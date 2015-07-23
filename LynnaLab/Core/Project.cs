@@ -11,16 +11,16 @@ namespace LynnaLab
 		string configDirectory;
 		StreamWriter logWriter;
 
-		AsmParser gfxHeaderFile;
+		AsmFileParser gfxHeaderFile;
 
 		// Maps label to file which contains it
-		Dictionary<string,AsmParser> labelDictionary = new Dictionary<string,AsmParser>();
+		Dictionary<string,FileParser> labelDictionary = new Dictionary<string,FileParser>();
 		// List of opened binary files
 		Dictionary<string,FileStream> binaryFileDictionary = new Dictionary<string,FileStream>();
 		// Dictionary of .DEFINE's
 		Dictionary<string,string> definesDictionary = new Dictionary<string,string>();
 
-		public AsmParser GfxHeaderFile {
+		public AsmFileParser GfxHeaderFile {
 			get { return gfxHeaderFile; }
 		}
 		public string BaseDirectory {
@@ -37,16 +37,21 @@ namespace LynnaLab
 
 			logWriter = new StreamWriter(configDirectory + "Log.txt");
 
-			gfxHeaderFile = new AsmParser(this, "data/gfxHeaders.s");
-
 			// Parse everything in constants/
 			foreach (string f in Directory.EnumerateFiles(baseDirectory + "constants/")) {
 				if (f.Substring(f.LastIndexOf('.')) == ".s") {
 					string filename = "constants/" + f.Substring(f.LastIndexOf('/') + 1);
-					AsmParser constantsFile = new AsmParser(this, filename);
+					new AsmFileParser(this, filename);
 				}
 			}
-			new AsmParser(this, "data/areas.s");
+			gfxHeaderFile = new AsmFileParser(this, "data/gfxHeaders.s");
+			new AsmFileParser(this, "data/areas.s");
+            new AsmFileParser(this, "data/paletteData.s");
+            new AsmFileParser(this, "data/paletteHeaders.s");
+            new AsmFileParser(this, "data/tilesetMappings.s");
+            new AsmFileParser(this, "data/tilesetCollisions.s");
+            new AsmFileParser(this, "data/tilesetHeaders.s");
+			new BinaryFileParser(this, "tileMappings.bin");
 		}
 
 		public void Close() {
@@ -60,13 +65,17 @@ namespace LynnaLab
 			}
 			definesDictionary[name] = value;
 		}
-		public void AddLabel(string label, AsmParser source) {
+		public void AddLabel(string label, FileParser source) {
 			if (labelDictionary.ContainsKey(label))
 				throw new DuplicateLabelException("Label \"" + label + "\" defined for a second time.");
 			labelDictionary.Add(label, source);
 		}
-		public AsmParser GetFileWithLabel(string label) {
-			return labelDictionary[label];
+		public FileParser GetFileWithLabel(string label) {
+            try {
+                return labelDictionary[label];
+            } catch(KeyNotFoundException e) {
+                throw new KeyNotFoundException("Label \"" + label + "\" was needed but could not be located!");
+            }
 		}
 
 		public void WriteLog(string data) {

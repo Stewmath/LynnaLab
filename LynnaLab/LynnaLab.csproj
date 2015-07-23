@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -31,9 +30,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="gtk-sharp, Version=2.4.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
+    <Reference Include="gtk-sharp" />
     <Reference Include="gdk-sharp, Version=2.4.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <SpecificVersion>False</SpecificVersion>
     </Reference>
@@ -50,6 +47,11 @@
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Mono.Posix" />
+    <Reference Include="Mono.Cairo" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="gtk-dotnet, Version=2.4.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="gtk-gui\gui.stetic">
@@ -58,19 +60,31 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="gtk-gui\generated.cs" />
-    <Compile Include="MainWindow.cs" />
     <Compile Include="gtk-gui\MainWindow.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Core\AsmParser.cs" />
-    <Compile Include="Core\GfxHeaderParser.cs" />
     <Compile Include="Core\Project.cs" />
     <Compile Include="Core\ConstantsMapping.cs" />
     <Compile Include="Core\Area.cs" />
     <Compile Include="Core\GraphicsState.cs" />
+    <Compile Include="Core\FileParser.cs" />
+    <Compile Include="Core\BinaryFileParser.cs" />
+    <Compile Include="Core\AsmFileParser.cs" />
+    <Compile Include="Core\GfxHeaderGroup.cs" />
+    <Compile Include="Core\GfxHeaderData.cs" />
+    <Compile Include="UI\MainWindow.cs" />
+    <Compile Include="UI\AreaViewer.cs" />
+    <Compile Include="Core\PaletteGroup.cs" />
+    <Compile Include="Core\PaletteHeaderData.cs" />
+    <Compile Include="Core\Data.cs" />
+    <Compile Include="Core\TilesetData.cs" />
+    <Compile Include="Core\TilesetHeaderData.cs" />
+    <Compile Include="Core\TilesetHeaderGroup.cs" />
+    <Compile Include="Core\GbGraphics.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="Core\" />
+    <Folder Include="UI\" />
   </ItemGroup>
 </Project>

@@ -12,6 +12,8 @@ public partial class MainWindow
 	private global::Gtk.VBox vbox1;
 	
 	private global::Gtk.MenuBar menubar1;
+	
+	private global::LynnaLab.AreaViewer tilesetviewer1;
 
 	protected virtual void Build ()
 	{
@@ -32,7 +34,6 @@ public partial class MainWindow
 		this.WindowPosition = ((global::Gtk.WindowPosition)(4));
 		// Container child MainWindow.Gtk.Container+ContainerChild
 		this.vbox1 = new global::Gtk.VBox ();
-		this.vbox1.Name = "vbox1";
 		this.vbox1.Spacing = 6;
 		// Container child vbox1.Gtk.Box+BoxChild
 		this.UIManager.AddUiFromString ("<ui><menubar name='menubar1'><menu name='FileAction' action='FileAction'><menuitem name='OpenAction' action='OpenAction'/></menu></menubar></ui>");
@@ -43,6 +44,14 @@ public partial class MainWindow
 		w2.Position = 0;
 		w2.Expand = false;
 		w2.Fill = false;
+		// Container child vbox1.Gtk.Box+BoxChild
+		this.tilesetviewer1 = new global::LynnaLab.AreaViewer ();
+		this.tilesetviewer1.Name = "tilesetviewer1";
+		this.vbox1.Add (this.tilesetviewer1);
+		global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.tilesetviewer1]));
+		w3.Position = 1;
+		w3.Expand = false;
+		w3.Fill = false;
 		this.Add (this.vbox1);
 		if ((this.Child != null)) {
 			this.Child.ShowAll ();

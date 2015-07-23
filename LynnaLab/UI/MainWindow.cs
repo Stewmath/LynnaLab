@@ -10,7 +10,10 @@ public partial class MainWindow: Gtk.Window
 	public MainWindow () : base (Gtk.WindowType.Toplevel)
 	{
 		Build();
-		OpenProject("/home/matthew/programs/gb/ages-disasm");
+
+		OpenProject("/home/matthew/programs/gb/ages/ages-disasm");
+
+        tilesetviewer1.SetArea(new Area(project, 0));
 	}
 
 	protected void OnDeleteEvent (object sender, DeleteEventArgs a)

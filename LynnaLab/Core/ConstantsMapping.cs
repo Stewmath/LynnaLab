@@ -11,7 +11,7 @@ namespace LynnaLab
 		{
 			//dict = new Dictionary();
 
-			AsmParser parser = new AsmParser(p, filename);
+			AsmFileParser parser = new AsmFileParser(p, filename);
 		}
 
 		public byte StringToByte(string val) {
