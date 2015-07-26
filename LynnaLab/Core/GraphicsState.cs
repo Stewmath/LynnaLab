@@ -70,9 +70,12 @@ namespace LynnaLab
 
             bool next = true;
             while (next) {
+                RgbData data = header.Data;
                 for (int i=header.FirstPalette; i<header.FirstPalette+header.NumPalettes; i++) {
-                    for (int j=0; j<4; j++)
-                        paletteBuffer[(int)header.PaletteType][i][j] = header.Data.Color;
+                    for (int j=0; j<4; j++) {
+                        paletteBuffer[(int)header.PaletteType][i][j] = data.Color;
+                        data = data.Next as RgbData;
+                    }
                 }
 
                 next = false;

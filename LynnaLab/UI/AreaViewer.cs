@@ -70,8 +70,8 @@ namespace LynnaLab
 		protected override void OnSizeRequested(ref Gtk.Requisition requisition)
 		{
 			// Calculate desired size here.
-			requisition.Height = 300;
-			requisition.Width = 300;
+			requisition.Height = 16*16;
+			requisition.Width = 16*16;
 		}
 	}
 }

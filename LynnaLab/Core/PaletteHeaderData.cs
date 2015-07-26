@@ -22,7 +22,7 @@ namespace LynnaLab {
         }
 
 		public PaletteType PaletteType {
-			get { return Command == "m_PaletteHeaderBg" ? PaletteType.Background : PaletteType.Sprite; }
+			get { return Command == "m_paletteheaderbg" ? PaletteType.Background : PaletteType.Sprite; }
 		}
         public int FirstPalette {
             get { return project.EvalToInt(Values[0]); }

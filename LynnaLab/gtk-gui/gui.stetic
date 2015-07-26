@@ -2,6 +2,7 @@
 <stetic-interface>
   <configuration>
     <images-root-path>..</images-root-path>
+    <target-gtk-version>2.12</target-gtk-version>
   </configuration>
   <import>
     <widget-library name="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
@@ -22,6 +23,13 @@
         <property name="ShortLabel" translatable="yes">_Open</property>
         <signal name="Activated" handler="OnOpenActionActivated" />
       </action>
+      <action id="QuitAction">
+        <property name="Type">Action</property>
+        <property name="Accelerator">&lt;Primary&gt;q</property>
+        <property name="Label" translatable="yes">_Quit</property>
+        <property name="ShortLabel" translatable="yes">_Quit</property>
+        <signal name="Activated" handler="OnQuitActionActivated" />
+      </action>
     </action-group>
     <property name="MemberName" />
     <property name="Title" translatable="yes">Lynna Lab</property>
@@ -37,6 +45,7 @@
             <node name="__gtksharp_196_Stetic_Editor_ActionMenuBar" type="Menubar">
               <node type="Menu" action="FileAction">
                 <node type="Menuitem" action="OpenAction" />
+                <node type="Menuitem" action="QuitAction" />
               </node>
             </node>
           </widget>
@@ -48,7 +57,7 @@
           </packing>
         </child>
         <child>
-          <widget class="LynnaLab.TilesetViewer" id="tilesetviewer1">
+          <widget class="LynnaLab.AreaViewer" id="areaviewer1">
             <property name="MemberName" />
           </widget>
           <packing>
@@ -59,7 +68,15 @@
           </packing>
         </child>
         <child>
-          <placeholder />
+          <widget class="LynnaLab.RoomEditor" id="roomeditor1">
+            <property name="MemberName" />
+          </widget>
+          <packing>
+            <property name="Position">2</property>
+            <property name="AutoSize">True</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
         </child>
       </widget>
     </child>

@@ -13,7 +13,33 @@ public partial class MainWindow: Gtk.Window
 
 		OpenProject("/home/matthew/programs/gb/ages/ages-disasm");
 
-        tilesetviewer1.SetArea(new Area(project, 0));
+        roomeditor1.SetRoom(new Room(project, 0x48));
+        areaviewer1.SetArea(roomeditor1.Room.Area);
+	}
+
+	void OpenProject(string dir) {
+		if (project != null) {
+			project.Close();
+			project = null;
+		}
+		project = new Project(dir);
+		/*
+		try {
+			project = new Project(dir);
+		}
+		catch (Exception ex) {
+			string outputString = "The following error was encountered while opening the project:\n\n";
+			outputString += ex.Message;
+
+			Gtk.MessageDialog d = new MessageDialog(this,
+				                     DialogFlags.DestroyWithParent,
+				                     MessageType.Error,
+				                     ButtonsType.Ok,
+				                     outputString);
+			d.Run();
+			d.Destroy();
+		}
+*/
 	}
 
 	protected void OnDeleteEvent (object sender, DeleteEventArgs a)
@@ -52,28 +78,9 @@ public partial class MainWindow: Gtk.Window
 		dialog.Destroy();
 	}
 
-	void OpenProject(string dir) {
-		if (project != null) {
-			project.Close();
-			project = null;
-		}
-		project = new Project(dir);
-		/*
-		try {
-			project = new Project(dir);
-		}
-		catch (Exception ex) {
-			string outputString = "The following error was encountered while opening the project:\n\n";
-			outputString += ex.Message;
-
-			Gtk.MessageDialog d = new MessageDialog(this,
-				                     DialogFlags.DestroyWithParent,
-				                     MessageType.Error,
-				                     ButtonsType.Ok,
-				                     outputString);
-			d.Run();
-			d.Destroy();
-		}
-*/
-	}
+    protected void OnQuitActionActivated(object sender, EventArgs e)
+    {
+        this.Destroy();
+        Environment.Exit(0);
+    }
 }

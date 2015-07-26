@@ -8,8 +8,8 @@ namespace LynnaLab {
 
         Project project;
 
-        byte[] mappingsData = new byte[512];
-        byte[] collisionsData = new byte[256];
+        byte[] mappingsData = new byte[0x800];
+        byte[] collisionsData = new byte[0x100];
 
         int index;
 
@@ -33,7 +33,7 @@ namespace LynnaLab {
                 file.Position = 0;
                 if (headerData.DestAddress == 0xdc00) {
                     // Mappings
-                    file.Read(mappingsData, 0, 0x200);
+                    file.Read(mappingsData, 0, 0x800);
                 }
                 else if (headerData.DestAddress == 0xdb00) {
                     // Collisions

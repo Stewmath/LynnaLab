@@ -9,11 +9,15 @@ public partial class MainWindow
 	
 	private global::Gtk.Action OpenAction;
 	
+	private global::Gtk.Action QuitAction;
+	
 	private global::Gtk.VBox vbox1;
 	
 	private global::Gtk.MenuBar menubar1;
 	
-	private global::LynnaLab.AreaViewer tilesetviewer1;
+	private global::LynnaLab.AreaViewer areaviewer1;
+	
+	private global::LynnaLab.RoomEditor roomeditor1;
 
 	protected virtual void Build ()
 	{
@@ -27,6 +31,9 @@ public partial class MainWindow
 		this.OpenAction = new global::Gtk.Action ("OpenAction", global::Mono.Unix.Catalog.GetString ("_Open"), null, null);
 		this.OpenAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("_Open");
 		w1.Add (this.OpenAction, "<Primary>o");
+		this.QuitAction = new global::Gtk.Action ("QuitAction", global::Mono.Unix.Catalog.GetString ("_Quit"), null, null);
+		this.QuitAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("_Quit");
+		w1.Add (this.QuitAction, "<Primary>q");
 		this.UIManager.InsertActionGroup (w1, 0);
 		this.AddAccelGroup (this.UIManager.AccelGroup);
 		this.Name = "MainWindow";
@@ -34,9 +41,10 @@ public partial class MainWindow
 		this.WindowPosition = ((global::Gtk.WindowPosition)(4));
 		// Container child MainWindow.Gtk.Container+ContainerChild
 		this.vbox1 = new global::Gtk.VBox ();
+		this.vbox1.Name = "vbox1";
 		this.vbox1.Spacing = 6;
 		// Container child vbox1.Gtk.Box+BoxChild
-		this.UIManager.AddUiFromString ("<ui><menubar name='menubar1'><menu name='FileAction' action='FileAction'><menuitem name='OpenAction' action='OpenAction'/></menu></menubar></ui>");
+		this.UIManager.AddUiFromString ("<ui><menubar name='menubar1'><menu name='FileAction' action='FileAction'><menuitem name='OpenAction' action='OpenAction'/><menuitem name='QuitAction' action='QuitAction'/></menu></menubar></ui>");
 		this.menubar1 = ((global::Gtk.MenuBar)(this.UIManager.GetWidget ("/menubar1")));
 		this.menubar1.Name = "menubar1";
 		this.vbox1.Add (this.menubar1);
@@ -45,13 +53,21 @@ public partial class MainWindow
 		w2.Expand = false;
 		w2.Fill = false;
 		// Container child vbox1.Gtk.Box+BoxChild
-		this.tilesetviewer1 = new global::LynnaLab.AreaViewer ();
-		this.tilesetviewer1.Name = "tilesetviewer1";
-		this.vbox1.Add (this.tilesetviewer1);
-		global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.tilesetviewer1]));
+		this.areaviewer1 = new global::LynnaLab.AreaViewer ();
+		this.areaviewer1.Name = "areaviewer1";
+		this.vbox1.Add (this.areaviewer1);
+		global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.areaviewer1]));
 		w3.Position = 1;
 		w3.Expand = false;
 		w3.Fill = false;
+		// Container child vbox1.Gtk.Box+BoxChild
+		this.roomeditor1 = new global::LynnaLab.RoomEditor ();
+		this.roomeditor1.Name = "roomeditor1";
+		this.vbox1.Add (this.roomeditor1);
+		global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.roomeditor1]));
+		w4.Position = 2;
+		w4.Expand = false;
+		w4.Fill = false;
 		this.Add (this.vbox1);
 		if ((this.Child != null)) {
 			this.Child.ShowAll ();
@@ -61,5 +77,6 @@ public partial class MainWindow
 		this.Show ();
 		this.DeleteEvent += new global::Gtk.DeleteEventHandler (this.OnDeleteEvent);
 		this.OpenAction.Activated += new global::System.EventHandler (this.OnOpenActionActivated);
+		this.QuitAction.Activated += new global::System.EventHandler (this.OnQuitActionActivated);
 	}
 }

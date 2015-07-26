@@ -51,7 +51,6 @@ namespace LynnaLab
             new AsmFileParser(this, "data/tilesetMappings.s");
             new AsmFileParser(this, "data/tilesetCollisions.s");
             new AsmFileParser(this, "data/tilesetHeaders.s");
-			new BinaryFileParser(this, "tileMappings.bin");
 		}
 
 		public void Close() {

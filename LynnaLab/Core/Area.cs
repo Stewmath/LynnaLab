@@ -81,20 +81,16 @@ namespace LynnaLab
 
             Graphics g = Graphics.FromImage(image);
 
-            int tileID = mappingsData[index*2];
-            tileID |= mappingsData[index*2+1]<<8;
-
-            FileStream file = project.GetBinaryFile("tileMappings.bin");
-            file.Position = tileID*8;
-
             for (int y=0; y<2; y++) {
                 for (int x=0; x<2; x++) {
-                    int tileIndex = file.ReadByte();
+                    int tileIndex = mappingsData[index*8+y*2+x];
+                    int flags = mappingsData[index*8+y*2+x+4];
+
                     int tileOffset = 0x1000 + ((sbyte)tileIndex)*16;
 
                     byte[] src = new byte[16];
                     Array.Copy(graphicsState.VramBuffer[1], tileOffset, src, 0, 16);
-                    Bitmap subImage = GbGraphics.TileToImage(src);
+                    Bitmap subImage = GbGraphics.TileToImage(src, GraphicsState.GetBackgroundPalettes()[flags&7], flags);
 
                     g.DrawImage(subImage, x*8, y*8);
                 }

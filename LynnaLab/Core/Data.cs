@@ -42,9 +42,10 @@ namespace LynnaLab
 
         public Color Color {
             get {
-                return Color.FromArgb(project.EvalToInt(Values[0]),
-                        project.EvalToInt(Values[1]),
-                        project.EvalToInt(Values[2]));
+                return Color.FromArgb(
+                        project.EvalToInt(Values[0])*8,
+                        project.EvalToInt(Values[1])*8,
+                        project.EvalToInt(Values[2])*8);
             }
         }
 
