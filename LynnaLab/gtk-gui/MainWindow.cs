@@ -61,7 +61,7 @@ public partial class MainWindow
 		w3.Expand = false;
 		w3.Fill = false;
 		// Container child vbox1.Gtk.Box+BoxChild
-		this.roomeditor1 = new global::LynnaLab.RoomEditor ();
+		this.roomeditor1 = new global::LynnaLab.RoomEditor (areaviewer1);
 		this.roomeditor1.Name = "roomeditor1";
 		this.vbox1.Add (this.roomeditor1);
 		global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.roomeditor1]));

@@ -73,6 +73,8 @@ namespace LynnaLab
 			graphicsState = new GraphicsState();
 			graphicsState.AddGfxHeaderGroup(gfxHeaderGroup);
             graphicsState.AddPaletteHeaderGroup(paletteHeaderGroup);
+            // Global palettes
+            graphicsState.AddPaletteHeaderGroup(new PaletteHeaderGroup(project, 0xf));
 		}
 
         public Bitmap GetTileImage(int index) {

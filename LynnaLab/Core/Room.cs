@@ -12,6 +12,7 @@ namespace LynnaLab
         int width, height;
         byte[,] tiles;
         Area area;
+        Bitmap cachedImage;
 
         public int Height
         {
@@ -77,8 +78,11 @@ namespace LynnaLab
         }
 
         public Bitmap GetImage() {
-            Bitmap image = new Bitmap(width*16, height*16);
-            Graphics g = Graphics.FromImage(image);
+            if (cachedImage != null)
+                return cachedImage;
+
+            cachedImage = new Bitmap(width*16, height*16);
+            Graphics g = Graphics.FromImage(cachedImage);
 
             for (int x=0; x<width; x++) {
                 for (int y=0; y<height; y++) {
@@ -86,7 +90,20 @@ namespace LynnaLab
                 }
             }
 
-            return image;
+            return cachedImage;
+        }
+
+        public int GetTile(int x, int y) {
+            return tiles[x,y];
+        }
+        public void SetTile(int x, int y, int value) {
+            if (tiles[x,y] != value) {
+                tiles[x,y] = (byte)value;
+                if (cachedImage != null) {
+                    Graphics g = Graphics.FromImage(cachedImage);
+                    g.DrawImage(area.GetTileImage(value), x*16, y*16);
+                }
+            }
         }
     }
 }
