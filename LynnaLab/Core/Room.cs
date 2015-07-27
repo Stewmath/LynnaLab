@@ -5,11 +5,13 @@ using System.IO;
 
 namespace LynnaLab
 {
-    public class Room {
-        Project project;
-        int index;
-
+    public class Room : ProjectIndexedDataType {
+        // Actual width and height of room
         int width, height;
+        // Width and height of file; large rooms always have an extra 0 at the
+        // end of each row
+        int fileWidth, fileHeight;
+
         byte[,] tiles;
         Area area;
         Bitmap cachedImage;
@@ -27,27 +29,31 @@ namespace LynnaLab
             get { return area; }
         }
 
-        public Room(Project p, int i) {
-            project = p;
-            index = i;
-
-            FileStream dataFile;
-            string roomString = "room" + i.ToString("X4").ToLower() + ".bin";
-            try {
-                dataFile = project.GetBinaryFile("maps/small/" + roomString);
-            }
-            catch (FileNotFoundException ex) {
+        FileStream TileDataFile {
+            get {
+                FileStream dataFile;
+                string roomString = "room" + Index.ToString("X4").ToLower() + ".bin";
                 try {
-                    dataFile = project.GetBinaryFile("maps/large/" + roomString);
+                    dataFile = Project.GetBinaryFile("maps/small/" + roomString);
                 }
-                catch (FileNotFoundException ex2) {
-                    throw new FileNotFoundException("Couldn't find \"" + roomString + "\" in \"maps/small\" or \"maps/large\".");
+                catch (FileNotFoundException ex) {
+                    try {
+                        dataFile = Project.GetBinaryFile("maps/large/" + roomString);
+                    }
+                    catch (FileNotFoundException ex2) {
+                        throw new FileNotFoundException("Couldn't find \"" + roomString + "\" in \"maps/small\" or \"maps/large\".");
+                    }
                 }
+                return dataFile;
             }
+        }
+
+        public Room(Project p, int i) : base(p,i) {
+            FileStream dataFile = TileDataFile;
 
             if (dataFile.Length == 80) { // Small map
-                width = 10;
-                height = 8;
+                width = fileWidth = 10;
+                height = fileHeight = 8;
                 tiles = new byte[width,height];
                 dataFile.Position = 0;
                 for (int y=0; y<height; y++)
@@ -57,7 +63,8 @@ namespace LynnaLab
             }
             else if (dataFile.Length == 176) { // Large map
                 width = 0xf;
-                height = 0xb;
+                fileWidth = 0x10;
+                height = fileHeight = 0xb;
                 tiles = new byte[width,height];
                 dataFile.Position = 0;
                 for (int y=0; y<height; y++) {
@@ -67,14 +74,14 @@ namespace LynnaLab
                 }
             }
             else
-                throw new Exception("Size of file \"" + roomString + "\" was invalid!");
+                throw new Exception("Size of file \"" + dataFile.Name + "\" was invalid!");
 
             int areaID = 0;
-            FileStream groupAreasFile = project.GetBinaryFile("maps/group" + (index>>8) + "Areas.bin");
-            groupAreasFile.Position = index&0xff;
+            FileStream groupAreasFile = Project.GetBinaryFile("maps/group" + (Index>>8) + "Areas.bin");
+            groupAreasFile.Position = Index&0xff;
             areaID = groupAreasFile.ReadByte() & 0x7f;
 
-            area = new Area(project, areaID);
+            area = Project.GetDataType<Area>(areaID);
         }
 
         public Bitmap GetImage() {
@@ -103,6 +110,23 @@ namespace LynnaLab
                     Graphics g = Graphics.FromImage(cachedImage);
                     g.DrawImage(area.GetTileImage(value), x*16, y*16);
                 }
+                Modified = true;
+            }
+        }
+
+        public override void Save() {
+            if (Modified) {
+                FileStream file = TileDataFile;
+                file.Position = 0;
+                for (int y=0; y<Height; y++) {
+                    for (int x=0; x<Width; x++) {
+                        file.WriteByte(tiles[x,y]);
+                    }
+                    for (int j=width; j<fileWidth; j++)
+                        file.WriteByte(0);
+                }
+
+                Modified = false;
             }
         }
     }

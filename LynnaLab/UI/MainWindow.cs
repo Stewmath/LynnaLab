@@ -11,6 +11,8 @@ public partial class MainWindow: Gtk.Window
     {
         Build();
 
+        roomeditor1.SetClient(areaviewer1);
+
         OpenProject("/home/matthew/programs/gb/ages/ages-disasm");
     }
 
@@ -56,11 +58,14 @@ public partial class MainWindow: Gtk.Window
         }
     }
 
+    void Quit() {
+        project.Close();
+        Application.Quit();
+    }
+
     protected void OnDeleteEvent (object sender, DeleteEventArgs a)
     {
-        project.Close();
-
-        Application.Quit ();
+        Quit();
         a.RetVal = true;
     }
 
@@ -82,7 +87,24 @@ public partial class MainWindow: Gtk.Window
 
     protected void OnQuitActionActivated(object sender, EventArgs e)
     {
-        this.Destroy();
-        Environment.Exit(0);
+        ResponseType response;
+        Gtk.Dialog d = new Dialog("AOEU", this,
+                DialogFlags.DestroyWithParent,
+                Gtk.Stock.Yes, ResponseType.Yes,
+                Gtk.Stock.No, ResponseType.No,
+                Gtk.Stock.Cancel, ResponseType.Cancel);
+        Alignment a = new Alignment(1,0.25f,1,0);
+        a.SetSizeRequest(0, 50);
+        a.Add(new Gtk.Label("Save project before exiting?"));
+        d.VBox.Add(a);
+        d.VBox.ShowAll();
+        response = (ResponseType)d.Run();
+        d.Destroy();
+        if (response == ResponseType.Yes) {
+            project.Save();
+            Quit();
+        }
+        else if (response == ResponseType.No)
+            Quit();
     }
 }

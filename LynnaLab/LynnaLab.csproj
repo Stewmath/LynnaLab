@@ -71,6 +71,7 @@
     <Compile Include="UI\MainWindow.cs" />
     <Compile Include="UI\RoomEditor.cs" />
     <Compile Include="Core\Room.cs" />
+    <Compile Include="Core\ProjectDataType.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

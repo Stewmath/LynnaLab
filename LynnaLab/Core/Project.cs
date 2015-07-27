@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Reflection;
 using System.IO;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
@@ -19,6 +20,9 @@ namespace LynnaLab
 		Dictionary<string,FileStream> binaryFileDictionary = new Dictionary<string,FileStream>();
 		// Dictionary of .DEFINE's
 		Dictionary<string,string> definesDictionary = new Dictionary<string,string>();
+
+        // Data structures which should be linked to a particular project
+        Dictionary<string,ProjectDataType> dataStructDictionary = new Dictionary<string,ProjectDataType>();
 
 		public AsmFileParser GfxHeaderFile {
 			get { return gfxHeaderFile; }
@@ -53,13 +57,40 @@ namespace LynnaLab
             new AsmFileParser(this, "data/tilesetHeaders.s");
 		}
 
+        public void Save() {
+            foreach (ProjectDataType data in dataStructDictionary.Values) {
+                data.Save();
+            }
+        }
+
 		public void Close() {
+            foreach (FileStream file in binaryFileDictionary.Values) {
+                file.Close();
+            }
 			if (logWriter != null)
 				logWriter.Close();
 		}
 
+        public T GetDataType<T>(int identifier) where T:ProjectDataType {
+            string s = typeof(T).Name + "_" + identifier;
+            ProjectDataType o;
+            if (dataStructDictionary.TryGetValue(s, out o))
+                return o as T;
+            o = (ProjectIndexedDataType)Activator.CreateInstance(typeof(T), new object[] { this, identifier });
+            dataStructDictionary[s] = o;
+
+            return o as T;
+        }
+        public void AddDataType(ProjectDataType data) {
+            string s = data.GetIdentifier();
+            if (dataStructDictionary.ContainsKey(s))
+                throw new Exception("Data with identifier \"" + data.GetIdentifier() +
+                        "\" was attempted to be added to the project multiple times.");
+            dataStructDictionary[s] = data;
+        }
+
 		public void AddDefinition(string name, string value) {
-			if (definesDictionary.ContainsKey("name")) {
+			if (definesDictionary.ContainsKey(name)) {
 				WriteLogLine("WARNING: \"" + name + "\" defined multiple times");
 			}
 			definesDictionary[name] = value;
@@ -183,4 +214,3 @@ namespace LynnaLab
 	}
 
 }
-

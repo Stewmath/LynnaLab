@@ -55,14 +55,23 @@ public partial class MainWindow
 		// Container child vbox1.Gtk.Box+BoxChild
 		this.areaviewer1 = new global::LynnaLab.AreaViewer ();
 		this.areaviewer1.Name = "areaviewer1";
+		this.areaviewer1.SelectedIndex = 0;
+		this.areaviewer1.Height = 16;
+		this.areaviewer1.Width = 16;
+		this.areaviewer1.TileWidth = 16;
+		this.areaviewer1.TileHeight = 16;
 		this.vbox1.Add (this.areaviewer1);
 		global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.areaviewer1]));
 		w3.Position = 1;
 		w3.Expand = false;
 		w3.Fill = false;
 		// Container child vbox1.Gtk.Box+BoxChild
-		this.roomeditor1 = new global::LynnaLab.RoomEditor (areaviewer1);
+		this.roomeditor1 = new global::LynnaLab.RoomEditor ();
 		this.roomeditor1.Name = "roomeditor1";
+		this.roomeditor1.Height = 15;
+		this.roomeditor1.Width = 10;
+		this.roomeditor1.TileWidth = 16;
+		this.roomeditor1.TileHeight = 16;
 		this.vbox1.Add (this.roomeditor1);
 		global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.roomeditor1]));
 		w4.Position = 2;

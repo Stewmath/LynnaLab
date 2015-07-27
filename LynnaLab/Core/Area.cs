@@ -4,11 +4,8 @@ using System.IO;
 
 namespace LynnaLab
 {
-	public class Area
+	public class Area : ProjectIndexedDataType
 	{
-		Project project;
-		int index;
-
 		FileParser areaFile;
 
 		int flags1, flags2;
@@ -24,24 +21,14 @@ namespace LynnaLab
 
 		GraphicsState graphicsState;
 
-		public Project Project {
-			get { return project; }
-		}
-
 		public GraphicsState GraphicsState {
 			get { return graphicsState; }
 		}
 
-		public Area(Project p, string indexStr)
-			: this(p, p.EvalToInt(indexStr)) {
-		}
-		public Area(Project p, int i) {
-            project = p;
-			index = i;
+		public Area(Project p, int i) : base(p, i) {
+			areaFile = Project.GetFileWithLabel("areaData");
 
-			areaFile = project.GetFileWithLabel("areaData");
-
-			Data areaData = areaFile.GetData("areaData", index * 8);
+			Data areaData = areaFile.GetData("areaData", Index * 8);
 			flags1 = p.EvalToInt(areaData.Values[0]);
 
 			areaData = areaData.Next;
@@ -66,18 +53,20 @@ namespace LynnaLab
 			animationIndex = p.EvalToInt(areaData.Values[0]);
 
 
-			gfxHeaderGroup = new GfxHeaderGroup(project, gfxHeaderGroupIndex);
-            paletteHeaderGroup = new PaletteHeaderGroup(project, paletteHeaderGroupIndex);
-            tilesetHeaderGroup = new TilesetHeaderGroup(project, tilesetHeaderGroupIndex);
+			gfxHeaderGroup = Project.GetDataType<GfxHeaderGroup>(gfxHeaderGroupIndex);
+            paletteHeaderGroup = Project.GetDataType<PaletteHeaderGroup>(paletteHeaderGroupIndex);
+            tilesetHeaderGroup = Project.GetDataType<TilesetHeaderGroup>(tilesetHeaderGroupIndex);
+            PaletteHeaderGroup globalPaletteHeaderGroup = 
+                Project.GetDataType<PaletteHeaderGroup>(0xf);
 
 			graphicsState = new GraphicsState();
 			graphicsState.AddGfxHeaderGroup(gfxHeaderGroup);
             graphicsState.AddPaletteHeaderGroup(paletteHeaderGroup);
             // Global palettes
-            graphicsState.AddPaletteHeaderGroup(new PaletteHeaderGroup(project, 0xf));
+            graphicsState.AddPaletteHeaderGroup(globalPaletteHeaderGroup);
 		}
 
-        public Bitmap GetTileImage(int index) {
+        public Bitmap GetTileImage(int Index) {
             Bitmap image = new Bitmap(16,16);
             byte[] mappingsData = tilesetHeaderGroup.GetMappingsData();
 
@@ -85,8 +74,8 @@ namespace LynnaLab
 
             for (int y=0; y<2; y++) {
                 for (int x=0; x<2; x++) {
-                    int tileIndex = mappingsData[index*8+y*2+x];
-                    int flags = mappingsData[index*8+y*2+x+4];
+                    int tileIndex = mappingsData[Index*8+y*2+x];
+                    int flags = mappingsData[Index*8+y*2+x+4];
 
                     int tileOffset = 0x1000 + ((sbyte)tileIndex)*16;
 
@@ -99,6 +88,9 @@ namespace LynnaLab
             }
 
             return image;
+        }
+
+        public override void Save() {
         }
 	}
 }

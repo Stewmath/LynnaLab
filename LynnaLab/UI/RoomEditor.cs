@@ -24,13 +24,14 @@ namespace LynnaLab
         Room room;
         TileGridSelector client;
 
-        public RoomEditor(TileGridSelector client) {
+        public RoomEditor() {
             TileWidth = 16;
             TileHeight = 16;
-            this.client = client;
 
             this.ButtonPressEvent += delegate(object o, ButtonPressEventArgs args)
             {
+                if (client == null)
+                    return;
                 int x, y;
                 Gdk.ModifierType state;
                 args.Event.Window.GetPointer(out x, out y, out state);
@@ -42,21 +43,20 @@ namespace LynnaLab
                 }
             };
             this.MotionNotifyEvent += delegate(object o, MotionNotifyEventArgs args) {
+                if (client == null)
+                    return;
                 int x, y;
                 Gdk.ModifierType state;
                 args.Event.Window.GetPointer(out x, out y, out state);
                 if (IsInBounds(x, y)) {
                     if (state.HasFlag(Gdk.ModifierType.Button1Mask))
-                    OnClicked(x, y);
+                        OnClicked(x, y);
                 }
             };
         }
 
-        void OnClicked(int x, int y) {
-            x /= TileWidth;
-            y /= TileHeight;
-            room.SetTile(x, y, client.SelectedIndex);
-            this.QueueDrawArea(x * TileWidth, y * TileWidth, TileWidth - 1, TileHeight - 1);
+        public void SetClient(TileGridSelector client) {
+            this.client = client;
         }
 
         public void SetRoom(Room r) {
@@ -64,6 +64,13 @@ namespace LynnaLab
             Width = room.Width;
             Height = room.Height;
             QueueDraw();
+        }
+
+        void OnClicked(int x, int y) {
+            x /= TileWidth;
+            y /= TileHeight;
+            room.SetTile(x, y, client.SelectedIndex);
+            this.QueueDrawArea(x * TileWidth, y * TileWidth, TileWidth - 1, TileHeight - 1);
         }
 
 		protected override bool OnButtonPressEvent(Gdk.EventButton ev)

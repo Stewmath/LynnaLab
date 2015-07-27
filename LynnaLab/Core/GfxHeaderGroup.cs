@@ -4,27 +4,19 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
-	public class GfxHeaderGroup
+	public class GfxHeaderGroup : ProjectIndexedDataType
 	{
-		Project project;
-		int index;
-
 		GfxHeaderData firstGfxHeader;
 
 		public GfxHeaderData FirstGfxHeader {
 			get { return firstGfxHeader; }
 		}
 
-		public GfxHeaderGroup(Project project, string name)
+		public GfxHeaderGroup(Project project, string name) : this(project, project.EvalToInt(name))
 		{
-			this.project = project;
-			index = project.EvalToInt(name);
 		}
-		public GfxHeaderGroup(Project project, int index)
+		public GfxHeaderGroup(Project project, int index) : base(project, index)
 		{
-			this.project = project;
-			this.index = index;
-
 			FileParser gfxPointerFile = project.GetFileWithLabel("gfxHeaderGroupTable");
 			Data headerPointerData = gfxPointerFile.GetData("gfxHeaderGroupTable", index*2);
 			FileParser gfxHeaderFile = project.GetFileWithLabel(headerPointerData.Values[0]);
@@ -34,5 +26,8 @@ namespace LynnaLab
 				throw new Exception("Expected GFX header group " + index.ToString("X") + " to start with GFX header data");
 			firstGfxHeader = (GfxHeaderData)headerData;
 		}
+
+        public override void Save() {
+        }
 	}
 }
