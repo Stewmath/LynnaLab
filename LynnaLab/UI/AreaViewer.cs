@@ -31,7 +31,7 @@ namespace LynnaLab
         public TileGridViewer() : base() {
             this.MotionNotifyEvent += new MotionNotifyEventHandler(OnMoveMouse);
             this.LeaveNotifyEvent += new LeaveNotifyEventHandler(OnMouseLeave);
-            this.Events |= Gdk.EventMask.PointerMotionMask | Gdk.EventMask.LeaveNotifyMask | Gdk.EventMask.ButtonPressMask;
+            this.Events = Gdk.EventMask.PointerMotionMask | Gdk.EventMask.LeaveNotifyMask | Gdk.EventMask.ButtonPressMask;
         }
 
         public bool IsInBounds(int x, int y) {
@@ -43,18 +43,25 @@ namespace LynnaLab
             Gdk.ModifierType state;
             args.Event.Window.GetPointer(out x, out y, out state);
 
-            this.QueueDrawArea(HoveringX*TileWidth, HoveringY*TileHeight, TileWidth, TileHeight);
+            int nextHoveringIndex;
             if (x >= 0 && y >= 0 && x<Width*TileWidth && y<Height*TileHeight) {
-                hoveringIndex = (x/TileWidth) + (y/TileHeight)*Width;
-                this.QueueDrawArea(HoveringX*TileWidth, HoveringY*TileHeight, TileWidth, TileHeight);
+                nextHoveringIndex = (x/TileWidth) + (y/TileHeight)*Width;
             }
             else {
-                hoveringIndex = -1;
+                nextHoveringIndex = -1;
+            }
+
+            if (nextHoveringIndex != hoveringIndex) {
+                this.QueueDraw();
+                //this.QueueDrawArea(HoveringX*TileWidth, HoveringY*TileHeight, TileWidth, TileHeight);
+                hoveringIndex = nextHoveringIndex;
+                //this.QueueDrawArea(HoveringX*TileWidth, HoveringY*TileHeight, TileWidth, TileHeight);
             }
         }
 
         protected void OnMouseLeave(object o, LeaveNotifyEventArgs args) {
-            this.QueueDrawArea(HoveringX*TileWidth, HoveringY*TileHeight, TileWidth, TileHeight);
+            if (hoveringIndex != -1)
+                this.QueueDrawArea(HoveringX*TileWidth, HoveringY*TileHeight, TileWidth, TileHeight);
             hoveringIndex = -1;
         }
 
@@ -63,13 +70,15 @@ namespace LynnaLab
             base.OnExposeEvent(ev);
 
             Gdk.Window win = ev.Window;
-            System.Drawing.Graphics g = Gtk.DotNet.Graphics.FromDrawable(win);
+            Graphics g = Gtk.DotNet.Graphics.FromDrawable(win);
 
             if (Image != null)
                 g.DrawImage(Image, 0, 0);
             if (hoveringIndex != -1) {
                 g.DrawRectangle(new Pen(Color.Red), HoveringX*TileWidth, HoveringY*TileHeight, TileWidth-1, TileHeight-1);
             }
+
+            g.Dispose();
 
             return true;
         }
@@ -125,6 +134,8 @@ namespace LynnaLab
                 g.DrawRectangle(new Pen(Color.White), SelectedX*TileWidth, SelectedY*TileHeight, TileWidth-1, TileHeight-1);
             }
 
+            g.Dispose();
+
             return true;
         }
     }
@@ -171,6 +182,7 @@ namespace LynnaLab
                 int y = i/16;
                 g.DrawImage(area.GetTileImage(i), x*16, y*16);
             }
+            g.Dispose();
 
             this.QueueDraw();
         }

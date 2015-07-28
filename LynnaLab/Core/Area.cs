@@ -86,6 +86,7 @@ namespace LynnaLab
                     g.DrawImage(subImage, x*8, y*8);
                 }
             }
+            g.Dispose();
 
             return image;
         }

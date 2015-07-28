@@ -97,6 +97,8 @@ namespace LynnaLab
                 }
             }
 
+            g.Dispose();
+
             return cachedImage;
         }
 
@@ -109,6 +111,7 @@ namespace LynnaLab
                 if (cachedImage != null) {
                     Graphics g = Graphics.FromImage(cachedImage);
                     g.DrawImage(area.GetTileImage(value), x*16, y*16);
+                    g.Dispose();
                 }
                 Modified = true;
             }

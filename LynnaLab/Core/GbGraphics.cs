@@ -40,6 +40,7 @@ namespace LynnaLab
 				}
 			}
 
+            g.Dispose();
 			return ret;
 		}
     }
