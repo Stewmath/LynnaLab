@@ -34,14 +34,14 @@ namespace LynnaLab
                 FileStream dataFile;
                 string roomString = "room" + Index.ToString("X4").ToLower() + ".bin";
                 try {
-                    dataFile = Project.GetBinaryFile("maps/small/" + roomString);
+                    dataFile = Project.GetBinaryFile("rooms/small/" + roomString);
                 }
                 catch (FileNotFoundException ex) {
                     try {
-                        dataFile = Project.GetBinaryFile("maps/large/" + roomString);
+                        dataFile = Project.GetBinaryFile("rooms/large/" + roomString);
                     }
                     catch (FileNotFoundException ex2) {
-                        throw new FileNotFoundException("Couldn't find \"" + roomString + "\" in \"maps/small\" or \"maps/large\".");
+                        throw new FileNotFoundException("Couldn't find \"" + roomString + "\" in \"rooms/small\" or \"rooms/large\".");
                     }
                 }
                 return dataFile;
@@ -77,7 +77,7 @@ namespace LynnaLab
                 throw new Exception("Size of file \"" + dataFile.Name + "\" was invalid!");
 
             int areaID = 0;
-            FileStream groupAreasFile = Project.GetBinaryFile("maps/group" + (Index>>8) + "Areas.bin");
+            FileStream groupAreasFile = Project.GetBinaryFile("rooms/group" + (Index>>8) + "Areas.bin");
             groupAreasFile.Position = Index&0xff;
             areaID = groupAreasFile.ReadByte() & 0x7f;
 
