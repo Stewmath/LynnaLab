@@ -90,9 +90,12 @@ namespace LynnaLab
         {
             get { return selectedIndex; }
             set {
-                QueueDrawArea(SelectedX*16, SelectedY*16, TileWidth, TileHeight);
-                selectedIndex = value;
-                QueueDrawArea(SelectedX*16, SelectedY*16, TileWidth, TileHeight);
+                if (selectedIndex != value) {
+                    selectedIndex = value;
+                    QueueDraw();
+                }
+                if (TileSelectedEvent != null)
+                    TileSelectedEvent(this);
             }
         }
         public int SelectedX
@@ -103,6 +106,11 @@ namespace LynnaLab
         {
             get { return selectedIndex/Width; }
         }
+
+        // Event for selecting a tile
+        public delegate void TileSelectedEventHandler(object sender);
+        public event TileSelectedEventHandler TileSelectedEvent;
+
 
         int selectedIndex = 0;
 
@@ -117,9 +125,7 @@ namespace LynnaLab
             args.Event.Window.GetPointer(out x, out y, out state);
 
             if (x >= 0 && y >= 0 && x<Width*TileWidth&& y<Height*TileHeight) {
-                this.QueueDrawArea(SelectedX*TileWidth, SelectedY*TileHeight, TileWidth, TileHeight);
-                selectedIndex = (x/TileWidth) + (y/TileHeight)*Width;
-                this.QueueDrawArea(SelectedX*TileWidth, SelectedY*TileHeight, TileWidth, TileHeight);
+                SelectedIndex = (x/TileWidth) + (y/TileHeight)*Width;
             }
         }
 

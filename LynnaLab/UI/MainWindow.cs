@@ -5,13 +5,17 @@ using LynnaLab;
 
 public partial class MainWindow: Gtk.Window
 {
-    Project project;
+    Project Project { get; set; }
 
     public MainWindow () : base (Gtk.WindowType.Toplevel)
     {
         Build();
 
         roomeditor1.SetClient(areaviewer1);
+        minimap.TileSelectedEvent += delegate(object sender) {
+            Room room = minimap.Dungeon.GetRoom(0, minimap.SelectedX, minimap.SelectedY);
+            SetRoom(room);
+        };
 
         OpenProject("/home/matthew/programs/gb/ages/ages-disasm");
     }
@@ -29,18 +33,18 @@ public partial class MainWindow: Gtk.Window
         }
 
         if (response == ResponseType.Yes) {
-            if (project != null) {
-                project.Close();
-                project = null;
+            if (Project != null) {
+                Project.Close();
+                Project = null;
             }
-            project = new Project(dir);
+            Project = new Project(dir);
 
             /*
             try {
-                project = new Project(dir);
+                Project = new Project(dir);
             }
             catch (Exception ex) {
-                string outputString = "The following error was encountered while opening the project:\n\n";
+                string outputString = "The following error was encountered while opening the Project:\n\n";
                 outputString += ex.Message;
 
                 Gtk.MessageDialog d = new MessageDialog(this,
@@ -53,13 +57,19 @@ public partial class MainWindow: Gtk.Window
             }
     */
 
-            roomeditor1.SetRoom(new Room(project, 0x48));
-            areaviewer1.SetArea(roomeditor1.Room.Area);
+            dungeonSpinButton.Value = 0;
+            minimap.Dungeon = Project.GetDataType<Dungeon>(0);
+            SetRoom(minimap.Dungeon.GetRoom(0,0,0));
         }
     }
 
+    void SetRoom(Room room) {
+        roomeditor1.SetRoom(room);
+        areaviewer1.SetArea(room.Area);
+    }
+
     void Quit() {
-        project.Close();
+        Project.Close();
         Application.Quit();
     }
 
@@ -84,11 +94,16 @@ public partial class MainWindow: Gtk.Window
         }
         dialog.Destroy();
     }
+    
+    protected void OnSaveActionActivated(object sender, EventArgs e)
+    {
+        Project.Save();
+    }
 
     protected void OnQuitActionActivated(object sender, EventArgs e)
     {
         ResponseType response;
-        Gtk.Dialog d = new Dialog("AOEU", this,
+        Gtk.Dialog d = new Dialog("Exiting", this,
                 DialogFlags.DestroyWithParent,
                 Gtk.Stock.Yes, ResponseType.Yes,
                 Gtk.Stock.No, ResponseType.No,
@@ -101,10 +116,17 @@ public partial class MainWindow: Gtk.Window
         response = (ResponseType)d.Run();
         d.Destroy();
         if (response == ResponseType.Yes) {
-            project.Save();
+            Project.Save();
             Quit();
         }
         else if (response == ResponseType.No)
             Quit();
+    }
+
+    protected void OnDungeonSpinButtonValueChanged(object sender, EventArgs e)
+    {
+        SpinButton spinner = sender as SpinButton;
+        minimap.Dungeon = Project.GetDataType<Dungeon>(spinner.ValueAsInt);
+        SetRoom(minimap.Dungeon.GetRoom(0, minimap.SelectedX, minimap.SelectedY));
     }
 }

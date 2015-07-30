@@ -8,7 +8,7 @@
     <widget-library name="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <widget-library name="../bin/Debug/LynnaLab.exe" internal="true" />
   </import>
-  <widget class="Gtk.Window" id="MainWindow" design-size="400 300">
+  <widget class="Gtk.Window" id="MainWindow" design-size="526 546">
     <action-group name="Default">
       <action id="FileAction">
         <property name="Type">Action</property>
@@ -30,6 +30,13 @@
         <property name="ShortLabel" translatable="yes">_Quit</property>
         <signal name="Activated" handler="OnQuitActionActivated" />
       </action>
+      <action id="SaveAction">
+        <property name="Type">Action</property>
+        <property name="Accelerator">&lt;Primary&gt;s</property>
+        <property name="Label" translatable="yes">_Save</property>
+        <property name="ShortLabel" translatable="yes">_Save</property>
+        <signal name="Activated" handler="OnSaveActionActivated" />
+      </action>
     </action-group>
     <property name="MemberName" />
     <property name="Title" translatable="yes">Lynna Lab</property>
@@ -45,6 +52,7 @@
             <node name="menubar1" type="Menubar">
               <node type="Menu" action="FileAction">
                 <node type="Menuitem" action="OpenAction" />
+                <node type="Menuitem" action="SaveAction" />
                 <node type="Menuitem" action="QuitAction" />
               </node>
             </node>
@@ -57,13 +65,104 @@
           </packing>
         </child>
         <child>
-          <widget class="LynnaLab.AreaViewer" id="areaviewer1">
+          <widget class="Gtk.HBox" id="hbox3">
             <property name="MemberName" />
-            <property name="SelectedIndex">0</property>
-            <property name="Height">16</property>
-            <property name="Width">16</property>
-            <property name="TileWidth">16</property>
-            <property name="TileHeight">16</property>
+            <property name="Spacing">6</property>
+            <child>
+              <widget class="Gtk.VBox" id="vbox2">
+                <property name="MemberName" />
+                <property name="Spacing">6</property>
+                <child>
+                  <widget class="LynnaLab.AreaViewer" id="areaviewer1">
+                    <property name="MemberName" />
+                    <property name="WidthRequest">256</property>
+                    <property name="HeightRequest">256</property>
+                    <property name="SelectedIndex">0</property>
+                    <property name="Height">16</property>
+                    <property name="Width">16</property>
+                    <property name="TileWidth">16</property>
+                    <property name="TileHeight">16</property>
+                  </widget>
+                  <packing>
+                    <property name="Position">0</property>
+                    <property name="AutoSize">True</property>
+                    <property name="Expand">False</property>
+                    <property name="Fill">False</property>
+                  </packing>
+                </child>
+                <child>
+                  <widget class="LynnaLab.RoomEditor" id="roomeditor1">
+                    <property name="MemberName" />
+                    <property name="WidthRequest">240</property>
+                    <property name="HeightRequest">224</property>
+                    <property name="Height">14</property>
+                    <property name="Width">15</property>
+                    <property name="TileWidth">16</property>
+                    <property name="TileHeight">16</property>
+                  </widget>
+                  <packing>
+                    <property name="Position">1</property>
+                    <property name="AutoSize">True</property>
+                    <property name="Expand">False</property>
+                    <property name="Fill">False</property>
+                  </packing>
+                </child>
+              </widget>
+              <packing>
+                <property name="Position">0</property>
+                <property name="AutoSize">True</property>
+                <property name="Expand">False</property>
+                <property name="Fill">False</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="Gtk.VBox" id="vbox3">
+                <property name="MemberName" />
+                <property name="Spacing">6</property>
+                <child>
+                  <widget class="Gtk.SpinButton" id="dungeonSpinButton">
+                    <property name="MemberName" />
+                    <property name="CanFocus">True</property>
+                    <property name="Upper">100</property>
+                    <property name="PageIncrement">10</property>
+                    <property name="StepIncrement">1</property>
+                    <property name="ClimbRate">1</property>
+                    <property name="Numeric">True</property>
+                    <signal name="ValueChanged" handler="OnDungeonSpinButtonValueChanged" />
+                  </widget>
+                  <packing>
+                    <property name="Position">0</property>
+                    <property name="AutoSize">True</property>
+                    <property name="Expand">False</property>
+                    <property name="Fill">False</property>
+                  </packing>
+                </child>
+                <child>
+                  <widget class="LynnaLab.Minimap" id="minimap">
+                    <property name="MemberName" />
+                    <property name="WidthRequest">240</property>
+                    <property name="HeightRequest">176</property>
+                    <property name="SelectedIndex">0</property>
+                    <property name="Height">8</property>
+                    <property name="Width">8</property>
+                    <property name="TileWidth">30</property>
+                    <property name="TileHeight">22</property>
+                  </widget>
+                  <packing>
+                    <property name="Position">1</property>
+                    <property name="AutoSize">True</property>
+                    <property name="Expand">False</property>
+                    <property name="Fill">False</property>
+                  </packing>
+                </child>
+              </widget>
+              <packing>
+                <property name="Position">1</property>
+                <property name="AutoSize">True</property>
+                <property name="Expand">False</property>
+                <property name="Fill">False</property>
+              </packing>
+            </child>
           </widget>
           <packing>
             <property name="Position">1</property>
@@ -72,17 +171,84 @@
             <property name="Fill">False</property>
           </packing>
         </child>
+      </widget>
+    </child>
+  </widget>
+  <widget class="Gtk.Dialog" id="LynnaLab.YesNoCancelDialog" design-size="400 300">
+    <property name="MemberName" />
+    <property name="WindowPosition">CenterOnParent</property>
+    <property name="Buttons">3</property>
+    <property name="HelpButton">False</property>
+    <child internal-child="VBox">
+      <widget class="Gtk.VBox" id="dialog1_VBox">
+        <property name="MemberName" />
+        <property name="BorderWidth">2</property>
         <child>
-          <widget class="LynnaLab.RoomEditor" id="roomeditor1">
+          <widget class="Gtk.Alignment" id="alignment1">
             <property name="MemberName" />
-            <property name="Height">15</property>
-            <property name="Width">10</property>
-            <property name="TileWidth">16</property>
-            <property name="TileHeight">16</property>
+            <child>
+              <placeholder />
+            </child>
+          </widget>
+          <packing>
+            <property name="Position">0</property>
+            <property name="AutoSize">True</property>
+          </packing>
+        </child>
+      </widget>
+    </child>
+    <child internal-child="ActionArea">
+      <widget class="Gtk.HButtonBox" id="dialog1_ActionArea">
+        <property name="MemberName" />
+        <property name="Spacing">10</property>
+        <property name="BorderWidth">5</property>
+        <property name="Size">3</property>
+        <property name="LayoutStyle">End</property>
+        <child>
+          <widget class="Gtk.Button" id="buttonCancel">
+            <property name="MemberName" />
+            <property name="CanDefault">True</property>
+            <property name="CanFocus">True</property>
+            <property name="UseStock">True</property>
+            <property name="Type">StockItem</property>
+            <property name="StockId">gtk-cancel</property>
+            <property name="ResponseId">-6</property>
+            <property name="label">gtk-cancel</property>
+          </widget>
+          <packing>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Button" id="button12">
+            <property name="MemberName" />
+            <property name="CanFocus">True</property>
+            <property name="UseStock">True</property>
+            <property name="Type">StockItem</property>
+            <property name="StockId">gtk-no</property>
+            <property name="ResponseId">-9</property>
+            <property name="label">gtk-no</property>
+          </widget>
+          <packing>
+            <property name="Position">1</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Button" id="buttonOk">
+            <property name="MemberName" />
+            <property name="CanDefault">True</property>
+            <property name="CanFocus">True</property>
+            <property name="UseStock">True</property>
+            <property name="Type">StockItem</property>
+            <property name="StockId">gtk-yes</property>
+            <property name="ResponseId">-8</property>
+            <property name="label">gtk-yes</property>
           </widget>
           <packing>
             <property name="Position">2</property>
-            <property name="AutoSize">True</property>
             <property name="Expand">False</property>
             <property name="Fill">False</property>
           </packing>

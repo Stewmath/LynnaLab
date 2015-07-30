@@ -27,7 +27,7 @@ namespace LynnaLab
             return this.GetType().Name + "_" + identifier;
         }
 
-        public abstract void Save();
+        public virtual void Save() {}
     }
 
     public abstract class ProjectIndexedDataType : ProjectDataType {

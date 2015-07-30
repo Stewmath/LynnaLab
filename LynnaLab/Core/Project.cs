@@ -12,8 +12,6 @@ namespace LynnaLab
 		string configDirectory;
 		StreamWriter logWriter;
 
-		AsmFileParser gfxHeaderFile;
-
 		// Maps label to file which contains it
 		Dictionary<string,FileParser> labelDictionary = new Dictionary<string,FileParser>();
 		// List of opened binary files
@@ -25,7 +23,7 @@ namespace LynnaLab
         Dictionary<string,ProjectDataType> dataStructDictionary = new Dictionary<string,ProjectDataType>();
 
 		public AsmFileParser GfxHeaderFile {
-			get { return gfxHeaderFile; }
+			get { return GetFileWithLabel("gfxHEaderGroupTable") as AsmFileParser; }
 		}
 		public string BaseDirectory {
 			get { return baseDirectory; }
@@ -48,13 +46,13 @@ namespace LynnaLab
 					new AsmFileParser(this, filename);
 				}
 			}
-			gfxHeaderFile = new AsmFileParser(this, "data/gfxHeaders.s");
-			new AsmFileParser(this, "data/areas.s");
-            new AsmFileParser(this, "data/paletteData.s");
-            new AsmFileParser(this, "data/paletteHeaders.s");
-            new AsmFileParser(this, "data/tilesetMappings.s");
-            new AsmFileParser(this, "data/tilesetCollisions.s");
-            new AsmFileParser(this, "data/tilesetHeaders.s");
+			// Parse everything in data/
+			foreach (string f in Directory.EnumerateFiles(baseDirectory + "data/")) {
+				if (f.Substring(f.LastIndexOf('.')) == ".s") {
+					string filename = "data/" + f.Substring(f.LastIndexOf('/') + 1);
+					new AsmFileParser(this, filename);
+				}
+			}
 		}
 
         public void Save() {

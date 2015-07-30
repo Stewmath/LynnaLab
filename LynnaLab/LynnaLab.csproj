@@ -73,6 +73,8 @@
     <Compile Include="Core\Room.cs" />
     <Compile Include="Core\ProjectDataType.cs" />
     <Compile Include="UI\Minimap.cs" />
+    <Compile Include="Core\Dungeon.cs" />
+    <Compile Include="gtk-gui\LynnaLab.YesNoCancelDialog.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
