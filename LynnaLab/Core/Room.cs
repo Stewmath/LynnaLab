@@ -31,8 +31,14 @@ namespace LynnaLab
 
         FileStream TileDataFile {
             get {
+                string label = "room" + Index.ToString("X4").ToLower();
+                FileParser parserFile = Project.GetFileWithLabel(label);
+                Data data = parserFile.GetData(label);
+                if (data.Command != "m_roomlayoutdata") {
+                    throw new Exception("Expected label \"" + label + "\" to be followed by the m_RoomLayoutData macro.");
+                }
+                string roomString = data.Values[0] + ".bin";
                 FileStream dataFile;
-                string roomString = "room" + Index.ToString("X4").ToLower() + ".bin";
                 try {
                     dataFile = Project.GetBinaryFile("rooms/small/" + roomString);
                 }

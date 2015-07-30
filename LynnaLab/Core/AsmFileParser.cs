@@ -130,6 +130,18 @@ namespace LynnaLab
 								AddData(d);
 								break;
 							}
+                        case "m_roomlayoutdata":
+							if (tokens.Length != 2) {
+								project.WriteLog(warningString);
+								project.WriteLogLine("Expected " + tokens[0] + " to take 1 parameter");
+								break;
+							}
+							{
+                                AddLabel(new Label(tokens[1], dataList.Count));
+								Data d = new Data(project, tokens[0].ToLower(), standardValues, -1);
+								AddData(d);
+								break;
+							}
 
 						default:
 							if (tokens[0][tokens[0].Length - 1] == ':') {
