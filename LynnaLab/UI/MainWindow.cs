@@ -13,7 +13,7 @@ public partial class MainWindow: Gtk.Window
 
         roomeditor1.SetClient(areaviewer1);
         minimap.TileSelectedEvent += delegate(object sender) {
-            Room room = minimap.Dungeon.GetRoom(0, minimap.SelectedX, minimap.SelectedY);
+            Room room = minimap.Dungeon.GetRoom(minimap.Floor, minimap.SelectedX, minimap.SelectedY);
             SetRoom(room);
         };
 
@@ -57,15 +57,22 @@ public partial class MainWindow: Gtk.Window
             }
     */
 
-            dungeonSpinButton.Value = 0;
-            minimap.Dungeon = Project.GetDataType<Dungeon>(0);
-            SetRoom(minimap.Dungeon.GetRoom(0,0,0));
+            SetDungeon(Project.GetDataType<Dungeon>(0));
         }
     }
 
     void SetRoom(Room room) {
         roomeditor1.SetRoom(room);
         areaviewer1.SetArea(room.Area);
+    }
+
+    void SetDungeon(Dungeon dungeon) {
+        dungeonSpinButton.Value = dungeon.Index;
+        floorSpinButton.Value = 0;
+        floorSpinButton.Adjustment = new Adjustment(0, 0, dungeon.NumFloors-1, 1, 0, 0);
+        floorSpinButton.MaxLength = dungeon.NumFloors;
+        minimap.Dungeon = dungeon;
+        SetRoom(minimap.Dungeon.GetRoom(minimap.Floor, minimap.SelectedX, minimap.SelectedY));
     }
 
     void Quit() {
@@ -126,7 +133,13 @@ public partial class MainWindow: Gtk.Window
     protected void OnDungeonSpinButtonValueChanged(object sender, EventArgs e)
     {
         SpinButton spinner = sender as SpinButton;
-        minimap.Dungeon = Project.GetDataType<Dungeon>(spinner.ValueAsInt);
-        SetRoom(minimap.Dungeon.GetRoom(0, minimap.SelectedX, minimap.SelectedY));
+        SetDungeon(Project.GetDataType<Dungeon>(spinner.ValueAsInt));
+    }
+
+    protected void OnFloorSpinButtonValueChanged(object sender, EventArgs e)
+    {
+        SpinButton spinner = sender as SpinButton;
+        minimap.Floor = spinner.ValueAsInt;
+        SetRoom(minimap.Dungeon.GetRoom(minimap.Floor, minimap.SelectedX, minimap.SelectedY));
     }
 }

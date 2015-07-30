@@ -23,17 +23,30 @@ namespace LynnaLab
             }
         }
 
+        public int Floor
+        {
+            get {
+                return floor;
+            }
+            set {
+                floor = value;
+                QueueDraw();
+            }
+        }
+
+        int floor;
+
         protected override Bitmap Image {
             get {
                 if (dungeon == null)
                     return null;
-                double scale = 1.0/8;
+                const double scale = 1.0/8;
                 Bitmap image = new Bitmap((int)(roomWidth*16*8*scale), (int)(roomHeight*16*8*scale));
                 Graphics g = Graphics.FromImage(image);
 
                 for (int x=0; x<8; x++) {
                     for (int y=0; y<8; y++) {
-                        Room room = Dungeon.GetRoom(0, x, y);
+                        Room room = Dungeon.GetRoom(Floor, x, y);
                         Bitmap img = room.GetImage();
                         g.DrawImage(img, (int)(x*roomWidth*16*scale), (int)(y*roomHeight*16*scale),
                                 (int)(roomWidth*16*scale), (int)(roomHeight*16*scale));
@@ -78,4 +91,3 @@ namespace LynnaLab
         }
     }
 }
-

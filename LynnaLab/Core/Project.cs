@@ -59,6 +59,9 @@ namespace LynnaLab
             foreach (ProjectDataType data in dataStructDictionary.Values) {
                 data.Save();
             }
+            foreach (FileStream file in binaryFileDictionary.Values) {
+                file.Flush();
+            }
         }
 
 		public void Close() {
