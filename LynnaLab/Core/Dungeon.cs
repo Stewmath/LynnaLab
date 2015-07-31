@@ -35,8 +35,7 @@ namespace LynnaLab
 
         public Room GetRoom(int floor, int x, int y) {
             int i = FirstLayoutIndex + floor;
-            FileStream file = Project.GetBinaryFile("dungeonLayouts/layout" + i.ToString("X2").ToLower() + ".bin");
-            byte[] data = new byte[0x40];
+            Stream file = Project.GetBinaryFile("dungeonLayouts/layout" + i.ToString("X2").ToLower() + ".bin");
             file.Position = y*8+x;
             int roomIndex = file.ReadByte();
             int group = GetDataIndex(0)-0xc9+4;

@@ -6,12 +6,12 @@ namespace LynnaLab {
     // Data macro "m_TilesetHeader"
 	public class TilesetHeaderData : Data {
 
-        FileStream referencedData;
+        Stream referencedData;
 
         public int DictionaryIndex {
             get { return project.EvalToInt(Values[0]); }
         }
-        public FileStream ReferencedData {
+        public Stream ReferencedData {
             get {
                 return referencedData;
             }
@@ -32,7 +32,7 @@ namespace LynnaLab {
                 try {
                     referencedData = project.GetBinaryFile("tilesets/" + Values[1] + ".bin");
                 }
-                catch (FileNotFoundException e) {}
+                catch (FileNotFoundException) {}
 		}
 
 		public bool ShouldHaveNext() {

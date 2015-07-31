@@ -23,7 +23,7 @@ namespace LynnaLab {
                 if (headerData == null)
                     throw new Exception("Expected tileset header group " + Index.ToString("X") + " to reference tileset header data (m_TilesetHeader)");
 
-                FileStream file = headerData.ReferencedData;
+                Stream file = headerData.ReferencedData;
                 file.Position = 0;
                 if (headerData.DestAddress == 0xdc00) {
                     // Mappings

@@ -59,19 +59,23 @@ namespace LynnaLab
         }
 
         public void SetDungeon(Dungeon d) {
-            worldGroup = -1;
-            dungeon = d;
-            roomWidth = 15;
-            roomHeight = 11;
-            GenerateImage();
+            if (dungeon != d) {
+                worldGroup = -1;
+                dungeon = d;
+                roomWidth = 15;
+                roomHeight = 11;
+                GenerateImage();
+            }
         }
 
         public void SetWorld(int group) {
-            worldGroup = group;
-            dungeon = null;
-            roomWidth = 10;
-            roomHeight = 8;
-            GenerateImage();
+            if (worldGroup != group) {
+                worldGroup = group;
+                dungeon = null;
+                roomWidth = 10;
+                roomHeight = 8;
+                GenerateImage();
+            }
         }
 
         public Room GetRoom(int x, int y) {
@@ -87,42 +91,68 @@ namespace LynnaLab
         }
 
         void GenerateImage() {
-            System.Drawing.Drawing2D.InterpolationMode interpolationMode =
-                System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear;
-
             const double scale = 1.0/8;
             if (dungeon != null) {
                 _image = new Bitmap((int)(roomWidth*16*8*scale), (int)(roomHeight*16*8*scale));
-                Graphics g = Graphics.FromImage(_image);
-                g.InterpolationMode = interpolationMode;
-
-                for (int x=0; x<8; x++) {
-                    for (int y=0; y<8; y++) {
-                        Room room = GetRoom(x, y);
-                        Bitmap img = room.GetImage();
-                        g.DrawImage(img, (int)(x*roomWidth*16*scale), (int)(y*roomHeight*16*scale),
-                                (int)(roomWidth*16*scale), (int)(roomHeight*16*scale));
-                    }
-                }
-                g.Dispose();
             }
             else if (worldGroup != -1) {
                 _image = new Bitmap((int)(roomWidth*16*16*scale), (int)(roomHeight*16*16*scale));
-                Graphics g = Graphics.FromImage(_image);
-                g.InterpolationMode = interpolationMode;
 
                 for (int x=0; x<16; x++) {
                     for (int y=0; y<16; y++) {
-                        Room room = GetRoom(x, y);
-                        Bitmap img = room.GetImage();
-                        g.DrawImage(img, (int)(x*roomWidth*16*scale), (int)(y*roomHeight*16*scale),
-                                (int)(roomWidth*16*scale), (int)(roomHeight*16*scale));
                     }
                 }
-                g.Dispose();
             }
             else
                 _image = null;
+
+            if (_image != null) {
+                idleX = 0;
+                idleY = 0;
+                GLib.IdleHandler handler = new GLib.IdleHandler(OnIdleGenerateImage);
+                GLib.Idle.Remove(handler);
+                GLib.Idle.Add(handler);
+            }
+        }
+
+        int idleX, idleY;
+        bool OnIdleGenerateImage() {
+            //Console.WriteLine("DRAW");
+
+            int x = idleX;
+            int y = idleY;
+
+            const System.Drawing.Drawing2D.InterpolationMode interpolationMode =
+                System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear;
+            const double scale = 1.0/8;
+
+            int width = (int)(roomWidth*16*scale);
+            int height = (int)(roomHeight*16*scale);
+
+            Graphics g = Graphics.FromImage(_image);
+            g.InterpolationMode = interpolationMode;
+
+            Room room = GetRoom(x, y);
+            Bitmap img = room.GetImage();
+            g.DrawImage(img, (int)(x*width), (int)(y*height),
+                    (int)(width), (int)(height));
+
+            g.Dispose();
+
+            this.QueueDrawArea(x*width, y*height, width, height);
+
+            idleX++;
+            if (idleX >= (worldGroup != -1 ? 16 : 8)) {
+                idleY++;
+                idleX = 0;
+                if (idleY >= (worldGroup != -1 ? 16 : 8))
+                    return false;
+            }
+            return true;
+        }
+
+        void FinalizeImage() {
+            Console.WriteLine("FINALIZE");
             QueueDraw();
         }
 

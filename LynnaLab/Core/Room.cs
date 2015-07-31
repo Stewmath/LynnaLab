@@ -29,7 +29,7 @@ namespace LynnaLab
             get { return area; }
         }
 
-        FileStream TileDataFile {
+        MemoryFileStream TileDataFile {
             get {
                 int layoutGroup = area.LayoutGroup;
                 string label = "room" + ((layoutGroup<<8)+(Index&0xff)).ToString("X4").ToLower();
@@ -39,15 +39,15 @@ namespace LynnaLab
                     throw new Exception("Expected label \"" + label + "\" to be followed by the m_RoomLayoutData macro.");
                 }
                 string roomString = data.Values[0] + ".bin";
-                FileStream dataFile;
+                MemoryFileStream dataFile;
                 try {
                     dataFile = Project.GetBinaryFile("rooms/small/" + roomString);
                 }
-                catch (FileNotFoundException ex) {
+                catch (FileNotFoundException) {
                     try {
                         dataFile = Project.GetBinaryFile("rooms/large/" + roomString);
                     }
-                    catch (FileNotFoundException ex2) {
+                    catch (FileNotFoundException) {
                         throw new FileNotFoundException("Couldn't find \"" + roomString + "\" in \"rooms/small\" or \"rooms/large\".");
                     }
                 }
@@ -57,14 +57,14 @@ namespace LynnaLab
 
         public Room(Project p, int i) : base(p,i) {
             int areaID = 0;
-            FileStream groupAreasFile = Project.GetBinaryFile("rooms/group" + (Index>>8) + "Areas.bin");
+            Stream groupAreasFile = Project.GetBinaryFile("rooms/group" + (Index>>8) + "Areas.bin");
             groupAreasFile.Position = Index&0xff;
             areaID = groupAreasFile.ReadByte() & 0x7f;
 
             area = Project.GetDataType<Area>(areaID);
 
 
-            FileStream dataFile = TileDataFile;
+            MemoryFileStream dataFile = TileDataFile;
 
             if (dataFile.Length == 80) { // Small map
                 width = fileWidth = 10;
@@ -127,7 +127,7 @@ namespace LynnaLab
 
         public override void Save() {
             if (Modified) {
-                FileStream file = TileDataFile;
+                Stream file = TileDataFile;
                 file.Position = 0;
                 for (int y=0; y<Height; y++) {
                     for (int x=0; x<Width; x++) {

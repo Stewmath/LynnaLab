@@ -125,7 +125,7 @@ namespace LynnaLab
 								break;
 							}
 							{
-                                FileStream file = project.GetBinaryFile("tilesets/" + tokens[1] + ".bin");
+                                Stream file = project.GetBinaryFile("tilesets/" + tokens[1] + ".bin");
 								Data d = new Data(project, tokens[0].ToLower(), standardValues, (Int32)file.Length);
 								AddData(d);
 								break;

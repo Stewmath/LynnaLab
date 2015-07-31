@@ -162,7 +162,9 @@ public partial class MainWindow: Gtk.Window
     protected void OnWorldSpinButtonValueChanged(object sender, EventArgs e)
     {
         SpinButton spinner = sender as SpinButton;
+        spinner.Hide();
         SetWorld(spinner.ValueAsInt);
+        spinner.Show();
     }
 
     protected void OnNotebook2SwitchPage(object o, SwitchPageArgs args)

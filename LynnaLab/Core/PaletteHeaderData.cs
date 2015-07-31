@@ -38,7 +38,7 @@ namespace LynnaLab {
                 try {
                     dest = project.EvalToInt(values[2]);
                 }
-                catch(FormatException e) {
+                catch(FormatException) {
                     dest = -1;
                 }
 

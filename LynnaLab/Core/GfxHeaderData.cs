@@ -10,7 +10,7 @@ namespace LynnaLab
 			"gfx_compressible/"
 		};
 
-		FileStream gfxFile;
+		Stream gfxFile;
 
 		public int DestAddr {
 			get { return project.EvalToInt(Values[1]) & 0xfff0; }
@@ -18,7 +18,7 @@ namespace LynnaLab
 		public int DestBank {
 			get { return project.EvalToInt(Values[1]) & 0x000f; }
 		}
-		public FileStream GfxFile { get { return gfxFile; } }
+		public Stream GfxFile { get { return gfxFile; } }
 
 		public GfxHeaderData(Project p, string command, IList<string> values) 
 			: base(p, command, values, 6) {

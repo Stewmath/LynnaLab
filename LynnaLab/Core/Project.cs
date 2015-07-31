@@ -15,7 +15,7 @@ namespace LynnaLab
 		// Maps label to file which contains it
 		Dictionary<string,FileParser> labelDictionary = new Dictionary<string,FileParser>();
 		// List of opened binary files
-		Dictionary<string,FileStream> binaryFileDictionary = new Dictionary<string,FileStream>();
+		Dictionary<string,MemoryFileStream> binaryFileDictionary = new Dictionary<string,MemoryFileStream>();
 		// Dictionary of .DEFINE's
 		Dictionary<string,string> definesDictionary = new Dictionary<string,string>();
 
@@ -56,13 +56,14 @@ namespace LynnaLab
             foreach (ProjectDataType data in dataStructDictionary.Values) {
                 data.Save();
             }
-            foreach (FileStream file in binaryFileDictionary.Values) {
+            foreach (MemoryFileStream file in binaryFileDictionary.Values) {
                 file.Flush();
             }
         }
 
 		public void Close() {
-            foreach (FileStream file in binaryFileDictionary.Values) {
+            foreach (MemoryFileStream file in binaryFileDictionary.Values) {
+                file.Flush();
                 file.Close();
             }
 			if (logWriter != null)
@@ -101,7 +102,7 @@ namespace LynnaLab
 		public FileParser GetFileWithLabel(string label) {
             try {
                 return labelDictionary[label];
-            } catch(KeyNotFoundException e) {
+            } catch(KeyNotFoundException) {
                 throw new KeyNotFoundException("Label \"" + label + "\" was needed but could not be located!");
             }
 		}
@@ -188,11 +189,11 @@ namespace LynnaLab
 				return Convert.ToInt32(val);
 		}
 
-		public FileStream GetBinaryFile(string filename) {
+		public MemoryFileStream GetBinaryFile(string filename) {
 			filename = baseDirectory + filename;
-			FileStream stream = null;
+			MemoryFileStream stream = null;
 			if (!binaryFileDictionary.TryGetValue(filename, out stream)) {
-				stream = new FileStream(filename, FileMode.Open);
+				stream = new MemoryFileStream(filename);
 				binaryFileDictionary[filename] = stream;
 			}
 			return stream;
