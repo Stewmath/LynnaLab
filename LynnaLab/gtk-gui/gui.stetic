@@ -8,7 +8,7 @@
     <widget-library name="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <widget-library name="../bin/Debug/LynnaLab.exe" internal="true" />
   </import>
-  <widget class="Gtk.Window" id="MainWindow" design-size="592 546">
+  <widget class="Gtk.Window" id="MainWindow" design-size="658 546">
     <action-group name="Default">
       <action id="FileAction">
         <property name="Type">Action</property>
@@ -69,19 +69,58 @@
             <property name="MemberName" />
             <property name="Spacing">6</property>
             <child>
-              <widget class="Gtk.VBox" id="vbox2">
+              <widget class="Gtk.HBox" id="hbox1">
                 <property name="MemberName" />
                 <property name="Spacing">6</property>
                 <child>
-                  <widget class="LynnaLab.AreaViewer" id="areaviewer1">
+                  <widget class="Gtk.Frame" id="frame1">
                     <property name="MemberName" />
-                    <property name="WidthRequest">256</property>
-                    <property name="HeightRequest">256</property>
-                    <property name="SelectedIndex">0</property>
-                    <property name="Height">16</property>
-                    <property name="Width">16</property>
-                    <property name="TileWidth">16</property>
-                    <property name="TileHeight">16</property>
+                    <property name="ShadowType">None</property>
+                    <child>
+                      <widget class="Gtk.Alignment" id="GtkAlignment">
+                        <property name="MemberName" />
+                        <property name="Xalign">0</property>
+                        <property name="Yalign">0</property>
+                        <property name="LeftPadding">12</property>
+                        <child>
+                          <widget class="Gtk.Table" id="table3">
+                            <property name="MemberName" />
+                            <property name="NRows">3</property>
+                            <property name="NColumns">2</property>
+                            <property name="RowSpacing">6</property>
+                            <property name="ColumnSpacing">6</property>
+                            <child>
+                              <placeholder />
+                            </child>
+                            <child>
+                              <placeholder />
+                            </child>
+                            <child>
+                              <placeholder />
+                            </child>
+                            <child>
+                              <placeholder />
+                            </child>
+                            <child>
+                              <placeholder />
+                            </child>
+                            <child>
+                              <placeholder />
+                            </child>
+                          </widget>
+                        </child>
+                      </widget>
+                    </child>
+                    <child>
+                      <widget class="Gtk.Label" id="areaLabel">
+                        <property name="MemberName" />
+                        <property name="LabelProp" translatable="yes">Area</property>
+                        <property name="UseMarkup">True</property>
+                      </widget>
+                      <packing>
+                        <property name="type">label_item</property>
+                      </packing>
+                    </child>
                   </widget>
                   <packing>
                     <property name="Position">0</property>
@@ -91,14 +130,44 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="LynnaLab.RoomEditor" id="roomeditor1">
+                  <widget class="Gtk.VBox" id="vbox2">
                     <property name="MemberName" />
-                    <property name="WidthRequest">240</property>
-                    <property name="HeightRequest">224</property>
-                    <property name="Height">14</property>
-                    <property name="Width">15</property>
-                    <property name="TileWidth">16</property>
-                    <property name="TileHeight">16</property>
+                    <property name="Spacing">6</property>
+                    <child>
+                      <widget class="LynnaLab.AreaViewer" id="areaviewer1">
+                        <property name="MemberName" />
+                        <property name="WidthRequest">256</property>
+                        <property name="HeightRequest">256</property>
+                        <property name="SelectedIndex">0</property>
+                        <property name="Height">16</property>
+                        <property name="Width">16</property>
+                        <property name="TileWidth">16</property>
+                        <property name="TileHeight">16</property>
+                      </widget>
+                      <packing>
+                        <property name="Position">0</property>
+                        <property name="AutoSize">True</property>
+                        <property name="Expand">False</property>
+                        <property name="Fill">False</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <widget class="LynnaLab.RoomEditor" id="roomeditor1">
+                        <property name="MemberName" />
+                        <property name="WidthRequest">240</property>
+                        <property name="HeightRequest">224</property>
+                        <property name="Height">14</property>
+                        <property name="Width">15</property>
+                        <property name="TileWidth">16</property>
+                        <property name="TileHeight">16</property>
+                      </widget>
+                      <packing>
+                        <property name="Position">1</property>
+                        <property name="AutoSize">True</property>
+                        <property name="Expand">False</property>
+                        <property name="Fill">False</property>
+                      </packing>
+                    </child>
                   </widget>
                   <packing>
                     <property name="Position">1</property>
@@ -155,6 +224,7 @@
                             <property name="CanFocus">True</property>
                             <property name="Upper">100</property>
                             <property name="PageIncrement">10</property>
+                            <property name="StepIncrement">1</property>
                             <property name="ClimbRate">1</property>
                             <property name="Numeric">True</property>
                             <signal name="ValueChanged" handler="OnWorldSpinButtonValueChanged" />

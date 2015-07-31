@@ -73,6 +73,7 @@ public partial class MainWindow: Gtk.Window
     void SetRoom(Room room) {
         roomeditor1.SetRoom(room);
         areaviewer1.SetArea(room.Area);
+        areaLabel.Text = "Area 0x" + room.Area.Index.ToString("X2");
     }
 
     void SetDungeon(Dungeon dungeon) {

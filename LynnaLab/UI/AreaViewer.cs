@@ -52,10 +52,9 @@ namespace LynnaLab
             }
 
             if (nextHoveringIndex != hoveringIndex) {
-                this.QueueDraw();
-                //this.QueueDrawArea(HoveringX*TileWidth, HoveringY*TileHeight, TileWidth, TileHeight);
+                this.QueueDrawArea(HoveringX*TileWidth, HoveringY*TileHeight, TileWidth, TileHeight);
                 hoveringIndex = nextHoveringIndex;
-                //this.QueueDrawArea(HoveringX*TileWidth, HoveringY*TileHeight, TileWidth, TileHeight);
+                this.QueueDrawArea(HoveringX*TileWidth, HoveringY*TileHeight, TileWidth, TileHeight);
             }
         }
 
@@ -91,8 +90,9 @@ namespace LynnaLab
             get { return selectedIndex; }
             set {
                 if (selectedIndex != value) {
+                    QueueDrawArea(SelectedX*TileWidth, SelectedY*TileHeight, TileWidth, TileHeight);
                     selectedIndex = value;
-                    QueueDraw();
+                    QueueDrawArea(SelectedX*TileWidth, SelectedY*TileHeight, TileWidth, TileHeight);
                 }
                 if (TileSelectedEvent != null)
                     TileSelectedEvent(this);

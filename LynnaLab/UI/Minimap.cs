@@ -117,8 +117,6 @@ namespace LynnaLab
 
         int idleX, idleY;
         bool OnIdleGenerateImage() {
-            //Console.WriteLine("DRAW");
-
             int x = idleX;
             int y = idleY;
 
@@ -149,11 +147,6 @@ namespace LynnaLab
                     return false;
             }
             return true;
-        }
-
-        void FinalizeImage() {
-            Console.WriteLine("FINALIZE");
-            QueueDraw();
         }
 
         protected override bool OnButtonPressEvent(Gdk.EventButton ev)
