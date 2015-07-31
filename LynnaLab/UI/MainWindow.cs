@@ -80,7 +80,7 @@ public partial class MainWindow: Gtk.Window
         floorSpinButton.Value = 0;
         floorSpinButton.Adjustment = new Adjustment(0, 0, dungeon.NumFloors-1, 1, 0, 0);
         dungeonMinimap.SetDungeon(dungeon);
-        SetRoom(dungeonMinimap.Dungeon.GetRoom(dungeonMinimap.Floor, dungeonMinimap.SelectedX, dungeonMinimap.SelectedY));
+        SetRoom(dungeonMinimap.GetRoom());
     }
     void SetDungeon(int index) {
         SetDungeon(Project.GetDataType<Dungeon>(index));
@@ -88,7 +88,7 @@ public partial class MainWindow: Gtk.Window
     void SetWorld(int index) {
         worldSpinButton.Value = index;
         worldMinimap.SetWorld(index);
-        SetRoom(worldMinimap.GetRoom(dungeonMinimap.SelectedX, dungeonMinimap.SelectedY));
+        SetRoom(worldMinimap.GetRoom());
     }
 
     void Quit() {

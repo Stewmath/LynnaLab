@@ -31,48 +31,19 @@ namespace LynnaLab
             }
             set {
                 floor = value;
-                QueueDraw();
+                GenerateImage();
             }
         }
 
         protected override Bitmap Image {
             get {
-                const double scale = 1.0/8;
-                if (dungeon != null) {
-                    Bitmap image = new Bitmap((int)(roomWidth*16*8*scale), (int)(roomHeight*16*8*scale));
-                    Graphics g = Graphics.FromImage(image);
-
-                    for (int x=0; x<8; x++) {
-                        for (int y=0; y<8; y++) {
-                            Room room = GetRoom(x, y);
-                            Bitmap img = room.GetImage();
-                            g.DrawImage(img, (int)(x*roomWidth*16*scale), (int)(y*roomHeight*16*scale),
-                                    (int)(roomWidth*16*scale), (int)(roomHeight*16*scale));
-                        }
-                    }
-                    g.Dispose();
-                    return image;
-                }
-                else if (worldGroup != -1) {
-                    Bitmap image = new Bitmap((int)(roomWidth*16*16*scale), (int)(roomHeight*16*16*scale));
-                    Graphics g = Graphics.FromImage(image);
-
-                    for (int x=0; x<16; x++) {
-                        for (int y=0; y<16; y++) {
-                            Room room = GetRoom(x, y);
-                            Bitmap img = room.GetImage();
-                            g.DrawImage(img, (int)(x*roomWidth*16*scale), (int)(y*roomHeight*16*scale),
-                                    (int)(roomWidth*16*scale), (int)(roomHeight*16*scale));
-                        }
-                    }
-                    g.Dispose();
-                    return image;
-                }
-                else
-                    return null;
+                if (_image == null)
+                    GenerateImage();
+                return _image;
             }
         }
 
+        Bitmap _image;
         Project _project;
         int roomWidth, roomHeight;
 
@@ -92,7 +63,7 @@ namespace LynnaLab
             dungeon = d;
             roomWidth = 15;
             roomHeight = 11;
-            QueueDraw();
+            GenerateImage();
         }
 
         public void SetWorld(int group) {
@@ -100,7 +71,7 @@ namespace LynnaLab
             dungeon = null;
             roomWidth = 10;
             roomHeight = 8;
-            QueueDraw();
+            GenerateImage();
         }
 
         public Room GetRoom(int x, int y) {
@@ -113,6 +84,46 @@ namespace LynnaLab
         }
         public Room GetRoom() {
             return GetRoom(SelectedX, SelectedY);
+        }
+
+        void GenerateImage() {
+            System.Drawing.Drawing2D.InterpolationMode interpolationMode =
+                System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear;
+
+            const double scale = 1.0/8;
+            if (dungeon != null) {
+                _image = new Bitmap((int)(roomWidth*16*8*scale), (int)(roomHeight*16*8*scale));
+                Graphics g = Graphics.FromImage(_image);
+                g.InterpolationMode = interpolationMode;
+
+                for (int x=0; x<8; x++) {
+                    for (int y=0; y<8; y++) {
+                        Room room = GetRoom(x, y);
+                        Bitmap img = room.GetImage();
+                        g.DrawImage(img, (int)(x*roomWidth*16*scale), (int)(y*roomHeight*16*scale),
+                                (int)(roomWidth*16*scale), (int)(roomHeight*16*scale));
+                    }
+                }
+                g.Dispose();
+            }
+            else if (worldGroup != -1) {
+                _image = new Bitmap((int)(roomWidth*16*16*scale), (int)(roomHeight*16*16*scale));
+                Graphics g = Graphics.FromImage(_image);
+                g.InterpolationMode = interpolationMode;
+
+                for (int x=0; x<16; x++) {
+                    for (int y=0; y<16; y++) {
+                        Room room = GetRoom(x, y);
+                        Bitmap img = room.GetImage();
+                        g.DrawImage(img, (int)(x*roomWidth*16*scale), (int)(y*roomHeight*16*scale),
+                                (int)(roomWidth*16*scale), (int)(roomHeight*16*scale));
+                    }
+                }
+                g.Dispose();
+            }
+            else
+                _image = null;
+            QueueDraw();
         }
 
         protected override bool OnButtonPressEvent(Gdk.EventButton ev)
