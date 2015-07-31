@@ -31,7 +31,8 @@ namespace LynnaLab
 
         FileStream TileDataFile {
             get {
-                string label = "room" + Index.ToString("X4").ToLower();
+                int layoutGroup = area.LayoutGroup;
+                string label = "room" + ((layoutGroup<<8)+(Index&0xff)).ToString("X4").ToLower();
                 FileParser parserFile = Project.GetFileWithLabel(label);
                 Data data = parserFile.GetData(label);
                 if (data.Command != "m_roomlayoutdata") {
@@ -55,6 +56,14 @@ namespace LynnaLab
         }
 
         public Room(Project p, int i) : base(p,i) {
+            int areaID = 0;
+            FileStream groupAreasFile = Project.GetBinaryFile("rooms/group" + (Index>>8) + "Areas.bin");
+            groupAreasFile.Position = Index&0xff;
+            areaID = groupAreasFile.ReadByte() & 0x7f;
+
+            area = Project.GetDataType<Area>(areaID);
+
+
             FileStream dataFile = TileDataFile;
 
             if (dataFile.Length == 80) { // Small map
@@ -81,13 +90,6 @@ namespace LynnaLab
             }
             else
                 throw new Exception("Size of file \"" + dataFile.Name + "\" was invalid!");
-
-            int areaID = 0;
-            FileStream groupAreasFile = Project.GetBinaryFile("rooms/group" + (Index>>8) + "Areas.bin");
-            groupAreasFile.Position = Index&0xff;
-            areaID = groupAreasFile.ReadByte() & 0x7f;
-
-            area = Project.GetDataType<Area>(areaID);
         }
 
         public Bitmap GetImage() {

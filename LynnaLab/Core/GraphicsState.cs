@@ -43,17 +43,7 @@ namespace LynnaLab
 
 			bool next = true;
 			while (next) {
-				if ((header.DestAddr & 0xe000) == 0x8000) {
-					int bank = header.DestBank & 1;
-					int dest = header.DestAddr & 0x1fff;
-                    header.GfxFile.Position = 0;
-					header.GfxFile.Read(vramBuffer[bank], dest, 0x2000 - dest);
-				} else if ((header.DestAddr & 0xf000) == 0xd000) {
-					int bank = header.DestBank & 7;
-					int dest = header.DestAddr & 0x0fff;
-                    header.GfxFile.Position = 0;
-					header.GfxFile.Read(wramBuffer[bank], dest, 0x1000 - dest);
-				}
+                AddGfxHeader(header);
 
 				next = false;
 				if (header.ShouldHaveNext()) {
@@ -66,6 +56,20 @@ namespace LynnaLab
 				}
 			}
 		}
+
+        public void AddGfxHeader(GfxHeaderData header) {
+            if ((header.DestAddr & 0xe000) == 0x8000) {
+                int bank = header.DestBank & 1;
+                int dest = header.DestAddr & 0x1fff;
+                header.GfxFile.Position = 0;
+                header.GfxFile.Read(vramBuffer[bank], dest, 0x2000 - dest);
+            } else if ((header.DestAddr & 0xf000) == 0xd000) {
+                int bank = header.DestBank & 7;
+                int dest = header.DestAddr & 0x0fff;
+                header.GfxFile.Position = 0;
+                header.GfxFile.Read(wramBuffer[bank], dest, 0x1000 - dest);
+            }
+        }
 
         public void AddPaletteHeaderGroup(PaletteHeaderGroup group) {
             PaletteHeaderData header = group.FirstPaletteHeader;

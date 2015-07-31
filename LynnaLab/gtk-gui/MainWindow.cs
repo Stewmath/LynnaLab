@@ -25,6 +25,20 @@ public partial class MainWindow
 	
 	private global::LynnaLab.RoomEditor roomeditor1;
 	
+	private global::Gtk.Notebook notebook2;
+	
+	private global::Gtk.VBox vbox4;
+	
+	private global::Gtk.Table table2;
+	
+	private global::Gtk.Label label7;
+	
+	private global::Gtk.SpinButton worldSpinButton;
+	
+	private global::LynnaLab.Minimap worldMinimap;
+	
+	private global::Gtk.Label label5;
+	
 	private global::Gtk.VBox vbox3;
 	
 	private global::Gtk.Table table1;
@@ -37,7 +51,9 @@ public partial class MainWindow
 	
 	private global::Gtk.Label label2;
 	
-	private global::LynnaLab.Minimap minimap;
+	private global::LynnaLab.Minimap dungeonMinimap;
+	
+	private global::Gtk.Label label6;
 
 	protected virtual void Build ()
 	{
@@ -118,6 +134,70 @@ public partial class MainWindow
 		w5.Expand = false;
 		w5.Fill = false;
 		// Container child hbox3.Gtk.Box+BoxChild
+		this.notebook2 = new global::Gtk.Notebook ();
+		this.notebook2.CanFocus = true;
+		this.notebook2.Name = "notebook2";
+		this.notebook2.CurrentPage = 0;
+		// Container child notebook2.Gtk.Notebook+NotebookChild
+		this.vbox4 = new global::Gtk.VBox ();
+		this.vbox4.Name = "vbox4";
+		this.vbox4.Spacing = 6;
+		// Container child vbox4.Gtk.Box+BoxChild
+		this.table2 = new global::Gtk.Table (((uint)(1)), ((uint)(2)), false);
+		this.table2.Name = "table2";
+		this.table2.RowSpacing = ((uint)(6));
+		this.table2.ColumnSpacing = ((uint)(6));
+		// Container child table2.Gtk.Table+TableChild
+		this.label7 = new global::Gtk.Label ();
+		this.label7.Name = "label7";
+		this.label7.Xalign = 1F;
+		this.label7.LabelProp = global::Mono.Unix.Catalog.GetString ("World Index");
+		this.table2.Add (this.label7);
+		global::Gtk.Table.TableChild w6 = ((global::Gtk.Table.TableChild)(this.table2 [this.label7]));
+		w6.XOptions = ((global::Gtk.AttachOptions)(4));
+		w6.YOptions = ((global::Gtk.AttachOptions)(4));
+		// Container child table2.Gtk.Table+TableChild
+		this.worldSpinButton = new global::Gtk.SpinButton (0, 100, 1);
+		this.worldSpinButton.CanFocus = true;
+		this.worldSpinButton.Name = "worldSpinButton";
+		this.worldSpinButton.Adjustment.PageIncrement = 10;
+		this.worldSpinButton.ClimbRate = 1;
+		this.worldSpinButton.Numeric = true;
+		this.table2.Add (this.worldSpinButton);
+		global::Gtk.Table.TableChild w7 = ((global::Gtk.Table.TableChild)(this.table2 [this.worldSpinButton]));
+		w7.LeftAttach = ((uint)(1));
+		w7.RightAttach = ((uint)(2));
+		w7.XOptions = ((global::Gtk.AttachOptions)(4));
+		w7.YOptions = ((global::Gtk.AttachOptions)(4));
+		this.vbox4.Add (this.table2);
+		global::Gtk.Box.BoxChild w8 = ((global::Gtk.Box.BoxChild)(this.vbox4 [this.table2]));
+		w8.Position = 0;
+		w8.Expand = false;
+		w8.Fill = false;
+		// Container child vbox4.Gtk.Box+BoxChild
+		this.worldMinimap = new global::LynnaLab.Minimap ();
+		this.worldMinimap.WidthRequest = 320;
+		this.worldMinimap.HeightRequest = 256;
+		this.worldMinimap.Name = "worldMinimap";
+		this.worldMinimap.Floor = 0;
+		this.worldMinimap.SelectedIndex = 0;
+		this.worldMinimap.Height = 16;
+		this.worldMinimap.Width = 16;
+		this.worldMinimap.TileWidth = 20;
+		this.worldMinimap.TileHeight = 16;
+		this.vbox4.Add (this.worldMinimap);
+		global::Gtk.Box.BoxChild w9 = ((global::Gtk.Box.BoxChild)(this.vbox4 [this.worldMinimap]));
+		w9.Position = 1;
+		w9.Expand = false;
+		w9.Fill = false;
+		this.notebook2.Add (this.vbox4);
+		// Notebook tab
+		this.label5 = new global::Gtk.Label ();
+		this.label5.Name = "label5";
+		this.label5.LabelProp = global::Mono.Unix.Catalog.GetString ("Worlds");
+		this.notebook2.SetTabLabel (this.vbox4, this.label5);
+		this.label5.ShowAll ();
+		// Container child notebook2.Gtk.Notebook+NotebookChild
 		this.vbox3 = new global::Gtk.VBox ();
 		this.vbox3.Name = "vbox3";
 		this.vbox3.Spacing = 6;
@@ -134,11 +214,11 @@ public partial class MainWindow
 		this.dungeonSpinButton.ClimbRate = 1;
 		this.dungeonSpinButton.Numeric = true;
 		this.table1.Add (this.dungeonSpinButton);
-		global::Gtk.Table.TableChild w6 = ((global::Gtk.Table.TableChild)(this.table1 [this.dungeonSpinButton]));
-		w6.LeftAttach = ((uint)(1));
-		w6.RightAttach = ((uint)(2));
-		w6.XOptions = ((global::Gtk.AttachOptions)(4));
-		w6.YOptions = ((global::Gtk.AttachOptions)(4));
+		global::Gtk.Table.TableChild w11 = ((global::Gtk.Table.TableChild)(this.table1 [this.dungeonSpinButton]));
+		w11.LeftAttach = ((uint)(1));
+		w11.RightAttach = ((uint)(2));
+		w11.XOptions = ((global::Gtk.AttachOptions)(4));
+		w11.YOptions = ((global::Gtk.AttachOptions)(4));
 		// Container child table1.Gtk.Table+TableChild
 		this.floorSpinButton = new global::Gtk.SpinButton (0, 100, 1);
 		this.floorSpinButton.CanFocus = true;
@@ -147,75 +227,86 @@ public partial class MainWindow
 		this.floorSpinButton.ClimbRate = 1;
 		this.floorSpinButton.Numeric = true;
 		this.table1.Add (this.floorSpinButton);
-		global::Gtk.Table.TableChild w7 = ((global::Gtk.Table.TableChild)(this.table1 [this.floorSpinButton]));
-		w7.TopAttach = ((uint)(1));
-		w7.BottomAttach = ((uint)(2));
-		w7.LeftAttach = ((uint)(1));
-		w7.RightAttach = ((uint)(2));
-		w7.XOptions = ((global::Gtk.AttachOptions)(4));
-		w7.YOptions = ((global::Gtk.AttachOptions)(4));
+		global::Gtk.Table.TableChild w12 = ((global::Gtk.Table.TableChild)(this.table1 [this.floorSpinButton]));
+		w12.TopAttach = ((uint)(1));
+		w12.BottomAttach = ((uint)(2));
+		w12.LeftAttach = ((uint)(1));
+		w12.RightAttach = ((uint)(2));
+		w12.XOptions = ((global::Gtk.AttachOptions)(4));
+		w12.YOptions = ((global::Gtk.AttachOptions)(4));
 		// Container child table1.Gtk.Table+TableChild
 		this.label1 = new global::Gtk.Label ();
 		this.label1.Name = "label1";
 		this.label1.Xalign = 1F;
 		this.label1.LabelProp = global::Mono.Unix.Catalog.GetString ("Dungeon Index");
 		this.table1.Add (this.label1);
-		global::Gtk.Table.TableChild w8 = ((global::Gtk.Table.TableChild)(this.table1 [this.label1]));
-		w8.XOptions = ((global::Gtk.AttachOptions)(4));
-		w8.YOptions = ((global::Gtk.AttachOptions)(4));
+		global::Gtk.Table.TableChild w13 = ((global::Gtk.Table.TableChild)(this.table1 [this.label1]));
+		w13.XOptions = ((global::Gtk.AttachOptions)(4));
+		w13.YOptions = ((global::Gtk.AttachOptions)(4));
 		// Container child table1.Gtk.Table+TableChild
 		this.label2 = new global::Gtk.Label ();
 		this.label2.Name = "label2";
 		this.label2.Xalign = 1F;
 		this.label2.LabelProp = global::Mono.Unix.Catalog.GetString ("Floor");
 		this.table1.Add (this.label2);
-		global::Gtk.Table.TableChild w9 = ((global::Gtk.Table.TableChild)(this.table1 [this.label2]));
-		w9.TopAttach = ((uint)(1));
-		w9.BottomAttach = ((uint)(2));
-		w9.XOptions = ((global::Gtk.AttachOptions)(4));
-		w9.YOptions = ((global::Gtk.AttachOptions)(4));
+		global::Gtk.Table.TableChild w14 = ((global::Gtk.Table.TableChild)(this.table1 [this.label2]));
+		w14.TopAttach = ((uint)(1));
+		w14.BottomAttach = ((uint)(2));
+		w14.XOptions = ((global::Gtk.AttachOptions)(4));
+		w14.YOptions = ((global::Gtk.AttachOptions)(4));
 		this.vbox3.Add (this.table1);
-		global::Gtk.Box.BoxChild w10 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.table1]));
-		w10.Position = 0;
-		w10.Expand = false;
-		w10.Fill = false;
+		global::Gtk.Box.BoxChild w15 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.table1]));
+		w15.Position = 0;
+		w15.Expand = false;
+		w15.Fill = false;
 		// Container child vbox3.Gtk.Box+BoxChild
-		this.minimap = new global::LynnaLab.Minimap ();
-		this.minimap.WidthRequest = 240;
-		this.minimap.HeightRequest = 176;
-		this.minimap.Name = "minimap";
-		this.minimap.Floor = 0;
-		this.minimap.SelectedIndex = 0;
-		this.minimap.Height = 8;
-		this.minimap.Width = 8;
-		this.minimap.TileWidth = 30;
-		this.minimap.TileHeight = 22;
-		this.vbox3.Add (this.minimap);
-		global::Gtk.Box.BoxChild w11 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.minimap]));
-		w11.Position = 1;
-		w11.Expand = false;
-		w11.Fill = false;
-		this.hbox3.Add (this.vbox3);
-		global::Gtk.Box.BoxChild w12 = ((global::Gtk.Box.BoxChild)(this.hbox3 [this.vbox3]));
-		w12.Position = 1;
-		w12.Expand = false;
-		w12.Fill = false;
+		this.dungeonMinimap = new global::LynnaLab.Minimap ();
+		this.dungeonMinimap.WidthRequest = 240;
+		this.dungeonMinimap.HeightRequest = 176;
+		this.dungeonMinimap.Name = "dungeonMinimap";
+		this.dungeonMinimap.Floor = 0;
+		this.dungeonMinimap.SelectedIndex = 0;
+		this.dungeonMinimap.Height = 8;
+		this.dungeonMinimap.Width = 8;
+		this.dungeonMinimap.TileWidth = 30;
+		this.dungeonMinimap.TileHeight = 22;
+		this.vbox3.Add (this.dungeonMinimap);
+		global::Gtk.Box.BoxChild w16 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.dungeonMinimap]));
+		w16.Position = 1;
+		w16.Expand = false;
+		w16.Fill = false;
+		this.notebook2.Add (this.vbox3);
+		global::Gtk.Notebook.NotebookChild w17 = ((global::Gtk.Notebook.NotebookChild)(this.notebook2 [this.vbox3]));
+		w17.Position = 1;
+		// Notebook tab
+		this.label6 = new global::Gtk.Label ();
+		this.label6.Name = "label6";
+		this.label6.LabelProp = global::Mono.Unix.Catalog.GetString ("Dungeons");
+		this.notebook2.SetTabLabel (this.vbox3, this.label6);
+		this.label6.ShowAll ();
+		this.hbox3.Add (this.notebook2);
+		global::Gtk.Box.BoxChild w18 = ((global::Gtk.Box.BoxChild)(this.hbox3 [this.notebook2]));
+		w18.Position = 1;
+		w18.Expand = false;
+		w18.Fill = false;
 		this.vbox1.Add (this.hbox3);
-		global::Gtk.Box.BoxChild w13 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.hbox3]));
-		w13.Position = 1;
-		w13.Expand = false;
-		w13.Fill = false;
+		global::Gtk.Box.BoxChild w19 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.hbox3]));
+		w19.Position = 1;
+		w19.Expand = false;
+		w19.Fill = false;
 		this.Add (this.vbox1);
 		if ((this.Child != null)) {
 			this.Child.ShowAll ();
 		}
-		this.DefaultWidth = 526;
+		this.DefaultWidth = 592;
 		this.DefaultHeight = 546;
 		this.Show ();
 		this.DeleteEvent += new global::Gtk.DeleteEventHandler (this.OnDeleteEvent);
 		this.OpenAction.Activated += new global::System.EventHandler (this.OnOpenActionActivated);
 		this.QuitAction.Activated += new global::System.EventHandler (this.OnQuitActionActivated);
 		this.SaveAction.Activated += new global::System.EventHandler (this.OnSaveActionActivated);
+		this.notebook2.SwitchPage += new global::Gtk.SwitchPageHandler (this.OnNotebook2SwitchPage);
+		this.worldSpinButton.ValueChanged += new global::System.EventHandler (this.OnWorldSpinButtonValueChanged);
 		this.floorSpinButton.ValueChanged += new global::System.EventHandler (this.OnFloorSpinButtonValueChanged);
 		this.dungeonSpinButton.ValueChanged += new global::System.EventHandler (this.OnDungeonSpinButtonValueChanged);
 	}

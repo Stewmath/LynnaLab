@@ -9,7 +9,7 @@ namespace LynnaLab
 		FileParser areaFile;
 
 		int flags1, flags2;
-		int uniqueGfxHeaderIndex, gfxHeaderGroupIndex;
+		int uniqueGfxHeaderGroupIndex, gfxHeaderGroupIndex;
 		int paletteHeaderGroupIndex;
 		int tilesetHeaderGroupIndex;
 		int layoutGroup;
@@ -21,9 +21,14 @@ namespace LynnaLab
 
 		GraphicsState graphicsState;
 
+        Bitmap[] tileImagesCache = new Bitmap[256];
+
 		public GraphicsState GraphicsState {
 			get { return graphicsState; }
 		}
+        public int LayoutGroup {
+            get { return layoutGroup; }
+        }
 
 		public Area(Project p, int i) : base(p, i) {
 			areaFile = Project.GetFileWithLabel("areaData");
@@ -35,7 +40,7 @@ namespace LynnaLab
 			flags2 = p.EvalToInt(areaData.Values[0]);
 
 			areaData = areaData.Next;
-			uniqueGfxHeaderIndex = p.EvalToInt(areaData.Values[0]);
+			uniqueGfxHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
 
 			areaData = areaData.Next;
 			gfxHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
@@ -64,9 +69,34 @@ namespace LynnaLab
             graphicsState.AddPaletteHeaderGroup(paletteHeaderGroup);
             // Global palettes
             graphicsState.AddPaletteHeaderGroup(globalPaletteHeaderGroup);
+
+            // Unique gfx headers
+            if (uniqueGfxHeaderGroupIndex != 0) {
+                FileParser uniqueGfxHeaderFile = Project.GetFileWithLabel("uniqueGfxHeaderGroupsStart");
+                GfxHeaderData header = uniqueGfxHeaderFile.GetData("uniqueGfxHeaderGroup" + uniqueGfxHeaderGroupIndex.ToString("x2"))
+                    as GfxHeaderData;
+                if (header != null) {
+                    bool next = true;
+                    while (next) {
+                        graphicsState.AddGfxHeader(header);
+                        next = false;
+                        if (header.ShouldHaveNext()) {
+                            GfxHeaderData nextHeader = header.Next as GfxHeaderData;
+                            if (nextHeader != null) {
+                                header = nextHeader;
+                                next = true;
+                            }
+                            // Might wanna print a warning if no next value is found
+                        }
+                    }
+                }
+            }
 		}
 
-        public Bitmap GetTileImage(int Index) {
+        public Bitmap GetTileImage(int index) {
+            if (tileImagesCache[index] != null)
+                return tileImagesCache[index];
+
             Bitmap image = new Bitmap(16,16);
             byte[] mappingsData = tilesetHeaderGroup.GetMappingsData();
 
@@ -74,8 +104,8 @@ namespace LynnaLab
 
             for (int y=0; y<2; y++) {
                 for (int x=0; x<2; x++) {
-                    int tileIndex = mappingsData[Index*8+y*2+x];
-                    int flags = mappingsData[Index*8+y*2+x+4];
+                    int tileIndex = mappingsData[index*8+y*2+x];
+                    int flags = mappingsData[index*8+y*2+x+4];
 
                     int tileOffset = 0x1000 + ((sbyte)tileIndex)*16;
 
@@ -88,6 +118,7 @@ namespace LynnaLab
             }
             g.Dispose();
 
+            tileImagesCache[index] = image;
             return image;
         }
 

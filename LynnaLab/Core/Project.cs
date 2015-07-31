@@ -22,9 +22,6 @@ namespace LynnaLab
         // Data structures which should be linked to a particular project
         Dictionary<string,ProjectDataType> dataStructDictionary = new Dictionary<string,ProjectDataType>();
 
-		public AsmFileParser GfxHeaderFile {
-			get { return GetFileWithLabel("gfxHEaderGroupTable") as AsmFileParser; }
-		}
 		public string BaseDirectory {
 			get { return baseDirectory; }
 		}

@@ -12,10 +12,17 @@ public partial class MainWindow: Gtk.Window
         Build();
 
         roomeditor1.SetClient(areaviewer1);
-        minimap.TileSelectedEvent += delegate(object sender) {
-            Room room = minimap.Dungeon.GetRoom(minimap.Floor, minimap.SelectedX, minimap.SelectedY);
+        dungeonMinimap.TileSelectedEvent += delegate(object sender) {
+            Room room = dungeonMinimap.GetRoom();
             SetRoom(room);
         };
+        worldMinimap.TileSelectedEvent += delegate(object sender) {
+            Room room = worldMinimap.GetRoom();
+            SetRoom(room);
+        };
+
+        worldSpinButton.Adjustment = new Adjustment(0, 0, 3, 1, 0, 0);
+        dungeonSpinButton.Adjustment = new Adjustment(0, 0, 15, 1, 0, 0);
 
         OpenProject("/home/matthew/programs/gb/ages/ages-disasm");
     }
@@ -57,7 +64,9 @@ public partial class MainWindow: Gtk.Window
             }
     */
 
-            SetDungeon(Project.GetDataType<Dungeon>(0));
+            dungeonMinimap.Project = Project;
+            worldMinimap.Project = Project;
+            SetWorld(0);
         }
     }
 
@@ -70,9 +79,16 @@ public partial class MainWindow: Gtk.Window
         dungeonSpinButton.Value = dungeon.Index;
         floorSpinButton.Value = 0;
         floorSpinButton.Adjustment = new Adjustment(0, 0, dungeon.NumFloors-1, 1, 0, 0);
-        floorSpinButton.MaxLength = dungeon.NumFloors;
-        minimap.Dungeon = dungeon;
-        SetRoom(minimap.Dungeon.GetRoom(minimap.Floor, minimap.SelectedX, minimap.SelectedY));
+        dungeonMinimap.SetDungeon(dungeon);
+        SetRoom(dungeonMinimap.Dungeon.GetRoom(dungeonMinimap.Floor, dungeonMinimap.SelectedX, dungeonMinimap.SelectedY));
+    }
+    void SetDungeon(int index) {
+        SetDungeon(Project.GetDataType<Dungeon>(index));
+    }
+    void SetWorld(int index) {
+        worldSpinButton.Value = index;
+        worldMinimap.SetWorld(index);
+        SetRoom(worldMinimap.GetRoom(dungeonMinimap.SelectedX, dungeonMinimap.SelectedY));
     }
 
     void Quit() {
@@ -139,7 +155,23 @@ public partial class MainWindow: Gtk.Window
     protected void OnFloorSpinButtonValueChanged(object sender, EventArgs e)
     {
         SpinButton spinner = sender as SpinButton;
-        minimap.Floor = spinner.ValueAsInt;
-        SetRoom(minimap.Dungeon.GetRoom(minimap.Floor, minimap.SelectedX, minimap.SelectedY));
+        dungeonMinimap.Floor = spinner.ValueAsInt;
+        SetRoom(dungeonMinimap.Dungeon.GetRoom(dungeonMinimap.Floor, dungeonMinimap.SelectedX, dungeonMinimap.SelectedY));
+    }
+
+    protected void OnWorldSpinButtonValueChanged(object sender, EventArgs e)
+    {
+        SpinButton spinner = sender as SpinButton;
+        SetWorld(spinner.ValueAsInt);
+    }
+
+    protected void OnNotebook2SwitchPage(object o, SwitchPageArgs args)
+    {
+        Console.WriteLine("YOYO");
+        Notebook nb = o as Notebook;
+        if (nb.Page == 0)
+            SetWorld(worldSpinButton.ValueAsInt);
+        else if (nb.Page == 1)
+            SetDungeon(dungeonSpinButton.ValueAsInt);
     }
 }
