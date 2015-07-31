@@ -29,6 +29,7 @@ public class MemoryFileStream : Stream {
     long _length;
     long _position;
     byte[] data;
+    bool modified = false;
 
     string filename;
 
@@ -40,22 +41,29 @@ public class MemoryFileStream : Stream {
 
         data = new byte[Length];
         _position = 0;
+        modified = false;
         input.Read(data, 0, (int)Length);
         input.Close();
     }
 
     public override void Flush() {
-        FileStream output = new FileStream(filename, FileMode.Open);
-        output.Write(data, 0, (int)Length);
-        output.Close();
+        if (modified) {
+            FileStream output = new FileStream(filename, FileMode.Open);
+            output.Write(data, 0, (int)Length);
+            output.Close();
+            modified = false;
+        }
     }
 
     public override void SetLength(long len) {
-        byte[] newData = new byte[len];
-        Array.Copy(data, newData, Math.Min(len, _length));
-        data = newData;
+        if (Length != len) {
+            modified = true;
+            byte[] newData = new byte[len];
+            Array.Copy(data, newData, Math.Min(len, _length));
+            data = newData;
 
-        _length = len;
+            _length = len;
+        }
     }
 
     public override long Seek(long dest, SeekOrigin origin) {
@@ -88,6 +96,7 @@ public class MemoryFileStream : Stream {
         Position = Position + count;
         if (Position > Length)
             Position = Length;
+        modified = true;
     }
 
     public override int ReadByte() {
@@ -98,5 +107,6 @@ public class MemoryFileStream : Stream {
     public override void WriteByte(byte value) {
         data[Position] = value;
         Position++;
+        modified = true;
     }
 }
