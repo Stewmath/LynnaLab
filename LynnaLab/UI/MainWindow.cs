@@ -167,7 +167,6 @@ public partial class MainWindow: Gtk.Window
 
     protected void OnNotebook2SwitchPage(object o, SwitchPageArgs args)
     {
-        Console.WriteLine("YOYO");
         Notebook nb = o as Notebook;
         if (nb.Page == 0)
             SetWorld(worldSpinButton.ValueAsInt);
