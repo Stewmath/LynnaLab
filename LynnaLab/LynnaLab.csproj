@@ -74,6 +74,9 @@
     <Compile Include="UI\Minimap.cs" />
     <Compile Include="Core\Dungeon.cs" />
     <Compile Include="Core\MemoryFileStream.cs" />
+    <Compile Include="Core\Animation.cs" />
+    <Compile Include="Core\AnimationGroup.cs" />
+    <Compile Include="Core\SubStream.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

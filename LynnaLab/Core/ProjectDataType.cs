@@ -8,19 +8,22 @@ namespace LynnaLab
         {
             get { return project; }
         }
-        public int Identifier
+        public string Identifier
         {
             get { return identifier; }
         }
         public bool Modified { get; set; }
 
         Project project;
-        int identifier;
+        string identifier;
 
-        public ProjectDataType(Project p, int identifier) {
+        public ProjectDataType(Project p, string identifier) {
             project = p;
             this.identifier = identifier;
             project.AddDataType(this);
+        }
+        public ProjectDataType(Project p, int i)
+            : this(p, i.ToString()) {
         }
 
         public string GetIdentifier() {
@@ -34,10 +37,14 @@ namespace LynnaLab
 
         public int Index
         {
-            get { return Identifier; }
+            get { return _index; }
         }
 
-        public ProjectIndexedDataType(Project p, int index) : base(p, index) {
+        int _index;
+
+        public ProjectIndexedDataType(Project p, int index)
+            : base(p, index.ToString()) {
+            _index = index;
         }
     }
 }

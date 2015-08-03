@@ -4,68 +4,68 @@ using System.IO;
 
 namespace LynnaLab
 {
-	public class Area : ProjectIndexedDataType
-	{
-		FileParser areaFile;
+    public class Area : ProjectIndexedDataType
+    {
+        FileParser areaFile;
 
-		int flags1, flags2;
-		int uniqueGfxHeaderGroupIndex, gfxHeaderGroupIndex;
-		int paletteHeaderGroupIndex;
-		int tilesetHeaderGroupIndex;
-		int layoutGroup;
-		int animationIndex;
+        int flags1, flags2;
+        int uniqueGfxHeaderGroupIndex, gfxHeaderGroupIndex;
+        int paletteHeaderGroupIndex;
+        int tilesetHeaderGroupIndex;
+        int layoutGroup;
+        int animationIndex;
 
-		GfxHeaderGroup gfxHeaderGroup;
-		PaletteHeaderGroup paletteHeaderGroup;
-		TilesetHeaderGroup tilesetHeaderGroup;
+        GfxHeaderGroup gfxHeaderGroup;
+        PaletteHeaderGroup paletteHeaderGroup;
+        TilesetHeaderGroup tilesetHeaderGroup;
 
-		GraphicsState graphicsState;
+        GraphicsState graphicsState;
 
         Bitmap[] tileImagesCache = new Bitmap[256];
 
-		public GraphicsState GraphicsState {
-			get { return graphicsState; }
-		}
+        public GraphicsState GraphicsState {
+            get { return graphicsState; }
+        }
         public int LayoutGroup {
             get { return layoutGroup; }
         }
 
-		public Area(Project p, int i) : base(p, i) {
-			areaFile = Project.GetFileWithLabel("areaData");
+        public Area(Project p, int i) : base(p, i) {
+            areaFile = Project.GetFileWithLabel("areaData");
 
-			Data areaData = areaFile.GetData("areaData", Index * 8);
-			flags1 = p.EvalToInt(areaData.Values[0]);
+            Data areaData = areaFile.GetData("areaData", Index * 8);
+            flags1 = p.EvalToInt(areaData.Values[0]);
 
-			areaData = areaData.Next;
-			flags2 = p.EvalToInt(areaData.Values[0]);
+            areaData = areaData.Next;
+            flags2 = p.EvalToInt(areaData.Values[0]);
 
-			areaData = areaData.Next;
-			uniqueGfxHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
+            areaData = areaData.Next;
+            uniqueGfxHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
 
-			areaData = areaData.Next;
-			gfxHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
+            areaData = areaData.Next;
+            gfxHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
 
-			areaData = areaData.Next;
-			paletteHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
+            areaData = areaData.Next;
+            paletteHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
 
-			areaData = areaData.Next;
-			tilesetHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
+            areaData = areaData.Next;
+            tilesetHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
 
-			areaData = areaData.Next;
-			layoutGroup = p.EvalToInt(areaData.Values[0]);
+            areaData = areaData.Next;
+            layoutGroup = p.EvalToInt(areaData.Values[0]);
 
-			areaData = areaData.Next;
-			animationIndex = p.EvalToInt(areaData.Values[0]);
+            areaData = areaData.Next;
+            animationIndex = p.EvalToInt(areaData.Values[0]);
 
 
-			gfxHeaderGroup = Project.GetDataType<GfxHeaderGroup>(gfxHeaderGroupIndex);
-            paletteHeaderGroup = Project.GetDataType<PaletteHeaderGroup>(paletteHeaderGroupIndex);
-            tilesetHeaderGroup = Project.GetDataType<TilesetHeaderGroup>(tilesetHeaderGroupIndex);
+            gfxHeaderGroup = Project.GetIndexedDataType<GfxHeaderGroup>(gfxHeaderGroupIndex);
+            paletteHeaderGroup = Project.GetIndexedDataType<PaletteHeaderGroup>(paletteHeaderGroupIndex);
+            tilesetHeaderGroup = Project.GetIndexedDataType<TilesetHeaderGroup>(tilesetHeaderGroupIndex);
             PaletteHeaderGroup globalPaletteHeaderGroup = 
-                Project.GetDataType<PaletteHeaderGroup>(0xf);
+                Project.GetIndexedDataType<PaletteHeaderGroup>(0xf);
 
-			graphicsState = new GraphicsState();
-			graphicsState.AddGfxHeaderGroup(gfxHeaderGroup);
+            graphicsState = new GraphicsState();
+            graphicsState.AddGfxHeaderGroup(gfxHeaderGroup);
             graphicsState.AddPaletteHeaderGroup(paletteHeaderGroup);
             // Global palettes
             graphicsState.AddPaletteHeaderGroup(globalPaletteHeaderGroup);
@@ -91,7 +91,19 @@ namespace LynnaLab
                     }
                 }
             }
-		}
+
+            // Animation
+            if (animationIndex != 0xff) {
+                AnimationGroup animationGroup
+                    = Project.GetIndexedDataType<AnimationGroup>(animationIndex);
+                for (int j=0; j<animationGroup.NumAnimations; j++) {
+                    Animation animation = animationGroup.GetAnimationIndex(j);
+                    for (int k=0; k<animation.NumIndices; k++) {
+                        graphicsState.AddGfxHeader(animation.GetGfxHeader(k));
+                    }
+                }
+            }
+        }
 
         public Bitmap GetTileImage(int index) {
             if (tileImagesCache[index] != null)
@@ -124,5 +136,5 @@ namespace LynnaLab
 
         public override void Save() {
         }
-	}
+    }
 }

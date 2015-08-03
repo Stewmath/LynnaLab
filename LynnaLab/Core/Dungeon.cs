@@ -39,7 +39,7 @@ namespace LynnaLab
             file.Position = y*8+x;
             int roomIndex = file.ReadByte();
             int group = GetDataIndex(0)-0xc9+4;
-            Room room = Project.GetDataType<Room>(roomIndex + group*0x100);
+            Room room = Project.GetIndexedDataType<Room>(roomIndex + group*0x100);
             return room;
         }
     }

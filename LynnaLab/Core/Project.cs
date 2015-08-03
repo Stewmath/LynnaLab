@@ -70,7 +70,7 @@ namespace LynnaLab
 				logWriter.Close();
 		}
 
-        public T GetDataType<T>(int identifier) where T:ProjectDataType {
+        public T GetIndexedDataType<T>(int identifier) where T:ProjectIndexedDataType {
             string s = typeof(T).Name + "_" + identifier;
             ProjectDataType o;
             if (dataStructDictionary.TryGetValue(s, out o))
@@ -80,6 +80,17 @@ namespace LynnaLab
 
             return o as T;
         }
+        public T GetDataType<T>(string identifier) where T:ProjectDataType {
+            string s = typeof(T).Name + "_" + identifier;
+            ProjectDataType o;
+            if (dataStructDictionary.TryGetValue(s, out o))
+                return o as T;
+            o = (ProjectDataType)Activator.CreateInstance(typeof(T), new object[] { this, identifier });
+            dataStructDictionary[s] = o;
+
+            return o as T;
+        }
+
         public void AddDataType(ProjectDataType data) {
             string s = data.GetIdentifier();
             if (dataStructDictionary.ContainsKey(s))

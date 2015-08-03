@@ -82,7 +82,7 @@ namespace LynnaLab
             if (dungeon != null)
                 return dungeon.GetRoom(Floor, x, y);
             else if (worldGroup != -1)
-                return Project.GetDataType<Room>(worldGroup*0x100+y*16+x);
+                return Project.GetIndexedDataType<Room>(worldGroup*0x100+y*16+x);
             else
                 return null;
         }

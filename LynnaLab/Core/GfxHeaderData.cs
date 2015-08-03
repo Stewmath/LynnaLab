@@ -18,7 +18,7 @@ namespace LynnaLab
 		public int DestBank {
 			get { return project.EvalToInt(Values[1]) & 0x000f; }
 		}
-		public Stream GfxFile { get { return gfxFile; } }
+		public Stream GfxStream { get { return gfxFile; } }
 
 		public GfxHeaderData(Project p, string command, IList<string> values) 
 			: base(p, command, values, 6) {
@@ -28,6 +28,11 @@ namespace LynnaLab
 			foreach (string directory in gfxDirectories) {
 				if (File.Exists(project.BaseDirectory + directory + filename)) {
 					gfxFile = project.GetBinaryFile(directory + filename);
+                    if (Command == "m_gfxheader" && Values.Count > 3)
+                        // Skip into part of gfx data
+                        gfxFile = new SubStream(gfxFile, p.EvalToInt(Values[3]),
+                                (p.EvalToInt(Values[2])+1)*16);
+
 					break;
 				}
 			}

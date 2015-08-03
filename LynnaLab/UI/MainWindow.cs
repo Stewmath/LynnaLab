@@ -84,7 +84,7 @@ public partial class MainWindow: Gtk.Window
         SetRoom(dungeonMinimap.GetRoom());
     }
     void SetDungeon(int index) {
-        SetDungeon(Project.GetDataType<Dungeon>(index));
+        SetDungeon(Project.GetIndexedDataType<Dungeon>(index));
     }
     void SetWorld(int index) {
         worldSpinButton.Value = index;
@@ -150,7 +150,7 @@ public partial class MainWindow: Gtk.Window
     protected void OnDungeonSpinButtonValueChanged(object sender, EventArgs e)
     {
         SpinButton spinner = sender as SpinButton;
-        SetDungeon(Project.GetDataType<Dungeon>(spinner.ValueAsInt));
+        SetDungeon(Project.GetIndexedDataType<Dungeon>(spinner.ValueAsInt));
     }
 
     protected void OnFloorSpinButtonValueChanged(object sender, EventArgs e)

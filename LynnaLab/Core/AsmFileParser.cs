@@ -70,6 +70,18 @@ namespace LynnaLab
 								AddData(d);
 							}
 							break;
+                        case "dwbe":
+							if (tokens.Length < 2) {
+								project.WriteLog(warningString);
+								project.WriteLogLine("Expected dwbe to have a value.");
+								break;
+							}
+							for (int j=1; j<tokens.Length; j++) {
+								string[] values = { tokens[j] };
+								Data d = new Data(project, tokens[0].ToLower(), values, 1);
+								AddData(d);
+							}
+							break;
 
                         // Macros
                         case "m_rgb16":

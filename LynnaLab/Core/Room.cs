@@ -61,7 +61,7 @@ namespace LynnaLab
             groupAreasFile.Position = Index&0xff;
             areaID = groupAreasFile.ReadByte() & 0x7f;
 
-            area = Project.GetDataType<Area>(areaID);
+            area = Project.GetIndexedDataType<Area>(areaID);
 
 
             MemoryFileStream dataFile = TileDataFile;
