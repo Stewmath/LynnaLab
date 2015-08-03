@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Drawing;
 using Gtk;
 using LynnaLab;
 
@@ -24,7 +26,24 @@ public partial class MainWindow: Gtk.Window
         worldSpinButton.Adjustment = new Adjustment(0, 0, 3, 1, 0, 0);
         dungeonSpinButton.Adjustment = new Adjustment(0, 0, 15, 1, 0, 0);
 
+        GLib.Timeout.Add(1000/60, new GLib.TimeoutHandler(AnimationUpdater));
+
         OpenProject("/home/matthew/programs/gb/ages/ages-disasm");
+    }
+
+    bool AnimationUpdater() {
+        var area = areaviewer1.Area;
+        if (area == null)
+            return true;
+        IList<byte> changedTiles = area.updateAnimations(1);
+        if (changedTiles.Count != 0) {
+            foreach (int tile in changedTiles) {
+                areaviewer1.DrawTile(tile);
+            }
+            areaviewer1.QueueDraw();
+            roomeditor1.QueueDraw();
+        }
+        return true;
     }
 
     void OpenProject(string dir) {

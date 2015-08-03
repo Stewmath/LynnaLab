@@ -26,7 +26,6 @@ namespace LynnaLab
                 gfxHeaderIndices.Add(Project.EvalToInt(data.Values[0]));
                 data = data.Next;
             }
-            Console.WriteLine(label + ": Length " + NumIndices);
         }
 
         public int GetCounter(int i) {

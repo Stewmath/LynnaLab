@@ -184,13 +184,22 @@ namespace LynnaLab
             Graphics g = Graphics.FromImage(image);
 
             for (int i=0; i<256; i++) {
-                int x = i%16;
-                int y = i/16;
-                g.DrawImage(area.GetTileImage(i), x*16, y*16);
+                DrawTile(i, g);
             }
             g.Dispose();
 
             this.QueueDraw();
+        }
+
+        public void DrawTile(int i, Graphics g=null) {
+            Graphics g2 = g;
+            if (g2 == null)
+                g2 = Graphics.FromImage(Image);
+            int x = i%16;
+            int y = i/16;
+            g2.DrawImage(area.GetTileImage(i), x*16, y*16);
+            if (g == null)
+                g2.Dispose();
         }
 
         protected override bool OnButtonPressEvent(Gdk.EventButton ev)

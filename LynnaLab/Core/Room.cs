@@ -90,6 +90,19 @@ namespace LynnaLab
             }
             else
                 throw new Exception("Size of file \"" + dataFile.Name + "\" was invalid!");
+
+            Area.TileModifiedEvent += delegate(int tile) {
+                if (cachedImage == null)
+                    return;
+                Graphics g = Graphics.FromImage(cachedImage);
+                for (int x=0; x<Width; x++) {
+                    for (int y=0; y<Height; y++) {
+                        if (GetTile(x, y) == tile)
+                            g.DrawImage(area.GetTileImage(tiles[x,y]), x*16, y*16);
+                    }
+                }
+                g.Dispose();
+            };
         }
 
         public Bitmap GetImage() {

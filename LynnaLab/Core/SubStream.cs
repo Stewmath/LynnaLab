@@ -27,12 +27,10 @@ public class SubStream : Stream {
 
     Stream stream;
     int streamOffset;
-    int size;
 
     public SubStream(Stream stream, int offset, int size) {
         this.stream = stream;
         this.streamOffset = offset;
-        this.size = size;
         
         _length = size;
     }
@@ -62,7 +60,7 @@ public class SubStream : Stream {
 
     public override int Read(byte[] buffer, int offset, int count) {
         int size = count;
-        if (Position + count > Length)
+        if (Position + size > Length)
             size = (int)(Length-Position);
         stream.Position = Position + streamOffset;
         stream.Read(buffer, offset, size);

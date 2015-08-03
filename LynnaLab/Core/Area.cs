@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
+using System.Collections.Generic;
 
 namespace LynnaLab
 {
@@ -18,10 +19,20 @@ namespace LynnaLab
         GfxHeaderGroup gfxHeaderGroup;
         PaletteHeaderGroup paletteHeaderGroup;
         TilesetHeaderGroup tilesetHeaderGroup;
+        AnimationGroup animationGroup;
 
         GraphicsState graphicsState;
 
         Bitmap[] tileImagesCache = new Bitmap[256];
+
+        public delegate void TileModifiedHandler(int tile);
+        public event TileModifiedHandler TileModifiedEvent;
+
+        // For dynamically showing an animation
+        int[] animationPos = new int[4];
+        int[] animationCounter = new int[4];
+
+        List<byte>[] usedTileList = new List<byte>[256];
 
         public GraphicsState GraphicsState {
             get { return graphicsState; }
@@ -64,6 +75,25 @@ namespace LynnaLab
             PaletteHeaderGroup globalPaletteHeaderGroup = 
                 Project.GetIndexedDataType<PaletteHeaderGroup>(0xf);
 
+
+            // Generate usedTileList for quick lookup of which metatiles use
+            // which 4 gameboy tiles
+            for (int j=0; j<256; j++)
+                usedTileList[j] = new List<byte>();
+            byte[] mappingsData = tilesetHeaderGroup.GetMappingsData();
+            for (int j=0; j<256; j++) {
+                // j = index of metatile
+                bool[] used = new bool[256];
+                for (int k=0; k<4; k++) {
+                    int tile = mappingsData[j*8+k];
+                    if (!used[tile]) {
+                        usedTileList[tile].Add((byte)j);
+                        used[tile] = true;
+                    }
+                }
+            }
+
+
             graphicsState = new GraphicsState();
             graphicsState.AddGfxHeaderGroup(gfxHeaderGroup);
             graphicsState.AddPaletteHeaderGroup(paletteHeaderGroup);
@@ -94,7 +124,7 @@ namespace LynnaLab
 
             // Animation
             if (animationIndex != 0xff) {
-                AnimationGroup animationGroup
+                animationGroup
                     = Project.GetIndexedDataType<AnimationGroup>(animationIndex);
                 for (int j=0; j<animationGroup.NumAnimations; j++) {
                     Animation animation = animationGroup.GetAnimationIndex(j);
@@ -132,6 +162,51 @@ namespace LynnaLab
 
             tileImagesCache[index] = image;
             return image;
+        }
+
+        // Returns a list of tiles which have changed
+        public IList<byte> updateAnimations(int frames) {
+            List<byte> retData = new List<byte>();
+            if (animationGroup == null)
+                return retData;
+
+            for (int i=0; i<animationGroup.NumAnimations; i++) {
+                Animation animation = animationGroup.GetAnimationIndex(i);
+                animationCounter[i] -= frames;
+                while (animationCounter[i] <= 0) {
+                    int pos = animationPos[i];
+                    animationCounter[i] += animation.GetCounter(pos);
+                    GfxHeaderData header = animation.GetGfxHeader(pos);
+                    graphicsState.AddGfxHeader(header);
+//                     Console.WriteLine(i + ":" + animationPos[i]);
+                    animationPos[i]++;
+                    if (animationPos[i] >= animation.NumIndices)
+                        animationPos[i] = 0;
+
+                    // Check which tiles changed
+                    if (header.DestAddr >= 0x8800 && header.DestAddr < 0x9800 &&
+                            header.DestBank == 1) {
+                        for (int addr=header.DestAddr;
+                                addr<header.DestAddr+
+                                (Project.EvalToInt(header.Values[2])+1)*16;
+                                addr++) {
+                            int tile = (addr-0x8800)/16;
+                            tile -= 128;
+                            if (tile <= 0)
+                                tile += 256;
+                            foreach (byte metatile in usedTileList[tile]) {
+                                tileImagesCache[metatile] = null;
+                                retData.Add(metatile);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (TileModifiedEvent != null)
+                foreach (byte b in retData)
+                    TileModifiedEvent(b);
+            return retData;
         }
 
         public override void Save() {
