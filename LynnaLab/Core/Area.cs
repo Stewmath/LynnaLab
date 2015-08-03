@@ -192,7 +192,7 @@ namespace LynnaLab
                                 addr++) {
                             int tile = (addr-0x8800)/16;
                             tile -= 128;
-                            if (tile <= 0)
+                            if (tile < 0)
                                 tile += 256;
                             foreach (byte metatile in usedTileList[tile]) {
                                 tileImagesCache[metatile] = null;
