@@ -13,6 +13,10 @@ public partial class MainWindow
 	
 	private global::Gtk.Action SaveAction;
 	
+	private global::Gtk.Action ViewAction;
+	
+	private global::Gtk.ToggleAction AnimationsAction;
+	
 	private global::Gtk.VBox vbox1;
 	
 	private global::Gtk.MenuBar menubar1;
@@ -83,6 +87,12 @@ public partial class MainWindow
 		this.SaveAction = new global::Gtk.Action ("SaveAction", global::Mono.Unix.Catalog.GetString ("_Save"), null, null);
 		this.SaveAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("_Save");
 		w1.Add (this.SaveAction, "<Primary>s");
+		this.ViewAction = new global::Gtk.Action ("ViewAction", global::Mono.Unix.Catalog.GetString ("_View"), null, null);
+		this.ViewAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("_View");
+		w1.Add (this.ViewAction, "<Alt>f");
+		this.AnimationsAction = new global::Gtk.ToggleAction ("AnimationsAction", global::Mono.Unix.Catalog.GetString ("_Animations"), null, null);
+		this.AnimationsAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("_Animations");
+		w1.Add (this.AnimationsAction, "<Primary>a");
 		this.UIManager.InsertActionGroup (w1, 0);
 		this.AddAccelGroup (this.UIManager.AccelGroup);
 		this.Name = "MainWindow";
@@ -93,7 +103,7 @@ public partial class MainWindow
 		this.vbox1.Name = "vbox1";
 		this.vbox1.Spacing = 6;
 		// Container child vbox1.Gtk.Box+BoxChild
-		this.UIManager.AddUiFromString ("<ui><menubar name='menubar1'><menu name='FileAction' action='FileAction'><menuitem name='OpenAction' action='OpenAction'/><menuitem name='SaveAction' action='SaveAction'/><menuitem name='QuitAction' action='QuitAction'/></menu></menubar></ui>");
+		this.UIManager.AddUiFromString ("<ui><menubar name='menubar1'><menu name='FileAction' action='FileAction'><menuitem name='OpenAction' action='OpenAction'/><menuitem name='SaveAction' action='SaveAction'/><menuitem name='QuitAction' action='QuitAction'/></menu><menu name='ViewAction' action='ViewAction'><menuitem name='AnimationsAction' action='AnimationsAction'/></menu></menubar></ui>");
 		this.menubar1 = ((global::Gtk.MenuBar)(this.UIManager.GetWidget ("/menubar1")));
 		this.menubar1.Name = "menubar1";
 		this.vbox1.Add (this.menubar1);
@@ -349,6 +359,7 @@ public partial class MainWindow
 		this.OpenAction.Activated += new global::System.EventHandler (this.OnOpenActionActivated);
 		this.QuitAction.Activated += new global::System.EventHandler (this.OnQuitActionActivated);
 		this.SaveAction.Activated += new global::System.EventHandler (this.OnSaveActionActivated);
+		this.AnimationsAction.Activated += new global::System.EventHandler (this.OnAnimationsActionActivated);
 		this.notebook2.SwitchPage += new global::Gtk.SwitchPageHandler (this.OnNotebook2SwitchPage);
 		this.worldSpinButton.ValueChanged += new global::System.EventHandler (this.OnWorldSpinButtonValueChanged);
 		this.floorSpinButton.ValueChanged += new global::System.EventHandler (this.OnFloorSpinButtonValueChanged);

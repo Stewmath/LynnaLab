@@ -37,6 +37,21 @@
         <property name="ShortLabel" translatable="yes">_Save</property>
         <signal name="Activated" handler="OnSaveActionActivated" />
       </action>
+      <action id="ViewAction">
+        <property name="Type">Action</property>
+        <property name="Accelerator">&lt;Alt&gt;f</property>
+        <property name="Label" translatable="yes">_View</property>
+        <property name="ShortLabel" translatable="yes">_View</property>
+      </action>
+      <action id="AnimationsAction">
+        <property name="Type">Toggle</property>
+        <property name="Accelerator">&lt;Primary&gt;a</property>
+        <property name="Label" translatable="yes">_Animations</property>
+        <property name="ShortLabel" translatable="yes">_Animations</property>
+        <property name="DrawAsRadio">False</property>
+        <property name="Active">False</property>
+        <signal name="Activated" handler="OnAnimationsActionActivated" />
+      </action>
     </action-group>
     <property name="MemberName" />
     <property name="Title" translatable="yes">Lynna Lab</property>
@@ -54,6 +69,9 @@
                 <node type="Menuitem" action="OpenAction" />
                 <node type="Menuitem" action="SaveAction" />
                 <node type="Menuitem" action="QuitAction" />
+              </node>
+              <node type="Menu" action="ViewAction">
+                <node type="Menuitem" action="AnimationsAction" />
               </node>
             </node>
           </widget>

@@ -9,6 +9,8 @@ public partial class MainWindow: Gtk.Window
 {
     Project Project { get; set; }
 
+    uint animationTimerID;
+
     public MainWindow () : base (Gtk.WindowType.Toplevel)
     {
         Build();
@@ -26,9 +28,19 @@ public partial class MainWindow: Gtk.Window
         worldSpinButton.Adjustment = new Adjustment(0, 0, 3, 1, 0, 0);
         dungeonSpinButton.Adjustment = new Adjustment(0, 0, 15, 1, 0, 0);
 
-        GLib.Timeout.Add(1000/60, new GLib.TimeoutHandler(AnimationUpdater));
-
         OpenProject("/home/matthew/programs/gb/ages/ages-disasm");
+    }
+
+    void StartAnimations() {
+        if (animationTimerID == 0)
+            animationTimerID =
+                GLib.Timeout.Add(1000/60, new GLib.TimeoutHandler(AnimationUpdater));
+    }
+
+    void EndAnimations() {
+        if (animationTimerID != 0)
+            GLib.Source.Remove(animationTimerID);
+        animationTimerID = 0;
     }
 
     bool AnimationUpdater() {
@@ -141,6 +153,13 @@ public partial class MainWindow: Gtk.Window
     protected void OnSaveActionActivated(object sender, EventArgs e)
     {
         Project.Save();
+    }
+
+    protected void OnAnimationsActionActivated(object sender, EventArgs e) {
+        if (AnimationsAction.Active)
+            StartAnimations();
+        else
+            EndAnimations();
     }
 
     protected void OnQuitActionActivated(object sender, EventArgs e)
