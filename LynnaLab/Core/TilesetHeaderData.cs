@@ -20,10 +20,10 @@ namespace LynnaLab {
             get { return project.EvalToInt(Values[2]); }
         }
         public int DestBank {
-            get { return project.EvalToInt(Values[3]); }
+            get { return project.EvalToInt(":"+Values[2]); }
         }
         public int DataSize {
-            get { return project.EvalToInt(Values[4]); }
+            get { return project.EvalToInt(Values[3]); }
         }
 
 
@@ -36,7 +36,7 @@ namespace LynnaLab {
 		}
 
 		public bool ShouldHaveNext() {
-			return (project.EvalToInt(Values[5]) & 0x80) == 0x80;
+			return (project.EvalToInt(Values[4]) & 0x80) == 0x80;
 		}
 	}
 

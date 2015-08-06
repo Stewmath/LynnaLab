@@ -1,0 +1,10 @@
+- Files that may be read from and written to include:
+  - Files in the "data/" folder
+  - Files in the "rooms/" folder
+  - Files in the "tilesets/" folder
+- All files in the "constants" folder are read.
+- "include/wram.s" is read.
+  - w3TileMappingIndices and w3TileCollisions are expected to be defined.
+  - It currently doesn't handle multiple ramsections for the same bank
+    properly.
+  - It also doesn't understand enums yet, only ramsections and defines.

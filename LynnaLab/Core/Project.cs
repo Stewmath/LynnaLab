@@ -50,6 +50,8 @@ namespace LynnaLab
 					new AsmFileParser(this, filename);
 				}
 			}
+            // Parse wram.s
+            new AsmFileParser(this, "include/wram.s");
 		}
 
         public void Save() {

@@ -25,11 +25,11 @@ namespace LynnaLab {
 
                 Stream file = headerData.ReferencedData;
                 file.Position = 0;
-                if (headerData.DestAddress == 0xdc00) {
+                if (headerData.DestAddress == Project.EvalToInt("w3TileMappingIndices")) {
                     // Mappings
                     file.Read(mappingsData, 0, 0x800);
                 }
-                else if (headerData.DestAddress == 0xdb00) {
+                else if (headerData.DestAddress == Project.EvalToInt("w3TileCollisions")) {
                     // Collisions
                     file.Read(collisionsData, 0, 0x100);
                 }
