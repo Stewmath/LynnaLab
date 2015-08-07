@@ -101,10 +101,17 @@ public partial class MainWindow: Gtk.Window
         }
     }
 
+    void SetArea(Area area) {
+        areaviewer1.SetArea(area);
+        areaSpinButton.Value = area.Index;
+        roomeditor1.Room.SetArea(area);
+        roomeditor1.QueueDraw();
+    }
+
     void SetRoom(Room room) {
         roomeditor1.SetRoom(room);
-        areaviewer1.SetArea(room.Area);
-        areaLabel.Text = "Area 0x" + room.Area.Index.ToString("X2");
+        SetArea(room.Area);
+        musicSpinButton.Value = room.GetMusicID();
     }
 
     void SetDungeon(Dungeon dungeon) {
@@ -213,5 +220,24 @@ public partial class MainWindow: Gtk.Window
             SetWorld(worldSpinButton.ValueAsInt);
         else if (nb.Page == 1)
             SetDungeon(dungeonSpinButton.ValueAsInt);
+    }
+
+    protected void OnSpinbuttonhexadecimal1ValueChanged(object sender, EventArgs e)
+    {
+        SpinButton button = sender as SpinButton;
+        SetRoom(Project.GetIndexedDataType<Room>(button.ValueAsInt));
+    }
+
+    protected void OnAreaSpinButtonValueChanged(object sender, EventArgs e)
+    {
+        SpinButton button = sender as SpinButton;
+        SetArea(Project.GetIndexedDataType<Area>(button.ValueAsInt));
+    }
+
+
+    protected void OnMusicSpinButtonValueChanged(object sender, EventArgs e)
+    {
+        SpinButton button = sender as SpinButton;
+        roomeditor1.Room.SetMusicID(button.ValueAsInt);
     }
 }

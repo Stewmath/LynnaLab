@@ -61,48 +61,9 @@ namespace LynnaLab
             groupAreasFile.Position = Index&0xff;
             areaID = groupAreasFile.ReadByte() & 0x7f;
 
-            area = Project.GetIndexedDataType<Area>(areaID);
+            Area a = Project.GetIndexedDataType<Area>(areaID);
+            SetArea(a);
 
-
-            MemoryFileStream dataFile = TileDataFile;
-
-            if (dataFile.Length == 80) { // Small map
-                width = fileWidth = 10;
-                height = fileHeight = 8;
-                tiles = new byte[width,height];
-                dataFile.Position = 0;
-                for (int y=0; y<height; y++)
-                    for (int x=0; x<width; x++) {
-                        tiles[x,y] = (byte)dataFile.ReadByte();
-                }
-            }
-            else if (dataFile.Length == 176) { // Large map
-                width = 0xf;
-                fileWidth = 0x10;
-                height = fileHeight = 0xb;
-                tiles = new byte[width,height];
-                dataFile.Position = 0;
-                for (int y=0; y<height; y++) {
-                    for (int x=0; x<width; x++)
-                        tiles[x,y] = (byte)dataFile.ReadByte();
-                    dataFile.ReadByte();
-                }
-            }
-            else
-                throw new Exception("Size of file \"" + dataFile.Name + "\" was invalid!");
-
-            Area.TileModifiedEvent += delegate(int tile) {
-                if (cachedImage == null)
-                    return;
-                Graphics g = Graphics.FromImage(cachedImage);
-                for (int x=0; x<Width; x++) {
-                    for (int y=0; y<Height; y++) {
-                        if (GetTile(x, y) == tile)
-                            g.DrawImage(area.GetTileImage(tiles[x,y]), x*16, y*16);
-                    }
-                }
-                g.Dispose();
-            };
         }
 
         public Bitmap GetImage() {
@@ -136,6 +97,78 @@ namespace LynnaLab
                 }
                 Modified = true;
             }
+        }
+
+        // These 2 functions may be deprecated later if I switch to using
+        // constant definitions
+        public int GetMusicID() {
+            Stream file = Project.GetBinaryFile("music/group" + (Index>>8) + "IDs.bin");
+            file.Position = Index&0xff;
+            return file.ReadByte();
+        }
+        public void SetMusicID(int id) {
+            Stream file = Project.GetBinaryFile("music/group" + (Index>>8) + "IDs.bin");
+            file.Position = Index&0xff;
+            file.WriteByte((byte)id);
+        }
+
+        public void SetArea(Area a) {
+            if (area == null || a.Index != area.Index) {
+                Stream groupAreasFile = Project.GetBinaryFile("rooms/group" + (Index>>8) + "Areas.bin");
+                groupAreasFile.Position = Index&0xff;
+                int lastValue = groupAreasFile.ReadByte() & 0x80;
+                groupAreasFile.Position = Index&0xff;
+                groupAreasFile.WriteByte((byte)((a.Index&0x7f) | lastValue));
+
+                Area.TileModifiedHandler handler = new Area.TileModifiedHandler(ModifiedTileCallback);
+                if (area != null)
+                    area.TileModifiedEvent -= handler;
+                a.TileModifiedEvent += handler;
+
+                cachedImage = null;
+
+                area = a;
+
+                MemoryFileStream dataFile = TileDataFile;
+
+                if (dataFile.Length == 80) { // Small map
+                    width = fileWidth = 10;
+                    height = fileHeight = 8;
+                    tiles = new byte[width,height];
+                    dataFile.Position = 0;
+                    for (int y=0; y<height; y++)
+                        for (int x=0; x<width; x++) {
+                            tiles[x,y] = (byte)dataFile.ReadByte();
+                    }
+                }
+                else if (dataFile.Length == 176) { // Large map
+                    width = 0xf;
+                    fileWidth = 0x10;
+                    height = fileHeight = 0xb;
+                    tiles = new byte[width,height];
+                    dataFile.Position = 0;
+                    for (int y=0; y<height; y++) {
+                        for (int x=0; x<width; x++)
+                            tiles[x,y] = (byte)dataFile.ReadByte();
+                        dataFile.ReadByte();
+                    }
+                }
+                else
+                    throw new Exception("Size of file \"" + dataFile.Name + "\" was invalid!");
+            }
+        }
+
+        void ModifiedTileCallback(int tile) {
+            if (cachedImage == null)
+                return;
+            Graphics g = Graphics.FromImage(cachedImage);
+            for (int x=0; x<Width; x++) {
+                for (int y=0; y<Height; y++) {
+                    if (GetTile(x, y) == tile)
+                        g.DrawImage(area.GetTileImage(tiles[x,y]), x*16, y*16);
+                }
+            }
+            g.Dispose();
         }
 
         public override void Save() {
