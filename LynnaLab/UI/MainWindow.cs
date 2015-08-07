@@ -240,4 +240,13 @@ public partial class MainWindow: Gtk.Window
         SpinButton button = sender as SpinButton;
         roomeditor1.Room.SetMusicID(button.ValueAsInt);
     }
+
+    protected void OnAreaEditorButtonClicked(object sender, EventArgs e)
+    {
+        Window win = new Window(WindowType.Toplevel);
+        AreaEditor a = new AreaEditor(areaviewer1.Area);
+        win.Add(a);
+        win.Name = "Edit Area";
+        win.ShowAll();
+    }
 }

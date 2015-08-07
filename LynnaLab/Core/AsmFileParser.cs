@@ -7,12 +7,17 @@ namespace LynnaLab
 {
     public class AsmFileParser : FileParser
     {
+        // Array of lines in the file, will be written back to the file if modified
+        string[] lines;
+        bool modified;
+
         // I'm a bit evil for using these variables like this, variables only
         // used for the constructor and helper functions
         string context = "";
         // Values for context:
         // - "RAMSECTION"
 
+        int lineIndex;
         // Variables for when context == RAMSECTION
         int bank;
         int address;
@@ -21,18 +26,36 @@ namespace LynnaLab
         public AsmFileParser(Project p, string f)
             : base(p,f)
         {
-            string[] lines = File.ReadAllLines(fullFilename);
+            Project.WriteLogLine("Began parsing \"" + Filename + "\".");
+
+            lines = File.ReadAllLines(FullFilename);
 
             for (int i=0; i<lines.Length; i++) {
+                lineIndex = i;
                 string line = lines[i];
-                line = line.Split(';')[0].Trim();
-                if (line.Length == 0)
+                line = line.Split(';')[0];
+                if (line.Trim().Length == 0)
                     continue;
 
                 // TODO: split tokens more intelligently, ie: recognize this as one token: $8000 | $03
                 //string[] tokens = line.Split(new char[] { ' ', '\t'} );
-                string[] tokens = Regex.Split(line, @"\s+");
-                string warningString = "WARNING while parsing \"" + filename + "\": Line " + (i+1) + ": ";
+                string[] tokens = Regex.Split(line.Trim(), @"\s+");
+                int[] tokenStartIndices = new int[tokens.Length];
+                int[] tokenEndIndices = new int[tokens.Length];
+                {
+                    int index = 0;
+
+                    for (int j=0; j<tokens.Length; j++) {
+                        while (index < line.Length && (line[index] == ' ' || line[index] == '\t')) {
+                            index++;
+                        }
+                        tokenStartIndices[j] = index;
+                        while (index < line.Length && line[index] != ' ' && line[index] != '\t')
+                            index++;
+                        tokenEndIndices[j] = index;
+                    }
+                }
+                string warningString = "WARNING while parsing \"" + Filename + "\": Line " + (i+1) + ": ";
 
                 string value;
 
@@ -95,20 +118,25 @@ namespace LynnaLab
                                     Project.AddDefinition(":"+s, bank.ToString());
                                 }
                                 else {
-                                    Label label = new Label(s,dataList.Count);
+                                    Label label = new Label(s,DataList.Count);
                                     AddLabel(label);
                                 }
                                 if (tokens.Length > 1) {
                                     string[] tokens2 = new string[tokens.Length-1];
-                                    for (int j=1; j<tokens.Length; j++)
+                                    int[] tokenStartIndices2 = new int[tokens.Length-1];
+                                    int[] tokenEndIndices2 = new int[tokens.Length-1];
+                                    for (int j=1; j<tokens.Length; j++) {
                                         tokens2[j-1] = tokens[j];
-                                    if (!parseData(tokens2, warningString)) {
+                                        tokenStartIndices2[j-1] = tokenStartIndices[j];
+                                        tokenEndIndices2[j-1] = tokenEndIndices[j];
+                                    }
+                                    if (!parseData(tokens2, tokenStartIndices2, tokenEndIndices2, warningString)) {
                                         Project.WriteLog(warningString);
                                         Project.WriteLogLine("Error parsing line.");
                                     }
                                 }
                             } else {
-                                if (!parseData(tokens, warningString)) {
+                                if (!parseData(tokens, tokenStartIndices, tokenEndIndices, warningString)) {
                                     // Unknown data
                                     Project.WriteLog(warningString);
                                     Project.WriteLogLine("Did not understand \"" + tokens[0] + "\".");
@@ -119,11 +147,11 @@ namespace LynnaLab
                 }
             }
 
-            Project.WriteLogLine("Parsed \"" + filename + "\" successfully maybe.");
+            Project.WriteLogLine("Parsed \"" + Filename + "\" successfully maybe.");
         }
 
         // Returns true if a meaning for the token was found.
-        bool parseData(string[] tokens, string warningString) {
+        bool parseData(string[] tokens, int[] tokenStartIndices, int[] tokenEndIndices, string warningString) {
             List<string> standardValues = new List<string>();
             for (int j = 1; j < tokens.Length; j++)
                 standardValues.Add(tokens[j]);
@@ -139,7 +167,8 @@ namespace LynnaLab
                     }
                     for (int j=1; j<tokens.Length; j++) {
                         string[] values = { tokens[j] };
-                        Data d = new Data(Project, tokens[0].ToLower(), values, 2);
+                        Data d = new Data(Project, tokens[0].ToLower(), values, 2,
+                                this, lineIndex, tokenStartIndices[j], tokenEndIndices[j]);
                         AddData(d);
                     }
                     break;
@@ -153,7 +182,8 @@ namespace LynnaLab
                     }
                     for (int j=1; j<tokens.Length; j++) {
                         string[] values = { tokens[j] };
-                        Data d = new Data(Project, tokens[0].ToLower(), values, 1);
+                        Data d = new Data(Project, tokens[0].ToLower(), values, 1,
+                                this, lineIndex, tokenStartIndices[j], tokenEndIndices[j]);
                         AddData(d);
                     }
                     break;
@@ -186,7 +216,8 @@ namespace LynnaLab
                     }
                     for (int j=1; j<tokens.Length; j++) {
                         string[] values = { tokens[j] };
-                        Data d = new Data(Project, tokens[0].ToLower(), values, 1);
+                        Data d = new Data(Project, tokens[0].ToLower(), values, 1,
+                                this, lineIndex, tokenStartIndices[j], tokenEndIndices[j]);
                         AddData(d);
                     }
                     break;
@@ -197,7 +228,8 @@ namespace LynnaLab
                         break;
                     }
                     {
-                        Data d = new RgbData(Project, tokens[0].ToLower(), standardValues);
+                        Data d = new RgbData(Project, tokens[0].ToLower(), standardValues,
+                                this, lineIndex, tokenStartIndices[1]);
                         AddData(d);
                         break;
                     }
@@ -209,7 +241,8 @@ namespace LynnaLab
                         break;
                     }
                     {
-                        Data d = new GfxHeaderData(Project, tokens[0].ToLower(), standardValues);
+                        Data d = new GfxHeaderData(Project, tokens[0].ToLower(), standardValues,
+                                this, lineIndex, tokenStartIndices[1]);
                         AddData(d);
                         break;
                     }
@@ -221,7 +254,8 @@ namespace LynnaLab
                         break;
                     }
                     {
-                        Data d = new PaletteHeaderData(Project, tokens[0].ToLower(), standardValues);
+                        Data d = new PaletteHeaderData(Project, tokens[0].ToLower(), standardValues,
+                                this, lineIndex, tokenStartIndices[1]);
                         AddData(d);
                         break;
                     }
@@ -232,7 +266,8 @@ namespace LynnaLab
                         break;
                     }
                     {
-                        Data d = new TilesetHeaderData(Project, tokens[0].ToLower(), standardValues);
+                        Data d = new TilesetHeaderData(Project, tokens[0].ToLower(), standardValues,
+                                this, lineIndex, tokenStartIndices[1]);
                         AddData(d);
                         break;
                     }
@@ -244,7 +279,8 @@ namespace LynnaLab
                     }
                     {
                         Stream file = Project.GetBinaryFile("tilesets/" + tokens[1] + ".bin");
-                        Data d = new Data(Project, tokens[0].ToLower(), standardValues, (Int32)file.Length);
+                        Data d = new Data(Project, tokens[0].ToLower(), standardValues,
+                                (Int32)file.Length, this, lineIndex, tokenStartIndices[1]);
                         AddData(d);
                         break;
                     }
@@ -255,8 +291,9 @@ namespace LynnaLab
                         break;
                     }
                     {
-                        AddLabel(new Label(tokens[1], dataList.Count));
-                        Data d = new Data(Project, tokens[0].ToLower(), standardValues, -1);
+                        AddLabel(new Label(tokens[1], DataList.Count));
+                        Data d = new Data(Project, tokens[0].ToLower(), standardValues, -1,
+                                this, lineIndex, tokenStartIndices[1]);
                         AddData(d);
                         break;
                     }
@@ -264,6 +301,26 @@ namespace LynnaLab
                     return false;
             }
             return true;
+        }
+
+        public override string GetLine(int i) {
+            return lines[i];
+        }
+        public override void SetLine(int i, string line) {
+            if (lines[i] != line) {
+                modified = true;
+                lines[i] = line;
+            }
+        }
+
+        public override void Save() {
+            foreach (Data d in DataList) {
+                d.Save();
+            }
+            if (!modified)
+                return;
+            modified = false;
+            File.WriteAllLines(FullFilename, lines);
         }
     }
 }

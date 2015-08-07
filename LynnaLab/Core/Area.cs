@@ -9,6 +9,8 @@ namespace LynnaLab
     {
         FileParser areaFile;
 
+        Data areaData;
+
         int flags1, flags2;
         int uniqueGfxHeaderGroupIndex, gfxHeaderGroupIndex;
         int paletteHeaderGroupIndex;
@@ -37,6 +39,23 @@ namespace LynnaLab
         public GraphicsState GraphicsState {
             get { return graphicsState; }
         }
+
+        public int Flags1 {
+            get { return flags1; }
+            set {
+                flags1 = value;
+                Data data = GetDataIndex(0);
+                data.SetValue(0,Wla.ToByte((byte)flags1));
+            }
+        }
+        public int Flags2 {
+            get { return flags2; }
+            set {
+                flags2 = value;
+                Data data = GetDataIndex(0);
+                data.SetValue(0,Wla.ToByte((byte)flags2));
+            }
+        }
         public int LayoutGroup {
             get { return layoutGroup; }
         }
@@ -44,7 +63,7 @@ namespace LynnaLab
         public Area(Project p, int i) : base(p, i) {
             areaFile = Project.GetFileWithLabel("areaData");
 
-            Data areaData = areaFile.GetData("areaData", Index * 8);
+            areaData = areaFile.GetData("areaData", Index * 8);
             flags1 = p.EvalToInt(areaData.Values[0]);
 
             areaData = areaData.Next;
@@ -133,6 +152,13 @@ namespace LynnaLab
                     }
                 }
             }
+        }
+
+        Data GetDataIndex(int i) {
+            Data data = areaData;
+            for (int j=0; j<i; j++)
+                data = data.Next;
+            return data;
         }
 
         public Bitmap GetTileImage(int index) {

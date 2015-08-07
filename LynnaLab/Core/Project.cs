@@ -12,6 +12,8 @@ namespace LynnaLab
 		string configDirectory;
 		StreamWriter logWriter;
 
+        List<FileParser> fileParserList = new List<FileParser>();
+
 		// Maps label to file which contains it
 		Dictionary<string,FileParser> labelDictionary = new Dictionary<string,FileParser>();
 		// List of opened binary files
@@ -40,23 +42,26 @@ namespace LynnaLab
 			foreach (string f in Directory.EnumerateFiles(baseDirectory + "constants/")) {
 				if (f.Substring(f.LastIndexOf('.')) == ".s") {
 					string filename = "constants/" + f.Substring(f.LastIndexOf('/') + 1);
-					new AsmFileParser(this, filename);
+					fileParserList.Add(new AsmFileParser(this, filename));
 				}
 			}
 			// Parse everything in data/
 			foreach (string f in Directory.EnumerateFiles(baseDirectory + "data/")) {
 				if (f.Substring(f.LastIndexOf('.')) == ".s") {
 					string filename = "data/" + f.Substring(f.LastIndexOf('/') + 1);
-					new AsmFileParser(this, filename);
+					fileParserList.Add(new AsmFileParser(this, filename));
 				}
 			}
             // Parse wram.s
-            new AsmFileParser(this, "include/wram.s");
+            fileParserList.Add(new AsmFileParser(this, "include/wram.s"));
 		}
 
         public void Save() {
             foreach (ProjectDataType data in dataStructDictionary.Values) {
                 data.Save();
+            }
+            foreach (FileParser parser in fileParserList) {
+                parser.Save();
             }
             foreach (MemoryFileStream file in binaryFileDictionary.Values) {
                 file.Flush();

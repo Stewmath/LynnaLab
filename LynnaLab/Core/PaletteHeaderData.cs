@@ -25,18 +25,18 @@ namespace LynnaLab {
 			get { return Command == "m_paletteheaderbg" ? PaletteType.Background : PaletteType.Sprite; }
 		}
         public int FirstPalette {
-            get { return project.EvalToInt(Values[0]); }
+            get { return Project.EvalToInt(Values[0]); }
         }
         public int NumPalettes {
-            get { return project.EvalToInt(Values[1]); }
+            get { return Project.EvalToInt(Values[1]); }
         }
 
-		public PaletteHeaderData(Project p, string command, IList<string> values) 
-			: base(p, command, values, 3) {
+		public PaletteHeaderData(Project p, string command, IList<string> values, FileParser parser, int line, int colStart) 
+			: base(p, command, values, 3, parser, line, colStart) {
 
                 int dest = -1;
                 try {
-                    dest = project.EvalToInt(values[2]);
+                    dest = Project.EvalToInt(values[2]);
                 }
                 catch(FormatException) {
                     dest = -1;
@@ -45,14 +45,14 @@ namespace LynnaLab {
                 if (dest != -1)
                     sourceFromRam = true;
                 else {
-                    paletteDataFile = project.GetFileWithLabel(Values[2]);
+                    paletteDataFile = Project.GetFileWithLabel(Values[2]);
                     if (!(paletteDataFile.GetData(Values[2]) is RgbData))
                         throw new Exception("Label \"" + Values[2] + "\" was expected to reference data defined with m_RGB16");
                 }
 		}
 
 		public bool ShouldHaveNext() {
-			return (project.EvalToInt(Values[3]) & 0x80) == 0x80;
+			return (Project.EvalToInt(Values[3]) & 0x80) == 0x80;
 		}
 
         public bool SourceFromRam() {

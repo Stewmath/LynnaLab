@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -57,7 +56,6 @@
     <Compile Include="Core\Area.cs" />
     <Compile Include="Core\GraphicsState.cs" />
     <Compile Include="Core\FileParser.cs" />
-    <Compile Include="Core\BinaryFileParser.cs" />
     <Compile Include="Core\AsmFileParser.cs" />
     <Compile Include="Core\GfxHeaderGroup.cs" />
     <Compile Include="Core\GfxHeaderData.cs" />
@@ -79,6 +77,9 @@
     <Compile Include="Core\AnimationGroup.cs" />
     <Compile Include="Core\SubStream.cs" />
     <Compile Include="UI\SpinButtonHexadecimal.cs" />
+    <Compile Include="UI\AreaEditor.cs" />
+    <Compile Include="gtk-gui\LynnaLab.AreaEditor.cs" />
+    <Compile Include="Wla.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

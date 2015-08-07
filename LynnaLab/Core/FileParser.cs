@@ -22,18 +22,27 @@ namespace LynnaLab
 	}
 
 
-	public class FileParser
+	public abstract class FileParser
 	{
 		private Project project;
 
-		protected string filename; // Relative to base directory
-		protected string fullFilename; // Full path
+		string filename; // Relative to base directory
+		string fullFilename; // Full path
 
-		protected Dictionary<string,Label> labelDictionary = new Dictionary<string,Label>();
-		protected List<Data> dataList = new List<Data>();
+		Dictionary<string,Label> labelDictionary = new Dictionary<string,Label>();
+		List<Data> dataList = new List<Data>();
 
         public Project Project {
             get { return project; }
+        }
+        protected List<Data> DataList {
+            get { return dataList; }
+        }
+        protected string FullFilename {
+            get { return fullFilename; }
+        }
+        protected string Filename {
+            get { return filename; }
         }
 
 		public string Basename {
@@ -80,6 +89,9 @@ namespace LynnaLab
 				"\" was invalid.");
 		}
 
+        public abstract string GetLine(int i);
+        public abstract void SetLine(int i, string line);
+        public abstract void Save();
 	}
 }
 

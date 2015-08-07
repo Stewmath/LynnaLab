@@ -9,7 +9,7 @@ namespace LynnaLab {
         Stream referencedData;
 
         public int DictionaryIndex {
-            get { return project.EvalToInt(Values[0]); }
+            get { return Project.EvalToInt(Values[0]); }
         }
         public Stream ReferencedData {
             get {
@@ -17,26 +17,26 @@ namespace LynnaLab {
             }
         }
         public int DestAddress {
-            get { return project.EvalToInt(Values[2]); }
+            get { return Project.EvalToInt(Values[2]); }
         }
         public int DestBank {
-            get { return project.EvalToInt(":"+Values[2]); }
+            get { return Project.EvalToInt(":"+Values[2]); }
         }
         public int DataSize {
-            get { return project.EvalToInt(Values[3]); }
+            get { return Project.EvalToInt(Values[3]); }
         }
 
 
-		public TilesetHeaderData(Project p, string command, IList<string> values) 
-			: base(p, command, values, 8) {
+		public TilesetHeaderData(Project p, string command, IList<string> values, FileParser parser, int line, int colStart) 
+			: base(p, command, values, 8, parser, line, colStart) {
                 try {
-                    referencedData = project.GetBinaryFile("tilesets/" + Values[1] + ".bin");
+                    referencedData = Project.GetBinaryFile("tilesets/" + Values[1] + ".bin");
                 }
                 catch (FileNotFoundException) {}
 		}
 
 		public bool ShouldHaveNext() {
-			return (project.EvalToInt(Values[4]) & 0x80) == 0x80;
+			return (Project.EvalToInt(Values[4]) & 0x80) == 0x80;
 		}
 	}
 
