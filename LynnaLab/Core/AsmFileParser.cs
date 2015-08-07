@@ -7,8 +7,6 @@ namespace LynnaLab
 {
     public class AsmFileParser : FileParser
     {
-        Project project;
-
         // I'm a bit evil for using these variables like this, variables only
         // used for the constructor and helper functions
         string context = "";
@@ -23,8 +21,6 @@ namespace LynnaLab
         public AsmFileParser(Project p, string f)
             : base(p,f)
         {
-            project = p;
-
             string[] lines = File.ReadAllLines(fullFilename);
 
             for (int i=0; i<lines.Length; i++) {
@@ -55,7 +51,7 @@ namespace LynnaLab
                                 while (tokenIndex < tokens.Length) {
                                     if (tokens[tokenIndex] == "BANK") {
                                         tokenIndex++;
-                                        bank = project.EvalToInt(tokens[tokenIndex++]);
+                                        bank = Project.EvalToInt(tokens[tokenIndex++]);
                                     }
                                     else if (tokens[tokenIndex] == "SLOT") {
                                         tokenIndex++;
@@ -77,8 +73,8 @@ namespace LynnaLab
 
                         case ".define":
                             if (tokens.Length < 3) {
-                                project.WriteLog(warningString);
-                                project.WriteLogLine("Expected .DEFINE to have a string and a value.");
+                                Project.WriteLog(warningString);
+                                Project.WriteLogLine("Expected .DEFINE to have a string and a value.");
                                 break;
                             }
                             value = "";
@@ -87,7 +83,7 @@ namespace LynnaLab
                                 value += " ";
                             }
                             value = value.Trim();
-                            project.AddDefinition(tokens[1], value);
+                            Project.AddDefinition(tokens[1], value);
                             break;
 
                         default:
@@ -95,8 +91,8 @@ namespace LynnaLab
                                 // Label
                                 string s = tokens[0].Substring(0, tokens[0].Length - 1); 
                                 if (context == "RAMSECTION") {
-                                    project.AddDefinition(s, address.ToString());
-                                    project.AddDefinition(":"+s, bank.ToString());
+                                    Project.AddDefinition(s, address.ToString());
+                                    Project.AddDefinition(":"+s, bank.ToString());
                                 }
                                 else {
                                     Label label = new Label(s,dataList.Count);
@@ -107,15 +103,15 @@ namespace LynnaLab
                                     for (int j=1; j<tokens.Length; j++)
                                         tokens2[j-1] = tokens[j];
                                     if (!parseData(tokens2, warningString)) {
-                                        project.WriteLog(warningString);
-                                        project.WriteLogLine("Error parsing line.");
+                                        Project.WriteLog(warningString);
+                                        Project.WriteLogLine("Error parsing line.");
                                     }
                                 }
                             } else {
                                 if (!parseData(tokens, warningString)) {
                                     // Unknown data
-                                    project.WriteLog(warningString);
-                                    project.WriteLogLine("Did not understand \"" + tokens[0] + "\".");
+                                    Project.WriteLog(warningString);
+                                    Project.WriteLogLine("Did not understand \"" + tokens[0] + "\".");
                                 }
                             }
                             break;
@@ -123,7 +119,7 @@ namespace LynnaLab
                 }
             }
 
-            project.WriteLogLine("Parsed \"" + filename + "\" successfully maybe.");
+            Project.WriteLogLine("Parsed \"" + filename + "\" successfully maybe.");
         }
 
         // Returns true if a meaning for the token was found.
@@ -137,13 +133,13 @@ namespace LynnaLab
                     if (context == "RAMSECTION")
                         break;
                     if (tokens.Length < 2) {
-                        project.WriteLog(warningString);
-                        project.WriteLogLine("Expected .DW to have a value.");
+                        Project.WriteLog(warningString);
+                        Project.WriteLogLine("Expected .DW to have a value.");
                         break;
                     }
                     for (int j=1; j<tokens.Length; j++) {
                         string[] values = { tokens[j] };
-                        Data d = new Data(project, tokens[0].ToLower(), values, 2);
+                        Data d = new Data(Project, tokens[0].ToLower(), values, 2);
                         AddData(d);
                     }
                     break;
@@ -151,13 +147,13 @@ namespace LynnaLab
                     if (context == "RAMSECTION")
                         break;
                     if (tokens.Length < 2) {
-                        project.WriteLog(warningString);
-                        project.WriteLogLine("Expected .DB to have a value.");
+                        Project.WriteLog(warningString);
+                        Project.WriteLogLine("Expected .DB to have a value.");
                         break;
                     }
                     for (int j=1; j<tokens.Length; j++) {
                         string[] values = { tokens[j] };
-                        Data d = new Data(project, tokens[0].ToLower(), values, 1);
+                        Data d = new Data(Project, tokens[0].ToLower(), values, 1);
                         AddData(d);
                     }
                     break;
@@ -174,93 +170,93 @@ namespace LynnaLab
                 case "dsb":
                     if (context != "RAMSECTION")
                         goto default;
-                    address += project.EvalToInt(tokens[1]);
+                    address += Project.EvalToInt(tokens[1]);
                     break;
                 case "dsw":
                     if (context != "RAMSECTION")
                         goto default;
-                    address += project.EvalToInt(tokens[1])*2;
+                    address += Project.EvalToInt(tokens[1])*2;
                     break;
 
                 case "dwbe":
                     if (tokens.Length < 2) {
-                        project.WriteLog(warningString);
-                        project.WriteLogLine("Expected dwbe to have a value.");
+                        Project.WriteLog(warningString);
+                        Project.WriteLogLine("Expected dwbe to have a value.");
                         break;
                     }
                     for (int j=1; j<tokens.Length; j++) {
                         string[] values = { tokens[j] };
-                        Data d = new Data(project, tokens[0].ToLower(), values, 1);
+                        Data d = new Data(Project, tokens[0].ToLower(), values, 1);
                         AddData(d);
                     }
                     break;
                 case "m_rgb16":
                     if (tokens.Length != 4) {
-                        project.WriteLog(warningString);
-                        project.WriteLogLine("Expected " + tokens[0] + " to take 3 parameters");
+                        Project.WriteLog(warningString);
+                        Project.WriteLogLine("Expected " + tokens[0] + " to take 3 parameters");
                         break;
                     }
                     {
-                        Data d = new RgbData(project, tokens[0].ToLower(), standardValues);
+                        Data d = new RgbData(Project, tokens[0].ToLower(), standardValues);
                         AddData(d);
                         break;
                     }
                 case "m_gfxheader":
                 case "m_gfxheaderforcemode":
                     if (tokens.Length < 4 || tokens.Length > 5) {
-                        project.WriteLog(warningString);
-                        project.WriteLogLine("Expected " + tokens[0] + " to take 3-4 parameters");
+                        Project.WriteLog(warningString);
+                        Project.WriteLogLine("Expected " + tokens[0] + " to take 3-4 parameters");
                         break;
                     }
                     {
-                        Data d = new GfxHeaderData(project, tokens[0].ToLower(), standardValues);
+                        Data d = new GfxHeaderData(Project, tokens[0].ToLower(), standardValues);
                         AddData(d);
                         break;
                     }
                 case "m_paletteheaderbg":
                 case "m_paletteheaderspr":
                     if (tokens.Length != 5) {
-                        project.WriteLog(warningString);
-                        project.WriteLogLine("Expected " + tokens[0] + " to take 4 parameters");
+                        Project.WriteLog(warningString);
+                        Project.WriteLogLine("Expected " + tokens[0] + " to take 4 parameters");
                         break;
                     }
                     {
-                        Data d = new PaletteHeaderData(project, tokens[0].ToLower(), standardValues);
+                        Data d = new PaletteHeaderData(Project, tokens[0].ToLower(), standardValues);
                         AddData(d);
                         break;
                     }
                 case "m_tilesetheader":
                     if (tokens.Length != 6) {
-                        project.WriteLog(warningString);
-                        project.WriteLogLine("Expected " + tokens[0] + " to take 5 parameters");
+                        Project.WriteLog(warningString);
+                        Project.WriteLogLine("Expected " + tokens[0] + " to take 5 parameters");
                         break;
                     }
                     {
-                        Data d = new TilesetHeaderData(project, tokens[0].ToLower(), standardValues);
+                        Data d = new TilesetHeaderData(Project, tokens[0].ToLower(), standardValues);
                         AddData(d);
                         break;
                     }
                 case "m_tilesetdata":
                     if (tokens.Length != 2) {
-                        project.WriteLog(warningString);
-                        project.WriteLogLine("Expected " + tokens[0] + " to take 1 parameter");
+                        Project.WriteLog(warningString);
+                        Project.WriteLogLine("Expected " + tokens[0] + " to take 1 parameter");
                         break;
                     }
                     {
-                        Stream file = project.GetBinaryFile("tilesets/" + tokens[1] + ".bin");
-                        Data d = new Data(project, tokens[0].ToLower(), standardValues, (Int32)file.Length);
+                        Stream file = Project.GetBinaryFile("tilesets/" + tokens[1] + ".bin");
+                        Data d = new Data(Project, tokens[0].ToLower(), standardValues, (Int32)file.Length);
                         AddData(d);
                         break;
                     }
                 case "m_roomlayoutdata":
                     if (tokens.Length != 2) {
-                        project.WriteLog(warningString);
-                        project.WriteLogLine("Expected " + tokens[0] + " to take 1 parameter");
+                        Project.WriteLog(warningString);
+                        Project.WriteLogLine("Expected " + tokens[0] + " to take 1 parameter");
                         break;
                     }
                     {
                         AddLabel(new Label(tokens[1], dataList.Count));
-                        Data d = new Data(project, tokens[0].ToLower(), standardValues, -1);
+                        Data d = new Data(Project, tokens[0].ToLower(), standardValues, -1);
                         AddData(d);
                         break;
                     }

@@ -15,7 +15,7 @@ namespace LynnaLab
 				AddData(new Data(p, ".db", new string[] { b.ToString() }, 1));
 			}
 
-			project.WriteLogLine("Parsed \"" + filename + "\" successfully maybe.");
+			Project.WriteLogLine("Parsed \"" + filename + "\" successfully maybe.");
 		}
 	}
 }

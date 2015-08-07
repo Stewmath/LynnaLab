@@ -24,13 +24,17 @@ namespace LynnaLab
 
 	public class FileParser
 	{
-		protected Project project;
+		private Project project;
 
 		protected string filename; // Relative to base directory
 		protected string fullFilename; // Full path
 
 		protected Dictionary<string,Label> labelDictionary = new Dictionary<string,Label>();
 		protected List<Data> dataList = new List<Data>();
+
+        public Project Project {
+            get { return project; }
+        }
 
 		public string Basename {
 			get { 
