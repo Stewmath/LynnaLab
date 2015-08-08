@@ -45,7 +45,7 @@ public partial class MainWindow
 	
 	private global::Gtk.Label label8;
 	
-	private global::Gtk.SpinButton musicSpinButton;
+	private global::LynnaLab.SpinButtonHexadecimal musicSpinButton;
 	
 	private global::Gtk.Label GtkLabel2;
 	
@@ -224,11 +224,14 @@ public partial class MainWindow
 		w8.XOptions = ((global::Gtk.AttachOptions)(4));
 		w8.YOptions = ((global::Gtk.AttachOptions)(4));
 		// Container child table3.Gtk.Table+TableChild
-		this.musicSpinButton = new global::Gtk.SpinButton (0, 100, 1);
+		this.musicSpinButton = new global::LynnaLab.SpinButtonHexadecimal ();
 		this.musicSpinButton.CanFocus = true;
 		this.musicSpinButton.Name = "musicSpinButton";
+		this.musicSpinButton.Adjustment.Upper = 255;
 		this.musicSpinButton.Adjustment.PageIncrement = 10;
+		this.musicSpinButton.Adjustment.StepIncrement = 1;
 		this.musicSpinButton.ClimbRate = 1;
+		this.musicSpinButton.Digits = ((uint)(2));
 		this.musicSpinButton.Numeric = true;
 		this.table3.Add (this.musicSpinButton);
 		global::Gtk.Table.TableChild w9 = ((global::Gtk.Table.TableChild)(this.table3 [this.musicSpinButton]));
