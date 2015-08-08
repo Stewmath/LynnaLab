@@ -11,6 +11,9 @@ namespace LynnaLab
         string[] lines;
         bool modified;
 
+        public Dictionary<string,string> definesDictionary = new Dictionary<string,string>();
+
+
         // I'm a bit evil for using these variables like this, variables only
         // used for the constructor and helper functions
         string context = "";
@@ -22,6 +25,11 @@ namespace LynnaLab
         int bank;
         int address;
 
+
+
+        public Dictionary<string,string> DefinesDictionary {
+            get { return definesDictionary; }
+        }
 
         public AsmFileParser(Project p, string f)
             : base(p,f)
@@ -106,7 +114,7 @@ namespace LynnaLab
                                 value += " ";
                             }
                             value = value.Trim();
-                            Project.AddDefinition(tokens[1], value);
+                            AddDefinition(tokens[1], value);
                             break;
 
                         default:
@@ -114,8 +122,8 @@ namespace LynnaLab
                                 // Label
                                 string s = tokens[0].Substring(0, tokens[0].Length - 1); 
                                 if (context == "RAMSECTION") {
-                                    Project.AddDefinition(s, address.ToString());
-                                    Project.AddDefinition(":"+s, bank.ToString());
+                                    AddDefinition(s, address.ToString());
+                                    AddDefinition(":"+s, bank.ToString());
                                 }
                                 else {
                                     Label label = new Label(s,DataList.Count);
@@ -321,6 +329,11 @@ namespace LynnaLab
                 return;
             modified = false;
             File.WriteAllLines(FullFilename, lines);
+        }
+
+        void AddDefinition(string def, string value) {
+            Project.AddDefinition(def, value);
+            definesDictionary[def] = value;
         }
     }
 }

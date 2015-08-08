@@ -12,7 +12,7 @@ namespace LynnaLab
         Data areaData;
 
         int flags1, flags2;
-        int uniqueGfxHeaderGroupIndex, gfxHeaderGroupIndex;
+        int gfxHeaderGroupIndex;
         int paletteHeaderGroupIndex;
         int tilesetHeaderGroupIndex;
         int layoutGroup;
@@ -56,6 +56,17 @@ namespace LynnaLab
                 data.SetValue(0,Wla.ToByte((byte)flags2));
             }
         }
+        public string UniqueGfxString {
+            get {
+                Data d = GetDataIndex(2);
+                return d.Values[0];
+            }
+            set {
+                Data d = GetDataIndex(2);
+                d.SetValue(0, value);
+            }
+        }
+            
         public int LayoutGroup {
             get { return layoutGroup; }
         }
@@ -71,7 +82,7 @@ namespace LynnaLab
             flags2 = p.EvalToInt(data.Values[0]);
 
             data = data.Next;
-            uniqueGfxHeaderGroupIndex = p.EvalToInt(data.Values[0]);
+            int uniqueGfxHeaderGroupIndex = p.EvalToInt(data.Values[0]);
 
             data = data.Next;
             gfxHeaderGroupIndex = p.EvalToInt(data.Values[0]);
@@ -160,6 +171,26 @@ namespace LynnaLab
             for (int j=0; j<i; j++)
                 data = data.Next;
             return data;
+        }
+
+        public void InvalidateAllTiles() {
+            if (TileModifiedEvent != null) {
+                tileUpdaterIndex = 0;
+                GLib.IdleHandler handler = new GLib.IdleHandler(TileUpdater);
+                GLib.Idle.Remove(handler);
+                GLib.Idle.Add(handler);
+            }
+        }
+
+        int tileUpdaterIndex;
+        bool TileUpdater() {
+            if (tileUpdaterIndex == 256)
+                return false;
+            tileImagesCache[tileUpdaterIndex] = null;
+            GetTileImage(tileUpdaterIndex);
+            if (TileModifiedEvent != null)
+                TileModifiedEvent(tileUpdaterIndex++);
+            return true;
         }
 
         public Bitmap GetTileImage(int index) {

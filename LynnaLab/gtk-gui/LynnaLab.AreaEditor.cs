@@ -28,6 +28,8 @@ namespace LynnaLab
 		
 		private global::Gtk.Label label6;
 		
+		private global::LynnaLab.ComboBoxFromConstants uniqueGfxComboBox;
+		
 		private global::Gtk.Label GtkLabel;
 
 		protected virtual void Build ()
@@ -147,6 +149,18 @@ namespace LynnaLab
 			w8.BottomAttach = ((uint)(3));
 			w8.XOptions = ((global::Gtk.AttachOptions)(4));
 			w8.YOptions = ((global::Gtk.AttachOptions)(4));
+			// Container child table2.Gtk.Table+TableChild
+			this.uniqueGfxComboBox = new global::LynnaLab.ComboBoxFromConstants ();
+			this.uniqueGfxComboBox.Events = ((global::Gdk.EventMask)(256));
+			this.uniqueGfxComboBox.Name = "uniqueGfxComboBox";
+			this.table2.Add (this.uniqueGfxComboBox);
+			global::Gtk.Table.TableChild w9 = ((global::Gtk.Table.TableChild)(this.table2 [this.uniqueGfxComboBox]));
+			w9.TopAttach = ((uint)(2));
+			w9.BottomAttach = ((uint)(3));
+			w9.LeftAttach = ((uint)(1));
+			w9.RightAttach = ((uint)(2));
+			w9.XOptions = ((global::Gtk.AttachOptions)(4));
+			w9.YOptions = ((global::Gtk.AttachOptions)(4));
 			this.GtkAlignment.Add (this.table2);
 			this.frame2.Add (this.GtkAlignment);
 			this.GtkLabel = new global::Gtk.Label ();
@@ -154,16 +168,17 @@ namespace LynnaLab
 			this.GtkLabel.UseMarkup = true;
 			this.frame2.LabelWidget = this.GtkLabel;
 			this.vbox2.Add (this.frame2);
-			global::Gtk.Box.BoxChild w11 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
-			w11.Position = 1;
-			w11.Expand = false;
-			w11.Fill = false;
+			global::Gtk.Box.BoxChild w12 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
+			w12.Position = 1;
+			w12.Expand = false;
+			w12.Fill = false;
 			this.Add (this.vbox2);
 			if ((this.Child != null)) {
 				this.Child.ShowAll ();
 			}
 			this.Hide ();
 			this.areaSpinButton.ValueChanged += new global::System.EventHandler (this.OnAreaSpinButtonValueChanged);
+			this.uniqueGfxComboBox.Changed += new global::System.EventHandler (this.OnUniqueGfxComboBoxChanged);
 			this.flags1SpinButton.ValueChanged += new global::System.EventHandler (this.OnFlags1SpinButtonValueChanged);
 		}
 	}

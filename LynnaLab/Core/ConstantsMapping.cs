@@ -5,18 +5,45 @@ namespace LynnaLab
 {
 	public class ConstantsMapping
 	{
-		//Dictionary dict;
+        public Project Project {
+            get { return parser.Project; }
+        }
 
-		public ConstantsMapping(Project p, string filename)
+		Dictionary<string,byte> stringToByte = new Dictionary<string,byte>();
+		Dictionary<byte,string> byteToString = new Dictionary<byte,string>();
+
+        AsmFileParser parser;
+
+		public ConstantsMapping(AsmFileParser parser, string prefix)
 		{
-			//dict = new Dictionary();
+            this.parser = parser;
 
-			AsmFileParser parser = new AsmFileParser(p, filename);
+            Dictionary<string,string> definesDictionary = parser.DefinesDictionary;
+            foreach (string key in definesDictionary.Keys) {
+                if (key.Substring(0,prefix.Length) == prefix) {
+                    byte tmp;
+                    if (!stringToByte.TryGetValue(key, out tmp)) {
+                        try {
+                            byte b = (byte)Project.EvalToInt(definesDictionary[key]);
+                            stringToByte[key] = b;
+                            byteToString[b] = key;
+                        }
+                        catch (FormatException) {}
+                    }
+                }
+            }
 		}
 
-		public byte StringToByte(string val) {
-			return 0;
+		public byte StringToByte(string key) {
+            return stringToByte[key];
 		}
+		public string ByteToString(byte key) {
+            return byteToString[key];
+		}
+
+        public ICollection<string> GetAllKeys() {
+            return stringToByte.Keys;
+        }
 	}
 }
 

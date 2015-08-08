@@ -6,7 +6,7 @@ namespace LynnaLab
     [System.ComponentModel.ToolboxItem(true)]
     public partial class SpinButtonHexadecimal : Gtk.SpinButton
     {
-        public SpinButtonHexadecimal() : base(0,100,1)
+        public SpinButtonHexadecimal() : base(0,255,1)
         {
             this.Numeric = false;
         }

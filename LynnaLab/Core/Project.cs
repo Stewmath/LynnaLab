@@ -12,7 +12,7 @@ namespace LynnaLab
 		string configDirectory;
 		StreamWriter logWriter;
 
-        List<FileParser> fileParserList = new List<FileParser>();
+        Dictionary<string,FileParser> fileParserDictionary = new Dictionary<string,FileParser>();
 
 		// Maps label to file which contains it
 		Dictionary<string,FileParser> labelDictionary = new Dictionary<string,FileParser>();
@@ -42,25 +42,33 @@ namespace LynnaLab
 			foreach (string f in Directory.EnumerateFiles(baseDirectory + "constants/")) {
 				if (f.Substring(f.LastIndexOf('.')) == ".s") {
 					string filename = "constants/" + f.Substring(f.LastIndexOf('/') + 1);
-					fileParserList.Add(new AsmFileParser(this, filename));
+                    GetFileParser(filename);
 				}
 			}
 			// Parse everything in data/
 			foreach (string f in Directory.EnumerateFiles(baseDirectory + "data/")) {
 				if (f.Substring(f.LastIndexOf('.')) == ".s") {
 					string filename = "data/" + f.Substring(f.LastIndexOf('/') + 1);
-					fileParserList.Add(new AsmFileParser(this, filename));
+                    GetFileParser(filename);
 				}
 			}
             // Parse wram.s
-            fileParserList.Add(new AsmFileParser(this, "include/wram.s"));
+            GetFileParser("include/wram.s");
 		}
 
+        public FileParser GetFileParser(string filename) {
+            FileParser p;
+            if (!fileParserDictionary.TryGetValue(filename, out p)) {
+                p = new AsmFileParser(this, filename);
+                fileParserDictionary[filename] = p;
+            }
+            return p;
+        }
         public void Save() {
             foreach (ProjectDataType data in dataStructDictionary.Values) {
                 data.Save();
             }
-            foreach (FileParser parser in fileParserList) {
+            foreach (FileParser parser in fileParserDictionary.Values) {
                 parser.Save();
             }
             foreach (MemoryFileStream file in binaryFileDictionary.Values) {
