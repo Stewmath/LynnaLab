@@ -13,21 +13,29 @@ namespace LynnaLab
 
         protected override int OnOutput() {
             this.Numeric = false;
-            Text = "0x" + ValueAsInt.ToString("X" + Digits);
+            Text = "$" + ValueAsInt.ToString("X" + Digits);
             return 1;
         }
         protected override int OnInput(out double value) {
+            string text = Text.Trim();
+            bool success = false;
+            value = Value;
             try {
-                value = Convert.ToInt32(Text);
+                value = Convert.ToInt32(text);
+                success = true;
             }
             catch (Exception e) {
-                try {
-                    value = Convert.ToInt32(Text.Substring(2),16);
-                }
-                catch (Exception) {
-                    value = Value;
+            }
+            try {
+                if (text.Length > 0 && text[0] == '$') {
+                    value = Convert.ToInt32(text.Substring(1),16);
+                    success = true;
                 }
             }
+            catch (Exception) {
+            }
+            if (!success)
+                value = Value;
             return 1;
         }
     }
