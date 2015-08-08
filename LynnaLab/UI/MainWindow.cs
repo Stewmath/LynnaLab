@@ -112,6 +112,7 @@ public partial class MainWindow: Gtk.Window
         roomeditor1.SetRoom(room);
         SetArea(room.Area);
         musicSpinButton.Value = room.GetMusicID();
+        roomSpinButton.Value = room.Index;
     }
 
     void SetDungeon(Dungeon dungeon) {
@@ -222,7 +223,7 @@ public partial class MainWindow: Gtk.Window
             SetDungeon(dungeonSpinButton.ValueAsInt);
     }
 
-    protected void OnSpinbuttonhexadecimal1ValueChanged(object sender, EventArgs e)
+    protected void OnRoomSpinButtonValueChanged(object sender, EventArgs e)
     {
         SpinButton button = sender as SpinButton;
         SetRoom(Project.GetIndexedDataType<Room>(button.ValueAsInt));

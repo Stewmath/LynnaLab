@@ -472,7 +472,7 @@ public partial class MainWindow
 		if ((this.Child != null)) {
 			this.Child.ShowAll ();
 		}
-		this.DefaultWidth = 728;
+		this.DefaultWidth = 738;
 		this.DefaultHeight = 546;
 		this.Show ();
 		this.DeleteEvent += new global::Gtk.DeleteEventHandler (this.OnDeleteEvent);
@@ -480,7 +480,7 @@ public partial class MainWindow
 		this.QuitAction.Activated += new global::System.EventHandler (this.OnQuitActionActivated);
 		this.SaveAction.Activated += new global::System.EventHandler (this.OnSaveActionActivated);
 		this.AnimationsAction.Activated += new global::System.EventHandler (this.OnAnimationsActionActivated);
-		this.roomSpinButton.ValueChanged += new global::System.EventHandler (this.OnSpinbuttonhexadecimal1ValueChanged);
+		this.roomSpinButton.ValueChanged += new global::System.EventHandler (this.OnRoomSpinButtonValueChanged);
 		this.musicSpinButton.ValueChanged += new global::System.EventHandler (this.OnMusicSpinButtonValueChanged);
 		this.areaSpinButton.ValueChanged += new global::System.EventHandler (this.OnAreaSpinButtonValueChanged);
 		this.areaEditorButton.Clicked += new global::System.EventHandler (this.OnAreaEditorButtonClicked);
