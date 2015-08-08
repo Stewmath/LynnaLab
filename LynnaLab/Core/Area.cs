@@ -52,7 +52,7 @@ namespace LynnaLab
             get { return flags2; }
             set {
                 flags2 = value;
-                Data data = GetDataIndex(0);
+                Data data = GetDataIndex(1);
                 data.SetValue(0,Wla.ToByte((byte)flags2));
             }
         }
@@ -64,28 +64,29 @@ namespace LynnaLab
             areaFile = Project.GetFileWithLabel("areaData");
 
             areaData = areaFile.GetData("areaData", Index * 8);
-            flags1 = p.EvalToInt(areaData.Values[0]);
+            Data data = areaData;
+            flags1 = p.EvalToInt(data.Values[0]);
 
-            areaData = areaData.Next;
-            flags2 = p.EvalToInt(areaData.Values[0]);
+            data = data.Next;
+            flags2 = p.EvalToInt(data.Values[0]);
 
-            areaData = areaData.Next;
-            uniqueGfxHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
+            data = data.Next;
+            uniqueGfxHeaderGroupIndex = p.EvalToInt(data.Values[0]);
 
-            areaData = areaData.Next;
-            gfxHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
+            data = data.Next;
+            gfxHeaderGroupIndex = p.EvalToInt(data.Values[0]);
 
-            areaData = areaData.Next;
-            paletteHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
+            data = data.Next;
+            paletteHeaderGroupIndex = p.EvalToInt(data.Values[0]);
 
-            areaData = areaData.Next;
-            tilesetHeaderGroupIndex = p.EvalToInt(areaData.Values[0]);
+            data = data.Next;
+            tilesetHeaderGroupIndex = p.EvalToInt(data.Values[0]);
 
-            areaData = areaData.Next;
-            layoutGroup = p.EvalToInt(areaData.Values[0]);
+            data = data.Next;
+            layoutGroup = p.EvalToInt(data.Values[0]);
 
-            areaData = areaData.Next;
-            animationIndex = p.EvalToInt(areaData.Values[0]);
+            data = data.Next;
+            animationIndex = p.EvalToInt(data.Values[0]);
 
 
             gfxHeaderGroup = Project.GetIndexedDataType<GfxHeaderGroup>(gfxHeaderGroupIndex);
