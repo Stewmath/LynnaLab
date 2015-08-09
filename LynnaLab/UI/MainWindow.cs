@@ -136,6 +136,33 @@ public partial class MainWindow: Gtk.Window
         SetRoom(worldMinimap.GetRoom());
     }
 
+    ResponseType AskSave(string info) {
+        ResponseType response;
+        Gtk.Dialog d = new Dialog("Save Project?", this,
+                DialogFlags.DestroyWithParent,
+                Gtk.Stock.Yes, ResponseType.Yes,
+                Gtk.Stock.No, ResponseType.No,
+                Gtk.Stock.Cancel, ResponseType.Cancel);
+        Alignment a = new Alignment(1,0.25f,1,0);
+        a.SetSizeRequest(0, 50);
+        a.Add(new Gtk.Label(info));
+        d.VBox.Add(a);
+        d.VBox.ShowAll();
+        response = (ResponseType)d.Run();
+        d.Destroy();
+        if (response == ResponseType.Yes) {
+            Project.Save();
+        }
+
+        return response;
+    }
+
+    void AskQuit() {
+        ResponseType r = AskSave("Save project before exiting?");
+        if (r == ResponseType.Yes || r == ResponseType.No)
+            Quit();
+    }
+
     void Quit() {
         if (Project != null)
             Project.Close();
@@ -144,7 +171,7 @@ public partial class MainWindow: Gtk.Window
 
     protected void OnDeleteEvent (object sender, DeleteEventArgs a)
     {
-        Quit();
+        AskQuit();
         a.RetVal = true;
     }
 
@@ -158,8 +185,11 @@ public partial class MainWindow: Gtk.Window
         ResponseType response = (ResponseType)dialog.Run();
 
         if (response == ResponseType.Accept) {
-            string basedir = dialog.Filename;
-            OpenProject(basedir);
+            ResponseType r2 = AskSave("Save project before closing it?");
+            if (r2 != ResponseType.Cancel) {
+                string basedir = dialog.Filename;
+                OpenProject(basedir);
+            }
         }
         dialog.Destroy();
     }
@@ -179,25 +209,7 @@ public partial class MainWindow: Gtk.Window
 
     protected void OnQuitActionActivated(object sender, EventArgs e)
     {
-        ResponseType response;
-        Gtk.Dialog d = new Dialog("Exiting", this,
-                DialogFlags.DestroyWithParent,
-                Gtk.Stock.Yes, ResponseType.Yes,
-                Gtk.Stock.No, ResponseType.No,
-                Gtk.Stock.Cancel, ResponseType.Cancel);
-        Alignment a = new Alignment(1,0.25f,1,0);
-        a.SetSizeRequest(0, 50);
-        a.Add(new Gtk.Label("Save project before exiting?"));
-        d.VBox.Add(a);
-        d.VBox.ShowAll();
-        response = (ResponseType)d.Run();
-        d.Destroy();
-        if (response == ResponseType.Yes) {
-            Project.Save();
-            Quit();
-        }
-        else if (response == ResponseType.No)
-            Quit();
+        AskQuit();
     }
 
     protected void OnDungeonSpinButtonValueChanged(object sender, EventArgs e)
