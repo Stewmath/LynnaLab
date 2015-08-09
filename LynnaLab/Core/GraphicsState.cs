@@ -51,8 +51,11 @@ namespace LynnaLab
         }
 
         public void AddGfxHeader(GfxHeaderData header, GfxHeaderGroup group) {
-            gfxHeaderDataList.Add(header);
-            gfxHeaderDataGroups.Add(group);
+            int i = 0;
+            while (i < gfxHeaderDataGroups.Count && gfxHeaderDataGroups[i] <= group)
+                i++;
+            gfxHeaderDataList.Insert(i, header);
+            gfxHeaderDataGroups.Insert(i, group);
             LoadGfxHeader(header);
         }
 
