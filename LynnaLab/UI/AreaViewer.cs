@@ -186,14 +186,22 @@ namespace LynnaLab
             area = a;
 
             image = new Bitmap(0x10*16,0x10*16);
-            Graphics g = Graphics.FromImage(image);
 
-            for (int i=0; i<256; i++) {
-                DrawTile(i, g);
-            }
-            g.Dispose();
+            drawTileIndex = 0;
+            var drawer = new GLib.IdleHandler(TileDrawer);
+            GLib.Idle.Remove(drawer);
+            GLib.Idle.Add(drawer);
 
             this.QueueDraw();
+        }
+
+        int drawTileIndex;
+        bool TileDrawer() {
+            if (drawTileIndex == 256)
+                return false;
+            for (int i=0; i<16; i++)
+                DrawTile(drawTileIndex++);
+            return true;
         }
 
         void ModifiedTileCallback(int tile) {

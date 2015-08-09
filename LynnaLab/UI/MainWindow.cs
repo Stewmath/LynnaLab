@@ -136,7 +136,11 @@ public partial class MainWindow: Gtk.Window
         SetRoom(worldMinimap.GetRoom());
     }
 
+    // This returns ResponseType.Yes, No, or Cancel
     ResponseType AskSave(string info) {
+        if (Project == null)
+            return ResponseType.No;
+
         ResponseType response;
         Gtk.Dialog d = new Dialog("Save Project?", this,
                 DialogFlags.DestroyWithParent,
@@ -216,38 +220,45 @@ public partial class MainWindow: Gtk.Window
     {
         if (Project == null)
             return;
-        SpinButton spinner = sender as SpinButton;
-        SetDungeon(Project.GetIndexedDataType<Dungeon>(spinner.ValueAsInt));
+        GLib.Idle.Add(new GLib.IdleHandler(delegate() {
+                    SetDungeon(Project.GetIndexedDataType<Dungeon>(dungeonSpinButton.ValueAsInt));
+                    return false;
+        }));
     }
 
     protected void OnFloorSpinButtonValueChanged(object sender, EventArgs e)
     {
         if (Project == null)
             return;
-        SpinButton spinner = sender as SpinButton;
-        dungeonMinimap.Floor = spinner.ValueAsInt;
-        SetRoom(dungeonMinimap.Dungeon.GetRoom(dungeonMinimap.Floor, dungeonMinimap.SelectedX, dungeonMinimap.SelectedY));
+        GLib.Idle.Add(new GLib.IdleHandler(delegate() {
+                    dungeonMinimap.Floor = floorSpinButton.ValueAsInt;
+                    SetRoom(dungeonMinimap.Dungeon.GetRoom(dungeonMinimap.Floor, dungeonMinimap.SelectedX, dungeonMinimap.SelectedY));
+                    return false;
+        }));
     }
 
     protected void OnWorldSpinButtonValueChanged(object sender, EventArgs e)
     {
         if (Project == null)
             return;
-        SpinButton spinner = sender as SpinButton;
-        spinner.Hide();
-        SetWorld(spinner.ValueAsInt);
-        spinner.Show();
+        GLib.Idle.Add(new GLib.IdleHandler(delegate() {
+                    SetWorld(worldSpinButton.ValueAsInt);
+                    return false;
+        }));
     }
 
     protected void OnNotebook2SwitchPage(object o, SwitchPageArgs args)
     {
         if (Project == null)
             return;
-        Notebook nb = o as Notebook;
-        if (nb.Page == 0)
-            SetWorld(worldSpinButton.ValueAsInt);
-        else if (nb.Page == 1)
-            SetDungeon(dungeonSpinButton.ValueAsInt);
+        GLib.Idle.Add(new GLib.IdleHandler(delegate() {
+                    Notebook nb = notebook2;
+                    if (nb.Page == 0)
+                        SetWorld(worldSpinButton.ValueAsInt);
+                    else if (nb.Page == 1)
+                        SetDungeon(dungeonSpinButton.ValueAsInt);
+                    return false;
+        }));
     }
 
     protected void OnRoomSpinButtonValueChanged(object sender, EventArgs e)
