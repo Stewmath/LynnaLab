@@ -16,6 +16,7 @@ namespace LynnaLab
             }
             set {
                 _project = value;
+                GenerateImage();
             }
         }
         public Dungeon Dungeon {
@@ -90,7 +91,7 @@ namespace LynnaLab
             return GetRoom(SelectedX, SelectedY);
         }
 
-        void GenerateImage() {
+        public void GenerateImage() {
             const double scale = 1.0/8;
             if (dungeon != null) {
                 _image = new Bitmap((int)(roomWidth*16*8*scale), (int)(roomHeight*16*8*scale));

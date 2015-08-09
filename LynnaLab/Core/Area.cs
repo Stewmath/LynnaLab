@@ -13,7 +13,6 @@ namespace LynnaLab
 
         int flags1, flags2;
         int layoutGroup;
-        int animationIndex;
 
         TilesetHeaderGroup tilesetHeaderGroup;
         AnimationGroup animationGroup;
@@ -24,7 +23,9 @@ namespace LynnaLab
         Bitmap fullCachedImage = new Bitmap(16*16,16*16);
 
         public delegate void TileModifiedHandler(int tile);
+        public delegate void LayoutGroupModifiedHandler();
         public event TileModifiedHandler TileModifiedEvent;
+        public event LayoutGroupModifiedHandler LayoutGroupModifiedEvent;
 
         // For dynamically showing an animation
         int[] animationPos = new int[4];
@@ -102,9 +103,26 @@ namespace LynnaLab
                 SetTileset(value);
             }
         }
-            
         public int LayoutGroup {
             get { return layoutGroup; }
+            set {
+                layoutGroup = value;
+                Data d = GetDataIndex(6);
+                d.SetValue(0, Wla.ToByte((byte)value));
+                if (LayoutGroupModifiedEvent != null)
+                    LayoutGroupModifiedEvent();
+            }
+        }
+        public int AnimationIndex {
+            get {
+                Data d = GetDataIndex(7);
+                return Project.EvalToInt(d.Values[0]);
+            }
+            set {
+                Data d = GetDataIndex(7);
+                d.SetValue(0, Wla.ToByte((byte)value));
+                SetAnimation(value);
+            }
         }
 
         public Area(Project p, int i) : base(p, i) {
@@ -138,24 +156,10 @@ namespace LynnaLab
             SetTileset(Project.EvalToInt(data.Values[0]));
 
             data = data.Next;
-            layoutGroup = p.EvalToInt(data.Values[0]);
+            layoutGroup = Project.EvalToInt(data.Values[0]);
 
             data = data.Next;
-            animationIndex = p.EvalToInt(data.Values[0]);
-
-
-
-            // Animation
-            if (animationIndex != 0xff) {
-                animationGroup
-                    = Project.GetIndexedDataType<AnimationGroup>(animationIndex);
-                for (int j=0; j<animationGroup.NumAnimations; j++) {
-                    Animation animation = animationGroup.GetAnimationIndex(j);
-                    for (int k=0; k<animation.NumIndices; k++) {
-                        graphicsState.AddGfxHeader(animation.GetGfxHeader(k), GfxHeaderType.Animation);
-                    }
-                }
-            }
+            SetAnimation(Project.EvalToInt(data.Values[0]));
         }
 
         Data GetDataIndex(int i) {
@@ -375,6 +379,18 @@ namespace LynnaLab
                 }
             }
 
+            InvalidateAllTiles();
+        }
+
+        void SetAnimation(int index) {
+            graphicsState.RemoveGfxHeaderType(GfxHeaderType.Animation);
+            // Animation
+            if (index != 0xff) {
+                animationGroup
+                    = Project.GetIndexedDataType<AnimationGroup>(index);
+            }
+            else
+                animationGroup = null;
             InvalidateAllTiles();
         }
     }

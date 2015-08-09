@@ -6,8 +6,8 @@ using System.IO;
 namespace LynnaLab
 {
     public class Room : ProjectIndexedDataType {
-        public delegate void TileModifiedHandler(int x, int y);
-        public event TileModifiedHandler TileModifiedEvent;
+        public delegate void RoomModifiedHandler();
+        public event RoomModifiedHandler RoomModifiedEvent;
 
         // Actual width and height of room
         int width, height;
@@ -123,57 +123,74 @@ namespace LynnaLab
                 groupAreasFile.Position = Index&0xff;
                 groupAreasFile.WriteByte((byte)((a.Index&0x7f) | lastValue));
 
-                Area.TileModifiedHandler handler = new Area.TileModifiedHandler(ModifiedTileCallback);
-                if (area != null)
+                var handler = new Area.TileModifiedHandler(ModifiedTileCallback);
+                var layoutHandler = new Area.LayoutGroupModifiedHandler(ModifiedLayoutGroupCallback);
+                if (area != null) {
                     area.TileModifiedEvent -= handler;
+                    area.LayoutGroupModifiedEvent -= layoutHandler;
+                }
                 a.TileModifiedEvent += handler;
+                a.LayoutGroupModifiedEvent += layoutHandler;
 
                 cachedImage = null;
 
                 area = a;
 
-                MemoryFileStream dataFile = TileDataFile;
-
-                if (dataFile.Length == 80) { // Small map
-                    width = fileWidth = 10;
-                    height = fileHeight = 8;
-                    tiles = new byte[width,height];
-                    dataFile.Position = 0;
-                    for (int y=0; y<height; y++)
-                        for (int x=0; x<width; x++) {
-                            tiles[x,y] = (byte)dataFile.ReadByte();
-                    }
-                }
-                else if (dataFile.Length == 176) { // Large map
-                    width = 0xf;
-                    fileWidth = 0x10;
-                    height = fileHeight = 0xb;
-                    tiles = new byte[width,height];
-                    dataFile.Position = 0;
-                    for (int y=0; y<height; y++) {
-                        for (int x=0; x<width; x++)
-                            tiles[x,y] = (byte)dataFile.ReadByte();
-                        dataFile.ReadByte();
-                    }
-                }
-                else
-                    throw new Exception("Size of file \"" + dataFile.Name + "\" was invalid!");
+                UpdateRoomData();
             }
         }
 
+        void UpdateRoomData() {
+            MemoryFileStream dataFile = TileDataFile;
+            if (dataFile.Length == 80) { // Small map
+                width = fileWidth = 10;
+                height = fileHeight = 8;
+                tiles = new byte[width,height];
+                dataFile.Position = 0;
+                for (int y=0; y<height; y++)
+                    for (int x=0; x<width; x++) {
+                        tiles[x,y] = (byte)dataFile.ReadByte();
+                    }
+            }
+            else if (dataFile.Length == 176) { // Large map
+                width = 0xf;
+                fileWidth = 0x10;
+                height = fileHeight = 0xb;
+                tiles = new byte[width,height];
+                dataFile.Position = 0;
+                for (int y=0; y<height; y++) {
+                    for (int x=0; x<width; x++)
+                        tiles[x,y] = (byte)dataFile.ReadByte();
+                    dataFile.ReadByte();
+                }
+            }
+            else
+                throw new Exception("Size of file \"" + dataFile.Name + "\" was invalid!");
+        }
+
         void ModifiedTileCallback(int tile) {
-            Graphics g = Graphics.FromImage(cachedImage);
+            Graphics g = null;
+            if (cachedImage != null)
+                g = Graphics.FromImage(cachedImage);
             for (int x=0; x<Width; x++) {
                 for (int y=0; y<Height; y++) {
                     if (GetTile(x, y) == tile) {
                         if (cachedImage != null)
                             g.DrawImage(area.GetTileImage(tiles[x,y]), x*16, y*16);
-                        if (TileModifiedEvent != null)
-                            TileModifiedEvent(x,y);
+                        if (RoomModifiedEvent != null)
+                            RoomModifiedEvent();
                     }
                 }
             }
-            g.Dispose();
+            if (g != null)
+                g.Dispose();
+        }
+
+        void ModifiedLayoutGroupCallback() {
+            UpdateRoomData();
+            cachedImage = null;
+            if (RoomModifiedEvent != null)
+                RoomModifiedEvent();
         }
 
         public override void Save() {

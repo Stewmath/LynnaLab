@@ -39,6 +39,8 @@ namespace LynnaLab
             SetMainGfx(a.MainGfxString);
             SetPaletteHeader(a.PaletteHeaderString);
             SetTileset(a.TilesetIndex);
+            SetLayoutGroup(a.LayoutGroup);
+            SetAnimation(a.AnimationIndex);
         }
 
         void SetFlags1(int value) {
@@ -76,6 +78,14 @@ namespace LynnaLab
         void SetTileset(int value) {
             tilesetSpinButton.Value = value;
             area.TilesetIndex = value;
+        }
+        void SetLayoutGroup(int value) {
+            layoutGroupSpinButton.Value = value;
+            area.LayoutGroup = value;
+        }
+        void SetAnimation(int value) {
+            animationsSpinButton.Value = value;
+            area.AnimationIndex = value;
         }
 
         protected void OnOkButtonClicked(object sender, EventArgs e)
@@ -125,6 +135,16 @@ namespace LynnaLab
         protected void OnTilesetSpinButtonValueChanged(object sender, EventArgs e)
         {
             SetTileset(tilesetSpinButton.ValueAsInt);
+        }
+
+        protected void OnLayoutGroupSpinButtonValueChanged(object sender, EventArgs e)
+        {
+            SetLayoutGroup(layoutGroupSpinButton.ValueAsInt);
+        }
+
+        protected void OnAnimationsSpinButtonValueChanged(object sender, EventArgs e)
+        {
+            SetAnimation(animationsSpinButton.ValueAsInt);
         }
     }
 }

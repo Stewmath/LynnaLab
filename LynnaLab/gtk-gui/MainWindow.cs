@@ -17,6 +17,8 @@ public partial class MainWindow
 	
 	private global::Gtk.ToggleAction AnimationsAction;
 	
+	private global::Gtk.Action RedrawMinimapsAction;
+	
 	private global::Gtk.VBox vbox1;
 	
 	private global::Gtk.MenuBar menubar1;
@@ -111,6 +113,9 @@ public partial class MainWindow
 		this.AnimationsAction = new global::Gtk.ToggleAction ("AnimationsAction", global::Mono.Unix.Catalog.GetString ("_Animations"), null, null);
 		this.AnimationsAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("_Animations");
 		w1.Add (this.AnimationsAction, "<Primary>a");
+		this.RedrawMinimapsAction = new global::Gtk.Action ("RedrawMinimapsAction", global::Mono.Unix.Catalog.GetString ("Redraw Minimaps"), null, null);
+		this.RedrawMinimapsAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("Redraw Minimaps");
+		w1.Add (this.RedrawMinimapsAction, null);
 		this.UIManager.InsertActionGroup (w1, 0);
 		this.AddAccelGroup (this.UIManager.AccelGroup);
 		this.Name = "MainWindow";

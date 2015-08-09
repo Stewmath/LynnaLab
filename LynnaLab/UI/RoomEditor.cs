@@ -60,10 +60,10 @@ namespace LynnaLab
         }
 
         public void SetRoom(Room r) {
-            var handler = new Room.TileModifiedHandler(OnTileModified);
+            var handler = new Room.RoomModifiedHandler(OnRoomModified);
             if (room != null)
-                room.TileModifiedEvent -= handler;
-            r.TileModifiedEvent += handler;
+                room.RoomModifiedEvent -= handler;
+            r.RoomModifiedEvent += handler;
 
             room = r;
             Width = room.Width;
@@ -71,7 +71,7 @@ namespace LynnaLab
             QueueDraw();
         }
 
-        void OnTileModified(int x, int y) {
+        void OnRoomModified() {
             QueueDraw();
         }
 
