@@ -1,0 +1,3 @@
+[submodule "ages-disasm"]
+	path = ages-disasm
+	url = https://github.com/Drenn1/ages-disasm.git
