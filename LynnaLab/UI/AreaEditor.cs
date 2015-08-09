@@ -23,6 +23,9 @@ namespace LynnaLab
             mainGfxComboBox.SetConstantsMapping(Project.MainGfxMapping);
             palettesComboBox.SetConstantsMapping(Project.PaletteHeaderMapping);
             tilesetSpinButton.Adjustment.Upper = 0x32;
+            layoutGroupSpinButton.Adjustment.Upper = 5;
+            animationsSpinButton.Adjustment.Upper = 0x15;
+            animationsSpinButton.Adjustment.Lower = -1;
 
             SetArea(a);
         }
@@ -84,6 +87,8 @@ namespace LynnaLab
             area.LayoutGroup = value;
         }
         void SetAnimation(int value) {
+            if (value == 0xff)
+                value = -1;
             animationsSpinButton.Value = value;
             area.AnimationIndex = value;
         }

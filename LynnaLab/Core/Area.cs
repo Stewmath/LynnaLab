@@ -121,7 +121,7 @@ namespace LynnaLab
             set {
                 Data d = GetDataIndex(7);
                 d.SetValue(0, Wla.ToByte((byte)value));
-                SetAnimation(value);
+                SetAnimation((byte)value);
             }
         }
 
@@ -159,7 +159,7 @@ namespace LynnaLab
             layoutGroup = Project.EvalToInt(data.Values[0]);
 
             data = data.Next;
-            SetAnimation(Project.EvalToInt(data.Values[0]));
+            SetAnimation((byte)Project.EvalToInt(data.Values[0]));
         }
 
         Data GetDataIndex(int i) {
@@ -382,7 +382,7 @@ namespace LynnaLab
             InvalidateAllTiles();
         }
 
-        void SetAnimation(int index) {
+        void SetAnimation(byte index) {
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Animation);
             // Animation
             if (index != 0xff) {
