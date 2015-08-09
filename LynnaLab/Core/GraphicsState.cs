@@ -1,14 +1,24 @@
 ﻿using System;
 using System.Drawing;
+using System.Collections.Generic;
 
 namespace LynnaLab
 {
+    public enum GfxHeaderGroup {
+        Main = 0,
+        Unique,
+        Animation
+    };
+
 	public class GraphicsState
 	{
-		byte[][] vramBuffer = { new byte[0x2000], new byte[0x2000] };
-		byte[][] wramBuffer = { new byte[0x1000], new byte[0x1000], new byte[0x1000], new byte[0x1000], 
-			new byte[0x1000], new byte[0x1000], new byte[0x1000], new byte[0x1000] };
+		byte[][] vramBuffer;
+		byte[][] wramBuffer;
 		Color[][][] paletteBuffer;
+
+        // Parallel lists
+        List<GfxHeaderData> gfxHeaderDataList = new List<GfxHeaderData>();
+        List<GfxHeaderGroup> gfxHeaderDataGroups = new List<GfxHeaderGroup>();
 
 		public byte[][] VramBuffer {
 			get { return vramBuffer; }
@@ -25,6 +35,8 @@ namespace LynnaLab
                 for (int j=0; j<8; j++)
                     paletteBuffer[i][j] = new Color[4];
             }
+
+            RegenerateBuffers();
 		}
 
         public Color[][] GetPalettes(PaletteType type) {
@@ -38,37 +50,21 @@ namespace LynnaLab
             return GetPalettes(PaletteType.Sprite);
         }
 
-		public void AddGfxHeaderGroup(GfxHeaderGroup group) {
-			GfxHeaderData header = group.FirstGfxHeader;
+        public void AddGfxHeader(GfxHeaderData header, GfxHeaderGroup group) {
+            gfxHeaderDataList.Add(header);
+            gfxHeaderDataGroups.Add(group);
+            LoadGfxHeader(header);
+        }
 
-			bool next = true;
-			while (next) {
-                AddGfxHeader(header);
-
-				next = false;
-				if (header.ShouldHaveNext()) {
-                    GfxHeaderData nextHeader = header.Next as GfxHeaderData;
-                    if (nextHeader != null) {
-						header = nextHeader;
-						next = true;
-					}
-					// Might wanna print a warning if no next value is found
-				}
-			}
-		}
-
-        public void AddGfxHeader(GfxHeaderData header) {
-            if ((header.DestAddr & 0xe000) == 0x8000) {
-                int bank = header.DestBank & 1;
-                int dest = header.DestAddr & 0x1fff;
-                header.GfxStream.Position = 0;
-                header.GfxStream.Read(vramBuffer[bank], dest, 0x2000 - dest);
-            } else if ((header.DestAddr & 0xf000) == 0xd000) {
-                int bank = header.DestBank & 7;
-                int dest = header.DestAddr & 0x0fff;
-                header.GfxStream.Position = 0;
-                header.GfxStream.Read(wramBuffer[bank], dest, 0x1000 - dest);
+        public void RemoveGfxHeaderGroup(GfxHeaderGroup group) {
+            for (int i=0; i<gfxHeaderDataList.Count; i++) {
+                if (gfxHeaderDataGroups[i] == group) {
+                    gfxHeaderDataGroups.RemoveAt(i);
+                    gfxHeaderDataList.RemoveAt(i);
+                    i--;
+                }
             }
+            RegenerateBuffers();
         }
 
         public void AddPaletteHeaderGroup(PaletteHeaderGroup group) {
@@ -94,6 +90,34 @@ namespace LynnaLab
 					}
 					// Might wanna print a warning if no next value is found
 				}
+            }
+        }
+
+        void LoadGfxHeader(GfxHeaderData header) {
+            if ((header.DestAddr & 0xe000) == 0x8000) {
+                int bank = header.DestBank & 1;
+                int dest = header.DestAddr & 0x1fff;
+                header.GfxStream.Position = 0;
+                header.GfxStream.Read(vramBuffer[bank], dest, 0x2000 - dest);
+            } else if ((header.DestAddr & 0xf000) == 0xd000) {
+                int bank = header.DestBank & 7;
+                int dest = header.DestAddr & 0x0fff;
+                header.GfxStream.Position = 0;
+                header.GfxStream.Read(wramBuffer[bank], dest, 0x1000 - dest);
+            }
+        }
+
+        void RegenerateBuffers() {
+            vramBuffer = new byte[2][];
+            vramBuffer[0] = new byte[0x2000];
+            vramBuffer[1] = new byte[0x2000];
+
+            wramBuffer = new byte[8][];
+            for (int i=0; i<8; i++)
+                wramBuffer[i] = new byte[0x1000];
+
+            foreach (GfxHeaderData header in gfxHeaderDataList) {
+                LoadGfxHeader(header);
             }
         }
 	}

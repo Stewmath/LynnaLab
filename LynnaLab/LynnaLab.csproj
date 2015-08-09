@@ -58,7 +58,6 @@
     <Compile Include="Core\GraphicsState.cs" />
     <Compile Include="Core\FileParser.cs" />
     <Compile Include="Core\AsmFileParser.cs" />
-    <Compile Include="Core\GfxHeaderGroup.cs" />
     <Compile Include="Core\GfxHeaderData.cs" />
     <Compile Include="UI\AreaViewer.cs" />
     <Compile Include="Core\PaletteGroup.cs" />

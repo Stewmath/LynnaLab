@@ -18,7 +18,6 @@ namespace LynnaLab
         int layoutGroup;
         int animationIndex;
 
-        GfxHeaderGroup gfxHeaderGroup;
         PaletteHeaderGroup paletteHeaderGroup;
         TilesetHeaderGroup tilesetHeaderGroup;
         AnimationGroup animationGroup;
@@ -64,6 +63,8 @@ namespace LynnaLab
             set {
                 Data d = GetDataIndex(2);
                 d.SetValue(0, value);
+                SetUniqueGfx(Project.EvalToInt(value));
+                InvalidateAllTiles();
             }
         }
             
@@ -100,7 +101,6 @@ namespace LynnaLab
             animationIndex = p.EvalToInt(data.Values[0]);
 
 
-            gfxHeaderGroup = Project.GetIndexedDataType<GfxHeaderGroup>(gfxHeaderGroupIndex);
             paletteHeaderGroup = Project.GetIndexedDataType<PaletteHeaderGroup>(paletteHeaderGroupIndex);
             tilesetHeaderGroup = Project.GetIndexedDataType<TilesetHeaderGroup>(tilesetHeaderGroupIndex);
             PaletteHeaderGroup globalPaletteHeaderGroup = 
@@ -126,32 +126,32 @@ namespace LynnaLab
 
 
             graphicsState = new GraphicsState();
-            graphicsState.AddGfxHeaderGroup(gfxHeaderGroup);
             graphicsState.AddPaletteHeaderGroup(paletteHeaderGroup);
             // Global palettes
             graphicsState.AddPaletteHeaderGroup(globalPaletteHeaderGroup);
 
-            // Unique gfx headers
-            if (uniqueGfxHeaderGroupIndex != 0) {
-                FileParser uniqueGfxHeaderFile = Project.GetFileWithLabel("uniqueGfxHeaderGroupsStart");
-                GfxHeaderData header = uniqueGfxHeaderFile.GetData("uniqueGfxHeaderGroup" + uniqueGfxHeaderGroupIndex.ToString("x2"))
-                    as GfxHeaderData;
-                if (header != null) {
-                    bool next = true;
-                    while (next) {
-                        graphicsState.AddGfxHeader(header);
-                        next = false;
-                        if (header.ShouldHaveNext()) {
-                            GfxHeaderData nextHeader = header.Next as GfxHeaderData;
-                            if (nextHeader != null) {
-                                header = nextHeader;
-                                next = true;
-                            }
-                            // Might wanna print a warning if no next value is found
+            // Main gfx headers
+            FileParser gfxHeaderFile = Project.GetFileWithLabel("gfxHeaderGroupTable");
+            Data pointerData = gfxHeaderFile.GetData("gfxHeaderGroupTable", gfxHeaderGroupIndex*2);
+            GfxHeaderData header = gfxHeaderFile.GetData(pointerData.Values[0])
+                as GfxHeaderData;
+            if (header != null) {
+                bool next = true;
+                while (next) {
+                    graphicsState.AddGfxHeader(header, GfxHeaderGroup.Main);
+                    next = false;
+                    if (header.ShouldHaveNext()) {
+                        GfxHeaderData nextHeader = header.Next as GfxHeaderData;
+                        if (nextHeader != null) {
+                            header = nextHeader;
+                            next = true;
                         }
+                        // Might wanna print a warning if no next value is found
                     }
                 }
             }
+
+            SetUniqueGfx(uniqueGfxHeaderGroupIndex);
 
             // Animation
             if (animationIndex != 0xff) {
@@ -160,7 +160,7 @@ namespace LynnaLab
                 for (int j=0; j<animationGroup.NumAnimations; j++) {
                     Animation animation = animationGroup.GetAnimationIndex(j);
                     for (int k=0; k<animation.NumIndices; k++) {
-                        graphicsState.AddGfxHeader(animation.GetGfxHeader(k));
+                        graphicsState.AddGfxHeader(animation.GetGfxHeader(k), GfxHeaderGroup.Animation);
                     }
                 }
             }
@@ -189,7 +189,8 @@ namespace LynnaLab
             tileImagesCache[tileUpdaterIndex] = null;
             GetTileImage(tileUpdaterIndex);
             if (TileModifiedEvent != null)
-                TileModifiedEvent(tileUpdaterIndex++);
+                TileModifiedEvent(tileUpdaterIndex);
+            tileUpdaterIndex++;
             return true;
         }
 
@@ -235,7 +236,7 @@ namespace LynnaLab
                     int pos = animationPos[i];
                     animationCounter[i] += animation.GetCounter(pos);
                     GfxHeaderData header = animation.GetGfxHeader(pos);
-                    graphicsState.AddGfxHeader(header);
+                    graphicsState.AddGfxHeader(header, GfxHeaderGroup.Animation);
 //                     Console.WriteLine(i + ":" + animationPos[i]);
                     animationPos[i]++;
                     if (animationPos[i] >= animation.NumIndices)
@@ -268,6 +269,33 @@ namespace LynnaLab
         }
 
         public override void Save() {
+        }
+
+        void SetUniqueGfx(int index) {
+            // Unique gfx headers
+            if (index != 0) {
+                graphicsState.RemoveGfxHeaderGroup(GfxHeaderGroup.Unique);
+
+                FileParser uniqueGfxHeaderFile = Project.GetFileWithLabel("uniqueGfxHeaderGroupsStart");
+                GfxHeaderData header
+                    = uniqueGfxHeaderFile.GetData("uniqueGfxHeaderGroup" + index.ToString("x2"))
+                    as GfxHeaderData;
+                if (header != null) {
+                    bool next = true;
+                    while (next) {
+                        graphicsState.AddGfxHeader(header, GfxHeaderGroup.Unique);
+                        next = false;
+                        if (header.ShouldHaveNext()) {
+                            GfxHeaderData nextHeader = header.Next as GfxHeaderData;
+                            if (nextHeader != null) {
+                                header = nextHeader;
+                                next = true;
+                            }
+                            // Might wanna print a warning if no next value is found
+                        }
+                    }
+                }
+            }
         }
     }
 }

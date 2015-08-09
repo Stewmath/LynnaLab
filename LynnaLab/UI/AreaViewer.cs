@@ -178,6 +178,11 @@ namespace LynnaLab
         }
 
         public void SetArea(Area a) {
+            Area.TileModifiedHandler handler = new Area.TileModifiedHandler(ModifiedTileCallback);
+            if (area != null)
+                area.TileModifiedEvent -= handler;
+            a.TileModifiedEvent += handler;
+
             area = a;
 
             image = new Bitmap(0x10*16,0x10*16);
@@ -191,7 +196,11 @@ namespace LynnaLab
             this.QueueDraw();
         }
 
-        public void DrawTile(int i, Graphics g=null) {
+        void ModifiedTileCallback(int tile) {
+            DrawTile(tile);
+        }
+
+        void DrawTile(int i, Graphics g=null) {
             Graphics g2 = g;
             if (g2 == null)
                 g2 = Graphics.FromImage(Image);
@@ -200,6 +209,7 @@ namespace LynnaLab
             g2.DrawImage(area.GetTileImage(i), x*16, y*16);
             if (g == null)
                 g2.Dispose();
+            QueueDraw();
         }
 
         protected override bool OnButtonPressEvent(Gdk.EventButton ev)

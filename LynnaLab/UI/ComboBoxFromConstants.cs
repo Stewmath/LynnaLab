@@ -25,7 +25,7 @@ namespace LynnaLab
 
         public void SetConstantsMapping(ConstantsMapping mapping) {
             this.mapping = mapping;
-            foreach (string key in mapping.GetAllKeys()) {
+            foreach (string key in mapping.GetAllStrings()) {
                 combobox1.AppendText(key);
             }
         }
@@ -37,4 +37,3 @@ namespace LynnaLab
         }
     }
 }
-

@@ -6,6 +6,9 @@ using System.IO;
 namespace LynnaLab
 {
     public class Room : ProjectIndexedDataType {
+        public delegate void TileModifiedHandler(int x, int y);
+        public event TileModifiedHandler TileModifiedEvent;
+
         // Actual width and height of room
         int width, height;
         // Width and height of file; large rooms always have an extra 0 at the
@@ -159,13 +162,15 @@ namespace LynnaLab
         }
 
         void ModifiedTileCallback(int tile) {
-            if (cachedImage == null)
-                return;
             Graphics g = Graphics.FromImage(cachedImage);
             for (int x=0; x<Width; x++) {
                 for (int y=0; y<Height; y++) {
-                    if (GetTile(x, y) == tile)
-                        g.DrawImage(area.GetTileImage(tiles[x,y]), x*16, y*16);
+                    if (GetTile(x, y) == tile) {
+                        if (cachedImage != null)
+                            g.DrawImage(area.GetTileImage(tiles[x,y]), x*16, y*16);
+                        if (TileModifiedEvent != null)
+                            TileModifiedEvent(x,y);
+                    }
                 }
             }
             g.Dispose();

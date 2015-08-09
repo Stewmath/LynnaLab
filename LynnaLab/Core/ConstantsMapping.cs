@@ -40,10 +40,16 @@ namespace LynnaLab
 		public string ByteToString(byte key) {
             return byteToString[key];
 		}
+        public int IndexOf(string key) {
+            var list = GetAllStrings();
+            return list.IndexOf(key);
+        }
 
-        public ICollection<string> GetAllKeys() {
-            return stringToByte.Keys;
+        public IList<string> GetAllStrings() {
+            var keys = stringToByte.Keys;
+            List<string> ret = new List<string>(keys);
+            ret.Sort();
+            return ret;
         }
 	}
 }
-

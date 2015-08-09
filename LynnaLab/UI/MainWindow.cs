@@ -48,13 +48,6 @@ public partial class MainWindow: Gtk.Window
         if (area == null)
             return true;
         IList<byte> changedTiles = area.updateAnimations(1);
-        if (changedTiles.Count != 0) {
-            foreach (int tile in changedTiles) {
-                areaviewer1.DrawTile(tile);
-            }
-            areaviewer1.QueueDraw();
-            roomeditor1.QueueDraw();
-        }
         return true;
     }
 

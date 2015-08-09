@@ -11,16 +11,20 @@ namespace LynnaLab
         }
 
         Area area;
+        ConstantsMapping mapping;
+
         public AreaEditor(Area a)
         {
             this.Build();
 
+            mapping = new ConstantsMapping(
+                        a.Project.GetFileParser("constants/uniqueGfxHeaders.s") as AsmFileParser,
+                        "UNIQGFXH_");
+
             SetArea(a);
 
             areaSpinButton.Adjustment.Upper = 0x66;
-            uniqueGfxComboBox.SetConstantsMapping(new ConstantsMapping(
-                        Project.GetFileParser("constants/uniqueGfxHeaders.s") as AsmFileParser,
-                        "UNIQGFXH_"));
+            uniqueGfxComboBox.SetConstantsMapping(mapping);
 
             SetArea(a);
         }
@@ -42,7 +46,7 @@ namespace LynnaLab
         }
         void SetUniqueGfx(string value) {
             try {
-                uniqueGfxComboBox.Active = Project.EvalToInt(value);
+                uniqueGfxComboBox.Active = mapping.IndexOf(value);
                 area.UniqueGfxString = value;
             }
             catch (FormatException) {
