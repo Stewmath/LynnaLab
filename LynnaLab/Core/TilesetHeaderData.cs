@@ -32,7 +32,12 @@ namespace LynnaLab {
                 try {
                     referencedData = Project.GetBinaryFile("tilesets/" + Values[1] + ".bin");
                 }
-                catch (FileNotFoundException) {}
+                catch (FileNotFoundException) {
+                    // Default is to copy from 00 I guess
+                    // TODO: copy this into its own file?
+                    string filename = Values[1].Substring(0, Values[1].Length-2);
+                    referencedData = Project.GetBinaryFile("tilesets/" + filename + "00.bin");
+                }
 		}
 
 		public bool ShouldHaveNext() {

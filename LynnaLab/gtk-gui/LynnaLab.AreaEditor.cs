@@ -38,6 +38,8 @@ namespace LynnaLab
 		
 		private global::LynnaLab.ComboBoxFromConstants palettesComboBox;
 		
+		private global::LynnaLab.SpinButtonHexadecimal tilesetSpinButton;
+		
 		private global::LynnaLab.ComboBoxFromConstants uniqueGfxComboBox;
 		
 		private global::Gtk.Label GtkLabel;
@@ -156,7 +158,7 @@ namespace LynnaLab
 			// Container child table2.Gtk.Table+TableChild
 			this.label3 = new global::Gtk.Label ();
 			this.label3.Name = "label3";
-			this.label3.LabelProp = global::Mono.Unix.Catalog.GetString ("label3");
+			this.label3.LabelProp = global::Mono.Unix.Catalog.GetString ("Tileset");
 			this.table2.Add (this.label3);
 			global::Gtk.Table.TableChild w8 = ((global::Gtk.Table.TableChild)(this.table2 [this.label3]));
 			w8.TopAttach = ((uint)(5));
@@ -218,18 +220,35 @@ namespace LynnaLab
 			w13.XOptions = ((global::Gtk.AttachOptions)(4));
 			w13.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table2.Gtk.Table+TableChild
+			this.tilesetSpinButton = new global::LynnaLab.SpinButtonHexadecimal ();
+			this.tilesetSpinButton.CanFocus = true;
+			this.tilesetSpinButton.Name = "tilesetSpinButton";
+			this.tilesetSpinButton.Adjustment.Upper = 100;
+			this.tilesetSpinButton.Adjustment.PageIncrement = 10;
+			this.tilesetSpinButton.Adjustment.StepIncrement = 1;
+			this.tilesetSpinButton.ClimbRate = 1;
+			this.tilesetSpinButton.Numeric = true;
+			this.table2.Add (this.tilesetSpinButton);
+			global::Gtk.Table.TableChild w14 = ((global::Gtk.Table.TableChild)(this.table2 [this.tilesetSpinButton]));
+			w14.TopAttach = ((uint)(5));
+			w14.BottomAttach = ((uint)(6));
+			w14.LeftAttach = ((uint)(1));
+			w14.RightAttach = ((uint)(2));
+			w14.XOptions = ((global::Gtk.AttachOptions)(4));
+			w14.YOptions = ((global::Gtk.AttachOptions)(4));
+			// Container child table2.Gtk.Table+TableChild
 			this.uniqueGfxComboBox = new global::LynnaLab.ComboBoxFromConstants ();
 			this.uniqueGfxComboBox.Events = ((global::Gdk.EventMask)(256));
 			this.uniqueGfxComboBox.Name = "uniqueGfxComboBox";
 			this.uniqueGfxComboBox.Active = 0;
 			this.table2.Add (this.uniqueGfxComboBox);
-			global::Gtk.Table.TableChild w14 = ((global::Gtk.Table.TableChild)(this.table2 [this.uniqueGfxComboBox]));
-			w14.TopAttach = ((uint)(2));
-			w14.BottomAttach = ((uint)(3));
-			w14.LeftAttach = ((uint)(1));
-			w14.RightAttach = ((uint)(2));
-			w14.XOptions = ((global::Gtk.AttachOptions)(4));
-			w14.YOptions = ((global::Gtk.AttachOptions)(4));
+			global::Gtk.Table.TableChild w15 = ((global::Gtk.Table.TableChild)(this.table2 [this.uniqueGfxComboBox]));
+			w15.TopAttach = ((uint)(2));
+			w15.BottomAttach = ((uint)(3));
+			w15.LeftAttach = ((uint)(1));
+			w15.RightAttach = ((uint)(2));
+			w15.XOptions = ((global::Gtk.AttachOptions)(4));
+			w15.YOptions = ((global::Gtk.AttachOptions)(4));
 			this.GtkAlignment.Add (this.table2);
 			this.frame2.Add (this.GtkAlignment);
 			this.GtkLabel = new global::Gtk.Label ();
@@ -237,10 +256,10 @@ namespace LynnaLab
 			this.GtkLabel.UseMarkup = true;
 			this.frame2.LabelWidget = this.GtkLabel;
 			this.vbox2.Add (this.frame2);
-			global::Gtk.Box.BoxChild w17 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
-			w17.Position = 1;
-			w17.Expand = false;
-			w17.Fill = false;
+			global::Gtk.Box.BoxChild w18 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
+			w18.Position = 1;
+			w18.Expand = false;
+			w18.Fill = false;
 			// Container child vbox2.Gtk.Box+BoxChild
 			this.okButton = new global::Gtk.Button ();
 			this.okButton.CanFocus = true;
@@ -248,11 +267,11 @@ namespace LynnaLab
 			this.okButton.UseUnderline = true;
 			this.okButton.Label = global::Mono.Unix.Catalog.GetString ("OK");
 			this.vbox2.Add (this.okButton);
-			global::Gtk.Box.BoxChild w18 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.okButton]));
-			w18.PackType = ((global::Gtk.PackType)(1));
-			w18.Position = 2;
-			w18.Expand = false;
-			w18.Fill = false;
+			global::Gtk.Box.BoxChild w19 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.okButton]));
+			w19.PackType = ((global::Gtk.PackType)(1));
+			w19.Position = 2;
+			w19.Expand = false;
+			w19.Fill = false;
 			this.Add (this.vbox2);
 			if ((this.Child != null)) {
 				this.Child.ShowAll ();
@@ -260,6 +279,7 @@ namespace LynnaLab
 			this.Hide ();
 			this.areaSpinButton.ValueChanged += new global::System.EventHandler (this.OnAreaSpinButtonValueChanged);
 			this.uniqueGfxComboBox.Changed += new global::System.EventHandler (this.OnUniqueGfxComboBoxChanged);
+			this.tilesetSpinButton.ValueChanged += new global::System.EventHandler (this.OnTilesetSpinButtonValueChanged);
 			this.palettesComboBox.Changed += new global::System.EventHandler (this.OnPalettesComboBoxChanged);
 			this.mainGfxComboBox.Changed += new global::System.EventHandler (this.OnMainGfxComboBoxChanged);
 			this.flags1SpinButton.ValueChanged += new global::System.EventHandler (this.OnFlags1SpinButtonValueChanged);

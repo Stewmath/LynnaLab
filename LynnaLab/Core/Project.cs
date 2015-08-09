@@ -46,6 +46,10 @@ namespace LynnaLab
 				}
 			}
 			// Parse everything in data/
+            // A few files need to be loaded before others through
+            GetFileParser("data/tilesetMappings.s");
+            GetFileParser("data/tilesetCollisions.s");
+            GetFileParser("data/tilesetHeaders.s");
 			foreach (string f in Directory.EnumerateFiles(baseDirectory + "data/")) {
 				if (f.Substring(f.LastIndexOf('.')) == ".s") {
 					string filename = "data/" + f.Substring(f.LastIndexOf('/') + 1);

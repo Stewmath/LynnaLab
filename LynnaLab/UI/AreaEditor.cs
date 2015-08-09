@@ -48,6 +48,7 @@ namespace LynnaLab
             SetUniqueGfx(a.UniqueGfxString);
             SetMainGfx(a.MainGfxString);
             SetPaletteHeader(a.PaletteHeaderString);
+            SetTileset(a.TilesetIndex);
         }
 
         void SetFlags1(int value) {
@@ -81,6 +82,10 @@ namespace LynnaLab
             }
             catch (FormatException) {
             }
+        }
+        void SetTileset(int value) {
+            tilesetSpinButton.Value = value;
+            area.TilesetIndex = value;
         }
 
         protected void OnOkButtonClicked(object sender, EventArgs e)
@@ -125,6 +130,11 @@ namespace LynnaLab
             var comboBox = sender as ComboBox;
             if (comboBox.ActiveText != null)
                 SetPaletteHeader(comboBox.ActiveText);
+        }
+
+        protected void OnTilesetSpinButtonValueChanged(object sender, EventArgs e)
+        {
+            SetTileset(tilesetSpinButton.ValueAsInt);
         }
     }
 }

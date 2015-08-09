@@ -12,7 +12,6 @@ namespace LynnaLab
         Data areaData;
 
         int flags1, flags2;
-        int tilesetHeaderGroupIndex;
         int layoutGroup;
         int animationIndex;
 
@@ -92,6 +91,17 @@ namespace LynnaLab
                 SetPaletteHeader(Project.EvalToInt(value));
             }
         }
+        public int TilesetIndex {
+            get {
+                Data d = GetDataIndex(5);
+                return Project.EvalToInt(d.Values[0]);
+            }
+            set {
+                Data d = GetDataIndex(5);
+                d.SetValue(0, Wla.ToByte((byte)value));
+                SetTileset(value);
+            }
+        }
             
         public int LayoutGroup {
             get { return layoutGroup; }
@@ -125,34 +135,13 @@ namespace LynnaLab
             SetPaletteHeader(Project.EvalToInt(data.Values[0]));
 
             data = data.Next;
-            tilesetHeaderGroupIndex = p.EvalToInt(data.Values[0]);
+            SetTileset(Project.EvalToInt(data.Values[0]));
 
             data = data.Next;
             layoutGroup = p.EvalToInt(data.Values[0]);
 
             data = data.Next;
             animationIndex = p.EvalToInt(data.Values[0]);
-
-
-            tilesetHeaderGroup = Project.GetIndexedDataType<TilesetHeaderGroup>(tilesetHeaderGroupIndex);
-
-
-            // Generate usedTileList for quick lookup of which metatiles use
-            // which 4 gameboy tiles
-            for (int j=0; j<256; j++)
-                usedTileList[j] = new List<byte>();
-            byte[] mappingsData = tilesetHeaderGroup.GetMappingsData();
-            for (int j=0; j<256; j++) {
-                // j = index of metatile
-                bool[] used = new bool[256];
-                for (int k=0; k<4; k++) {
-                    int tile = mappingsData[j*8+k];
-                    if (!used[tile]) {
-                        usedTileList[tile].Add((byte)j);
-                        used[tile] = true;
-                    }
-                }
-            }
 
 
 
@@ -363,6 +352,29 @@ namespace LynnaLab
             var paletteHeaderGroup =
                 Project.GetIndexedDataType<PaletteHeaderGroup>(index);
             graphicsState.AddPaletteHeaderGroup(paletteHeaderGroup, PaletteGroupType.Main);
+            InvalidateAllTiles();
+        }
+
+        void SetTileset(int index) {
+            tilesetHeaderGroup = Project.GetIndexedDataType<TilesetHeaderGroup>(index);
+
+            // Generate usedTileList for quick lookup of which metatiles use
+            // which 4 gameboy tiles
+            for (int j=0; j<256; j++)
+                usedTileList[j] = new List<byte>();
+            byte[] mappingsData = tilesetHeaderGroup.GetMappingsData();
+            for (int j=0; j<256; j++) {
+                // j = index of metatile
+                bool[] used = new bool[256];
+                for (int k=0; k<4; k++) {
+                    int tile = mappingsData[j*8+k];
+                    if (!used[tile]) {
+                        usedTileList[tile].Add((byte)j);
+                        used[tile] = true;
+                    }
+                }
+            }
+
             InvalidateAllTiles();
         }
     }

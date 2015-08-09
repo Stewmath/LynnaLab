@@ -165,6 +165,13 @@ namespace LynnaLab
                 standardValues.Add(tokens[j]);
 
             switch (tokens[0].ToLower()) {
+                case ".incbin":
+                    {
+                        Data d = new Data(Project, tokens[0].ToLower(), standardValues, -1,
+                                this, lineIndex, tokenStartIndices[1]);
+                        AddData(d);
+                    }
+                    break;
                 case ".dw":
                     if (context == "RAMSECTION")
                         break;
