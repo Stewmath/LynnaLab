@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
+    // ConstantsMapping: takes a file from the constants folder and creates
+    // a 1:1 mapping between definitions and values.
 	public class ConstantsMapping
 	{
         public Project Project {

@@ -11,7 +11,8 @@ public partial class MainWindow: Gtk.Window
 
     uint animationTimerID;
 
-    public MainWindow () : base (Gtk.WindowType.Toplevel)
+    public MainWindow() : this("") {}
+    public MainWindow (string directory) : base (Gtk.WindowType.Toplevel)
     {
         Build();
 
@@ -28,7 +29,8 @@ public partial class MainWindow: Gtk.Window
         worldSpinButton.Adjustment = new Adjustment(0, 0, 3, 1, 0, 0);
         dungeonSpinButton.Adjustment = new Adjustment(0, 0, 15, 1, 0, 0);
 
-        OpenProject("/home/matthew/programs/gb/ages/ages-disasm");
+        if (directory != "")
+            OpenProject(directory);
     }
 
     void StartAnimations() {
@@ -95,6 +97,8 @@ public partial class MainWindow: Gtk.Window
     }
 
     void SetArea(Area area) {
+        if (Project == null)
+            return;
         areaviewer1.SetArea(area);
         areaSpinButton.Value = area.Index;
         roomeditor1.Room.SetArea(area);
@@ -102,6 +106,8 @@ public partial class MainWindow: Gtk.Window
     }
 
     void SetRoom(Room room) {
+        if (Project == null)
+            return;
         roomeditor1.SetRoom(room);
         SetArea(room.Area);
         musicSpinButton.Value = room.GetMusicID();
@@ -109,6 +115,8 @@ public partial class MainWindow: Gtk.Window
     }
 
     void SetDungeon(Dungeon dungeon) {
+        if (Project == null)
+            return;
         dungeonSpinButton.Value = dungeon.Index;
         floorSpinButton.Value = 0;
         floorSpinButton.Adjustment = new Adjustment(0, 0, dungeon.NumFloors-1, 1, 0, 0);
@@ -116,16 +124,21 @@ public partial class MainWindow: Gtk.Window
         SetRoom(dungeonMinimap.GetRoom());
     }
     void SetDungeon(int index) {
+        if (Project == null)
+            return;
         SetDungeon(Project.GetIndexedDataType<Dungeon>(index));
     }
     void SetWorld(int index) {
+        if (Project == null)
+            return;
         worldSpinButton.Value = index;
         worldMinimap.SetWorld(index);
         SetRoom(worldMinimap.GetRoom());
     }
 
     void Quit() {
-        Project.Close();
+        if (Project != null)
+            Project.Close();
         Application.Quit();
     }
 
@@ -153,7 +166,8 @@ public partial class MainWindow: Gtk.Window
     
     protected void OnSaveActionActivated(object sender, EventArgs e)
     {
-        Project.Save();
+        if (Project != null)
+            Project.Save();
     }
 
     protected void OnAnimationsActionActivated(object sender, EventArgs e) {
@@ -188,12 +202,16 @@ public partial class MainWindow: Gtk.Window
 
     protected void OnDungeonSpinButtonValueChanged(object sender, EventArgs e)
     {
+        if (Project == null)
+            return;
         SpinButton spinner = sender as SpinButton;
         SetDungeon(Project.GetIndexedDataType<Dungeon>(spinner.ValueAsInt));
     }
 
     protected void OnFloorSpinButtonValueChanged(object sender, EventArgs e)
     {
+        if (Project == null)
+            return;
         SpinButton spinner = sender as SpinButton;
         dungeonMinimap.Floor = spinner.ValueAsInt;
         SetRoom(dungeonMinimap.Dungeon.GetRoom(dungeonMinimap.Floor, dungeonMinimap.SelectedX, dungeonMinimap.SelectedY));
@@ -201,6 +219,8 @@ public partial class MainWindow: Gtk.Window
 
     protected void OnWorldSpinButtonValueChanged(object sender, EventArgs e)
     {
+        if (Project == null)
+            return;
         SpinButton spinner = sender as SpinButton;
         spinner.Hide();
         SetWorld(spinner.ValueAsInt);
@@ -209,6 +229,8 @@ public partial class MainWindow: Gtk.Window
 
     protected void OnNotebook2SwitchPage(object o, SwitchPageArgs args)
     {
+        if (Project == null)
+            return;
         Notebook nb = o as Notebook;
         if (nb.Page == 0)
             SetWorld(worldSpinButton.ValueAsInt);
@@ -218,12 +240,16 @@ public partial class MainWindow: Gtk.Window
 
     protected void OnRoomSpinButtonValueChanged(object sender, EventArgs e)
     {
+        if (Project == null)
+            return;
         SpinButton button = sender as SpinButton;
         SetRoom(Project.GetIndexedDataType<Room>(button.ValueAsInt));
     }
 
     protected void OnAreaSpinButtonValueChanged(object sender, EventArgs e)
     {
+        if (Project == null)
+            return;
         SpinButton button = sender as SpinButton;
         SetArea(Project.GetIndexedDataType<Area>(button.ValueAsInt));
     }
@@ -231,12 +257,16 @@ public partial class MainWindow: Gtk.Window
 
     protected void OnMusicSpinButtonValueChanged(object sender, EventArgs e)
     {
+        if (Project == null)
+            return;
         SpinButton button = sender as SpinButton;
         roomeditor1.Room.SetMusicID(button.ValueAsInt);
     }
 
     protected void OnAreaEditorButtonClicked(object sender, EventArgs e)
     {
+        if (Project == null)
+            return;
         Window win = new Window(WindowType.Toplevel);
         AreaEditor a = new AreaEditor(areaviewer1.Area);
         win.Add(a);
