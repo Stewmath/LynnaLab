@@ -9,6 +9,9 @@ namespace LynnaLab
             get { return parser.Project; }
         }
 
+        // This list is only necessary to preserve ordering
+        List<string> stringList = new List<string>();
+
 		Dictionary<string,byte> stringToByte = new Dictionary<string,byte>();
 		Dictionary<byte,string> byteToString = new Dictionary<byte,string>();
 
@@ -25,6 +28,7 @@ namespace LynnaLab
                     if (!stringToByte.TryGetValue(key, out tmp)) {
                         try {
                             byte b = (byte)Project.EvalToInt(definesDictionary[key]);
+                            stringList.Add(key);
                             stringToByte[key] = b;
                             byteToString[b] = key;
                         }
@@ -46,10 +50,7 @@ namespace LynnaLab
         }
 
         public IList<string> GetAllStrings() {
-            var keys = stringToByte.Keys;
-            List<string> ret = new List<string>(keys);
-            ret.Sort();
-            return ret;
+            return stringList;
         }
 	}
 }
