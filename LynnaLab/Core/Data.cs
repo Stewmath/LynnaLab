@@ -5,6 +5,8 @@ namespace LynnaLab
 {
 	public class Data 
 	{
+        bool modified;
+
 		// Command is like .db, .dw, or a macro.
 		string command;
 		List<string> values;
@@ -45,10 +47,17 @@ namespace LynnaLab
 		}
 
         public void SetValue(int i, string value) {
-            values[i] = value;
+            if (values[i] != value) {
+                values[i] = value;
+                modified = true;
+            }
         }
 
         public virtual void Save() {
+            if (!modified)
+                return;
+            modified = false;
+
             string s = parser.GetLine(line);
 
             if (colEnd == -1)

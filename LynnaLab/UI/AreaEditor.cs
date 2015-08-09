@@ -39,6 +39,7 @@ namespace LynnaLab
 
         void SetArea(Area a) {
             area = a;
+            areaSpinButton.Value = area.Index;
             SetFlags1(a.Flags1);
             SetFlags2(a.Flags2);
             SetUniqueGfx(a.UniqueGfxString);
