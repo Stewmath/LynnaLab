@@ -22,6 +22,7 @@ namespace LynnaLab
         GraphicsState graphicsState;
 
         Bitmap[] tileImagesCache = new Bitmap[256];
+        Bitmap fullCachedImage = new Bitmap(16*16,16*16);
 
         public delegate void TileModifiedHandler(int tile);
         public event TileModifiedHandler TileModifiedEvent;
@@ -31,6 +32,12 @@ namespace LynnaLab
         int[] animationCounter = new int[4];
 
         List<byte>[] usedTileList = new List<byte>[256];
+
+
+        // If true, tiles which must be updated are always slated to be
+        // redrawn, so they'll be ready when they're needed.
+        public bool DrawInvalidatedTiles { get; set; }
+
 
         public GraphicsState GraphicsState {
             get { return graphicsState; }
@@ -170,23 +177,43 @@ namespace LynnaLab
         }
 
         public void InvalidateAllTiles() {
-            if (TileModifiedEvent != null) {
-                tileUpdaterIndex = 0;
-                GLib.IdleHandler handler = new GLib.IdleHandler(TileUpdater);
-                GLib.Idle.Remove(handler);
-                GLib.Idle.Add(handler);
-            }
+            for (int i=0; i<256; i++)
+                tileImagesCache[i] = null;
+            if (DrawInvalidatedTiles)
+                DrawAllTiles();
+        }
+        public void RedrawAllTiles() {
+            tileUpdaterIndex = 0;
+            tileUpdaterRedraw = true;
+            GLib.IdleHandler handler = new GLib.IdleHandler(TileUpdater);
+            GLib.Idle.Remove(handler);
+            GLib.Idle.Add(handler);
+        }
+        public void DrawAllTiles() {
+            tileUpdaterIndex = 0;
+            tileUpdaterRedraw = false;
+            GLib.IdleHandler handler = new GLib.IdleHandler(TileUpdater);
+            GLib.Idle.Remove(handler);
+            GLib.Idle.Add(handler);
         }
 
+        bool tileUpdaterRedraw;
         int tileUpdaterIndex;
         bool TileUpdater() {
             if (tileUpdaterIndex == 256)
                 return false;
-            tileImagesCache[tileUpdaterIndex] = null;
-            GetTileImage(tileUpdaterIndex);
-            if (TileModifiedEvent != null)
-                TileModifiedEvent(tileUpdaterIndex);
-            tileUpdaterIndex++;
+            int numDrawnTiles = 0;
+            while (tileUpdaterIndex < 256 && numDrawnTiles < 16) {
+                if (tileUpdaterRedraw)
+                    tileImagesCache[tileUpdaterIndex] = null;
+                if (tileImagesCache[tileUpdaterIndex] == null)
+                    numDrawnTiles++;
+                GetTileImage(tileUpdaterIndex);
+
+                if (TileModifiedEvent != null)
+                    TileModifiedEvent(tileUpdaterIndex);
+                tileUpdaterIndex++;
+            }
             return true;
         }
 
@@ -215,8 +242,17 @@ namespace LynnaLab
             }
             g.Dispose();
 
+            g = Graphics.FromImage(fullCachedImage);
+            g.DrawImage(image, (index%16)*16, (index/16)*16);
+
             tileImagesCache[index] = image;
             return image;
+        }
+
+        // This function doesn't guarantee to return a fully rendered image,
+        // only what is currently available
+        public Bitmap GetFullCachedImage() {
+            return fullCachedImage;
         }
 
         // Returns a list of tiles which have changed
@@ -261,6 +297,10 @@ namespace LynnaLab
             if (TileModifiedEvent != null)
                 foreach (byte b in retData)
                     TileModifiedEvent(b);
+
+            if (DrawInvalidatedTiles)
+                DrawAllTiles();
+
             return retData;
         }
 

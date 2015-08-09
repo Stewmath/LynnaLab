@@ -163,11 +163,14 @@ namespace LynnaLab
         }
 
         protected override Bitmap Image {
-            get { return image; }
+            get {
+                if (Area == null)
+                    return null;
+                return Area.GetFullCachedImage();
+            }
         }
 
         Area area;
-        Bitmap image;
 
         public AreaViewer() : base()
         {
@@ -185,38 +188,12 @@ namespace LynnaLab
 
             area = a;
 
-            image = new Bitmap(0x10*16,0x10*16);
-
-            drawTileIndex = 0;
-            var drawer = new GLib.IdleHandler(TileDrawer);
-            GLib.Idle.Remove(drawer);
-            GLib.Idle.Add(drawer);
+            area.DrawAllTiles();
 
             this.QueueDraw();
         }
 
-        int drawTileIndex;
-        bool TileDrawer() {
-            if (drawTileIndex == 256)
-                return false;
-            for (int i=0; i<16; i++)
-                DrawTile(drawTileIndex++);
-            return true;
-        }
-
         void ModifiedTileCallback(int tile) {
-            DrawTile(tile);
-        }
-
-        void DrawTile(int i, Graphics g=null) {
-            Graphics g2 = g;
-            if (g2 == null)
-                g2 = Graphics.FromImage(Image);
-            int x = i%16;
-            int y = i/16;
-            g2.DrawImage(area.GetTileImage(i), x*16, y*16);
-            if (g == null)
-                g2.Dispose();
             QueueDraw();
         }
 

@@ -39,6 +39,9 @@ namespace LynnaLab
 
         void SetArea(Area a) {
             area = a;
+
+            area.DrawInvalidatedTiles = true;
+
             areaSpinButton.Value = area.Index;
             SetFlags1(a.Flags1);
             SetFlags2(a.Flags2);
