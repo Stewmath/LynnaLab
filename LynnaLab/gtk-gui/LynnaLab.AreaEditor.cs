@@ -22,15 +22,27 @@ namespace LynnaLab
 		
 		private global::LynnaLab.SpinButtonHexadecimal flags2SpinButton;
 		
+		private global::Gtk.Label label1;
+		
+		private global::Gtk.Label label2;
+		
+		private global::Gtk.Label label3;
+		
 		private global::Gtk.Label label4;
 		
 		private global::Gtk.Label label5;
 		
 		private global::Gtk.Label label6;
 		
+		private global::LynnaLab.ComboBoxFromConstants mainGfxComboBox;
+		
+		private global::LynnaLab.ComboBoxFromConstants palettesComboBox;
+		
 		private global::LynnaLab.ComboBoxFromConstants uniqueGfxComboBox;
 		
 		private global::Gtk.Label GtkLabel;
+		
+		private global::Gtk.Button okButton;
 
 		protected virtual void Build ()
 		{
@@ -83,7 +95,7 @@ namespace LynnaLab
 			this.GtkAlignment.Name = "GtkAlignment";
 			this.GtkAlignment.LeftPadding = ((uint)(12));
 			// Container child GtkAlignment.Gtk.Container+ContainerChild
-			this.table2 = new global::Gtk.Table (((uint)(3)), ((uint)(2)), false);
+			this.table2 = new global::Gtk.Table (((uint)(6)), ((uint)(2)), false);
 			this.table2.Name = "table2";
 			this.table2.RowSpacing = ((uint)(6));
 			this.table2.ColumnSpacing = ((uint)(6));
@@ -122,45 +134,102 @@ namespace LynnaLab
 			w5.XOptions = ((global::Gtk.AttachOptions)(4));
 			w5.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table2.Gtk.Table+TableChild
+			this.label1 = new global::Gtk.Label ();
+			this.label1.Name = "label1";
+			this.label1.LabelProp = global::Mono.Unix.Catalog.GetString ("Main Gfx");
+			this.table2.Add (this.label1);
+			global::Gtk.Table.TableChild w6 = ((global::Gtk.Table.TableChild)(this.table2 [this.label1]));
+			w6.TopAttach = ((uint)(3));
+			w6.BottomAttach = ((uint)(4));
+			w6.XOptions = ((global::Gtk.AttachOptions)(4));
+			w6.YOptions = ((global::Gtk.AttachOptions)(4));
+			// Container child table2.Gtk.Table+TableChild
+			this.label2 = new global::Gtk.Label ();
+			this.label2.Name = "label2";
+			this.label2.LabelProp = global::Mono.Unix.Catalog.GetString ("Palettes");
+			this.table2.Add (this.label2);
+			global::Gtk.Table.TableChild w7 = ((global::Gtk.Table.TableChild)(this.table2 [this.label2]));
+			w7.TopAttach = ((uint)(4));
+			w7.BottomAttach = ((uint)(5));
+			w7.XOptions = ((global::Gtk.AttachOptions)(4));
+			w7.YOptions = ((global::Gtk.AttachOptions)(4));
+			// Container child table2.Gtk.Table+TableChild
+			this.label3 = new global::Gtk.Label ();
+			this.label3.Name = "label3";
+			this.label3.LabelProp = global::Mono.Unix.Catalog.GetString ("label3");
+			this.table2.Add (this.label3);
+			global::Gtk.Table.TableChild w8 = ((global::Gtk.Table.TableChild)(this.table2 [this.label3]));
+			w8.TopAttach = ((uint)(5));
+			w8.BottomAttach = ((uint)(6));
+			w8.XOptions = ((global::Gtk.AttachOptions)(4));
+			w8.YOptions = ((global::Gtk.AttachOptions)(4));
+			// Container child table2.Gtk.Table+TableChild
 			this.label4 = new global::Gtk.Label ();
 			this.label4.Name = "label4";
 			this.label4.LabelProp = global::Mono.Unix.Catalog.GetString ("Flags 1");
 			this.table2.Add (this.label4);
-			global::Gtk.Table.TableChild w6 = ((global::Gtk.Table.TableChild)(this.table2 [this.label4]));
-			w6.XOptions = ((global::Gtk.AttachOptions)(4));
-			w6.YOptions = ((global::Gtk.AttachOptions)(4));
+			global::Gtk.Table.TableChild w9 = ((global::Gtk.Table.TableChild)(this.table2 [this.label4]));
+			w9.XOptions = ((global::Gtk.AttachOptions)(4));
+			w9.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table2.Gtk.Table+TableChild
 			this.label5 = new global::Gtk.Label ();
 			this.label5.Name = "label5";
 			this.label5.LabelProp = global::Mono.Unix.Catalog.GetString ("Flags 2");
 			this.table2.Add (this.label5);
-			global::Gtk.Table.TableChild w7 = ((global::Gtk.Table.TableChild)(this.table2 [this.label5]));
-			w7.TopAttach = ((uint)(1));
-			w7.BottomAttach = ((uint)(2));
-			w7.XOptions = ((global::Gtk.AttachOptions)(4));
-			w7.YOptions = ((global::Gtk.AttachOptions)(4));
+			global::Gtk.Table.TableChild w10 = ((global::Gtk.Table.TableChild)(this.table2 [this.label5]));
+			w10.TopAttach = ((uint)(1));
+			w10.BottomAttach = ((uint)(2));
+			w10.XOptions = ((global::Gtk.AttachOptions)(4));
+			w10.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table2.Gtk.Table+TableChild
 			this.label6 = new global::Gtk.Label ();
 			this.label6.Name = "label6";
 			this.label6.LabelProp = global::Mono.Unix.Catalog.GetString ("Unique Gfx");
 			this.table2.Add (this.label6);
-			global::Gtk.Table.TableChild w8 = ((global::Gtk.Table.TableChild)(this.table2 [this.label6]));
-			w8.TopAttach = ((uint)(2));
-			w8.BottomAttach = ((uint)(3));
-			w8.XOptions = ((global::Gtk.AttachOptions)(4));
-			w8.YOptions = ((global::Gtk.AttachOptions)(4));
+			global::Gtk.Table.TableChild w11 = ((global::Gtk.Table.TableChild)(this.table2 [this.label6]));
+			w11.TopAttach = ((uint)(2));
+			w11.BottomAttach = ((uint)(3));
+			w11.XOptions = ((global::Gtk.AttachOptions)(4));
+			w11.YOptions = ((global::Gtk.AttachOptions)(4));
+			// Container child table2.Gtk.Table+TableChild
+			this.mainGfxComboBox = new global::LynnaLab.ComboBoxFromConstants ();
+			this.mainGfxComboBox.Events = ((global::Gdk.EventMask)(256));
+			this.mainGfxComboBox.Name = "mainGfxComboBox";
+			this.mainGfxComboBox.Active = 0;
+			this.table2.Add (this.mainGfxComboBox);
+			global::Gtk.Table.TableChild w12 = ((global::Gtk.Table.TableChild)(this.table2 [this.mainGfxComboBox]));
+			w12.TopAttach = ((uint)(3));
+			w12.BottomAttach = ((uint)(4));
+			w12.LeftAttach = ((uint)(1));
+			w12.RightAttach = ((uint)(2));
+			w12.XOptions = ((global::Gtk.AttachOptions)(4));
+			w12.YOptions = ((global::Gtk.AttachOptions)(4));
+			// Container child table2.Gtk.Table+TableChild
+			this.palettesComboBox = new global::LynnaLab.ComboBoxFromConstants ();
+			this.palettesComboBox.Events = ((global::Gdk.EventMask)(256));
+			this.palettesComboBox.Name = "palettesComboBox";
+			this.palettesComboBox.Active = 0;
+			this.table2.Add (this.palettesComboBox);
+			global::Gtk.Table.TableChild w13 = ((global::Gtk.Table.TableChild)(this.table2 [this.palettesComboBox]));
+			w13.TopAttach = ((uint)(4));
+			w13.BottomAttach = ((uint)(5));
+			w13.LeftAttach = ((uint)(1));
+			w13.RightAttach = ((uint)(2));
+			w13.XOptions = ((global::Gtk.AttachOptions)(4));
+			w13.YOptions = ((global::Gtk.AttachOptions)(4));
 			// Container child table2.Gtk.Table+TableChild
 			this.uniqueGfxComboBox = new global::LynnaLab.ComboBoxFromConstants ();
 			this.uniqueGfxComboBox.Events = ((global::Gdk.EventMask)(256));
 			this.uniqueGfxComboBox.Name = "uniqueGfxComboBox";
+			this.uniqueGfxComboBox.Active = 0;
 			this.table2.Add (this.uniqueGfxComboBox);
-			global::Gtk.Table.TableChild w9 = ((global::Gtk.Table.TableChild)(this.table2 [this.uniqueGfxComboBox]));
-			w9.TopAttach = ((uint)(2));
-			w9.BottomAttach = ((uint)(3));
-			w9.LeftAttach = ((uint)(1));
-			w9.RightAttach = ((uint)(2));
-			w9.XOptions = ((global::Gtk.AttachOptions)(4));
-			w9.YOptions = ((global::Gtk.AttachOptions)(4));
+			global::Gtk.Table.TableChild w14 = ((global::Gtk.Table.TableChild)(this.table2 [this.uniqueGfxComboBox]));
+			w14.TopAttach = ((uint)(2));
+			w14.BottomAttach = ((uint)(3));
+			w14.LeftAttach = ((uint)(1));
+			w14.RightAttach = ((uint)(2));
+			w14.XOptions = ((global::Gtk.AttachOptions)(4));
+			w14.YOptions = ((global::Gtk.AttachOptions)(4));
 			this.GtkAlignment.Add (this.table2);
 			this.frame2.Add (this.GtkAlignment);
 			this.GtkLabel = new global::Gtk.Label ();
@@ -168,10 +237,22 @@ namespace LynnaLab
 			this.GtkLabel.UseMarkup = true;
 			this.frame2.LabelWidget = this.GtkLabel;
 			this.vbox2.Add (this.frame2);
-			global::Gtk.Box.BoxChild w12 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
-			w12.Position = 1;
-			w12.Expand = false;
-			w12.Fill = false;
+			global::Gtk.Box.BoxChild w17 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
+			w17.Position = 1;
+			w17.Expand = false;
+			w17.Fill = false;
+			// Container child vbox2.Gtk.Box+BoxChild
+			this.okButton = new global::Gtk.Button ();
+			this.okButton.CanFocus = true;
+			this.okButton.Name = "okButton";
+			this.okButton.UseUnderline = true;
+			this.okButton.Label = global::Mono.Unix.Catalog.GetString ("OK");
+			this.vbox2.Add (this.okButton);
+			global::Gtk.Box.BoxChild w18 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.okButton]));
+			w18.PackType = ((global::Gtk.PackType)(1));
+			w18.Position = 2;
+			w18.Expand = false;
+			w18.Fill = false;
 			this.Add (this.vbox2);
 			if ((this.Child != null)) {
 				this.Child.ShowAll ();
@@ -179,7 +260,10 @@ namespace LynnaLab
 			this.Hide ();
 			this.areaSpinButton.ValueChanged += new global::System.EventHandler (this.OnAreaSpinButtonValueChanged);
 			this.uniqueGfxComboBox.Changed += new global::System.EventHandler (this.OnUniqueGfxComboBoxChanged);
+			this.palettesComboBox.Changed += new global::System.EventHandler (this.OnPalettesComboBoxChanged);
+			this.mainGfxComboBox.Changed += new global::System.EventHandler (this.OnMainGfxComboBoxChanged);
 			this.flags1SpinButton.ValueChanged += new global::System.EventHandler (this.OnFlags1SpinButtonValueChanged);
+			this.okButton.Clicked += new global::System.EventHandler (this.OnOkButtonClicked);
 		}
 	}
 }

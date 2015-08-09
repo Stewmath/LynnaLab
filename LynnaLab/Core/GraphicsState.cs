@@ -4,42 +4,56 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
-    public enum GfxHeaderGroup {
+    // The lower the value, the lower the priority
+    public enum GfxHeaderType {
         Main = 0,
         Unique,
         Animation
     };
+    public enum PaletteGroupType{
+        Common = 0,
+        Main,
+    };
 
 	public class GraphicsState
 	{
+        bool gfxModified, palettesModified;
+
 		byte[][] vramBuffer;
 		byte[][] wramBuffer;
 		Color[][][] paletteBuffer;
 
         // Parallel lists
         List<GfxHeaderData> gfxHeaderDataList = new List<GfxHeaderData>();
-        List<GfxHeaderGroup> gfxHeaderDataGroups = new List<GfxHeaderGroup>();
+        List<GfxHeaderType> gfxHeaderDataTypes = new List<GfxHeaderType>();
+
+        List<PaletteHeaderGroup> paletteHeaderGroupList = new List<PaletteHeaderGroup>();
+        List<PaletteGroupType> paletteHeaderGroupTypes = new List<PaletteGroupType>();
 
 		public byte[][] VramBuffer {
-			get { return vramBuffer; }
+			get { 
+                if (gfxModified)
+                    RegenerateBuffers();
+                return vramBuffer;
+            }
 		}
 		public byte[][] WramBuffer {
-			get { return wramBuffer; }
+			get {
+                if (gfxModified)
+                    RegenerateBuffers();
+                return wramBuffer;
+            }
 		}
 
 		public GraphicsState()
 		{
-            paletteBuffer = new Color[2][][];
-            for (int i=0; i<2; i++) {
-                paletteBuffer[i] = new Color[8][];
-                for (int j=0; j<8; j++)
-                    paletteBuffer[i][j] = new Color[4];
-            }
-
             RegenerateBuffers();
+            RegeneratePalettes();
 		}
 
         public Color[][] GetPalettes(PaletteType type) {
+            if (palettesModified)
+                RegeneratePalettes();
             return paletteBuffer[(int)type];
         }
 
@@ -50,29 +64,66 @@ namespace LynnaLab
             return GetPalettes(PaletteType.Sprite);
         }
 
-        public void AddGfxHeader(GfxHeaderData header, GfxHeaderGroup group) {
+        public void AddGfxHeader(GfxHeaderData header, GfxHeaderType group) {
             int i = 0;
-            while (i < gfxHeaderDataGroups.Count && gfxHeaderDataGroups[i] <= group)
+            while (i < gfxHeaderDataTypes.Count && gfxHeaderDataTypes[i] <= group)
                 i++;
             gfxHeaderDataList.Insert(i, header);
-            gfxHeaderDataGroups.Insert(i, group);
-            LoadGfxHeader(header);
+            gfxHeaderDataTypes.Insert(i, group);
+            if (!gfxModified && i == gfxHeaderDataTypes.Count-1)
+                LoadGfxHeader(header);
+            else
+                gfxModified = true;
         }
 
-        public void RemoveGfxHeaderGroup(GfxHeaderGroup group) {
+        public void RemoveGfxHeaderType(GfxHeaderType type) {
             for (int i=0; i<gfxHeaderDataList.Count; i++) {
-                if (gfxHeaderDataGroups[i] == group) {
-                    gfxHeaderDataGroups.RemoveAt(i);
+                if (gfxHeaderDataTypes[i] == type) {
+                    gfxHeaderDataTypes.RemoveAt(i);
                     gfxHeaderDataList.RemoveAt(i);
                     i--;
                 }
             }
-            RegenerateBuffers();
+            gfxModified = true;
         }
 
-        public void AddPaletteHeaderGroup(PaletteHeaderGroup group) {
-            PaletteHeaderData header = group.FirstPaletteHeader;
+        public void AddPaletteHeaderGroup(PaletteHeaderGroup group, PaletteGroupType type) {
+            int i = 0;
+            while (i < paletteHeaderGroupList.Count && paletteHeaderGroupTypes[i] <= type)
+                i++;
+            paletteHeaderGroupList.Insert(i, group);
+            paletteHeaderGroupTypes.Insert(i, type);
+            if (!palettesModified && i == paletteHeaderGroupList.Count-1)
+                LoadPaletteHeaderGroup(group);
+            else
+                palettesModified = true;
+        }
+        public void RemovePaletteGroupType(PaletteGroupType type) {
+            for (int i=0; i<paletteHeaderGroupList.Count; i++) {
+                if (paletteHeaderGroupTypes[i] == type) {
+                    paletteHeaderGroupTypes.RemoveAt(i);
+                    paletteHeaderGroupList.RemoveAt(i);
+                    i--;
+                }
+            }
+            palettesModified = true;
+        }
 
+        void LoadGfxHeader(GfxHeaderData header) {
+            if ((header.DestAddr & 0xe000) == 0x8000) {
+                int bank = header.DestBank & 1;
+                int dest = header.DestAddr & 0x1fff;
+                header.GfxStream.Position = 0;
+                header.GfxStream.Read(vramBuffer[bank], dest, 0x2000 - dest);
+            } else if ((header.DestAddr & 0xf000) == 0xd000) {
+                int bank = header.DestBank & 7;
+                int dest = header.DestAddr & 0x0fff;
+                header.GfxStream.Position = 0;
+                header.GfxStream.Read(wramBuffer[bank], dest, 0x1000 - dest);
+            }
+        }
+        void LoadPaletteHeaderGroup(PaletteHeaderGroup group) {
+            PaletteHeaderData header = group.FirstPaletteHeader;
             bool next = true;
             while (next) {
                 RgbData data = header.Data;
@@ -96,20 +147,6 @@ namespace LynnaLab
             }
         }
 
-        void LoadGfxHeader(GfxHeaderData header) {
-            if ((header.DestAddr & 0xe000) == 0x8000) {
-                int bank = header.DestBank & 1;
-                int dest = header.DestAddr & 0x1fff;
-                header.GfxStream.Position = 0;
-                header.GfxStream.Read(vramBuffer[bank], dest, 0x2000 - dest);
-            } else if ((header.DestAddr & 0xf000) == 0xd000) {
-                int bank = header.DestBank & 7;
-                int dest = header.DestAddr & 0x0fff;
-                header.GfxStream.Position = 0;
-                header.GfxStream.Read(wramBuffer[bank], dest, 0x1000 - dest);
-            }
-        }
-
         void RegenerateBuffers() {
             vramBuffer = new byte[2][];
             vramBuffer[0] = new byte[0x2000];
@@ -122,6 +159,24 @@ namespace LynnaLab
             foreach (GfxHeaderData header in gfxHeaderDataList) {
                 LoadGfxHeader(header);
             }
+
+            gfxModified = false;
+        }
+        void RegeneratePalettes() {
+            paletteBuffer = new Color[2][][];
+            for (int i=0; i<2; i++) {
+                paletteBuffer[i] = new Color[8][];
+                for (int j=0; j<8; j++) {
+                    paletteBuffer[i][j] = new Color[4];
+                    for (int k=0; k<4; k++)
+                        paletteBuffer[i][j][k] = Color.FromArgb(0,0,0);
+                }
+            }
+
+            foreach (PaletteHeaderGroup group in paletteHeaderGroupList) {
+                LoadPaletteHeaderGroup(group);
+            }
+            palettesModified = false;
         }
 	}
 }

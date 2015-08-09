@@ -616,7 +616,7 @@
       </widget>
     </child>
   </widget>
-  <widget class="Gtk.Bin" id="LynnaLab.AreaEditor" design-size="164 198">
+  <widget class="Gtk.Bin" id="LynnaLab.AreaEditor" design-size="164 233">
     <property name="MemberName" />
     <property name="Visible">False</property>
     <child>
@@ -678,10 +678,13 @@
                 <child>
                   <widget class="Gtk.Table" id="table2">
                     <property name="MemberName" />
-                    <property name="NRows">3</property>
+                    <property name="NRows">6</property>
                     <property name="NColumns">2</property>
                     <property name="RowSpacing">6</property>
                     <property name="ColumnSpacing">6</property>
+                    <child>
+                      <placeholder />
+                    </child>
                     <child>
                       <widget class="LynnaLab.SpinButtonHexadecimal" id="flags1SpinButton">
                         <property name="MemberName" />
@@ -724,6 +727,63 @@
                         <property name="BottomAttach">2</property>
                         <property name="LeftAttach">1</property>
                         <property name="RightAttach">2</property>
+                        <property name="AutoSize">True</property>
+                        <property name="XOptions">Fill</property>
+                        <property name="YOptions">Fill</property>
+                        <property name="XExpand">False</property>
+                        <property name="XFill">True</property>
+                        <property name="XShrink">False</property>
+                        <property name="YExpand">False</property>
+                        <property name="YFill">True</property>
+                        <property name="YShrink">False</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <widget class="Gtk.Label" id="label1">
+                        <property name="MemberName" />
+                        <property name="LabelProp" translatable="yes">Main Gfx</property>
+                      </widget>
+                      <packing>
+                        <property name="TopAttach">3</property>
+                        <property name="BottomAttach">4</property>
+                        <property name="AutoSize">True</property>
+                        <property name="XOptions">Fill</property>
+                        <property name="YOptions">Fill</property>
+                        <property name="XExpand">False</property>
+                        <property name="XFill">True</property>
+                        <property name="XShrink">False</property>
+                        <property name="YExpand">False</property>
+                        <property name="YFill">True</property>
+                        <property name="YShrink">False</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <widget class="Gtk.Label" id="label2">
+                        <property name="MemberName" />
+                        <property name="LabelProp" translatable="yes">Palettes</property>
+                      </widget>
+                      <packing>
+                        <property name="TopAttach">4</property>
+                        <property name="BottomAttach">5</property>
+                        <property name="AutoSize">True</property>
+                        <property name="XOptions">Fill</property>
+                        <property name="YOptions">Fill</property>
+                        <property name="XExpand">False</property>
+                        <property name="XFill">True</property>
+                        <property name="XShrink">False</property>
+                        <property name="YExpand">False</property>
+                        <property name="YFill">True</property>
+                        <property name="YShrink">False</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <widget class="Gtk.Label" id="label3">
+                        <property name="MemberName" />
+                        <property name="LabelProp" translatable="yes">label3</property>
+                      </widget>
+                      <packing>
+                        <property name="TopAttach">5</property>
+                        <property name="BottomAttach">6</property>
                         <property name="AutoSize">True</property>
                         <property name="XOptions">Fill</property>
                         <property name="YOptions">Fill</property>
@@ -791,9 +851,56 @@
                       </packing>
                     </child>
                     <child>
+                      <widget class="LynnaLab.ComboBoxFromConstants" id="mainGfxComboBox">
+                        <property name="MemberName" />
+                        <property name="Events">ButtonPressMask</property>
+                        <property name="Active">0</property>
+                        <signal name="Changed" handler="OnMainGfxComboBoxChanged" />
+                      </widget>
+                      <packing>
+                        <property name="TopAttach">3</property>
+                        <property name="BottomAttach">4</property>
+                        <property name="LeftAttach">1</property>
+                        <property name="RightAttach">2</property>
+                        <property name="AutoSize">True</property>
+                        <property name="XOptions">Fill</property>
+                        <property name="YOptions">Fill</property>
+                        <property name="XExpand">False</property>
+                        <property name="XFill">True</property>
+                        <property name="XShrink">False</property>
+                        <property name="YExpand">False</property>
+                        <property name="YFill">True</property>
+                        <property name="YShrink">False</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <widget class="LynnaLab.ComboBoxFromConstants" id="palettesComboBox">
+                        <property name="MemberName" />
+                        <property name="Events">ButtonPressMask</property>
+                        <property name="Active">0</property>
+                        <signal name="Changed" handler="OnPalettesComboBoxChanged" />
+                      </widget>
+                      <packing>
+                        <property name="TopAttach">4</property>
+                        <property name="BottomAttach">5</property>
+                        <property name="LeftAttach">1</property>
+                        <property name="RightAttach">2</property>
+                        <property name="AutoSize">True</property>
+                        <property name="XOptions">Fill</property>
+                        <property name="YOptions">Fill</property>
+                        <property name="XExpand">False</property>
+                        <property name="XFill">True</property>
+                        <property name="XShrink">False</property>
+                        <property name="YExpand">False</property>
+                        <property name="YFill">True</property>
+                        <property name="YShrink">False</property>
+                      </packing>
+                    </child>
+                    <child>
                       <widget class="LynnaLab.ComboBoxFromConstants" id="uniqueGfxComboBox">
                         <property name="MemberName" />
                         <property name="Events">ButtonPressMask</property>
+                        <property name="Active">0</property>
                         <signal name="Changed" handler="OnUniqueGfxComboBoxChanged" />
                       </widget>
                       <packing>
@@ -828,6 +935,23 @@
           </widget>
           <packing>
             <property name="Position">1</property>
+            <property name="AutoSize">True</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Button" id="okButton">
+            <property name="MemberName" />
+            <property name="CanFocus">True</property>
+            <property name="Type">TextOnly</property>
+            <property name="Label" translatable="yes">OK</property>
+            <property name="UseUnderline">True</property>
+            <signal name="Clicked" handler="OnOkButtonClicked" />
+          </widget>
+          <packing>
+            <property name="PackType">End</property>
+            <property name="Position">2</property>
             <property name="AutoSize">True</property>
             <property name="Expand">False</property>
             <property name="Fill">False</property>

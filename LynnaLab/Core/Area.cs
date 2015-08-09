@@ -12,13 +12,10 @@ namespace LynnaLab
         Data areaData;
 
         int flags1, flags2;
-        int gfxHeaderGroupIndex;
-        int paletteHeaderGroupIndex;
         int tilesetHeaderGroupIndex;
         int layoutGroup;
         int animationIndex;
 
-        PaletteHeaderGroup paletteHeaderGroup;
         TilesetHeaderGroup tilesetHeaderGroup;
         AnimationGroup animationGroup;
 
@@ -64,7 +61,28 @@ namespace LynnaLab
                 Data d = GetDataIndex(2);
                 d.SetValue(0, value);
                 SetUniqueGfx(Project.EvalToInt(value));
-                InvalidateAllTiles();
+            }
+        }
+        public string MainGfxString {
+            get {
+                Data d = GetDataIndex(3);
+                return d.Values[0];
+            }
+            set {
+                Data d = GetDataIndex(3);
+                d.SetValue(0, value);
+                SetMainGfx(Project.EvalToInt(value));
+            }
+        }
+        public string PaletteHeaderString {
+            get {
+                Data d = GetDataIndex(4);
+                return d.Values[0];
+            }
+            set {
+                Data d = GetDataIndex(4);
+                d.SetValue(0, value);
+                SetPaletteHeader(Project.EvalToInt(value));
             }
         }
             
@@ -76,6 +94,14 @@ namespace LynnaLab
             areaFile = Project.GetFileWithLabel("areaData");
 
             areaData = areaFile.GetData("areaData", Index * 8);
+
+            // Initialize graphics state
+            graphicsState = new GraphicsState();
+            // Global palettes
+            PaletteHeaderGroup globalPaletteHeaderGroup = 
+                Project.GetIndexedDataType<PaletteHeaderGroup>(0xf);
+            graphicsState.AddPaletteHeaderGroup(globalPaletteHeaderGroup, PaletteGroupType.Common);
+
             Data data = areaData;
             flags1 = p.EvalToInt(data.Values[0]);
 
@@ -83,13 +109,13 @@ namespace LynnaLab
             flags2 = p.EvalToInt(data.Values[0]);
 
             data = data.Next;
-            int uniqueGfxHeaderGroupIndex = p.EvalToInt(data.Values[0]);
+            SetUniqueGfx(Project.EvalToInt(data.Values[0]));
 
             data = data.Next;
-            gfxHeaderGroupIndex = p.EvalToInt(data.Values[0]);
+            SetMainGfx(Project.EvalToInt(data.Values[0]));
 
             data = data.Next;
-            paletteHeaderGroupIndex = p.EvalToInt(data.Values[0]);
+            SetPaletteHeader(Project.EvalToInt(data.Values[0]));
 
             data = data.Next;
             tilesetHeaderGroupIndex = p.EvalToInt(data.Values[0]);
@@ -101,10 +127,7 @@ namespace LynnaLab
             animationIndex = p.EvalToInt(data.Values[0]);
 
 
-            paletteHeaderGroup = Project.GetIndexedDataType<PaletteHeaderGroup>(paletteHeaderGroupIndex);
             tilesetHeaderGroup = Project.GetIndexedDataType<TilesetHeaderGroup>(tilesetHeaderGroupIndex);
-            PaletteHeaderGroup globalPaletteHeaderGroup = 
-                Project.GetIndexedDataType<PaletteHeaderGroup>(0xf);
 
 
             // Generate usedTileList for quick lookup of which metatiles use
@@ -125,33 +148,6 @@ namespace LynnaLab
             }
 
 
-            graphicsState = new GraphicsState();
-            graphicsState.AddPaletteHeaderGroup(paletteHeaderGroup);
-            // Global palettes
-            graphicsState.AddPaletteHeaderGroup(globalPaletteHeaderGroup);
-
-            // Main gfx headers
-            FileParser gfxHeaderFile = Project.GetFileWithLabel("gfxHeaderGroupTable");
-            Data pointerData = gfxHeaderFile.GetData("gfxHeaderGroupTable", gfxHeaderGroupIndex*2);
-            GfxHeaderData header = gfxHeaderFile.GetData(pointerData.Values[0])
-                as GfxHeaderData;
-            if (header != null) {
-                bool next = true;
-                while (next) {
-                    graphicsState.AddGfxHeader(header, GfxHeaderGroup.Main);
-                    next = false;
-                    if (header.ShouldHaveNext()) {
-                        GfxHeaderData nextHeader = header.Next as GfxHeaderData;
-                        if (nextHeader != null) {
-                            header = nextHeader;
-                            next = true;
-                        }
-                        // Might wanna print a warning if no next value is found
-                    }
-                }
-            }
-
-            SetUniqueGfx(uniqueGfxHeaderGroupIndex);
 
             // Animation
             if (animationIndex != 0xff) {
@@ -160,7 +156,7 @@ namespace LynnaLab
                 for (int j=0; j<animationGroup.NumAnimations; j++) {
                     Animation animation = animationGroup.GetAnimationIndex(j);
                     for (int k=0; k<animation.NumIndices; k++) {
-                        graphicsState.AddGfxHeader(animation.GetGfxHeader(k), GfxHeaderGroup.Animation);
+                        graphicsState.AddGfxHeader(animation.GetGfxHeader(k), GfxHeaderType.Animation);
                     }
                 }
             }
@@ -236,7 +232,7 @@ namespace LynnaLab
                     int pos = animationPos[i];
                     animationCounter[i] += animation.GetCounter(pos);
                     GfxHeaderData header = animation.GetGfxHeader(pos);
-                    graphicsState.AddGfxHeader(header, GfxHeaderGroup.Animation);
+                    graphicsState.AddGfxHeader(header, GfxHeaderType.Animation);
 //                     Console.WriteLine(i + ":" + animationPos[i]);
                     animationPos[i]++;
                     if (animationPos[i] >= animation.NumIndices)
@@ -271,11 +267,34 @@ namespace LynnaLab
         public override void Save() {
         }
 
-        void SetUniqueGfx(int index) {
-            // Unique gfx headers
-            if (index != 0) {
-                graphicsState.RemoveGfxHeaderGroup(GfxHeaderGroup.Unique);
+        void SetMainGfx(int index) {
+            graphicsState.RemoveGfxHeaderType(GfxHeaderType.Main);
 
+            FileParser gfxHeaderFile = Project.GetFileWithLabel("gfxHeaderGroupTable");
+            Data pointerData = gfxHeaderFile.GetData("gfxHeaderGroupTable", index*2);
+            GfxHeaderData header = gfxHeaderFile.GetData(pointerData.Values[0])
+                as GfxHeaderData;
+            if (header != null) {
+                bool next = true;
+                while (next) {
+                    graphicsState.AddGfxHeader(header, GfxHeaderType.Main);
+                    next = false;
+                    if (header.ShouldHaveNext()) {
+                        GfxHeaderData nextHeader = header.Next as GfxHeaderData;
+                        if (nextHeader != null) {
+                            header = nextHeader;
+                            next = true;
+                        }
+                        // Might wanna print a warning if no next value is found
+                    }
+                }
+            }
+            InvalidateAllTiles();
+        }
+
+        void SetUniqueGfx(int index) {
+            graphicsState.RemoveGfxHeaderType(GfxHeaderType.Unique);
+            if (index != 0) {
                 FileParser uniqueGfxHeaderFile = Project.GetFileWithLabel("uniqueGfxHeaderGroupsStart");
                 GfxHeaderData header
                     = uniqueGfxHeaderFile.GetData("uniqueGfxHeaderGroup" + index.ToString("x2"))
@@ -283,7 +302,7 @@ namespace LynnaLab
                 if (header != null) {
                     bool next = true;
                     while (next) {
-                        graphicsState.AddGfxHeader(header, GfxHeaderGroup.Unique);
+                        graphicsState.AddGfxHeader(header, GfxHeaderType.Unique);
                         next = false;
                         if (header.ShouldHaveNext()) {
                             GfxHeaderData nextHeader = header.Next as GfxHeaderData;
@@ -296,6 +315,15 @@ namespace LynnaLab
                     }
                 }
             }
+            InvalidateAllTiles();
+        }
+
+        void SetPaletteHeader(int index) {
+            graphicsState.RemovePaletteGroupType(PaletteGroupType.Main);
+            var paletteHeaderGroup =
+                Project.GetIndexedDataType<PaletteHeaderGroup>(index);
+            graphicsState.AddPaletteHeaderGroup(paletteHeaderGroup, PaletteGroupType.Main);
+            InvalidateAllTiles();
         }
     }
 }
