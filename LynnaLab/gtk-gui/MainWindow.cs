@@ -45,7 +45,7 @@ public partial class MainWindow
 	
 	private global::Gtk.Label label8;
 	
-	private global::LynnaLab.SpinButtonHexadecimal musicSpinButton;
+	private global::LynnaLab.ComboBoxFromConstants musicComboBox;
 	
 	private global::Gtk.Label GtkLabel2;
 	
@@ -224,17 +224,12 @@ public partial class MainWindow
 		w8.XOptions = ((global::Gtk.AttachOptions)(4));
 		w8.YOptions = ((global::Gtk.AttachOptions)(4));
 		// Container child table3.Gtk.Table+TableChild
-		this.musicSpinButton = new global::LynnaLab.SpinButtonHexadecimal ();
-		this.musicSpinButton.CanFocus = true;
-		this.musicSpinButton.Name = "musicSpinButton";
-		this.musicSpinButton.Adjustment.Upper = 255;
-		this.musicSpinButton.Adjustment.PageIncrement = 10;
-		this.musicSpinButton.Adjustment.StepIncrement = 1;
-		this.musicSpinButton.ClimbRate = 1;
-		this.musicSpinButton.Digits = ((uint)(2));
-		this.musicSpinButton.Numeric = true;
-		this.table3.Add (this.musicSpinButton);
-		global::Gtk.Table.TableChild w9 = ((global::Gtk.Table.TableChild)(this.table3 [this.musicSpinButton]));
+		this.musicComboBox = new global::LynnaLab.ComboBoxFromConstants ();
+		this.musicComboBox.Events = ((global::Gdk.EventMask)(256));
+		this.musicComboBox.Name = "musicComboBox";
+		this.musicComboBox.Active = 0;
+		this.table3.Add (this.musicComboBox);
+		global::Gtk.Table.TableChild w9 = ((global::Gtk.Table.TableChild)(this.table3 [this.musicComboBox]));
 		w9.LeftAttach = ((uint)(1));
 		w9.RightAttach = ((uint)(2));
 		w9.XOptions = ((global::Gtk.AttachOptions)(4));
@@ -484,7 +479,7 @@ public partial class MainWindow
 		this.SaveAction.Activated += new global::System.EventHandler (this.OnSaveActionActivated);
 		this.AnimationsAction.Activated += new global::System.EventHandler (this.OnAnimationsActionActivated);
 		this.roomSpinButton.ValueChanged += new global::System.EventHandler (this.OnRoomSpinButtonValueChanged);
-		this.musicSpinButton.ValueChanged += new global::System.EventHandler (this.OnMusicSpinButtonValueChanged);
+		this.musicComboBox.Changed += new global::System.EventHandler (this.OnMusicComboBoxChanged);
 		this.areaSpinButton.ValueChanged += new global::System.EventHandler (this.OnAreaSpinButtonValueChanged);
 		this.areaEditorButton.Clicked += new global::System.EventHandler (this.OnAreaEditorButtonClicked);
 		this.notebook2.SwitchPage += new global::Gtk.SwitchPageHandler (this.OnNotebook2SwitchPage);

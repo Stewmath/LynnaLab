@@ -19,13 +19,23 @@ namespace LynnaLab
 
         AsmFileParser parser;
 
-		public ConstantsMapping(AsmFileParser parser, string prefix)
+        public ConstantsMapping(AsmFileParser parser, string prefix)
+            : this(parser, new string[] { prefix }) {}
+
+		public ConstantsMapping(AsmFileParser parser, string[] prefixes)
 		{
             this.parser = parser;
 
             Dictionary<string,string> definesDictionary = parser.DefinesDictionary;
             foreach (string key in definesDictionary.Keys) {
-                if (key.Substring(0,prefix.Length) == prefix) {
+                bool acceptable = false;
+                foreach (string prefix in prefixes)
+                    if (key.Substring(0, prefix.Length) == prefix) {
+                        acceptable = true;
+                        break;
+                    }
+
+                if (acceptable) {
                     byte tmp;
                     if (!stringToByte.TryGetValue(key, out tmp)) {
                         try {
@@ -49,6 +59,9 @@ namespace LynnaLab
         public int IndexOf(string key) {
             var list = GetAllStrings();
             return list.IndexOf(key);
+        }
+        public int IndexOf(byte val) {
+            return IndexOf(ByteToString(val));
         }
 
         public IList<string> GetAllStrings() {

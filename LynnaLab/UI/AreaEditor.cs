@@ -11,28 +11,18 @@ namespace LynnaLab
         }
 
         Area area;
-        ConstantsMapping uniqueGfxMapping, mainGfxMapping, paletteHeaderMapping;
 
         public AreaEditor(Area a)
         {
             this.Build();
 
-            uniqueGfxMapping = new ConstantsMapping(
-                        a.Project.GetFileParser("constants/uniqueGfxHeaders.s") as AsmFileParser,
-                        "UNIQGFXH_");
-            mainGfxMapping = new ConstantsMapping(
-                        a.Project.GetFileParser("constants/gfxHeaders.s") as AsmFileParser,
-                        "GFXH_");
-            paletteHeaderMapping = new ConstantsMapping(
-                        a.Project.GetFileParser("constants/paletteHeaders.s") as AsmFileParser,
-                        "PALH_");
-
             SetArea(a);
 
             areaSpinButton.Adjustment.Upper = 0x66;
-            uniqueGfxComboBox.SetConstantsMapping(uniqueGfxMapping);
-            mainGfxComboBox.SetConstantsMapping(mainGfxMapping);
-            palettesComboBox.SetConstantsMapping(paletteHeaderMapping);
+            uniqueGfxComboBox.SetConstantsMapping(Project.UniqueGfxMapping);
+            mainGfxComboBox.SetConstantsMapping(Project.MainGfxMapping);
+            palettesComboBox.SetConstantsMapping(Project.PaletteHeaderMapping);
+            tilesetSpinButton.Adjustment.Upper = 0x32;
 
             SetArea(a);
         }
@@ -61,7 +51,7 @@ namespace LynnaLab
         }
         void SetUniqueGfx(string value) {
             try {
-                uniqueGfxComboBox.Active = uniqueGfxMapping.IndexOf(value);
+                uniqueGfxComboBox.Active = Project.UniqueGfxMapping.IndexOf(value);
                 area.UniqueGfxString = value;
             }
             catch (FormatException) {
@@ -69,7 +59,7 @@ namespace LynnaLab
         }
         void SetMainGfx(string value) {
             try {
-                mainGfxComboBox.Active = mainGfxMapping.IndexOf(value);
+                mainGfxComboBox.Active = Project.MainGfxMapping.IndexOf(value);
                 area.MainGfxString = value;
             }
             catch (FormatException) {
@@ -77,7 +67,7 @@ namespace LynnaLab
         }
         void SetPaletteHeader(string value) {
             try {
-                palettesComboBox.Active = paletteHeaderMapping.IndexOf(value);
+                palettesComboBox.Active = Project.PaletteHeaderMapping.IndexOf(value);
                 area.PaletteHeaderString = value;
             }
             catch (FormatException) {

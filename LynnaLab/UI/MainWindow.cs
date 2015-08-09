@@ -90,6 +90,7 @@ public partial class MainWindow: Gtk.Window
             }
     */
 
+            musicComboBox.SetConstantsMapping(Project.MusicMapping);
             dungeonMinimap.Project = Project;
             worldMinimap.Project = Project;
             SetWorld(0);
@@ -110,7 +111,7 @@ public partial class MainWindow: Gtk.Window
             return;
         roomeditor1.SetRoom(room);
         SetArea(room.Area);
-        musicSpinButton.Value = room.GetMusicID();
+        musicComboBox.Active = Project.MusicMapping.IndexOf((byte)room.GetMusicID());
         roomSpinButton.Value = room.Index;
     }
 
@@ -278,12 +279,10 @@ public partial class MainWindow: Gtk.Window
     }
 
 
-    protected void OnMusicSpinButtonValueChanged(object sender, EventArgs e)
-    {
+    protected void OnMusicComboBoxChanged(object sender, EventArgs e) {
         if (Project == null)
             return;
-        SpinButton button = sender as SpinButton;
-        roomeditor1.Room.SetMusicID(button.ValueAsInt);
+        roomeditor1.Room.SetMusicID(Project.MusicMapping.StringToByte(musicComboBox.ActiveText));
     }
 
     protected void OnAreaEditorButtonClicked(object sender, EventArgs e)

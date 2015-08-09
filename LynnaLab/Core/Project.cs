@@ -8,6 +8,11 @@ namespace LynnaLab
 {
 	public class Project
 	{
+        public readonly ConstantsMapping UniqueGfxMapping;
+        public readonly ConstantsMapping MainGfxMapping;
+        public readonly ConstantsMapping PaletteHeaderMapping;
+        public readonly ConstantsMapping MusicMapping;
+
 		string baseDirectory;
 		string configDirectory;
 		StreamWriter logWriter;
@@ -58,6 +63,21 @@ namespace LynnaLab
 			}
             // Parse wram.s
             GetFileParser("include/wram.s");
+
+            // Initialize constantsMappings
+            UniqueGfxMapping = new ConstantsMapping(
+                        GetFileParser("constants/uniqueGfxHeaders.s") as AsmFileParser,
+                        "UNIQGFXH_");
+            MainGfxMapping = new ConstantsMapping(
+                        GetFileParser("constants/gfxHeaders.s") as AsmFileParser,
+                        "GFXH_");
+            PaletteHeaderMapping = new ConstantsMapping(
+                        GetFileParser("constants/paletteHeaders.s") as AsmFileParser,
+                        "PALH_");
+            MusicMapping = new ConstantsMapping(
+                        GetFileParser("constants/music.s") as AsmFileParser,
+                        new string[] {"MUS_", "SND_"} );
+
 		}
 
         public FileParser GetFileParser(string filename) {

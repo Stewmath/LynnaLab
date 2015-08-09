@@ -232,16 +232,11 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <widget class="LynnaLab.SpinButtonHexadecimal" id="musicSpinButton">
+                                  <widget class="LynnaLab.ComboBoxFromConstants" id="musicComboBox">
                                     <property name="MemberName" />
-                                    <property name="CanFocus">True</property>
-                                    <property name="Upper">255</property>
-                                    <property name="PageIncrement">10</property>
-                                    <property name="StepIncrement">1</property>
-                                    <property name="ClimbRate">1</property>
-                                    <property name="Digits">2</property>
-                                    <property name="Numeric">True</property>
-                                    <signal name="ValueChanged" handler="OnMusicSpinButtonValueChanged" />
+                                    <property name="Events">ButtonPressMask</property>
+                                    <property name="Active">0</property>
+                                    <signal name="Changed" handler="OnMusicComboBoxChanged" />
                                   </widget>
                                   <packing>
                                     <property name="LeftAttach">1</property>
