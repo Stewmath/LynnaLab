@@ -317,6 +317,7 @@
                         <property name="Width">16</property>
                         <property name="TileWidth">16</property>
                         <property name="TileHeight">16</property>
+                        <property name="Scale">0</property>
                       </widget>
                       <packing>
                         <property name="Position">0</property>
@@ -334,6 +335,7 @@
                         <property name="Width">15</property>
                         <property name="TileWidth">16</property>
                         <property name="TileHeight">16</property>
+                        <property name="Scale">0</property>
                       </widget>
                       <packing>
                         <property name="Position">1</property>
@@ -436,6 +438,7 @@
                         <property name="Width">16</property>
                         <property name="TileWidth">20</property>
                         <property name="TileHeight">16</property>
+                        <property name="Scale">0</property>
                       </widget>
                       <packing>
                         <property name="Position">1</property>
@@ -575,6 +578,7 @@
                         <property name="Width">8</property>
                         <property name="TileWidth">30</property>
                         <property name="TileHeight">22</property>
+                        <property name="Scale">0</property>
                       </widget>
                       <packing>
                         <property name="Position">1</property>
@@ -616,7 +620,7 @@
       </widget>
     </child>
   </widget>
-  <widget class="Gtk.Bin" id="LynnaLab.AreaEditor" design-size="456 329">
+  <widget class="Gtk.Bin" id="LynnaLab.AreaEditor" design-size="546 367">
     <property name="MemberName" />
     <property name="Visible">False</property>
     <child>
@@ -925,6 +929,7 @@
                             <property name="PageIncrement">10</property>
                             <property name="StepIncrement">1</property>
                             <property name="ClimbRate">1</property>
+                            <property name="Digits">2</property>
                             <property name="Numeric">True</property>
                             <signal name="ValueChanged" handler="OnLayoutGroupSpinButtonValueChanged" />
                           </widget>
@@ -1050,15 +1055,28 @@
                       </packing>
                     </child>
                     <child>
-                      <widget class="LynnaLab.AreaViewer" id="areaviewer1">
+                      <widget class="Gtk.VBox" id="vbox1">
                         <property name="MemberName" />
-                        <property name="WidthRequest">256</property>
-                        <property name="HeightRequest">256</property>
-                        <property name="SelectedIndex">0</property>
-                        <property name="Height">16</property>
-                        <property name="Width">16</property>
-                        <property name="TileWidth">16</property>
-                        <property name="TileHeight">16</property>
+                        <property name="Spacing">6</property>
+                        <child>
+                          <widget class="LynnaLab.AreaViewer" id="areaviewer1">
+                            <property name="MemberName" />
+                            <property name="WidthRequest">256</property>
+                            <property name="HeightRequest">256</property>
+                            <property name="SelectedIndex">0</property>
+                            <property name="Height">16</property>
+                            <property name="Width">16</property>
+                            <property name="TileWidth">16</property>
+                            <property name="TileHeight">16</property>
+                            <property name="Scale">1</property>
+                          </widget>
+                          <packing>
+                            <property name="Position">0</property>
+                            <property name="AutoSize">True</property>
+                            <property name="Expand">False</property>
+                            <property name="Fill">False</property>
+                          </packing>
+                        </child>
                       </widget>
                       <packing>
                         <property name="Position">1</property>
@@ -1068,14 +1086,68 @@
                       </packing>
                     </child>
                     <child>
-                      <placeholder />
+                      <widget class="Gtk.Frame" id="frame1">
+                        <property name="MemberName" />
+                        <child>
+                          <widget class="Gtk.Alignment" id="GtkAlignment1">
+                            <property name="MemberName" />
+                            <property name="Xalign">0</property>
+                            <property name="Yalign">0</property>
+                            <property name="LeftPadding">12</property>
+                            <child>
+                              <widget class="Gtk.VBox" id="vbox3">
+                                <property name="MemberName" />
+                                <property name="Spacing">6</property>
+                                <child>
+                                  <widget class="Gtk.Alignment" id="subTileContainer">
+                                    <property name="MemberName" />
+                                    <property name="WidthRequest">32</property>
+                                    <property name="HeightRequest">32</property>
+                                    <property name="Xscale">0</property>
+                                    <property name="Yscale">0</property>
+                                    <child>
+                                      <placeholder />
+                                    </child>
+                                  </widget>
+                                  <packing>
+                                    <property name="Position">0</property>
+                                    <property name="AutoSize">True</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <placeholder />
+                                </child>
+                                <child>
+                                  <placeholder />
+                                </child>
+                              </widget>
+                            </child>
+                          </widget>
+                        </child>
+                        <child>
+                          <widget class="Gtk.Label" id="GtkLabel2">
+                            <property name="MemberName" />
+                            <property name="LabelProp" translatable="yes">Tile Properties</property>
+                            <property name="UseMarkup">True</property>
+                          </widget>
+                          <packing>
+                            <property name="type">label_item</property>
+                          </packing>
+                        </child>
+                      </widget>
+                      <packing>
+                        <property name="Position">2</property>
+                        <property name="AutoSize">True</property>
+                        <property name="Expand">False</property>
+                        <property name="Fill">False</property>
+                      </packing>
                     </child>
                   </widget>
                 </child>
               </widget>
             </child>
             <child>
-              <widget class="Gtk.Label" id="GtkLabel">
+              <widget class="Gtk.Label" id="GtkLabel1">
                 <property name="MemberName" />
                 <property name="UseMarkup">True</property>
               </widget>

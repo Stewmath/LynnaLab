@@ -52,9 +52,21 @@ namespace LynnaLab
 		
 		private global::LynnaLab.ComboBoxFromConstants uniqueGfxComboBox;
 		
+		private global::Gtk.VBox vbox1;
+		
 		private global::LynnaLab.AreaViewer areaviewer1;
 		
-		private global::Gtk.Label GtkLabel;
+		private global::Gtk.Frame frame1;
+		
+		private global::Gtk.Alignment GtkAlignment1;
+		
+		private global::Gtk.VBox vbox3;
+		
+		private global::Gtk.Alignment subTileContainer;
+		
+		private global::Gtk.Label GtkLabel2;
+		
+		private global::Gtk.Label GtkLabel1;
 		
 		private global::Gtk.Button okButton;
 
@@ -110,7 +122,6 @@ namespace LynnaLab
 			this.GtkAlignment.LeftPadding = ((uint)(12));
 			// Container child GtkAlignment.Gtk.Container+ContainerChild
 			this.hbox1 = new global::Gtk.HBox ();
-			this.hbox1.Name = "hbox1";
 			this.hbox1.Spacing = 6;
 			// Container child hbox1.Gtk.Box+BoxChild
 			this.table2 = new global::Gtk.Table (((uint)(8)), ((uint)(2)), false);
@@ -255,6 +266,7 @@ namespace LynnaLab
 			this.layoutGroupSpinButton.Adjustment.PageIncrement = 10;
 			this.layoutGroupSpinButton.Adjustment.StepIncrement = 1;
 			this.layoutGroupSpinButton.ClimbRate = 1;
+			this.layoutGroupSpinButton.Digits = ((uint)(2));
 			this.layoutGroupSpinButton.Numeric = true;
 			this.table2.Add (this.layoutGroupSpinButton);
 			global::Gtk.Table.TableChild w15 = ((global::Gtk.Table.TableChild)(this.table2 [this.layoutGroupSpinButton]));
@@ -327,6 +339,10 @@ namespace LynnaLab
 			w20.Expand = false;
 			w20.Fill = false;
 			// Container child hbox1.Gtk.Box+BoxChild
+			this.vbox1 = new global::Gtk.VBox ();
+			this.vbox1.Name = "vbox1";
+			this.vbox1.Spacing = 6;
+			// Container child vbox1.Gtk.Box+BoxChild
 			this.areaviewer1 = new global::LynnaLab.AreaViewer ();
 			this.areaviewer1.WidthRequest = 256;
 			this.areaviewer1.HeightRequest = 256;
@@ -336,22 +352,59 @@ namespace LynnaLab
 			this.areaviewer1.Width = 16;
 			this.areaviewer1.TileWidth = 16;
 			this.areaviewer1.TileHeight = 16;
-			this.hbox1.Add (this.areaviewer1);
-			global::Gtk.Box.BoxChild w21 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.areaviewer1]));
-			w21.Position = 1;
+			this.areaviewer1.Scale = 1;
+			this.vbox1.Add (this.areaviewer1);
+			global::Gtk.Box.BoxChild w21 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.areaviewer1]));
+			w21.Position = 0;
 			w21.Expand = false;
 			w21.Fill = false;
+			this.hbox1.Add (this.vbox1);
+			global::Gtk.Box.BoxChild w22 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.vbox1]));
+			w22.Position = 1;
+			w22.Expand = false;
+			w22.Fill = false;
+			// Container child hbox1.Gtk.Box+BoxChild
+			this.frame1 = new global::Gtk.Frame ();
+			this.frame1.Name = "frame1";
+			// Container child frame1.Gtk.Container+ContainerChild
+			this.GtkAlignment1 = new global::Gtk.Alignment (0F, 0F, 1F, 1F);
+			this.GtkAlignment1.Name = "GtkAlignment1";
+			this.GtkAlignment1.LeftPadding = ((uint)(12));
+			// Container child GtkAlignment1.Gtk.Container+ContainerChild
+			this.vbox3 = new global::Gtk.VBox ();
+			this.vbox3.Name = "vbox3";
+			this.vbox3.Spacing = 6;
+			// Container child vbox3.Gtk.Box+BoxChild
+			this.subTileContainer = new global::Gtk.Alignment (0.5F, 0.5F, 0F, 0F);
+			this.subTileContainer.WidthRequest = 32;
+			this.subTileContainer.HeightRequest = 32;
+			this.subTileContainer.Name = "subTileContainer";
+			this.vbox3.Add (this.subTileContainer);
+			global::Gtk.Box.BoxChild w23 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.subTileContainer]));
+			w23.Position = 0;
+			this.GtkAlignment1.Add (this.vbox3);
+			this.frame1.Add (this.GtkAlignment1);
+			this.GtkLabel2 = new global::Gtk.Label ();
+			this.GtkLabel2.Name = "GtkLabel2";
+			this.GtkLabel2.LabelProp = global::Mono.Unix.Catalog.GetString ("Tile Properties");
+			this.GtkLabel2.UseMarkup = true;
+			this.frame1.LabelWidget = this.GtkLabel2;
+			this.hbox1.Add (this.frame1);
+			global::Gtk.Box.BoxChild w26 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.frame1]));
+			w26.Position = 2;
+			w26.Expand = false;
+			w26.Fill = false;
 			this.GtkAlignment.Add (this.hbox1);
 			this.frame2.Add (this.GtkAlignment);
-			this.GtkLabel = new global::Gtk.Label ();
-			this.GtkLabel.Name = "GtkLabel";
-			this.GtkLabel.UseMarkup = true;
-			this.frame2.LabelWidget = this.GtkLabel;
+			this.GtkLabel1 = new global::Gtk.Label ();
+			this.GtkLabel1.Name = "GtkLabel1";
+			this.GtkLabel1.UseMarkup = true;
+			this.frame2.LabelWidget = this.GtkLabel1;
 			this.vbox2.Add (this.frame2);
-			global::Gtk.Box.BoxChild w24 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
-			w24.Position = 1;
-			w24.Expand = false;
-			w24.Fill = false;
+			global::Gtk.Box.BoxChild w29 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
+			w29.Position = 1;
+			w29.Expand = false;
+			w29.Fill = false;
 			// Container child vbox2.Gtk.Box+BoxChild
 			this.okButton = new global::Gtk.Button ();
 			this.okButton.CanFocus = true;
@@ -359,11 +412,11 @@ namespace LynnaLab
 			this.okButton.UseUnderline = true;
 			this.okButton.Label = global::Mono.Unix.Catalog.GetString ("OK");
 			this.vbox2.Add (this.okButton);
-			global::Gtk.Box.BoxChild w25 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.okButton]));
-			w25.PackType = ((global::Gtk.PackType)(1));
-			w25.Position = 2;
-			w25.Expand = false;
-			w25.Fill = false;
+			global::Gtk.Box.BoxChild w30 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.okButton]));
+			w30.PackType = ((global::Gtk.PackType)(1));
+			w30.Position = 2;
+			w30.Expand = false;
+			w30.Fill = false;
 			this.Add (this.vbox2);
 			if ((this.Child != null)) {
 				this.Child.ShowAll ();

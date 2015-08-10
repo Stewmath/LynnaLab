@@ -77,6 +77,7 @@ namespace LynnaLab
 
             Gdk.Window win = ev.Window;
             Graphics g = Gtk.DotNet.Graphics.FromDrawable(win);
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
 
             if (Image != null)
                 g.DrawImage(Image, 0, 0, Image.Width*Scale, Image.Height*Scale);

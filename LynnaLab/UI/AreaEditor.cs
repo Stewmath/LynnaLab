@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using Gtk;
 
 namespace LynnaLab
@@ -12,9 +13,17 @@ namespace LynnaLab
 
         Area area;
 
+        SubTileViewer subTileViewer;
+        SubTileEditor subTileEditor;
+
         public AreaEditor(Area a)
         {
             this.Build();
+
+            subTileViewer = new SubTileViewer();
+            subTileEditor = new SubTileEditor(subTileViewer);
+            subTileContainer.Add(subTileEditor);
+            subTileContainer.ShowAll();
 
             SetArea(a);
 
@@ -31,11 +40,26 @@ namespace LynnaLab
         }
 
         void SetArea(Area a) {
+            Area.TileModifiedHandler handler = delegate(int tile) {
+                if (tile == subTileViewer.TileIndex) {
+                    subTileViewer.QueueDraw();
+                }
+            };
+
+            if (area != null)
+                area.TileModifiedEvent -= handler;
+            a.TileModifiedEvent += handler;
+
             area = a;
+            subTileViewer.SetArea(area);
 
             area.DrawInvalidatedTiles = true;
 
             areaviewer1.SetArea(area);
+
+            areaviewer1.TileSelectedEvent += delegate(object sender) {
+                subTileViewer.TileIndex = areaviewer1.SelectedIndex;
+            };
 
             areaSpinButton.Value = area.Index;
             SetFlags1(a.Flags1);
@@ -152,6 +176,65 @@ namespace LynnaLab
         protected void OnAnimationsSpinButtonValueChanged(object sender, EventArgs e)
         {
             SetAnimation(animationsSpinButton.ValueAsInt);
+        }
+    }
+
+    class SubTileViewer : TileGridSelector {
+
+        int _tileIndex;
+        Area area;
+
+        public int TileIndex {
+            get { return _tileIndex; }
+            set {
+                _tileIndex = value;
+                QueueDraw();
+            }
+        }
+
+        override protected Bitmap Image {
+            get {
+                if (area == null)
+                    return null;
+                return area.GetTileImage(TileIndex);
+            }
+        }
+
+        public SubTileViewer() : base() {
+            Width = 2;
+            Height = 2;
+            TileWidth = 8;
+            TileHeight = 8;
+            Scale = 2;
+        }
+
+        public void SetArea(Area a) {
+            area = a;
+        }
+    }
+
+    class SubTileEditor : Gtk.Bin {
+
+        public SubTileEditor(SubTileViewer subTileViewer) : base() {
+            var table = new Table(8, 2, false);
+            table.RowSpacing = 6;
+            table.ColumnSpacing = 6;
+
+            var paletteSpinButton = new SpinButton(0,7,1);
+            paletteSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
+            };
+
+            table.Add(paletteSpinButton);
+
+            Gtk.VBox vbox = new VBox(false, 2);
+            vbox.PackStart(subTileViewer);
+//             vbox.Add(table);
+            this.Add(vbox);
+
+            paletteSpinButton.ShowAll();
+            table.ShowAll();
+            vbox.ShowAll();
+            this.Child.ShowAll();
         }
     }
 }
