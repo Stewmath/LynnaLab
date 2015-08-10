@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -82,6 +81,7 @@
     <Compile Include="Wla.cs" />
     <Compile Include="UI\ComboBoxFromConstants.cs" />
     <Compile Include="gtk-gui\LynnaLab.ComboBoxFromConstants.cs" />
+    <Compile Include="UI\TileGridViewer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
