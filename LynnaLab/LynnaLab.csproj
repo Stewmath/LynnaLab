@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -75,18 +76,19 @@
     <Compile Include="Core\Animation.cs" />
     <Compile Include="Core\AnimationGroup.cs" />
     <Compile Include="Core\SubStream.cs" />
-    <Compile Include="UI\SpinButtonHexadecimal.cs" />
     <Compile Include="UI\AreaEditor.cs" />
     <Compile Include="gtk-gui\LynnaLab.AreaEditor.cs" />
     <Compile Include="Wla.cs" />
-    <Compile Include="UI\ComboBoxFromConstants.cs" />
     <Compile Include="gtk-gui\LynnaLab.ComboBoxFromConstants.cs" />
     <Compile Include="UI\TileGridViewer.cs" />
+    <Compile Include="Widgets\SpinButtonHexadecimal.cs" />
+    <Compile Include="Widgets\ComboBoxFromConstants.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="Core\" />
     <Folder Include="UI\" />
     <Folder Include="gtk-gui\" />
+    <Folder Include="Widgets\" />
   </ItemGroup>
 </Project>
