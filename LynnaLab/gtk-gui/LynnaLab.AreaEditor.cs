@@ -16,6 +16,8 @@ namespace LynnaLab
 		
 		private global::Gtk.Alignment GtkAlignment;
 		
+		private global::Gtk.HBox hbox1;
+		
 		private global::Gtk.Table table2;
 		
 		private global::LynnaLab.SpinButtonHexadecimal animationsSpinButton;
@@ -49,6 +51,8 @@ namespace LynnaLab
 		private global::LynnaLab.SpinButtonHexadecimal tilesetSpinButton;
 		
 		private global::LynnaLab.ComboBoxFromConstants uniqueGfxComboBox;
+		
+		private global::LynnaLab.AreaViewer areaviewer1;
 		
 		private global::Gtk.Label GtkLabel;
 		
@@ -105,6 +109,10 @@ namespace LynnaLab
 			this.GtkAlignment.Name = "GtkAlignment";
 			this.GtkAlignment.LeftPadding = ((uint)(12));
 			// Container child GtkAlignment.Gtk.Container+ContainerChild
+			this.hbox1 = new global::Gtk.HBox ();
+			this.hbox1.Name = "hbox1";
+			this.hbox1.Spacing = 6;
+			// Container child hbox1.Gtk.Box+BoxChild
 			this.table2 = new global::Gtk.Table (((uint)(8)), ((uint)(2)), false);
 			this.table2.Name = "table2";
 			this.table2.RowSpacing = ((uint)(6));
@@ -313,17 +321,37 @@ namespace LynnaLab
 			w19.RightAttach = ((uint)(2));
 			w19.XOptions = ((global::Gtk.AttachOptions)(4));
 			w19.YOptions = ((global::Gtk.AttachOptions)(4));
-			this.GtkAlignment.Add (this.table2);
+			this.hbox1.Add (this.table2);
+			global::Gtk.Box.BoxChild w20 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.table2]));
+			w20.Position = 0;
+			w20.Expand = false;
+			w20.Fill = false;
+			// Container child hbox1.Gtk.Box+BoxChild
+			this.areaviewer1 = new global::LynnaLab.AreaViewer ();
+			this.areaviewer1.WidthRequest = 256;
+			this.areaviewer1.HeightRequest = 256;
+			this.areaviewer1.Name = "areaviewer1";
+			this.areaviewer1.SelectedIndex = 0;
+			this.areaviewer1.Height = 16;
+			this.areaviewer1.Width = 16;
+			this.areaviewer1.TileWidth = 16;
+			this.areaviewer1.TileHeight = 16;
+			this.hbox1.Add (this.areaviewer1);
+			global::Gtk.Box.BoxChild w21 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.areaviewer1]));
+			w21.Position = 1;
+			w21.Expand = false;
+			w21.Fill = false;
+			this.GtkAlignment.Add (this.hbox1);
 			this.frame2.Add (this.GtkAlignment);
 			this.GtkLabel = new global::Gtk.Label ();
 			this.GtkLabel.Name = "GtkLabel";
 			this.GtkLabel.UseMarkup = true;
 			this.frame2.LabelWidget = this.GtkLabel;
 			this.vbox2.Add (this.frame2);
-			global::Gtk.Box.BoxChild w22 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
-			w22.Position = 1;
-			w22.Expand = false;
-			w22.Fill = false;
+			global::Gtk.Box.BoxChild w24 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
+			w24.Position = 1;
+			w24.Expand = false;
+			w24.Fill = false;
 			// Container child vbox2.Gtk.Box+BoxChild
 			this.okButton = new global::Gtk.Button ();
 			this.okButton.CanFocus = true;
@@ -331,11 +359,11 @@ namespace LynnaLab
 			this.okButton.UseUnderline = true;
 			this.okButton.Label = global::Mono.Unix.Catalog.GetString ("OK");
 			this.vbox2.Add (this.okButton);
-			global::Gtk.Box.BoxChild w23 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.okButton]));
-			w23.PackType = ((global::Gtk.PackType)(1));
-			w23.Position = 2;
-			w23.Expand = false;
-			w23.Fill = false;
+			global::Gtk.Box.BoxChild w25 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.okButton]));
+			w25.PackType = ((global::Gtk.PackType)(1));
+			w25.Position = 2;
+			w25.Expand = false;
+			w25.Fill = false;
 			this.Add (this.vbox2);
 			if ((this.Child != null)) {
 				this.Child.ShowAll ();
@@ -343,6 +371,7 @@ namespace LynnaLab
 			this.Hide ();
 			this.areaSpinButton.ValueChanged += new global::System.EventHandler (this.OnAreaSpinButtonValueChanged);
 			this.uniqueGfxComboBox.Changed += new global::System.EventHandler (this.OnUniqueGfxComboBoxChanged);
+			this.tilesetSpinButton.ValueChanged += new global::System.EventHandler (this.OnTilesetSpinButtonValueChanged);
 			this.palettesComboBox.Changed += new global::System.EventHandler (this.OnPalettesComboBoxChanged);
 			this.mainGfxComboBox.Changed += new global::System.EventHandler (this.OnMainGfxComboBoxChanged);
 			this.layoutGroupSpinButton.ValueChanged += new global::System.EventHandler (this.OnLayoutGroupSpinButtonValueChanged);

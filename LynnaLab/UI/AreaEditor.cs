@@ -35,6 +35,8 @@ namespace LynnaLab
 
             area.DrawInvalidatedTiles = true;
 
+            areaviewer1.SetArea(area);
+
             areaSpinButton.Value = area.Index;
             SetFlags1(a.Flags1);
             SetFlags2(a.Flags2);
