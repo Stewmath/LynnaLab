@@ -213,10 +213,9 @@ namespace LynnaLab
         }
     }
 
-    class SubTileEditor : Gtk.Bin {
-
-        public SubTileEditor(SubTileViewer subTileViewer) : base() {
-            var table = new Table(8, 2, false);
+    class SubTileEditor : Gtk.Alignment {
+        public SubTileEditor(SubTileViewer subTileViewer) : base(0,0,0,0) {
+            var table = new Table(2, 2, true);
             table.RowSpacing = 6;
             table.ColumnSpacing = 6;
 
@@ -224,17 +223,13 @@ namespace LynnaLab
             paletteSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
             };
 
+            table.Attach(new Gtk.Label("Palette"), 0, 0, 1, 1);
             table.Add(paletteSpinButton);
 
             Gtk.VBox vbox = new VBox(false, 2);
             vbox.PackStart(subTileViewer);
-//             vbox.Add(table);
+            vbox.PackStart(table);
             this.Add(vbox);
-
-            paletteSpinButton.ShowAll();
-            table.ShowAll();
-            vbox.ShowAll();
-            this.Child.ShowAll();
         }
     }
 }
