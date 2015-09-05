@@ -1101,8 +1101,6 @@
                                 <child>
                                   <widget class="Gtk.Alignment" id="subTileContainer">
                                     <property name="MemberName" />
-                                    <property name="WidthRequest">32</property>
-                                    <property name="HeightRequest">32</property>
                                     <property name="Xscale">0</property>
                                     <property name="Yscale">0</property>
                                     <child>

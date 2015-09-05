@@ -23,7 +23,6 @@ namespace LynnaLab
             subTileViewer = new SubTileViewer();
             subTileEditor = new SubTileEditor(subTileViewer);
             subTileContainer.Add(subTileEditor);
-            subTileContainer.ShowAll();
 
             SetArea(a);
 
@@ -184,11 +183,30 @@ namespace LynnaLab
         int _tileIndex;
         Area area;
 
+        public delegate void TileChangedHandler();
+        public event TileChangedHandler TileChangedEvent;
+        public event TileChangedHandler SubTileChangedEvent;
+
         public int TileIndex {
             get { return _tileIndex; }
             set {
-                _tileIndex = value;
-                QueueDraw();
+                if (_tileIndex != value) {
+                    _tileIndex = value;
+                    if (TileChangedEvent != null)
+                        TileChangedEvent();
+                    QueueDraw();
+                }
+            }
+        }
+        public byte TileFlags {
+            get {
+                if (area == null)
+                    return 0;
+                return area.GetTileFlags(TileIndex, SelectedX, SelectedY);
+            } set {
+                if (area == null)
+                    return;
+                area.SetTileFlags(TileIndex, SelectedX, SelectedY, value);
             }
         }
 
@@ -206,30 +224,120 @@ namespace LynnaLab
             TileWidth = 8;
             TileHeight = 8;
             Scale = 2;
+
+            TileSelectedEvent += delegate(object sender) {
+                SubTileChangedEvent();
+            };
         }
 
         public void SetArea(Area a) {
             area = a;
+            TileChangedEvent();
         }
     }
 
     class SubTileEditor : Gtk.Alignment {
-        public SubTileEditor(SubTileViewer subTileViewer) : base(0,0,0,0) {
-            var table = new Table(2, 2, true);
-            table.RowSpacing = 6;
-            table.ColumnSpacing = 6;
+        SubTileViewer viewer;
+        SpinButton paletteSpinButton;
+        CheckButton flipXCheckButton, flipYCheckButton;
+        CheckButton priorityCheckButton;
+        CheckButton bankCheckButton;
 
-            var paletteSpinButton = new SpinButton(0,7,1);
-            paletteSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
+        public SubTileEditor(SubTileViewer subTileViewer) : base(0,0,0,0) {
+            viewer = subTileViewer;
+            viewer.TileChangedEvent += delegate() {
+                PullFlags();
+            };
+            viewer.SubTileChangedEvent += delegate() {
+                PullFlags();
             };
 
-            table.Attach(new Gtk.Label("Palette"), 0, 0, 1, 1);
-            table.Add(paletteSpinButton);
+            var table = new Table(2, 2, false);
+            table.ColumnSpacing = 6;
+            table.RowSpacing = 6;
+
+            paletteSpinButton = new SpinButton(0,7,1);
+            paletteSpinButton.CanFocus = false;
+            paletteSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
+                PushFlags();
+            };
+            flipXCheckButton = new Gtk.CheckButton();
+            flipXCheckButton.CanFocus = false;
+            flipXCheckButton.Toggled += delegate(object sender, EventArgs e) {
+                PushFlags();
+            };
+            flipYCheckButton = new Gtk.CheckButton();
+            flipYCheckButton.CanFocus = false;
+            flipYCheckButton.Toggled += delegate(object sender, EventArgs e) {
+                PushFlags();
+            };
+            priorityCheckButton = new Gtk.CheckButton();
+            priorityCheckButton.CanFocus = false;
+            priorityCheckButton.Toggled += delegate(object sender, EventArgs e) {
+                PushFlags();
+            };
+            bankCheckButton = new Gtk.CheckButton();
+            bankCheckButton.CanFocus = false;
+            bankCheckButton.Toggled += delegate(object sender, EventArgs e) {
+                PushFlags();
+            };
+
+            uint y = 0;
+
+            table.Attach(new Gtk.Label("Palette"), 0, 1, y, y+1);
+            table.Attach(paletteSpinButton, 1, 2, y, y+1);
+            y++;
+            table.Attach(new Gtk.Label("Flip X"), 0, 1, y, y+1);
+            table.Attach(flipXCheckButton, 1, 2, y, y+1);
+            y++;
+            table.Attach(new Gtk.Label("Flip Y"), 0, 1, y, y+1);
+            table.Attach(flipYCheckButton, 1, 2, y, y+1);
+            y++;
+            table.Attach(new Gtk.Label("Priority"), 0, 1, y, y+1);
+            table.Attach(priorityCheckButton, 1, 2, y, y+1);
+            y++;
+            table.Attach(new Gtk.Label("Bank (0/1)"), 0, 1, y, y+1);
+            table.Attach(bankCheckButton, 1, 2, y, y+1);
+            y++;
 
             Gtk.VBox vbox = new VBox(false, 2);
-            vbox.PackStart(subTileViewer);
+
+            Alignment hAlign = new Alignment(0.5f, 0, 0, 0);
+            hAlign.Add(viewer);
+
+            vbox.Spacing = 10;
+            vbox.PackStart(hAlign);
             vbox.PackStart(table);
             this.Add(vbox);
+
+            ShowAll();
+
+            PullFlags();
+        }
+
+        void PullFlags() {
+            byte flags = viewer.TileFlags;
+
+            paletteSpinButton.Value = flags&7;
+            flipXCheckButton.Active = ((flags & 0x20) != 0);
+            flipYCheckButton.Active = ((flags & 0x40) != 0);
+            priorityCheckButton.Active = ((flags & 0x80) != 0);
+            bankCheckButton.Active = ((flags & 0x08) != 0);
+        }
+
+        void PushFlags() {
+            byte flags = 0;
+            flags |= (byte)paletteSpinButton.ValueAsInt;
+            if (flipXCheckButton.Active)
+                flags |= 0x20;
+            if (flipYCheckButton.Active)
+                flags |= 0x40;
+            if (priorityCheckButton.Active)
+                flags |= 0x80;
+            if (bankCheckButton.Active)
+                flags |= 0x08;
+
+            viewer.TileFlags = flags;
         }
     }
 }

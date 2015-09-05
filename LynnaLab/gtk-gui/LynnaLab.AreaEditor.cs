@@ -122,6 +122,7 @@ namespace LynnaLab
 			this.GtkAlignment.LeftPadding = ((uint)(12));
 			// Container child GtkAlignment.Gtk.Container+ContainerChild
 			this.hbox1 = new global::Gtk.HBox ();
+			this.hbox1.Name = "hbox1";
 			this.hbox1.Spacing = 6;
 			// Container child hbox1.Gtk.Box+BoxChild
 			this.table2 = new global::Gtk.Table (((uint)(8)), ((uint)(2)), false);
@@ -376,8 +377,6 @@ namespace LynnaLab
 			this.vbox3.Spacing = 6;
 			// Container child vbox3.Gtk.Box+BoxChild
 			this.subTileContainer = new global::Gtk.Alignment (0.5F, 0.5F, 0F, 0F);
-			this.subTileContainer.WidthRequest = 32;
-			this.subTileContainer.HeightRequest = 32;
 			this.subTileContainer.Name = "subTileContainer";
 			this.vbox3.Add (this.subTileContainer);
 			global::Gtk.Box.BoxChild w23 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.subTileContainer]));

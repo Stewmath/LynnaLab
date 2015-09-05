@@ -49,7 +49,7 @@ public partial class MainWindow: Gtk.Window
         var area = areaviewer1.Area;
         if (area == null)
             return true;
-        IList<byte> changedTiles = area.updateAnimations(1);
+        IList<byte> changedTiles = area.UpdateAnimations(1);
         return true;
     }
 

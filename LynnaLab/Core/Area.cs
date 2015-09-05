@@ -237,9 +237,21 @@ namespace LynnaLab
 
             g = Graphics.FromImage(fullCachedImage);
             g.DrawImage(image, (index%16)*16, (index/16)*16);
+            g.Dispose();
 
             tileImagesCache[index] = image;
             return image;
+        }
+
+        public byte GetTileFlags(int index, int x, int y) {
+            byte[] mappingsData = tilesetHeaderGroup.GetMappingsData();
+            return mappingsData[index*8+y*2+x+4];
+        }
+        public void SetTileFlags(int index, int x, int y, byte value) {
+            byte[] mappingsData = tilesetHeaderGroup.GetMappingsData();
+            mappingsData[index*8+y*2+x+4] = value;
+            tileImagesCache[index] = null;
+            TileModifiedEvent(index);
         }
 
         // This function doesn't guarantee to return a fully rendered image,
@@ -249,7 +261,7 @@ namespace LynnaLab
         }
 
         // Returns a list of tiles which have changed
-        public IList<byte> updateAnimations(int frames) {
+        public IList<byte> UpdateAnimations(int frames) {
             List<byte> retData = new List<byte>();
             if (animationGroup == null)
                 return retData;
