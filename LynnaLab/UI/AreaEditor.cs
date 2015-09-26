@@ -282,21 +282,37 @@ namespace LynnaLab
                 PushFlags();
             };
 
+            Gtk.Label paletteLabel = new Gtk.Label("Palette");
+            Gtk.Label flipXLabel = new Gtk.Label("Flip X");
+            Gtk.Label flipYLabel = new Gtk.Label("Flip Y");
+            Gtk.Label priorityLabel = new Gtk.Label("Priority");
+            Gtk.Label bankLabel = new Gtk.Label("Bank (0/1)");
+
+            Tooltips tooltips = new Tooltips();
+            tooltips.SetTip(paletteLabel, "Palette index (0-7)", null);
+            tooltips.SetTip(paletteSpinButton, "Palette index (0-7)", null);
+
+            tooltips.SetTip(priorityLabel, "Check to make colors 1-3 appear above sprites", null);
+            tooltips.SetTip(priorityCheckButton, "Check to make colors 1-3 appear above sprites", null);
+
+            tooltips.SetTip(bankLabel, "You're better off leaving this checked.", null);
+            tooltips.SetTip(bankCheckButton, "You're better off leaving this checked.", null);
+
             uint y = 0;
 
-            table.Attach(new Gtk.Label("Palette"), 0, 1, y, y+1);
+            table.Attach(paletteLabel, 0, 1, y, y+1);
             table.Attach(paletteSpinButton, 1, 2, y, y+1);
             y++;
-            table.Attach(new Gtk.Label("Flip X"), 0, 1, y, y+1);
+            table.Attach(flipXLabel, 0, 1, y, y+1);
             table.Attach(flipXCheckButton, 1, 2, y, y+1);
             y++;
-            table.Attach(new Gtk.Label("Flip Y"), 0, 1, y, y+1);
+            table.Attach(flipYLabel, 0, 1, y, y+1);
             table.Attach(flipYCheckButton, 1, 2, y, y+1);
             y++;
-            table.Attach(new Gtk.Label("Priority"), 0, 1, y, y+1);
+            table.Attach(priorityLabel, 0, 1, y, y+1);
             table.Attach(priorityCheckButton, 1, 2, y, y+1);
             y++;
-            table.Attach(new Gtk.Label("Bank (0/1)"), 0, 1, y, y+1);
+            table.Attach(bankLabel, 0, 1, y, y+1);
             table.Attach(bankCheckButton, 1, 2, y, y+1);
             y++;
 

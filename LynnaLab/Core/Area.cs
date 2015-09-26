@@ -215,14 +215,13 @@ namespace LynnaLab
                 return tileImagesCache[index];
 
             Bitmap image = new Bitmap(16,16);
-            byte[] mappingsData = tilesetHeaderGroup.GetMappingsData();
 
             Graphics g = Graphics.FromImage(image);
 
             for (int y=0; y<2; y++) {
                 for (int x=0; x<2; x++) {
-                    int tileIndex = mappingsData[index*8+y*2+x];
-                    int flags = mappingsData[index*8+y*2+x+4];
+                    int tileIndex = tilesetHeaderGroup.GetMappingsData(index*8+y*2+x);
+                    int flags = tilesetHeaderGroup.GetMappingsData(index*8+y*2+x+4);
 
                     int tileOffset = 0x1000 + ((sbyte)tileIndex)*16;
 
@@ -244,12 +243,10 @@ namespace LynnaLab
         }
 
         public byte GetTileFlags(int index, int x, int y) {
-            byte[] mappingsData = tilesetHeaderGroup.GetMappingsData();
-            return mappingsData[index*8+y*2+x+4];
+            return tilesetHeaderGroup.GetMappingsData(index*8+y*2+x+4);
         }
         public void SetTileFlags(int index, int x, int y, byte value) {
-            byte[] mappingsData = tilesetHeaderGroup.GetMappingsData();
-            mappingsData[index*8+y*2+x+4] = value;
+            tilesetHeaderGroup.SetMappingsData(index*8+y*2+x+4, value);
             tileImagesCache[index] = null;
             TileModifiedEvent(index);
         }
@@ -378,12 +375,11 @@ namespace LynnaLab
             // which 4 gameboy tiles
             for (int j=0; j<256; j++)
                 usedTileList[j] = new List<byte>();
-            byte[] mappingsData = tilesetHeaderGroup.GetMappingsData();
             for (int j=0; j<256; j++) {
                 // j = index of metatile
                 bool[] used = new bool[256];
                 for (int k=0; k<4; k++) {
-                    int tile = mappingsData[j*8+k];
+                    int tile = tilesetHeaderGroup.GetMappingsData(j*8+k);
                     if (!used[tile]) {
                         usedTileList[tile].Add((byte)j);
                         used[tile] = true;

@@ -6,8 +6,7 @@ namespace LynnaLab {
 
 	public class TilesetHeaderGroup : ProjectIndexedDataType {
 
-        byte[] mappingsData = new byte[0x800];
-        byte[] collisionsData = new byte[0x100];
+        Stream mappingsDataFile, collisionsDataFile;
 
 		public TilesetHeaderGroup(Project p, int i) : base(p, i)
         {
@@ -23,15 +22,15 @@ namespace LynnaLab {
                 if (headerData == null)
                     throw new Exception("Expected tileset header group " + Index.ToString("X") + " to reference tileset header data (m_TilesetHeader)");
 
-                Stream file = headerData.ReferencedData;
-                file.Position = 0;
+                Stream dataFile = headerData.ReferencedData;
+                dataFile.Position = 0;
                 if (headerData.DestAddress == Project.EvalToInt("w3TileMappingIndices")) {
                     // Mappings
-                    file.Read(mappingsData, 0, 0x800);
+                    mappingsDataFile = dataFile;
                 }
                 else if (headerData.DestAddress == Project.EvalToInt("w3TileCollisions")) {
                     // Collisions
-                    file.Read(collisionsData, 0, 0x100);
+                    collisionsDataFile = dataFile;
                 }
 
                 if (headerData.ShouldHaveNext()) {
@@ -44,14 +43,32 @@ namespace LynnaLab {
             }
 		}
 
-        public byte[] GetMappingsData() {
-            return mappingsData;
+        public byte GetMappingsData(int i) {
+            if (mappingsDataFile == null)
+                throw new Exception("Tileset header group 0x" + Index.ToString("X") + " does not reference mapping data.");
+            mappingsDataFile.Seek(i, SeekOrigin.Begin);
+            return (byte)mappingsDataFile.ReadByte();
         }
-        public byte[] GetCollisionsData() {
-            return collisionsData;
+        public byte GetCollisionsData(int i) {
+            if (collisionsDataFile == null)
+                throw new Exception("Tileset header group 0x" + Index.ToString("X") + " does not reference collision data.");
+            collisionsDataFile.Seek(i, SeekOrigin.Begin);
+            return (byte)collisionsDataFile.ReadByte();
         }
 
-        public override void Save() {
+        public void SetMappingsData(int i, byte value) {
+            if (mappingsDataFile == null)
+                throw new Exception("Tileset header group 0x" + Index.ToString("X") + " does not reference mapping data.");
+            mappingsDataFile.Seek(i, SeekOrigin.Begin);
+            mappingsDataFile.WriteByte(value);
         }
+        public void SetCollisionsData(int i, byte value) {
+            if (collisionsDataFile == null)
+                throw new Exception("Tileset header group 0x" + Index.ToString("X") + " does not reference collision data.");
+            collisionsDataFile.Seek(i, SeekOrigin.Begin);
+            collisionsDataFile.WriteByte(value);
+        }
+
+        // No need for a save function, dataFiles are tracked elsewhere
 	}
 }
