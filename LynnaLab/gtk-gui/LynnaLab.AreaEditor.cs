@@ -66,6 +66,8 @@ namespace LynnaLab
 		
 		private global::Gtk.Label GtkLabel2;
 		
+		private global::Gtk.Alignment subTileGfxContainer;
+		
 		private global::Gtk.Label GtkLabel1;
 		
 		private global::Gtk.Button okButton;
@@ -393,6 +395,14 @@ namespace LynnaLab
 			w26.Position = 2;
 			w26.Expand = false;
 			w26.Fill = false;
+			// Container child hbox1.Gtk.Box+BoxChild
+			this.subTileGfxContainer = new global::Gtk.Alignment (0.5F, 0.5F, 1F, 1F);
+			this.subTileGfxContainer.WidthRequest = 256;
+			this.subTileGfxContainer.HeightRequest = 256;
+			this.subTileGfxContainer.Name = "subTileGfxContainer";
+			this.hbox1.Add (this.subTileGfxContainer);
+			global::Gtk.Box.BoxChild w27 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.subTileGfxContainer]));
+			w27.Position = 3;
 			this.GtkAlignment.Add (this.hbox1);
 			this.frame2.Add (this.GtkAlignment);
 			this.GtkLabel1 = new global::Gtk.Label ();
@@ -400,10 +410,10 @@ namespace LynnaLab
 			this.GtkLabel1.UseMarkup = true;
 			this.frame2.LabelWidget = this.GtkLabel1;
 			this.vbox2.Add (this.frame2);
-			global::Gtk.Box.BoxChild w29 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
-			w29.Position = 1;
-			w29.Expand = false;
-			w29.Fill = false;
+			global::Gtk.Box.BoxChild w30 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
+			w30.Position = 1;
+			w30.Expand = false;
+			w30.Fill = false;
 			// Container child vbox2.Gtk.Box+BoxChild
 			this.okButton = new global::Gtk.Button ();
 			this.okButton.CanFocus = true;
@@ -411,11 +421,11 @@ namespace LynnaLab
 			this.okButton.UseUnderline = true;
 			this.okButton.Label = global::Mono.Unix.Catalog.GetString ("OK");
 			this.vbox2.Add (this.okButton);
-			global::Gtk.Box.BoxChild w30 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.okButton]));
-			w30.PackType = ((global::Gtk.PackType)(1));
-			w30.Position = 2;
-			w30.Expand = false;
-			w30.Fill = false;
+			global::Gtk.Box.BoxChild w31 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.okButton]));
+			w31.PackType = ((global::Gtk.PackType)(1));
+			w31.Position = 2;
+			w31.Expand = false;
+			w31.Fill = false;
 			this.Add (this.vbox2);
 			if ((this.Child != null)) {
 				this.Child.ShowAll ();

@@ -13,15 +13,23 @@ namespace LynnaLab
 
         Area area;
 
-        SubTileViewer subTileViewer;
-        SubTileEditor subTileEditor;
+        internal SubTileViewer subTileViewer;
+        internal SubTileEditor subTileEditor;
+        internal GfxViewer subTileGfxViewer;
 
         public AreaEditor(Area a)
         {
             this.Build();
 
+            subTileGfxViewer = new GfxViewer();
+            subTileGfxViewer.TileSelectedEvent += delegate(object sender) {
+                if (subTileEditor != null)
+                    subTileEditor.TileIndex = (byte)(subTileGfxViewer.SelectedIndex^0x80);
+            };
+            subTileGfxContainer.Add(subTileGfxViewer);
+
             subTileViewer = new SubTileViewer();
-            subTileEditor = new SubTileEditor(subTileViewer);
+            subTileEditor = new SubTileEditor(this);
             subTileContainer.Add(subTileEditor);
 
             SetArea(a);
@@ -51,6 +59,9 @@ namespace LynnaLab
 
             area = a;
             subTileViewer.SetArea(area);
+            if (area != null) {
+                subTileGfxViewer.SetGraphicsState(area.GraphicsState, 0x2000, 0x3000);
+            }
 
             area.DrawInvalidatedTiles = true;
 
@@ -198,15 +209,26 @@ namespace LynnaLab
                 }
             }
         }
-        public byte TileFlags {
+        public byte SubTileFlags {
             get {
                 if (area == null)
                     return 0;
-                return area.GetTileFlags(TileIndex, SelectedX, SelectedY);
+                return area.GetSubTileFlags(TileIndex, SelectedX, SelectedY);
             } set {
                 if (area == null)
                     return;
-                area.SetTileFlags(TileIndex, SelectedX, SelectedY, value);
+                area.SetSubTileFlags(TileIndex, SelectedX, SelectedY, value);
+            }
+        }
+        public byte SubTileIndex {
+            get {
+                if (area == null)
+                    return 0;
+                return area.GetSubTileIndex(TileIndex, SelectedX, SelectedY);
+            } set {
+                if (area == null)
+                    return;
+                area.SetSubTileIndex(TileIndex, SelectedX, SelectedY, value);
             }
         }
 
@@ -237,14 +259,28 @@ namespace LynnaLab
     }
 
     class SubTileEditor : Gtk.Alignment {
+
+        public byte TileIndex {
+            get { return (byte)(subTileSpinButton.ValueAsInt); }
+            set {
+                subTileSpinButton.Value = value;
+            }
+        }
+
         SubTileViewer viewer;
+        AreaEditor areaEditor;
+
+        SpinButton subTileSpinButton;
         SpinButton paletteSpinButton;
         CheckButton flipXCheckButton, flipYCheckButton;
         CheckButton priorityCheckButton;
         CheckButton bankCheckButton;
 
-        public SubTileEditor(SubTileViewer subTileViewer) : base(0,0,0,0) {
-            viewer = subTileViewer;
+        public SubTileEditor(AreaEditor areaEditor) : base(0,0,0,0) {
+            this.areaEditor = areaEditor;
+
+            viewer = areaEditor.subTileViewer;
+
             viewer.TileChangedEvent += delegate() {
                 PullFlags();
             };
@@ -256,6 +292,11 @@ namespace LynnaLab
             table.ColumnSpacing = 6;
             table.RowSpacing = 6;
 
+            subTileSpinButton = new SpinButtonHexadecimal(0,255);
+            subTileSpinButton.CanFocus = false;
+            subTileSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
+                PushFlags();
+            };
             paletteSpinButton = new SpinButton(0,7,1);
             paletteSpinButton.CanFocus = false;
             paletteSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
@@ -282,6 +323,7 @@ namespace LynnaLab
                 PushFlags();
             };
 
+            Gtk.Label subTileLabel = new Gtk.Label("Subtile Index");
             Gtk.Label paletteLabel = new Gtk.Label("Palette");
             Gtk.Label flipXLabel = new Gtk.Label("Flip X");
             Gtk.Label flipYLabel = new Gtk.Label("Flip Y");
@@ -300,6 +342,9 @@ namespace LynnaLab
 
             uint y = 0;
 
+            table.Attach(subTileLabel, 0, 1, y, y+1);
+            table.Attach(subTileSpinButton, 1, 2, y, y+1);
+            y++;
             table.Attach(paletteLabel, 0, 1, y, y+1);
             table.Attach(paletteSpinButton, 1, 2, y, y+1);
             y++;
@@ -332,7 +377,10 @@ namespace LynnaLab
         }
 
         void PullFlags() {
-            byte flags = viewer.TileFlags;
+            byte flags = viewer.SubTileFlags;
+
+            subTileSpinButton.Value = viewer.SubTileIndex;
+            areaEditor.subTileGfxViewer.SelectedIndex = viewer.SubTileIndex^0x80;
 
             paletteSpinButton.Value = flags&7;
             flipXCheckButton.Active = ((flags & 0x20) != 0);
@@ -353,8 +401,9 @@ namespace LynnaLab
             if (bankCheckButton.Active)
                 flags |= 0x08;
 
-            viewer.TileFlags = flags;
+            viewer.SubTileFlags = flags;
+            viewer.SubTileIndex = (byte)(subTileSpinButton.ValueAsInt);
+            areaEditor.subTileGfxViewer.SelectedIndex = viewer.SubTileIndex^0x80;
         }
     }
 }
-

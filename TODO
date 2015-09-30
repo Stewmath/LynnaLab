@@ -1,3 +1,9 @@
+Editor:
+
 - Ability to add areas, etc, as well as moving labels which refer to the same
   data
 - Interactions
+- Dungeon minimap editor
+
+disasm:
+- Optimize compression for files in tilesets/ directory?

@@ -220,8 +220,8 @@ namespace LynnaLab
 
             for (int y=0; y<2; y++) {
                 for (int x=0; x<2; x++) {
-                    int tileIndex = tilesetHeaderGroup.GetMappingsData(index*8+y*2+x);
-                    int flags = tilesetHeaderGroup.GetMappingsData(index*8+y*2+x+4);
+                    int tileIndex = GetSubTileIndex(index,x,y);
+                    int flags = GetSubTileFlags(index,x,y);
 
                     int tileOffset = 0x1000 + ((sbyte)tileIndex)*16;
 
@@ -242,10 +242,17 @@ namespace LynnaLab
             return image;
         }
 
-        public byte GetTileFlags(int index, int x, int y) {
+        // Functions dealing with subtiles
+        public byte GetSubTileIndex(int index, int x, int y) {
+            return tilesetHeaderGroup.GetMappingsData(index*8+y*2+x);
+        }
+        public void SetSubTileIndex(int index, int x, int y, byte value) {
+            tilesetHeaderGroup.SetMappingsData(index*8+y*2+x, value);
+        }
+        public byte GetSubTileFlags(int index, int x, int y) {
             return tilesetHeaderGroup.GetMappingsData(index*8+y*2+x+4);
         }
-        public void SetTileFlags(int index, int x, int y, byte value) {
+        public void SetSubTileFlags(int index, int x, int y, byte value) {
             tilesetHeaderGroup.SetMappingsData(index*8+y*2+x+4, value);
             tileImagesCache[index] = null;
             TileModifiedEvent(index);

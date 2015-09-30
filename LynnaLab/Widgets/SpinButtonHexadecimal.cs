@@ -10,6 +10,10 @@ namespace LynnaLab
         {
             this.Numeric = false;
         }
+        public SpinButtonHexadecimal(int start,int end) : base(start,end,1)
+        {
+            this.Numeric = false;
+        }
 
         protected override int OnOutput() {
             this.Numeric = false;

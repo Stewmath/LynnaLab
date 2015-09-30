@@ -18,11 +18,17 @@ namespace LynnaLab
         }
         public int HoveringX
         {
-            get { return hoveringIndex%Width; }
+            get { 
+                if (Width == 0) return 0;
+                return hoveringIndex%Width;
+            }
         }
         public int HoveringY
         {
-            get { return hoveringIndex/Width; }
+            get {
+                if (Height == 0) return 0;
+                return hoveringIndex/Width;
+            }
         }
 
         protected abstract Bitmap Image { get; }
@@ -114,11 +120,17 @@ namespace LynnaLab
         }
         public int SelectedX
         {
-            get { return selectedIndex%Width; }
+            get { 
+                if (Width == 0) return 0;
+                return selectedIndex%Width;
+            }
         }
         public int SelectedY
         {
-            get { return selectedIndex/Width; }
+            get { 
+                if (Height == 0) return 0;
+                return selectedIndex/Width;
+            }
         }
 
         // Event for selecting a tile
