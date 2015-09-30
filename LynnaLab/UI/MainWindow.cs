@@ -113,6 +113,8 @@ public partial class MainWindow: Gtk.Window
         SetArea(room.Area);
         musicComboBox.Active = Project.MusicMapping.IndexOf((byte)room.GetMusicID());
         roomSpinButton.Value = room.Index;
+
+        interactionGroupEditor.SetInteractionGroup(room.GetInteractionGroup());
     }
 
     void SetDungeon(Dungeon dungeon) {

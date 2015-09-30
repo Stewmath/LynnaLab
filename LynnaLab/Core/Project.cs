@@ -63,6 +63,13 @@ namespace LynnaLab
 			}
             // Parse wram.s
             GetFileParser("include/wram.s");
+			// Parse everything in interactions/
+			foreach (string f in Directory.EnumerateFiles(baseDirectory + "interactions/")) {
+				if (f.Substring(f.LastIndexOf('.')) == ".s") {
+					string filename = "interactions/" + f.Substring(f.LastIndexOf('/') + 1);
+                    GetFileParser(filename);
+				}
+			}
 
             // Initialize constantsMappings
             UniqueGfxMapping = new ConstantsMapping(

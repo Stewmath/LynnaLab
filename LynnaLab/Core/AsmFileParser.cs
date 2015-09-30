@@ -161,6 +161,10 @@ namespace LynnaLab
         // Returns true if a meaning for the token was found.
         bool parseData(string[] tokens, int[] tokenStartIndices, int[] tokenEndIndices, string warningString) {
             List<string> standardValues = new List<string>();
+
+            int minParams=-1,maxParams=-1;
+            InteractionType interactionType;
+
             for (int j = 1; j < tokens.Length; j++)
                 standardValues.Add(tokens[j]);
 
@@ -312,6 +316,85 @@ namespace LynnaLab
                         AddData(d);
                         break;
                     }
+
+                    // Interactions
+                case "interac0":
+                    minParams = 1;
+                    interactionType = InteractionType.Type0;
+                    goto interactionData;
+                case "novalue":
+                    minParams = 1;
+                    interactionType = InteractionType.NoValue;
+                    goto interactionData;
+                case "doublevalue":
+                    minParams = 3;
+                    interactionType = InteractionType.DoubleValue;
+                    goto interactionData;
+                case "pointer":
+                    minParams = 1;
+                    interactionType = InteractionType.Pointer;
+                    goto interactionData;
+                case "bosspointer":
+                    minParams = 1;
+                    interactionType = InteractionType.BossPointer;
+                    goto interactionData;
+                case "conditional":
+                    minParams = 1;
+                    interactionType = InteractionType.Conditional;
+                    goto interactionData;
+                case "randomenemy":
+                    minParams = 2;
+                    interactionType = InteractionType.RandomEnemy;
+                    goto interactionData;
+                case "specificenemy":
+                    minParams = 3;
+                    maxParams = 4;
+                    interactionType = InteractionType.SpecificEnemy;
+                    goto interactionData;
+                case "part":
+                    minParams = 2;
+                    interactionType = InteractionType.Part;
+                    goto interactionData;
+                case "quadruplevalue":
+                    minParams = 5;
+                    interactionType = InteractionType.QuadrupleValue;
+                    goto interactionData;
+                case "interaca":
+                    minParams = 2;
+                    maxParams = 3;
+                    interactionType = InteractionType.TypeA;
+                    goto interactionData;
+                case "interacend":
+                    minParams = 0;
+                    interactionType = InteractionType.End;
+                    goto interactionData;
+                case "interacendpointer":
+                    minParams = 0;
+                    interactionType = InteractionType.EndPointer;
+                    goto interactionData;
+
+
+interactionData:
+                    {
+                        if (minParams == -1) minParams = maxParams;
+                        if (maxParams == -1) maxParams = minParams;
+                        if (tokens.Length-1 < minParams || tokens.Length-1 > maxParams) {
+                            Project.WriteLog(warningString);
+                            Project.WriteLogLine("Expected " + tokens[0] + " to take " +
+                                    minParams + "-" + maxParams + "parameter(s)");
+                            break;
+                        }
+                        int startColumn=0;
+                        if (tokens.Length < 2)
+                            startColumn = 0;
+                        else
+                            startColumn = tokenStartIndices[1];
+                        Data d = new InteractionData(Project, tokens[0].ToLower(), standardValues,
+                                this, lineIndex, startColumn, interactionType);
+                        AddData(d);
+                        break;
+                    }
+
                 default:
                     return false;
             }

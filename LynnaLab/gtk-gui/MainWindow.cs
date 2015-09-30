@@ -88,6 +88,8 @@ public partial class MainWindow
 	private global::LynnaLab.Minimap dungeonMinimap;
 	
 	private global::Gtk.Label label6;
+	
+	private global::LynnaLab.InteractionGroupEditor interactionGroupEditor;
 
 	protected virtual void Build ()
 	{
@@ -281,6 +283,7 @@ public partial class MainWindow
 		this.areaviewer1.Width = 16;
 		this.areaviewer1.TileWidth = 16;
 		this.areaviewer1.TileHeight = 16;
+		this.areaviewer1.Scale = 1;
 		this.vbox2.Add (this.areaviewer1);
 		global::Gtk.Box.BoxChild w15 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.areaviewer1]));
 		w15.Position = 0;
@@ -295,6 +298,7 @@ public partial class MainWindow
 		this.roomeditor1.Width = 15;
 		this.roomeditor1.TileWidth = 16;
 		this.roomeditor1.TileHeight = 16;
+		this.roomeditor1.Scale = 1;
 		this.vbox2.Add (this.roomeditor1);
 		global::Gtk.Box.BoxChild w16 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.roomeditor1]));
 		w16.Position = 1;
@@ -314,7 +318,7 @@ public partial class MainWindow
 		this.notebook2 = new global::Gtk.Notebook ();
 		this.notebook2.CanFocus = true;
 		this.notebook2.Name = "notebook2";
-		this.notebook2.CurrentPage = 0;
+		this.notebook2.CurrentPage = 1;
 		// Container child notebook2.Gtk.Notebook+NotebookChild
 		this.vbox4 = new global::Gtk.VBox ();
 		this.vbox4.Name = "vbox4";
@@ -362,6 +366,7 @@ public partial class MainWindow
 		this.worldMinimap.Width = 16;
 		this.worldMinimap.TileWidth = 20;
 		this.worldMinimap.TileHeight = 16;
+		this.worldMinimap.Scale = 1;
 		this.vbox4.Add (this.worldMinimap);
 		global::Gtk.Box.BoxChild w22 = ((global::Gtk.Box.BoxChild)(this.vbox4 [this.worldMinimap]));
 		w22.Position = 1;
@@ -447,6 +452,7 @@ public partial class MainWindow
 		this.dungeonMinimap.Width = 8;
 		this.dungeonMinimap.TileWidth = 30;
 		this.dungeonMinimap.TileHeight = 22;
+		this.dungeonMinimap.Scale = 1;
 		this.vbox3.Add (this.dungeonMinimap);
 		global::Gtk.Box.BoxChild w29 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.dungeonMinimap]));
 		w29.Position = 1;
@@ -466,16 +472,25 @@ public partial class MainWindow
 		w31.Position = 1;
 		w31.Expand = false;
 		w31.Fill = false;
-		this.vbox1.Add (this.hbox3);
-		global::Gtk.Box.BoxChild w32 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.hbox3]));
-		w32.Position = 1;
+		// Container child hbox3.Gtk.Box+BoxChild
+		this.interactionGroupEditor = new global::LynnaLab.InteractionGroupEditor ();
+		this.interactionGroupEditor.Events = ((global::Gdk.EventMask)(256));
+		this.interactionGroupEditor.Name = "interactionGroupEditor";
+		this.hbox3.Add (this.interactionGroupEditor);
+		global::Gtk.Box.BoxChild w32 = ((global::Gtk.Box.BoxChild)(this.hbox3 [this.interactionGroupEditor]));
+		w32.Position = 2;
 		w32.Expand = false;
 		w32.Fill = false;
+		this.vbox1.Add (this.hbox3);
+		global::Gtk.Box.BoxChild w33 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.hbox3]));
+		w33.Position = 1;
+		w33.Expand = false;
+		w33.Fill = false;
 		this.Add (this.vbox1);
 		if ((this.Child != null)) {
 			this.Child.ShowAll ();
 		}
-		this.DefaultWidth = 738;
+		this.DefaultWidth = 941;
 		this.DefaultHeight = 546;
 		this.Show ();
 		this.DeleteEvent += new global::Gtk.DeleteEventHandler (this.OnDeleteEvent);

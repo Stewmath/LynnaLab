@@ -140,6 +140,10 @@ namespace LynnaLab
             }
         }
 
+        public InteractionGroup GetInteractionGroup() {
+            return Project.GetIndexedDataType<InteractionGroup>(Index);
+        }
+
         void UpdateRoomData() {
             MemoryFileStream dataFile = TileDataFile;
             if (dataFile.Length == 80) { // Small map
