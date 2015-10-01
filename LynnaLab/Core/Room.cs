@@ -141,7 +141,8 @@ namespace LynnaLab
         }
 
         public InteractionGroup GetInteractionGroup() {
-            return Project.GetIndexedDataType<InteractionGroup>(Index);
+            String label = "group" + (Index/0x100).ToString("x") + "Map" + (Index%0x100).ToString("x2") + "InteractionData";
+            return Project.GetDataType<InteractionGroup>(label);
         }
 
         void UpdateRoomData() {

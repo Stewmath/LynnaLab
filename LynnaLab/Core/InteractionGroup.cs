@@ -4,17 +4,18 @@ using System.Collections.Generic;
 namespace LynnaLab
 {
 
-    public class InteractionGroup : ProjectIndexedDataType
+    public class InteractionGroup : ProjectDataType
     {
         List<InteractionData> interactionDataList = new List<InteractionData>();
 
-        public InteractionGroup(Project p, int index) : base(p, index)
+        public InteractionGroup(Project p, String id) : base(p, id)
         {
-            FileParser parser = Project.GetFileWithLabel(GetDataLabel());
+            FileParser parser = Project.GetFileWithLabel(Identifier);
+            InteractionData data = parser.GetData(Identifier) as InteractionData;
 
-            InteractionData data = parser.GetData(GetDataLabel()) as InteractionData;
-            while (data.Command != "interacend") {
+            while (data.GetInteractionType() != InteractionType.End && data.GetInteractionType() != InteractionType.EndPointer) {
                 interactionDataList.Add(data);
+                data = data.Next as InteractionData;
             }
         }
 
@@ -23,10 +24,6 @@ namespace LynnaLab
         }
         public int GetNumInteractions() {
             return interactionDataList.Count;
-        }
-
-        String GetDataLabel() {
-            return "group" + (Index/0x100).ToString("x") + "Map" + (Index%0x100).ToString("x2") + "InteractionData";
         }
     }
 }

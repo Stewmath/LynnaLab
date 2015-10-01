@@ -1,8 +1,12 @@
 Editor:
 
+- Interactions
+    - Handle interactions referencing same data
+    - Fix output formatting
+- Warps
+- Tileset collisions
 - Ability to add areas, etc, as well as moving labels which refer to the same
   data
-- Interactions
 - Dungeon minimap editor
 
 disasm:
