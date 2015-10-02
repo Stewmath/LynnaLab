@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
-    public class Label {
+    public class Label : FileComponent {
         string name;
         // An index for dataList (start of the data it references)
         int index;
@@ -16,9 +16,18 @@ namespace LynnaLab
             get { return index; }
         }
 
-        public Label(string n, int i) {
+        public Label(string n, int i) : base(null) {
             name = n;
-            index = i; }
+            index = i;
+        }
+        public Label(string n, int i, IList<int> spacing) : base(spacing) {
+            name = n;
+            index = i;
+        }
+
+        public override string GetString() {
+            return GetSpacing(spacing[0]) + name + ":" + GetSpacing(spacing[1]);
+        }
     }
 
 
@@ -69,23 +78,27 @@ namespace LynnaLab
             this.fullFilename = p.BaseDirectory + f;
 
             // Made-up label for the start of the file
-            AddLabel(new Label(Basename + "_start", 0));
+            Label l = new Label(Basename + "_start", 0);
+            l.Fake = true;
+            AddLabel(l);
         }
 
-        protected void AddLabel(Label label) {
+        protected virtual bool AddLabel(Label label) {
             labelDictionary.Add(label.Name, label);
             project.AddLabel(label.Name, this);
             activeLabel = label;
+            return true;
         }
-        protected void AddData(Data data) {
+        protected virtual bool AddData(Data data) {
             if (dataList.Count != 0) {
-                dataList[dataList.Count - 1].Next = data;
-                data.Last = dataList[dataList.Count - 1];
+                dataList[dataList.Count - 1].nextData = data;
+                data.prevData = dataList[dataList.Count - 1];
             }
             if (activeLabel != null)
                 dataDictionary[data] = activeLabel;
             activeLabel = null;
             dataList.Add(data);
+            return true;
         }
 
         public Data GetData(string labelStr, int offset=0) {
@@ -109,8 +122,8 @@ namespace LynnaLab
             return null;
         }
 
-        public abstract string GetLine(int i);
-        public abstract void SetLine(int i, string line);
+        public abstract bool InsertDataAfter(Data refData, Data newData);
+        public abstract bool InsertDataBefore(Data refData, Data newData);
         public abstract void Save();
     }
 }

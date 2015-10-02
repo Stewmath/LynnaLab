@@ -36,7 +36,7 @@ namespace LynnaLab
                 _numAnimations = 0;
 
             for (int j=0; j<NumAnimations; j++) {
-                if (data.Command != ".dw")
+                if (data.CommandLowerCase != ".dw")
                     throw new Exception("Malformatted animation group data (index 0x" +
                             Index.ToString("x") + "\n");
                 animations[j] = Project.GetDataType<Animation>(data.Values[0]);

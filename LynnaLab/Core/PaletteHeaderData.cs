@@ -8,6 +8,9 @@ namespace LynnaLab {
         Sprite
     };
 
+    // Class represents macro:
+    // m_PaletteHeader[Bg|Spr] startIndex numPalettes address continue
+    //                          0           1           2       3
 	public class PaletteHeaderData : Data {
         FileParser paletteDataFile;
 
@@ -22,7 +25,7 @@ namespace LynnaLab {
         }
 
 		public PaletteType PaletteType {
-			get { return Command == "m_paletteheaderbg" ? PaletteType.Background : PaletteType.Sprite; }
+			get { return CommandLowerCase == "m_paletteheaderbg" ? PaletteType.Background : PaletteType.Sprite; }
 		}
         public int FirstPalette {
             get { return Project.EvalToInt(Values[0]); }
@@ -31,8 +34,8 @@ namespace LynnaLab {
             get { return Project.EvalToInt(Values[1]); }
         }
 
-		public PaletteHeaderData(Project p, string command, IList<string> values, FileParser parser, int line, int colStart) 
-			: base(p, command, values, 3, parser, line, colStart) {
+		public PaletteHeaderData(Project p, string command, IList<string> values, FileParser parser, IList<int> spacing)
+			: base(p, command, values, 3, parser, spacing) {
 
                 int dest = -1;
                 try {
@@ -61,4 +64,3 @@ namespace LynnaLab {
 	}
 
 }
-

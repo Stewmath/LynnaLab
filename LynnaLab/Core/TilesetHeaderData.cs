@@ -27,8 +27,8 @@ namespace LynnaLab {
         }
 
 
-		public TilesetHeaderData(Project p, string command, IList<string> values, FileParser parser, int line, int colStart) 
-			: base(p, command, values, 8, parser, line, colStart) {
+		public TilesetHeaderData(Project p, string command, IList<string> values, FileParser parser, IList<int> spacing) 
+			: base(p, command, values, 8, parser, spacing) {
                 try {
                     referencedData = Project.GetBinaryFile("tilesets/" + Values[1] + ".bin");
                 }

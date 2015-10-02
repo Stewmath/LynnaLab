@@ -18,10 +18,10 @@ namespace LynnaLab
         public Animation(Project p, string label) : base(p, label) {
             FileParser parser = Project.GetFileWithLabel(label);
             Data data = parser.GetData(label);
-            while (data != null && data.Command == ".db") {
+            while (data != null && data.CommandLowerCase == ".db") {
                 counters.Add(Project.EvalToInt(data.Values[0]));
                 data = data.Next;
-                if (data.Command != ".db")
+                if (data.CommandLowerCase != ".db")
                     throw new Exception("Malformatted animation data");
                 gfxHeaderIndices.Add(Project.EvalToInt(data.Values[0]));
                 data = data.Next;

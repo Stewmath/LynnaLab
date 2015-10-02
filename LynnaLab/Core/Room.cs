@@ -38,7 +38,7 @@ namespace LynnaLab
                 string label = "room" + ((layoutGroup<<8)+(Index&0xff)).ToString("X4").ToLower();
                 FileParser parserFile = Project.GetFileWithLabel(label);
                 Data data = parserFile.GetData(label);
-                if (data.Command != "m_roomlayoutdata") {
+                if (data.CommandLowerCase != "m_roomlayoutdata") {
                     throw new Exception("Expected label \"" + label + "\" to be followed by the m_RoomLayoutData macro.");
                 }
                 string roomString = data.Values[0] + ".bin";

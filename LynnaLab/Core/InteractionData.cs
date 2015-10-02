@@ -22,8 +22,8 @@ namespace LynnaLab {
 
         InteractionType type;
 
-        public InteractionData(Project p, string command, IList<string> values, FileParser parser, int line, int colStart, InteractionType type)
-            : base(p, command, values, -1, parser, line, colStart) {
+        public InteractionData(Project p, string command, IList<string> values, FileParser parser, IList<int> spacing, InteractionType type)
+            : base(p, command, values, -1, parser, spacing) {
 
             this.type = type;
         }
@@ -62,7 +62,7 @@ namespace LynnaLab {
             SetValue(i, value);
         }
 
-        public override void Save() {
+        public override string GetString() {
             if (Parser.GetDataLabel(this) != null) {
                 // If a label points directly to this data, it can't be
                 // shortened
@@ -71,7 +71,7 @@ namespace LynnaLab {
             else
                 Shorten(); // Try to, anyway
 
-            base.Save();
+            return base.GetString();
         }
 
         bool IsShortenable() {

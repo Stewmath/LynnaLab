@@ -4,10 +4,13 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
-    public class Data 
+    public class Data : FileComponent
     {
+        // These are accessed by AsmFileParser, and by nothing else pls
+        internal Data nextData, prevData;
+
         // Size in bytes
-        // -1 if indeterminate?
+        // -1 if indeterminate? (consider getting rid of this, it's unreliable)
         protected int size;
         FileParser parser;
 
@@ -16,8 +19,6 @@ namespace LynnaLab
         // Command is like .db, .dw, or a macro.
         string command;
         List<string> values;
-        int line;
-        int colStart, colEnd;
 
         protected Project Project { get; set; }
 
@@ -26,28 +27,46 @@ namespace LynnaLab
         public string Command {
             get { return command; }
         }
+        public string CommandLowerCase {
+            get { return command.ToLower(); }
+        }
         public IList<string> Values {
             get { return values.AsReadOnly(); }
             set {
                 values = new List<string>(value);
+                while (spacing.Count < values.Count+2)
+                    spacing.Add(0);
                 modified = true;
             }
         }
         public int Size {
             get { return size; }
         }
-        public Data Next {get; set;}
-        public Data Last {get; set;}
 
-        public Data(Project p, string command, IList<string> values, int size, FileParser parser, int line, int colStart=0, int colEnd=-1) {
+        public bool PrintCommand {get; set;} // If false, don't output the command, only the values
+
+        public Data Next {
+            get { return nextData; }
+            set {
+                // Doesn't work for data that already exists in the parser
+                parser.InsertDataAfter(this, value);
+            }
+        }
+        public Data Last {
+            get { return prevData; }
+            set {
+                parser.InsertDataBefore(this, value);
+            }
+        }
+
+        public Data(Project p, string command, IList<string> values, int size, FileParser parser, IList<int> spacing) : base(spacing) {
             this.Project = p;
             this.command = command;
             this.values = new List<string>(values);
             this.size = size;
             this.parser = parser;
-            this.line = line;
-            this.colStart = colStart;
-            this.colEnd = colEnd;
+
+            PrintCommand = true;
         }
 
         public void SetValue(int i, string value) {
@@ -63,33 +82,32 @@ namespace LynnaLab
             SetValue(i, Wla.ToWord(value));
         }
 
-        public virtual void Save() {
-            if (!modified)
-                return;
-            modified = false;
+        public override string GetString() {
+            string s = "";
+            if (PrintCommand)
+                s = GetSpacingIndex(0) + Command;
 
-            string s = parser.GetLine(line);
-
-            if (colEnd == -1)
-                s = s.Remove(colStart);
-            else
-                s = s.Remove(colStart, colEnd-colStart);
-
-            string insertion = "";
-            if (colStart == 0)
-                insertion += command;
+            int spacingIndex = 1;
             for (int i=0; i<Values.Count; i++) {
-                if (i != 0 || colStart == 0)
-                    insertion += " ";
-                insertion += Values[i];
+                s += GetSpacingIndex(spacingIndex++);
+                s += Values[i];
             }
+            s += GetSpacingIndex(spacingIndex++);
 
-            s = s.Insert(colStart, insertion);
-            parser.SetLine(line, s);
+            return s;
+        }
+
+        // Helper function for GetString
+        string GetSpacingIndex(int i) {
+            string s = "";
+            int spaces = spacing[i];
+            if (spaces == 0 && i != 0 && i != Values.Count+1) spaces = 1;
+            s = GetSpacing(spaces);
+            return s;
         }
 
         public void ThrowException(string message) {
-            message += " (" + parser.Filename + ": Line " + (line+1);
+            message += " (" + parser.Filename;
             throw new Exception(message);
         }
     }
@@ -105,8 +123,8 @@ namespace LynnaLab
             }
         }
 
-        public RgbData(Project p, string command, IList<string> values, FileParser parser, int line, int colStart)
-            : base(p, command, values, 2, parser, line, colStart) {
+        public RgbData(Project p, string command, IList<string> values, FileParser parser, IList<int> spacing)
+            : base(p, command, values, 2, parser, spacing) {
             }
     }
 }
