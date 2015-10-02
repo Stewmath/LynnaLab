@@ -1272,7 +1272,21 @@
               </packing>
             </child>
             <child>
-              <placeholder />
+              <widget class="Gtk.Button" id="deleteButton">
+                <property name="MemberName" />
+                <property name="CanFocus">True</property>
+                <property name="UseStock">True</property>
+                <property name="Type">StockItem</property>
+                <property name="StockId">gtk-delete</property>
+                <signal name="Clicked" handler="OnDeleteButtonClicked" />
+                <property name="label">gtk-delete</property>
+              </widget>
+              <packing>
+                <property name="Position">2</property>
+                <property name="AutoSize">True</property>
+                <property name="Expand">False</property>
+                <property name="Fill">False</property>
+              </packing>
             </child>
           </widget>
           <packing>

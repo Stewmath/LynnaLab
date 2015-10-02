@@ -51,13 +51,15 @@ namespace LynnaLab {
             if (IsShortened()) {
                 if (i == 0) {
                     Elongate();
-                    // Check if the next interaction depends on this
-                    InteractionData next = Next as InteractionData;
-                    if (next != null && next.GetInteractionType() == GetInteractionType())
-                        next.Elongate();
                 }
                 else
                     i--;
+            }
+            if (IsShortenable()) {
+                // Check if the next interaction depends on this
+                InteractionData next = Next as InteractionData;
+                if (next != null && next.GetInteractionType() == GetInteractionType())
+                    next.Elongate();
             }
             SetValue(i, value);
         }
@@ -83,12 +85,10 @@ namespace LynnaLab {
                     (GetInteractionType() == InteractionType.TypeA && Values.Count != 3));
         }
         void Elongate() {
-            if (!(IsShortened() && IsShortenable())) return;
-
-            // Set the value
-            List<string> values = new List<string> {GetInteractionValue(0)};
-            values.AddRange(Values);
-            Values = values;
+            if (IsShortenable() && IsShortened()) {
+                SetSpacing(1,1);
+                InsertValue(0, GetInteractionValue(0));
+            }
         }
         void Shorten() {
             // Shortens the interaction if possible
@@ -98,9 +98,8 @@ namespace LynnaLab {
             if (last == null || last.GetInteractionType() != GetInteractionType()) return;
             if (last.GetInteractionValue(0) != GetInteractionValue(0)) return;
 
-            List<string> values = new List<string>(Values);
-            values.RemoveAt(0);
-            Values = values;
+            RemoveValue(0);
+            SetSpacing(1, 5);
         }
     }
 }

@@ -12,6 +12,8 @@ namespace LynnaLab
 		
 		private global::Gtk.SpinButton indexSpinButton;
 		
+		private global::Gtk.Button deleteButton;
+		
 		private global::Gtk.Frame frame2;
 		
 		private global::Gtk.Alignment GtkAlignment;
@@ -54,11 +56,23 @@ namespace LynnaLab
 			w2.Position = 1;
 			w2.Expand = false;
 			w2.Fill = false;
-			this.vbox1.Add (this.hbox1);
-			global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.hbox1]));
-			w3.Position = 0;
+			// Container child hbox1.Gtk.Box+BoxChild
+			this.deleteButton = new global::Gtk.Button ();
+			this.deleteButton.CanFocus = true;
+			this.deleteButton.Name = "deleteButton";
+			this.deleteButton.UseStock = true;
+			this.deleteButton.UseUnderline = true;
+			this.deleteButton.Label = "gtk-delete";
+			this.hbox1.Add (this.deleteButton);
+			global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.deleteButton]));
+			w3.Position = 2;
 			w3.Expand = false;
 			w3.Fill = false;
+			this.vbox1.Add (this.hbox1);
+			global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.hbox1]));
+			w4.Position = 0;
+			w4.Expand = false;
+			w4.Fill = false;
 			// Container child vbox1.Gtk.Box+BoxChild
 			this.frame2 = new global::Gtk.Frame ();
 			this.frame2.Name = "frame2";
@@ -77,13 +91,14 @@ namespace LynnaLab
 			this.frameLabel.UseMarkup = true;
 			this.frame2.LabelWidget = this.frameLabel;
 			this.vbox1.Add (this.frame2);
-			global::Gtk.Box.BoxChild w6 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.frame2]));
-			w6.Position = 1;
+			global::Gtk.Box.BoxChild w7 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.frame2]));
+			w7.Position = 1;
 			this.Add (this.vbox1);
 			if ((this.Child != null)) {
 				this.Child.ShowAll ();
 			}
 			this.Hide ();
+			this.deleteButton.Clicked += new global::System.EventHandler (this.OnDeleteButtonClicked);
 		}
 	}
 }

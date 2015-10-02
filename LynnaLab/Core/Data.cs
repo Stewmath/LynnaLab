@@ -14,11 +14,23 @@ namespace LynnaLab
         protected int size;
         FileParser parser;
 
-        bool modified;
+        bool _modified;
 
         // Command is like .db, .dw, or a macro.
         string command;
         List<string> values;
+
+
+        // Properties
+
+        public bool Modified {
+            get { return _modified; }
+            set {
+                _modified = value;
+                if (value == true)
+                    parser.Modified = true;
+            }
+        }
 
         protected Project Project { get; set; }
 
@@ -32,12 +44,6 @@ namespace LynnaLab
         }
         public IList<string> Values {
             get { return values.AsReadOnly(); }
-            set {
-                values = new List<string>(value);
-                while (spacing.Count < values.Count+2)
-                    spacing.Add(0);
-                modified = true;
-            }
         }
         public int Size {
             get { return size; }
@@ -59,6 +65,9 @@ namespace LynnaLab
             }
         }
 
+
+        // Constructor
+
         public Data(Project p, string command, IList<string> values, int size, FileParser parser, IList<int> spacing) : base(spacing) {
             this.Project = p;
             this.command = command;
@@ -67,12 +76,13 @@ namespace LynnaLab
             this.parser = parser;
 
             PrintCommand = true;
+            _modified = false;
         }
 
         public void SetValue(int i, string value) {
             if (values[i] != value) {
                 values[i] = value;
-                modified = true;
+                Modified = true;
             }
         }
         public void SetByteValue(int i, byte value) {
@@ -80,6 +90,17 @@ namespace LynnaLab
         }
         public void SetWordValue(int i, int value) {
             SetValue(i, Wla.ToWord(value));
+        }
+        // Removes a value, deletes the spacing prior to it
+        public void RemoveValue(int i) {
+            values.RemoveAt(i);
+            spacing.RemoveAt(i+1);
+            Modified = true;
+        }
+        public void InsertValue(int i, string value, int priorSpaces=1) {
+            values.Insert(i, value);
+            spacing.Insert(i+1, priorSpaces);
+            Modified = true;
         }
 
         public override string GetString() {
@@ -97,17 +118,28 @@ namespace LynnaLab
             return s;
         }
 
+        // Detach from the parser
+        public void Detach() {
+            if (prevData != null) prevData.nextData = null;
+            if (nextData != null) nextData.prevData = null;
+            if (prevData != null && nextData != null) {
+                prevData.nextData = nextData;
+                nextData.prevData = prevData;
+            }
+            parser.RemoveFileComponent(this);
+        }
+
         // Helper function for GetString
         string GetSpacingIndex(int i) {
             string s = "";
             int spaces = spacing[i];
             if (spaces == 0 && i != 0 && i != Values.Count+1) spaces = 1;
-            s = GetSpacing(spaces);
+            s = GetSpacingHelper(spaces);
             return s;
         }
 
         public void ThrowException(string message) {
-            message += " (" + parser.Filename;
+            message += " (" + parser.Filename + ")";
             throw new Exception(message);
         }
     }

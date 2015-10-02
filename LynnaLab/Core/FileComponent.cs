@@ -22,8 +22,15 @@ namespace LynnaLab
                 this.spacing = new List<int>(spacing);
         }
 
+        public int GetSpacing(int index) {
+            return spacing[index];
+        }
+        public void SetSpacing(int index, int spaces) {
+            spacing[index] = spaces;
+        }
+
         // Returns a string representing the given space value
-        protected string GetSpacing(int spaces) {
+        protected static string GetSpacingHelper(int spaces) {
             string s = "";
             while (spaces > 0) {
                 s += ' ';
@@ -51,7 +58,7 @@ namespace LynnaLab
         }
 
         public override string GetString() {
-            return GetSpacing(spacing[0]) + str + GetSpacing(spacing[1]);
+            return GetSpacingHelper(spacing[0]) + str + GetSpacingHelper(spacing[1]);
         }
     }
 }

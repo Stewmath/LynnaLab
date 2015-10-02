@@ -12,7 +12,6 @@ namespace LynnaLab
     {
         // Array of lines in the file, will be written back to the file if modified
         string[] lines;
-        bool modified; // CONSIDER REMOVING
 
         public Dictionary<string,string> definesDictionary = new Dictionary<string,string>();
 
@@ -194,6 +193,8 @@ namespace LynnaLab
                     }
                 }
             }
+
+            Modified = false;
 
             Project.WriteLogLine("Parsed \"" + Filename + "\" successfully maybe.");
         }
@@ -447,6 +448,7 @@ interactionData:
             if (fileStructure.Contains(data)) return false;
 
             if (base.AddData(data)) {
+                Modified = true;
                 fileStructure.Add(data);
                 fileStructureComments.Add(comment);
                 return true;
@@ -457,6 +459,7 @@ interactionData:
             if (fileStructure.Contains(label)) return false;
 
             if (base.AddLabel(label)) {
+                Modified = true;
                 fileStructure.Add(label);
                 fileStructureComments.Add(comment);
                 return true;
@@ -476,16 +479,19 @@ interactionData:
             string comment = fileStructureComments[fileStructureComments.Count-1];
             fileStructureComments.RemoveAt(fileStructureComments.Count-1);
             this.AddLabel(label, comment);
+            Modified = true;
         }
         void AddDataAndPopFileStructure(Data data) {
             fileStructure.RemoveAt(fileStructure.Count-1);
             string comment = fileStructureComments[fileStructureComments.Count-1];
             fileStructureComments.RemoveAt(fileStructureComments.Count-1);
             this.AddData(data, comment);
+            Modified = true;
         }
         void PopFileStructure() {
             fileStructure.RemoveAt(fileStructure.Count-1);
             fileStructureComments.RemoveAt(fileStructureComments.Count-1);
+            Modified = true;
         }
 
         // Attempt to insert newData after refData.
@@ -505,6 +511,8 @@ interactionData:
             refData.nextData = newData;
             newData.prevData = refData;
 
+            Modified = true;
+
             return true;
         }
         public override bool InsertDataBefore(Data refData, Data newData) {
@@ -521,10 +529,24 @@ interactionData:
             refData.prevData = newData;
             newData.nextData = refData;
 
+            Modified = true;
+
             return true;
         }
 
+        // Remove a FileComponent (Data, Label) from the fileStructure.
+        // Be careful using this with Data, because the Next and Prev fields
+        // won't be updated. Use Data.Detach() instead.
+        public override void RemoveFileComponent(FileComponent component) {
+            int index = fileStructure.IndexOf(component);
+            if (index == -1) return;
+            fileStructure.RemoveAt(index);
+            fileStructureComments.RemoveAt(index);
+        }
+
         public override void Save() {
+            if (!Modified) return;
+
             List<string> output = new List<string>();
             FileComponent lastComponent = null;
             for (int i=0;i<fileStructure.Count;i++) {
@@ -547,9 +569,14 @@ interactionData:
                 if (s != null)
                     output.Add(s);
 
+                if (d is Data)
+                    (d as Data).Modified = false;
+
                 lastComponent = d;
             }
             File.WriteAllLines(FullFilename, output);
+
+            Modified = false;
         }
 
         void AddDefinition(string def, string value) {

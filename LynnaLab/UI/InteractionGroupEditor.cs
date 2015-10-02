@@ -45,8 +45,7 @@ namespace LynnaLab
 
         public void SetInteractionGroup(InteractionGroup group) {
             this.interactionGroup = group;
-            indexSpinButton.Adjustment.Lower = -1;
-            indexSpinButton.Adjustment.Upper = group.GetNumInteractions()-1;
+            UpdateBoundaries();
             indexSpinButton.Value = 0;
             if (interactionGroup != null && interactionGroup.GetNumInteractions() != 0)
                 SetInteractionData(interactionGroup.GetInteractionData(0));
@@ -56,6 +55,12 @@ namespace LynnaLab
             }
         }
 
+        void SetInteractionDataIndex(int i) {
+            if (interactionGroup == null || i < 0 || i >= interactionGroup.GetNumInteractions())
+                SetInteractionData(null);
+            else
+                SetInteractionData(interactionGroup.GetInteractionData(i));
+        }
         void SetInteractionData(InteractionData data) {
             activeData = data;
 
@@ -356,6 +361,30 @@ namespace LynnaLab
 
             interactionDataContainer.Add(table);
             interactionDataContainer.ShowAll();
+        }
+
+        protected void OnDeleteButtonClicked(object sender, EventArgs e)
+        {
+            if (interactionGroup != null && indexSpinButton.ValueAsInt != -1) {
+                interactionGroup.RemoveInteraction(indexSpinButton.ValueAsInt);
+                UpdateBoundaries();
+            }
+        }
+
+        void UpdateBoundaries() {
+            indexSpinButton.Adjustment.Lower = -1;
+            int max=0;
+            if (interactionGroup == null)
+                max = -1;
+            else
+                max = interactionGroup.GetNumInteractions()-1;
+
+            indexSpinButton.Adjustment.Upper = max;
+            if (indexSpinButton.ValueAsInt > max) {
+                indexSpinButton.Value = max;
+            }
+
+            SetInteractionDataIndex(indexSpinButton.ValueAsInt);
         }
     }
 }

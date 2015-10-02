@@ -26,7 +26,7 @@ namespace LynnaLab
         }
 
         public override string GetString() {
-            return GetSpacing(spacing[0]) + name + ":" + GetSpacing(spacing[1]);
+            return GetSpacingHelper(spacing[0]) + name + ":" + GetSpacingHelper(spacing[1]);
         }
     }
 
@@ -49,6 +49,7 @@ namespace LynnaLab
         // then gets unset
         Label activeLabel;
 
+        public bool Modified {get; set;}
         public Project Project {
             get { return project; }
         }
@@ -124,7 +125,7 @@ namespace LynnaLab
 
         public abstract bool InsertDataAfter(Data refData, Data newData);
         public abstract bool InsertDataBefore(Data refData, Data newData);
+        public abstract void RemoveFileComponent(FileComponent component);
         public abstract void Save();
     }
 }
-

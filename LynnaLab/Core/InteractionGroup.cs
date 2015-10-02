@@ -17,13 +17,23 @@ namespace LynnaLab
                 interactionDataList.Add(data);
                 data = data.Next as InteractionData;
             }
+            interactionDataList.Add(data);
         }
 
         public InteractionData GetInteractionData(int index) {
             return interactionDataList[index];
         }
         public int GetNumInteractions() {
-            return interactionDataList.Count;
+            return interactionDataList.Count-1; // Not counting InteracEnd
+        }
+
+        public void RemoveInteraction(int index) {
+            if (index >= interactionDataList.Count-1)
+                throw new Exception("Array index out of bounds.");
+
+            InteractionData data = interactionDataList[index];
+            data.Detach();
+            interactionDataList.RemoveAt(index);
         }
     }
 }
