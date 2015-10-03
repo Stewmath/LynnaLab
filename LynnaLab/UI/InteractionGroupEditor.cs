@@ -6,7 +6,7 @@ namespace LynnaLab
     [System.ComponentModel.ToolboxItem(true)]
     public partial class InteractionGroupEditor : Gtk.Bin
     {
-        String[] InteractionNames = {
+        public static String[] InteractionNames = {
             "Type 0 Interaction",
             "No Value Scriptable Interaction",
             "2-Value Scriptable Interaction",
@@ -385,6 +385,21 @@ namespace LynnaLab
             }
 
             SetInteractionDataIndex(indexSpinButton.ValueAsInt);
+        }
+
+        protected void OnAddButtonClicked(object sender, EventArgs e)
+        {
+            if (interactionGroup == null) return;
+
+            AddInteractionDialog d = new AddInteractionDialog();
+            d.Run();
+            if (d.InteractionTypeToAdd != InteractionType.End) {
+                if (interactionGroup == null) return;
+
+                interactionGroup.InsertInteraction(indexSpinButton.ValueAsInt+1, d.InteractionTypeToAdd);
+                indexSpinButton.Value = indexSpinButton.ValueAsInt+1;
+                UpdateBoundaries();
+            }
         }
     }
 }

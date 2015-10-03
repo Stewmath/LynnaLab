@@ -535,11 +535,21 @@ interactionData:
         }
 
         // Remove a FileComponent (Data, Label) from the fileStructure.
-        // Be careful using this with Data, because the Next and Prev fields
-        // won't be updated. Use Data.Detach() instead.
         public override void RemoveFileComponent(FileComponent component) {
             int index = fileStructure.IndexOf(component);
             if (index == -1) return;
+
+            if (component is Data) {
+                // Update data linked list
+                Data data = component as Data;
+                if (data.prevData != null) data.prevData.nextData = null;
+                if (data.nextData != null) data.nextData.prevData = null;
+                if (data.prevData != null && data.nextData != null) {
+                    data.prevData.nextData = data.nextData;
+                    data.nextData.prevData = data.prevData;
+                }
+            }
+
             fileStructure.RemoveAt(index);
             fileStructureComments.RemoveAt(index);
         }

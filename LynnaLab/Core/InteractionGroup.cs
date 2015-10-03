@@ -6,11 +6,44 @@ namespace LynnaLab
 
     public class InteractionGroup : ProjectDataType
     {
+        public static string[] InteractionCommands = {"Interac0",
+            "NoValue",
+            "DoubleValue",
+            "Pointer",
+            "BossPointer",
+            "Conditional",
+            "RandomEnemy",
+            "SpecificEnemy",
+            "Part",
+            "QuadrupleValue",
+            "InteracA",
+            "InteracEnd",
+            "InteracEndPointer"
+        };
+        static DataValueType[][] defaultDataValueTypes = {
+            new DataValueType[] {DataValueType.Byte},
+            new DataValueType[] {DataValueType.Word},
+            new DataValueType[] {DataValueType.Word, DataValueType.Byte, DataValueType.Byte},
+            new DataValueType[] {DataValueType.String},
+            new DataValueType[] {DataValueType.String},
+            new DataValueType[] {DataValueType.String},
+            new DataValueType[] {DataValueType.Byte, DataValueType.Word},
+            new DataValueType[] {DataValueType.Byte, DataValueType.Word, DataValueType.Byte, DataValueType.Byte},
+            new DataValueType[] {DataValueType.Word, DataValueType.Byte},
+            new DataValueType[] {DataValueType.Word, DataValueType.Byte, DataValueType.Byte, DataValueType.Byte, DataValueType.Byte},
+            new DataValueType[] {DataValueType.Byte, DataValueType.Byte, DataValueType.Byte},
+            new DataValueType[] {},
+            new DataValueType[] {}
+        };
+
+
         List<InteractionData> interactionDataList = new List<InteractionData>();
+        FileParser parser;
+
 
         public InteractionGroup(Project p, String id) : base(p, id)
         {
-            FileParser parser = Project.GetFileWithLabel(Identifier);
+            parser = Project.GetFileWithLabel(Identifier);
             InteractionData data = parser.GetData(Identifier) as InteractionData;
 
             while (data.GetInteractionType() != InteractionType.End && data.GetInteractionType() != InteractionType.EndPointer) {
@@ -34,6 +67,15 @@ namespace LynnaLab
             InteractionData data = interactionDataList[index];
             data.Detach();
             interactionDataList.RemoveAt(index);
+        }
+
+        public void InsertInteraction(int index, InteractionType type) {
+            IList<string> values = Data.GetDefaultValues(defaultDataValueTypes[(int)type]);
+            InteractionData data = new InteractionData(Project, InteractionCommands[(int)type], values, parser,
+                    new int[]{-1}, // Tab at start of line
+                    type);
+            data.InsertIntoParserBefore(interactionDataList[index]);
+            interactionDataList.Insert(index, data);
         }
     }
 }

@@ -4,8 +4,33 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
+    // Enum of types of values that can be had, currently only used to help
+    // with default initialization
+    public enum DataValueType {
+        Byte=0,
+        Word,
+        String
+    }
+
     public class Data : FileComponent
     {
+        public static string[] defaultDataValueTypes = {
+            "$00",
+            "$0000",
+            ""
+        };
+
+        public static string[] GetDefaultValues(DataValueType[] valueList) {
+            string[] ret = new string[valueList.Length];
+            for (int i=0;i<valueList.Length;i++) {
+                ret[i] = defaultDataValueTypes[(int)valueList[i]];
+            }
+            return ret;
+        }
+
+
+
+
         // These are accessed by AsmFileParser, and by nothing else pls
         internal Data nextData, prevData;
 
@@ -53,16 +78,9 @@ namespace LynnaLab
 
         public Data Next {
             get { return nextData; }
-            set {
-                // Doesn't work for data that already exists in the parser
-                parser.InsertDataAfter(this, value);
-            }
         }
         public Data Last {
             get { return prevData; }
-            set {
-                parser.InsertDataBefore(this, value);
-            }
         }
 
 
@@ -74,6 +92,11 @@ namespace LynnaLab
             this.values = new List<string>(values);
             this.size = size;
             this.parser = parser;
+
+            if (this.spacing == null)
+                this.spacing = new List<int>();
+            while (this.spacing.Count < Values.Count+2)
+                this.spacing.Add(0);
 
             PrintCommand = true;
             _modified = false;
@@ -120,13 +143,13 @@ namespace LynnaLab
 
         // Detach from the parser
         public void Detach() {
-            if (prevData != null) prevData.nextData = null;
-            if (nextData != null) nextData.prevData = null;
-            if (prevData != null && nextData != null) {
-                prevData.nextData = nextData;
-                nextData.prevData = prevData;
-            }
             parser.RemoveFileComponent(this);
+        }
+        public void InsertIntoParserAfter(Data reference) {
+            parser.InsertDataAfter(reference, this);
+        }
+        public void InsertIntoParserBefore(Data reference) {
+            parser.InsertDataBefore(reference, this);
         }
 
         // Helper function for GetString

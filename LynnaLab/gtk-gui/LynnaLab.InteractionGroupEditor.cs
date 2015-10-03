@@ -12,6 +12,10 @@ namespace LynnaLab
 		
 		private global::Gtk.SpinButton indexSpinButton;
 		
+		private global::Gtk.VBox vbox2;
+		
+		private global::Gtk.Button addButton;
+		
 		private global::Gtk.Button deleteButton;
 		
 		private global::Gtk.Frame frame2;
@@ -57,22 +61,43 @@ namespace LynnaLab
 			w2.Expand = false;
 			w2.Fill = false;
 			// Container child hbox1.Gtk.Box+BoxChild
+			this.vbox2 = new global::Gtk.VBox ();
+			this.vbox2.Name = "vbox2";
+			this.vbox2.Spacing = 6;
+			// Container child vbox2.Gtk.Box+BoxChild
+			this.addButton = new global::Gtk.Button ();
+			this.addButton.CanFocus = true;
+			this.addButton.Name = "addButton";
+			this.addButton.UseStock = true;
+			this.addButton.UseUnderline = true;
+			this.addButton.Label = "gtk-add";
+			this.vbox2.Add (this.addButton);
+			global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.addButton]));
+			w3.Position = 0;
+			w3.Expand = false;
+			w3.Fill = false;
+			// Container child vbox2.Gtk.Box+BoxChild
 			this.deleteButton = new global::Gtk.Button ();
 			this.deleteButton.CanFocus = true;
 			this.deleteButton.Name = "deleteButton";
 			this.deleteButton.UseStock = true;
 			this.deleteButton.UseUnderline = true;
 			this.deleteButton.Label = "gtk-delete";
-			this.hbox1.Add (this.deleteButton);
-			global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.deleteButton]));
-			w3.Position = 2;
-			w3.Expand = false;
-			w3.Fill = false;
-			this.vbox1.Add (this.hbox1);
-			global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.hbox1]));
-			w4.Position = 0;
+			this.vbox2.Add (this.deleteButton);
+			global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.deleteButton]));
+			w4.Position = 1;
 			w4.Expand = false;
 			w4.Fill = false;
+			this.hbox1.Add (this.vbox2);
+			global::Gtk.Box.BoxChild w5 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.vbox2]));
+			w5.Position = 2;
+			w5.Expand = false;
+			w5.Fill = false;
+			this.vbox1.Add (this.hbox1);
+			global::Gtk.Box.BoxChild w6 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.hbox1]));
+			w6.Position = 0;
+			w6.Expand = false;
+			w6.Fill = false;
 			// Container child vbox1.Gtk.Box+BoxChild
 			this.frame2 = new global::Gtk.Frame ();
 			this.frame2.Name = "frame2";
@@ -91,13 +116,14 @@ namespace LynnaLab
 			this.frameLabel.UseMarkup = true;
 			this.frame2.LabelWidget = this.frameLabel;
 			this.vbox1.Add (this.frame2);
-			global::Gtk.Box.BoxChild w7 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.frame2]));
-			w7.Position = 1;
+			global::Gtk.Box.BoxChild w9 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.frame2]));
+			w9.Position = 1;
 			this.Add (this.vbox1);
 			if ((this.Child != null)) {
 				this.Child.ShowAll ();
 			}
 			this.Hide ();
+			this.addButton.Clicked += new global::System.EventHandler (this.OnAddButtonClicked);
 			this.deleteButton.Clicked += new global::System.EventHandler (this.OnDeleteButtonClicked);
 		}
 	}
