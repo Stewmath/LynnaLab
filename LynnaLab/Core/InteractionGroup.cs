@@ -72,6 +72,9 @@ namespace LynnaLab
 
         public void InsertInteraction(int index, InteractionType type) {
             IList<string> values = Data.GetDefaultValues(defaultDataValueTypes[(int)type]);
+            if (type >= InteractionType.Pointer && type <= InteractionType.Conditional)
+                values[0] = "interactionData4000"; // Compileable default pointer
+
             InteractionData data = new InteractionData(Project, InteractionCommands[(int)type], values, parser,
                     new int[]{-1}, // Tab at start of line
                     type);
