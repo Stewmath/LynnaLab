@@ -21,53 +21,57 @@ namespace LynnaLab {
 
     public class InteractionData : Data {
 
-        public static List<List<DataValueReference>> interactionValueReferences =
-            new List<List<DataValueReference>> {
-                new List<DataValueReference> { // Type0
-                    new DataValueReference("Condition",0,DataValueType.Byte),
+        public static List<List<ValueReference>> interactionValueReferences =
+            new List<List<ValueReference>> {
+                new List<ValueReference> { // Type0
+                    new ValueReference("Condition",0,DataValueType.Byte),
                 },
-                new List<DataValueReference> { // NoValue
-                    new DataValueReference("ID",0,DataValueType.Word),
+                new List<ValueReference> { // NoValue
+                    new ValueReference("ID",0,DataValueType.Word),
                 },
-                new List<DataValueReference> { // DoubleValue
-                    new DataValueReference("ID",0,DataValueType.Word),
-                    new DataValueReference("Y",1,DataValueType.Byte),
-                    new DataValueReference("X",2,DataValueType.Byte),
+                new List<ValueReference> { // DoubleValue
+                    new ValueReference("ID",0,DataValueType.Word),
+                    new ValueReference("Y",1,DataValueType.Byte),
+                    new ValueReference("X",2,DataValueType.Byte),
                 },
-                new List<DataValueReference> { // Pointer
-                    new DataValueReference("Pointer",0,DataValueType.InteractionPointer),
+                new List<ValueReference> { // Pointer
+                    new ValueReference("Pointer",0,DataValueType.InteractionPointer),
                 },
-                new List<DataValueReference> { // BossPointer
-                    new DataValueReference("Pointer",0,DataValueType.InteractionPointer),
+                new List<ValueReference> { // BossPointer
+                    new ValueReference("Pointer",0,DataValueType.InteractionPointer),
                 },
-                new List<DataValueReference> { // Conditional
-                    new DataValueReference("Pointer",0,DataValueType.InteractionPointer),
+                new List<ValueReference> { // Conditional
+                    new ValueReference("Pointer",0,DataValueType.InteractionPointer),
                 },
-                new List<DataValueReference> { // Random Enemy
-                    new DataValueReference("Flags",0,DataValueType.Byte),
-                    new DataValueReference("ID",1,DataValueType.Word),
+                new List<ValueReference> { // Random Enemy
+                    new ValueReference("Flags",0,DataValueType.Byte),
+                    new ValueReference("ID",1,DataValueType.Word),
                 },
-                new List<DataValueReference> { // Specific Enemy
-                    new DataValueReference("Flags",0,DataValueType.Byte),
-                    new DataValueReference("ID",1,DataValueType.Word),
-                    new DataValueReference("Y",2,DataValueType.Byte),
-                    new DataValueReference("X",3,DataValueType.Byte),
+                new List<ValueReference> { // Specific Enemy
+                    new ValueReference("Flags",0,DataValueType.Byte),
+                    new ValueReference("ID",1,DataValueType.Word),
+                    new ValueReference("Y",2,DataValueType.Byte),
+                    new ValueReference("X",3,DataValueType.Byte),
                 },
-                new List<DataValueReference> { // Part
-                    new DataValueReference("ID",0,DataValueType.Word),
-                    new DataValueReference("YX",1,DataValueType.Byte),
+                new List<ValueReference> { // Part
+                    new ValueReference("ID",0,DataValueType.Word),
+                    new ValueReference("YX",1,DataValueType.Byte),
                 },
-                new List<DataValueReference> { // QuadrupleValue
-                    new DataValueReference("ID",0,DataValueType.Word),
-                    new DataValueReference("Unknown 1",1,DataValueType.Byte),
-                    new DataValueReference("Unknown 2",2,DataValueType.Byte),
-                    new DataValueReference("Y",3,DataValueType.Byte),
-                    new DataValueReference("X",4,DataValueType.Byte),
+                new List<ValueReference> { // QuadrupleValue
+                    new ValueReference("ID",0,DataValueType.Word),
+                    new ValueReference("Unknown 1",1,DataValueType.Byte),
+                    new ValueReference("Unknown 2",2,DataValueType.Byte),
+                    new ValueReference("Y",3,DataValueType.Byte),
+                    new ValueReference("X",4,DataValueType.Byte),
                 },
-                new List<DataValueReference> { // Item Drop
-                    new DataValueReference("Flags",0,DataValueType.Byte),
-                    new DataValueReference("Item",1,DataValueType.Byte),
-                    new DataValueReference("YX",2,DataValueType.Byte),
+                new List<ValueReference> { // Item Drop
+                    new ValueReference("Flags",0,DataValueType.Byte),
+                    new ValueReference("Item",1,DataValueType.Byte),
+                    new ValueReference("YX",2,DataValueType.Byte),
+                },
+                new List<ValueReference> { // InteracEnd
+                },
+                new List<ValueReference> { // InteracEndPointer
                 },
             };
 
@@ -78,6 +82,8 @@ namespace LynnaLab {
             : base(p, command, values, -1, parser, spacing) {
 
             this.type = type;
+
+            SetValueReferences(interactionValueReferences[(int)type]);
         }
 
         public InteractionType GetInteractionType() {

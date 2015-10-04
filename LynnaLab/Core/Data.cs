@@ -18,7 +18,7 @@ namespace LynnaLab
 
         // These DataValueReferences provide an alternate interface to editing
         // the values
-        List<DataValueReference> valueReferences;
+        List<ValueReference> valueReferences;
 
 
         // Properties
@@ -90,6 +90,10 @@ namespace LynnaLab
         public virtual string GetValue(int i) {
             return values[i];
         }
+        public int GetIntValue(int i) {
+            // TODO: error handling
+            return Project.EvalToInt(GetValue(i));
+        }
         public virtual int GetNumValues() {
             return values.Count;
         }
@@ -117,14 +121,16 @@ namespace LynnaLab
             Modified = true;
         }
 
-        public IList<DataValueReference> GetValueReferences() {
+        public IList<ValueReference> GetValueReferences() {
             if (valueReferences == null)
                 return null;
             return valueReferences.AsReadOnly();
         }
-        public void SetValueReferences(IList<DataValueReference> references) {
-            valueReferences = new List<DataValueReference>(references);
-            foreach (DataValueReference r in valueReferences)
+        public void SetValueReferences(IList<ValueReference> references) {
+            valueReferences = new List<ValueReference>();
+            foreach (ValueReference r in references)
+                valueReferences.Add(new ValueReference(r));
+            foreach (ValueReference r in valueReferences)
                 r.SetData(this);
         }
 

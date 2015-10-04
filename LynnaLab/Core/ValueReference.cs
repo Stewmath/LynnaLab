@@ -15,7 +15,7 @@ namespace LynnaLab
 
     // This class provides a way of accessing Data values of various different
     // formats.
-    public class DataValueReference {
+    public class ValueReference {
 
         // Static default value stuff
 
@@ -33,7 +33,7 @@ namespace LynnaLab
             }
             return ret;
         }
-        public static string[] GetDefaultValues(IList<DataValueReference> valueList) {
+        public static string[] GetDefaultValues(IList<ValueReference> valueList) {
             string[] ret = new string[valueList.Count];
             for (int i=0;i<valueList.Count;i++) {
                 ret[i] = defaultDataValues[(int)valueList[i].ValueType];
@@ -49,16 +49,29 @@ namespace LynnaLab
         public DataValueType ValueType {get; set;}
         public string Name {get; set;}
 
-        public DataValueReference(string n, int index, DataValueType t) {
+        public ValueReference(string n, int index, DataValueType t) {
             valueIndex = index;
             ValueType = t;
             Name = n;
+        }
+
+        public ValueReference(ValueReference r) {
+            data = r.data;
+            valueIndex = r.valueIndex;
+            ValueType = r.ValueType;
+            Name = r.Name;
         }
 
         public void SetData(Data d) {
             data = d;
         }
 
+        public virtual string GetStringValue() {
+            return data.GetValue(valueIndex);
+        }
+        public virtual int GetIntValue() {
+            return data.GetIntValue(valueIndex);
+        }
         public virtual void SetValue(string s) {
             switch(ValueType) {
                 case DataValueType.String:

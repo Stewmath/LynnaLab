@@ -56,7 +56,7 @@ namespace LynnaLab
         }
 
         public void InsertInteraction(int index, InteractionType type) {
-            IList<string> values = DataValueReference.GetDefaultValues(InteractionData.interactionValueReferences[(int)type]);
+            IList<string> values = ValueReference.GetDefaultValues(InteractionData.interactionValueReferences[(int)type]);
             if (type >= InteractionType.Pointer && type <= InteractionType.Conditional)
                 values[0] = "interactionData4000"; // Compileable default pointer
 
