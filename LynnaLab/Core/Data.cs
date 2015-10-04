@@ -4,41 +4,21 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
-    // Enum of types of values that can be had, currently only used to help
-    // with default initialization
-    public enum DataValueType {
-        Byte=0,
-        Word,
-        String
-    }
 
     public class Data : FileComponent
     {
-        public static string[] defaultDataValueTypes = {
-            "$00",
-            "$0000",
-            ""
-        };
-
-        public static string[] GetDefaultValues(DataValueType[] valueList) {
-            string[] ret = new string[valueList.Length];
-            for (int i=0;i<valueList.Length;i++) {
-                ret[i] = defaultDataValueTypes[(int)valueList[i]];
-            }
-            return ret;
-        }
-
-
-
         // Size in bytes
         // -1 if indeterminate? (consider getting rid of this, it's unreliable)
         protected int size;
-
         bool _modified;
 
         // Command is like .db, .dw, or a macro.
         string command;
         List<string> values;
+
+        // These DataValueReferences provide an alternate interface to editing
+        // the values
+        List<DataValueReference> valueReferences;
 
 
         // Properties
@@ -61,9 +41,6 @@ namespace LynnaLab
         }
         public string CommandLowerCase {
             get { return command.ToLower(); }
-        }
-        public IList<string> Values {
-            get { return values.AsReadOnly(); }
         }
         public int Size {
             get { return size; }
@@ -103,14 +80,20 @@ namespace LynnaLab
 
             if (this.spacing == null)
                 this.spacing = new List<int>();
-            while (this.spacing.Count < Values.Count+2)
+            while (this.spacing.Count < values.Count+2)
                 this.spacing.Add(0);
 
             PrintCommand = true;
             _modified = false;
         }
 
-        public void SetValue(int i, string value) {
+        public virtual string GetValue(int i) {
+            return values[i];
+        }
+        public virtual int GetNumValues() {
+            return values.Count;
+        }
+        public virtual void SetValue(int i, string value) {
             if (values[i] != value) {
                 values[i] = value;
                 Modified = true;
@@ -128,10 +111,21 @@ namespace LynnaLab
             spacing.RemoveAt(i+1);
             Modified = true;
         }
-        public void InsertValue(int i, string value, int priorSpaces=1) {
+        public void InsertValue(int i, string value, DataValueType valueType=DataValueType.String,int priorSpaces=-1) {
             values.Insert(i, value);
             spacing.Insert(i+1, priorSpaces);
             Modified = true;
+        }
+
+        public IList<DataValueReference> GetValueReferences() {
+            if (valueReferences == null)
+                return null;
+            return valueReferences.AsReadOnly();
+        }
+        public void SetValueReferences(IList<DataValueReference> references) {
+            valueReferences = new List<DataValueReference>(references);
+            foreach (DataValueReference r in valueReferences)
+                r.SetData(this);
         }
 
         public override string GetString() {
@@ -140,9 +134,9 @@ namespace LynnaLab
                 s = GetSpacingIndex(0) + Command;
 
             int spacingIndex = 1;
-            for (int i=0; i<Values.Count; i++) {
+            for (int i=0; i<values.Count; i++) {
                 s += GetSpacingIndex(spacingIndex++);
-                s += Values[i];
+                s += values[i];
             }
             s += GetSpacingIndex(spacingIndex++);
 
@@ -164,7 +158,7 @@ namespace LynnaLab
         string GetSpacingIndex(int i) {
             string s = "";
             int spaces = spacing[i];
-            if (spaces == 0 && i != 0 && i != Values.Count+1) spaces = 1;
+            if (spaces == 0 && i != 0 && i != values.Count+1) spaces = 1;
             s = GetSpacingHelper(spaces);
             return s;
         }
@@ -180,9 +174,9 @@ namespace LynnaLab
         public Color Color {
             get {
                 return Color.FromArgb(
-                        Project.EvalToInt(Values[0])*8,
-                        Project.EvalToInt(Values[1])*8,
-                        Project.EvalToInt(Values[2])*8);
+                        Project.EvalToInt(GetValue(0))*8,
+                        Project.EvalToInt(GetValue(1))*8,
+                        Project.EvalToInt(GetValue(2))*8);
             }
         }
 

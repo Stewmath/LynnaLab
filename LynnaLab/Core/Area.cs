@@ -62,7 +62,7 @@ namespace LynnaLab
         public string UniqueGfxString {
             get {
                 Data d = GetDataIndex(2);
-                return d.Values[0];
+                return d.GetValue(0);
             }
             set {
                 Data d = GetDataIndex(2);
@@ -73,7 +73,7 @@ namespace LynnaLab
         public string MainGfxString {
             get {
                 Data d = GetDataIndex(3);
-                return d.Values[0];
+                return d.GetValue(0);
             }
             set {
                 Data d = GetDataIndex(3);
@@ -84,7 +84,7 @@ namespace LynnaLab
         public string PaletteHeaderString {
             get {
                 Data d = GetDataIndex(4);
-                return d.Values[0];
+                return d.GetValue(0);
             }
             set {
                 Data d = GetDataIndex(4);
@@ -95,7 +95,7 @@ namespace LynnaLab
         public int TilesetIndex {
             get {
                 Data d = GetDataIndex(5);
-                return Project.EvalToInt(d.Values[0]);
+                return Project.EvalToInt(d.GetValue(0));
             }
             set {
                 Data d = GetDataIndex(5);
@@ -116,7 +116,7 @@ namespace LynnaLab
         public int AnimationIndex {
             get {
                 Data d = GetDataIndex(7);
-                return Project.EvalToInt(d.Values[0]);
+                return Project.EvalToInt(d.GetValue(0));
             }
             set {
                 Data d = GetDataIndex(7);
@@ -138,28 +138,28 @@ namespace LynnaLab
             graphicsState.AddPaletteHeaderGroup(globalPaletteHeaderGroup, PaletteGroupType.Common);
 
             Data data = areaData;
-            flags1 = p.EvalToInt(data.Values[0]);
+            flags1 = p.EvalToInt(data.GetValue(0));
 
             data = data.NextData;
-            flags2 = p.EvalToInt(data.Values[0]);
+            flags2 = p.EvalToInt(data.GetValue(0));
 
             data = data.NextData;
-            SetUniqueGfx(Project.EvalToInt(data.Values[0]));
+            SetUniqueGfx(Project.EvalToInt(data.GetValue(0)));
 
             data = data.NextData;
-            SetMainGfx(Project.EvalToInt(data.Values[0]));
+            SetMainGfx(Project.EvalToInt(data.GetValue(0)));
 
             data = data.NextData;
-            SetPaletteHeader(Project.EvalToInt(data.Values[0]));
+            SetPaletteHeader(Project.EvalToInt(data.GetValue(0)));
 
             data = data.NextData;
-            SetTileset(Project.EvalToInt(data.Values[0]));
+            SetTileset(Project.EvalToInt(data.GetValue(0)));
 
             data = data.NextData;
-            layoutGroup = Project.EvalToInt(data.Values[0]);
+            layoutGroup = Project.EvalToInt(data.GetValue(0));
 
             data = data.NextData;
-            SetAnimation((byte)Project.EvalToInt(data.Values[0]));
+            SetAnimation((byte)Project.EvalToInt(data.GetValue(0)));
         }
 
         Data GetDataIndex(int i) {
@@ -288,7 +288,7 @@ namespace LynnaLab
                             header.DestBank == 1) {
                         for (int addr=header.DestAddr;
                                 addr<header.DestAddr+
-                                (Project.EvalToInt(header.Values[2])+1)*16;
+                                (Project.EvalToInt(header.GetValue(2))+1)*16;
                                 addr++) {
                             int tile = (addr-0x8800)/16;
                             tile -= 128;
@@ -321,7 +321,7 @@ namespace LynnaLab
 
             FileParser gfxHeaderFile = Project.GetFileWithLabel("gfxHeaderGroupTable");
             Data pointerData = gfxHeaderFile.GetData("gfxHeaderGroupTable", index*2);
-            GfxHeaderData header = gfxHeaderFile.GetData(pointerData.Values[0])
+            GfxHeaderData header = gfxHeaderFile.GetData(pointerData.GetValue(0))
                 as GfxHeaderData;
             if (header != null) {
                 bool next = true;

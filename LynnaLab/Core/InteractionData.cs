@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace LynnaLab {
     public enum InteractionType {
@@ -13,12 +14,63 @@ namespace LynnaLab {
         SpecificEnemy,
         Part,
         QuadrupleValue,
-        TypeA,
+        ItemDrop,
         End,
         EndPointer
     }
 
     public class InteractionData : Data {
+
+        public static List<List<DataValueReference>> interactionValueReferences =
+            new List<List<DataValueReference>> {
+                new List<DataValueReference> { // Type0
+                    new DataValueReference("Condition",0,DataValueType.Byte),
+                },
+                new List<DataValueReference> { // NoValue
+                    new DataValueReference("ID",0,DataValueType.Word),
+                },
+                new List<DataValueReference> { // DoubleValue
+                    new DataValueReference("ID",0,DataValueType.Word),
+                    new DataValueReference("Y",1,DataValueType.Byte),
+                    new DataValueReference("X",2,DataValueType.Byte),
+                },
+                new List<DataValueReference> { // Pointer
+                    new DataValueReference("Pointer",0,DataValueType.InteractionPointer),
+                },
+                new List<DataValueReference> { // BossPointer
+                    new DataValueReference("Pointer",0,DataValueType.InteractionPointer),
+                },
+                new List<DataValueReference> { // Conditional
+                    new DataValueReference("Pointer",0,DataValueType.InteractionPointer),
+                },
+                new List<DataValueReference> { // Random Enemy
+                    new DataValueReference("Flags",0,DataValueType.Byte),
+                    new DataValueReference("ID",1,DataValueType.Word),
+                },
+                new List<DataValueReference> { // Specific Enemy
+                    new DataValueReference("Flags",0,DataValueType.Byte),
+                    new DataValueReference("ID",1,DataValueType.Word),
+                    new DataValueReference("Y",2,DataValueType.Byte),
+                    new DataValueReference("X",3,DataValueType.Byte),
+                },
+                new List<DataValueReference> { // Part
+                    new DataValueReference("ID",0,DataValueType.Word),
+                    new DataValueReference("YX",1,DataValueType.Byte),
+                },
+                new List<DataValueReference> { // QuadrupleValue
+                    new DataValueReference("ID",0,DataValueType.Word),
+                    new DataValueReference("Unknown 1",1,DataValueType.Byte),
+                    new DataValueReference("Unknown 2",2,DataValueType.Byte),
+                    new DataValueReference("Y",3,DataValueType.Byte),
+                    new DataValueReference("X",4,DataValueType.Byte),
+                },
+                new List<DataValueReference> { // Item Drop
+                    new DataValueReference("Flags",0,DataValueType.Byte),
+                    new DataValueReference("Item",1,DataValueType.Byte),
+                    new DataValueReference("YX",2,DataValueType.Byte),
+                },
+            };
+
 
         InteractionType type;
 
@@ -32,22 +84,28 @@ namespace LynnaLab {
             return type;
         }
 
-        // Same as Values[i] except this keeps track of values "carried over"
-        // from the last interaction, for SpecificEnemy and TypeA interactions.
-        public string GetInteractionValue(int i) {
+        // Same as base.GetValue except this keeps track of values "carried
+        // over" from the last interaction, for SpecificEnemy and ItemDrop
+        // interactions.
+        public override string GetValue(int i) {
             if (IsShortened()) {
                 InteractionData last = LastData as InteractionData;
                 if (last == null || (last.GetInteractionType() != GetInteractionType()))
                     this.ThrowException("Malformatted interaction");
                 if (i == 0)
-                    return (LastData as InteractionData).GetInteractionValue(0);
+                    return (LastData as InteractionData).GetValue(0);
                 else
-                    return Values[i-1];
+                    return base.GetValue(i-1);
             }
 
-            return Values[i];
+            return base.GetValue(i);
         }
-        public void SetInteractionValue(int i, string value) {
+        public override int GetNumValues() {
+            if (IsShortened())
+                return base.GetNumValues()+1;
+            return base.GetNumValues();
+        }
+        public override void SetValue(int i, string value) {
             if (IsShortened()) {
                 if (i == 0) {
                     Elongate();
@@ -61,7 +119,7 @@ namespace LynnaLab {
                 if (next != null && next.GetInteractionType() == GetInteractionType())
                     next.Elongate();
             }
-            SetValue(i, value);
+            base.SetValue(i, value);
         }
 
         public override string GetString() {
@@ -76,18 +134,39 @@ namespace LynnaLab {
             return base.GetString();
         }
 
+        // Interaction colors match ZOLE
+		public Color GetColor()
+		{
+			switch (type)
+			{
+				case (InteractionType)0: return Color.Black;
+				case (InteractionType)1: return Color.Red;
+				case (InteractionType)2: return Color.DarkOrange;
+				case (InteractionType)3: return Color.Yellow;
+				case (InteractionType)4: return Color.Green;
+				case (InteractionType)5: return Color.Blue;
+				case (InteractionType)6: return Color.Purple;
+				case (InteractionType)7: return Color.FromArgb(128, 64, 0);
+				case (InteractionType)8: return Color.Gray;
+				case (InteractionType)9: return Color.White;
+				case (InteractionType)0xA: return Color.Lime;
+			}
+			return Color.Magenta;
+		}
+
         bool IsShortenable() {
-            return GetInteractionType() == InteractionType.SpecificEnemy || GetInteractionType() == InteractionType.TypeA;
+            return GetInteractionType() == InteractionType.SpecificEnemy ||
+                GetInteractionType() == InteractionType.ItemDrop;
         }
         // Returns true if this interaction reuses a byte from the last one
         bool IsShortened() {
-            return ((GetInteractionType() == InteractionType.SpecificEnemy && Values.Count < 4) ||
-                    (GetInteractionType() == InteractionType.TypeA && Values.Count < 3));
+            return ((GetInteractionType() == InteractionType.SpecificEnemy && base.GetNumValues() < 4) ||
+                    (GetInteractionType() == InteractionType.ItemDrop && base.GetNumValues() < 3));
         }
         void Elongate() {
             if (IsShortenable() && IsShortened()) {
                 SetSpacing(1,1);
-                InsertValue(0, GetInteractionValue(0));
+                base.InsertValue(0, GetValue(0));
             }
         }
         void Shorten() {
@@ -96,7 +175,7 @@ namespace LynnaLab {
 
             InteractionData last = LastData as InteractionData;
             if (last == null || last.GetInteractionType() != GetInteractionType()) return;
-            if (last.GetInteractionValue(0) != GetInteractionValue(0)) return;
+            if (last.GetValue(0) != GetValue(0)) return;
 
             RemoveValue(0);
             SetSpacing(1, 5);

@@ -84,9 +84,9 @@ namespace LynnaLab
                     {
                         labelList.Add("Condition");
                         SpinButtonHexadecimal button = new SpinButtonHexadecimal(0,255);
-                        button.Value = Project.EvalToInt(activeData.GetInteractionValue(0));
+                        button.Value = Project.EvalToInt(activeData.GetValue(0));
                         button.ValueChanged += delegate(object sender, EventArgs e) {
-                            activeData.SetInteractionValue(0, Wla.ToByte((byte)button.ValueAsInt));
+                            activeData.SetValue(0, Wla.ToByte((byte)button.ValueAsInt));
                         };
                         button.Digits = 2;
                         widgetList.Add(button);
@@ -96,9 +96,9 @@ namespace LynnaLab
                     {
                         labelList.Add("ID");
                         SpinButtonHexadecimal button = new SpinButtonHexadecimal(0,0xffff);
-                        button.Value = Project.EvalToInt(activeData.GetInteractionValue(0));
+                        button.Value = Project.EvalToInt(activeData.GetValue(0));
                         button.ValueChanged += delegate(object sender, EventArgs e) {
-                            activeData.SetInteractionValue(0, Wla.ToWord(button.ValueAsInt));
+                            activeData.SetValue(0, Wla.ToWord(button.ValueAsInt));
                         };
                         button.Digits = 4;
                         widgetList.Add(button);
@@ -108,10 +108,10 @@ namespace LynnaLab
                     {
                         labelList.Add("ID");
                         SpinButtonHexadecimal button = new SpinButtonHexadecimal(0,0xffff);
-                        button.Value = Project.EvalToInt(activeData.GetInteractionValue(0));
+                        button.Value = Project.EvalToInt(activeData.GetValue(0));
                         button.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
-                            activeData.SetInteractionValue(0, Wla.ToWord(b.ValueAsInt));
+                            activeData.SetValue(0, Wla.ToWord(b.ValueAsInt));
                         };
                         button.Digits = 4;
                         widgetList.Add(button);
@@ -119,10 +119,10 @@ namespace LynnaLab
 
                         labelList.Add("Y");
                         button = new SpinButtonHexadecimal();
-                        button.Value = Project.EvalToInt(activeData.GetInteractionValue(1));
+                        button.Value = Project.EvalToInt(activeData.GetValue(1));
                         button.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
-                            activeData.SetInteractionValue(1, Wla.ToByte((byte)b.ValueAsInt));
+                            activeData.SetValue(1, Wla.ToByte((byte)b.ValueAsInt));
                         };
                         button.Digits = 2;
                         widgetList.Add(button);
@@ -130,10 +130,10 @@ namespace LynnaLab
 
                         labelList.Add("X");
                         button = new SpinButtonHexadecimal();
-                        button.Value = Project.EvalToInt(activeData.GetInteractionValue(2));
+                        button.Value = Project.EvalToInt(activeData.GetValue(2));
                         button.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
-                            activeData.SetInteractionValue(2, Wla.ToByte((byte)b.ValueAsInt));
+                            activeData.SetValue(2, Wla.ToByte((byte)b.ValueAsInt));
                         };
                         button.Digits = 2;
                         widgetList.Add(button);
@@ -145,7 +145,7 @@ namespace LynnaLab
                     {
                         labelList.Add("Pointer");
                         Gtk.Entry entry = new Gtk.Entry();
-                        entry.Text = activeData.GetInteractionValue(0);
+                        entry.Text = activeData.GetValue(0);
                         entry.Changed += delegate(object sender, EventArgs e) {
                             UpdatePointerTextBox(sender as Gtk.Entry);
                         };
@@ -164,9 +164,9 @@ namespace LynnaLab
                     {
                         labelList.Add("Flags");
                         SpinButtonHexadecimal flagsButton = new SpinButtonHexadecimal();
-                        flagsButton.Value = Project.EvalToInt(activeData.GetInteractionValue(0));
+                        flagsButton.Value = Project.EvalToInt(activeData.GetValue(0));
                         flagsButton.ValueChanged += delegate(object sender, EventArgs e) {
-                            activeData.SetInteractionValue(0, Wla.ToByte((byte)flagsButton.ValueAsInt));
+                            activeData.SetValue(0, Wla.ToByte((byte)flagsButton.ValueAsInt));
                         };
                         flagsButton.Digits = 2;
                         widgetList.Add(flagsButton);
@@ -174,9 +174,9 @@ namespace LynnaLab
 
                         labelList.Add("ID");
                         SpinButtonHexadecimal idButton = new SpinButtonHexadecimal(0,0xffff);
-                        idButton.Value = Project.EvalToInt(activeData.GetInteractionValue(1));
+                        idButton.Value = Project.EvalToInt(activeData.GetValue(1));
                         idButton.ValueChanged += delegate(object sender, EventArgs e) {
-                            activeData.SetInteractionValue(1, Wla.ToWord(idButton.ValueAsInt));
+                            activeData.SetValue(1, Wla.ToWord(idButton.ValueAsInt));
                         };
                         idButton.Digits = 4;
                         widgetList.Add(idButton);
@@ -186,9 +186,9 @@ namespace LynnaLab
                     {
                         labelList.Add("Flags");
                         SpinButtonHexadecimal flagsButton = new SpinButtonHexadecimal();
-                        flagsButton.Value = Project.EvalToInt(activeData.GetInteractionValue(0));
+                        flagsButton.Value = Project.EvalToInt(activeData.GetValue(0));
                         flagsButton.ValueChanged += delegate(object sender, EventArgs e) {
-                            activeData.SetInteractionValue(0, Wla.ToByte((byte)flagsButton.ValueAsInt));
+                            activeData.SetValue(0, Wla.ToByte((byte)flagsButton.ValueAsInt));
                         };
                         flagsButton.Digits = 2;
                         widgetList.Add(flagsButton);
@@ -196,9 +196,9 @@ namespace LynnaLab
 
                         labelList.Add("ID");
                         SpinButtonHexadecimal idButton = new SpinButtonHexadecimal(0,0xffff);
-                        idButton.Value = Project.EvalToInt(activeData.GetInteractionValue(1));
+                        idButton.Value = Project.EvalToInt(activeData.GetValue(1));
                         idButton.ValueChanged += delegate(object sender, EventArgs e) {
-                            activeData.SetInteractionValue(1, Wla.ToWord(idButton.ValueAsInt));
+                            activeData.SetValue(1, Wla.ToWord(idButton.ValueAsInt));
                         };
                         idButton.Digits = 4;
                         widgetList.Add(idButton);
@@ -206,9 +206,9 @@ namespace LynnaLab
 
                         labelList.Add("Y");
                         SpinButtonHexadecimal yButton = new SpinButtonHexadecimal();
-                        yButton.Value = Project.EvalToInt(activeData.GetInteractionValue(2));
+                        yButton.Value = Project.EvalToInt(activeData.GetValue(2));
                         yButton.ValueChanged += delegate(object sender, EventArgs e) {
-                            activeData.SetInteractionValue(2, Wla.ToByte((byte)yButton.ValueAsInt));
+                            activeData.SetValue(2, Wla.ToByte((byte)yButton.ValueAsInt));
                         };
                         yButton.Digits = 2;
                         widgetList.Add(yButton);
@@ -216,9 +216,9 @@ namespace LynnaLab
 
                         labelList.Add("X");
                         SpinButtonHexadecimal xButton = new SpinButtonHexadecimal();
-                        xButton.Value = Project.EvalToInt(activeData.GetInteractionValue(3));
+                        xButton.Value = Project.EvalToInt(activeData.GetValue(3));
                         xButton.ValueChanged += delegate(object sender, EventArgs e) {
-                            activeData.SetInteractionValue(3, Wla.ToByte((byte)xButton.ValueAsInt));
+                            activeData.SetValue(3, Wla.ToByte((byte)xButton.ValueAsInt));
                         };
                         xButton.Digits = 2;
                         widgetList.Add(xButton);
@@ -228,10 +228,10 @@ namespace LynnaLab
                     {
                         labelList.Add("ID");
                         SpinButtonHexadecimal button = new SpinButtonHexadecimal(0,0xffff);
-                        button.Value = Project.EvalToInt(activeData.GetInteractionValue(0));
+                        button.Value = Project.EvalToInt(activeData.GetValue(0));
                         button.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
-                            activeData.SetInteractionValue(0, Wla.ToWord(b.ValueAsInt));
+                            activeData.SetValue(0, Wla.ToWord(b.ValueAsInt));
                         };
                         button.Digits = 4;
                         widgetList.Add(button);
@@ -239,10 +239,10 @@ namespace LynnaLab
 
                         labelList.Add("YX");
                         button = new SpinButtonHexadecimal();
-                        button.Value = Project.EvalToInt(activeData.GetInteractionValue(1));
+                        button.Value = Project.EvalToInt(activeData.GetValue(1));
                         button.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
-                            activeData.SetInteractionValue(1, Wla.ToByte((byte)b.ValueAsInt));
+                            activeData.SetValue(1, Wla.ToByte((byte)b.ValueAsInt));
                         };
                         button.Digits = 2;
                         widgetList.Add(button);
@@ -252,10 +252,10 @@ namespace LynnaLab
                     {
                         labelList.Add("ID");
                         SpinButtonHexadecimal button = new SpinButtonHexadecimal(0,0xffff);
-                        button.Value = Project.EvalToInt(activeData.GetInteractionValue(0));
+                        button.Value = Project.EvalToInt(activeData.GetValue(0));
                         button.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
-                            activeData.SetInteractionValue(0, Wla.ToWord(b.ValueAsInt));
+                            activeData.SetValue(0, Wla.ToWord(b.ValueAsInt));
                         };
                         button.Digits = 4;
                         widgetList.Add(button);
@@ -263,10 +263,10 @@ namespace LynnaLab
 
                         labelList.Add("Unknown 1");
                         SpinButtonHexadecimal u1Button = new SpinButtonHexadecimal();
-                        u1Button.Value = Project.EvalToInt(activeData.GetInteractionValue(1));
+                        u1Button.Value = Project.EvalToInt(activeData.GetValue(1));
                         u1Button.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
-                            activeData.SetInteractionValue(1, Wla.ToByte((byte)b.ValueAsInt));
+                            activeData.SetValue(1, Wla.ToByte((byte)b.ValueAsInt));
                         };
                         u1Button.Digits = 2;
                         widgetList.Add(u1Button);
@@ -274,7 +274,7 @@ namespace LynnaLab
 
                         labelList.Add("Unknown 2");
                         SpinButtonHexadecimal u2Button = new SpinButtonHexadecimal();
-                        u2Button.Value = Project.EvalToInt(activeData.GetInteractionValue(2));
+                        u2Button.Value = Project.EvalToInt(activeData.GetValue(2));
                         u2Button.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
                             activeData.SetValue(2, Wla.ToByte((byte)b.ValueAsInt));
@@ -285,7 +285,7 @@ namespace LynnaLab
 
                         labelList.Add("Y");
                         SpinButtonHexadecimal yButton = new SpinButtonHexadecimal();
-                        yButton.Value = Project.EvalToInt(activeData.GetInteractionValue(3));
+                        yButton.Value = Project.EvalToInt(activeData.GetValue(3));
                         yButton.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
                             activeData.SetValue(3, Wla.ToByte((byte)b.ValueAsInt));
@@ -296,7 +296,7 @@ namespace LynnaLab
 
                         labelList.Add("X");
                         SpinButtonHexadecimal xButton = new SpinButtonHexadecimal();
-                        xButton.Value = Project.EvalToInt(activeData.GetInteractionValue(4));
+                        xButton.Value = Project.EvalToInt(activeData.GetValue(4));
                         xButton.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
                             activeData.SetValue(4, Wla.ToByte((byte)b.ValueAsInt));
@@ -305,14 +305,14 @@ namespace LynnaLab
                         widgetList.Add(xButton);
                     }
                     break;
-                case InteractionType.TypeA:
+                case InteractionType.ItemDrop:
                     {
                         labelList.Add("Flags");
                         SpinButtonHexadecimal uButton = new SpinButtonHexadecimal();
-                        uButton.Value = Project.EvalToInt(activeData.GetInteractionValue(0));
+                        uButton.Value = Project.EvalToInt(activeData.GetValue(0));
                         uButton.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
-                            activeData.SetInteractionValue(0, Wla.ToByte((byte)b.ValueAsInt));
+                            activeData.SetValue(0, Wla.ToByte((byte)b.ValueAsInt));
                         };
                         uButton.Digits = 2;
                         widgetList.Add(uButton);
@@ -320,10 +320,10 @@ namespace LynnaLab
 
                         labelList.Add("Item");
                         SpinButtonHexadecimal u2Button = new SpinButtonHexadecimal();
-                        u2Button.Value = Project.EvalToInt(activeData.GetInteractionValue(1));
+                        u2Button.Value = Project.EvalToInt(activeData.GetValue(1));
                         u2Button.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
-                            activeData.SetInteractionValue(1, Wla.ToByte((byte)b.ValueAsInt));
+                            activeData.SetValue(1, Wla.ToByte((byte)b.ValueAsInt));
                         };
                         u2Button.Digits = 2;
                         widgetList.Add(u2Button);
@@ -331,10 +331,10 @@ namespace LynnaLab
 
                         labelList.Add("YX");
                         SpinButtonHexadecimal yxButton = new SpinButtonHexadecimal();
-                        yxButton.Value = Project.EvalToInt(activeData.GetInteractionValue(2));
+                        yxButton.Value = Project.EvalToInt(activeData.GetValue(2));
                         yxButton.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
-                            activeData.SetInteractionValue(2, Wla.ToByte((byte)b.ValueAsInt));
+                            activeData.SetValue(2, Wla.ToByte((byte)b.ValueAsInt));
                         };
                         yxButton.Digits = 2;
                         widgetList.Add(yxButton);
@@ -382,10 +382,10 @@ namespace LynnaLab
             Gtk.Alignment alignment = new Gtk.Alignment(0.5F, 0.5F, 0.0F, 0.8F);
             try {
                 Project.GetFileWithLabel(entry.Text.Trim());
-                subEditor.SetInteractionGroup(Project.GetDataType<InteractionGroup>(activeData.Values[0]));
+                subEditor.SetInteractionGroup(Project.GetDataType<InteractionGroup>(activeData.GetValue(0)));
                 subEditor.ShowAll();
                 alignment.Add(subEditor);
-                activeData.SetInteractionValue(0, entry.Text.Trim());
+                activeData.SetValue(0, entry.Text.Trim());
             }
             catch (LabelNotFoundException e) {
                 subEditor.SetInteractionGroup(null);

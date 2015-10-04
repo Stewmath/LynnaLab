@@ -9,7 +9,7 @@ namespace LynnaLab {
         Stream referencedData;
 
         public int DictionaryIndex {
-            get { return Project.EvalToInt(Values[0]); }
+            get { return Project.EvalToInt(GetValue(0)); }
         }
         public Stream ReferencedData {
             get {
@@ -17,31 +17,31 @@ namespace LynnaLab {
             }
         }
         public int DestAddress {
-            get { return Project.EvalToInt(Values[2]); }
+            get { return Project.EvalToInt(GetValue(2)); }
         }
         public int DestBank {
-            get { return Project.EvalToInt(":"+Values[2]); }
+            get { return Project.EvalToInt(":"+GetValue(2)); }
         }
         public int DataSize {
-            get { return Project.EvalToInt(Values[3]); }
+            get { return Project.EvalToInt(GetValue(3)); }
         }
 
 
 		public TilesetHeaderData(Project p, string command, IList<string> values, FileParser parser, IList<int> spacing) 
 			: base(p, command, values, 8, parser, spacing) {
                 try {
-                    referencedData = Project.GetBinaryFile("tilesets/" + Values[1] + ".bin");
+                    referencedData = Project.GetBinaryFile("tilesets/" + GetValue(1) + ".bin");
                 }
                 catch (FileNotFoundException) {
                     // Default is to copy from 00 I guess
                     // TODO: copy this into its own file?
-                    string filename = Values[1].Substring(0, Values[1].Length-2);
+                    string filename = GetValue(1).Substring(0, GetValue(1).Length-2);
                     referencedData = Project.GetBinaryFile("tilesets/" + filename + "00.bin");
                 }
 		}
 
 		public bool ShouldHaveNext() {
-			return (Project.EvalToInt(Values[4]) & 0x80) == 0x80;
+			return (Project.EvalToInt(GetValue(4)) & 0x80) == 0x80;
 		}
 	}
 

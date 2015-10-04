@@ -21,7 +21,7 @@ namespace LynnaLab
         public Dungeon(Project p, int i) : base(p, i) {
             FileParser dungeonDataFile = Project.GetFileWithLabel("dungeonDataTable");
             Data pointerData = dungeonDataFile.GetData("dungeonDataTable", Index*2);
-            string label = pointerData.Values[0];
+            string label = pointerData.GetValue(0);
             dataBase = dungeonDataFile.GetData(label);
         }
 
@@ -30,7 +30,7 @@ namespace LynnaLab
             for (int j=0; j<i; j++) {
                 d = d.NextData;
             }
-            return Project.EvalToInt(d.Values[0]);
+            return Project.EvalToInt(d.GetValue(0));
         }
 
         public Room GetRoom(int floor, int x, int y) {

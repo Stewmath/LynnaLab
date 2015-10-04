@@ -12,7 +12,7 @@ namespace LynnaLab {
         {
             FileParser tableFile = Project.GetFileWithLabel("tilesetHeaderGroupTable");
             Data pointerData = tableFile.GetData("tilesetHeaderGroupTable", Index*2);
-            string labelName = pointerData.Values[0];
+            string labelName = pointerData.GetValue(0);
 
             FileParser headerFile = Project.GetFileWithLabel(labelName);
             TilesetHeaderData headerData = headerFile.GetData(labelName) as TilesetHeaderData;

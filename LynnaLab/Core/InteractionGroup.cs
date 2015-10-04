@@ -21,21 +21,6 @@ namespace LynnaLab
             "InteracEnd",
             "InteracEndPointer"
         };
-        static DataValueType[][] defaultDataValueTypes = {
-            new DataValueType[] {DataValueType.Byte},
-            new DataValueType[] {DataValueType.Word},
-            new DataValueType[] {DataValueType.Word, DataValueType.Byte, DataValueType.Byte},
-            new DataValueType[] {DataValueType.String},
-            new DataValueType[] {DataValueType.String},
-            new DataValueType[] {DataValueType.String},
-            new DataValueType[] {DataValueType.Byte, DataValueType.Word},
-            new DataValueType[] {DataValueType.Byte, DataValueType.Word, DataValueType.Byte, DataValueType.Byte},
-            new DataValueType[] {DataValueType.Word, DataValueType.Byte},
-            new DataValueType[] {DataValueType.Word, DataValueType.Byte, DataValueType.Byte, DataValueType.Byte, DataValueType.Byte},
-            new DataValueType[] {DataValueType.Byte, DataValueType.Byte, DataValueType.Byte},
-            new DataValueType[] {},
-            new DataValueType[] {}
-        };
 
 
         List<InteractionData> interactionDataList = new List<InteractionData>();
@@ -71,7 +56,7 @@ namespace LynnaLab
         }
 
         public void InsertInteraction(int index, InteractionType type) {
-            IList<string> values = Data.GetDefaultValues(defaultDataValueTypes[(int)type]);
+            IList<string> values = DataValueReference.GetDefaultValues(InteractionData.interactionValueReferences[(int)type]);
             if (type >= InteractionType.Pointer && type <= InteractionType.Conditional)
                 values[0] = "interactionData4000"; // Compileable default pointer
 

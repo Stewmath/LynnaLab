@@ -409,7 +409,7 @@ arbitraryLengthData:
                 case "interaca":
                     minParams = 2;
                     maxParams = 3;
-                    interactionType = InteractionType.TypeA;
+                    interactionType = InteractionType.ItemDrop;
                     goto interactionData;
                 case "interacend":
                     minParams = 0;

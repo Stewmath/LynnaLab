@@ -41,7 +41,7 @@ namespace LynnaLab
                 if (data.CommandLowerCase != "m_roomlayoutdata") {
                     throw new Exception("Expected label \"" + label + "\" to be followed by the m_RoomLayoutData macro.");
                 }
-                string roomString = data.Values[0] + ".bin";
+                string roomString = data.GetValue(0) + ".bin";
                 MemoryFileStream dataFile;
                 try {
                     dataFile = Project.GetBinaryFile("rooms/small/" + roomString);
