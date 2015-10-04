@@ -34,6 +34,7 @@ namespace LynnaLab {
                         {
                             labelList.Add(r.Name);
                             SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,255);
+                            spinButton.Digits = 2;
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
                                 r.SetValue(button.ValueAsInt);
@@ -46,6 +47,7 @@ namespace LynnaLab {
                         {
                             labelList.Add(r.Name);
                             SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,0xffff);
+                            spinButton.Digits = 2;
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
                                 r.SetValue(button.ValueAsInt);
