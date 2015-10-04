@@ -20,11 +20,11 @@ namespace LynnaLab
             Data data = parser.GetData(label);
             while (data != null && data.CommandLowerCase == ".db") {
                 counters.Add(Project.EvalToInt(data.Values[0]));
-                data = data.Next;
+                data = data.NextData;
                 if (data.CommandLowerCase != ".db")
                     throw new Exception("Malformatted animation data");
                 gfxHeaderIndices.Add(Project.EvalToInt(data.Values[0]));
-                data = data.Next;
+                data = data.NextData;
             }
         }
 
@@ -36,7 +36,7 @@ namespace LynnaLab
             FileParser parser = Project.GetFileWithLabel("animationGfxHeaders");
             var header = parser.GetData("animationGfxHeaders") as GfxHeaderData;
             for (int j=0; j<index; j++)
-                header = header.Next as GfxHeaderData;
+                header = header.NextData as GfxHeaderData;
             return header;
         }
     }

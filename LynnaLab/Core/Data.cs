@@ -30,14 +30,9 @@ namespace LynnaLab
 
 
 
-
-        // These are accessed by AsmFileParser, and by nothing else pls
-        internal Data nextData, prevData;
-
         // Size in bytes
         // -1 if indeterminate? (consider getting rid of this, it's unreliable)
         protected int size;
-        FileParser parser;
 
         bool _modified;
 
@@ -76,22 +71,35 @@ namespace LynnaLab
 
         public bool PrintCommand {get; set;} // If false, don't output the command, only the values
 
-        public Data Next {
-            get { return nextData; }
+        public Data NextData {
+            get {
+                FileComponent c = this;
+                do {
+                    c = parser.GetNextFileComponent(c);
+                    if (c is Data) return c as Data;
+                } while(c != null);
+                return c as Data;
+            }
         }
-        public Data Last {
-            get { return prevData; }
+        public Data LastData {
+            get {
+                FileComponent c = this;
+                do {
+                    c = parser.GetPrevFileComponent(c);
+                    if (c is Data) return c as Data;
+                } while(c != null);
+                return c as Data;
+            }
         }
 
 
         // Constructor
 
-        public Data(Project p, string command, IList<string> values, int size, FileParser parser, IList<int> spacing) : base(spacing) {
+        public Data(Project p, string command, IList<string> values, int size, FileParser parser, IList<int> spacing) : base(parser, spacing) {
             this.Project = p;
             this.command = command;
             this.values = new List<string>(values);
             this.size = size;
-            this.parser = parser;
 
             if (this.spacing == null)
                 this.spacing = new List<int>();

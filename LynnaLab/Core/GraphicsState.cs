@@ -130,14 +130,14 @@ namespace LynnaLab
                 for (int i=header.FirstPalette; i<header.FirstPalette+header.NumPalettes; i++) {
                     for (int j=0; j<4; j++) {
                         paletteBuffer[(int)header.PaletteType][i][j] = data.Color;
-                        data = data.Next as RgbData;
+                        data = data.NextData as RgbData;
                     }
                 }
 
                 next = false;
 
 				if (header.ShouldHaveNext()) {
-                    PaletteHeaderData nextHeader = header.Next as PaletteHeaderData;
+                    PaletteHeaderData nextHeader = header.NextData as PaletteHeaderData;
                     if (nextHeader != null) {
 						header = nextHeader;
 						next = true;

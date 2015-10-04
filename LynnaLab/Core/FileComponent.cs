@@ -6,7 +6,7 @@ namespace LynnaLab
 {
     public abstract class FileComponent {
         protected List<int> spacing;
-
+        protected FileParser parser;
 
         public bool EndsLine {get; set;} // True if a newline comes after this data
 
@@ -14,12 +14,23 @@ namespace LynnaLab
         // the file
         public bool Fake {get; set;}
 
+        public FileComponent Next {
+            get {
+                return parser.GetNextFileComponent(this);
+            }
+        }
+        public FileComponent Prev {
+            get {
+                return parser.GetPrevFileComponent(this);
+            }
+        }
 
-        public FileComponent(IList<int> spacing) {
+        public FileComponent(FileParser parser, IList<int> spacing) {
             EndsLine = true;
             Fake = false;
             if (spacing != null)
                 this.spacing = new List<int>(spacing);
+            this.parser = parser;
         }
 
         public int GetSpacing(int index) {
@@ -49,7 +60,7 @@ namespace LynnaLab
     public class StringFileComponent : FileComponent {
         string str;
 
-        public StringFileComponent(string s, IList<int> spacing) : base(spacing) {
+        public StringFileComponent(FileParser parser, string s, IList<int> spacing) : base(parser, spacing) {
             str = s;
             if (this.spacing == null)
                 this.spacing = new List<int>();

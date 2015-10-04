@@ -56,7 +56,7 @@ namespace LynnaLab
 
                 // Add raw string to file structure, it'll be removed if
                 // a better representation is found
-                fileStructure.Add(new StringFileComponent(line, null));
+                fileStructure.Add(new StringFileComponent(this, line, null));
                 fileStructureComments.Add(comment);
 
                 if (line.Trim().Length == 0)
@@ -150,13 +150,13 @@ namespace LynnaLab
                                     AddDefinition(s, address.ToString());
                                     AddDefinition(":"+s, bank.ToString());
                                     PopFileStructure();
-                                    StringFileComponent sc = new StringFileComponent(tokens[0], spacing);
+                                    StringFileComponent sc = new StringFileComponent(this, tokens[0], spacing);
                                     fileStructure.Add(sc);
                                     fileStructureComments.Add(comment);
                                     addedComponent = sc;
                                 }
                                 else {
-                                    Label label = new Label(s,DataList.Count,spacing);
+                                    Label label = new Label(this,s,DataList.Count,spacing);
                                     AddLabelAndPopFileStructure(label);
                                     addedComponent = label;
                                 }
@@ -170,7 +170,7 @@ namespace LynnaLab
                                     // be removed if a better representation is
                                     // found
                                     fileStructure.Add(new StringFileComponent(
-                                                line.Substring(tokenStartIndices[1]), spacing2));
+                                                this, line.Substring(tokenStartIndices[1]), spacing2));
                                     fileStructureComments.Add(comment);
 
                                     for (int j=1; j<tokens.Length; j++)
@@ -355,7 +355,7 @@ arbitraryLengthData:
                         break;
                     }
                     {
-                        Label l = new Label(tokens[1], DataList.Count);
+                        Label l = new Label(this, tokens[1], DataList.Count);
                         l.Fake = true;
                         AddLabelAndPopFileStructure(l);
                         Data d = new Data(Project, tokens[0], standardValues, -1,
@@ -507,10 +507,6 @@ interactionData:
             fileStructure.Insert(i+1, newData);
             fileStructureComments.Insert(i+1, "");
 
-            newData.nextData = refData.nextData;
-            refData.nextData = newData;
-            newData.prevData = refData;
-
             Modified = true;
 
             return true;
@@ -525,30 +521,29 @@ interactionData:
             fileStructure.Insert(i, newData);
             fileStructureComments.Insert(i, "");
 
-            newData.prevData = refData.prevData;
-            refData.prevData = newData;
-            newData.nextData = refData;
-
             Modified = true;
 
             return true;
+        }
+        public override FileComponent GetNextFileComponent(FileComponent reference) {
+            int i = fileStructure.IndexOf(reference);
+            if (i == -1) return null;
+            if (i+1 < fileStructure.Count)
+                return fileStructure[i+1];
+            return null;
+        }
+        public override FileComponent GetPrevFileComponent(FileComponent reference) {
+            int i = fileStructure.IndexOf(reference);
+            if (i == -1) return null;
+            if (i-1 >= 0)
+                return fileStructure[i-1];
+            return null;
         }
 
         // Remove a FileComponent (Data, Label) from the fileStructure.
         public override void RemoveFileComponent(FileComponent component) {
             int index = fileStructure.IndexOf(component);
             if (index == -1) return;
-
-            if (component is Data) {
-                // Update data linked list
-                Data data = component as Data;
-                if (data.prevData != null) data.prevData.nextData = null;
-                if (data.nextData != null) data.nextData.prevData = null;
-                if (data.prevData != null && data.nextData != null) {
-                    data.prevData.nextData = data.nextData;
-                    data.nextData.prevData = data.prevData;
-                }
-            }
 
             fileStructure.RemoveAt(index);
             fileStructureComments.RemoveAt(index);

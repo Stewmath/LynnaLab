@@ -6,7 +6,8 @@ namespace LynnaLab
 
     public class InteractionGroup : ProjectDataType
     {
-        public static string[] InteractionCommands = {"Interac0",
+        public static string[] InteractionCommands = {
+            "Interac0",
             "NoValue",
             "DoubleValue",
             "Pointer",
@@ -48,7 +49,7 @@ namespace LynnaLab
 
             while (data.GetInteractionType() != InteractionType.End && data.GetInteractionType() != InteractionType.EndPointer) {
                 interactionDataList.Add(data);
-                data = data.Next as InteractionData;
+                data = data.NextData as InteractionData;
             }
             interactionDataList.Add(data);
         }
@@ -76,6 +77,11 @@ namespace LynnaLab
                     type);
             data.InsertIntoParserBefore(interactionDataList[index]);
             interactionDataList.Insert(index, data);
+        }
+
+        // Returns true if no data is shared with another label
+        bool IsIsolated() {
+            return true;
         }
     }
 }

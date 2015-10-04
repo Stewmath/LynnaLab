@@ -34,7 +34,7 @@ namespace LynnaLab {
                 }
 
                 if (headerData.ShouldHaveNext()) {
-                    headerData = headerData.Next as TilesetHeaderData;
+                    headerData = headerData.NextData as TilesetHeaderData;
                     if (headerData != null)
                         next = true;
                 }

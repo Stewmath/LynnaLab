@@ -82,9 +82,9 @@ namespace LynnaLab
                     {
                         labelList.Add("Condition");
                         SpinButtonHexadecimal button = new SpinButtonHexadecimal(0,255);
-                        button.Value = Project.EvalToInt(activeData.Values[0]);
+                        button.Value = Project.EvalToInt(activeData.GetInteractionValue(0));
                         button.ValueChanged += delegate(object sender, EventArgs e) {
-                            activeData.SetByteValue(0, (byte)button.ValueAsInt);
+                            activeData.SetInteractionValue(0, Wla.ToByte((byte)button.ValueAsInt));
                         };
                         button.Digits = 2;
                         widgetList.Add(button);
@@ -94,9 +94,9 @@ namespace LynnaLab
                     {
                         labelList.Add("ID");
                         SpinButtonHexadecimal button = new SpinButtonHexadecimal(0,0xffff);
-                        button.Value = Project.EvalToInt(activeData.Values[0]);
+                        button.Value = Project.EvalToInt(activeData.GetInteractionValue(0));
                         button.ValueChanged += delegate(object sender, EventArgs e) {
-                            activeData.SetWordValue(0, button.ValueAsInt);
+                            activeData.SetInteractionValue(0, Wla.ToWord(button.ValueAsInt));
                         };
                         button.Digits = 4;
                         widgetList.Add(button);
@@ -131,7 +131,7 @@ namespace LynnaLab
                         button.Value = Project.EvalToInt(activeData.GetInteractionValue(2));
                         button.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton b = sender as Gtk.SpinButton;
-                            activeData.SetValue(2, Wla.ToByte((byte)b.ValueAsInt));
+                            activeData.SetInteractionValue(2, Wla.ToByte((byte)b.ValueAsInt));
                         };
                         button.Digits = 2;
                         widgetList.Add(button);
@@ -143,9 +143,9 @@ namespace LynnaLab
                     {
                         labelList.Add("Pointer");
                         Gtk.Entry entry = new Gtk.Entry();
-                        entry.Text = activeData.Values[0];
+                        entry.Text = activeData.GetInteractionValue(0);
                         entry.Changed += delegate(object sender, EventArgs e) {
-                            activeData.SetValue(0, entry.Text);
+                            activeData.SetInteractionValue(0, entry.Text);
                         };
                         widgetList.Add(entry);
 
@@ -168,9 +168,9 @@ namespace LynnaLab
                     {
                         labelList.Add("Flags");
                         SpinButtonHexadecimal flagsButton = new SpinButtonHexadecimal();
-                        flagsButton.Value = Project.EvalToInt(activeData.Values[0]);
+                        flagsButton.Value = Project.EvalToInt(activeData.GetInteractionValue(0));
                         flagsButton.ValueChanged += delegate(object sender, EventArgs e) {
-                            activeData.SetByteValue(0, (byte)flagsButton.ValueAsInt);
+                            activeData.SetInteractionValue(0, Wla.ToByte((byte)flagsButton.ValueAsInt));
                         };
                         flagsButton.Digits = 2;
                         widgetList.Add(flagsButton);
@@ -178,9 +178,9 @@ namespace LynnaLab
 
                         labelList.Add("ID");
                         SpinButtonHexadecimal idButton = new SpinButtonHexadecimal(0,0xffff);
-                        idButton.Value = Project.EvalToInt(activeData.Values[1]);
+                        idButton.Value = Project.EvalToInt(activeData.GetInteractionValue(1));
                         idButton.ValueChanged += delegate(object sender, EventArgs e) {
-                            activeData.SetWordValue(1, idButton.ValueAsInt);
+                            activeData.SetInteractionValue(1, Wla.ToWord(idButton.ValueAsInt));
                         };
                         idButton.Digits = 4;
                         widgetList.Add(idButton);

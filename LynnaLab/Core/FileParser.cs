@@ -16,11 +16,11 @@ namespace LynnaLab
             get { return index; }
         }
 
-        public Label(string n, int i) : base(null) {
+        public Label(FileParser parser, string n, int i) : base(parser, null) {
             name = n;
             index = i;
         }
-        public Label(string n, int i, IList<int> spacing) : base(spacing) {
+        public Label(FileParser parser, string n, int i, IList<int> spacing) : base(parser, spacing) {
             name = n;
             index = i;
         }
@@ -79,7 +79,7 @@ namespace LynnaLab
             this.fullFilename = p.BaseDirectory + f;
 
             // Made-up label for the start of the file
-            Label l = new Label(Basename + "_start", 0);
+            Label l = new Label(this, Basename + "_start", 0);
             l.Fake = true;
             AddLabel(l);
         }
@@ -91,10 +91,6 @@ namespace LynnaLab
             return true;
         }
         protected virtual bool AddData(Data data) {
-            if (dataList.Count != 0) {
-                dataList[dataList.Count - 1].nextData = data;
-                data.prevData = dataList[dataList.Count - 1];
-            }
             if (activeLabel != null)
                 dataDictionary[data] = activeLabel;
             activeLabel = null;
@@ -125,7 +121,10 @@ namespace LynnaLab
 
         public abstract bool InsertDataAfter(Data refData, Data newData);
         public abstract bool InsertDataBefore(Data refData, Data newData);
+        public abstract FileComponent GetNextFileComponent(FileComponent reference);
+        public abstract FileComponent GetPrevFileComponent(FileComponent reference);
         public abstract void RemoveFileComponent(FileComponent component);
+
         public abstract void Save();
     }
 }

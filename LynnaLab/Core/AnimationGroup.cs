@@ -21,7 +21,7 @@ namespace LynnaLab
 
             Data data = parser.GetData(label);
             int b1 = Project.EvalToInt(data.Values[0]);
-            data = data.Next;
+            data = data.NextData;
             int bits = b1&0xf;
 
             if (bits >= 0xf)
@@ -40,7 +40,7 @@ namespace LynnaLab
                     throw new Exception("Malformatted animation group data (index 0x" +
                             Index.ToString("x") + "\n");
                 animations[j] = Project.GetDataType<Animation>(data.Values[0]);
-                data = data.Next;
+                data = data.NextData;
             }
         }
 

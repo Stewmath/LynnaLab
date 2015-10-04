@@ -28,7 +28,7 @@ namespace LynnaLab
         int GetDataIndex(int i) {
             Data d = dataBase;
             for (int j=0; j<i; j++) {
-                d = d.Next;
+                d = d.NextData;
             }
             return Project.EvalToInt(d.Values[0]);
         }

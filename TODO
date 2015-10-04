@@ -8,6 +8,9 @@ Editor:
 - Ability to add areas, etc, as well as moving labels which refer to the same
   data
 - Dungeon minimap editor
+- Select multiple tiles from a tileset at once
+- Bugs:
+    - Crash when changing animation index
 
 disasm:
 - Optimize compression for files in tilesets/ directory?

@@ -140,32 +140,32 @@ namespace LynnaLab
             Data data = areaData;
             flags1 = p.EvalToInt(data.Values[0]);
 
-            data = data.Next;
+            data = data.NextData;
             flags2 = p.EvalToInt(data.Values[0]);
 
-            data = data.Next;
+            data = data.NextData;
             SetUniqueGfx(Project.EvalToInt(data.Values[0]));
 
-            data = data.Next;
+            data = data.NextData;
             SetMainGfx(Project.EvalToInt(data.Values[0]));
 
-            data = data.Next;
+            data = data.NextData;
             SetPaletteHeader(Project.EvalToInt(data.Values[0]));
 
-            data = data.Next;
+            data = data.NextData;
             SetTileset(Project.EvalToInt(data.Values[0]));
 
-            data = data.Next;
+            data = data.NextData;
             layoutGroup = Project.EvalToInt(data.Values[0]);
 
-            data = data.Next;
+            data = data.NextData;
             SetAnimation((byte)Project.EvalToInt(data.Values[0]));
         }
 
         Data GetDataIndex(int i) {
             Data data = areaData;
             for (int j=0; j<i; j++)
-                data = data.Next;
+                data = data.NextData;
             return data;
         }
 
@@ -329,7 +329,7 @@ namespace LynnaLab
                     graphicsState.AddGfxHeader(header, GfxHeaderType.Main);
                     next = false;
                     if (header.ShouldHaveNext()) {
-                        GfxHeaderData nextHeader = header.Next as GfxHeaderData;
+                        GfxHeaderData nextHeader = header.NextData as GfxHeaderData;
                         if (nextHeader != null) {
                             header = nextHeader;
                             next = true;
@@ -354,7 +354,7 @@ namespace LynnaLab
                         graphicsState.AddGfxHeader(header, GfxHeaderType.Unique);
                         next = false;
                         if (header.ShouldHaveNext()) {
-                            GfxHeaderData nextHeader = header.Next as GfxHeaderData;
+                            GfxHeaderData nextHeader = header.NextData as GfxHeaderData;
                             if (nextHeader != null) {
                                 header = nextHeader;
                                 next = true;

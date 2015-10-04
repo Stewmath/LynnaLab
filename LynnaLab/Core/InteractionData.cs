@@ -36,11 +36,11 @@ namespace LynnaLab {
         // from the last interaction, for SpecificEnemy and TypeA interactions.
         public string GetInteractionValue(int i) {
             if (IsShortened()) {
-                InteractionData last = Last as InteractionData;
+                InteractionData last = LastData as InteractionData;
                 if (last == null || (last.GetInteractionType() != GetInteractionType()))
                     this.ThrowException("Malformatted interaction");
                 if (i == 0)
-                    return (Last as InteractionData).GetInteractionValue(0);
+                    return (LastData as InteractionData).GetInteractionValue(0);
                 else
                     return Values[i-1];
             }
@@ -57,7 +57,7 @@ namespace LynnaLab {
             }
             if (IsShortenable()) {
                 // Check if the next interaction depends on this
-                InteractionData next = Next as InteractionData;
+                InteractionData next = NextData as InteractionData;
                 if (next != null && next.GetInteractionType() == GetInteractionType())
                     next.Elongate();
             }
@@ -81,8 +81,8 @@ namespace LynnaLab {
         }
         // Returns true if this interaction reuses a byte from the last one
         bool IsShortened() {
-            return ((GetInteractionType() == InteractionType.SpecificEnemy && Values.Count != 4) ||
-                    (GetInteractionType() == InteractionType.TypeA && Values.Count != 3));
+            return ((GetInteractionType() == InteractionType.SpecificEnemy && Values.Count < 4) ||
+                    (GetInteractionType() == InteractionType.TypeA && Values.Count < 3));
         }
         void Elongate() {
             if (IsShortenable() && IsShortened()) {
@@ -94,7 +94,7 @@ namespace LynnaLab {
             // Shortens the interaction if possible
             if (IsShortened() || !IsShortenable()) return;
 
-            InteractionData last = Last as InteractionData;
+            InteractionData last = LastData as InteractionData;
             if (last == null || last.GetInteractionType() != GetInteractionType()) return;
             if (last.GetInteractionValue(0) != GetInteractionValue(0)) return;
 

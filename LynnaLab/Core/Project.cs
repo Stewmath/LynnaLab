@@ -164,7 +164,7 @@ namespace LynnaLab
             try {
                 return labelDictionary[label];
             } catch(KeyNotFoundException) {
-                throw new KeyNotFoundException("Label \"" + label + "\" was needed but could not be located!");
+                throw new LabelNotFoundException("Label \"" + label + "\" was needed but could not be located!");
             }
 		}
 
@@ -261,16 +261,5 @@ namespace LynnaLab
 		}
 	}
 
-	public class DuplicateLabelException : Exception {
-		public DuplicateLabelException()
-			: base() {}
-	    public DuplicateLabelException(string message)
-			: base(message) {}
-	    public DuplicateLabelException(string message, Exception inner)
-			: base(message, inner) {}
-
-	   protected DuplicateLabelException(SerializationInfo info, StreamingContext context)
-			: base(info, context) {}
-	}
 
 }
