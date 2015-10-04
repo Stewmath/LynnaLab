@@ -20,17 +20,21 @@ namespace LynnaLab
             "Item Drop",
         };
 
-        Project Project {
-            get {
-                if (interactionGroup == null) return null;
-                return interactionGroup.Project;
-            }
-        }
-
-        InteractionGroup interactionGroup;
+        InteractionGroup _interactionGroup;
         InteractionData activeData;
 
         Gtk.Frame pointerFrame;
+
+        Project Project {
+            get {
+                if (InteractionGroup == null) return null;
+                return InteractionGroup.Project;
+            }
+        }
+        public InteractionGroup InteractionGroup {
+            get { return _interactionGroup; }
+        }
+        
 
         public InteractionGroupEditor()
         {
@@ -38,19 +42,19 @@ namespace LynnaLab
 
             indexSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
                 int i = indexSpinButton.ValueAsInt;
-                if (interactionGroup == null || i == -1)
+                if (InteractionGroup == null || i == -1)
                     SetInteractionData(null);
                 else
-                    SetInteractionData(interactionGroup.GetInteractionData(i));
+                    SetInteractionData(InteractionGroup.GetInteractionData(i));
             };
         }
 
         public void SetInteractionGroup(InteractionGroup group) {
-            this.interactionGroup = group;
+            _interactionGroup = group;
             UpdateBoundaries();
             indexSpinButton.Value = 0;
-            if (interactionGroup != null && interactionGroup.GetNumInteractions() != 0)
-                SetInteractionData(interactionGroup.GetInteractionData(0));
+            if (InteractionGroup != null && InteractionGroup.GetNumInteractions() != 0)
+                SetInteractionData(InteractionGroup.GetInteractionData(0));
             else {
                 indexSpinButton.Value = -1;
                 SetInteractionData(null);
@@ -58,10 +62,10 @@ namespace LynnaLab
         }
 
         void SetInteractionDataIndex(int i) {
-            if (interactionGroup == null || i < 0 || i >= interactionGroup.GetNumInteractions())
+            if (InteractionGroup == null || i < 0 || i >= InteractionGroup.GetNumInteractions())
                 SetInteractionData(null);
             else
-                SetInteractionData(interactionGroup.GetInteractionData(i));
+                SetInteractionData(InteractionGroup.GetInteractionData(i));
         }
         void SetInteractionData(InteractionData data) {
             activeData = data;
@@ -86,10 +90,10 @@ namespace LynnaLab
         void UpdateBoundaries() {
             indexSpinButton.Adjustment.Lower = -1;
             int max=0;
-            if (interactionGroup == null)
+            if (InteractionGroup == null)
                 max = -1;
             else
-                max = interactionGroup.GetNumInteractions()-1;
+                max = InteractionGroup.GetNumInteractions()-1;
 
             indexSpinButton.Adjustment.Upper = max;
             if (indexSpinButton.ValueAsInt > max) {
@@ -101,22 +105,22 @@ namespace LynnaLab
 
         protected void OnDeleteButtonClicked(object sender, EventArgs e)
         {
-            if (interactionGroup != null && indexSpinButton.ValueAsInt != -1) {
-                interactionGroup.RemoveInteraction(indexSpinButton.ValueAsInt);
+            if (InteractionGroup != null && indexSpinButton.ValueAsInt != -1) {
+                InteractionGroup.RemoveInteraction(indexSpinButton.ValueAsInt);
                 UpdateBoundaries();
             }
         }
 
         protected void OnAddButtonClicked(object sender, EventArgs e)
         {
-            if (interactionGroup == null) return;
+            if (InteractionGroup == null) return;
 
             AddInteractionDialog d = new AddInteractionDialog();
             d.Run();
             if (d.InteractionTypeToAdd != InteractionType.End) {
-                if (interactionGroup == null) return;
+                if (InteractionGroup == null) return;
 
-                interactionGroup.InsertInteraction(indexSpinButton.ValueAsInt+1, d.InteractionTypeToAdd);
+                InteractionGroup.InsertInteraction(indexSpinButton.ValueAsInt+1, d.InteractionTypeToAdd);
                 UpdateBoundaries();
                 indexSpinButton.Value = indexSpinButton.ValueAsInt+1;
             }

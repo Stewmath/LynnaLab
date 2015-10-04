@@ -55,7 +55,9 @@ namespace LynnaLab {
                 },
                 new List<ValueReference> { // Part
                     new ValueReference("ID",0,DataValueType.Word),
-                    new ValueReference("YX",1,DataValueType.Byte),
+                    new ValueReference("Y",1,4,7,DataValueType.ByteBits),
+                    new ValueReference("X",1,0,3,DataValueType.ByteBits),
+//                     new ValueReference("YX",1,DataValueType.Byte),
                 },
                 new List<ValueReference> { // QuadrupleValue
                     new ValueReference("ID",0,DataValueType.Word),
@@ -67,7 +69,8 @@ namespace LynnaLab {
                 new List<ValueReference> { // Item Drop
                     new ValueReference("Flags",0,DataValueType.Byte),
                     new ValueReference("Item",1,DataValueType.Byte),
-                    new ValueReference("YX",2,DataValueType.Byte),
+                    new ValueReference("Y",2,4,7,DataValueType.ByteBits),
+                    new ValueReference("X",2,0,3,DataValueType.ByteBits),
                 },
                 new List<ValueReference> { // InteracEnd
                 },

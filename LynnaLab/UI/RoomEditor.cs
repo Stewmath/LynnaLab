@@ -23,6 +23,7 @@ namespace LynnaLab
 
         Room room;
         TileGridSelector client;
+        InteractionGroupEditor interactionEditor;
 
         public RoomEditor() {
             TileWidth = 16;
@@ -59,6 +60,10 @@ namespace LynnaLab
             this.client = client;
         }
 
+        public void SetInteractionGroupEditor(InteractionGroupEditor editor) {
+            interactionEditor = editor;
+        }
+
         public void SetRoom(Room r) {
             var handler = new Room.RoomModifiedHandler(OnRoomModified);
             if (room != null)
@@ -90,7 +95,18 @@ namespace LynnaLab
 
 		protected override bool OnExposeEvent(Gdk.EventExpose ev)
 		{
-			return base.OnExposeEvent(ev);
+			base.OnExposeEvent(ev);
+
+            // Draw interactions
+            if (interactionEditor == null) return true;
+            InteractionGroup group = interactionEditor.InteractionGroup;
+
+            for (int i=0; i<group.GetNumInteractions(); i++) {
+                InteractionData data = group.GetInteractionData(i);
+                Color color = data.GetColor();
+            }
+
+            return true;
 		}
 
 		protected override void OnSizeAllocated(Gdk.Rectangle allocation)

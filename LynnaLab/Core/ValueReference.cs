@@ -10,6 +10,7 @@ namespace LynnaLab
         String=0,
         Byte,
         Word,
+        ByteBits,
         InteractionPointer,
     }
 
@@ -45,14 +46,41 @@ namespace LynnaLab
 
         Data data;
         int valueIndex;
+        int startBit,endBit;
 
         public DataValueType ValueType {get; set;}
         public string Name {get; set;}
 
+        public int MaxValue { // For integer-based ones
+            get {
+                switch(ValueType) {
+                    case DataValueType.Byte:
+                        return 0xff;
+                    case DataValueType.Word:
+                        return 0xffff;
+                    case DataValueType.ByteBits:
+                        return (1<<(endBit-startBit+1))-1;
+                    default:
+                        return 0;
+                }
+            }
+        }
+
+        // Standard constructor for most DataValueTypes
         public ValueReference(string n, int index, DataValueType t) {
             valueIndex = index;
             ValueType = t;
             Name = n;
+            if (t == DataValueType.ByteBits)
+                throw new Exception("Wrong constructor");
+        }
+        // Constructor for DataValueType.Bits
+        public ValueReference(string n, int index, int startBit, int endBit, DataValueType t) {
+            valueIndex = index;
+            ValueType = t;
+            Name = n;
+            this.startBit = startBit;
+            this.endBit = endBit;
         }
 
         public ValueReference(ValueReference r) {
@@ -60,6 +88,8 @@ namespace LynnaLab
             valueIndex = r.valueIndex;
             ValueType = r.ValueType;
             Name = r.Name;
+            startBit = r.startBit;
+            endBit = r.endBit;
         }
 
         public void SetData(Data d) {
@@ -70,7 +100,15 @@ namespace LynnaLab
             return data.GetValue(valueIndex);
         }
         public virtual int GetIntValue() {
-            return data.GetIntValue(valueIndex);
+            switch(ValueType) {
+                case DataValueType.ByteBits:
+                    {
+                        int andValue = (1<<(endBit-startBit+1))-1;
+                        return (data.GetIntValue(valueIndex)>>startBit)&andValue;
+                    }
+                default:
+                    return data.GetIntValue(valueIndex);
+            }
         }
         public virtual void SetValue(string s) {
             switch(ValueType) {
@@ -87,6 +125,14 @@ namespace LynnaLab
                     break;
                 case DataValueType.Word:
                     data.SetWordValue(valueIndex,i);
+                    break;
+                case DataValueType.ByteBits:
+                    {
+                        int andValue = ((1<<(endBit-startBit+1))-1);
+                        int value = data.GetIntValue(valueIndex) & (~(andValue<<startBit));
+                        value |= ((i&andValue)<<startBit);
+                        data.SetByteValue(valueIndex,(byte)value);
+                    }
                     break;
                 default:
                     throw new Exception("Tried to use an integer to set a string-based value");

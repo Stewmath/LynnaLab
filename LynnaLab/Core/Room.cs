@@ -6,7 +6,9 @@ using System.IO;
 namespace LynnaLab
 {
     public class Room : ProjectIndexedDataType {
+
         public delegate void RoomModifiedHandler();
+        // Event invoked when the room's image is modified in any way
         public event RoomModifiedHandler RoomModifiedEvent;
 
         // Actual width and height of room

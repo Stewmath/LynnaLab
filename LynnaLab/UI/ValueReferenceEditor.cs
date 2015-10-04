@@ -47,7 +47,20 @@ namespace LynnaLab {
                         {
                             labelList.Add(r.Name);
                             SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,0xffff);
-                            spinButton.Digits = 2;
+                            spinButton.Digits = 4;
+                            spinButton.ValueChanged += delegate(object sender, EventArgs e) {
+                                Gtk.SpinButton button = sender as Gtk.SpinButton;
+                                r.SetValue(button.ValueAsInt);
+                            };
+                            spinButton.Value = r.GetIntValue();
+                            widgetList.Add(spinButton);
+                        }
+                        break;
+                    case DataValueType.ByteBits:
+                        {
+                            labelList.Add(r.Name);
+                            SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,r.MaxValue);
+                            spinButton.Digits = (uint)((r.MaxValue+0xf)/0x10);
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
                                 r.SetValue(button.ValueAsInt);
