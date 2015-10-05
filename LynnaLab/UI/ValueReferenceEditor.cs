@@ -6,9 +6,14 @@ namespace LynnaLab {
     {
         List<ValueReference> valueReferences;
         Gtk.Frame pointerFrame;
+        InteractionGroupEditor subEditor;
 
 
         Project Project {get; set;}
+
+        public InteractionGroupEditor SubEditor { // This is only for InteractionPointer values
+            get { return subEditor; }
+        }
 
         public ValueReferenceEditor(Project p, IList<ValueReference> dataValueReferences, string frameText=null) 
         : base(1.0F,1.0F,1.0F,1.0F) {
@@ -122,7 +127,7 @@ namespace LynnaLab {
         void UpdatePointerTextBox(Gtk.Entry entry, ValueReference r) {
             pointerFrame.Remove(pointerFrame.Child);
 
-            InteractionGroupEditor subEditor = new InteractionGroupEditor();
+            subEditor = new InteractionGroupEditor();
             Gtk.Alignment alignment = new Gtk.Alignment(0.5F, 0.5F, 0.0F, 0.8F);
             try {
                 Project.GetFileWithLabel(entry.Text.Trim());

@@ -87,6 +87,7 @@ namespace LynnaLab
             _modified = false;
         }
 
+
         public virtual string GetValue(int i) {
             return values[i];
         }
@@ -94,9 +95,30 @@ namespace LynnaLab
             // TODO: error handling
             return Project.EvalToInt(GetValue(i));
         }
+        public string GetValue(string s) { // Get a value based on a value reference name
+            foreach (ValueReference r in valueReferences) {
+                if (r.Name == s) {
+                    return r.GetStringValue();
+                }
+            }
+            ThrowException(new NotFoundException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
+            return null;
+        }
+        public int GetIntValue(string s) {
+            foreach (ValueReference r in valueReferences) {
+                if (r.Name == s) {
+                    return r.GetIntValue();
+                }
+            }
+            ThrowException(new NotFoundException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
+            return 0;
+        }
+
         public virtual int GetNumValues() {
             return values.Count;
         }
+
+
         public virtual void SetValue(int i, string value) {
             if (values[i] != value) {
                 values[i] = value;
@@ -169,9 +191,8 @@ namespace LynnaLab
             return s;
         }
 
-        public void ThrowException(string message) {
-            message += " (" + parser.Filename + ")";
-            throw new Exception(message);
+        public void ThrowException(Exception e) {
+            throw e;
         }
     }
 

@@ -57,7 +57,6 @@ namespace LynnaLab {
                     new ValueReference("ID",0,DataValueType.Word),
                     new ValueReference("Y",1,4,7,DataValueType.ByteBits),
                     new ValueReference("X",1,0,3,DataValueType.ByteBits),
-//                     new ValueReference("YX",1,DataValueType.Byte),
                 },
                 new List<ValueReference> { // QuadrupleValue
                     new ValueReference("ID",0,DataValueType.Word),
@@ -100,7 +99,7 @@ namespace LynnaLab {
             if (IsShortened()) {
                 InteractionData last = LastData as InteractionData;
                 if (last == null || (last.GetInteractionType() != GetInteractionType()))
-                    this.ThrowException("Malformatted interaction");
+                    this.ThrowException(new Exception("Malformatted interaction"));
                 if (i == 0)
                     return (LastData as InteractionData).GetValue(0);
                 else
@@ -162,6 +161,26 @@ namespace LynnaLab {
 			}
 			return Color.Magenta;
 		}
+
+        // Returns true if XY values are 4 bits rather than 8.
+        public bool HasShortenedXY() {
+            return GetInteractionType() == InteractionType.Part ||
+                GetInteractionType() == InteractionType.ItemDrop;
+        }
+
+        // Get the interaction group pointed to, or null if no such group
+        // exists.
+        public InteractionGroup GetPointedInteractionGroup() {
+            if (!(type >= InteractionType.Pointer && type <= InteractionType.Conditional)) return null;
+
+            try {
+                Project.GetFileWithLabel(GetValue(0));
+                return Project.GetDataType<InteractionGroup>(GetValue(0));
+            }
+            catch(LabelNotFoundException e) {
+                return null;
+            }
+        }
 
         bool IsShortenable() {
             return GetInteractionType() == InteractionType.SpecificEnemy ||

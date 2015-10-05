@@ -24,6 +24,8 @@ namespace LynnaLab
         InteractionData activeData;
 
         Gtk.Frame pointerFrame;
+        ValueReferenceEditor interactionDataEditor;
+        RoomEditor roomEditor;
 
         Project Project {
             get {
@@ -33,6 +35,24 @@ namespace LynnaLab
         }
         public InteractionGroup InteractionGroup {
             get { return _interactionGroup; }
+        }
+        public int SelectedIndex {
+            get { return indexSpinButton.ValueAsInt; }
+        }
+        public RoomEditor RoomEditor {
+            get { return roomEditor; }
+            set {
+                if (roomEditor != value) {
+                    roomEditor = value;
+                }
+            }
+        }
+
+        public InteractionGroupEditor SubEditor { // Sub-editor for pointers
+            get {
+                if (interactionDataEditor == null) return null;
+                return interactionDataEditor.SubEditor;
+            }
         }
         
 
@@ -46,6 +66,9 @@ namespace LynnaLab
                     SetInteractionData(null);
                 else
                     SetInteractionData(InteractionGroup.GetInteractionData(i));
+
+                if (roomEditor != null)
+                    roomEditor.QueueDraw();
             };
         }
 
@@ -74,6 +97,7 @@ namespace LynnaLab
                 interactionDataContainer.Remove(widget);
                 widget.Destroy();
             }
+            interactionDataEditor = null;
 
             if (data == null) {
                 frameLabel.Text = "";
@@ -81,9 +105,12 @@ namespace LynnaLab
             }
             frameLabel.Text = InteractionNames[(int)activeData.GetInteractionType()];
 
-            ValueReferenceEditor eddie = new ValueReferenceEditor(Project,data.GetValueReferences());
+            interactionDataEditor = new ValueReferenceEditor(Project,data.GetValueReferences());
 
-            interactionDataContainer.Add(eddie);
+            if (interactionDataEditor.SubEditor != null)
+                interactionDataEditor.SubEditor.RoomEditor = RoomEditor;
+
+            interactionDataContainer.Add(interactionDataEditor);
             interactionDataContainer.ShowAll();
         }
 

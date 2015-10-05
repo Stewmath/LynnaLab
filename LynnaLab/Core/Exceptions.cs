@@ -2,8 +2,12 @@ using System;
 
 namespace LynnaLab {
 
-    public class LabelNotFoundException : Exception {
+    public class NotFoundException : Exception {
+        public NotFoundException() {}
+        public NotFoundException(string s) : base(s) {}
+    }
 
+    public class LabelNotFoundException : NotFoundException {
         public LabelNotFoundException() {}
         public LabelNotFoundException(string s) : base(s) {}
     }

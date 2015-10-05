@@ -17,6 +17,7 @@ public partial class MainWindow: Gtk.Window
         Build();
 
         roomeditor1.SetClient(areaviewer1);
+        roomeditor1.SetInteractionGroupEditor(interactionGroupEditor);
         dungeonMinimap.TileSelectedEvent += delegate(object sender) {
             Room room = dungeonMinimap.GetRoom();
             SetRoom(room);

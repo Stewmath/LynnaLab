@@ -20,7 +20,7 @@ namespace LynnaLab
 		
 		private global::Gtk.Frame frame2;
 		
-		private global::Gtk.Alignment GtkAlignment;
+		private global::Gtk.Alignment GtkAlignment1;
 		
 		private global::Gtk.Alignment interactionDataContainer;
 		
@@ -102,14 +102,14 @@ namespace LynnaLab
 			this.frame2 = new global::Gtk.Frame ();
 			this.frame2.Name = "frame2";
 			// Container child frame2.Gtk.Container+ContainerChild
-			this.GtkAlignment = new global::Gtk.Alignment (0F, 0F, 1F, 0F);
-			this.GtkAlignment.Name = "GtkAlignment";
-			this.GtkAlignment.LeftPadding = ((uint)(12));
+			this.GtkAlignment1 = new global::Gtk.Alignment (0F, 0F, 1F, 0F);
+			this.GtkAlignment1.Name = "GtkAlignment";
+			this.GtkAlignment1.LeftPadding = ((uint)(12));
 			// Container child GtkAlignment.Gtk.Container+ContainerChild
 			this.interactionDataContainer = new global::Gtk.Alignment (0.5F, 0.5F, 1F, 1F);
 			this.interactionDataContainer.Name = "interactionDataContainer";
-			this.GtkAlignment.Add (this.interactionDataContainer);
-			this.frame2.Add (this.GtkAlignment);
+			this.GtkAlignment1.Add (this.interactionDataContainer);
+			this.frame2.Add (this.GtkAlignment1);
 			this.frameLabel = new global::Gtk.Label ();
 			this.frameLabel.Name = "frameLabel";
 			this.frameLabel.LabelProp = global::Mono.Unix.Catalog.GetString ("Interaction");
