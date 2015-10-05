@@ -16,6 +16,9 @@ namespace LynnaLab
         string command;
         List<string> values;
 
+        // Event called whenever data is modified
+        event EventHandler dataModifiedEvent;
+
         // These DataValueReferences provide an alternate interface to editing
         // the values
         List<ValueReference> valueReferences;
@@ -96,22 +99,19 @@ namespace LynnaLab
             return Project.EvalToInt(GetValue(i));
         }
         public string GetValue(string s) { // Get a value based on a value reference name
-            foreach (ValueReference r in valueReferences) {
-                if (r.Name == s) {
-                    return r.GetStringValue();
-                }
-            }
-            ThrowException(new NotFoundException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
-            return null;
+            ValueReference r = GetValueReference(s);
+            if (r == null)
+                ThrowException(new NotFoundException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
+            return r.GetStringValue();
         }
         public int GetIntValue(string s) {
-            foreach (ValueReference r in valueReferences) {
-                if (r.Name == s) {
-                    return r.GetIntValue();
-                }
+            ValueReference r = GetValueReference(s);
+            if (r == null) {
+                ThrowException(new NotFoundException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
+                return 0;
             }
-            ThrowException(new NotFoundException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
-            return 0;
+            else
+                return r.GetIntValue();
         }
 
         public virtual int GetNumValues() {
@@ -123,6 +123,8 @@ namespace LynnaLab
             if (values[i] != value) {
                 values[i] = value;
                 Modified = true;
+                if (dataModifiedEvent != null)
+                    dataModifiedEvent(this, null);
             }
         }
         public void SetByteValue(int i, byte value) {
@@ -131,6 +133,13 @@ namespace LynnaLab
         public void SetWordValue(int i, int value) {
             SetValue(i, Wla.ToWord(value));
         }
+        public void SetValue(string s, string value) {
+            GetValueReference(s).SetValue(s);
+        }
+        public void SetValue(string s, int i) {
+            GetValueReference(s).SetValue(i);
+        }
+
         // Removes a value, deletes the spacing prior to it
         public void RemoveValue(int i) {
             values.RemoveAt(i);
@@ -147,6 +156,14 @@ namespace LynnaLab
             if (valueReferences == null)
                 return null;
             return valueReferences.AsReadOnly();
+        }
+        public ValueReference GetValueReference(string name) {
+            foreach (ValueReference r in valueReferences) {
+                if (r.Name == name) {
+                    return r;
+                }
+            }
+            return null;
         }
         public void SetValueReferences(IList<ValueReference> references) {
             valueReferences = new List<ValueReference>();
@@ -180,6 +197,14 @@ namespace LynnaLab
         }
         public void InsertIntoParserBefore(Data reference) {
             parser.InsertDataBefore(reference, this);
+        }
+
+        // Data events
+        public void AddDataModifiedHandler(EventHandler handler) {
+            dataModifiedEvent += handler;
+        }
+        public void RemoveDataModifiedHandler(EventHandler handler) {
+            dataModifiedEvent -= handler;
         }
 
         // Helper function for GetString

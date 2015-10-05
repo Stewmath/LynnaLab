@@ -38,7 +38,20 @@ namespace LynnaLab
         }
         public int SelectedIndex {
             get { return indexSpinButton.ValueAsInt; }
+            set {
+                indexSpinButton.Value = value;
+            }
         }
+
+        // This property accounts for pointers
+        public InteractionData SelectedInteractionData {
+            get {
+                if (SubEditor != null)
+                    return SubEditor.SelectedInteractionData;
+                return InteractionGroup.GetInteractionData(SelectedIndex);
+            }
+        }
+
         public RoomEditor RoomEditor {
             get { return roomEditor; }
             set {
@@ -82,6 +95,9 @@ namespace LynnaLab
                 indexSpinButton.Value = -1;
                 SetInteractionData(null);
             }
+
+            if (RoomEditor != null)
+                RoomEditor.OnInteractionsModified();
         }
 
         void SetInteractionDataIndex(int i) {
@@ -105,7 +121,7 @@ namespace LynnaLab
             }
             frameLabel.Text = InteractionNames[(int)activeData.GetInteractionType()];
 
-            interactionDataEditor = new ValueReferenceEditor(Project,data.GetValueReferences());
+            interactionDataEditor = new ValueReferenceEditor(Project,data);
 
             if (interactionDataEditor.SubEditor != null)
                 interactionDataEditor.SubEditor.RoomEditor = RoomEditor;
@@ -116,7 +132,7 @@ namespace LynnaLab
 
         void UpdateBoundaries() {
             indexSpinButton.Adjustment.Lower = -1;
-            int max=0;
+            int max;
             if (InteractionGroup == null)
                 max = -1;
             else

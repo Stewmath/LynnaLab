@@ -142,7 +142,7 @@ namespace LynnaLab {
             return base.GetString();
         }
 
-        // Interaction colors match ZOLE
+        // Interaction colors match ZOLE mostly
 		public Color GetColor()
 		{
 			switch (type)
@@ -156,16 +156,55 @@ namespace LynnaLab {
 				case (InteractionType)6: return Color.Purple;
 				case (InteractionType)7: return Color.FromArgb(128, 64, 0);
 				case (InteractionType)8: return Color.Gray;
-				case (InteractionType)9: return Color.White;
+				case (InteractionType)9: return Color.Magenta;
 				case (InteractionType)0xA: return Color.Lime;
 			}
-			return Color.Magenta;
+            return Color.White;
 		}
 
         // Returns true if XY values are 4 bits rather than 8.
         public bool HasShortenedXY() {
             return GetInteractionType() == InteractionType.Part ||
                 GetInteractionType() == InteractionType.ItemDrop;
+        }
+
+        public bool HasXY() {
+            try {
+                GetValue("X");
+                GetValue("Y");
+                return true;
+            }
+            catch (NotFoundException e) {
+                return false;
+            }
+        }
+
+        // Return the center x-coordinate of the interaction
+        public int GetX() {
+            int n = GetIntValue("X");
+            if (HasShortenedXY()) {
+                n = n*16+8;
+            }
+            return n;
+        }
+        // Return the center y-coordinate of the interaction
+        public int GetY() {
+            int n = GetIntValue("Y");
+            if (HasShortenedXY()) {
+                n = n*16+8;
+            }
+            return n;
+        }
+
+        public void SetX(int n) {
+            if (HasShortenedXY())
+                n /= 16;
+            SetValue("X", n);
+        }
+        public void SetY(int n) {
+            if (HasShortenedXY())
+                n /= 16;
+            SetValue("Y", n);
         }
 
         // Get the interaction group pointed to, or null if no such group

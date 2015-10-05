@@ -4,9 +4,12 @@ using System.Collections.Generic;
 namespace LynnaLab {
     public class ValueReferenceEditor : Gtk.Alignment
     {
-        List<ValueReference> valueReferences;
+        IList<ValueReference> valueReferences;
         Gtk.Frame pointerFrame;
         InteractionGroupEditor subEditor;
+
+        event EventHandler dataModifiedExternalEvent;
+        event EventHandler dataModifiedInternalEvent;
 
 
         Project Project {get; set;}
@@ -15,11 +18,11 @@ namespace LynnaLab {
             get { return subEditor; }
         }
 
-        public ValueReferenceEditor(Project p, IList<ValueReference> dataValueReferences, string frameText=null) 
+        public ValueReferenceEditor(Project p, Data data, string frameText=null) 
         : base(1.0F,1.0F,1.0F,1.0F) {
             Project = p;
 
-            valueReferences = new List<ValueReference>(dataValueReferences);
+            valueReferences = data.GetValueReferences();
 
             List<String> labelList = new List<String>();
             List<Gtk.Widget> widgetList = new List<Gtk.Widget>();
@@ -31,7 +34,10 @@ namespace LynnaLab {
                         {
                             labelList.Add(r.Name);
                             Gtk.Entry entry = new Gtk.Entry();
-                            entry.Text = r.GetStringValue();
+                            dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                                entry.Text = r.GetStringValue();
+                                OnDataModifiedInternal();
+                            };
                             widgetList.Add(entry);
                             break;
                         }
@@ -43,8 +49,11 @@ namespace LynnaLab {
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
                                 r.SetValue(button.ValueAsInt);
+                                OnDataModifiedInternal();
                             };
-                            spinButton.Value = r.GetIntValue();
+                            dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                                spinButton.Value = r.GetIntValue();
+                            };
                             widgetList.Add(spinButton);
                         }
                         break;
@@ -56,8 +65,11 @@ namespace LynnaLab {
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
                                 r.SetValue(button.ValueAsInt);
+                                OnDataModifiedInternal();
                             };
-                            spinButton.Value = r.GetIntValue();
+                            dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                                spinButton.Value = r.GetIntValue();
+                            };
                             widgetList.Add(spinButton);
                         }
                         break;
@@ -69,8 +81,11 @@ namespace LynnaLab {
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
                                 r.SetValue(button.ValueAsInt);
+                                OnDataModifiedInternal();
                             };
-                            spinButton.Value = r.GetIntValue();
+                            dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                                spinButton.Value = r.GetIntValue();
+                            };
                             widgetList.Add(spinButton);
                         }
                         break;
@@ -79,9 +94,9 @@ namespace LynnaLab {
                             labelList.Add(r.Name);
 
                             Gtk.Entry entry = new Gtk.Entry();
-                            entry.Text = r.GetStringValue();
                             entry.Changed += delegate(object sender, EventArgs e) {
                                 UpdatePointerTextBox(sender as Gtk.Entry, r);
+                                OnDataModifiedInternal();
                             };
                             widgetList.Add(entry);
 
@@ -91,7 +106,10 @@ namespace LynnaLab {
                             pointerFrame.BorderWidth = 5;
                             widgetList.Add(pointerFrame);
 
-                            UpdatePointerTextBox(entry, r);
+                            dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                                entry.Text = r.GetStringValue();
+                                UpdatePointerTextBox(entry, r);
+                            };
                         }
                         break;
                 }
@@ -122,6 +140,35 @@ namespace LynnaLab {
                 this.Add(frame);
             }
             this.ShowAll();
+
+            data.AddDataModifiedHandler(OnDataModifiedExternal);
+            // Destroy handler
+            this.Destroyed += delegate(object sender, EventArgs e) {
+                data.RemoveDataModifiedHandler(OnDataModifiedExternal);
+            };
+
+            // Initial values
+            if (dataModifiedExternalEvent != null)
+                dataModifiedExternalEvent(this, null);
+        }
+
+        // Data modified externally
+        void OnDataModifiedExternal(object sender, EventArgs e) {
+            if (dataModifiedExternalEvent != null)
+                dataModifiedExternalEvent(this, null);
+        }
+
+        // Data modified internally
+        void OnDataModifiedInternal() {
+            if (dataModifiedInternalEvent != null)
+                dataModifiedInternalEvent(this, null);
+        }
+
+        public void AddDataModifiedHandler(EventHandler handler) {
+            dataModifiedInternalEvent += handler;
+        }
+        public void RemoveDataModifiedHandler(EventHandler handler) {
+            dataModifiedInternalEvent -= handler;
         }
 
         void UpdatePointerTextBox(Gtk.Entry entry, ValueReference r) {

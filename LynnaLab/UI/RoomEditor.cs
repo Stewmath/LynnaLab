@@ -13,6 +13,8 @@ namespace LynnaLab
             get { return room; }
         }
 
+        public bool ViewInteractions {get; set;}
+
         protected override Bitmap Image {
             get {
                 if (room == null)
@@ -24,6 +26,12 @@ namespace LynnaLab
         Room room;
         TileGridSelector client;
         InteractionGroupEditor interactionEditor;
+        int mouseX=-1,mouseY=-1;
+
+        bool draggingInteraction;
+        // List of indices of interactions, each entry is one "depth" into the
+        // interaction pointers
+        List<int> hoveringInteractionIndices = new List<int>();
 
         public RoomEditor() {
             TileWidth = 16;
@@ -33,9 +41,10 @@ namespace LynnaLab
             {
                 if (client == null)
                     return;
-                int x, y;
+                int x,y;
                 Gdk.ModifierType state;
                 args.Event.Window.GetPointer(out x, out y, out state);
+                UpdateMouse(x,y);
                 if (IsInBounds(x, y)) {
                     if (state.HasFlag(Gdk.ModifierType.Button1Mask))
                         OnClicked(x, y);
@@ -46,12 +55,13 @@ namespace LynnaLab
             this.MotionNotifyEvent += delegate(object o, MotionNotifyEventArgs args) {
                 if (client == null)
                     return;
-                int x, y;
+                int x,y;
                 Gdk.ModifierType state;
                 args.Event.Window.GetPointer(out x, out y, out state);
+                UpdateMouse(x,y);
                 if (IsInBounds(x, y)) {
                     if (state.HasFlag(Gdk.ModifierType.Button1Mask))
-                        OnClicked(x, y);
+                        OnDragged(x, y);
                 }
             };
         }
@@ -83,11 +93,66 @@ namespace LynnaLab
             QueueDraw();
         }
 
+        // Called when a new set of interactions is loaded or interactions are
+        // modified or whatever
+        public void OnInteractionsModified() {
+        }
+
+        void UpdateMouse(int x, int y) {
+            if (mouseX != x || mouseY != y) {
+                mouseX = x;
+                mouseY = y;
+
+                if (ViewInteractions) // Laziness
+                    QueueDraw();
+            }
+        }
+
         void OnClicked(int x, int y) {
             x /= TileWidth;
             y /= TileHeight;
-            room.SetTile(x, y, client.SelectedIndex);
-            this.QueueDrawArea(x * TileWidth, y * TileWidth, TileWidth - 1, TileHeight - 1);
+            if (!ViewInteractions) {
+                room.SetTile(x, y, client.SelectedIndex);
+                this.QueueDrawArea(x * TileWidth, y * TileWidth, TileWidth - 1, TileHeight - 1);
+            }
+            else {
+                if (interactionEditor != null) {
+                    InteractionGroupEditor editor = interactionEditor;
+                    while (hoveringInteractionIndices.Count > 1) {
+                        editor.SelectedIndex = hoveringInteractionIndices[0];
+                        hoveringInteractionIndices.RemoveAt(0);
+                        editor = editor.SubEditor;
+                    }
+                    if (hoveringInteractionIndices.Count == 1)
+                        editor.SelectedIndex = hoveringInteractionIndices[0];
+                }
+            }
+        }
+
+        void OnDragged(int x, int y) {
+            if (!ViewInteractions)
+                OnClicked(x,y);
+            else {
+                if (!IsInBounds(x,y)) return;
+
+                InteractionData data = interactionEditor.SelectedInteractionData;
+                if (data != null && data.HasXY()) {
+                    // Move interactions in increments of 16 pixels
+                    int dataX = data.GetX()+8;
+                    int dataY = data.GetY()+8;
+                    int alignX = (dataX)%16;
+                    int alignY = (dataY)%16;
+                    int newX = (x-alignX)/16;
+                    int newY = (y-alignY)/16;
+                    newX = (newX*16+alignX+8)%256;
+                    newY = (newY*16+alignY+8)%256;
+
+                    data.SetX(newX);
+                    data.SetY(newY);
+
+                    QueueDraw();
+                }
+            }
         }
 
 		protected override bool OnButtonPressEvent(Gdk.EventButton ev)
@@ -98,26 +163,41 @@ namespace LynnaLab
 
 		protected override bool OnExposeEvent(Gdk.EventExpose ev)
 		{
-			base.OnExposeEvent(ev);
-
             Graphics g = Gtk.DotNet.Graphics.FromDrawable(ev.Window);
 
-            // Draw interactions
+            if (ViewInteractions)
+                g.DrawImage(Image, 0, 0, Image.Width*Scale, Image.Height*Scale);
+            else
+                base.OnExposeEvent(ev);
 
-            if (interactionEditor == null) return true;
+            if (ViewInteractions && interactionEditor != null) {
+                // Draw interactions
 
-            InteractionGroup group = interactionEditor.InteractionGroup;
-            DrawInteractionGroup(g, 0, group, interactionEditor);
+                int cursorX=-1,cursorY=-1;
+                int selectedX=-1,selectedY=-1;
+                hoveringInteractionIndices = new List<int>();
+
+                InteractionGroup group = interactionEditor.InteractionGroup;
+                DrawInteractionGroup(g, 0, ref cursorX, ref cursorY, ref selectedX, ref selectedY, group, interactionEditor);
+
+                // Interaction hovering over
+                if (cursorX != -1)
+                    g.DrawRectangle(new Pen(Color.Red), cursorX, cursorY, 15, 15);
+                // Interaction selected
+                if (selectedX != -1)
+                    g.DrawRectangle(new Pen(Color.White), selectedX, selectedY, 15, 15);
+            }
+
 
             g.Dispose();
 
             return true;
 		}
 
-        int DrawInteractionGroup(Graphics g, int index, InteractionGroup group, InteractionGroupEditor editor) {
+        int DrawInteractionGroup(Graphics g, int index, ref int cursorX, ref int cursorY, ref int selectedX, ref int selectedY, InteractionGroup group, InteractionGroupEditor editor) {
             if (group == null) return index;
 
-            int cursorX=-1,cursorY=-1;
+            bool foundHoveringMatch = false;
 
             for (int i=0; i<group.GetNumInteractions(); i++) {
                 InteractionData data = group.GetInteractionData(i);
@@ -125,29 +205,32 @@ namespace LynnaLab
                         data.GetInteractionType() <= InteractionType.Conditional) {
                     InteractionGroup nextGroup = data.GetPointedInteractionGroup();
                     if (nextGroup != null) {
+                        List<int> oldHoveringInteractionIndices =
+                            new List<int>(hoveringInteractionIndices);
+                        hoveringInteractionIndices.Add(i);
                         if (editor != null && i == editor.SelectedIndex)
-                            index = DrawInteractionGroup(g, index, nextGroup, editor.SubEditor);
+                            index = DrawInteractionGroup(g, index, ref cursorX, ref cursorY,
+                                    ref selectedX, ref selectedY, nextGroup, editor.SubEditor);
                         else
-                            index = DrawInteractionGroup(g, index, nextGroup, null);
+                            index = DrawInteractionGroup(g, index, ref cursorX, ref cursorY,
+                                    ref selectedX, ref selectedY, nextGroup, null);
+                        if (hoveringInteractionIndices.Count == oldHoveringInteractionIndices.Count+1)
+                            hoveringInteractionIndices = oldHoveringInteractionIndices;
                     }
                 }
                 else {
                     Color color = data.GetColor();
                     int x,y;
                     int width;
-                    try {
-                        x = data.GetIntValue("X");
-                        y = data.GetIntValue("Y");
+                    if (data.HasXY()) {
+                        x = data.GetX();
+                        y = data.GetY();
                         width = 16;
-                        if (data.HasShortenedXY()) {
-                            x = x*16+8;
-                            y = y*16+8;
-                        }
                         // Interactions with specific positions get
                         // transparency
                         color = Color.FromArgb(0xd0,color.R,color.G,color.B);
                     }
-                    catch (NotFoundException e) {
+                    else {
                         // No X/Y values exist
                         x = index;
                         y = 0;
@@ -164,18 +247,27 @@ namespace LynnaLab
                     }
 
                     if (editor != null && i == editor.SelectedIndex) {
-                        cursorX = x-8;
-                        cursorY = y-8;
+                        selectedX = x-8;
+                        selectedY = y-8;
                     }
                     x -= width/2;
                     y -= width/2;
+
+                    if (mouseX >= x && mouseX < x+width &&
+                            mouseY >= y && mouseY < y+width) {
+                        if (foundHoveringMatch)
+                            hoveringInteractionIndices[hoveringInteractionIndices.Count-1] = i;
+                        else
+                            hoveringInteractionIndices.Add(i);
+                        cursorX = x+width/2 - 8;
+                        cursorY = y+width/2 - 8;
+                        foundHoveringMatch = true;
+                    }
 
                     g.FillRectangle(new SolidBrush(color), x, y, width, width);
                 }
             }
 
-            if (cursorX != -1)
-                g.DrawRectangle(new Pen(Color.Red), cursorX, cursorY, 15, 15);
             return index;
         }
 

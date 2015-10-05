@@ -298,4 +298,10 @@ public partial class MainWindow: Gtk.Window
         win.Name = "Edit Area";
         win.ShowAll();
     }
+
+    protected void OnViewInteractionsCheckBoxToggled(object sender, EventArgs e)
+    {
+        roomeditor1.ViewInteractions = viewInteractionsCheckBox.Active;
+        roomeditor1.QueueDraw();
+    }
 }
