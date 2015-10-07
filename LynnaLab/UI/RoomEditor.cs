@@ -189,7 +189,7 @@ namespace LynnaLab
                 hoveringInteractionIndices = new List<int>();
 
                 InteractionGroup group = interactionEditor.InteractionGroup;
-                DrawInteractionGroup(g, 0, ref cursorX, ref cursorY, ref selectedX, ref selectedY, group, interactionEditor);
+                DrawInteractionGroup(g, 0, ref cursorX, ref cursorY, ref selectedX, ref selectedY, group, interactionEditor, ref hoveringInteractionIndices);
 
                 // Interaction hovering over
                 if (cursorX != -1)
@@ -205,8 +205,10 @@ namespace LynnaLab
             return true;
         }
 
-        int DrawInteractionGroup(Graphics g, int index, ref int cursorX, ref int cursorY, ref int selectedX, ref int selectedY, InteractionGroup group, InteractionGroupEditor editor) {
+        int DrawInteractionGroup(Graphics g, int index, ref int cursorX, ref int cursorY, ref int selectedX, ref int selectedY, InteractionGroup group, InteractionGroupEditor editor, ref List<int> interactionIndices) {
             if (group == null) return index;
+
+            List<int> localInteractionIndices = new List<int>(interactionIndices);
 
             bool foundHoveringMatch = false;
 
@@ -216,17 +218,16 @@ namespace LynnaLab
                         data.GetInteractionType() <= InteractionType.Conditional) {
                     InteractionGroup nextGroup = data.GetPointedInteractionGroup();
                     if (nextGroup != null) {
-                        List<int> oldHoveringInteractionIndices =
-                            new List<int>(hoveringInteractionIndices);
-                        hoveringInteractionIndices.Add(i);
+                        List<int> pointerInteractionIndices = new List<int>(interactionIndices);
+                        pointerInteractionIndices.Add(i);
                         if (editor != null && i == editor.SelectedIndex)
                             index = DrawInteractionGroup(g, index, ref cursorX, ref cursorY,
-                                    ref selectedX, ref selectedY, nextGroup, editor.SubEditor);
+                                    ref selectedX, ref selectedY, nextGroup, editor.SubEditor, ref pointerInteractionIndices);
                         else
                             index = DrawInteractionGroup(g, index, ref cursorX, ref cursorY,
-                                    ref selectedX, ref selectedY, nextGroup, null);
-                        if (hoveringInteractionIndices.Count == oldHoveringInteractionIndices.Count+1)
-                            hoveringInteractionIndices = oldHoveringInteractionIndices;
+                                    ref selectedX, ref selectedY, nextGroup, null, ref pointerInteractionIndices);
+                        if (pointerInteractionIndices.Count > interactionIndices.Count+1)
+                            localInteractionIndices = pointerInteractionIndices;
                     }
                 }
                 else {
@@ -263,13 +264,15 @@ namespace LynnaLab
                     }
                     if (mouseX >= x-8 && mouseX < x+8 &&
                             mouseY >= y-8 && mouseY < y+8) {
-                        if (foundHoveringMatch)
-                            hoveringInteractionIndices[hoveringInteractionIndices.Count-1] = i;
-                        else
-                            hoveringInteractionIndices.Add(i);
-                        cursorX = x-8;
-                        cursorY = y-8;
-                        foundHoveringMatch = true;
+                        if (localInteractionIndices.Count == interactionIndices.Count) {
+                            if (foundHoveringMatch)
+                                localInteractionIndices[localInteractionIndices.Count-1] = i;
+                            else
+                                localInteractionIndices.Add(i);
+                            cursorX = x-8;
+                            cursorY = y-8;
+                            foundHoveringMatch = true;
+                        }
                     }
 
                     x -= width/2;
@@ -280,6 +283,7 @@ namespace LynnaLab
                 }
             }
 
+            interactionIndices = localInteractionIndices;
             return index;
         }
 
