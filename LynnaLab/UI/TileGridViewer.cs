@@ -38,7 +38,8 @@ namespace LynnaLab
         public TileGridViewer() : base() {
             this.MotionNotifyEvent += new MotionNotifyEventHandler(OnMoveMouse);
             this.LeaveNotifyEvent += new LeaveNotifyEventHandler(OnMouseLeave);
-            this.Events = Gdk.EventMask.PointerMotionMask | Gdk.EventMask.LeaveNotifyMask | Gdk.EventMask.ButtonPressMask;
+            this.Events = Gdk.EventMask.PointerMotionMask | Gdk.EventMask.LeaveNotifyMask |
+                Gdk.EventMask.ButtonPressMask | Gdk.EventMask.ButtonReleaseMask;
 
             Scale = 1;
         }

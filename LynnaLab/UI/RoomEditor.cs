@@ -5,9 +5,9 @@ using Gtk;
 
 namespace LynnaLab
 {
-	[System.ComponentModel.ToolboxItem(true)]
-	public class RoomEditor : TileGridViewer
-	{
+    [System.ComponentModel.ToolboxItem(true)]
+    public class RoomEditor : TileGridViewer
+    {
         public Room Room
         {
             get { return room; }
@@ -50,6 +50,14 @@ namespace LynnaLab
                         OnClicked(x, y);
                     else if (state.HasFlag(Gdk.ModifierType.Button3Mask))
                         client.SelectedIndex = room.GetTile(x/TileWidth, y/TileWidth);
+                }
+            };
+            this.ButtonReleaseEvent += delegate(object o, ButtonReleaseEventArgs args) {
+                int x,y;
+                Gdk.ModifierType state;
+                args.Event.Window.GetPointer(out x, out y, out state);
+                if (!state.HasFlag(Gdk.ModifierType.Button1Mask)) {
+                    draggingInteraction = false;
                 }
             };
             this.MotionNotifyEvent += delegate(object o, MotionNotifyEventArgs args) {
@@ -123,8 +131,10 @@ namespace LynnaLab
                         hoveringInteractionIndices.RemoveAt(0);
                         editor = editor.SubEditor;
                     }
-                    if (hoveringInteractionIndices.Count == 1)
+                    if (hoveringInteractionIndices.Count == 1) {
                         editor.SelectedIndex = hoveringInteractionIndices[0];
+                        draggingInteraction = true;
+                    }
                 }
             }
         }
@@ -134,6 +144,7 @@ namespace LynnaLab
                 OnClicked(x,y);
             else {
                 if (!IsInBounds(x,y)) return;
+                if (!draggingInteraction) return;
 
                 InteractionData data = interactionEditor.SelectedInteractionData;
                 if (data != null && data.HasXY()) {
@@ -155,14 +166,14 @@ namespace LynnaLab
             }
         }
 
-		protected override bool OnButtonPressEvent(Gdk.EventButton ev)
-		{
-			// Insert button press handling code here.
-			return base.OnButtonPressEvent(ev);
-		}
+        protected override bool OnButtonPressEvent(Gdk.EventButton ev)
+        {
+            // Insert button press handling code here.
+            return base.OnButtonPressEvent(ev);
+        }
 
-		protected override bool OnExposeEvent(Gdk.EventExpose ev)
-		{
+        protected override bool OnExposeEvent(Gdk.EventExpose ev)
+        {
             Graphics g = Gtk.DotNet.Graphics.FromDrawable(ev.Window);
 
             if (ViewInteractions)
@@ -192,7 +203,7 @@ namespace LynnaLab
             g.Dispose();
 
             return true;
-		}
+        }
 
         int DrawInteractionGroup(Graphics g, int index, ref int cursorX, ref int cursorY, ref int selectedX, ref int selectedY, InteractionGroup group, InteractionGroupEditor editor) {
             if (group == null) return index;
@@ -250,19 +261,20 @@ namespace LynnaLab
                         selectedX = x-8;
                         selectedY = y-8;
                     }
-                    x -= width/2;
-                    y -= width/2;
-
-                    if (mouseX >= x && mouseX < x+width &&
-                            mouseY >= y && mouseY < y+width) {
+                    if (mouseX >= x-8 && mouseX < x+8 &&
+                            mouseY >= y-8 && mouseY < y+8) {
                         if (foundHoveringMatch)
                             hoveringInteractionIndices[hoveringInteractionIndices.Count-1] = i;
                         else
                             hoveringInteractionIndices.Add(i);
-                        cursorX = x+width/2 - 8;
-                        cursorY = y+width/2 - 8;
+                        cursorX = x-8;
+                        cursorY = y-8;
                         foundHoveringMatch = true;
                     }
+
+                    x -= width/2;
+                    y -= width/2;
+
 
                     g.FillRectangle(new SolidBrush(color), x, y, width, width);
                 }
@@ -271,17 +283,17 @@ namespace LynnaLab
             return index;
         }
 
-		protected override void OnSizeAllocated(Gdk.Rectangle allocation)
-		{
-			base.OnSizeAllocated(allocation);
-			// Insert layout code here.
-		}
+        protected override void OnSizeAllocated(Gdk.Rectangle allocation)
+        {
+            base.OnSizeAllocated(allocation);
+            // Insert layout code here.
+        }
 
-		protected override void OnSizeRequested(ref Gtk.Requisition requisition)
-		{
-			// Calculate desired size here.
-			requisition.Width = 0xf*16;
-			requisition.Height = 0xb*16;
-		}
-	}
+        protected override void OnSizeRequested(ref Gtk.Requisition requisition)
+        {
+            // Calculate desired size here.
+            requisition.Width = 0xf*16;
+            requisition.Height = 0xb*16;
+        }
+    }
 }
