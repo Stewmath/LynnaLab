@@ -93,6 +93,8 @@
     <Compile Include="Core\Exceptions.cs" />
     <Compile Include="Core\ValueReference.cs" />
     <Compile Include="UI\ValueReferenceEditor.cs" />
+    <Compile Include="Core\WarpSourceData.cs" />
+    <Compile Include="Core\WarpGroup.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

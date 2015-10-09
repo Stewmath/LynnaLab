@@ -3,9 +3,6 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-// TODO: Given the parallels between Labels and Data, consider making
-// a "FileComponent" subclass and make FileStructure an array of those
-
 namespace LynnaLab
 {
     public class AsmFileParser : FileParser
@@ -438,7 +435,20 @@ interactionData:
                     }
 
                 default:
-                    return false;
+                    {
+                        Data d = null;
+                        // Try warp sources
+                        foreach (string s in WarpSourceData.WarpCommands) {
+                            if (s == tokens[0].ToLower()) {
+                                d = new WarpSourceData(Project, tokens[0], standardValues,
+                                        this, spacing);
+                            }
+                        }
+                        if (d != null)
+                            AddDataAndPopFileStructure(d);
+                        else
+                            return false;
+                    }
             }
             return true;
         }
