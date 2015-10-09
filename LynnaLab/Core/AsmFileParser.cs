@@ -439,16 +439,18 @@ interactionData:
                         Data d = null;
                         // Try warp sources
                         foreach (string s in WarpSourceData.WarpCommands) {
-                            if (s == tokens[0].ToLower()) {
+                            if (s.ToLower() == tokens[0].ToLower()) {
                                 d = new WarpSourceData(Project, tokens[0], standardValues,
                                         this, spacing);
                             }
                         }
-                        if (d != null)
+                        if (d != null) {
                             AddDataAndPopFileStructure(d);
-                        else
-                            return false;
+                            break;
+                        }
+                        return false;
                     }
+                    break;
             }
             return true;
         }

@@ -167,6 +167,9 @@ namespace LynnaLab
                 throw new LabelNotFoundException("Label \"" + label + "\" was needed but could not be located!");
             }
 		}
+        public Data GetData(string label) {
+            return GetFileWithLabel(label).GetData(label);
+        }
 
 		public void WriteLog(string data) {
 			logWriter.Write(data);

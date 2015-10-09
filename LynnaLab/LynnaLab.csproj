@@ -94,7 +94,7 @@
     <Compile Include="Core\ValueReference.cs" />
     <Compile Include="UI\ValueReferenceEditor.cs" />
     <Compile Include="Core\WarpSourceData.cs" />
-    <Compile Include="Core\WarpGroup.cs" />
+    <Compile Include="Core\WarpSourceGroup.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
