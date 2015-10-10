@@ -19,6 +19,10 @@ public partial class MainWindow
 	
 	private global::Gtk.Action RedrawMinimapsAction;
 	
+	private global::Gtk.Action EditAction;
+	
+	private global::Gtk.Action WarpsAction;
+	
 	private global::Gtk.VBox vbox1;
 	
 	private global::Gtk.MenuBar menubar1;
@@ -130,6 +134,12 @@ public partial class MainWindow
 		this.RedrawMinimapsAction = new global::Gtk.Action ("RedrawMinimapsAction", global::Mono.Unix.Catalog.GetString ("Redraw Minimaps"), null, null);
 		this.RedrawMinimapsAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("Redraw Minimaps");
 		w1.Add (this.RedrawMinimapsAction, null);
+		this.EditAction = new global::Gtk.Action ("EditAction", global::Mono.Unix.Catalog.GetString ("_Edit"), null, null);
+		this.EditAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("_Edit");
+		w1.Add (this.EditAction, "<Alt>e");
+		this.WarpsAction = new global::Gtk.Action ("WarpsAction", global::Mono.Unix.Catalog.GetString ("_Warps"), null, null);
+		this.WarpsAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("_Warps");
+		w1.Add (this.WarpsAction, "<Primary>w");
 		this.UIManager.InsertActionGroup (w1, 0);
 		this.AddAccelGroup (this.UIManager.AccelGroup);
 		this.Name = "MainWindow";
@@ -140,7 +150,7 @@ public partial class MainWindow
 		this.vbox1.Name = "vbox1";
 		this.vbox1.Spacing = 6;
 		// Container child vbox1.Gtk.Box+BoxChild
-		this.UIManager.AddUiFromString ("<ui><menubar name='menubar1'><menu name='FileAction' action='FileAction'><menuitem name='OpenAction' action='OpenAction'/><menuitem name='SaveAction' action='SaveAction'/><menuitem name='QuitAction' action='QuitAction'/></menu><menu name='ViewAction' action='ViewAction'><menuitem name='AnimationsAction' action='AnimationsAction'/></menu></menubar></ui>");
+		this.UIManager.AddUiFromString ("<ui><menubar name='menubar1'><menu name='FileAction' action='FileAction'><menuitem name='OpenAction' action='OpenAction'/><menuitem name='SaveAction' action='SaveAction'/><menuitem name='QuitAction' action='QuitAction'/></menu><menu name='EditAction' action='EditAction'><menuitem name='WarpsAction' action='WarpsAction'/></menu><menu name='ViewAction' action='ViewAction'><menuitem name='AnimationsAction' action='AnimationsAction'/></menu></menubar></ui>");
 		this.menubar1 = ((global::Gtk.MenuBar)(this.UIManager.GetWidget ("/menubar1")));
 		this.menubar1.Name = "menubar1";
 		this.vbox1.Add (this.menubar1);
@@ -307,6 +317,7 @@ public partial class MainWindow
 		this.interactionGroupEditor = new global::LynnaLab.InteractionGroupEditor ();
 		this.interactionGroupEditor.Events = ((global::Gdk.EventMask)(256));
 		this.interactionGroupEditor.Name = "interactionGroupEditor";
+		this.interactionGroupEditor.SelectedIndex = 0;
 		this.vbox6.Add (this.interactionGroupEditor);
 		global::Gtk.Box.BoxChild w15 = ((global::Gtk.Box.BoxChild)(this.vbox6 [this.interactionGroupEditor]));
 		w15.Position = 1;
@@ -553,6 +564,7 @@ public partial class MainWindow
 		this.QuitAction.Activated += new global::System.EventHandler (this.OnQuitActionActivated);
 		this.SaveAction.Activated += new global::System.EventHandler (this.OnSaveActionActivated);
 		this.AnimationsAction.Activated += new global::System.EventHandler (this.OnAnimationsActionActivated);
+		this.WarpsAction.Activated += new global::System.EventHandler (this.OnWarpsActionActivated);
 		this.roomSpinButton.ValueChanged += new global::System.EventHandler (this.OnRoomSpinButtonValueChanged);
 		this.musicComboBox.Changed += new global::System.EventHandler (this.OnMusicComboBoxChanged);
 		this.areaSpinButton.ValueChanged += new global::System.EventHandler (this.OnAreaSpinButtonValueChanged);

@@ -70,6 +70,7 @@ namespace LynnaLab
 			this.addButton.Name = "addButton";
 			this.addButton.UseStock = true;
 			this.addButton.UseUnderline = true;
+			this.addButton.FocusOnClick = false;
 			this.addButton.Label = "gtk-add";
 			this.vbox2.Add (this.addButton);
 			global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.addButton]));
@@ -82,7 +83,8 @@ namespace LynnaLab
 			this.deleteButton.Name = "deleteButton";
 			this.deleteButton.UseStock = true;
 			this.deleteButton.UseUnderline = true;
-			this.deleteButton.Label = "gtk-delete";
+			this.deleteButton.FocusOnClick = false;
+			this.deleteButton.Label = "gtk-remove";
 			this.vbox2.Add (this.deleteButton);
 			global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.deleteButton]));
 			w4.Position = 1;
@@ -103,9 +105,9 @@ namespace LynnaLab
 			this.frame2.Name = "frame2";
 			// Container child frame2.Gtk.Container+ContainerChild
 			this.GtkAlignment1 = new global::Gtk.Alignment (0F, 0F, 1F, 0F);
-			this.GtkAlignment1.Name = "GtkAlignment";
+			this.GtkAlignment1.Name = "GtkAlignment1";
 			this.GtkAlignment1.LeftPadding = ((uint)(12));
-			// Container child GtkAlignment.Gtk.Container+ContainerChild
+			// Container child GtkAlignment1.Gtk.Container+ContainerChild
 			this.interactionDataContainer = new global::Gtk.Alignment (0.5F, 0.5F, 1F, 1F);
 			this.interactionDataContainer.Name = "interactionDataContainer";
 			this.GtkAlignment1.Add (this.interactionDataContainer);

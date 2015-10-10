@@ -96,7 +96,12 @@ namespace LynnaLab
         }
         public int GetIntValue(int i) {
             // TODO: error handling
-            return Project.EvalToInt(GetValue(i));
+            try {
+                return Project.EvalToInt(GetValue(i));
+            }
+            catch (Exception e) {
+                throw e;
+            }
         }
         public string GetValue(string s) { // Get a value based on a value reference name
             ValueReference r = GetValueReference(s);
@@ -107,11 +112,11 @@ namespace LynnaLab
         public int GetIntValue(string s) {
             ValueReference r = GetValueReference(s);
             if (r == null) {
-                ThrowException(new NotFoundException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
-                return 0;
+                throw new NotFoundException("Couldn't find ValueReference corresponding to \"" + s + "\".");
             }
-            else
+            else {
                 return r.GetIntValue();
+            }
         }
 
         public virtual int GetNumValues() {

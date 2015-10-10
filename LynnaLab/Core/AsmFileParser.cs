@@ -444,6 +444,12 @@ interactionData:
                                         this, spacing);
                             }
                         }
+                        // Try warp dest
+                        if (WarpDestData.WarpCommand.ToLower() == tokens[0].ToLower()) {
+                            d = new WarpDestData(Project, tokens[0], standardValues,
+                                    this, spacing);
+                        }
+
                         if (d != null) {
                             AddDataAndPopFileStructure(d);
                             break;

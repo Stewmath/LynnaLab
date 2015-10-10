@@ -304,4 +304,13 @@ public partial class MainWindow: Gtk.Window
         roomeditor1.ViewInteractions = viewInteractionsCheckBox.Active;
         roomeditor1.QueueDraw();
     }
+
+    protected void OnWarpsActionActivated(object sender, EventArgs e) {
+        WarpEditor editor = new WarpEditor(Project);
+        editor.SetMap(roomSpinButton.ValueAsInt >> 8, roomSpinButton.ValueAsInt & 0xff);
+
+        Gtk.Window win = new Window(WindowType.Toplevel);
+        win.Add(editor);
+        win.ShowAll();
+    }
 }

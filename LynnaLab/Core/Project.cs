@@ -262,7 +262,10 @@ namespace LynnaLab
 			}
 			return stream;
 		}
+
+
+        public int GetNumGroups() {
+            return 8;
+        }
 	}
-
-
 }

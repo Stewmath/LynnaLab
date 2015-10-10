@@ -8,7 +8,7 @@ namespace LynnaLab
     {
         public int Group {
             get {
-                return 0;
+                return Index;
             }
         }
 
@@ -19,9 +19,11 @@ namespace LynnaLab
             Data d = parser.GetData("warpSourcesTable", id*2);
             string label = d.GetValue(0);
 
+            warpSourceDataList = new List<WarpSourceData>();
             WarpSourceData warpData = parser.GetData(label) as WarpSourceData;
             while (warpData != null && warpData.WarpSourceType != WarpSourceType.WarpSourcesEnd) {
                 warpSourceDataList.Add(warpData);
+                warpData = warpData.NextData as WarpSourceData;
             }
             if (warpData != null)
                 warpSourceDataList.Add(warpData); // WarpSourcesEnd

@@ -25,9 +25,9 @@ namespace LynnaLab
                 new List<ValueReference> { // StandardWarp
                     new ValueReference("Opcode",0,DataValueType.Byte),
                     new ValueReference("Map",1,DataValueType.Byte),
-                    new ValueReference("Group",3,0,3,DataValueType.ByteBits),
+                    new ValueReference("Group",2,0,3,DataValueType.ByteBits),
                     new ValueReference("Entrance",3,0,3,DataValueType.ByteBits),
-                    new ValueReference("Dest Index",2,DataValueType.Byte),
+                    new ValueReference("Dest Index",4,DataValueType.Byte),
                 },
                 new List<ValueReference> { // PointedWarp
                     new ValueReference("Opcode",0,DataValueType.Byte),
@@ -36,9 +36,9 @@ namespace LynnaLab
                     new ValueReference("Y",1,4,7,DataValueType.ByteBits),
                     new ValueReference("X",1,0,3,DataValueType.ByteBits),
 
-                    new ValueReference("Group",3,0,3,DataValueType.ByteBits),
+                    new ValueReference("Group",2,0,3,DataValueType.ByteBits),
                     new ValueReference("Entrance",3,0,3,DataValueType.ByteBits),
-                    new ValueReference("Dest Index",2,DataValueType.Byte),
+                    new ValueReference("Dest Index",4,DataValueType.Byte),
                 },
                 new List<ValueReference> { // PointerWarp
                     new ValueReference("Opcode",0,DataValueType.Byte),
@@ -49,11 +49,6 @@ namespace LynnaLab
                     new ValueReference("Pointer", 2, DataValueType.String),
                 },
                 new List<ValueReference> { // WarpSourcesEnd
-                    new ValueReference("Opcode",0,DataValueType.Byte),
-                    new ValueReference("Map",1,DataValueType.Byte),
-                    new ValueReference("Group",3,0,3,DataValueType.ByteBits),
-                    new ValueReference("Entrance",3,0,3,DataValueType.ByteBits),
-                    new ValueReference("Dest Index",2,DataValueType.Byte),
                 }
             };
 
@@ -74,7 +69,12 @@ namespace LynnaLab
         }
         public int Map {
             get {
-                return GetIntValue("Map");
+                try {
+                    return GetIntValue("Map");
+                }
+                catch (NotFoundException) {
+                    return -1;
+                }
             }
             set {
                 SetValue("Map", value);
@@ -82,7 +82,12 @@ namespace LynnaLab
         }
         public int Group {
             get {
-                return GetIntValue("Group");
+                try {
+                    return GetIntValue("Group");
+                }
+                catch (NotFoundException) {
+                    return -1;
+                }
             }
             set {
                 SetValue("Group",value);
@@ -90,7 +95,12 @@ namespace LynnaLab
         }
         public int Entrance {
             get {
-                return GetIntValue("Entrance");
+                try {
+                    return GetIntValue("Entrance");
+                }
+                catch (NotFoundException) {
+                    return -1;
+                }
             }
             set {
                 SetValue("Entrance",value);
@@ -98,15 +108,25 @@ namespace LynnaLab
         }
         public int DestIndex {
             get {
-                return GetIntValue("DestIndex");
+                try {
+                    return GetIntValue("Dest Index");
+                }
+                catch (NotFoundException) {
+                    return -1;
+                }
             }
             set {
-                SetValue("DestIndex",value);
+                SetValue("Dest Index",value);
             }
         }
         public int X {
             get {
-                return GetIntValue("X");
+                try {
+                    return GetIntValue("X");
+                }
+                catch (NotFoundException) {
+                    return -1;
+                }
             }
             set {
                 SetValue("X",value);
@@ -114,10 +134,20 @@ namespace LynnaLab
         }
         public int Y {
             get {
-                return GetIntValue("Y");
+                try {
+                    return GetIntValue("Y");
+                }
+                catch (NotFoundException) {
+                    return -1;
+                }
             }
             set {
                 SetValue("Y",value);
+            }
+        }
+        public string PointerString {
+            get {
+                return GetValue("Pointer");
             }
         }
 
@@ -152,7 +182,7 @@ namespace LynnaLab
             if (WarpSourceType != WarpSourceType.PointedWarp) return null;
 
             // A warp with opcode bit 7 set signals the end of the sequence
-            if ((Opcode & 0x80) == 0) return null;
+            if ((Opcode & 0x80) != 0) return null;
 
             FileComponent next = Next;
             while (next != null) {
@@ -167,6 +197,22 @@ namespace LynnaLab
             }
 
             return null;
+        }
+
+        // Returns the number of PointedWarps there are after and including
+        // this one. This is the number of times (plus one) that you can call
+        // GetNextWarp() before you get a null value.
+        //
+        // If called on a PointerWarp, it returns the corresponding value for
+        // its PointedWarp.
+        public int GetPointedChainLength() {
+            if (WarpSourceType == WarpSourceType.PointerWarp)
+                return GetPointedWarp().GetPointedChainLength();
+
+            WarpSourceData next = GetNextWarp();
+            if (next == null) return 1;
+
+            return 1+next.GetPointedChainLength();
         }
     }
 }

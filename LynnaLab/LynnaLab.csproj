@@ -95,6 +95,10 @@
     <Compile Include="UI\ValueReferenceEditor.cs" />
     <Compile Include="Core\WarpSourceData.cs" />
     <Compile Include="Core\WarpSourceGroup.cs" />
+    <Compile Include="gtk-gui\LynnaLab.WarpEditor.cs" />
+    <Compile Include="UI\WarpEditor.cs" />
+    <Compile Include="Core\WarpDestGroup.cs" />
+    <Compile Include="Core\WarpDestData.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
