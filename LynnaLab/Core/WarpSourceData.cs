@@ -25,9 +25,9 @@ namespace LynnaLab
                 new List<ValueReference> { // StandardWarp
                     new ValueReference("Opcode",0,DataValueType.Byte),
                     new ValueReference("Map",1,DataValueType.Byte),
-                    new ValueReference("Group",2,0,3,DataValueType.ByteBits),
-                    new ValueReference("Entrance",3,0,3,DataValueType.ByteBits),
-                    new ValueReference("Dest Index",4,DataValueType.Byte),
+                    new ValueReference("Dest Index",2,DataValueType.WarpDestIndex),
+                    new ValueReference("Dest Group",3,0,2,DataValueType.ByteBits),
+                    new ValueReference("Entrance",4,0,3,DataValueType.ByteBits),
                 },
                 new List<ValueReference> { // PointedWarp
                     new ValueReference("Opcode",0,DataValueType.Byte),
@@ -36,9 +36,9 @@ namespace LynnaLab
                     new ValueReference("Y",1,4,7,DataValueType.ByteBits),
                     new ValueReference("X",1,0,3,DataValueType.ByteBits),
 
-                    new ValueReference("Group",2,0,3,DataValueType.ByteBits),
-                    new ValueReference("Entrance",3,0,3,DataValueType.ByteBits),
-                    new ValueReference("Dest Index",4,DataValueType.Byte),
+                    new ValueReference("Dest Index",2,DataValueType.WarpDestIndex),
+                    new ValueReference("Dest Group",3,0,2,DataValueType.ByteBits),
+                    new ValueReference("Entrance",4,0,3,DataValueType.ByteBits),
                 },
                 new List<ValueReference> { // PointerWarp
                     new ValueReference("Opcode",0,DataValueType.Byte),
@@ -80,17 +80,17 @@ namespace LynnaLab
                 SetValue("Map", value);
             }
         }
-        public int Group {
+        public int DestGroup {
             get {
                 try {
-                    return GetIntValue("Group");
+                    return GetIntValue("Dest Group");
                 }
                 catch (NotFoundException) {
                     return -1;
                 }
             }
             set {
-                SetValue("Group",value);
+                SetValue("Dest Group",value);
             }
         }
         public int Entrance {
@@ -151,6 +151,10 @@ namespace LynnaLab
             }
         }
 
+
+        WarpDestData referencedDestData;
+
+
         public WarpSourceData(Project p, string command, IList<string> values,
                 FileParser parser, IList<int> spacing)
             : base(p, command, values, -1, parser, spacing)
@@ -165,6 +169,22 @@ namespace LynnaLab
             }
 
             SetValueReferences(warpValueReferences[(int)WarpSourceType]);
+
+            referencedDestData = GetReferencedDestData();
+            if (referencedDestData != null)
+                referencedDestData.AddReference(this);
+
+            this.AddDataModifiedHandler(delegate(object sender, EventArgs e) {
+                    WarpDestData newDestData = GetReferencedDestData();
+                    if (newDestData != referencedDestData) {
+                        // Update DestData reference
+                        if (referencedDestData != null)
+                            referencedDestData.RemoveReference(this);
+                        referencedDestData = newDestData;
+                        if (newDestData != null)
+                            newDestData.AddReference(this);
+                    }
+                });
         }
 
         // If this is the kind of warp which points to another warp, return the
@@ -213,6 +233,34 @@ namespace LynnaLab
             if (next == null) return 1;
 
             return 1+next.GetPointedChainLength();
+        }
+
+        public WarpDestData GetReferencedDestData() {
+            WarpDestGroup group = GetReferencedDestGroup();
+            if (group == null) return null;
+
+            try {
+                return group.GetWarpDest(DestIndex);
+            }
+            catch (ArgumentOutOfRangeException e) {
+                return null;
+            }
+        }
+
+        public WarpDestGroup GetReferencedDestGroup() {
+            if (_type == WarpSourceType.PointerWarp ||
+                    _type == WarpSourceType.WarpSourcesEnd)
+                return null;
+            return Project.GetIndexedDataType<WarpDestGroup>(DestGroup);
+        }
+
+        // Set the WarpDestData associated with this source, setting DestIndex
+        // and DestGroup appropriately
+        public void SetDestData(WarpDestData data) {
+            DestIndex = data.DestIndex;
+            DestGroup = data.DestGroup.Index;
+            // The handler defined in the constructor will update the
+            // referencedData variable
         }
     }
 }

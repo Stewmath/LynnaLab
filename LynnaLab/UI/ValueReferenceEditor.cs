@@ -24,26 +24,30 @@ namespace LynnaLab {
 
             valueReferences = data.GetValueReferences();
 
-            List<String> labelList = new List<String>();
-            List<Gtk.Widget> widgetList = new List<Gtk.Widget>();
+//             List<String> labelList = new List<String>();
+//             List<Gtk.Widget> widgetList = new List<Gtk.Widget>();
+
+            Gtk.Table table = new Gtk.Table(2, 2, false);
+            uint y=0;
 
             foreach (ValueReference r in valueReferences) {
                 switch(r.ValueType) {
                     case DataValueType.String:
                     default:
                         {
-                            labelList.Add(r.Name);
+                            table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
                             Gtk.Entry entry = new Gtk.Entry();
                             dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
                                 entry.Text = r.GetStringValue();
                                 OnDataModifiedInternal();
                             };
-                            widgetList.Add(entry);
+                            table.Attach(entry, 1, 2, y, y+1);
                             break;
                         }
                     case DataValueType.Byte:
+byteCase:
                         {
-                            labelList.Add(r.Name);
+                            table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
                             SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,255);
                             spinButton.Digits = 2;
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
@@ -54,12 +58,25 @@ namespace LynnaLab {
                             dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
                                 spinButton.Value = r.GetIntValue();
                             };
-                            widgetList.Add(spinButton);
+                            table.Attach(spinButton, 1, 2, y, y+1);
                         }
                         break;
+
+                    case DataValueType.WarpDestIndex:
+                        {
+                            Gtk.Button newDestButton = new Gtk.Button("New\nDestination");
+                            newDestButton.Clicked += delegate(object sender, EventArgs e) {
+                                WarpSourceData warpData = (WarpSourceData)data;
+                                WarpDestGroup group = warpData.GetReferencedDestGroup();
+                                warpData.SetDestData(group.AddDestData());
+                            };
+                            table.Attach(newDestButton, 2, 3, y, y+2);
+                        }
+                        goto byteCase;
+
                     case DataValueType.Word:
                         {
-                            labelList.Add(r.Name);
+                            table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
                             SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,0xffff);
                             spinButton.Digits = 4;
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
@@ -70,12 +87,12 @@ namespace LynnaLab {
                             dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
                                 spinButton.Value = r.GetIntValue();
                             };
-                            widgetList.Add(spinButton);
+                            table.Attach(spinButton, 1, 2, y, y+1);
                         }
                         break;
                     case DataValueType.ByteBits:
                         {
-                            labelList.Add(r.Name);
+                            table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
                             SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,r.MaxValue);
                             spinButton.Digits = (uint)((r.MaxValue+0xf)/0x10);
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
@@ -86,25 +103,26 @@ namespace LynnaLab {
                             dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
                                 spinButton.Value = r.GetIntValue();
                             };
-                            widgetList.Add(spinButton);
+                            table.Attach(spinButton, 1, 2, y, y+1);
                         }
                         break;
                     case DataValueType.InteractionPointer:
                         {
-                            labelList.Add(r.Name);
+                            table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
 
                             Gtk.Entry entry = new Gtk.Entry();
                             entry.Changed += delegate(object sender, EventArgs e) {
                                 UpdatePointerTextBox(sender as Gtk.Entry, r);
                                 OnDataModifiedInternal();
                             };
-                            widgetList.Add(entry);
+                            table.Attach(entry, 1, 2, y, y+1);
 
-                            labelList.Add("");
                             pointerFrame = new Gtk.Frame();
                             pointerFrame.Label = "Pointer data (possibly shared)";
                             pointerFrame.BorderWidth = 5;
-                            widgetList.Add(pointerFrame);
+
+                            y++;
+                            table.Attach(pointerFrame, 0, 2, y, y+1);
 
                             dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
                                 entry.Text = r.GetStringValue();
@@ -113,32 +131,13 @@ namespace LynnaLab {
                         }
                         break;
                 }
-            }
 
-            Gtk.Frame frame = null;
-            if (frameText != null)
-                frame = new Gtk.Frame(frameText);
-
-            Gtk.Table table = new Gtk.Table(2, 2, false);
-            table.ColumnSpacing = 6;
-            uint y=0;
-
-            for (int i=0;i<labelList.Count;i++) {
-                table.Attach(new Gtk.Label(labelList[i]), 0, 1, y, y+1);
-                if (widgetList[i] is Gtk.Frame)
-                    table.Attach(widgetList[i], 0, 2, y, y+1);
-                else
-                    table.Attach(widgetList[i], 1, 2, y, y+1);
                 y++;
             }
 
-            if (frame == null) {
-                this.Add(table);
-            }
-            else {
-                frame.Add(table);
-                this.Add(frame);
-            }
+            table.ColumnSpacing = 6;
+
+            this.Add(table);
             this.ShowAll();
 
             data.AddDataModifiedHandler(OnDataModifiedExternal);

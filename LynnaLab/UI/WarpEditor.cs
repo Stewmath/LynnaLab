@@ -69,7 +69,7 @@ namespace LynnaLab
             WarpSourceData warpSourceData = warpGroup.GetMapWarpSourceData(map)[i];
 
             if (warpSourceData.WarpSourceType == WarpSourceType.StandardWarp)
-                SetDestIndex(warpSourceData.Group, warpSourceData.DestIndex);
+                SetDestIndex(warpSourceData.DestGroup, warpSourceData.DestIndex);
 
             sourceEditor = new ValueReferenceEditor(Project,
                     warpSourceData);
@@ -105,12 +105,12 @@ namespace LynnaLab
                         new ValueReferenceEditor(Project, pointedData);
 
                     destEditor.AddDataModifiedHandler(delegate(object sender2, EventArgs e2) {
-                            SetDestIndex(pointedData.Group, pointedData.DestIndex);
-                            });
+                            SetDestIndex(pointedData.DestGroup, pointedData.DestIndex);
+                        });
 
                     table.Attach(destEditor, 0, 2, 1, 2);
 
-                    SetDestIndex(pointedData.Group, pointedData.DestIndex);
+                    SetDestIndex(pointedData.DestGroup, pointedData.DestIndex);
                 };
 
                 pointerSpinButton.ValueChanged += valueChangedHandler;
@@ -125,7 +125,7 @@ namespace LynnaLab
             }
             else { // Not pointerWarp
                 sourceEditor.AddDataModifiedHandler(delegate(object sender, EventArgs e) {
-                        SetDestIndex(warpSourceData.Group, warpSourceData.DestIndex);
+                        SetDestIndex(warpSourceData.DestGroup, warpSourceData.DestIndex);
                         });
             }
 
@@ -145,18 +145,23 @@ namespace LynnaLab
 
             destEditorContainer.Remove(destEditorContainer.Child);
 
-            if (index == -1)
+            if (index == -1 || index >= destGroup.GetNumWarpDests()) {
+                frame2.Hide();
                 return;
+            }
 
-            Data destData = destGroup.GetWarpDest(index);
+            WarpDestData destData = destGroup.GetWarpDest(index);
             ValueReferenceEditor editor = new ValueReferenceEditor(Project,destData);
 
-            editor.AddDataModifiedHandler(delegate(object sender, EventArgs e) {
-//                     destIndexLabel.Text = "Group " + 
-                    });
+            int numReferences = destData.GetNumReferences();
+            if (numReferences == 2)
+                destInfoLabel.Text = "Used by " + (numReferences-1) + " other source";
+            else
+                destInfoLabel.Text = "Used by " + (numReferences-1) + " other sources";
 
             destEditorContainer.Add(editor);
             destEditorContainer.ShowAll();
+            frame2.ShowAll();
         }
     }
 }

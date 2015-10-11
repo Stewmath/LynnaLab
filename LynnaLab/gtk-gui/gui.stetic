@@ -1736,6 +1736,18 @@
                             <property name="Fill">False</property>
                           </packing>
                         </child>
+                        <child>
+                          <widget class="Gtk.Label" id="destInfoLabel">
+                            <property name="MemberName" />
+                            <property name="LabelProp" translatable="yes">label1</property>
+                          </widget>
+                          <packing>
+                            <property name="Position">4</property>
+                            <property name="AutoSize">True</property>
+                            <property name="Expand">False</property>
+                            <property name="Fill">False</property>
+                          </packing>
+                        </child>
                       </widget>
                       <packing>
                         <property name="Position">0</property>

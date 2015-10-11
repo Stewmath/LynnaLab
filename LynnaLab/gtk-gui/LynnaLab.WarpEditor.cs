@@ -38,6 +38,8 @@ namespace LynnaLab
 		
 		private global::LynnaLab.SpinButtonHexadecimal destIndexSpinButton;
 		
+		private global::Gtk.Label destInfoLabel;
+		
 		private global::Gtk.Alignment destEditorContainer;
 		
 		private global::Gtk.Label GtkLabel;
@@ -171,17 +173,26 @@ namespace LynnaLab
 			w11.Position = 3;
 			w11.Expand = false;
 			w11.Fill = false;
-			this.vbox3.Add (this.hbox2);
-			global::Gtk.Box.BoxChild w12 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.hbox2]));
-			w12.Position = 0;
+			// Container child hbox2.Gtk.Box+BoxChild
+			this.destInfoLabel = new global::Gtk.Label ();
+			this.destInfoLabel.Name = "destInfoLabel";
+			this.destInfoLabel.LabelProp = global::Mono.Unix.Catalog.GetString ("label1");
+			this.hbox2.Add (this.destInfoLabel);
+			global::Gtk.Box.BoxChild w12 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destInfoLabel]));
+			w12.Position = 4;
 			w12.Expand = false;
 			w12.Fill = false;
+			this.vbox3.Add (this.hbox2);
+			global::Gtk.Box.BoxChild w13 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.hbox2]));
+			w13.Position = 0;
+			w13.Expand = false;
+			w13.Fill = false;
 			// Container child vbox3.Gtk.Box+BoxChild
 			this.destEditorContainer = new global::Gtk.Alignment (0.5F, 0.5F, 1F, 1F);
 			this.destEditorContainer.Name = "destEditorContainer";
 			this.vbox3.Add (this.destEditorContainer);
-			global::Gtk.Box.BoxChild w13 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.destEditorContainer]));
-			w13.Position = 1;
+			global::Gtk.Box.BoxChild w14 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.destEditorContainer]));
+			w14.Position = 1;
 			this.GtkAlignment1.Add (this.vbox3);
 			this.frame2.Add (this.GtkAlignment1);
 			this.GtkLabel = new global::Gtk.Label ();
@@ -190,9 +201,9 @@ namespace LynnaLab
 			this.GtkLabel.UseMarkup = true;
 			this.frame2.LabelWidget = this.GtkLabel;
 			this.vbox2.Add (this.frame2);
-			global::Gtk.Box.BoxChild w16 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
-			w16.Position = 2;
-			w16.Expand = false;
+			global::Gtk.Box.BoxChild w17 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
+			w17.Position = 2;
+			w17.Expand = false;
 			this.Add (this.vbox2);
 			if ((this.Child != null)) {
 				this.Child.ShowAll ();

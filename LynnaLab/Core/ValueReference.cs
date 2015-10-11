@@ -12,6 +12,7 @@ namespace LynnaLab
         Word,
         ByteBits,
         InteractionPointer,
+        WarpDestIndex,
     }
 
     // This class provides a way of accessing Data values of various different
@@ -24,7 +25,9 @@ namespace LynnaLab
             ".",
             "$00",
             "$0000",
+            "$0",
             "interactionData4000",
+            "$00",
         };
 
         public static string[] GetDefaultValues(DataValueType[] valueList) {
@@ -121,6 +124,7 @@ namespace LynnaLab
         public virtual void SetValue(int i) {
             switch(ValueType) {
                 case DataValueType.Byte:
+                case DataValueType.WarpDestIndex:
                     data.SetByteValue(valueIndex,(byte)i);
                     break;
                 case DataValueType.Word:
