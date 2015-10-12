@@ -23,8 +23,8 @@ namespace LynnaLab
         public static List<List<ValueReference>> warpValueReferences =
             new List<List<ValueReference>> {
                 new List<ValueReference> { // StandardWarp
-                    new ValueReference("Opcode",0,DataValueType.Byte),
-                    new ValueReference("Map",1,DataValueType.Byte),
+                    new ValueReference("Opcode",0,DataValueType.Byte, false),
+                    new ValueReference("Map",1,DataValueType.Byte, false),
                     new ValueReference("Dest Index",2,DataValueType.WarpDestIndex),
                     new ValueReference("Dest Group",3,0,2,DataValueType.ByteBits),
                     new ValueReference("Entrance",4,0,3,DataValueType.ByteBits),
@@ -41,12 +41,12 @@ namespace LynnaLab
                     new ValueReference("Entrance",4,0,3,DataValueType.ByteBits),
                 },
                 new List<ValueReference> { // PointerWarp
-                    new ValueReference("Opcode",0,DataValueType.Byte),
-                    new ValueReference("Map",1,DataValueType.Byte),
+                    new ValueReference("Opcode",0,DataValueType.Byte, false),
+                    new ValueReference("Map",1,DataValueType.Byte, false),
 
                     // For warp sources which point to others, the pointer replaces
                     // Group/Entrance/Dest Index.
-                    new ValueReference("Pointer", 2, DataValueType.String),
+                    new ValueReference("Pointer", 2, DataValueType.String, false),
                 },
                 new List<ValueReference> { // WarpSourcesEnd
                 }

@@ -10,6 +10,7 @@ namespace LynnaLab
         String=0,
         Byte,
         Word,
+        ByteBit,
         ByteBits,
         InteractionPointer,
         WarpDestIndex,
@@ -25,6 +26,7 @@ namespace LynnaLab
             ".",
             "$00",
             "$0000",
+            "0",
             "$0",
             "interactionData4000",
             "$00",
@@ -53,6 +55,7 @@ namespace LynnaLab
 
         public DataValueType ValueType {get; set;}
         public string Name {get; set;}
+        public bool Editable {get; set;}
 
         public int MaxValue { // For integer-based ones
             get {
@@ -63,6 +66,8 @@ namespace LynnaLab
                         return 0xffff;
                     case DataValueType.ByteBits:
                         return (1<<(endBit-startBit+1))-1;
+                    case DataValueType.ByteBit:
+                        return 1;
                     default:
                         return 0;
                 }
@@ -70,20 +75,22 @@ namespace LynnaLab
         }
 
         // Standard constructor for most DataValueTypes
-        public ValueReference(string n, int index, DataValueType t) {
+        public ValueReference(string n, int index, DataValueType t, bool editable=true) {
             valueIndex = index;
             ValueType = t;
             Name = n;
-            if (t == DataValueType.ByteBits)
+            Editable = editable;
+            if (t == DataValueType.ByteBits || t == DataValueType.ByteBit)
                 throw new Exception("Wrong constructor");
         }
-        // Constructor for DataValueType.Bits
-        public ValueReference(string n, int index, int startBit, int endBit, DataValueType t) {
+        // Constructor for DataValueType.ByteBits
+        public ValueReference(string n, int index, int startBit, int endBit, DataValueType t, bool editable=true) {
             valueIndex = index;
             ValueType = t;
             Name = n;
             this.startBit = startBit;
             this.endBit = endBit;
+            Editable = editable;
         }
 
         public ValueReference(ValueReference r) {
@@ -93,6 +100,7 @@ namespace LynnaLab
             Name = r.Name;
             startBit = r.startBit;
             endBit = r.endBit;
+            Editable = r.Editable;
         }
 
         public void SetData(Data d) {
@@ -109,6 +117,8 @@ namespace LynnaLab
                         int andValue = (1<<(endBit-startBit+1))-1;
                         return (data.GetIntValue(valueIndex)>>startBit)&andValue;
                     }
+                case DataValueType.ByteBit:
+                    return (Data.GetIntValue(valaueindex)>>startBit)&1;
                 default:
                     return data.GetIntValue(valueIndex);
             }
@@ -136,6 +146,13 @@ namespace LynnaLab
                         int value = data.GetIntValue(valueIndex) & (~(andValue<<startBit));
                         value |= ((i&andValue)<<startBit);
                         data.SetByteValue(valueIndex,(byte)value);
+                    }
+                    break;
+                case DataValueType.ByteBit:
+                    {
+                        int value = data.GetIntValue(valueIndex) & ~(1<<startBit);
+                        value |= ((i&1)<<startBit);
+                        data.SetByteValue(valueIndex, (byte)value);
                     }
                     break;
                 default:

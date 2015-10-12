@@ -37,6 +37,8 @@ namespace LynnaLab {
                         {
                             table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
                             Gtk.Entry entry = new Gtk.Entry();
+                            if (!r.Editable)
+                                entry.Sensitive = false;
                             dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
                                 entry.Text = r.GetStringValue();
                                 OnDataModifiedInternal();
@@ -49,6 +51,8 @@ byteCase:
                         {
                             table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
                             SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,255);
+                            if (!r.Editable)
+                                spinButton.Sensitive = false;
                             spinButton.Digits = 2;
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
@@ -78,6 +82,8 @@ byteCase:
                         {
                             table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
                             SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,0xffff);
+                            if (!r.Editable)
+                                spinButton.Sensitive = false;
                             spinButton.Digits = 4;
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
@@ -90,10 +96,25 @@ byteCase:
                             table.Attach(spinButton, 1, 2, y, y+1);
                         }
                         break;
+                    case DataValueType.ByteBit:
+                        {
+                            table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
+                            Gtk.CheckButton checkButton = new Gtk.CheckButton();
+                            if (!r.Editable)
+                                checkButton.Sensitive = false;
+                            checkButton.Toggled += delegate(object sender, EventArgs e) {
+                                Gtk.CheckButton button = sender as Gtk.CheckButton;
+                                r.SetValue(button.Active ? 1 : 0);
+                                OnDataModifiedInternal();
+                            };
+                        }
+                        break;
                     case DataValueType.ByteBits:
                         {
                             table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
                             SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,r.MaxValue);
+                            if (!r.Editable)
+                                spinButton.Sensitive = false;
                             spinButton.Digits = (uint)((r.MaxValue+0xf)/0x10);
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
@@ -111,6 +132,8 @@ byteCase:
                             table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
 
                             Gtk.Entry entry = new Gtk.Entry();
+                            if (!r.Editable)
+                                entry.Sensitive = false;
                             entry.Changed += delegate(object sender, EventArgs e) {
                                 UpdatePointerTextBox(sender as Gtk.Entry, r);
                                 OnDataModifiedInternal();

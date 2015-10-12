@@ -18,6 +18,10 @@ namespace LynnaLab
 		
 		private global::Gtk.SpinButton indexSpinButton;
 		
+		private global::Gtk.Button addWarpButton;
+		
+		private global::Gtk.Button removeWarpButton;
+		
 		private global::Gtk.Alignment valueEditorContainer;
 		
 		private global::Gtk.Label frameLabel;
@@ -42,7 +46,7 @@ namespace LynnaLab
 		
 		private global::Gtk.Alignment destEditorContainer;
 		
-		private global::Gtk.Label GtkLabel;
+		private global::Gtk.Label GtkLabel1;
 
 		protected virtual void Build ()
 		{
@@ -89,17 +93,41 @@ namespace LynnaLab
 			w2.Position = 1;
 			w2.Expand = false;
 			w2.Fill = false;
-			this.vbox1.Add (this.hbox1);
-			global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.hbox1]));
-			w3.Position = 0;
+			// Container child hbox1.Gtk.Box+BoxChild
+			this.addWarpButton = new global::Gtk.Button ();
+			this.addWarpButton.CanFocus = true;
+			this.addWarpButton.Name = "addWarpButton";
+			this.addWarpButton.UseStock = true;
+			this.addWarpButton.UseUnderline = true;
+			this.addWarpButton.Label = "gtk-add";
+			this.hbox1.Add (this.addWarpButton);
+			global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.addWarpButton]));
+			w3.Position = 2;
 			w3.Expand = false;
 			w3.Fill = false;
+			// Container child hbox1.Gtk.Box+BoxChild
+			this.removeWarpButton = new global::Gtk.Button ();
+			this.removeWarpButton.CanFocus = true;
+			this.removeWarpButton.Name = "removeWarpButton";
+			this.removeWarpButton.UseStock = true;
+			this.removeWarpButton.UseUnderline = true;
+			this.removeWarpButton.Label = "gtk-remove";
+			this.hbox1.Add (this.removeWarpButton);
+			global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.removeWarpButton]));
+			w4.Position = 3;
+			w4.Expand = false;
+			w4.Fill = false;
+			this.vbox1.Add (this.hbox1);
+			global::Gtk.Box.BoxChild w5 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.hbox1]));
+			w5.Position = 0;
+			w5.Expand = false;
+			w5.Fill = false;
 			// Container child vbox1.Gtk.Box+BoxChild
 			this.valueEditorContainer = new global::Gtk.Alignment (0.5F, 0.5F, 0F, 0F);
 			this.valueEditorContainer.Name = "valueEditorContainer";
 			this.vbox1.Add (this.valueEditorContainer);
-			global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.valueEditorContainer]));
-			w4.Position = 1;
+			global::Gtk.Box.BoxChild w6 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.valueEditorContainer]));
+			w6.Position = 1;
 			this.GtkAlignment.Add (this.vbox1);
 			this.frame1.Add (this.GtkAlignment);
 			this.frameLabel = new global::Gtk.Label ();
@@ -108,9 +136,9 @@ namespace LynnaLab
 			this.frameLabel.UseMarkup = true;
 			this.frame1.LabelWidget = this.frameLabel;
 			this.vbox2.Add (this.frame1);
-			global::Gtk.Box.BoxChild w7 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame1]));
-			w7.Position = 1;
-			w7.Expand = false;
+			global::Gtk.Box.BoxChild w9 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame1]));
+			w9.Position = 1;
+			w9.Expand = false;
 			// Container child vbox2.Gtk.Box+BoxChild
 			this.frame2 = new global::Gtk.Frame ();
 			this.frame2.Name = "frame2";
@@ -131,10 +159,10 @@ namespace LynnaLab
 			this.label2.Name = "label2";
 			this.label2.LabelProp = global::Mono.Unix.Catalog.GetString ("Group");
 			this.hbox2.Add (this.label2);
-			global::Gtk.Box.BoxChild w8 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.label2]));
-			w8.Position = 0;
-			w8.Expand = false;
-			w8.Fill = false;
+			global::Gtk.Box.BoxChild w10 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.label2]));
+			w10.Position = 0;
+			w10.Expand = false;
+			w10.Fill = false;
 			// Container child hbox2.Gtk.Box+BoxChild
 			this.destGroupSpinButton = new global::Gtk.SpinButton (0, 100, 1);
 			this.destGroupSpinButton.Sensitive = false;
@@ -144,19 +172,19 @@ namespace LynnaLab
 			this.destGroupSpinButton.ClimbRate = 1;
 			this.destGroupSpinButton.Numeric = true;
 			this.hbox2.Add (this.destGroupSpinButton);
-			global::Gtk.Box.BoxChild w9 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destGroupSpinButton]));
-			w9.Position = 1;
-			w9.Expand = false;
-			w9.Fill = false;
+			global::Gtk.Box.BoxChild w11 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destGroupSpinButton]));
+			w11.Position = 1;
+			w11.Expand = false;
+			w11.Fill = false;
 			// Container child hbox2.Gtk.Box+BoxChild
 			this.destIndexLabel = new global::Gtk.Label ();
 			this.destIndexLabel.Name = "destIndexLabel";
 			this.destIndexLabel.LabelProp = global::Mono.Unix.Catalog.GetString ("Index");
 			this.hbox2.Add (this.destIndexLabel);
-			global::Gtk.Box.BoxChild w10 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destIndexLabel]));
-			w10.Position = 2;
-			w10.Expand = false;
-			w10.Fill = false;
+			global::Gtk.Box.BoxChild w12 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destIndexLabel]));
+			w12.Position = 2;
+			w12.Expand = false;
+			w12.Fill = false;
 			// Container child hbox2.Gtk.Box+BoxChild
 			this.destIndexSpinButton = new global::LynnaLab.SpinButtonHexadecimal ();
 			this.destIndexSpinButton.Sensitive = false;
@@ -169,46 +197,47 @@ namespace LynnaLab
 			this.destIndexSpinButton.Digits = ((uint)(2));
 			this.destIndexSpinButton.Numeric = true;
 			this.hbox2.Add (this.destIndexSpinButton);
-			global::Gtk.Box.BoxChild w11 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destIndexSpinButton]));
-			w11.Position = 3;
-			w11.Expand = false;
-			w11.Fill = false;
+			global::Gtk.Box.BoxChild w13 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destIndexSpinButton]));
+			w13.Position = 3;
+			w13.Expand = false;
+			w13.Fill = false;
 			// Container child hbox2.Gtk.Box+BoxChild
 			this.destInfoLabel = new global::Gtk.Label ();
 			this.destInfoLabel.Name = "destInfoLabel";
 			this.destInfoLabel.LabelProp = global::Mono.Unix.Catalog.GetString ("label1");
 			this.hbox2.Add (this.destInfoLabel);
-			global::Gtk.Box.BoxChild w12 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destInfoLabel]));
-			w12.Position = 4;
-			w12.Expand = false;
-			w12.Fill = false;
+			global::Gtk.Box.BoxChild w14 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destInfoLabel]));
+			w14.Position = 4;
+			w14.Expand = false;
+			w14.Fill = false;
 			this.vbox3.Add (this.hbox2);
-			global::Gtk.Box.BoxChild w13 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.hbox2]));
-			w13.Position = 0;
-			w13.Expand = false;
-			w13.Fill = false;
+			global::Gtk.Box.BoxChild w15 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.hbox2]));
+			w15.Position = 0;
+			w15.Expand = false;
+			w15.Fill = false;
 			// Container child vbox3.Gtk.Box+BoxChild
 			this.destEditorContainer = new global::Gtk.Alignment (0.5F, 0.5F, 1F, 1F);
 			this.destEditorContainer.Name = "destEditorContainer";
 			this.vbox3.Add (this.destEditorContainer);
-			global::Gtk.Box.BoxChild w14 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.destEditorContainer]));
-			w14.Position = 1;
+			global::Gtk.Box.BoxChild w16 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.destEditorContainer]));
+			w16.Position = 1;
 			this.GtkAlignment1.Add (this.vbox3);
 			this.frame2.Add (this.GtkAlignment1);
-			this.GtkLabel = new global::Gtk.Label ();
-			this.GtkLabel.Name = "GtkLabel";
-			this.GtkLabel.LabelProp = global::Mono.Unix.Catalog.GetString ("Warp Destination");
-			this.GtkLabel.UseMarkup = true;
-			this.frame2.LabelWidget = this.GtkLabel;
+			this.GtkLabel1 = new global::Gtk.Label ();
+			this.GtkLabel1.Name = "GtkLabel1";
+			this.GtkLabel1.LabelProp = global::Mono.Unix.Catalog.GetString ("Warp Destination");
+			this.GtkLabel1.UseMarkup = true;
+			this.frame2.LabelWidget = this.GtkLabel1;
 			this.vbox2.Add (this.frame2);
-			global::Gtk.Box.BoxChild w17 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
-			w17.Position = 2;
-			w17.Expand = false;
+			global::Gtk.Box.BoxChild w19 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
+			w19.Position = 2;
+			w19.Expand = false;
 			this.Add (this.vbox2);
 			if ((this.Child != null)) {
 				this.Child.ShowAll ();
 			}
 			this.Hide ();
+			this.addWarpButton.Clicked += new global::System.EventHandler (this.OnAddWarpButtonClicked);
 		}
 	}
 }

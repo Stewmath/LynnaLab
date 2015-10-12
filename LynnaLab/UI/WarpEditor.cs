@@ -163,5 +163,10 @@ namespace LynnaLab
             destEditorContainer.ShowAll();
             frame2.ShowAll();
         }
+
+        protected void OnAddWarpButtonClicked(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
