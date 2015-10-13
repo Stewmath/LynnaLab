@@ -11,16 +11,23 @@ namespace LynnaLab
                 return Index;
             }
         }
+        public FileParser FileParser {
+            get {
+                return fileParser;
+            }
+        }
 
         List<WarpSourceData> warpSourceDataList;
+        FileParser fileParser;
+
 
         public WarpSourceGroup(Project p, int id) : base(p,id) {
-            FileParser parser = Project.GetFileWithLabel("warpSourcesTable");
-            Data d = parser.GetData("warpSourcesTable", id*2);
+            fileParser = Project.GetFileWithLabel("warpSourcesTable");
+            Data d = fileParser.GetData("warpSourcesTable", id*2);
             string label = d.GetValue(0);
 
             warpSourceDataList = new List<WarpSourceData>();
-            WarpSourceData warpData = parser.GetData(label) as WarpSourceData;
+            WarpSourceData warpData = fileParser.GetData(label) as WarpSourceData;
             while (warpData != null && warpData.WarpSourceType != WarpSourceType.WarpSourcesEnd) {
                 warpSourceDataList.Add(warpData);
                 warpData = warpData.NextData as WarpSourceData;
@@ -29,7 +36,7 @@ namespace LynnaLab
                 warpSourceDataList.Add(warpData); // WarpSourcesEnd
         }
 
-        // Returns a new list of all the WarpDataSource objects for the given map.
+        // Returns a new list of all the WarpSourceData objects for the given map.
         public List<WarpSourceData> GetMapWarpSourceData(int map) {
             List<WarpSourceData> newList = new List<WarpSourceData>();
 
@@ -41,9 +48,36 @@ namespace LynnaLab
             return newList;
         }
 
+        // Adds the given data to the end of the group and inserts the data
+        // into the FileParser.
         public void AddWarpSourceData(WarpSourceData data) {
-            throw new NotImplementedException();
+            if (warpSourceDataList.Contains(data))
+                return;
+
+            // Assumes the last element of warpSourceDataList is always the
+            // m_WarpSourcesEnd command
+            fileParser.InsertComponentBefore(warpSourceDataList[warpSourceDataList.Count-1], data);
+            warpSourceDataList.Insert(warpSourceDataList.Count-1, data);
+
+            if (data.PointerString == ".") {
+                // Create a unique pointer after m_WarpSourcesEnd
+                WarpSourceData pointedData = new WarpSourceData(Project,
+                        WarpSourceData.WarpCommands[(int)WarpSourceType.PointedWarp],
+                        WarpSourceData.DefaultValues[(int)WarpSourceType.PointedWarp],
+                        FileParser,
+                        new List<int>{-1});
+                int nameIndex = 0;
+                string name;
+//                 do {
+//                     name = "customWarpSource" + name.ToString("d2");
+//                 }
+//                 while (!Project.HasLabel(name));
+
+                // Insert label after m_WarpSourcesEnd
+//                 FileParser.InsertDataAfter(
+            }
         }
+
         public void RemoveWarpSourceData(WarpSourceData data) {
             throw new NotImplementedException();
         }

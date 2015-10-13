@@ -72,4 +72,23 @@ namespace LynnaLab
             return GetSpacingHelper(spacing[0]) + str + GetSpacingHelper(spacing[1]);
         }
     }
+
+    public class Label : FileComponent {
+        string name;
+
+        public string Name {
+            get { return name; }
+        }
+
+        public Label(FileParser parser, string n) : base(parser, null) {
+            name = n;
+        }
+        public Label(FileParser parser, string n, IList<int> spacing) : base(parser, spacing) {
+            name = n;
+        }
+
+        public override string GetString() {
+            return GetSpacingHelper(spacing[0]) + name + ":" + GetSpacingHelper(spacing[1]);
+        }
+    }
 }

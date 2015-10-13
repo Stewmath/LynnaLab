@@ -63,7 +63,7 @@ namespace LynnaLab
             newData.DestGroup = this;
             newData.DestIndex = warpDestDataList.Count;
 
-            fileParser.InsertDataAfter(warpDestDataList[warpDestDataList.Count-1], newData);
+            fileParser.InsertComponentAfter(warpDestDataList[warpDestDataList.Count-1], newData);
             warpDestDataList.Add(newData);
 
             return newData;

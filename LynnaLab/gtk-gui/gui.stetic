@@ -1554,7 +1554,7 @@
       </widget>
     </child>
   </widget>
-  <widget class="Gtk.Bin" id="LynnaLab.WarpEditor" design-size="300 300">
+  <widget class="Gtk.Bin" id="LynnaLab.WarpEditor" design-size="326 300">
     <property name="MemberName" />
     <property name="Visible">False</property>
     <child>
@@ -1610,14 +1610,41 @@
                           </packing>
                         </child>
                         <child>
-                          <widget class="Gtk.Button" id="addWarpButton">
+                          <widget class="Gtk.VBox" id="vbox4">
                             <property name="MemberName" />
-                            <property name="CanFocus">True</property>
-                            <property name="UseStock">True</property>
-                            <property name="Type">StockItem</property>
-                            <property name="StockId">gtk-add</property>
-                            <signal name="Clicked" handler="OnAddWarpButtonClicked" />
-                            <property name="label">gtk-add</property>
+                            <property name="Spacing">6</property>
+                            <child>
+                              <widget class="Gtk.Button" id="addWarpButton">
+                                <property name="MemberName" />
+                                <property name="CanFocus">True</property>
+                                <property name="Type">TextOnly</property>
+                                <property name="Label" translatable="yes">Add Standard Warp</property>
+                                <property name="UseUnderline">True</property>
+                                <signal name="Clicked" handler="OnAddWarpButtonClicked" />
+                              </widget>
+                              <packing>
+                                <property name="Position">0</property>
+                                <property name="AutoSize">True</property>
+                                <property name="Expand">False</property>
+                                <property name="Fill">False</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <widget class="Gtk.Button" id="addSpecificWarpButton">
+                                <property name="MemberName" />
+                                <property name="CanFocus">True</property>
+                                <property name="Type">TextOnly</property>
+                                <property name="Label" translatable="yes">Add Specific-pos Warp</property>
+                                <property name="UseUnderline">True</property>
+                                <signal name="Clicked" handler="OnAddSpecificWarpButtonClicked" />
+                              </widget>
+                              <packing>
+                                <property name="Position">1</property>
+                                <property name="AutoSize">True</property>
+                                <property name="Expand">False</property>
+                                <property name="Fill">False</property>
+                              </packing>
+                            </child>
                           </widget>
                           <packing>
                             <property name="Position">2</property>
@@ -1692,7 +1719,7 @@
           <widget class="Gtk.Frame" id="frame2">
             <property name="MemberName" />
             <child>
-              <widget class="Gtk.Alignment" id="GtkAlignment1">
+              <widget class="Gtk.Alignment" id="GtkAlignment2">
                 <property name="MemberName" />
                 <property name="Xalign">0</property>
                 <property name="Yalign">0</property>
@@ -1806,7 +1833,7 @@
               </widget>
             </child>
             <child>
-              <widget class="Gtk.Label" id="GtkLabel1">
+              <widget class="Gtk.Label" id="GtkLabel2">
                 <property name="MemberName" />
                 <property name="LabelProp" translatable="yes">Warp Destination</property>
                 <property name="UseMarkup">True</property>

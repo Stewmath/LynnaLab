@@ -118,7 +118,7 @@ namespace LynnaLab
                         return (data.GetIntValue(valueIndex)>>startBit)&andValue;
                     }
                 case DataValueType.ByteBit:
-                    return (Data.GetIntValue(valaueindex)>>startBit)&1;
+                    return (data.GetIntValue(valueIndex)>>startBit)&1;
                 default:
                     return data.GetIntValue(valueIndex);
             }

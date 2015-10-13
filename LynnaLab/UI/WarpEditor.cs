@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Gtk;
 
 namespace LynnaLab
@@ -12,7 +13,7 @@ namespace LynnaLab
 
         // Variables
 
-        WarpSourceGroup warpGroup;
+        WarpSourceGroup sourceGroup;
         WarpDestGroup destGroup;
 
         ValueReferenceEditor sourceEditor;
@@ -40,13 +41,10 @@ namespace LynnaLab
         }
 
         public void SetMap(int group, int map) {
-            warpGroup = Project.
+            sourceGroup = Project.
                 GetIndexedDataType<WarpSourceGroup>(group);
 
             this.map = map;
-
-            indexSpinButton.Adjustment.Lower = -1;
-            indexSpinButton.Adjustment.Upper = warpGroup.GetMapWarpSourceData(map).Count-1;
 
             frameLabel.Text = "Room " + ((group<<8)+map).ToString("X3") + " Warp Sources";
             SetWarpIndex(0);
@@ -54,6 +52,11 @@ namespace LynnaLab
 
         // Load the i'th warp in the current map.
         void SetWarpIndex(int i) {
+            List<WarpSourceData> sourceDataList = sourceGroup.GetMapWarpSourceData(map);
+
+            indexSpinButton.Adjustment.Lower = -1;
+            indexSpinButton.Adjustment.Upper = sourceDataList.Count-1;
+
             if (i > indexSpinButton.Adjustment.Upper)
                 i = (int)indexSpinButton.Adjustment.Upper;
 
@@ -66,7 +69,7 @@ namespace LynnaLab
 
             Gtk.HBox hbox = new Gtk.HBox();
 
-            WarpSourceData warpSourceData = warpGroup.GetMapWarpSourceData(map)[i];
+            WarpSourceData warpSourceData = sourceDataList[i];
 
             if (warpSourceData.WarpSourceType == WarpSourceType.StandardWarp)
                 SetDestIndex(warpSourceData.DestGroup, warpSourceData.DestIndex);
@@ -166,7 +169,30 @@ namespace LynnaLab
 
         protected void OnAddWarpButtonClicked(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            WarpSourceData data = new WarpSourceData(Project,
+                    WarpSourceData.WarpCommands[(int)WarpSourceType.StandardWarp],
+                    WarpSourceData.DefaultValues[(int)WarpSourceType.StandardWarp],
+                    sourceGroup.FileParser,
+                    new List<int>{-1});
+            data.Map = map;
+
+            sourceGroup.AddWarpSourceData(data);
+
+            SetWarpIndex((int)indexSpinButton.Adjustment.Upper+1);
+        }
+
+        protected void OnAddSpecificWarpButtonClicked(object sender, EventArgs e)
+        {
+            WarpSourceData data = new WarpSourceData(Project,
+                    WarpSourceData.WarpCommands[(int)WarpSourceType.PointerWarp],
+                    WarpSourceData.DefaultValues[(int)WarpSourceType.PointerWarp],
+                    sourceGroup.FileParser,
+                    new List<int>{-1});
+            data.Map = map;
+
+            sourceGroup.AddWarpSourceData(data);
+
+            SetWarpIndex((int)indexSpinButton.Adjustment.Upper+1);
         }
     }
 }

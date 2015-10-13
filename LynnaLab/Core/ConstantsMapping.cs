@@ -17,12 +17,12 @@ namespace LynnaLab
 		Dictionary<string,byte> stringToByte = new Dictionary<string,byte>();
 		Dictionary<byte,string> byteToString = new Dictionary<byte,string>();
 
-        AsmFileParser parser;
+        FileParser parser;
 
-        public ConstantsMapping(AsmFileParser parser, string prefix)
+        public ConstantsMapping(FileParser parser, string prefix)
             : this(parser, new string[] { prefix }) {}
 
-		public ConstantsMapping(AsmFileParser parser, string[] prefixes)
+		public ConstantsMapping(FileParser parser, string[] prefixes)
 		{
             this.parser = parser;
 

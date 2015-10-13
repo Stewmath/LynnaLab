@@ -20,6 +20,30 @@ namespace LynnaLab
             "m_WarpSourcesEnd"
         };
 
+        public static List<string>[] DefaultValues = {
+            new List<string> { // StandardWarp
+                "$00",
+                "$00",
+                "$00",
+                "$0",
+                "$0",
+            },
+            new List<string> { // PointedWarp
+                "$00",
+                "$00",
+                "$00",
+                "$0",
+                "$0",
+            },
+            new List<string> { // PointerWarp
+                "$00",
+                "$00",
+                "."
+            },
+            new List<string> { // WarpSourcesEnd
+            }
+        };
+
         public static List<List<ValueReference>> warpValueReferences =
             new List<List<ValueReference>> {
                 new List<ValueReference> { // StandardWarp
@@ -80,6 +104,19 @@ namespace LynnaLab
                 SetValue("Map", value);
             }
         }
+        public int DestIndex {
+            get {
+                try {
+                    return GetIntValue("Dest Index");
+                }
+                catch (NotFoundException) {
+                    return -1;
+                }
+            }
+            set {
+                SetValue("Dest Index",value);
+            }
+        }
         public int DestGroup {
             get {
                 try {
@@ -104,19 +141,6 @@ namespace LynnaLab
             }
             set {
                 SetValue("Entrance",value);
-            }
-        }
-        public int DestIndex {
-            get {
-                try {
-                    return GetIntValue("Dest Index");
-                }
-                catch (NotFoundException) {
-                    return -1;
-                }
-            }
-            set {
-                SetValue("Dest Index",value);
             }
         }
         public int X {
@@ -175,16 +199,16 @@ namespace LynnaLab
                 referencedDestData.AddReference(this);
 
             this.AddDataModifiedHandler(delegate(object sender, EventArgs e) {
-                    WarpDestData newDestData = GetReferencedDestData();
-                    if (newDestData != referencedDestData) {
-                        // Update DestData reference
-                        if (referencedDestData != null)
-                            referencedDestData.RemoveReference(this);
-                        referencedDestData = newDestData;
-                        if (newDestData != null)
-                            newDestData.AddReference(this);
-                    }
-                });
+                WarpDestData newDestData = GetReferencedDestData();
+                if (newDestData != referencedDestData) {
+                    // Update DestData reference
+                    if (referencedDestData != null)
+                        referencedDestData.RemoveReference(this);
+                    referencedDestData = newDestData;
+                    if (newDestData != null)
+                        newDestData.AddReference(this);
+                }
+            });
         }
 
         // If this is the kind of warp which points to another warp, return the

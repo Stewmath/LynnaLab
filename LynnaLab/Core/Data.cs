@@ -198,10 +198,10 @@ namespace LynnaLab
             parser.RemoveFileComponent(this);
         }
         public void InsertIntoParserAfter(Data reference) {
-            parser.InsertDataAfter(reference, this);
+            parser.InsertComponentAfter(reference, this);
         }
         public void InsertIntoParserBefore(Data reference) {
-            parser.InsertDataBefore(reference, this);
+            parser.InsertComponentBefore(reference, this);
         }
 
         // Data events

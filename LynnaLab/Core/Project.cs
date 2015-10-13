@@ -77,16 +77,16 @@ namespace LynnaLab
 
             // Initialize constantsMappings
             UniqueGfxMapping = new ConstantsMapping(
-                        GetFileParser("constants/uniqueGfxHeaders.s") as AsmFileParser,
+                        GetFileParser("constants/uniqueGfxHeaders.s") as FileParser,
                         "UNIQGFXH_");
             MainGfxMapping = new ConstantsMapping(
-                        GetFileParser("constants/gfxHeaders.s") as AsmFileParser,
+                        GetFileParser("constants/gfxHeaders.s") as FileParser,
                         "GFXH_");
             PaletteHeaderMapping = new ConstantsMapping(
-                        GetFileParser("constants/paletteHeaders.s") as AsmFileParser,
+                        GetFileParser("constants/paletteHeaders.s") as FileParser,
                         "PALH_");
             MusicMapping = new ConstantsMapping(
-                        GetFileParser("constants/music.s") as AsmFileParser,
+                        GetFileParser("constants/music.s") as FileParser,
                         new string[] {"MUS_", "SND_"} );
 
 		}
@@ -94,7 +94,7 @@ namespace LynnaLab
         public FileParser GetFileParser(string filename) {
             FileParser p;
             if (!fileParserDictionary.TryGetValue(filename, out p)) {
-                p = new AsmFileParser(this, filename);
+                p = new FileParser(this, filename);
                 fileParserDictionary[filename] = p;
             }
             return p;
