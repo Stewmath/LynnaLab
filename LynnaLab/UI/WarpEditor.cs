@@ -187,7 +187,7 @@ namespace LynnaLab
                     WarpSourceData.WarpCommands[(int)WarpSourceType.PointerWarp],
                     WarpSourceData.DefaultValues[(int)WarpSourceType.PointerWarp],
                     sourceGroup.FileParser,
-                    new List<int>{-1});
+                    new List<int>{-1,2});
             data.Map = map;
 
             sourceGroup.AddWarpSourceData(data);

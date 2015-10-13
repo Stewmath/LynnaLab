@@ -80,11 +80,11 @@ namespace LynnaLab
             get { return name; }
         }
 
-        public Label(FileParser parser, string n) : base(parser, null) {
+        public Label(FileParser parser, string n, IList<int> spacing=null) : base(parser, spacing) {
             name = n;
-        }
-        public Label(FileParser parser, string n, IList<int> spacing) : base(parser, spacing) {
-            name = n;
+            if (spacing == null) {
+                this.spacing = new List<int>{0,0};
+            }
         }
 
         public override string GetString() {

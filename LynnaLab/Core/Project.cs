@@ -120,6 +120,16 @@ namespace LynnaLab
 				logWriter.Close();
 		}
 
+		public void WriteLog(string data) {
+			logWriter.Write(data);
+			// Also print to console
+			Console.Write(data);
+		}
+		public void WriteLogLine(string data) {
+			logWriter.WriteLine(data);
+			Console.WriteLine(data);
+		}
+
         public T GetIndexedDataType<T>(int identifier) where T:ProjectIndexedDataType {
             string s = typeof(T).Name + "_" + identifier;
             ProjectDataType o;
@@ -167,19 +177,18 @@ namespace LynnaLab
                 throw new LabelNotFoundException("Label \"" + label + "\" was needed but could not be located!");
             }
 		}
+        public bool HasLabel(string label) {
+            try {
+                FileParser p = labelDictionary[label];
+                return true;
+            }
+            catch(KeyNotFoundException e) {
+                return false;
+            }
+        }
         public Data GetData(string label) {
             return GetFileWithLabel(label).GetData(label);
         }
-
-		public void WriteLog(string data) {
-			logWriter.Write(data);
-			// Also print to console
-			Console.Write(data);
-		}
-		public void WriteLogLine(string data) {
-			logWriter.WriteLine(data);
-			Console.WriteLine(data);
-		}
 
 		// Handles only simple substitution
 		public string Eval(string val)

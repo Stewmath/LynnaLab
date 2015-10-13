@@ -36,7 +36,7 @@ namespace LynnaLab
                 "$0",
             },
             new List<string> { // PointerWarp
-                "$00",
+                "$40",
                 "$00",
                 "."
             },
@@ -172,6 +172,9 @@ namespace LynnaLab
         public string PointerString {
             get {
                 return GetValue("Pointer");
+            }
+            set {
+                SetValue("Pointer",value);
             }
         }
 

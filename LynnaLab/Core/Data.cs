@@ -139,7 +139,7 @@ namespace LynnaLab
             SetValue(i, Wla.ToWord(value));
         }
         public void SetValue(string s, string value) {
-            GetValueReference(s).SetValue(s);
+            GetValueReference(s).SetValue(value);
         }
         public void SetValue(string s, int i) {
             GetValueReference(s).SetValue(i);

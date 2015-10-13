@@ -17,6 +17,12 @@ namespace LynnaLab
             }
         }
 
+        WarpSourceData EndData {
+            get {
+                return warpSourceDataList[warpSourceDataList.Count-1];
+            }
+        }
+
         List<WarpSourceData> warpSourceDataList;
         FileParser fileParser;
 
@@ -56,25 +62,33 @@ namespace LynnaLab
 
             // Assumes the last element of warpSourceDataList is always the
             // m_WarpSourcesEnd command
-            fileParser.InsertComponentBefore(warpSourceDataList[warpSourceDataList.Count-1], data);
+            fileParser.InsertComponentBefore(EndData, data);
             warpSourceDataList.Insert(warpSourceDataList.Count-1, data);
 
-            if (data.PointerString == ".") {
+            if (data.WarpSourceType == WarpSourceType.PointerWarp && data.PointerString == ".") {
                 // Create a unique pointer after m_WarpSourcesEnd
+                int nameIndex = 0;
+                string name;
+                do {
+                    name = "customWarpSource" + nameIndex.ToString("d2");
+                    nameIndex++;
+                }
+                while (Project.HasLabel(name));
+
+                data.PointerString = name;
+
+                Label newLabel = new Label(FileParser, name);
+                // Insert label after m_WarpSourcesEnd
+                FileParser.InsertComponentAfter(EndData, newLabel);
+
+                // Create a blank PointedData to go after this label
                 WarpSourceData pointedData = new WarpSourceData(Project,
                         WarpSourceData.WarpCommands[(int)WarpSourceType.PointedWarp],
                         WarpSourceData.DefaultValues[(int)WarpSourceType.PointedWarp],
                         FileParser,
                         new List<int>{-1});
-                int nameIndex = 0;
-                string name;
-//                 do {
-//                     name = "customWarpSource" + name.ToString("d2");
-//                 }
-//                 while (!Project.HasLabel(name));
-
-                // Insert label after m_WarpSourcesEnd
-//                 FileParser.InsertDataAfter(
+                pointedData.Opcode = 0x80;
+                FileParser.InsertComponentAfter(newLabel, pointedData);
             }
         }
 

@@ -500,31 +500,12 @@ interactionData:
         }
 
         // Appends the given data to the end of the file
-        bool AddData(Data data, string comment) {
-            if (fileStructure.Contains(data)) return false;
-
-            Modified = true;
-            fileStructure.Add(data);
-            fileStructureComments.Add(comment);
-            return true;
+        bool AddData(Data data, string comment="") {
+            return InsertComponentAfter(null, data, comment);
         }
-        bool AddLabel(Label label, string comment) {
-            if (fileStructure.Contains(label)) return false;
-
-            labelDictionary.Add(label.Name, label);
-            Project.AddLabel(label.Name, this);
-
-            Modified = true;
-            fileStructure.Add(label);
-            fileStructureComments.Add(comment);
-            return true;
-        }
-
-        bool AddData(Data data) {
-            return AddData(data, "");
-        }
-        bool AddLabel(Label label) {
-            return AddLabel(label, "");
+        // Appends label to the end of the file
+        bool AddLabel(Label label, string comment="") {
+            return InsertComponentAfter(null, label, comment);
         }
 
         void AddLabelAndPopFileStructure(Label label) {
@@ -588,32 +569,51 @@ interactionData:
             return null;
         }
 
-        // Attempt to insert newComponent after refComponent.
+        // Attempt to insert newComponent after refComponent, or at the end if
+        // refComponent is null
         // Returns false if failed (refComponent doesn't exist or newComponent already
         // exists in this file).
-        public bool InsertComponentAfter(FileComponent refComponent, FileComponent newComponent) {
-            int i = fileStructure.IndexOf(refComponent);
-            if (i == -1)
-                return false;
+        public bool InsertComponentAfter(FileComponent refComponent, FileComponent newComponent, string comment="") {
+            int i;
+            if (refComponent == null)
+                i = fileStructure.Count-1;
+            else {
+                i = fileStructure.IndexOf(refComponent);
+                if (i == -1)
+                    return false;
+            }
+
             if (fileStructure.Contains(newComponent))
                 return false;
 
+            if (newComponent is Label) {
+                Label label = newComponent as Label;
+                labelDictionary.Add(label.Name, label);
+                Project.AddLabel(label.Name, this);
+            }
+
             fileStructure.Insert(i+1, newComponent);
-            fileStructureComments.Insert(i+1, "");
+            fileStructureComments.Insert(i+1, comment);
 
             Modified = true;
 
             return true;
         }
-        public bool InsertComponentBefore(FileComponent refComponent, FileComponent newComponent) {
+        public bool InsertComponentBefore(FileComponent refComponent, FileComponent newComponent, string comment="") {
             int i = fileStructure.IndexOf(refComponent);
             if (i == -1)
                 return false;
             if (fileStructure.Contains(newComponent))
                 return false;
 
+            if (newComponent is Label) {
+                Label label = newComponent as Label;
+                labelDictionary.Add(label.Name, label);
+                Project.AddLabel(label.Name, this);
+            }
+
             fileStructure.Insert(i, newComponent);
-            fileStructureComments.Insert(i, "");
+            fileStructureComments.Insert(i, comment);
 
             Modified = true;
 
