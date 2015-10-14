@@ -8,6 +8,7 @@ namespace LynnaLab
     // Enum of types of values that can be had.
     public enum DataValueType {
         String=0,
+        HalfByte,
         Byte,
         Word,
         ByteBit,
@@ -24,6 +25,7 @@ namespace LynnaLab
 
         public static string[] defaultDataValues = {
             ".",
+            "$0",
             "$00",
             "$0000",
             "0",
@@ -133,6 +135,9 @@ namespace LynnaLab
         }
         public virtual void SetValue(int i) {
             switch(ValueType) {
+                case DataValueType.HalfByte:
+                    data.SetValue(valueIndex, Wla.ToHalfByte((byte)i));
+                    break;
                 case DataValueType.Byte:
                 case DataValueType.WarpDestIndex:
                     data.SetByteValue(valueIndex,(byte)i);

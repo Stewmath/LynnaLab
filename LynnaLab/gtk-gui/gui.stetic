@@ -1316,7 +1316,7 @@
       </widget>
     </child>
   </widget>
-  <widget class="Gtk.Bin" id="LynnaLab.InteractionGroupEditor" design-size="300 309">
+  <widget class="Gtk.Bin" id="LynnaLab.InteractionGroupEditor" design-size="324 309">
     <property name="MemberName" />
     <property name="Visible">False</property>
     <child>
@@ -1356,48 +1356,36 @@
               </packing>
             </child>
             <child>
-              <widget class="Gtk.VBox" id="vbox2">
+              <widget class="Gtk.Button" id="addButton">
                 <property name="MemberName" />
-                <property name="Spacing">6</property>
-                <child>
-                  <widget class="Gtk.Button" id="addButton">
-                    <property name="MemberName" />
-                    <property name="CanFocus">True</property>
-                    <property name="UseStock">True</property>
-                    <property name="Type">StockItem</property>
-                    <property name="StockId">gtk-add</property>
-                    <property name="FocusOnClick">False</property>
-                    <signal name="Clicked" handler="OnAddButtonClicked" />
-                    <property name="label">gtk-add</property>
-                  </widget>
-                  <packing>
-                    <property name="Position">0</property>
-                    <property name="AutoSize">True</property>
-                    <property name="Expand">False</property>
-                    <property name="Fill">False</property>
-                  </packing>
-                </child>
-                <child>
-                  <widget class="Gtk.Button" id="deleteButton">
-                    <property name="MemberName" />
-                    <property name="CanFocus">True</property>
-                    <property name="UseStock">True</property>
-                    <property name="Type">StockItem</property>
-                    <property name="StockId">gtk-remove</property>
-                    <property name="FocusOnClick">False</property>
-                    <signal name="Clicked" handler="OnDeleteButtonClicked" />
-                    <property name="label">gtk-remove</property>
-                  </widget>
-                  <packing>
-                    <property name="Position">1</property>
-                    <property name="AutoSize">True</property>
-                    <property name="Expand">False</property>
-                    <property name="Fill">False</property>
-                  </packing>
-                </child>
+                <property name="CanFocus">True</property>
+                <property name="UseStock">True</property>
+                <property name="Type">StockItem</property>
+                <property name="StockId">gtk-add</property>
+                <property name="FocusOnClick">False</property>
+                <signal name="Clicked" handler="OnAddButtonClicked" />
+                <property name="label">gtk-add</property>
               </widget>
               <packing>
                 <property name="Position">2</property>
+                <property name="AutoSize">True</property>
+                <property name="Expand">False</property>
+                <property name="Fill">False</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="Gtk.Button" id="deleteButton">
+                <property name="MemberName" />
+                <property name="CanFocus">True</property>
+                <property name="UseStock">True</property>
+                <property name="Type">StockItem</property>
+                <property name="StockId">gtk-remove</property>
+                <property name="FocusOnClick">False</property>
+                <signal name="Clicked" handler="OnDeleteButtonClicked" />
+                <property name="label">gtk-remove</property>
+              </widget>
+              <packing>
+                <property name="Position">3</property>
                 <property name="AutoSize">True</property>
                 <property name="Expand">False</property>
                 <property name="Fill">False</property>
@@ -1660,6 +1648,7 @@
                             <property name="UseStock">True</property>
                             <property name="Type">StockItem</property>
                             <property name="StockId">gtk-remove</property>
+                            <signal name="Clicked" handler="OnRemoveWarpButtonClicked" />
                             <property name="label">gtk-remove</property>
                           </widget>
                           <packing>

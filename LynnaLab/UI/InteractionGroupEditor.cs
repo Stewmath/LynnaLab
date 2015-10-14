@@ -73,6 +73,11 @@ namespace LynnaLab
         {
             this.Build();
 
+            addButton.Image = new Gtk.Image(Gtk.Stock.Add, Gtk.IconSize.Button);
+            addButton.Label = "";
+            deleteButton.Image = new Gtk.Image(Gtk.Stock.Remove, Gtk.IconSize.Button);
+            deleteButton.Label = "";
+
             indexSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
                 int i = indexSpinButton.ValueAsInt;
                 if (InteractionGroup == null || i == -1)

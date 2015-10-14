@@ -93,7 +93,23 @@ namespace LynnaLab
         }
 
         public void RemoveWarpSourceData(WarpSourceData data) {
-            throw new NotImplementedException();
+            if (!warpSourceDataList.Contains(data))
+                return;
+
+            if (data.WarpSourceType == WarpSourceType.PointerWarp) {
+                WarpSourceData pointedData = data.GetPointedWarp();
+                // Delete label
+                fileParser.RemoveFileComponent(fileParser.GetDataLabel(pointedData));
+                // Delete after the label
+                while (pointedData != null) {
+                    WarpSourceData next = pointedData.GetNextWarp();
+                    pointedData.FileParser.RemoveFileComponent(pointedData);
+                    pointedData = next;
+                }
+            }
+
+            data.FileParser.RemoveFileComponent(data);
+            warpSourceDataList.Remove(data);
         }
     }
 }

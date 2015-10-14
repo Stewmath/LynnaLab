@@ -24,6 +24,9 @@ namespace LynnaLab
                 return parser.GetPrevFileComponent(this);
             }
         }
+        public FileParser FileParser {
+            get { return parser; }
+        }
 
         public FileComponent(FileParser parser, IList<int> spacing) {
             EndsLine = true;

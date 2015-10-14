@@ -262,6 +262,7 @@ namespace LynnaLab
 			this.Hide ();
 			this.addWarpButton.Clicked += new global::System.EventHandler (this.OnAddWarpButtonClicked);
 			this.addSpecificWarpButton.Clicked += new global::System.EventHandler (this.OnAddSpecificWarpButtonClicked);
+			this.removeWarpButton.Clicked += new global::System.EventHandler (this.OnRemoveWarpButtonClicked);
 		}
 	}
 }

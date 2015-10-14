@@ -48,21 +48,25 @@ namespace LynnaLab
             new List<List<ValueReference>> {
                 new List<ValueReference> { // StandardWarp
                     new ValueReference("Opcode",0,DataValueType.Byte, false),
+                    new ValueReference("Top-Left",0,0,0,DataValueType.ByteBit),
+                    new ValueReference("Top-Right",0,1,1,DataValueType.ByteBit),
+                    new ValueReference("Bottom-Left",0,2,2,DataValueType.ByteBit),
+                    new ValueReference("Bottom-Right",0,3,3,DataValueType.ByteBit),
                     new ValueReference("Map",1,DataValueType.Byte, false),
                     new ValueReference("Dest Index",2,DataValueType.WarpDestIndex),
-                    new ValueReference("Dest Group",3,0,2,DataValueType.ByteBits),
-                    new ValueReference("Entrance",4,0,3,DataValueType.ByteBits),
+                    new ValueReference("Dest Group",3,DataValueType.HalfByte),
+                    new ValueReference("Transition",4,DataValueType.HalfByte),
                 },
                 new List<ValueReference> { // PointedWarp
-                    new ValueReference("Opcode",0,DataValueType.Byte),
+                    new ValueReference("Opcode",0,DataValueType.Byte, false),
 
                     // For "pointed" warp sources, "map" is instead a position
                     new ValueReference("Y",1,4,7,DataValueType.ByteBits),
                     new ValueReference("X",1,0,3,DataValueType.ByteBits),
 
                     new ValueReference("Dest Index",2,DataValueType.WarpDestIndex),
-                    new ValueReference("Dest Group",3,0,2,DataValueType.ByteBits),
-                    new ValueReference("Entrance",4,0,3,DataValueType.ByteBits),
+                    new ValueReference("Dest Group",3,DataValueType.HalfByte),
+                    new ValueReference("Transition",4,DataValueType.HalfByte),
                 },
                 new List<ValueReference> { // PointerWarp
                     new ValueReference("Opcode",0,DataValueType.Byte, false),
@@ -130,17 +134,17 @@ namespace LynnaLab
                 SetValue("Dest Group",value);
             }
         }
-        public int Entrance {
+        public int Transition {
             get {
                 try {
-                    return GetIntValue("Entrance");
+                    return GetIntValue("Transition");
                 }
                 catch (NotFoundException) {
                     return -1;
                 }
             }
             set {
-                SetValue("Entrance",value);
+                SetValue("Transition",value);
             }
         }
         public int X {
@@ -246,6 +250,17 @@ namespace LynnaLab
             return null;
         }
 
+        public bool SetNextWarp(WarpSourceData next) {
+            if (!FileParser.InsertComponentAfter(this, next)) return false;
+
+            this.Opcode &= ~0x80;
+            if (next.GetNextWarp() == null)
+                next.Opcode |= 0x80;
+            else
+                next.Opcode &= 0x80;
+            return true;
+        }
+
         // Returns the number of PointedWarps there are after and including
         // this one. This is the number of times (plus one) that you can call
         // GetNextWarp() before you get a null value.
@@ -277,6 +292,8 @@ namespace LynnaLab
         public WarpDestGroup GetReferencedDestGroup() {
             if (_type == WarpSourceType.PointerWarp ||
                     _type == WarpSourceType.WarpSourcesEnd)
+                return null;
+            if (DestGroup >= Project.GetNumGroups())
                 return null;
             return Project.GetIndexedDataType<WarpDestGroup>(DestGroup);
         }

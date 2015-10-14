@@ -47,13 +47,19 @@ namespace LynnaLab {
                             break;
                         }
                     case DataValueType.Byte:
+                    case DataValueType.HalfByte:
 byteCase:
                         {
                             table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
                             SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,255);
                             if (!r.Editable)
                                 spinButton.Sensitive = false;
-                            spinButton.Digits = 2;
+                            if (r.ValueType == DataValueType.HalfByte) {
+                                spinButton.Digits = 1;
+                                spinButton.Adjustment.Upper = 15;
+                            }
+                            else
+                                spinButton.Digits = 2;
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
                                 r.SetValue(button.ValueAsInt);
@@ -71,8 +77,27 @@ byteCase:
                             Gtk.Button newDestButton = new Gtk.Button("New\nDestination");
                             newDestButton.Clicked += delegate(object sender, EventArgs e) {
                                 WarpSourceData warpData = (WarpSourceData)data;
-                                WarpDestGroup group = warpData.GetReferencedDestGroup();
-                                warpData.SetDestData(group.AddDestData());
+                                WarpDestGroup destGroup = warpData.GetReferencedDestGroup();
+                                // Check if there's unused destination data
+                                // already
+                                for (int i=0; i<destGroup.GetNumWarpDests(); i++) {
+                                    WarpDestData destData = destGroup.GetWarpDest(i);
+                                    if (destData.GetNumReferences() == 0) {
+                                        Gtk.MessageDialog d = new Gtk.MessageDialog(null,
+                                                Gtk.DialogFlags.DestroyWithParent,
+                                                Gtk.MessageType.Warning,
+                                                Gtk.ButtonsType.YesNo,
+                                                "Destination index " + i.ToString("X2") + " is not used by any sources. Use this index?\n\n(\"No\" will create a new destination instead.)");
+                                        Gtk.ResponseType response = (Gtk.ResponseType)d.Run();
+                                        d.Destroy();
+
+                                        if (response == Gtk.ResponseType.Yes)
+                                            warpData.SetDestData(destGroup.GetWarpDest(i));
+                                        else if (response == Gtk.ResponseType.No)
+                                            warpData.SetDestData(destGroup.AddDestData());
+                                        break;
+                                    }
+                                }
                             };
                             table.Attach(newDestButton, 2, 3, y, y+2);
                         }
@@ -100,6 +125,7 @@ byteCase:
                         {
                             table.Attach(new Gtk.Label(r.Name), 0, 1, y, y+1);
                             Gtk.CheckButton checkButton = new Gtk.CheckButton();
+                            checkButton.CanFocus = false;
                             if (!r.Editable)
                                 checkButton.Sensitive = false;
                             checkButton.Toggled += delegate(object sender, EventArgs e) {
@@ -107,6 +133,10 @@ byteCase:
                                 r.SetValue(button.Active ? 1 : 0);
                                 OnDataModifiedInternal();
                             };
+                            dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                                checkButton.Active = r.GetIntValue() == 1;
+                            };
+                            table.Attach(checkButton, 1, 2, y, y+1);
                         }
                         break;
                     case DataValueType.ByteBits:
