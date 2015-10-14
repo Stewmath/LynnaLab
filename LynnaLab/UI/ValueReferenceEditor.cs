@@ -31,6 +31,25 @@ namespace LynnaLab {
             uint y=0;
 
             foreach (ValueReference r in valueReferences) {
+                if (r.ConstantsMapping != null) {
+                    ComboBoxFromConstants comboBox = new ComboBoxFromConstants();
+                    comboBox.SetConstantsMapping(r.ConstantsMapping);
+
+                    comboBox.Changed += delegate(object sender, EventArgs e) {
+                        r.SetValue(comboBox.ActiveValue);
+                    };
+
+                    dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                        comboBox.ActiveValue = r.GetIntValue();
+                    };
+
+                    table.Attach(new Gtk.Label(r.Name), 0,1,y,y+1);
+                    table.Attach(comboBox, 1,2,y,y+1);
+
+                    continue;
+                }
+                // ConstantsMapping == null
+
                 switch(r.ValueType) {
                     case DataValueType.String:
                     default:

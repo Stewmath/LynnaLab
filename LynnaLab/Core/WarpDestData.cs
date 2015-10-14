@@ -12,7 +12,8 @@ namespace LynnaLab
             new List<ValueReference> {
                 new ValueReference("Map",0,DataValueType.Byte),
                 new ValueReference("YX",1,DataValueType.Byte),
-                new ValueReference("Unknown",2,DataValueType.Byte),
+                new ValueReference("Unknown",2,4,7,DataValueType.ByteBits),
+                new ValueReference("Transition",2,0,3,DataValueType.ByteBits,true,"DestTransitionMapping"),
             };
 
         // Properties

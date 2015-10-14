@@ -14,8 +14,17 @@ namespace LynnaLab
             get { return combobox1.Active; }
             set { combobox1.Active = value; }
         }
+        public int ActiveValue {
+            get { return mapping.StringToByte(ActiveText); }
+            set {
+                Active = mapping.IndexOf((byte)value);
+            }
+        }
         public string ActiveText {
             get { return combobox1.ActiveText; }
+            set {
+                Active = mapping.IndexOf(value);
+            }
         }
 
         public ComboBoxFromConstants()

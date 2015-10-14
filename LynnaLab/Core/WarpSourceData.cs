@@ -55,7 +55,7 @@ namespace LynnaLab
                     new ValueReference("Map",1,DataValueType.Byte, false),
                     new ValueReference("Dest Index",2,DataValueType.WarpDestIndex),
                     new ValueReference("Dest Group",3,DataValueType.HalfByte),
-                    new ValueReference("Transition",4,DataValueType.HalfByte),
+                    new ValueReference("Transition",4,DataValueType.HalfByte,true,"SourceTransitionMapping"),
                 },
                 new List<ValueReference> { // PointedWarp
                     new ValueReference("Opcode",0,DataValueType.Byte, false),
@@ -66,7 +66,7 @@ namespace LynnaLab
 
                     new ValueReference("Dest Index",2,DataValueType.WarpDestIndex),
                     new ValueReference("Dest Group",3,DataValueType.HalfByte),
-                    new ValueReference("Transition",4,DataValueType.HalfByte),
+                    new ValueReference("Transition",4,DataValueType.HalfByte,true,"SourceTransitionMapping"),
                 },
                 new List<ValueReference> { // PointerWarp
                     new ValueReference("Opcode",0,DataValueType.Byte, false),

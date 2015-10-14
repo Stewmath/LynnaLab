@@ -12,6 +12,8 @@ namespace LynnaLab
         public readonly ConstantsMapping MainGfxMapping;
         public readonly ConstantsMapping PaletteHeaderMapping;
         public readonly ConstantsMapping MusicMapping;
+        public readonly ConstantsMapping SourceTransitionMapping;
+        public readonly ConstantsMapping DestTransitionMapping;
 
 		string baseDirectory;
 		string configDirectory;
@@ -50,6 +52,27 @@ namespace LynnaLab
                     GetFileParser(filename);
 				}
 			}
+
+            // Initialize constantsMappings
+            UniqueGfxMapping = new ConstantsMapping(
+                        GetFileParser("constants/uniqueGfxHeaders.s") as FileParser,
+                        "UNIQGFXH_");
+            MainGfxMapping = new ConstantsMapping(
+                        GetFileParser("constants/gfxHeaders.s") as FileParser,
+                        "GFXH_");
+            PaletteHeaderMapping = new ConstantsMapping(
+                        GetFileParser("constants/paletteHeaders.s") as FileParser,
+                        "PALH_");
+            MusicMapping = new ConstantsMapping(
+                        GetFileParser("constants/music.s") as FileParser,
+                        new string[] {"MUS_", "SND_"} );
+            SourceTransitionMapping = new ConstantsMapping(
+                        GetFileParser("constants/transitions.s") as FileParser,
+                        "TRANSITION_SRC_");
+            DestTransitionMapping = new ConstantsMapping(
+                        GetFileParser("constants/transitions.s") as FileParser,
+                        "TRANSITION_DEST_");
+
 			// Parse everything in data/
             // A few files need to be loaded before others through
             GetFileParser("data/tilesetMappings.s");
@@ -74,21 +97,6 @@ namespace LynnaLab
                     GetFileParser(filename);
 				}
 			}
-
-            // Initialize constantsMappings
-            UniqueGfxMapping = new ConstantsMapping(
-                        GetFileParser("constants/uniqueGfxHeaders.s") as FileParser,
-                        "UNIQGFXH_");
-            MainGfxMapping = new ConstantsMapping(
-                        GetFileParser("constants/gfxHeaders.s") as FileParser,
-                        "GFXH_");
-            PaletteHeaderMapping = new ConstantsMapping(
-                        GetFileParser("constants/paletteHeaders.s") as FileParser,
-                        "PALH_");
-            MusicMapping = new ConstantsMapping(
-                        GetFileParser("constants/music.s") as FileParser,
-                        new string[] {"MUS_", "SND_"} );
-
 		}
 
         public FileParser GetFileParser(string filename) {

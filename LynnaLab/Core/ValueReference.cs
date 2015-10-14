@@ -54,6 +54,8 @@ namespace LynnaLab
         Data data;
         int valueIndex;
         int startBit,endBit;
+        string constantsMappingString;
+        ConstantsMapping constantsMapping;
 
         public DataValueType ValueType {get; set;}
         public string Name {get; set;}
@@ -75,6 +77,9 @@ namespace LynnaLab
                 }
             }
         }
+        public ConstantsMapping ConstantsMapping {
+            get { return constantsMapping; }
+        }
 
         // Standard constructor for most DataValueTypes
         public ValueReference(string n, int index, DataValueType t, bool editable=true) {
@@ -94,6 +99,28 @@ namespace LynnaLab
             this.endBit = endBit;
             Editable = editable;
         }
+        // Constructor which takes a ConstantsMapping, affecting the interface
+        // that will be used
+        public ValueReference(string n, int index, int startBit, int endBit, DataValueType t, bool editable, string constantsMappingString) {
+            valueIndex = index;
+            ValueType = t;
+            Name = n;
+            this.startBit = startBit;
+            this.endBit = endBit;
+            Editable = editable;
+            this.constantsMappingString = constantsMappingString;
+        }
+        // Same as above but without start/endBit
+        public ValueReference(string n, int index, DataValueType t, bool editable, string constantsMappingString) {
+            valueIndex = index;
+            ValueType = t;
+            Name = n;
+            Editable = editable;
+            this.constantsMappingString = constantsMappingString;
+            Console.WriteLine("Mapping string " + this.constantsMappingString);
+            if (t == DataValueType.ByteBits || t == DataValueType.ByteBit)
+                throw new Exception("Wrong constructor");
+        }
 
         public ValueReference(ValueReference r) {
             data = r.data;
@@ -103,10 +130,15 @@ namespace LynnaLab
             startBit = r.startBit;
             endBit = r.endBit;
             Editable = r.Editable;
+            constantsMappingString = r.constantsMappingString;
+            constantsMapping = r.constantsMapping;
         }
 
         public void SetData(Data d) {
             data = d;
+            if (data != null && constantsMappingString != null) {
+                constantsMapping = (ConstantsMapping)typeof(Project).GetField(constantsMappingString).GetValue(data.Project);
+            }
         }
 
         public virtual string GetStringValue() {
@@ -140,6 +172,7 @@ namespace LynnaLab
                     break;
                 case DataValueType.Byte:
                 case DataValueType.WarpDestIndex:
+                default:
                     data.SetByteValue(valueIndex,(byte)i);
                     break;
                 case DataValueType.Word:
@@ -160,8 +193,6 @@ namespace LynnaLab
                         data.SetByteValue(valueIndex, (byte)value);
                     }
                     break;
-                default:
-                    throw new Exception("Tried to use an integer to set a string-based value");
             }
         }
     }

@@ -11,6 +11,4 @@ Editor:
 - Select multiple tiles from a tileset at once
 - Bugs:
     - Crash when changing animation index
-
-disasm:
-- Optimize compression for files in tilesets/ directory?
+- Deal with ConstantsMapping that don't have a mapping for a value 
