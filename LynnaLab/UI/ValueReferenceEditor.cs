@@ -24,9 +24,6 @@ namespace LynnaLab {
 
             valueReferences = data.GetValueReferences();
 
-//             List<String> labelList = new List<String>();
-//             List<Gtk.Widget> widgetList = new List<Gtk.Widget>();
-
             Gtk.Table table = new Gtk.Table(2, 2, false);
             uint y=0;
 

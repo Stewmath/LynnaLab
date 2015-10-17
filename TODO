@@ -11,4 +11,5 @@ Editor:
 - Select multiple tiles from a tileset at once
 - Bugs:
     - Crash when changing animation index
+    - Binary files might always be saved regardless of choice
 - Deal with ConstantsMapping that don't have a mapping for a value 
