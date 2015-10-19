@@ -1,9 +1,7 @@
-Editor:
+Before Release:
 
 - Interactions
     - Handle interactions referencing same data
-    - Fix output formatting
-- Warps
 - Tileset collisions
 - Ability to add areas, etc, as well as moving labels which refer to the same
   data
@@ -11,5 +9,4 @@ Editor:
 - Select multiple tiles from a tileset at once
 - Bugs:
     - Crash when changing animation index
-    - Binary files might always be saved regardless of choice
-- Deal with ConstantsMapping that don't have a mapping for a value 
+- Deal with ConstantsMappings that don't have a mapping for a value 

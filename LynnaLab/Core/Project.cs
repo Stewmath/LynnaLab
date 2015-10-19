@@ -121,7 +121,6 @@ namespace LynnaLab
 
 		public void Close() {
             foreach (MemoryFileStream file in binaryFileDictionary.Values) {
-                file.Flush();
                 file.Close();
             }
 			if (logWriter != null)
