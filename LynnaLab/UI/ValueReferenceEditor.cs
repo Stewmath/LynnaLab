@@ -43,7 +43,7 @@ namespace LynnaLab {
                     table.Attach(new Gtk.Label(r.Name), 0,1,y,y+1);
                     table.Attach(comboBox, 1,2,y,y+1);
 
-                    continue;
+                    goto loopEnd;
                 }
                 // ConstantsMapping == null
 
@@ -201,6 +201,7 @@ byteCase:
                         break;
                 }
 
+loopEnd:
                 y++;
             }
 

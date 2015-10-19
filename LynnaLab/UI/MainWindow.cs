@@ -305,12 +305,25 @@ public partial class MainWindow: Gtk.Window
         roomeditor1.QueueDraw();
     }
 
+    bool openedWarpEditor = false;
     protected void OnWarpsActionActivated(object sender, EventArgs e) {
+        if (openedWarpEditor)
+            return;
         WarpEditor editor = new WarpEditor(Project);
         editor.SetMap(roomSpinButton.ValueAsInt >> 8, roomSpinButton.ValueAsInt & 0xff);
 
         Gtk.Window win = new Window(WindowType.Toplevel);
+        win.Modal = false;
         win.Add(editor);
+
+        editor.Destroyed += delegate(object sender2, EventArgs e2) {
+            win.Destroy();
+        };
+        win.Destroyed += delegate(object sender2, EventArgs e2) {
+            openedWarpEditor = false;
+        };
+
+        openedWarpEditor = true;
         win.ShowAll();
     }
 }

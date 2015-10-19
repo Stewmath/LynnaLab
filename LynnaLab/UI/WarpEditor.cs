@@ -30,14 +30,19 @@ namespace LynnaLab
             addWarpButton.Image = new Gtk.Image(Stock.Add, Gtk.IconSize.Button);
             addSpecificWarpButton.Image = new Gtk.Image(Stock.Add, Gtk.IconSize.Button);
 
+            roomSpinButton.Adjustment.Lower = 0;
+            roomSpinButton.Adjustment.Upper = Project.GetNumRooms()-1;
+            roomSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
+                SetMap(roomSpinButton.ValueAsInt>>8, roomSpinButton.ValueAsInt&0xff);
+            };
             indexSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
                 SetWarpIndex(indexSpinButton.ValueAsInt);
             };
         }
 
         public void SetMap(int group, int map) {
-            sourceGroup = Project.
-                GetIndexedDataType<WarpSourceGroup>(group);
+            roomSpinButton.Value = (group<<8) | map;
+            sourceGroup = Project.GetIndexedDataType<WarpSourceGroup>(group);
 
             this.map = map;
 
@@ -223,6 +228,7 @@ namespace LynnaLab
                     sourceGroup.FileParser,
                     new List<int>{-1});
             data.Map = map;
+            data.Transition = 4;
 
             sourceGroup.AddWarpSourceData(data);
 
@@ -258,6 +264,7 @@ namespace LynnaLab
                     sourceGroup.FileParser,
                     new List<int>{-1,2});
             data.Map = map;
+            data.Transition = 4;
 
             sourceGroup.AddWarpSourceData(data);
 
@@ -269,6 +276,11 @@ namespace LynnaLab
             List<WarpSourceData> dataList = sourceGroup.GetMapWarpSourceData(map);
             sourceGroup.RemoveWarpSourceData(dataList[indexSpinButton.ValueAsInt]);
             SetWarpIndex(indexSpinButton.ValueAsInt);
+        }
+
+        protected void OnOkButtonClicked(object sender, EventArgs e)
+        {
+            this.Destroy();
         }
     }
 }

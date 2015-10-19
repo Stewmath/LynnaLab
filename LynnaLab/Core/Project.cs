@@ -284,5 +284,9 @@ namespace LynnaLab
         public int GetNumGroups() {
             return 8;
         }
+
+        public int GetNumRooms() {
+            return 0x600;
+        }
 	}
 }

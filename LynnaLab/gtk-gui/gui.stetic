@@ -285,6 +285,7 @@
                                     <property name="MemberName" />
                                     <property name="Events">ButtonPressMask</property>
                                     <property name="Active">0</property>
+                                    <property name="ActiveValue">0</property>
                                     <signal name="Changed" handler="OnMusicComboBoxChanged" />
                                   </widget>
                                   <packing>
@@ -1063,6 +1064,7 @@
                             <property name="MemberName" />
                             <property name="Events">ButtonPressMask</property>
                             <property name="Active">0</property>
+                            <property name="ActiveValue">0</property>
                             <signal name="Changed" handler="OnMainGfxComboBoxChanged" />
                           </widget>
                           <packing>
@@ -1086,6 +1088,7 @@
                             <property name="MemberName" />
                             <property name="Events">ButtonPressMask</property>
                             <property name="Active">0</property>
+                            <property name="ActiveValue">0</property>
                             <signal name="Changed" handler="OnPalettesComboBoxChanged" />
                           </widget>
                           <packing>
@@ -1137,6 +1140,7 @@
                             <property name="MemberName" />
                             <property name="Events">ButtonPressMask</property>
                             <property name="Active">0</property>
+                            <property name="ActiveValue">0</property>
                             <signal name="Changed" handler="OnUniqueGfxComboBoxChanged" />
                           </widget>
                           <packing>
@@ -1270,6 +1274,7 @@
             <child>
               <widget class="Gtk.Label" id="GtkLabel1">
                 <property name="MemberName" />
+                <property name="LabelProp" translatable="yes" />
                 <property name="UseMarkup">True</property>
               </widget>
               <packing>
@@ -1478,7 +1483,7 @@
             <child>
               <widget class="Gtk.Label" id="infoLabel">
                 <property name="MemberName" />
-                <property name="LabelProp" translatable="yes">label1</property>
+                <property name="LabelProp" translatable="yes" />
               </widget>
               <packing>
                 <property name="Position">2</property>
@@ -1542,7 +1547,7 @@
       </widget>
     </child>
   </widget>
-  <widget class="Gtk.Bin" id="LynnaLab.WarpEditor" design-size="326 300">
+  <widget class="Gtk.Bin" id="LynnaLab.WarpEditor" design-size="536 385">
     <property name="MemberName" />
     <property name="Visible">False</property>
     <child>
@@ -1550,7 +1555,46 @@
         <property name="MemberName" />
         <property name="Spacing">6</property>
         <child>
-          <placeholder />
+          <widget class="Gtk.HBox" id="hbox3">
+            <property name="MemberName" />
+            <property name="Spacing">6</property>
+            <child>
+              <widget class="Gtk.Label" id="label3">
+                <property name="MemberName" />
+                <property name="LabelProp" translatable="yes">Room</property>
+              </widget>
+              <packing>
+                <property name="Position">0</property>
+                <property name="AutoSize">True</property>
+                <property name="Expand">False</property>
+                <property name="Fill">False</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="LynnaLab.SpinButtonHexadecimal" id="roomSpinButton">
+                <property name="MemberName" />
+                <property name="CanFocus">True</property>
+                <property name="Upper">100</property>
+                <property name="PageIncrement">10</property>
+                <property name="StepIncrement">1</property>
+                <property name="ClimbRate">1</property>
+                <property name="Digits">3</property>
+                <property name="Numeric">True</property>
+              </widget>
+              <packing>
+                <property name="Position">1</property>
+                <property name="AutoSize">True</property>
+                <property name="Expand">False</property>
+                <property name="Fill">False</property>
+              </packing>
+            </child>
+          </widget>
+          <packing>
+            <property name="Position">0</property>
+            <property name="AutoSize">True</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
         </child>
         <child>
           <widget class="Gtk.Frame" id="frame1">
@@ -1572,6 +1616,7 @@
                         <child>
                           <widget class="Gtk.Label" id="label1">
                             <property name="MemberName" />
+                            <property name="LabelProp" translatable="yes" />
                           </widget>
                           <packing>
                             <property name="Position">0</property>
@@ -1579,6 +1624,9 @@
                             <property name="Expand">False</property>
                             <property name="Fill">False</property>
                           </packing>
+                        </child>
+                        <child>
+                          <placeholder />
                         </child>
                         <child>
                           <widget class="Gtk.SpinButton" id="indexSpinButton">
@@ -1591,7 +1639,7 @@
                             <property name="Numeric">True</property>
                           </widget>
                           <packing>
-                            <property name="Position">1</property>
+                            <property name="Position">2</property>
                             <property name="AutoSize">True</property>
                             <property name="Expand">False</property>
                             <property name="Fill">False</property>
@@ -1635,7 +1683,7 @@
                             </child>
                           </widget>
                           <packing>
-                            <property name="Position">2</property>
+                            <property name="Position">3</property>
                             <property name="AutoSize">True</property>
                             <property name="Expand">False</property>
                             <property name="Fill">False</property>
@@ -1652,7 +1700,7 @@
                             <property name="label">gtk-remove</property>
                           </widget>
                           <packing>
-                            <property name="Position">3</property>
+                            <property name="Position">4</property>
                             <property name="AutoSize">True</property>
                             <property name="Expand">False</property>
                             <property name="Fill">False</property>
@@ -1785,7 +1833,7 @@
                         <child>
                           <widget class="Gtk.Label" id="destInfoLabel">
                             <property name="MemberName" />
-                            <property name="LabelProp" translatable="yes">label1</property>
+                            <property name="LabelProp" translatable="yes" />
                           </widget>
                           <packing>
                             <property name="Position">4</property>
@@ -1822,7 +1870,7 @@
               </widget>
             </child>
             <child>
-              <widget class="Gtk.Label" id="GtkLabel2">
+              <widget class="Gtk.Label" id="GtkLabel3">
                 <property name="MemberName" />
                 <property name="LabelProp" translatable="yes">Warp Destination</property>
                 <property name="UseMarkup">True</property>
@@ -1836,6 +1884,29 @@
             <property name="Position">2</property>
             <property name="AutoSize">False</property>
             <property name="Expand">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Alignment" id="alignment1">
+            <property name="MemberName" />
+            <property name="Xscale">0.06</property>
+            <child>
+              <widget class="Gtk.Button" id="okButton">
+                <property name="MemberName" />
+                <property name="CanFocus">True</property>
+                <property name="UseStock">True</property>
+                <property name="Type">StockItem</property>
+                <property name="StockId">gtk-ok</property>
+                <signal name="Clicked" handler="OnOkButtonClicked" />
+                <property name="label">gtk-ok</property>
+              </widget>
+            </child>
+          </widget>
+          <packing>
+            <property name="Position">3</property>
+            <property name="AutoSize">True</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
           </packing>
         </child>
       </widget>

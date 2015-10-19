@@ -11,13 +11,22 @@ namespace LynnaLab
         public static List<ValueReference> warpValueReferences = 
             new List<ValueReference> {
                 new ValueReference("Map",0,DataValueType.Byte),
-                new ValueReference("YX",1,DataValueType.Byte),
-                new ValueReference("Unknown",2,4,7,DataValueType.ByteBits),
+                new ValueReference("Y",1,4,7,DataValueType.ByteBits),
+                new ValueReference("X",1,0,3,DataValueType.ByteBits),
+                new ValueReference("Parameter",2,4,7,DataValueType.ByteBits),
                 new ValueReference("Transition",2,0,3,DataValueType.ByteBits,true,"DestTransitionMapping"),
             };
 
         // Properties
 
+        public int Transition {
+            get {
+                return GetIntValue("Transition");
+            }
+            set {
+                SetValue("Transition", value);
+            }
+        }
         // Don't edit these properties outside of the WarpDestGroup class
         public WarpDestGroup DestGroup {get; set;}
         public int DestIndex {get; set;}
@@ -35,6 +44,9 @@ namespace LynnaLab
             SetValueReferences(warpValueReferences);
 
             referenceSet = new HashSet<WarpSourceData>();
+
+            DestGroup = null;
+            DestIndex = -1;
         }
 
         public void AddReference(WarpSourceData data) {

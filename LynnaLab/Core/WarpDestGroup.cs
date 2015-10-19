@@ -59,6 +59,7 @@ namespace LynnaLab
             WarpDestData newData = new WarpDestData(Project, WarpDestData.WarpCommand,
                     ValueReference.GetDefaultValues(WarpDestData.warpValueReferences),
                     fileParser, new List<int>{-1});
+            newData.Transition = 1;
 
             newData.DestGroup = this;
             newData.DestIndex = warpDestDataList.Count;
