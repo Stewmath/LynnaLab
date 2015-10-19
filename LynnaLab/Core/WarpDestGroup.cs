@@ -56,9 +56,13 @@ namespace LynnaLab
 
         // Adds a new WarpDestData to the end of the group, returns the index
         public WarpDestData AddDestData() {
-            WarpDestData newData = new WarpDestData(Project, WarpDestData.WarpCommand,
-                    ValueReference.GetDefaultValues(WarpDestData.warpValueReferences),
+            WarpDestData newData = new WarpDestData(Project,
+                    WarpDestData.WarpCommand,
+                    null,
                     fileParser, new List<int>{-1});
+
+            ValueReference.InitializeDataValues(newData, newData.GetValueReferences());
+
             newData.Transition = 1;
 
             newData.DestGroup = this;

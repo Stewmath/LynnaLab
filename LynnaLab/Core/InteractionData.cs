@@ -98,8 +98,10 @@ namespace LynnaLab {
         public override string GetValue(int i) {
             if (IsShortened()) {
                 InteractionData last = LastData as InteractionData;
+
                 if (last == null || (last.GetInteractionType() != GetInteractionType()))
                     this.ThrowException(new Exception("Malformatted interaction"));
+
                 if (i == 0)
                     return (LastData as InteractionData).GetValue(0);
                 else

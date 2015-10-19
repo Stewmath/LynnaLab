@@ -78,12 +78,15 @@ namespace LynnaLab
         public Data(Project p, string command, IList<string> values, int size, FileParser parser, IList<int> spacing) : base(parser, spacing) {
             this.Project = p;
             this.command = command;
-            this.values = new List<string>(values);
+            if (values == null)
+                this.values = new List<string>();
+            else
+                this.values = new List<string>(values);
             this.size = size;
 
             if (this.spacing == null)
                 this.spacing = new List<int>();
-            while (this.spacing.Count < values.Count+2)
+            while (this.spacing.Count < this.values.Count+2)
                 this.spacing.Add(0);
 
             PrintCommand = true;
@@ -145,13 +148,21 @@ namespace LynnaLab
             GetValueReference(s).SetValue(i);
         }
 
+        public void SetNumValues(int n) {
+            while (values.Count < n) {
+                InsertValue(values.Count, ".");
+            }
+            while (values.Count > n)
+                RemoveValue(values.Count-1);
+        }
+
         // Removes a value, deletes the spacing prior to it
         public void RemoveValue(int i) {
             values.RemoveAt(i);
             spacing.RemoveAt(i+1);
             Modified = true;
         }
-        public void InsertValue(int i, string value, DataValueType valueType=DataValueType.String,int priorSpaces=-1) {
+        public void InsertValue(int i, string value, int priorSpaces=1) {
             values.Insert(i, value);
             spacing.Insert(i+1, priorSpaces);
             Modified = true;

@@ -20,7 +20,6 @@ namespace LynnaLab
     // This class provides a way of accessing Data values of various different
     // formats.
     public class ValueReference {
-
         // Static default value stuff
 
         public static string[] defaultDataValues = {
@@ -29,27 +28,24 @@ namespace LynnaLab
             "$00",
             "$0000",
             "0",
-            "$0",
+            "$00",
             "interactionData4000",
             "$00",
         };
 
-        public static string[] GetDefaultValues(DataValueType[] valueList) {
-            string[] ret = new string[valueList.Length];
-            for (int i=0;i<valueList.Length;i++) {
-                ret[i] = defaultDataValues[(int)valueList[i]];
+        public static void InitializeDataValues(Data data, IList<ValueReference> refs) {
+            int numValues = 0;
+            foreach (ValueReference r in refs) {
+                if (r.valueIndex+1 > numValues)
+                    numValues = r.valueIndex+1;
             }
-            return ret;
-        }
-        public static string[] GetDefaultValues(IList<ValueReference> valueList) {
-            string[] ret = new string[valueList.Count];
-            for (int i=0;i<valueList.Count;i++) {
-                ret[i] = defaultDataValues[(int)valueList[i].ValueType];
-            }
-            return ret;
-        }
 
-        //////////////// 
+            data.SetNumValues(numValues);
+
+            foreach (ValueReference r in refs) {
+                data.SetValue(r.valueIndex, defaultDataValues[(int)r.ValueType]);
+            }
+        }
 
         Data data;
         int valueIndex;

@@ -56,13 +56,18 @@ namespace LynnaLab
         }
 
         public void InsertInteraction(int index, InteractionType type) {
-            IList<string> values = ValueReference.GetDefaultValues(InteractionData.interactionValueReferences[(int)type]);
-            if (type >= InteractionType.Pointer && type <= InteractionType.Conditional)
-                values[0] = "interactionData4000"; // Compileable default pointer
-
-            InteractionData data = new InteractionData(Project, InteractionCommands[(int)type], values, parser,
+            InteractionData data = new InteractionData(Project,
+                    InteractionCommands[(int)type],
+                    null,
+                    parser,
                     new int[]{-1}, // Tab at start of line
                     type);
+
+            ValueReference.InitializeDataValues(data, data.GetValueReferences());
+
+            if (type >= InteractionType.Pointer && type <= InteractionType.Conditional)
+                data.SetValue(0, "interactionData4000"); // Compileable default pointer
+
             data.InsertIntoParserBefore(interactionDataList[index]);
             interactionDataList.Insert(index, data);
         }
