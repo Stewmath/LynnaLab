@@ -80,7 +80,7 @@ namespace LynnaLab
 
             for (int x=0; x<width; x++) {
                 for (int y=0; y<height; y++) {
-                    g.DrawImage(area.GetTileImage(tiles[x,y]), x*16, y*16);
+                    g.DrawImageUnscaled(area.GetTileImage(tiles[x,y]), x*16, y*16);
                 }
             }
 
@@ -97,7 +97,7 @@ namespace LynnaLab
                 tiles[x,y] = (byte)value;
                 if (cachedImage != null) {
                     Graphics g = Graphics.FromImage(cachedImage);
-                    g.DrawImage(area.GetTileImage(value), x*16, y*16);
+                    g.DrawImageUnscaled(area.GetTileImage(value), x*16, y*16);
                     g.Dispose();
                 }
                 Modified = true;
@@ -183,7 +183,7 @@ namespace LynnaLab
                 for (int y=0; y<Height; y++) {
                     if (GetTile(x, y) == tile) {
                         if (cachedImage != null)
-                            g.DrawImage(area.GetTileImage(tiles[x,y]), x*16, y*16);
+                            g.DrawImageUnscaled(area.GetTileImage(tiles[x,y]), x*16, y*16);
                         if (RoomModifiedEvent != null)
                             RoomModifiedEvent();
                     }

@@ -1,5 +1,7 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Collections.Generic;
 
 namespace LynnaLab
@@ -12,36 +14,67 @@ namespace LynnaLab
             Color.FromArgb(0, 0, 0)
         };
 
-		public static Bitmap TileToImage(IList<byte> data, Color[] palette = null, int flags=0) {
+		public unsafe static Bitmap TileToImage(IList<byte> data, Color[] palette = null, int flags=0) {
             if (palette == null)
                 palette = standardPalette;
 
 			Bitmap ret = new Bitmap(8, 8);
-			Graphics g = Graphics.FromImage(ret);
+            BitmapData imageData = ret.LockBits(new Rectangle(0, 0, ret.Width, 
+                        ret.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            byte* pixels = (byte*)imageData.Scan0.ToPointer();
+            int bytesPerPixel = 3;
+
+            bool hflip = (flags&0x20) == 0x20;
+            bool vflip = (flags&0x40) == 0x40;
 
 			for (int y = 0; y < 8; y++) {
 				int b1 = data[y * 2];
-				int b2 = data[y * 2 + 1];
+				int b2 = data[y * 2 + 1] << 1;
+                byte* row;
+                if (vflip)
+                    row = pixels + (7-y)*imageData.Stride;
+                else
+                    row = pixels + y*imageData.Stride;
 				for (int x = 0; x < 8; x++) {
                     int color;
-                    if ((flags & 0x20) == 0x20) // Horizontal flip
-                    {
-                        color = (b1 >> x) & 1;
-                        color |= ((b2 >> x) & 1) << 1;
-                    }
-                    else {
-                        color = (b1 >> (7-x)) & 1;
-                        color |= ((b2 >> (7-x)) & 1) << 1;
-                    }
-                    if ((flags & 0x40) == 0x40) // Vertical flip
-                        g.FillRectangle(new SolidBrush(palette[color]), x, (7-y), 1, 1);
+
+                    color = b1 & 1;
+                    color |= b2 & 2;
+                    b1>>=1;
+                    b2>>=1;
+
+                    int realX;
+                    if (hflip)
+                        realX = x;
                     else
-                        g.FillRectangle(new SolidBrush(palette[color]), x, y, 1, 1);
+                        realX = 7-x;
+
+                    row[realX*bytesPerPixel+0] = palette[color].B;
+                    row[realX*bytesPerPixel+1] = palette[color].G;
+                    row[realX*bytesPerPixel+2] = palette[color].R;
 				}
 			}
 
-            g.Dispose();
+            ret.UnlockBits(imageData);
 			return ret;
 		}
+
+        // These are experiments, dunno if they're really fast at all
+        public unsafe static void QuickDraw(BitmapData data, Bitmap src, int x, int y) {
+            BitmapData srcData = src.LockBits(new Rectangle(0, 0, src.Width, 
+                        src.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+            QuickDraw(data, srcData, x, y);
+        }
+        public unsafe static void QuickDraw(BitmapData data, BitmapData srcData, int x, int y) {
+            int bytesPerPixel = 3;
+
+            for (int i=0;i<srcData.Height;i++) {
+                byte* dest = (byte*)data.Scan0 + data.Stride*(y+i) + x*bytesPerPixel;
+                byte* srcBuf = (byte*)srcData.Scan0 + srcData.Stride*(i);
+                for (int j=0;j<(srcData.Width)*bytesPerPixel;j++)
+                    dest[j] = srcBuf[j];
+            }
+        }
     }
 }

@@ -122,7 +122,7 @@ namespace LynnaLab
             int y = idleY;
 
             const System.Drawing.Drawing2D.InterpolationMode interpolationMode =
-                System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear;
+                System.Drawing.Drawing2D.InterpolationMode.Default;
             const double scale = 1.0/8;
 
             int width = (int)(roomWidth*16*scale);

@@ -92,14 +92,16 @@ namespace LynnaLab
 
         public void SetInteractionGroup(InteractionGroup group) {
             _interactionGroup = group;
-            UpdateBoundaries();
-            indexSpinButton.Value = 0;
-            if (InteractionGroup != null && InteractionGroup.GetNumInteractions() != 0)
+            if (InteractionGroup != null && InteractionGroup.GetNumInteractions() != 0) {
+                indexSpinButton.Value = 0;
                 SetInteractionData(InteractionGroup.GetInteractionData(0));
+            }
             else {
                 indexSpinButton.Value = -1;
                 SetInteractionData(null);
             }
+
+            UpdateBoundaries();
 
             if (RoomEditor != null)
                 RoomEditor.OnInteractionsModified();
@@ -136,6 +138,8 @@ namespace LynnaLab
         }
 
         void UpdateBoundaries() {
+            int origValue = indexSpinButton.ValueAsInt;
+
             indexSpinButton.Adjustment.Lower = -1;
             int max;
             if (InteractionGroup == null)
@@ -148,7 +152,8 @@ namespace LynnaLab
                 indexSpinButton.Value = max;
             }
 
-            SetInteractionDataIndex(indexSpinButton.ValueAsInt);
+            if (origValue != indexSpinButton.ValueAsInt)
+                SetInteractionDataIndex(indexSpinButton.ValueAsInt);
         }
 
         protected void OnDeleteButtonClicked(object sender, EventArgs e)

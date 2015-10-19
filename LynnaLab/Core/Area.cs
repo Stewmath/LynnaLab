@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Collections.Generic;
 
@@ -21,6 +22,7 @@ namespace LynnaLab
 
         Bitmap[] tileImagesCache = new Bitmap[256];
         Bitmap fullCachedImage = new Bitmap(16*16,16*16);
+        BitmapData fullCachedImageData;
 
         public delegate void TileModifiedHandler(int tile);
         public delegate void LayoutGroupModifiedHandler();
@@ -229,13 +231,18 @@ namespace LynnaLab
                     Array.Copy(graphicsState.VramBuffer[1], tileOffset, src, 0, 16);
                     Bitmap subImage = GbGraphics.TileToImage(src, GraphicsState.GetBackgroundPalettes()[flags&7], flags);
 
-                    g.DrawImage(subImage, x*8, y*8);
+                    g.DrawImageUnscaled(subImage, x*8, y*8);
                 }
             }
             g.Dispose();
 
+//             if (fullCachedImageData == null)
+//                 fullCachedImageData = fullCachedImage.LockBits(
+//                         new Rectangle(0, 0, fullCachedImage.Width, fullCachedImage.Height),
+//                         ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+//             GbGraphics.QuickDraw(fullCachedImageData, image, (index%16)*16, (index/16)*16);
             g = Graphics.FromImage(fullCachedImage);
-            g.DrawImage(image, (index%16)*16, (index/16)*16);
+            g.DrawImageUnscaled(image, (index%16)*16, (index/16)*16);
             g.Dispose();
 
             tileImagesCache[index] = image;
@@ -261,6 +268,10 @@ namespace LynnaLab
         // This function doesn't guarantee to return a fully rendered image,
         // only what is currently available
         public Bitmap GetFullCachedImage() {
+            if (fullCachedImageData != null) {
+                fullCachedImage.UnlockBits(fullCachedImageData);
+                fullCachedImageData = null;
+            }
             return fullCachedImage;
         }
 
