@@ -730,7 +730,7 @@
       </widget>
     </child>
   </widget>
-  <widget class="Gtk.Bin" id="LynnaLab.AreaEditor" design-size="808 367">
+  <widget class="Gtk.Bin" id="LynnaLab.AreaEditor" design-size="810 367">
     <property name="MemberName" />
     <property name="Visible">False</property>
     <child>
@@ -1274,7 +1274,6 @@
             <child>
               <widget class="Gtk.Label" id="GtkLabel1">
                 <property name="MemberName" />
-                <property name="LabelProp" translatable="yes" />
                 <property name="UseMarkup">True</property>
               </widget>
               <packing>
@@ -1290,13 +1289,20 @@
           </packing>
         </child>
         <child>
-          <widget class="Gtk.Button" id="okButton">
+          <widget class="Gtk.Alignment" id="alignment1">
             <property name="MemberName" />
-            <property name="CanFocus">True</property>
-            <property name="Type">TextOnly</property>
-            <property name="Label" translatable="yes">OK</property>
-            <property name="UseUnderline">True</property>
-            <signal name="Clicked" handler="OnOkButtonClicked" />
+            <property name="Xscale">0.01</property>
+            <child>
+              <widget class="Gtk.Button" id="okButton">
+                <property name="MemberName" />
+                <property name="CanFocus">True</property>
+                <property name="UseStock">True</property>
+                <property name="Type">StockItem</property>
+                <property name="StockId">gtk-ok</property>
+                <signal name="Clicked" handler="OnOkButtonClicked" />
+                <property name="label">gtk-ok</property>
+              </widget>
+            </child>
           </widget>
           <packing>
             <property name="PackType">End</property>
@@ -1483,7 +1489,6 @@
             <child>
               <widget class="Gtk.Label" id="infoLabel">
                 <property name="MemberName" />
-                <property name="LabelProp" translatable="yes" />
               </widget>
               <packing>
                 <property name="Position">2</property>
@@ -1616,7 +1621,6 @@
                         <child>
                           <widget class="Gtk.Label" id="label1">
                             <property name="MemberName" />
-                            <property name="LabelProp" translatable="yes" />
                           </widget>
                           <packing>
                             <property name="Position">0</property>
@@ -1833,7 +1837,6 @@
                         <child>
                           <widget class="Gtk.Label" id="destInfoLabel">
                             <property name="MemberName" />
-                            <property name="LabelProp" translatable="yes" />
                           </widget>
                           <packing>
                             <property name="Position">4</property>

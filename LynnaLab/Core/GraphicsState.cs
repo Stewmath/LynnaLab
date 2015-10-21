@@ -17,6 +17,9 @@ namespace LynnaLab
 
 	public class GraphicsState
 	{
+        public delegate void TileModifiedHandler(int bank, int tile);
+        event TileModifiedHandler tileModifiedEvent;
+
         bool gfxModified, palettesModified;
 
 		byte[][] vramBuffer;
@@ -74,13 +77,19 @@ namespace LynnaLab
                 LoadGfxHeader(header);
             else
                 gfxModified = true;
+
+            CheckGfxHeaderTilesToUpdate(header);
         }
 
         public void RemoveGfxHeaderType(GfxHeaderType type) {
             for (int i=0; i<gfxHeaderDataList.Count; i++) {
                 if (gfxHeaderDataTypes[i] == type) {
+                    GfxHeaderData header = gfxHeaderDataList[i];
                     gfxHeaderDataTypes.RemoveAt(i);
                     gfxHeaderDataList.RemoveAt(i);
+
+                    CheckGfxHeaderTilesToUpdate(header);
+
                     i--;
                 }
             }
@@ -107,6 +116,13 @@ namespace LynnaLab
                 }
             }
             palettesModified = true;
+        }
+
+        public void AddTileModifiedHandler(TileModifiedHandler handler) {
+            tileModifiedEvent += handler;
+        }
+        public void RemoveTileModifiedHandler(TileModifiedHandler handler) {
+            tileModifiedEvent -= handler;
         }
 
         void LoadGfxHeader(GfxHeaderData header) {
@@ -177,6 +193,18 @@ namespace LynnaLab
                 LoadPaletteHeaderGroup(group);
             }
             palettesModified = false;
+        }
+
+        void CheckGfxHeaderTilesToUpdate(GfxHeaderData header) {
+            if (tileModifiedEvent == null)
+                return;
+            if (header.DestAddr < 0x8000 || header.DestAddr > 0x9fff)
+                return;
+
+            for (int t=0; t<header.GetBlockCount(); t++) {
+                int tile = t+(header.DestAddr-0x8000)/16;
+                tileModifiedEvent(header.DestBank, tile);
+            }
         }
 	}
 }

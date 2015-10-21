@@ -12,6 +12,9 @@ namespace LynnaLab
 
         Bitmap image;
 
+        GraphicsState graphicsState;
+        int offsetStart, offsetEnd;
+
         public GfxViewer() : base() {
             TileWidth = 8;
             TileHeight = 8;
@@ -20,39 +23,61 @@ namespace LynnaLab
             Scale = 2;
         }
 
-        public void SetGraphicsState(GraphicsState state, int offsetStart, int offsetEnd, int width=-1, int scale=2) {
+        public void SetGraphicsState(GraphicsState state, int offsetStart, int offsetEnd, int width=-1, int scale=2)
+        {
+            GraphicsState.TileModifiedHandler tileModifiedHandler = delegate(int bank, int tile)
+            {
+                draw(tile+bank*0x180);
+            };
+
+            if (graphicsState != null)
+                graphicsState.RemoveTileModifiedHandler(tileModifiedHandler);
+            if (state != null)
+                state.AddTileModifiedHandler(tileModifiedHandler);
+
+            graphicsState = state;
+
             int size = (offsetEnd-offsetStart)/16;
             if (width == -1)
                 width = (int)Math.Sqrt(size);
-            Console.WriteLine("size " + size);
-            Console.WriteLine("width " + width);
             int height = size/width;
-            Console.WriteLine("height " + height);
 
-            image = new Bitmap(width*8,height*8);
-
-            for (int x=0;x<width;x++) {
-                for (int y=0;y<height;y++) {
-                    int offset = offsetStart+x*16+y*16*width;
-                    int bank=0;
-                    if (offset >= 0x1800) {
-                        offset -= 0x1800;
-                        bank = 1;
-                    }
-                    Console.WriteLine("Draw at " + x + "," + y);
-                    byte[] data = new byte[16];
-                    Array.Copy(state.VramBuffer[bank], offset, data, 0, 16);
-                    Bitmap subImage = GbGraphics.TileToImage(data);
-                    Graphics g = Graphics.FromImage(image);
-                    g.DrawImage(subImage, x*8, y*8);
-                }
-            }
+            this.offsetStart = offsetStart;
+            this.offsetEnd = offsetEnd;
 
             Width = width;
             Height = height;
             TileWidth = 8;
             TileHeight = 8;
             Scale = scale;
+
+            image = new Bitmap(Width*TileWidth,Height*TileHeight);
+
+            for (int i=offsetStart/16; i<offsetEnd/16; i++)
+                draw(i);
+        }
+
+        void draw(int tile) {
+            int offset = tile*16;
+
+            if (!(offset >= offsetStart && offset < offsetEnd))
+                return;
+
+            int x = ((offset-offsetStart)/16)%Width;
+            int y = ((offset-offsetStart)/16)/Width;
+
+            int bank=0;
+            if (offset >= 0x1800) {
+                offset -= 0x1800;
+                bank = 1;
+            }
+            byte[] data = new byte[16];
+            Array.Copy(graphicsState.VramBuffer[bank], offset, data, 0, 16);
+            Bitmap subImage = GbGraphics.TileToImage(data);
+            Graphics g = Graphics.FromImage(image);
+            g.DrawImage(subImage, x*8, y*8);
+
+            QueueDraw();
         }
     }
 }

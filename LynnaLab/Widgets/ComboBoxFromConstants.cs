@@ -17,13 +17,15 @@ namespace LynnaLab
         public int ActiveValue {
             get { return mapping.StringToByte(ActiveText); }
             set {
-                Active = mapping.IndexOf((byte)value);
+                if (mapping != null)
+                    Active = mapping.IndexOf((byte)value);
             }
         }
         public string ActiveText {
             get { return combobox1.ActiveText; }
             set {
-                Active = mapping.IndexOf(value);
+                if (mapping != null)
+                    Active = mapping.IndexOf(value);
             }
         }
 

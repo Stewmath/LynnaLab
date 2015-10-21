@@ -70,6 +70,8 @@ namespace LynnaLab
 		
 		private global::Gtk.Label GtkLabel1;
 		
+		private global::Gtk.Alignment alignment1;
+		
 		private global::Gtk.Button okButton;
 
 		protected virtual void Build ()
@@ -284,6 +286,7 @@ namespace LynnaLab
 			this.mainGfxComboBox.Events = ((global::Gdk.EventMask)(256));
 			this.mainGfxComboBox.Name = "mainGfxComboBox";
 			this.mainGfxComboBox.Active = 0;
+			this.mainGfxComboBox.ActiveValue = 0;
 			this.table2.Add (this.mainGfxComboBox);
 			global::Gtk.Table.TableChild w16 = ((global::Gtk.Table.TableChild)(this.table2 [this.mainGfxComboBox]));
 			w16.TopAttach = ((uint)(3));
@@ -297,6 +300,7 @@ namespace LynnaLab
 			this.palettesComboBox.Events = ((global::Gdk.EventMask)(256));
 			this.palettesComboBox.Name = "palettesComboBox";
 			this.palettesComboBox.Active = 0;
+			this.palettesComboBox.ActiveValue = 0;
 			this.table2.Add (this.palettesComboBox);
 			global::Gtk.Table.TableChild w17 = ((global::Gtk.Table.TableChild)(this.table2 [this.palettesComboBox]));
 			w17.TopAttach = ((uint)(4));
@@ -328,6 +332,7 @@ namespace LynnaLab
 			this.uniqueGfxComboBox.Events = ((global::Gdk.EventMask)(256));
 			this.uniqueGfxComboBox.Name = "uniqueGfxComboBox";
 			this.uniqueGfxComboBox.Active = 0;
+			this.uniqueGfxComboBox.ActiveValue = 0;
 			this.table2.Add (this.uniqueGfxComboBox);
 			global::Gtk.Table.TableChild w19 = ((global::Gtk.Table.TableChild)(this.table2 [this.uniqueGfxComboBox]));
 			w19.TopAttach = ((uint)(2));
@@ -415,17 +420,22 @@ namespace LynnaLab
 			w30.Expand = false;
 			w30.Fill = false;
 			// Container child vbox2.Gtk.Box+BoxChild
+			this.alignment1 = new global::Gtk.Alignment (0.5F, 0.5F, 0.01F, 1F);
+			this.alignment1.Name = "alignment1";
+			// Container child alignment1.Gtk.Container+ContainerChild
 			this.okButton = new global::Gtk.Button ();
 			this.okButton.CanFocus = true;
 			this.okButton.Name = "okButton";
+			this.okButton.UseStock = true;
 			this.okButton.UseUnderline = true;
-			this.okButton.Label = global::Mono.Unix.Catalog.GetString ("OK");
-			this.vbox2.Add (this.okButton);
-			global::Gtk.Box.BoxChild w31 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.okButton]));
-			w31.PackType = ((global::Gtk.PackType)(1));
-			w31.Position = 2;
-			w31.Expand = false;
-			w31.Fill = false;
+			this.okButton.Label = "gtk-ok";
+			this.alignment1.Add (this.okButton);
+			this.vbox2.Add (this.alignment1);
+			global::Gtk.Box.BoxChild w32 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.alignment1]));
+			w32.PackType = ((global::Gtk.PackType)(1));
+			w32.Position = 2;
+			w32.Expand = false;
+			w32.Fill = false;
 			this.Add (this.vbox2);
 			if ((this.Child != null)) {
 				this.Child.ShowAll ();
