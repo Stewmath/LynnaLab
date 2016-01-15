@@ -104,6 +104,7 @@ namespace LynnaLab
         // Called when a new set of interactions is loaded or interactions are
         // modified or whatever
         public void OnInteractionsModified() {
+            QueueDraw();
         }
 
         void UpdateMouse(int x, int y) {

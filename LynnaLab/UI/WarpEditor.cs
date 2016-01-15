@@ -110,7 +110,7 @@ namespace LynnaLab
 
                     destEditor = new ValueReferenceEditor(Project, pointedData);
 
-                    destEditor.AddDataModifiedHandler(delegate(object sender2, EventArgs e2) {
+                    destEditor.AddDataModifiedHandler(delegate() {
                             SetDestIndex(pointedData.DestGroup, pointedData.DestIndex);
                         });
 
@@ -181,7 +181,7 @@ namespace LynnaLab
                 hbox.Add(frame);
             }
             else { // Not pointerWarp
-                sourceEditor.AddDataModifiedHandler(delegate(object sender, EventArgs e) {
+                sourceEditor.AddDataModifiedHandler(delegate() {
                         SetDestIndex(warpSourceData.DestGroup, warpSourceData.DestIndex);
                         });
             }

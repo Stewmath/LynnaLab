@@ -8,8 +8,8 @@ namespace LynnaLab {
         Gtk.Frame pointerFrame;
         InteractionGroupEditor subEditor;
 
-        event EventHandler dataModifiedExternalEvent;
-        event EventHandler dataModifiedInternalEvent;
+        event Action dataModifiedExternalEvent;
+        event Action dataModifiedInternalEvent;
 
 
         Project Project {get; set;}
@@ -36,7 +36,7 @@ namespace LynnaLab {
                         r.SetValue(comboBox.ActiveValue);
                     };
 
-                    dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                    dataModifiedExternalEvent += delegate() {
                         comboBox.ActiveValue = r.GetIntValue();
                     };
 
@@ -55,7 +55,7 @@ namespace LynnaLab {
                             Gtk.Entry entry = new Gtk.Entry();
                             if (!r.Editable)
                                 entry.Sensitive = false;
-                            dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                            dataModifiedExternalEvent += delegate() {
                                 entry.Text = r.GetStringValue();
                                 OnDataModifiedInternal();
                             };
@@ -81,7 +81,7 @@ byteCase:
                                 r.SetValue(button.ValueAsInt);
                                 OnDataModifiedInternal();
                             };
-                            dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                            dataModifiedExternalEvent += delegate() {
                                 spinButton.Value = r.GetIntValue();
                             };
                             table.Attach(spinButton, 1, 2, y, y+1);
@@ -131,7 +131,7 @@ byteCase:
                                 r.SetValue(button.ValueAsInt);
                                 OnDataModifiedInternal();
                             };
-                            dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                            dataModifiedExternalEvent += delegate() {
                                 spinButton.Value = r.GetIntValue();
                             };
                             table.Attach(spinButton, 1, 2, y, y+1);
@@ -149,7 +149,7 @@ byteCase:
                                 r.SetValue(button.Active ? 1 : 0);
                                 OnDataModifiedInternal();
                             };
-                            dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                            dataModifiedExternalEvent += delegate() {
                                 checkButton.Active = r.GetIntValue() == 1;
                             };
                             table.Attach(checkButton, 1, 2, y, y+1);
@@ -167,7 +167,7 @@ byteCase:
                                 r.SetValue(button.ValueAsInt);
                                 OnDataModifiedInternal();
                             };
-                            dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                            dataModifiedExternalEvent += delegate() {
                                 spinButton.Value = r.GetIntValue();
                             };
                             table.Attach(spinButton, 1, 2, y, y+1);
@@ -193,7 +193,7 @@ byteCase:
                             y++;
                             table.Attach(pointerFrame, 0, 2, y, y+1);
 
-                            dataModifiedExternalEvent += delegate(object sender, EventArgs e) {
+                            dataModifiedExternalEvent += delegate() {
                                 entry.Text = r.GetStringValue();
                                 UpdatePointerTextBox(entry, r);
                             };
@@ -218,25 +218,25 @@ loopEnd:
 
             // Initial values
             if (dataModifiedExternalEvent != null)
-                dataModifiedExternalEvent(this, null);
+                dataModifiedExternalEvent();
         }
 
         // Data modified externally
         void OnDataModifiedExternal(object sender, EventArgs e) {
             if (dataModifiedExternalEvent != null)
-                dataModifiedExternalEvent(this, null);
+                dataModifiedExternalEvent();
         }
 
         // Data modified internally
         void OnDataModifiedInternal() {
             if (dataModifiedInternalEvent != null)
-                dataModifiedInternalEvent(this, null);
+                dataModifiedInternalEvent();
         }
 
-        public void AddDataModifiedHandler(EventHandler handler) {
+        public void AddDataModifiedHandler(Action handler) {
             dataModifiedInternalEvent += handler;
         }
-        public void RemoveDataModifiedHandler(EventHandler handler) {
+        public void RemoveDataModifiedHandler(Action handler) {
             dataModifiedInternalEvent -= handler;
         }
 

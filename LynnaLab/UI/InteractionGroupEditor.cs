@@ -84,9 +84,6 @@ namespace LynnaLab
                     SetInteractionData(null);
                 else
                     SetInteractionData(InteractionGroup.GetInteractionData(i));
-
-                if (roomEditor != null)
-                    roomEditor.QueueDraw();
             };
         }
 
@@ -102,9 +99,6 @@ namespace LynnaLab
             }
 
             UpdateBoundaries();
-
-            if (RoomEditor != null)
-                RoomEditor.OnInteractionsModified();
         }
 
         void SetInteractionDataIndex(int i) {
@@ -114,13 +108,24 @@ namespace LynnaLab
                 SetInteractionData(InteractionGroup.GetInteractionData(i));
         }
         void SetInteractionData(InteractionData data) {
+            Action handler = delegate() {
+                if (RoomEditor != null)
+                    RoomEditor.OnInteractionsModified();
+            };
+
             activeData = data;
 
             foreach (Gtk.Widget widget in interactionDataContainer.Children) {
                 interactionDataContainer.Remove(widget);
                 widget.Destroy();
             }
-            interactionDataEditor = null;
+            if (interactionDataEditor != null) {
+                interactionDataEditor.RemoveDataModifiedHandler(handler);
+                interactionDataEditor = null;
+            }
+
+            if (RoomEditor != null)
+                RoomEditor.OnInteractionsModified();
 
             if (data == null) {
                 frameLabel.Text = "";
@@ -129,9 +134,12 @@ namespace LynnaLab
             frameLabel.Text = InteractionNames[(int)activeData.GetInteractionType()];
 
             interactionDataEditor = new ValueReferenceEditor(Project,data);
+            interactionDataEditor.AddDataModifiedHandler(handler);
 
-            if (interactionDataEditor.SubEditor != null)
+            if (interactionDataEditor.SubEditor != null) {
+                // What if there's more than 2 layers of editors
                 interactionDataEditor.SubEditor.RoomEditor = RoomEditor;
+            }
 
             interactionDataContainer.Add(interactionDataEditor);
             interactionDataContainer.ShowAll();
