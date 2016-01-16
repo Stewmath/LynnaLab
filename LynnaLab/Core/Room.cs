@@ -5,6 +5,12 @@ using System.IO;
 
 namespace LynnaLab
 {
+    /* Room class
+     * Provides an interface for modifying layout and keeping track of changes
+     * to the image.
+     * Doesn't keep track of much else, like interactions or dungeon data,
+     * though it may have getter functions.
+     */
     public class Room : ProjectIndexedDataType {
 
         public delegate void RoomModifiedHandler();
@@ -61,7 +67,7 @@ namespace LynnaLab
         }
 
         public Room(Project p, int i) : base(p,i) {
-            int areaID = 0;
+            int areaID;
             Stream groupAreasFile = Project.GetBinaryFile("rooms/group" + (Index>>8) + "Areas.bin");
             groupAreasFile.Position = Index&0xff;
             areaID = groupAreasFile.ReadByte() & 0x7f;
