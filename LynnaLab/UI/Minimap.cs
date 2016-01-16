@@ -114,6 +114,9 @@ namespace LynnaLab
                 GLib.Idle.Remove(handler);
                 GLib.Idle.Add(handler);
             }
+
+            int squares = (worldGroup != -1 ? 16 : 8);
+            SetSizeRequest((int)(roomWidth*16*squares*scale), (int)(roomHeight*16*squares*scale));
         }
 
         int idleX, idleY;
@@ -147,6 +150,7 @@ namespace LynnaLab
                 if (idleY >= (worldGroup != -1 ? 16 : 8))
                     return false;
             }
+
             return true;
         }
 

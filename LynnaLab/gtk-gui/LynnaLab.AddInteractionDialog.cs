@@ -43,7 +43,6 @@ namespace LynnaLab
 			// Container child hbox1.Gtk.Box+BoxChild
 			this.infoLabel = new global::Gtk.Label ();
 			this.infoLabel.Name = "infoLabel";
-			this.infoLabel.LabelProp = global::Mono.Unix.Catalog.GetString ("label1");
 			this.hbox1.Add (this.infoLabel);
 			global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.infoLabel]));
 			w3.Position = 2;

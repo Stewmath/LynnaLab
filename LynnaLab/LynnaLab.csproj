@@ -101,6 +101,8 @@
     <Compile Include="Core\WarpDestGroup.cs" />
     <Compile Include="Core\WarpDestData.cs" />
     <Compile Include="Core\FileParser.cs" />
+    <Compile Include="UI\DungeonEditor.cs" />
+    <Compile Include="gtk-gui\LynnaLab.DungeonEditor.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

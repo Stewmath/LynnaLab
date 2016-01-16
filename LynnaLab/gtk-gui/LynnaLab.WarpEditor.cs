@@ -122,7 +122,7 @@ namespace LynnaLab
 			this.hbox1.Spacing = 6;
 			// Container child hbox1.Gtk.Box+BoxChild
 			this.label1 = new global::Gtk.Label ();
-			this.label1.LabelProp = "";
+			this.label1.Name = "label1";
 			this.hbox1.Add (this.label1);
 			global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.label1]));
 			w4.Position = 0;
@@ -270,7 +270,6 @@ namespace LynnaLab
 			// Container child hbox2.Gtk.Box+BoxChild
 			this.destInfoLabel = new global::Gtk.Label ();
 			this.destInfoLabel.Name = "destInfoLabel";
-			this.destInfoLabel.LabelProp = "";
 			this.hbox2.Add (this.destInfoLabel);
 			global::Gtk.Box.BoxChild w19 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destInfoLabel]));
 			w19.Position = 4;
