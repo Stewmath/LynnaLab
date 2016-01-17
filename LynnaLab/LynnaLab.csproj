@@ -103,6 +103,10 @@
     <Compile Include="Core\FileParser.cs" />
     <Compile Include="UI\DungeonEditor.cs" />
     <Compile Include="gtk-gui\LynnaLab.DungeonEditor.cs" />
+    <Compile Include="PluginCore\PluginCore.cs" />
+    <Compile Include="PluginCore\PluginManager.cs" />
+    <Compile Include="PluginInterfaces\Plugin.cs" />
+    <Compile Include="PluginInterfaces\SimplePlugin.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -110,5 +114,7 @@
     <Folder Include="UI\" />
     <Folder Include="gtk-gui\" />
     <Folder Include="Widgets\" />
+    <Folder Include="PluginCore\" />
+    <Folder Include="PluginInterfaces\" />
   </ItemGroup>
 </Project>

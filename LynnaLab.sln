@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LynnaLab", "LynnaLab\LynnaLab.csproj", "{21072A00-C7C0-41FF-8103-4186BB75056E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugins", "Plugins\Plugins.csproj", "{6F9D3CD8-0679-4475-B95D-8E37028D90DC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -13,6 +15,10 @@ Global
 		{21072A00-C7C0-41FF-8103-4186BB75056E}.Debug|x86.Build.0 = Debug|x86
 		{21072A00-C7C0-41FF-8103-4186BB75056E}.Release|x86.ActiveCfg = Release|x86
 		{21072A00-C7C0-41FF-8103-4186BB75056E}.Release|x86.Build.0 = Release|x86
+		{6F9D3CD8-0679-4475-B95D-8E37028D90DC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6F9D3CD8-0679-4475-B95D-8E37028D90DC}.Debug|x86.Build.0 = Debug|Any CPU
+		{6F9D3CD8-0679-4475-B95D-8E37028D90DC}.Release|x86.ActiveCfg = Release|Any CPU
+		{6F9D3CD8-0679-4475-B95D-8E37028D90DC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		Policies = $0

@@ -27,6 +27,8 @@ public partial class MainWindow
 	
 	private global::Gtk.Action DungeonAction1;
 	
+	private global::Gtk.Action PluginsAction;
+	
 	private global::Gtk.VBox vbox1;
 	
 	private global::Gtk.MenuBar menubar1;
@@ -150,6 +152,9 @@ public partial class MainWindow
 		this.DungeonAction1 = new global::Gtk.Action ("DungeonAction1", global::Mono.Unix.Catalog.GetString ("Dungeon"), null, null);
 		this.DungeonAction1.ShortLabel = global::Mono.Unix.Catalog.GetString ("Dungeon");
 		w1.Add (this.DungeonAction1, null);
+		this.PluginsAction = new global::Gtk.Action ("PluginsAction", global::Mono.Unix.Catalog.GetString ("Plugins"), null, null);
+		this.PluginsAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("Plugins");
+		w1.Add (this.PluginsAction, null);
 		this.UIManager.InsertActionGroup (w1, 0);
 		this.AddAccelGroup (this.UIManager.AccelGroup);
 		this.Name = "MainWindow";
@@ -160,7 +165,7 @@ public partial class MainWindow
 		this.vbox1.Name = "vbox1";
 		this.vbox1.Spacing = 6;
 		// Container child vbox1.Gtk.Box+BoxChild
-		this.UIManager.AddUiFromString ("<ui><menubar name='menubar1'><menu name='FileAction' action='FileAction'><menuitem name='OpenAction' action='OpenAction'/><menuitem name='SaveAction' action='SaveAction'/><menuitem name='QuitAction' action='QuitAction'/></menu><menu name='EditAction' action='EditAction'><menuitem name='DungeonAction1' action='DungeonAction1'/><menuitem name='WarpsAction' action='WarpsAction'/></menu><menu name='ViewAction' action='ViewAction'><menuitem name='AnimationsAction' action='AnimationsAction'/></menu></menubar></ui>");
+		this.UIManager.AddUiFromString ("<ui><menubar name='menubar1'><menu name='FileAction' action='FileAction'><menuitem name='OpenAction' action='OpenAction'/><menuitem name='SaveAction' action='SaveAction'/><menuitem name='QuitAction' action='QuitAction'/></menu><menu name='EditAction' action='EditAction'><menuitem name='DungeonAction1' action='DungeonAction1'/><menuitem name='WarpsAction' action='WarpsAction'/></menu><menu name='ViewAction' action='ViewAction'><menuitem name='AnimationsAction' action='AnimationsAction'/></menu><menu name='PluginsAction' action='PluginsAction'/></menubar></ui>");
 		this.menubar1 = ((global::Gtk.MenuBar)(this.UIManager.GetWidget ("/menubar1")));
 		this.menubar1.Name = "menubar1";
 		this.vbox1.Add (this.menubar1);
@@ -568,7 +573,7 @@ public partial class MainWindow
 			this.Child.ShowAll ();
 		}
 		this.DefaultWidth = 952;
-		this.DefaultHeight = 520;
+		this.DefaultHeight = 526;
 		this.Show ();
 		this.DeleteEvent += new global::Gtk.DeleteEventHandler (this.OnDeleteEvent);
 		this.OpenAction.Activated += new global::System.EventHandler (this.OnOpenActionActivated);

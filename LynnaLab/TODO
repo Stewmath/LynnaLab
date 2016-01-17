@@ -10,4 +10,5 @@ Before Release:
 - Select multiple tiles from a tileset at once
 - Bugs:
     - Crash when changing animation index
+    - Crash when area ID is too high
 - Deal with ConstantsMappings that don't have a mapping for a value 

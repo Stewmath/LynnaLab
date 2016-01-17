@@ -107,6 +107,8 @@ namespace LynnaLab
                     g.Dispose();
                 }
                 Modified = true;
+                if (RoomModifiedEvent != null)
+                    RoomModifiedEvent();
             }
         }
 

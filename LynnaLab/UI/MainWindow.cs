@@ -2,17 +2,27 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Reflection;
+using System.Linq;
 using Gtk;
 using LynnaLab;
 
 public partial class MainWindow: Gtk.Window
 {
-    Project Project { get; set; }
-
     uint animationTimerID;
+    PluginCore pluginCore;
 
-    public MainWindow() : this("") {}
-    public MainWindow (string directory) : base (Gtk.WindowType.Toplevel)
+    Gtk.Menu pluginSubMenu;
+
+    internal Project Project { get; set; }
+    internal Room ActiveRoom {
+        get {
+            return roomeditor1.Room;
+        }
+    }
+
+    internal MainWindow() : this("") {}
+    internal MainWindow (string directory) : base (Gtk.WindowType.Toplevel)
     {
         Build();
 
@@ -30,8 +40,57 @@ public partial class MainWindow: Gtk.Window
         worldSpinButton.Adjustment = new Adjustment(0, 0, 3, 1, 0, 0);
         dungeonSpinButton.Adjustment = new Adjustment(0, 0, 15, 1, 0, 0);
 
+        pluginCore = new PluginCore(this);
+
+        LoadPlugins();
+
         if (directory != "")
             OpenProject(directory);
+    }
+
+    void LoadPlugins() {
+        pluginCore.ReloadPlugins();
+
+        MenuItem pluginMenuItem = null;
+
+        foreach (Widget w in menubar1.AllChildren) {
+            if ((w as MenuItem).Name == "PluginsAction") {
+                pluginMenuItem = w as MenuItem;
+                break;
+            }
+        }
+
+        var reloadItem = new MenuItem("Reload scripts");
+        reloadItem.Activated += (a,b) => LoadPlugins();
+
+        pluginSubMenu = new Menu();
+        pluginMenuItem.Submenu = pluginSubMenu;
+
+        pluginSubMenu.Append(reloadItem);
+
+        foreach (Plugin plugin in pluginCore.GetPlugins()) {
+             var item = new MenuItem(plugin.Name);
+             item.Activated += ((a, b) =>
+                     {
+                        plugin.Clicked();
+//                         try {
+//                             plugin.Clicked();
+//                         }
+//                         catch(Exception e) {
+//                             string msg = "The plugin \"" + plugin.Name + "\" threw an exception:\n\n"
+//                                     + e.Message;
+//                             Gtk.MessageDialog d = new MessageDialog(null,
+//                                     DialogFlags.DestroyWithParent,
+//                                     MessageType.Error,
+//                                     ButtonsType.Ok,
+//                                     msg);
+//                             d.Run();
+//                             d.Destroy();
+//                         }
+                    });
+             pluginSubMenu.Append(item);
+        }
+        menubar1.ShowAll();
     }
 
     void StartAnimations() {
@@ -209,7 +268,7 @@ public partial class MainWindow: Gtk.Window
     }
 
     protected void OnAnimationsActionActivated(object sender, EventArgs e) {
-        if (AnimationsAction.Active)
+        if ((sender as ToggleAction).Active)
             StartAnimations();
         else
             EndAnimations();
