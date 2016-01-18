@@ -4,8 +4,10 @@ using System.IO;
 
 namespace LynnaLab
 {
-	public class Dungeon : ProjectIndexedDataType
-	{
+    public class Dungeon : Map
+    {
+        Data dataBase;
+
         public int FirstLayoutIndex {
             get {
                 return GetDataIndex(2);
@@ -16,9 +18,30 @@ namespace LynnaLab
                 return GetDataIndex(3);
             }
         }
-        Data dataBase;
 
-        public Dungeon(Project p, int i) : base(p, i) {
+        // Map properties
+        public override int MapWidth {
+            get {
+                return 8;
+            }
+        }
+        public override int MapHeight {
+            get {
+                return 8;
+            }
+        }
+        public override int RoomWidth {
+            get {
+                return 15;
+            }
+        }
+        public override int RoomHeight {
+            get {
+                return 11;
+            }
+        }
+
+        internal Dungeon(Project p, int i) : base(p, i) {
             FileParser dungeonDataFile = Project.GetFileWithLabel("dungeonDataTable");
             Data pointerData = dungeonDataFile.GetData("dungeonDataTable", Index*2);
             string label = pointerData.GetValue(0);
@@ -33,7 +56,9 @@ namespace LynnaLab
             return Project.EvalToInt(d.GetValue(0));
         }
 
-        public Room GetRoom(int floor, int x, int y) {
+        // IMap methods
+
+        public override Room GetRoom(int x, int y, int floor=0) {
             int i = FirstLayoutIndex + floor;
             Stream file = Project.GetBinaryFile("dungeonLayouts/layout" + i.ToString("X2").ToLower() + ".bin");
             file.Position = y*8+x;

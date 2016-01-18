@@ -14,7 +14,7 @@ namespace LynnaLab
         int _numAnimations;
         Animation[] animations = new Animation[4];
 
-        public AnimationGroup(Project p, int i) : base(p, i) {
+        internal AnimationGroup(Project p, int i) : base(p, i) {
             FileParser parser = Project.GetFileWithLabel("animationGroupTable");
             Data pointer = parser.GetData("animationGroupTable", 2*Index);
             string label = pointer.GetValue(0);

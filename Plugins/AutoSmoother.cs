@@ -71,11 +71,11 @@ namespace Plugins
     }
 
     class Smoother {
-        int[,] baseTiles;
-        int[] hTiles;
-        int[] vTiles;
-        int[] ignoreTiles;
-        HashSet<int> tiles = new HashSet<int>();
+        protected int[,] baseTiles;
+        protected int[] hTiles;
+        protected int[] vTiles;
+        protected int[] ignoreTiles;
+        protected HashSet<int> tiles = new HashSet<int>();
 
         public Smoother(int[,] baseTiles, int[] hTiles, int[] vTiles, int[] ignoreTiles) {
             this.baseTiles = baseTiles;
@@ -95,14 +95,19 @@ namespace Plugins
                 tiles.Add(i);
         }
 
-        public int GetTile(int x, int y, Room room) {
+        public virtual int GetTile(int x, int y, Room room) {
             int t = room.GetTile(x,y);
             if (!tiles.Contains(t) || ignoreTiles.Contains(t))
                 return t;
 
-            Func<int,int,bool> f = (a,b) =>
-                (a < 0 || b < 0 || a >= room.Width || b >= room.Height) ? false
-                : tiles.Contains(room.GetTile(a,b));
+            Func<int,int,bool> f = (a,b) => {
+                return tiles.Contains(room.GetTile(a,b));
+            };
+
+            return GetTileBy(x, y, room, f);
+        }
+
+        protected int GetTileBy(int x, int y, Room room, Func<int,int,bool> f) {
             Func<int,bool> fx = (a) => f(a,y);
             Func<int,bool> fy = (b) => f(x,b);
 
@@ -136,5 +141,17 @@ namespace Plugins
             }
             return baseTiles[yi,xi];
         }
+    }
+
+    // A smoother where the only "edges" are water
+    class WaterEdgeSmoother : Smoother {
+        public WaterEdgeSmoother(int[,] baseTiles, int[] hTiles, int[] vTiles, int[] ignoreTiles)
+            : base(baseTiles, hTiles, vTiles, ignoreTiles)
+        {
+        }
+
+//         public override int GetTile(int x, int y, Room room) {
+// //             Func<int,int,bool> f = (a,b) =>
+//         }
     }
 }

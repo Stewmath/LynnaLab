@@ -4,34 +4,27 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
-	public class PaletteHeaderGroup
-	{
-		Project project;
-		int index;
+    public class PaletteHeaderGroup : ProjectIndexedDataType
+    {
+        PaletteHeaderData firstPaletteHeader;
 
-		PaletteHeaderData firstPaletteHeader;
+        public PaletteHeaderData FirstPaletteHeader {
+            get { return firstPaletteHeader; }
+        }
 
-		public PaletteHeaderData FirstPaletteHeader {
-			get { return firstPaletteHeader; }
-		}
+        PaletteHeaderGroup(Project project, int index) : base(project, index)
+        {
+            FileParser palettePointerFile = project.GetFileWithLabel("paletteHeaderGroupTable");
+            Data headerPointerData = palettePointerFile.GetData("paletteHeaderGroupTable", index*2);
+            FileParser paletteHeaderFile = project.GetFileWithLabel(headerPointerData.GetValue(0));
+            Data headerData = paletteHeaderFile.GetData(headerPointerData.GetValue(0));
 
-		public PaletteHeaderGroup(Project project, string name)
-            : this(project, project.EvalToInt(name))
-		{
-		}
-		public PaletteHeaderGroup(Project project, int index)
-		{
-			this.project = project;
-			this.index = index;
+            if (!(headerData is PaletteHeaderData))
+                throw new Exception("Expected palette header group " + index.ToString("X") + " to start with palette header data");
+            firstPaletteHeader = (PaletteHeaderData)headerData;
+        }
 
-			FileParser palettePointerFile = project.GetFileWithLabel("paletteHeaderGroupTable");
-			Data headerPointerData = palettePointerFile.GetData("paletteHeaderGroupTable", index*2);
-			FileParser paletteHeaderFile = project.GetFileWithLabel(headerPointerData.Values[0]);
-			Data headerData = paletteHeaderFile.GetData(headerPointerData.Values[0]);
-
-			if (!(headerData is PaletteHeaderData))
-				throw new Exception("Expected palette header group " + index.ToString("X") + " to start with palette header data");
-			firstPaletteHeader = (PaletteHeaderData)headerData;
-		}
-	}
+        public override void Save() {
+        }
+    }
 }

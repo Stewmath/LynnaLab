@@ -60,7 +60,6 @@
     <Compile Include="Core\GraphicsState.cs" />
     <Compile Include="Core\GfxHeaderData.cs" />
     <Compile Include="UI\AreaViewer.cs" />
-    <Compile Include="Core\PaletteGroup.cs" />
     <Compile Include="Core\PaletteHeaderData.cs" />
     <Compile Include="Core\Data.cs" />
     <Compile Include="Core\TilesetHeaderData.cs" />
@@ -107,6 +106,9 @@
     <Compile Include="PluginCore\PluginManager.cs" />
     <Compile Include="PluginInterfaces\Plugin.cs" />
     <Compile Include="PluginInterfaces\SimplePlugin.cs" />
+    <Compile Include="Core\WorldMap.cs" />
+    <Compile Include="Core\Map.cs" />
+    <Compile Include="Core\PaletteHeaderGroup.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

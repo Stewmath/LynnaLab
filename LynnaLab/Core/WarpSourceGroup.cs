@@ -27,7 +27,7 @@ namespace LynnaLab
         FileParser fileParser;
 
 
-        public WarpSourceGroup(Project p, int id) : base(p,id) {
+        internal WarpSourceGroup(Project p, int id) : base(p,id) {
             fileParser = Project.GetFileWithLabel("warpSourcesTable");
             Data d = fileParser.GetData("warpSourcesTable", id*2);
             string label = d.GetValue(0);

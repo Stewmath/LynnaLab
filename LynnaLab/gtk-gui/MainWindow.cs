@@ -206,7 +206,7 @@ public partial class MainWindow
 		this.roomSpinButton.Adjustment.PageIncrement = 10;
 		this.roomSpinButton.Adjustment.StepIncrement = 1;
 		this.roomSpinButton.ClimbRate = 1;
-		this.roomSpinButton.Digits = ((uint)(2));
+		this.roomSpinButton.Digits = ((uint)(3));
 		this.roomSpinButton.Numeric = true;
 		this.table4.Add (this.roomSpinButton);
 		global::Gtk.Table.TableChild w4 = ((global::Gtk.Table.TableChild)(this.table4 [this.roomSpinButton]));

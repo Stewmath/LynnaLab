@@ -15,7 +15,7 @@ namespace LynnaLab
         List<int> gfxHeaderIndices = new List<int>();
         List<int> counters = new List<int>();
 
-        public Animation(Project p, string label) : base(p, label) {
+        internal Animation(Project p, string label) : base(p, label) {
             FileParser parser = Project.GetFileWithLabel(label);
             Data data = parser.GetData(label);
             while (data != null && data.CommandLowerCase == ".db") {

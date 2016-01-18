@@ -4,11 +4,11 @@ using System.IO;
 
 namespace LynnaLab {
 
-	public class TilesetHeaderGroup : ProjectIndexedDataType {
+    public class TilesetHeaderGroup : ProjectIndexedDataType {
 
         Stream mappingsDataFile, collisionsDataFile;
 
-		public TilesetHeaderGroup(Project p, int i) : base(p, i)
+        internal TilesetHeaderGroup(Project p, int i) : base(p, i)
         {
             FileParser tableFile = Project.GetFileWithLabel("tilesetHeaderGroupTable");
             Data pointerData = tableFile.GetData("tilesetHeaderGroupTable", Index*2);
@@ -41,7 +41,7 @@ namespace LynnaLab {
                 else
                     next = false;
             }
-		}
+        }
 
         public byte GetMappingsData(int i) {
             if (mappingsDataFile == null)
@@ -70,5 +70,5 @@ namespace LynnaLab {
         }
 
         // No need for a save function, dataFiles are tracked elsewhere
-	}
+    }
 }

@@ -151,8 +151,6 @@ public partial class MainWindow: Gtk.Window
     */
 
             musicComboBox.SetConstantsMapping(Project.MusicMapping);
-            dungeonMinimap.Project = Project;
-            worldMinimap.Project = Project;
             SetWorld(0);
         }
     }
@@ -183,7 +181,7 @@ public partial class MainWindow: Gtk.Window
         dungeonSpinButton.Value = dungeon.Index;
         floorSpinButton.Value = 0;
         floorSpinButton.Adjustment = new Adjustment(0, 0, dungeon.NumFloors-1, 1, 0, 0);
-        dungeonMinimap.SetDungeon(dungeon);
+        dungeonMinimap.SetMap(dungeon);
         SetRoom(dungeonMinimap.GetRoom());
     }
     void SetDungeon(int index) {
@@ -191,12 +189,17 @@ public partial class MainWindow: Gtk.Window
             return;
         SetDungeon(Project.GetIndexedDataType<Dungeon>(index));
     }
+    void SetWorld(WorldMap map) {
+        if (Project == null)
+            return;
+        worldSpinButton.Value = map.Index;
+        worldMinimap.SetMap(map);
+        SetRoom(worldMinimap.GetRoom());
+    }
     void SetWorld(int index) {
         if (Project == null)
             return;
-        worldSpinButton.Value = index;
-        worldMinimap.SetWorld(index);
-        SetRoom(worldMinimap.GetRoom());
+        SetWorld(Project.GetIndexedDataType<WorldMap>(index));
     }
 
     // This returns ResponseType.Yes, No, or Cancel
@@ -295,7 +298,7 @@ public partial class MainWindow: Gtk.Window
             return;
         GLib.Idle.Add(new GLib.IdleHandler(delegate() {
                     dungeonMinimap.Floor = floorSpinButton.ValueAsInt;
-                    SetRoom(dungeonMinimap.Dungeon.GetRoom(dungeonMinimap.Floor, dungeonMinimap.SelectedX, dungeonMinimap.SelectedY));
+                    SetRoom(dungeonMinimap.GetRoom());
                     return false;
         }));
     }
@@ -391,7 +394,7 @@ public partial class MainWindow: Gtk.Window
         if (openedDungeonEditor)
             return;
         DungeonEditor editor = new DungeonEditor();
-        editor.Dungeon = dungeonMinimap.Dungeon;
+        editor.Dungeon = dungeonMinimap.Map as Dungeon;
 
         Gtk.Window win = new Window(WindowType.Toplevel);
         win.Modal = false;

@@ -15,7 +15,7 @@ namespace LynnaLab
         List<WarpDestData> warpDestDataList;
         FileParser fileParser;
 
-        public WarpDestGroup(Project p, int id) : base(p,id) {
+        internal WarpDestGroup(Project p, int id) : base(p,id) {
             fileParser = Project.GetFileWithLabel("warpDestTable");
             Data tmp = fileParser.GetData("warpDestTable", id*2);
 

@@ -15,8 +15,7 @@ namespace LynnaLab
             }
             set {
                 _dungeon = value;
-                minimap.Project = _dungeon.Project;
-                minimap.SetDungeon(_dungeon);
+                minimap.SetMap(_dungeon);
             }
         }
 

@@ -6,32 +6,33 @@ namespace LynnaLab
     [System.ComponentModel.ToolboxItem(true)]
     public class Minimap : TileGridSelector
     {
+        const double IMAGE_SCALE = 1.0/8;
+
+        Bitmap _image;
+        Map _map;
+
+        int _floor;
+
         public Project Project {
             get {
-                if (_project != null)
-                    return _project;
-                if (dungeon != null)
-                    return dungeon.Project;
-                return null;
-            }
-            set {
-                _project = value;
-                GenerateImage();
+                if (_map == null)
+                    return null;
+                return _map.Project;
             }
         }
-        public Dungeon Dungeon {
+        public new Map Map {
             get {
-                return dungeon;
+                return _map;
             }
         }
 
         public int Floor
         {
             get {
-                return floor;
+                return _floor;
             }
             set {
-                floor = value;
+                _floor = value;
                 GenerateImage();
             }
         }
@@ -44,79 +45,43 @@ namespace LynnaLab
             }
         }
 
-        Bitmap _image;
-        Project _project;
-        int roomWidth, roomHeight;
-
-        // For dungeons
-        Dungeon dungeon;
-        int floor;
-
-        // For worlds
-        int worldGroup = -1;
-
         public Minimap()
         {
         }
 
-        public void SetDungeon(Dungeon d) {
-            if (dungeon != d) {
-                worldGroup = -1;
-                dungeon = d;
-                roomWidth = 15;
-                roomHeight = 11;
-                GenerateImage();
-            }
-        }
-
-        public void SetWorld(int group) {
-            if (worldGroup != group) {
-                worldGroup = group;
-                dungeon = null;
-                roomWidth = 10;
-                roomHeight = 8;
+        public void SetMap(Map m) {
+            if (_map != m) {
+                _map = m;
+                _floor = 0;
                 GenerateImage();
             }
         }
 
         public Room GetRoom(int x, int y) {
-            if (dungeon != null)
-                return dungeon.GetRoom(Floor, x, y);
-            else if (worldGroup != -1)
-                return Project.GetIndexedDataType<Room>(worldGroup*0x100+y*16+x);
-            else
-                return null;
+            if (_map != null)
+                return _map.GetRoom(x, y, Floor);
+            return null;
         }
         public Room GetRoom() {
             return GetRoom(SelectedX, SelectedY);
         }
 
         public void GenerateImage() {
-            const double scale = 1.0/8;
-            if (dungeon != null) {
-                _image = new Bitmap((int)(roomWidth*16*8*scale), (int)(roomHeight*16*8*scale));
-            }
-            else if (worldGroup != -1) {
-                _image = new Bitmap((int)(roomWidth*16*16*scale), (int)(roomHeight*16*16*scale));
-
-                for (int x=0; x<16; x++) {
-                    for (int y=0; y<16; y++) {
-                    }
-                }
-            }
-            else
+            if (_map == null) {
                 _image = null;
-
-            if (_image != null) {
-                idleX = 0;
-                idleY = 0;
-                GLib.IdleHandler handler = new GLib.IdleHandler(OnIdleGenerateImage);
-                GLib.Idle.Remove(handler);
-                GLib.Idle.Add(handler);
+                return;
             }
+            int width = (int)(_map.RoomWidth*_map.MapWidth*16*IMAGE_SCALE);
+            int height = (int)(_map.RoomHeight*_map.MapHeight*16*IMAGE_SCALE);
+            _image = new Bitmap(width,height);
 
-            int squares = (worldGroup != -1 ? 16 : 8);
-            SetSizeRequest((int)(roomWidth*16*squares*scale), (int)(roomHeight*16*squares*scale));
+            idleX = 0;
+            idleY = 0;
+            GLib.IdleHandler handler = new GLib.IdleHandler(OnIdleGenerateImage);
+            GLib.Idle.Remove(handler);
+            GLib.Idle.Add(handler);
+
+            SetSizeRequest(width, height);
         }
 
         int idleX, idleY;
@@ -124,12 +89,11 @@ namespace LynnaLab
             int x = idleX;
             int y = idleY;
 
+            int width = (int)(_map.RoomWidth*16*IMAGE_SCALE);
+            int height = (int)(_map.RoomHeight*16*IMAGE_SCALE);
+
             const System.Drawing.Drawing2D.InterpolationMode interpolationMode =
                 System.Drawing.Drawing2D.InterpolationMode.Default;
-            const double scale = 1.0/8;
-
-            int width = (int)(roomWidth*16*scale);
-            int height = (int)(roomHeight*16*scale);
 
             Graphics g = Graphics.FromImage(_image);
             g.InterpolationMode = interpolationMode;
@@ -144,10 +108,10 @@ namespace LynnaLab
             this.QueueDrawArea(x*width, y*height, width, height);
 
             idleX++;
-            if (idleX >= (worldGroup != -1 ? 16 : 8)) {
+            if (idleX >= _map.MapWidth) {
                 idleY++;
                 idleX = 0;
-                if (idleY >= (worldGroup != -1 ? 16 : 8))
+                if (idleY >= _map.MapHeight)
                     return false;
             }
 

@@ -66,7 +66,7 @@ namespace LynnaLab
             }
         }
 
-        public Room(Project p, int i) : base(p,i) {
+        internal Room(Project p, int i) : base(p,i) {
             int areaID;
             Stream groupAreasFile = Project.GetBinaryFile("rooms/group" + (Index>>8) + "Areas.bin");
             groupAreasFile.Position = Index&0xff;

@@ -27,7 +27,7 @@ namespace LynnaLab
         FileParser parser;
 
 
-        public InteractionGroup(Project p, String id) : base(p, id)
+        internal InteractionGroup(Project p, String id) : base(p, id)
         {
             parser = Project.GetFileWithLabel(Identifier);
             InteractionData data = parser.GetData(Identifier) as InteractionData;

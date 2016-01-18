@@ -127,7 +127,7 @@ namespace LynnaLab
             }
         }
 
-        public Area(Project p, int i) : base(p, i) {
+        internal Area(Project p, int i) : base(p, i) {
             areaFile = Project.GetFileWithLabel("areaData");
 
             areaData = areaFile.GetData("areaData", Index * 8);
