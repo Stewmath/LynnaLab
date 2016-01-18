@@ -1,0 +1,38 @@
+<smoother>
+  <area index="00-24,26,5f-62">
+    <base>
+      10 11 12
+      16 1b 17
+      13 14 15
+    </base>
+    <horizontal>
+      19 19
+    </horizontal>
+    <vertical>
+      18
+      18
+    </vertical>
+    <friendly>0c,1a</friendly>
+  </area>
+
+  <!-- Bridges -->
+  <area index="00-21">
+    <friendly>0d-0f,1d-1f</friendly>
+  </area>
+
+  <!-- Cliffs -->
+  <area index="00-1f,21">
+    <friendly>05-06</friendly>
+  </area>
+  <area index="01-0c,10-21">
+    <friendly>0a-0b</friendly>
+  </area>
+  <area index="00-01,03-13,16-21,5f-62">
+    <friendly>40-4d,50-5d,60-6d,70-7d</friendly>
+  </area>
+
+  <!-- Elevated dirt path -->
+  <area index="08-09,1a-1c">
+    <friendly>30-39</friendly>
+  </area>
+</smoother>

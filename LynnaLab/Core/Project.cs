@@ -300,6 +300,10 @@ namespace LynnaLab
             return 0x600;
         }
 
+        public int GetNumAreas() {
+            return 0x67;
+        }
+
         public int GetFirstDungeonGroup() {
             return 4;
         }

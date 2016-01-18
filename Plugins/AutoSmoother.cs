@@ -1,30 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Xml;
 using LynnaLab;
 
 namespace Plugins
 {
     // This plugin "smoothens" similar tiles that are supposed to flow
     // together, such as the various kinds of paths.
+    // It reads from an xml file to figure out what pieces "go together".
     public class AutoSmoother : Plugin
     {
-        // Edit this if areas are modified.
-        Smoother[] smoothers = {
-            new Smoother(
-                    new int[,] {
-                    // 3x3 grid: includes corners, sides, center
-                    {0x10,0x11,0x12},
-                    {0x16,0x1b,0x17},
-                    {0x13,0x14,0x15}},
-                    // 2x1 arrangement
-                    new int[] {0x19,0x19},
-                    // 1x2 arrangement
-                    new int[] {0x18,0x18},
-                    // Tiles to not modify but use for adjacency checks
-                    new int[] {0x1a}
-                    )};
-
         PluginManager manager;
 
         public override String Name {
@@ -56,33 +43,139 @@ namespace Plugins
         }
 
         public override void Clicked() {
-
             Room room = manager.GetActiveRoom();
-            foreach (Smoother s in smoothers) {
-                for (int y=0; y<room.Height; y++) {
-                    for (int x=0; x<room.Width; x++) {
-                        int t = s.GetTile(x, y, manager);
-                        if (t != room.GetTile(x,y))
-                            room.SetTile(x, y, t);
-                    }
+            int area = room.Area.Index;
+
+            var reader = new XmlTextReader("Plugins/AutoSmoother.xml");
+
+            Smoother smoother = new Smoother();
+            bool validArea = false;
+
+            string name = "";
+            while (reader.Read()) 
+            {
+                string s;
+
+                switch (reader.NodeType) 
+                {
+                    case XmlNodeType.Element:
+                        name = reader.Name;
+                        switch(name) {
+                            case "area":
+                                s = reader.GetAttribute("index");
+                                List<int> ints = GetIntList(s);
+                                validArea = ints.Contains(area);
+                                break;
+                        }
+                        break;
+                    case XmlNodeType.Text:
+                        s = reader.Value.Trim();
+                        switch(name) {
+                            case "base":
+                                {
+                                    IEnumerable<int> values = Regex.Split(s, @"\s+")
+                                        .Select(a => Convert.ToInt32(a,16));
+                                    int c=0;
+                                    foreach (int i in values) {
+                                        smoother.baseTiles[c/3,c%3] = i;
+                                        c++;
+                                    }
+                                }
+                                break;
+                            case "horizontal":
+                                {
+                                    IEnumerable<int> values = Regex.Split(s,@"\s+")
+                                        .Select(a => Convert.ToInt32(a,16));
+                                    int c=0;
+                                    foreach (int i in values) {
+                                        smoother.hTiles[c] = i;
+                                        c++;
+                                    }
+                                }
+                                break;
+                            case "vertical":
+                                {
+                                    IEnumerable<int> values = Regex.Split(s,@"\s+")
+                                        .Select(a => Convert.ToInt32(a,16));
+                                    int c=0;
+                                    foreach (int i in values) {
+                                        smoother.vTiles[c] = i;
+                                        c++;
+                                    }
+                                }
+                                break;
+                            case "friendly":
+                                {
+                                    s = Regex.Replace(s, @"\s","");
+                                    List<int> ints = GetIntList(s);
+                                    foreach (int i in ints) {
+                                        smoother.ignoreTiles.Add(i);
+                                    }
+                                }
+                                break;
+                        }
+                        break;
+                    case XmlNodeType.EndElement:
+                        switch(reader.Name) {
+                            case "area":
+                                validArea = false;
+                                break;
+                            case "smoother":
+                                smoother.Apply(manager);
+                                smoother = new Smoother();
+                                break;
+                        }
+                        name = "";
+                        break;
                 }
             }
+        }
+
+        // Convert xml string into a list of ints
+        // ie "13,15-18" => {13,15,16,17,18}
+        List<int> GetIntList(string s) {
+            if (s == "")
+                return new List<int>();
+
+            Func<string,Tuple<int,int>> f = str =>
+            {
+                int i = str.IndexOf('-');
+                if (i == -1) {
+                    int n = Convert.ToInt32(str,16);
+                    return new Tuple<int,int>(n,n);
+                }
+                int n1 = Convert.ToInt32(str.Substring(0,i),16);
+                int n2 = Convert.ToInt32(str.Substring(i+1),16);
+                return new Tuple<int,int>(n1,n2);
+            };
+
+            int ind = s.IndexOf(',');
+            if (ind == -1)  {
+                var ret = new List<int>();
+                var tuple = f(s);
+                for (int i=tuple.Item1;i<=tuple.Item2;i++) {
+                    ret.Add(i);
+                }
+                return ret;
+            }
+            List<int> ret2 = GetIntList(s.Substring(0,ind));
+            ret2.AddRange(GetIntList(s.Substring(ind+1)));
+            return ret2;
         }
     }
 
     class Smoother {
-        protected int[,] baseTiles;
-        protected int[] hTiles;
-        protected int[] vTiles;
-        protected int[] ignoreTiles;
+        public int[,] baseTiles = new int[3,3];
+        public int[] hTiles = new int[2];
+        public int[] vTiles = new int[2];
+        public List<int> ignoreTiles = new List<int>();
         protected HashSet<int> tiles = new HashSet<int>();
 
-        public Smoother(int[,] baseTiles, int[] hTiles, int[] vTiles, int[] ignoreTiles) {
-            this.baseTiles = baseTiles;
-            this.hTiles = hTiles;
-            this.vTiles = vTiles;
-            this.ignoreTiles = ignoreTiles;
+        public Smoother() {
+            baseTiles[0,0] = -1;
+        }
 
+        protected void AssembleTiles() {
             for (int y=0;y<3;y++) {
                 for (int x=0;x<3;x++)
                     tiles.Add(baseTiles[y,x]);
@@ -93,6 +186,22 @@ namespace Plugins
             tiles.Add(vTiles[1]);
             foreach (int i in ignoreTiles)
                 tiles.Add(i);
+        }
+
+        public void Apply(PluginManager manager) {
+            if (baseTiles[0,0] == -1)
+                return;
+
+            AssembleTiles();
+
+            Room room = manager.GetActiveRoom();
+            for (int y=0; y<room.Height; y++) {
+                for (int x=0; x<room.Width; x++) {
+                    int t = GetTile(x, y, manager);
+                    if (t != room.GetTile(x,y))
+                        room.SetTile(x, y, t);
+                }
+            }
         }
 
         public virtual int GetTile(int x, int y, PluginManager manager) {
