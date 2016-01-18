@@ -56,7 +56,7 @@ namespace LynnaLab
             return Project.EvalToInt(d.GetValue(0));
         }
 
-        // IMap methods
+        // Map methods
 
         public override Room GetRoom(int x, int y, int floor=0) {
             int i = FirstLayoutIndex + floor;
@@ -66,6 +66,30 @@ namespace LynnaLab
             int group = GetDataIndex(0)-0xc9+4;
             Room room = Project.GetIndexedDataType<Room>(roomIndex + group*0x100);
             return room;
+        }
+
+        public override void GetRoomPosition(Room room, out int x, out int y, out int floor) {
+            x = -1;
+            y = -1;
+            floor = -1;
+
+            for (int f=0;f<NumFloors;f++) {
+                for (int j=0;j<MapHeight;j++) {
+                    for (int i=0;i<MapWidth;i++) {
+                        if (GetRoom(i,j,f) == room) {
+                            x = i;
+                            y = j;
+                            floor = f;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        public override void GetRoomPosition(Room room, out int x, out int y) {
+            int f;
+            GetRoomPosition(room, out x, out y, out f);
         }
     }
 }

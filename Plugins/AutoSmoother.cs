@@ -61,7 +61,7 @@ namespace Plugins
             foreach (Smoother s in smoothers) {
                 for (int y=0; y<room.Height; y++) {
                     for (int x=0; x<room.Width; x++) {
-                        int t = s.GetTile(x, y, room);
+                        int t = s.GetTile(x, y, manager);
                         if (t != room.GetTile(x,y))
                             room.SetTile(x, y, t);
                     }
@@ -95,21 +95,59 @@ namespace Plugins
                 tiles.Add(i);
         }
 
-        public virtual int GetTile(int x, int y, Room room) {
+        public virtual int GetTile(int x, int y, PluginManager manager) {
+            Room room = manager.GetActiveRoom();
             int t = room.GetTile(x,y);
             if (!tiles.Contains(t) || ignoreTiles.Contains(t))
                 return t;
 
-            Func<int,int,bool> f = (a,b) => {
-                return tiles.Contains(room.GetTile(a,b));
+            Func<int,bool> f = a => {
+                return tiles.Contains(a);
             };
 
-            return GetTileBy(x, y, room, f);
+            return GetTileBy(x, y, manager, f);
         }
 
-        protected int GetTileBy(int x, int y, Room room, Func<int,int,bool> f) {
-            Func<int,bool> fx = (a) => f(a,y);
-            Func<int,bool> fy = (b) => f(x,b);
+        protected int GetTileBy(int x, int y, PluginManager manager, Func<int,bool> checker) {
+            Map map = manager.GetActiveMap();
+            Room room = manager.GetActiveRoom();
+
+            // g takes x/y, corrects for room wrapping, returns the tile to check
+            Func<int,int,int> g = (a,b) =>
+            {
+                int roomX = manager.GetMapSelectedX();
+                int roomY = manager.GetMapSelectedY();
+                int floor = manager.GetMapSelectedFloor();
+
+                if (a < 0) {
+                    if (roomX == 0)
+                        return -1;
+                    roomX--;
+                    a += map.RoomWidth;
+                }
+                else if (a >= map.RoomWidth) {
+                    if (roomX == map.MapWidth-1)
+                        return -1;
+                    roomX++;
+                    a -= map.RoomWidth;
+                }
+                if (b < 0) {
+                    if (roomY == 0)
+                        return -1;
+                    roomY--;
+                    b += map.RoomHeight;
+                }
+                else if (b >= map.RoomHeight) {
+                    if (roomY == map.MapHeight-1)
+                        return -1;
+                    roomY++;
+                    b -= map.RoomHeight;
+                }
+                return map.GetRoom(roomX,roomY,floor).GetTile(a,b);
+            };
+
+            Func<int,bool> fx = (a) => checker(g(a,y));
+            Func<int,bool> fy = (b) => checker(g(x,b));
 
             int xi;
             if (fx(x-1) && fx(x+1))
@@ -144,14 +182,19 @@ namespace Plugins
     }
 
     // A smoother where the only "edges" are water
-    class WaterEdgeSmoother : Smoother {
-        public WaterEdgeSmoother(int[,] baseTiles, int[] hTiles, int[] vTiles, int[] ignoreTiles)
-            : base(baseTiles, hTiles, vTiles, ignoreTiles)
-        {
-        }
-
-//         public override int GetTile(int x, int y, Room room) {
-// //             Func<int,int,bool> f = (a,b) =>
+//     class WaterEdgeSmoother : Smoother {
+//         public WaterEdgeSmoother(int[,] baseTiles, int[] hTiles, int[] vTiles, int[] ignoreTiles)
+//             : base(baseTiles, hTiles, vTiles, ignoreTiles)
+//         {
 //         }
-    }
+// 
+//         public override int GetTile(int x, int y, PluginManager manager) {
+//             Func<int,int,bool> f = (a,b) => {
+//                 if (a < 0) {
+//                     if (room.Index%mapWidth == 0)
+//                         return false;
+//                 }
+//             };
+//         }
+//     }
 }

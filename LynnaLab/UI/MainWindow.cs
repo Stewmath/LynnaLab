@@ -20,6 +20,26 @@ public partial class MainWindow: Gtk.Window
             return roomeditor1.Room;
         }
     }
+    internal Map ActiveMap {
+        get {
+            return notebook2.Page == 0 ? worldMinimap.Map : dungeonMinimap.Map;
+        }
+    }
+    internal int MapSelectedX {
+        get {
+            return notebook2.Page == 0 ? worldMinimap.SelectedX : dungeonMinimap.SelectedX;
+        }
+    }
+    internal int MapSelectedY {
+        get {
+            return notebook2.Page == 0 ? worldMinimap.SelectedY : dungeonMinimap.SelectedY;
+        }
+    }
+    internal int MapSelectedFloor {
+        get {
+            return notebook2.Page == 0 ? worldMinimap.Floor : dungeonMinimap.Floor;
+        }
+    }
 
     internal MainWindow() : this("") {}
     internal MainWindow (string directory) : base (Gtk.WindowType.Toplevel)

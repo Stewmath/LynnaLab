@@ -33,6 +33,19 @@ namespace LynnaLab
         public Room GetActiveRoom() {
             return MainWindow.ActiveRoom;
         }
+
+        public Map GetActiveMap() {
+            return MainWindow.ActiveMap;
+        }
+        public int GetMapSelectedX() {
+            return MainWindow.MapSelectedX;
+        }
+        public int GetMapSelectedY() {
+            return MainWindow.MapSelectedY;
+        }
+        public int GetMapSelectedFloor() {
+            return MainWindow.MapSelectedFloor;
+        }
     }
 }
 
