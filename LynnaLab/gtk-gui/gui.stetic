@@ -882,6 +882,7 @@
                             <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>
                             <property name="Numeric">True</property>
+                            <signal name="ValueChanged" handler="OnFlags2SpinButtonValueChanged" />
                           </widget>
                           <packing>
                             <property name="TopAttach">1</property>

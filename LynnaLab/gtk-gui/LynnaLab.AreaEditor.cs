@@ -447,6 +447,7 @@ namespace LynnaLab
 			this.palettesComboBox.Changed += new global::System.EventHandler (this.OnPalettesComboBoxChanged);
 			this.mainGfxComboBox.Changed += new global::System.EventHandler (this.OnMainGfxComboBoxChanged);
 			this.layoutGroupSpinButton.ValueChanged += new global::System.EventHandler (this.OnLayoutGroupSpinButtonValueChanged);
+			this.flags2SpinButton.ValueChanged += new global::System.EventHandler (this.OnFlags2SpinButtonValueChanged);
 			this.flags1SpinButton.ValueChanged += new global::System.EventHandler (this.OnFlags1SpinButtonValueChanged);
 			this.animationsSpinButton.ValueChanged += new global::System.EventHandler (this.OnAnimationsSpinButtonValueChanged);
 			this.okButton.Clicked += new global::System.EventHandler (this.OnOkButtonClicked);
