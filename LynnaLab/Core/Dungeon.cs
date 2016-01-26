@@ -20,6 +20,13 @@ namespace LynnaLab
         }
 
         // Map properties
+
+        public abstract int Group {
+            get {
+                return GetDataIndex(0)-0xc9+4;
+            }
+        }
+
         public override int MapWidth {
             get {
                 return 8;

@@ -56,6 +56,7 @@ public partial class MainWindow: Gtk.Window
             Room room = worldMinimap.GetRoom();
             SetRoom(room);
         };
+
         areaviewer1.HoverChangedEvent += delegate() {
             if (areaviewer1.HoveringIndex == -1)
                 statusbar1.Push(1,
@@ -67,6 +68,16 @@ public partial class MainWindow: Gtk.Window
         areaviewer1.TileSelectedEvent += delegate(object sender) {
             statusbar1.Push(1,
                     "Selected Tile: 0x" + areaviewer1.SelectedIndex.ToString("X2")); 
+        };
+
+        roomeditor1.HoverChangedEvent += delegate() {
+            if (roomeditor1.HoveringIndex == -1)
+                statusbar1.Push(1,
+                        "Selected Tile: 0x" + areaviewer1.SelectedIndex.ToString("X2")); 
+            else
+                statusbar1.Push(2,
+                        "Hovering Tile: (" + roomeditor1.HoveringX +
+                        ", " + roomeditor1.HoveringY + ")");
         };
 
         worldSpinButton.Adjustment = new Adjustment(0, 0, 3, 1, 0, 0);

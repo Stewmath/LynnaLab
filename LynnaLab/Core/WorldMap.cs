@@ -7,6 +7,11 @@ namespace LynnaLab
     public class WorldMap : Map
     {
         // Map properties
+        public abstract int Group {
+            get {
+                return Index;
+            }
+        }
         public override int MapWidth {
             get {
                 return 16;
