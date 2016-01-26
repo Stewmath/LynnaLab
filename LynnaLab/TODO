@@ -8,6 +8,7 @@ Before Release:
 - Dungeon minimap editor
 - Change floors, other attributes in a dungeon
 - Select multiple tiles from a tileset at once
+- Chest editor
 - Bugs:
     - Crash when changing animation index
     - Crash when area ID is too high

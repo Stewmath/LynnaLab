@@ -8,6 +8,8 @@ namespace LynnaLab
 {
     public abstract class Map : ProjectIndexedDataType
     {
+        public abstract int Group { get; }
+
         public abstract int MapWidth { get; }
         public abstract int MapHeight { get; }
         public abstract int RoomWidth { get; }
