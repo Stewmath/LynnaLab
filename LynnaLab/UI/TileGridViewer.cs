@@ -33,6 +33,8 @@ namespace LynnaLab
 
         protected abstract Bitmap Image { get; }
 
+        public event System.Action HoverChangedEvent;
+
         int hoveringIndex = -1;
 
         public TileGridViewer() : base() {
@@ -68,14 +70,24 @@ namespace LynnaLab
                 hoveringIndex = nextHoveringIndex;
                 this.QueueDrawArea(HoveringX*TileWidth*Scale, HoveringY*TileHeight*Scale,
                         TileWidth*Scale, TileHeight*Scale);
+
+                if (HoverChangedEvent != null)
+                    HoverChangedEvent();
             }
         }
 
         protected void OnMouseLeave(object o, LeaveNotifyEventArgs args) {
-            if (hoveringIndex != -1)
-                this.QueueDrawArea(HoveringX*TileWidth*Scale, HoveringY*TileHeight*Scale,
-                        TileWidth*Scale, TileHeight*Scale);
+            bool changed = false;
+            if (hoveringIndex != -1) {
+                this.QueueDrawArea(HoveringX * TileWidth * Scale, HoveringY * TileHeight * Scale,
+                    TileWidth * Scale, TileHeight * Scale);
+
+                changed = true;
+            }
             hoveringIndex = -1;
+
+            if (changed && HoverChangedEvent != null)
+                HoverChangedEvent();
         }
 
         protected override bool OnExposeEvent(Gdk.EventExpose ev)

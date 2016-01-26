@@ -8,7 +8,7 @@
     <widget-library name="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <widget-library name="../bin/Debug/LynnaLab.exe" internal="true" />
   </import>
-  <widget class="Gtk.Window" id="MainWindow" design-size="952 526">
+  <widget class="Gtk.Window" id="MainWindow" design-size="952 540">
     <action-group name="Default">
       <action id="FileAction">
         <property name="Type">Action</property>
@@ -325,7 +325,7 @@
                           </widget>
                         </child>
                         <child>
-                          <widget class="Gtk.Label" id="GtkLabel3">
+                          <widget class="Gtk.Label" id="GtkLabel5">
                             <property name="MemberName" />
                             <property name="LabelProp" translatable="yes">Room Properties</property>
                             <property name="UseMarkup">True</property>
@@ -392,7 +392,7 @@
                           </widget>
                         </child>
                         <child>
-                          <widget class="Gtk.Label" id="GtkLabel4">
+                          <widget class="Gtk.Label" id="GtkLabel9">
                             <property name="MemberName" />
                             <property name="LabelProp" translatable="yes">Interactions</property>
                             <property name="UseMarkup">True</property>
@@ -417,7 +417,7 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="Gtk.VBox" id="vbox2">
+                  <widget class="Gtk.VBox" id="vbox3">
                     <property name="MemberName" />
                     <property name="Spacing">6</property>
                     <child>
@@ -573,7 +573,7 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="Gtk.VBox" id="vbox3">
+                  <widget class="Gtk.VBox" id="vbox7">
                     <property name="MemberName" />
                     <property name="Spacing">6</property>
                     <child>
@@ -636,12 +636,14 @@
                           </packing>
                         </child>
                         <child>
-                          <widget class="Gtk.Label" id="label1">
+                          <widget class="Gtk.Label" id="label2">
                             <property name="MemberName" />
                             <property name="Xalign">1</property>
-                            <property name="LabelProp" translatable="yes">Dungeon Index</property>
+                            <property name="LabelProp" translatable="yes">Floor</property>
                           </widget>
                           <packing>
+                            <property name="TopAttach">1</property>
+                            <property name="BottomAttach">2</property>
                             <property name="AutoSize">True</property>
                             <property name="XOptions">Fill</property>
                             <property name="YOptions">Fill</property>
@@ -654,14 +656,12 @@
                           </packing>
                         </child>
                         <child>
-                          <widget class="Gtk.Label" id="label2">
+                          <widget class="Gtk.Label" id="label6">
                             <property name="MemberName" />
                             <property name="Xalign">1</property>
-                            <property name="LabelProp" translatable="yes">Floor</property>
+                            <property name="LabelProp" translatable="yes">Dungeon Index</property>
                           </widget>
                           <packing>
-                            <property name="TopAttach">1</property>
-                            <property name="BottomAttach">2</property>
                             <property name="AutoSize">True</property>
                             <property name="XOptions">Fill</property>
                             <property name="YOptions">Fill</property>
@@ -707,7 +707,7 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="Gtk.Label" id="label6">
+                  <widget class="Gtk.Label" id="label9">
                     <property name="MemberName" />
                     <property name="LabelProp" translatable="yes">Dungeons</property>
                   </widget>
@@ -740,6 +740,25 @@
           </widget>
           <packing>
             <property name="Position">1</property>
+            <property name="AutoSize">True</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Statusbar" id="statusbar1">
+            <property name="MemberName" />
+            <property name="Spacing">6</property>
+            <child>
+              <placeholder />
+            </child>
+            <child>
+              <placeholder />
+            </child>
+          </widget>
+          <packing>
+            <property name="PackType">End</property>
+            <property name="Position">2</property>
             <property name="AutoSize">True</property>
             <property name="Expand">False</property>
             <property name="Fill">False</property>
