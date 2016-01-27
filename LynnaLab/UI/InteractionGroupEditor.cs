@@ -23,7 +23,6 @@ namespace LynnaLab
         InteractionGroup _interactionGroup;
         InteractionData activeData;
 
-        Gtk.Frame pointerFrame;
         ValueReferenceEditor interactionDataEditor;
         RoomEditor roomEditor;
 

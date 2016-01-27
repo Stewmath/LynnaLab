@@ -36,7 +36,7 @@ namespace LynnaLab
                 value = Convert.ToInt32(text);
                 success = true;
             }
-            catch (Exception e) {
+            catch (Exception) {
             }
             // Try a hex number
             try {

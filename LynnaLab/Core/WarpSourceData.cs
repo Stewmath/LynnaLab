@@ -284,7 +284,7 @@ namespace LynnaLab
             try {
                 return group.GetWarpDest(DestIndex);
             }
-            catch (ArgumentOutOfRangeException e) {
+            catch (ArgumentOutOfRangeException) {
                 return null;
             }
         }

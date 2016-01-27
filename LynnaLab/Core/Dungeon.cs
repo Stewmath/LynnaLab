@@ -21,7 +21,7 @@ namespace LynnaLab
 
         // Map properties
 
-        public abstract int Group {
+        public override int Group {
             get {
                 return GetDataIndex(0)-0xc9+4;
             }

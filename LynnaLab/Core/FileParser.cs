@@ -29,7 +29,6 @@ namespace LynnaLab
         // Values for context:
         // - "RAMSECTION"
 
-        int lineIndex;
         // Variables for when context == RAMSECTION
         int bank;
         int address;
@@ -77,7 +76,6 @@ namespace LynnaLab
             string[] lines = File.ReadAllLines(FullFilename);
 
             for (int i=0; i<lines.Length; i++) {
-                lineIndex = i;
                 string pureLine = lines[i];
 
                 string[] split = pureLine.Split(';');
@@ -489,7 +487,6 @@ interactionData:
                         }
                         return false;
                     }
-                    break;
             }
             return true;
         }

@@ -252,7 +252,7 @@ loopEnd:
                 alignment.Add(subEditor);
                 r.SetValue(entry.Text.Trim());
             }
-            catch (LabelNotFoundException e) {
+            catch (LabelNotFoundException) {
                 subEditor.SetInteractionGroup(null);
                 Gtk.Label label = new Gtk.Label("Error: label \"" + entry.Text + "\" not found.");
                 label.Show();

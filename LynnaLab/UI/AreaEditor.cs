@@ -330,15 +330,14 @@ namespace LynnaLab
             Gtk.Label priorityLabel = new Gtk.Label("Priority");
             Gtk.Label bankLabel = new Gtk.Label("Bank (0/1)");
 
-            Tooltips tooltips = new Tooltips();
-            tooltips.SetTip(paletteLabel, "Palette index (0-7)", null);
-            tooltips.SetTip(paletteSpinButton, "Palette index (0-7)", null);
+            paletteLabel.TooltipText = "Palette index (0-7)";
+            paletteSpinButton.TooltipText = "Palette index (0-7)";
 
-            tooltips.SetTip(priorityLabel, "Check to make colors 1-3 appear above sprites", null);
-            tooltips.SetTip(priorityCheckButton, "Check to make colors 1-3 appear above sprites", null);
+            priorityLabel.TooltipText = "Check to make colors 1-3 appear above sprites";
+            priorityCheckButton.TooltipText = "Check to make colors 1-3 appear above sprites";
 
-            tooltips.SetTip(bankLabel, "You're better off leaving this checked.", null);
-            tooltips.SetTip(bankCheckButton, "You're better off leaving this checked.", null);
+            bankLabel.TooltipText = "You're better off leaving this checked.";
+            bankCheckButton.TooltipText = "You're better off leaving this checked.";
 
             uint y = 0;
 

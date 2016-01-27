@@ -133,7 +133,7 @@ namespace LynnaLab {
         }
 
         public override string GetString() {
-            if (Parser.GetDataLabel(this) != null) {
+            if (FileParser.GetDataLabel(this) != null) {
                 // If a label points directly to this data, it can't be
                 // shortened
                 Elongate();
@@ -176,7 +176,7 @@ namespace LynnaLab {
                 GetValue("Y");
                 return true;
             }
-            catch (NotFoundException e) {
+            catch (NotFoundException) {
                 return false;
             }
         }
@@ -218,7 +218,7 @@ namespace LynnaLab {
                 Project.GetFileWithLabel(GetValue(0));
                 return Project.GetDataType<InteractionGroup>(GetValue(0));
             }
-            catch(LabelNotFoundException e) {
+            catch(LabelNotFoundException) {
                 return null;
             }
         }

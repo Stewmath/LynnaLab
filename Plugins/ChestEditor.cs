@@ -9,43 +9,69 @@ namespace Plugins
 {
     public class ChestEditor : Plugin
     {
-        public abstract String Name {
+        public override String Name {
             get {
                 return "Chest Editor";
             }
         }
-        public abstract String Tooltip {
+        public override String Tooltip {
             get {
                 return "Edit Chests";
             }
         }
-        public abstract bool IsDockable {
+        public override bool IsDockable {
             get {
                 return false;
             }
         }
 
         Project Project {
-            return manager.Project;
+            get {
+                return manager.Project;
+            }
         }
 
         PluginManager manager;
 
-        public abstract void Init(PluginManager manager) {
+        public override void Init(PluginManager manager) {
             this.manager = manager;
         }
 
-        public abstract void Exit() {
+        public override void Exit() {
         }
 
-        public abstract void Clicked() {
-            int group = manager.GetActiveMap().Group;
-            FileParser chestFileParser = Project.GetFileWithLabel("chestGroupTable");
-            Data chestPointer = chestFileParser.getData("chestGroupTable", group*2);
-            string pointerString = chestPointer.GetValue(0);
+        public override void Clicked() {
+        }
 
+        Data GetChestData() {
+            int group = manager.GetActiveMap().Group;
+            int room = manager.GetActiveRoom().Index&0xff;
+
+            FileParser chestFileParser = Project.GetFileWithLabel("chestGroupTable");
+            Data chestPointer = chestFileParser.GetData("chestGroupTable", group*2);
+            string pointerString = chestPointer.GetValue(0);
             Data chestGroupData = Project.GetData(pointerString);
 
+            while (chestGroupData.GetIntValue(0) != 0xff) {
+                if (chestGroupData.GetIntValue(0) == room)
+                    return chestGroupData;
+                for (int i=0;i<4;i++)
+                    chestGroupData = chestGroupData.NextData;
+            }
+
+            return null;
+        }
+
+        Data AddChestData() {
+            int group = manager.GetActiveMap().Group;
+
+            FileParser chestFileParser = Project.GetFileWithLabel("chestGroupTable");
+            Data chestPointer = chestFileParser.GetData("chestGroupTable", group*2);
+            string pointerString = chestPointer.GetValue(0);
+            Data chestGroupData = Project.GetData(pointerString);
+
+            return null;
+//             chestFileParser.InsertComponentBefore(chestGroupData
         }
     }
 }

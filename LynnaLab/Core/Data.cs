@@ -35,10 +35,6 @@ namespace LynnaLab
             }
         }
 
-        protected Project Project { get; set; }
-
-        protected FileParser Parser { get { return parser; } }
-
         public string Command {
             get { return command; }
         }
@@ -76,7 +72,7 @@ namespace LynnaLab
         // Constructor
 
         public Data(Project p, string command, IList<string> values, int size, FileParser parser, IList<int> spacing) : base(parser, spacing) {
-            this.Project = p;
+            base.SetProject(p);
             this.command = command;
             if (values == null)
                 this.values = new List<string>();
@@ -249,7 +245,8 @@ namespace LynnaLab
         }
 
         public RgbData(Project p, string command, IList<string> values, FileParser parser, IList<int> spacing)
-            : base(p, command, values, 2, parser, spacing) {
-            }
+            : base(p, command, values, 2, parser, spacing)
+        {
+        }
     }
 }
