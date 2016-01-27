@@ -17,6 +17,8 @@ namespace LynnaLab
         MainWindow mainWindow;
         readonly List<PluginManager> pluginManagers = new List<PluginManager>();
 
+        readonly string[] referencedAssemblies;
+
         public Project Project {
             get {
                 return mainWindow.Project;
@@ -26,6 +28,16 @@ namespace LynnaLab
         public PluginCore(MainWindow window)
         {
             mainWindow = window;
+
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            List<string> references = new List<string>();
+            references.Add("LynnaLab.exe");
+
+            for (int i=0;i<assemblies.Length;i++) {
+                references.Add(assemblies[i].CodeBase.Replace("file:///", "/"));
+                Console.WriteLine("Reference: \"" + references[i] + "\"");
+            }
+            referencedAssemblies = references.ToArray();
         }
 
         public void ReloadPlugins() {
@@ -62,16 +74,7 @@ namespace LynnaLab
             CompilerParams.GenerateExecutable = false;
             CompilerParams.CompilerOptions = "/optimize";
 
-            // Get a list of all referenced assemblies, give them to the plugin
-            AssemblyName[] assemblies = System.Reflection.Assembly.GetEntryAssembly().GetReferencedAssemblies();
-            string[] references = new string[assemblies.Length+1];
-            references[assemblies.Length] = "LynnaLab.exe";
-            for (int i=0;i<assemblies.Length;i++) {
-                Assembly asm = Assembly.Load(assemblies[i]);
-                references[i] = asm.CodeBase.Replace("file:///", "/");
-//                 Console.WriteLine("Reference: \"" + references[i] + "\"");
-            }
-            CompilerParams.ReferencedAssemblies.AddRange(references);
+            CompilerParams.ReferencedAssemblies.AddRange(referencedAssemblies);
 
             var provider = new CSharpCodeProvider();
             CompilerResults compile = provider.CompileAssemblyFromSource(CompilerParams, code);

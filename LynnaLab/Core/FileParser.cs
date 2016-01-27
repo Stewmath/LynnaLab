@@ -591,6 +591,7 @@ interactionData:
 
             fileStructure.Insert(i+1, newComponent);
             fileStructureComments.Insert(i+1, comment);
+            newComponent.SetFileParser(this);
 
             Modified = true;
 
@@ -611,6 +612,7 @@ interactionData:
 
             fileStructure.Insert(i, newComponent);
             fileStructureComments.Insert(i, comment);
+            newComponent.SetFileParser(this);
 
             Modified = true;
 
