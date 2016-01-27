@@ -5,6 +5,8 @@ namespace LynnaLab {
     public class ValueReferenceEditor : Gtk.Alignment
     {
         IList<ValueReference> valueReferences;
+        IList<int> maxBounds;
+
         Gtk.Frame pointerFrame;
         InteractionGroupEditor subEditor;
 
@@ -19,15 +21,26 @@ namespace LynnaLab {
         }
 
         public ValueReferenceEditor(Project p, Data data, string frameText=null) 
-        : base(1.0F,1.0F,1.0F,1.0F) {
+            : this(p, data.GetValueReferences(), frameText)
+        {
+        }
+
+        public ValueReferenceEditor(Project p, IList<ValueReference> vrs, string frameText=null) 
+        : base(1.0F,1.0F,1.0F,1.0F)
+        {
             Project = p;
 
-            valueReferences = data.GetValueReferences();
+            valueReferences = vrs;
+            maxBounds = new int[valueReferences.Count];
 
             Gtk.Table table = new Gtk.Table(2, 2, false);
             uint y=0;
 
+            int cnt=0;
             foreach (ValueReference r in valueReferences) {
+                int index = cnt;
+                cnt++;
+
                 if (r.ConstantsMapping != null) {
                     ComboBoxFromConstants comboBox = new ComboBoxFromConstants();
                     comboBox.SetConstantsMapping(r.ConstantsMapping);
@@ -78,7 +91,11 @@ byteCase:
                                 spinButton.Digits = 2;
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
-                                r.SetValue(button.ValueAsInt);
+                                if (maxBounds[index] == 0 ||button.ValueAsInt <= maxBounds[index]) {
+                                    r.SetValue(button.ValueAsInt);
+                                }
+                                else
+                                    button.Value = maxBounds[index];
                                 OnDataModifiedInternal();
                             };
                             dataModifiedExternalEvent += delegate() {
@@ -92,7 +109,7 @@ byteCase:
                         {
                             Gtk.Button newDestButton = new Gtk.Button("New\nDestination");
                             newDestButton.Clicked += delegate(object sender, EventArgs e) {
-                                WarpSourceData warpData = (WarpSourceData)data;
+                                WarpSourceData warpData = (WarpSourceData)r.Data;
                                 WarpDestGroup destGroup = warpData.GetReferencedDestGroup();
                                 // Check if there's unused destination data
                                 // already
@@ -128,7 +145,11 @@ byteCase:
                             spinButton.Digits = 4;
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
-                                r.SetValue(button.ValueAsInt);
+                                if (maxBounds[index] == 0 || button.ValueAsInt <= maxBounds[index]) {
+                                    r.SetValue(button.ValueAsInt);
+                                }
+                                else
+                                    button.Value = maxBounds[index];
                                 OnDataModifiedInternal();
                             };
                             dataModifiedExternalEvent += delegate() {
@@ -164,7 +185,11 @@ byteCase:
                             spinButton.Digits = (uint)((r.MaxValue+0xf)/0x10);
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
-                                r.SetValue(button.ValueAsInt);
+                                if (maxBounds[index] == 0 || button.ValueAsInt <= maxBounds[index]) {
+                                    r.SetValue(button.ValueAsInt);
+                                }
+                                else
+                                    button.Value = maxBounds[index];
                                 OnDataModifiedInternal();
                             };
                             dataModifiedExternalEvent += delegate() {
@@ -210,15 +235,35 @@ loopEnd:
             this.Add(table);
             this.ShowAll();
 
-            data.AddDataModifiedHandler(OnDataModifiedExternal);
-            // Destroy handler
-            this.Destroyed += delegate(object sender, EventArgs e) {
-                data.RemoveDataModifiedHandler(OnDataModifiedExternal);
-            };
+            Data lastData = null;
+            foreach (ValueReference r in valueReferences) {
+                if (lastData != r.Data) {
+                    lastData = r.Data;
+                    r.Data.AddDataModifiedHandler(OnDataModifiedExternal);
+                    // Destroy handler
+                    this.Destroyed += delegate(object sender, EventArgs e) {
+                        r.Data.RemoveDataModifiedHandler(OnDataModifiedExternal);
+                    };
+                }
+            }
 
             // Initial values
             if (dataModifiedExternalEvent != null)
                 dataModifiedExternalEvent();
+        }
+
+        public void SetMaxBound(ValueReference r, int max) {
+            int i = valueReferences.IndexOf(r);
+            if (i == -1)
+                return;
+            maxBounds[i] = max;
+        }
+
+        public void AddDataModifiedHandler(Action handler) {
+            dataModifiedInternalEvent += handler;
+        }
+        public void RemoveDataModifiedHandler(Action handler) {
+            dataModifiedInternalEvent -= handler;
         }
 
         // Data modified externally
@@ -231,13 +276,6 @@ loopEnd:
         void OnDataModifiedInternal() {
             if (dataModifiedInternalEvent != null)
                 dataModifiedInternalEvent();
-        }
-
-        public void AddDataModifiedHandler(Action handler) {
-            dataModifiedInternalEvent += handler;
-        }
-        public void RemoveDataModifiedHandler(Action handler) {
-            dataModifiedInternalEvent -= handler;
         }
 
         void UpdatePointerTextBox(Gtk.Entry entry, ValueReference r) {

@@ -52,10 +52,12 @@ namespace LynnaLab
         int startBit,endBit;
         string constantsMappingString;
         ConstantsMapping constantsMapping;
+        Func<bool> boundsChecker;
 
         public DataValueType ValueType {get; set;}
         public string Name {get; set;}
         public bool Editable {get; set;}
+        public Data Data { get { return data; } }
 
         public int MaxValue { // For integer-based ones
             get {
