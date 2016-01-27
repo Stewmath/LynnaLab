@@ -80,7 +80,7 @@ namespace LynnaLab {
 
         InteractionType type;
 
-        public InteractionData(Project p, string command, IList<string> values, FileParser parser, IList<int> spacing, InteractionType type)
+        public InteractionData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<int> spacing, InteractionType type)
             : base(p, command, values, -1, parser, spacing) {
 
             this.type = type;

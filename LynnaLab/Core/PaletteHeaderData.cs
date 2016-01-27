@@ -34,13 +34,13 @@ namespace LynnaLab {
             get { return Project.EvalToInt(GetValue(1)); }
         }
 
-        public PaletteHeaderData(Project p, string command, IList<string> values, FileParser parser, IList<int> spacing)
+        public PaletteHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<int> spacing)
             : base(p, command, values, 3, parser, spacing)
         {
 
             int dest = -1;
             try {
-                dest = Project.EvalToInt(values[2]);
+                dest = Project.EvalToInt(GetValue(2));
             }
             catch(FormatException) {
                 dest = -1;

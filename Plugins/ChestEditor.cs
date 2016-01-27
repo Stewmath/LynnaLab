@@ -9,6 +9,8 @@ namespace Plugins
 {
     public class ChestEditor : Plugin
     {
+        PluginManager manager;
+
         public override String Name {
             get {
                 return "Chest Editor";
@@ -31,7 +33,7 @@ namespace Plugins
             }
         }
 
-        PluginManager manager;
+        // Methods
 
         public override void Init(PluginManager manager) {
             this.manager = manager;
@@ -41,6 +43,7 @@ namespace Plugins
         }
 
         public override void Clicked() {
+            Gtk.Bin bin;
         }
 
         Data GetChestData() {
@@ -62,7 +65,7 @@ namespace Plugins
             return null;
         }
 
-        Data AddChestData() {
+        void AddChestData(int room) {
             int group = manager.GetActiveMap().Group;
 
             FileParser chestFileParser = Project.GetFileWithLabel("chestGroupTable");
@@ -70,8 +73,23 @@ namespace Plugins
             string pointerString = chestPointer.GetValue(0);
             Data chestGroupData = Project.GetData(pointerString);
 
-            return null;
-//             chestFileParser.InsertComponentBefore(chestGroupData
+            Data newData = new Data(Project, ".db", new string[] {"$00"}, -1, null, new List<int>{-1});
+            newData.EndsLine = false;
+            chestFileParser.InsertComponentBefore(chestGroupData, newData);
+
+            newData = new Data(Project, ".db", new string[] {"$00"}, -1, null, new List<int>{-1});
+            newData.PrintCommand = false;
+            newData.EndsLine = false;
+            chestFileParser.InsertComponentBefore(chestGroupData, newData);
+
+            newData = new Data(Project, ".db", new string[] {"$00"}, -1, null, new List<int>{-1});
+            newData.PrintCommand = false;
+            newData.EndsLine = false;
+            chestFileParser.InsertComponentBefore(chestGroupData, newData);
+
+            newData = new Data(Project, ".db", new string[] {"$00"}, -1, null, new List<int>{-1});
+            newData.PrintCommand = false;
+            chestFileParser.InsertComponentBefore(chestGroupData, newData);
         }
     }
 }

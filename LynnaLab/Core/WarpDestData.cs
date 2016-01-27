@@ -37,7 +37,7 @@ namespace LynnaLab
         HashSet<WarpSourceData> referenceSet;
 
 
-        public WarpDestData(Project p, string command, IList<string> values,
+        public WarpDestData(Project p, string command, IEnumerable<string> values,
                 FileParser parser, IList<int> spacing)
             : base(p, command, values, 3, parser, spacing)
         {
