@@ -21,7 +21,7 @@ namespace LynnaLab
         int width, height;
         // Width and height of file; large rooms always have an extra 0 at the
         // end of each row
-        int fileWidth, fileHeight;
+        int fileWidth;
 
         byte[,] tiles;
         Area area;
@@ -159,7 +159,7 @@ namespace LynnaLab
             MemoryFileStream dataFile = TileDataFile;
             if (dataFile.Length == 80) { // Small map
                 width = fileWidth = 10;
-                height = fileHeight = 8;
+                height = 8;
                 tiles = new byte[width,height];
                 dataFile.Position = 0;
                 for (int y=0; y<height; y++)
@@ -170,7 +170,7 @@ namespace LynnaLab
             else if (dataFile.Length == 176) { // Large map
                 width = 0xf;
                 fileWidth = 0x10;
-                height = fileHeight = 0xb;
+                height = 0xb;
                 tiles = new byte[width,height];
                 dataFile.Position = 0;
                 for (int y=0; y<height; y++) {

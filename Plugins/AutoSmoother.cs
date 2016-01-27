@@ -69,6 +69,9 @@ namespace Plugins
                         }
                         break;
                     case XmlNodeType.Text:
+                        if (!validArea)
+                            continue;
+
                         s = reader.Value.Trim();
                         switch(name) {
                             case "base":
@@ -219,7 +222,6 @@ namespace Plugins
 
         protected int GetTileBy(int x, int y, PluginManager manager, Func<int,bool> checker) {
             Map map = manager.GetActiveMap();
-            Room room = manager.GetActiveRoom();
 
             // g takes x/y, corrects for room wrapping, returns the tile to check
             Func<int,int,int> g = (a,b) =>

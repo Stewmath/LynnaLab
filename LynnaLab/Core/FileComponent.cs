@@ -8,6 +8,8 @@ namespace LynnaLab
         protected List<int> spacing;
         protected FileParser parser;
 
+        Project _project;
+
         public bool EndsLine {get; set;} // True if a newline comes after this data
 
         // True if it's an internally-made object, not to be written back to
@@ -28,10 +30,12 @@ namespace LynnaLab
             get { return parser; }
         }
         public Project Project {
-            get { return parser.Project; }
+            get { return _project; }
         }
 
         public FileComponent(FileParser parser, IList<int> spacing) {
+            if (parser != null)
+                _project = parser.Project;
             EndsLine = true;
             Fake = false;
             if (spacing != null)
@@ -44,6 +48,12 @@ namespace LynnaLab
         }
         public void SetSpacing(int index, int spaces) {
             spacing[index] = spaces;
+        }
+
+        public abstract string GetString();
+
+        protected void SetProject(Project p) {
+            _project = p;
         }
 
         // Returns a string representing the given space value
@@ -59,8 +69,6 @@ namespace LynnaLab
             }
             return s;
         }
-
-        public abstract string GetString();
     }
 
     public class StringFileComponent : FileComponent {

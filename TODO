@@ -9,4 +9,8 @@ Before Release:
 - Select multiple tiles from a tileset at once
 - Bugs:
     - Crash when changing animation index
+    - Music combo box has stuff listed multiple times
+- Warp editor:
+    - should always put added "Standard Warps" before "Pointer Warps"
+    - should warn that multiple pointer warps don't work
 - Deal with ConstantsMappings that don't have a mapping for a value 

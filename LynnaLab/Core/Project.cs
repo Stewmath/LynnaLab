@@ -201,7 +201,7 @@ namespace LynnaLab
                 FileParser p = labelDictionary[label];
                 return true;
             }
-            catch(KeyNotFoundException e) {
+            catch(KeyNotFoundException) {
                 return false;
             }
         }

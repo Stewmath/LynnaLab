@@ -7,7 +7,7 @@ namespace LynnaLab
     public class WorldMap : Map
     {
         // Map properties
-        public abstract int Group {
+        public override int Group {
             get {
                 return Index;
             }
