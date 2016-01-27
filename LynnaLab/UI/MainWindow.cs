@@ -46,9 +46,6 @@ public partial class MainWindow: Gtk.Window
     {
         Build();
 
-        // Make damn sure that Atk is referenced
-        Atk.Implementor implementor;
-
         roomeditor1.SetClient(areaviewer1);
         roomeditor1.SetInteractionGroupEditor(interactionGroupEditor);
         dungeonMinimap.TileSelectedEvent += delegate(object sender) {
