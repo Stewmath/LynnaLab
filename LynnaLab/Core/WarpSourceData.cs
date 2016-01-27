@@ -186,7 +186,7 @@ namespace LynnaLab
         WarpDestData referencedDestData;
 
 
-        public WarpSourceData(Project p, string command, IList<string> values,
+        public WarpSourceData(Project p, string command, IEnumerable<string> values,
                 FileParser parser, IList<int> spacing)
             : base(p, command, values, -1, parser, spacing)
         {

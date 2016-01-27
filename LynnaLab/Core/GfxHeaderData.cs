@@ -23,7 +23,7 @@ namespace LynnaLab
         }
         public Stream GfxStream { get { return gfxFile; } }
 
-        public GfxHeaderData(Project p, string command, IList<string> values, FileParser parser, IList<int> spacing) 
+        public GfxHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<int> spacing) 
             : base(p, command, values, 6, parser, spacing)
         {
 

@@ -8,6 +8,7 @@ using System.Reflection;
 using Microsoft.CSharp;
 
 using Gtk;
+using Atk;
 
 namespace LynnaLab
 {
@@ -61,7 +62,15 @@ namespace LynnaLab
             CompilerParams.GenerateExecutable = false;
             CompilerParams.CompilerOptions = "/optimize";
 
-            string[] references = { "System.dll", "LynnaLab.exe" };
+            // Get a list of all referenced assemblies, give them to the plugin
+            AssemblyName[] assemblies = System.Reflection.Assembly.GetEntryAssembly().GetReferencedAssemblies();
+            string[] references = new string[assemblies.Length+1];
+            references[assemblies.Length] = "LynnaLab.exe";
+            for (int i=0;i<assemblies.Length;i++) {
+                Assembly asm = Assembly.Load(assemblies[i]);
+                references[i] = asm.CodeBase.Replace("file:///", "/");
+//                 Console.WriteLine("Reference: \"" + references[i] + "\"");
+            }
             CompilerParams.ReferencedAssemblies.AddRange(references);
 
             var provider = new CSharpCodeProvider();
