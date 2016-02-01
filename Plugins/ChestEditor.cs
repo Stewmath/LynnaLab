@@ -164,8 +164,8 @@ namespace Plugins
             int group = room>>8;
             room &= 0xff;
 
-            FileParser chestFileParser = Project.GetFileWithLabel("chestGroupTable");
-            Data chestPointer = chestFileParser.GetData("chestGroupTable", group*2);
+            FileParser chestFileParser = Project.GetFileWithLabel("chestDataGroupTable");
+            Data chestPointer = chestFileParser.GetData("chestDataGroupTable", group*2);
             string pointerString = chestPointer.GetValue(0);
             Data chestGroupData = Project.GetData(pointerString);
 
@@ -183,8 +183,8 @@ namespace Plugins
             int group = room>>8;
             room &= 0xff;
 
-            FileParser chestFileParser = Project.GetFileWithLabel("chestGroupTable");
-            Data chestPointer = chestFileParser.GetData("chestGroupTable", group*2);
+            FileParser chestFileParser = Project.GetFileWithLabel("chestDataGroupTable");
+            Data chestPointer = chestFileParser.GetData("chestDataGroupTable", group*2);
             string pointerString = chestPointer.GetValue(0);
             Data chestGroupData = Project.GetData(pointerString);
 
