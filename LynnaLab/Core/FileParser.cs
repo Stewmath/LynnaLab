@@ -7,6 +7,8 @@ namespace LynnaLab
 {
     public class FileParser
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         private Project _project;
 
         string filename; // Relative to base directory
@@ -65,7 +67,7 @@ namespace LynnaLab
             this.fullFilename = Project.BaseDirectory + f;
 
 
-            Project.WriteLogLine("Began parsing \"" + Filename + "\".");
+            log.Info("Began parsing \"" + Filename + "\".");
 
             // Made-up label for the start of the file
             Label l = new Label(this, Basename + "_start");
@@ -156,8 +158,7 @@ namespace LynnaLab
 
                         case ".define":
                             if (tokens.Length < 3) {
-                                Project.WriteLog(warningString);
-                                Project.WriteLogLine("Expected .DEFINE to have a string and a value.");
+                                log.Debug(warningString + "Expected .DEFINE to have a string and a value.");
                                 break;
                             }
                             value = "";
@@ -206,15 +207,13 @@ namespace LynnaLab
                                     for (int j=1; j<spacing.Count; j++)
                                         spacing2.Add(spacing[j]);
                                     if (!parseData(tokens2, spacing2, warningString)) {
-                                        Project.WriteLog(warningString);
-                                        Project.WriteLogLine("Error parsing line.");
+                                        log.Debug(warningString + "Error parsing line.");
                                     }
                                 }
                             } else {
                                 if (!parseData(tokens, spacing, warningString)) {
                                     // Unknown data
-                                    Project.WriteLog(warningString);
-                                    Project.WriteLogLine("Did not understand \"" + tokens[0] + "\".");
+                                    log.Debug(warningString + "Did not understand \"" + tokens[0] + "\".");
                                 }
                             }
                             break;
@@ -224,7 +223,7 @@ namespace LynnaLab
 
             Modified = false;
 
-            Project.WriteLogLine("Parsed \"" + Filename + "\" successfully maybe.");
+            log.Info("Finished parsing \"" + Filename + "\".");
         }
 
         // Returns true if a meaning for the token was found.
@@ -251,8 +250,7 @@ namespace LynnaLab
                     if (context == "RAMSECTION")
                         break;
                     if (tokens.Length < 2) {
-                        Project.WriteLog(warningString);
-                        Project.WriteLogLine("Expected .DW to have a value.");
+                        log.Warn(warningString + "Expected .DW to have a value.");
                         break;
                     }
                     size = 2;
@@ -261,16 +259,14 @@ namespace LynnaLab
                     if (context == "RAMSECTION")
                         break;
                     if (tokens.Length < 2) {
-                        Project.WriteLog(warningString);
-                        Project.WriteLogLine("Expected .DB to have a value.");
+                        log.Warn(warningString + "Expected .DB to have a value.");
                         break;
                     }
                     size = 1;
                     goto arbitraryLengthData;
                 case "dwbe":
                     if (tokens.Length < 2) {
-                        Project.WriteLog(warningString);
-                        Project.WriteLogLine("Expected dwbe to have a value.");
+                        log.Warn(warningString + "Expected dwbe to have a value.");
                         break;
                     }
                     size = 2;
@@ -315,8 +311,7 @@ arbitraryLengthData:
 
                 case "m_rgb16":
                     if (tokens.Length != 4) {
-                        Project.WriteLog(warningString);
-                        Project.WriteLogLine("Expected " + tokens[0] + " to take 3 parameters");
+                        log.Warn(warningString + "Expected " + tokens[0] + " to take 3 parameters");
                         break;
                     }
                     {
@@ -328,8 +323,7 @@ arbitraryLengthData:
                 case "m_gfxheader":
                 case "m_gfxheaderforcemode":
                     if (tokens.Length < 4 || tokens.Length > 5) {
-                        Project.WriteLog(warningString);
-                        Project.WriteLogLine("Expected " + tokens[0] + " to take 3-4 parameters");
+                        log.Warn(warningString + "Expected " + tokens[0] + " to take 3-4 parameters");
                         break;
                     }
                     {
@@ -341,8 +335,7 @@ arbitraryLengthData:
                 case "m_paletteheaderbg":
                 case "m_paletteheaderspr":
                     if (tokens.Length != 5) {
-                        Project.WriteLog(warningString);
-                        Project.WriteLogLine("Expected " + tokens[0] + " to take 4 parameters");
+                        log.Warn(warningString + "Expected " + tokens[0] + " to take 4 parameters");
                         break;
                     }
                     {
@@ -353,8 +346,7 @@ arbitraryLengthData:
                     }
                 case "m_tilesetheader":
                     if (tokens.Length != 6) {
-                        Project.WriteLog(warningString);
-                        Project.WriteLogLine("Expected " + tokens[0] + " to take 5 parameters");
+                        log.Warn(warningString + "Expected " + tokens[0] + " to take 5 parameters");
                         break;
                     }
                     {
@@ -365,8 +357,7 @@ arbitraryLengthData:
                     }
                 case "m_tilesetdata":
                     if (tokens.Length != 2) {
-                        Project.WriteLog(warningString);
-                        Project.WriteLogLine("Expected " + tokens[0] + " to take 1 parameter");
+                        log.Warn(warningString + "Expected " + tokens[0] + " to take 1 parameter");
                         break;
                     }
                     {
@@ -378,8 +369,7 @@ arbitraryLengthData:
                     }
                 case "m_roomlayoutdata":
                     if (tokens.Length != 2) {
-                        Project.WriteLog(warningString);
-                        Project.WriteLogLine("Expected " + tokens[0] + " to take 1 parameter");
+                        log.Warn(warningString + "Expected " + tokens[0] + " to take 1 parameter");
                         break;
                     }
                     {
@@ -454,8 +444,7 @@ interactionData:
                         if (minParams == -1) minParams = maxParams;
                         if (maxParams == -1) maxParams = minParams;
                         if (tokens.Length-1 < minParams || tokens.Length-1 > maxParams) {
-                            Project.WriteLog(warningString);
-                            Project.WriteLogLine("Expected " + tokens[0] + " to take " +
+                            log.Warn(warningString + "Expected " + tokens[0] + " to take " +
                                     minParams + "-" + maxParams + "parameter(s)");
                             break;
                         }

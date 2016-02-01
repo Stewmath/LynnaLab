@@ -9,6 +9,8 @@ using LynnaLab;
 
 public partial class MainWindow: Gtk.Window
 {
+    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
     uint animationTimerID;
     PluginCore pluginCore;
 
@@ -44,6 +46,8 @@ public partial class MainWindow: Gtk.Window
     internal MainWindow() : this("") {}
     internal MainWindow (string directory) : base (Gtk.WindowType.Toplevel)
     {
+        log.Debug("Beginning Program");
+
         Build();
 
         roomeditor1.SetClient(areaviewer1);

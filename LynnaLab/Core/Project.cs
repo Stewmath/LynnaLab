@@ -2,12 +2,13 @@ using System;
 using System.Reflection;
 using System.IO;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 
 namespace LynnaLab
 {
     public class Project
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         public readonly ConstantsMapping UniqueGfxMapping;
         public readonly ConstantsMapping MainGfxMapping;
         public readonly ConstantsMapping PaletteHeaderMapping;
@@ -15,9 +16,10 @@ namespace LynnaLab
         public readonly ConstantsMapping SourceTransitionMapping;
         public readonly ConstantsMapping DestTransitionMapping;
 
+        log4net.Appender.RollingFileAppender logAppender;
+
         string baseDirectory;
         string configDirectory;
-        StreamWriter logWriter;
 
         Dictionary<string,FileParser> fileParserDictionary = new Dictionary<string,FileParser>();
 
@@ -41,9 +43,18 @@ namespace LynnaLab
             configDirectory = baseDirectory + "LynnaLab/";
             System.IO.Directory.CreateDirectory(configDirectory);
 
-            Console.WriteLine("Opened directory \"" + baseDirectory + "\"");
+            logAppender = new log4net.Appender.RollingFileAppender();
+            logAppender.AppendToFile = true;
+            logAppender.Layout = new log4net.Layout.PatternLayout("%date{ABSOLUTE} [%logger] %level - %message%newline%exception");
+            logAppender.File = configDirectory + "Log.txt";
+            logAppender.Threshold = log4net.Core.Level.All;
+            logAppender.MaxFileSize = 2 * 1024 * 1024;
+            logAppender.MaxSizeRollBackups = 3;
+            logAppender.RollingStyle = log4net.Appender.RollingFileAppender.RollingMode.Composite;
+            logAppender.ActivateOptions();
+            LogHelper.AddAppenderToRootLogger(logAppender);
 
-            logWriter = new StreamWriter(configDirectory + "Log.txt");
+            log.Info("Opened project at \"" + baseDirectory + "\".");
 
             // Parse everything in constants/
             foreach (string f in Directory.EnumerateFiles(baseDirectory + "constants/")) {
@@ -123,18 +134,8 @@ namespace LynnaLab
             foreach (MemoryFileStream file in binaryFileDictionary.Values) {
                 file.Close();
             }
-            if (logWriter != null)
-                logWriter.Close();
-        }
-
-        public void WriteLog(string data) {
-            logWriter.Write(data);
-            // Also print to console
-            Console.Write(data);
-        }
-        public void WriteLogLine(string data) {
-            logWriter.WriteLine(data);
-            Console.WriteLine(data);
+            logAppender.Close();
+            LogHelper.RemoveAppenderFromRootLogger(logAppender);
         }
 
         public T GetIndexedDataType<T>(int identifier) where T:ProjectIndexedDataType {
@@ -180,7 +181,7 @@ namespace LynnaLab
 
         public void AddDefinition(string name, string value) {
             if (definesDictionary.ContainsKey(name)) {
-                WriteLogLine("WARNING: \"" + name + "\" defined multiple times");
+                log.Warn("WARNING: \"" + name + "\" defined multiple times");
             }
             definesDictionary[name] = value;
         }

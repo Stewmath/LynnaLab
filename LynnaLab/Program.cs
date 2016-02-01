@@ -1,6 +1,8 @@
 ﻿using System;
 using Gtk;
 
+[assembly: log4net.Config.XmlConfigurator(Watch=true)]
+
 namespace LynnaLab
 {
     class MainClass
