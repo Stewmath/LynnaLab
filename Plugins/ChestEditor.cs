@@ -45,13 +45,111 @@ namespace Plugins
 
         public override void Clicked() {
             Gtk.Window win = new Window(WindowType.Toplevel);
-            var gui = new ChestEditorGui(manager);
-            gui.SetRoom(manager.GetActiveRoom().Index);
-            win.Add(gui);
+
+            var chestGui = new ChestEditorGui(manager);
+            chestGui.SetRoom(manager.GetActiveRoom().Index);
+            chestGui.Destroyed += (sender2, e2) => win.Destroy();
+
+            var itemGui = new ItemEditorGui(manager);
+
+            HBox hbox = new Gtk.HBox();
+            hbox.Spacing = 6;
+            hbox.Add(chestGui);
+            hbox.Add(new VSeparator());
+            hbox.Add(itemGui);
+            win.Add(hbox);
             win.ShowAll();
-            gui.Destroyed += (sender2, e2) => win.Destroy();
         }
 
+    }
+
+    class ItemEditorGui : Gtk.Alignment {
+        PluginManager manager;
+        Widget vrEditor;
+        Alignment vrContainer;
+        SpinButtonHexadecimal highIndexButton, lowIndexButton;
+
+        Project Project {
+            get { return manager.Project; }
+        }
+
+        int Index {
+            get {
+                return highIndexButton.ValueAsInt<<8 | lowIndexButton.ValueAsInt;
+            }
+        }
+
+        public ItemEditorGui(PluginManager manager)
+            : base(1.0f,1.0f,1.0f,1.0f)
+        {
+            this.manager = manager;
+
+            highIndexButton = new SpinButtonHexadecimal(0,0xffff);
+            highIndexButton.ValueChanged += (a,b) => {
+                SetItem(Index);
+            };
+//             highIndexButton.Digits = 2;
+
+            lowIndexButton = new SpinButtonHexadecimal(0,0xffff);
+            lowIndexButton.ValueChanged += (a,b) => {
+                SetItem(Index);
+            };
+//             lowIndexButton.Digits = 2;
+
+            vrContainer = new Alignment(1.0f,1.0f,1.0f,1.0f);
+
+            HBox indexBox = new HBox();
+            indexBox.Add(new Gtk.Label("High Item Index:"));
+            indexBox.Add(highIndexButton);
+            indexBox.Add(new Gtk.Label("Low Index:"));
+            indexBox.Add(lowIndexButton);
+
+            VBox vbox = new VBox();
+            vbox.Add(indexBox);
+            vbox.Add(vrContainer);
+
+            Add(vbox);
+
+            SetItem(0);
+        }
+
+        public void SetItem(int index) {
+            highIndexButton.Value = index>>8;
+            lowIndexButton.Value = index&0xff;
+
+            vrContainer.Remove(vrEditor);
+
+            FileParser parser = Project.GetFileWithLabel("itemData");
+            Data data = parser.GetData("itemData", (index>>8)*4);
+
+            if ((data.GetIntValue(0) & 0x80) != 0) {
+                string s = data.NextData.GetValue(0);
+                data = Project.GetData(s);
+            }
+            else {
+            }
+            ValueReference v1 = new ValueReference("Flags", 0, DataValueType.Byte);
+            v1.SetData(data);
+            data = data.NextData;
+            ValueReference v2 = new ValueReference("Unknown", 0, DataValueType.Byte);
+            v2.SetData(data);
+            data = data.NextData;
+            ValueReference v3 = new ValueReference("Text ID", 0, DataValueType.Byte);
+            v3.SetData(data);
+            data = data.NextData;
+            ValueReference v4 = new ValueReference("Gfx", 0, DataValueType.Byte);
+            v4.SetData(data);
+            data = data.NextData;
+
+            var vr = new ValueReferenceEditor(
+                    Project,
+                    new ValueReference[] {v1, v2, v3, v4},
+                    "Data");
+            vr.SetMaxBound(v1, 0x7f);
+
+            vrEditor = vr;
+            vrContainer.Add(vrEditor);
+        }
     }
 
     class ChestEditorGui : Gtk.Alignment {
