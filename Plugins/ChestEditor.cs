@@ -84,28 +84,51 @@ namespace Plugins
         {
             this.manager = manager;
 
-            highIndexButton = new SpinButtonHexadecimal(0,0xffff);
+            highIndexButton = new SpinButtonHexadecimal(0,0xff);
             highIndexButton.ValueChanged += (a,b) => {
                 SetItem(Index);
             };
 //             highIndexButton.Digits = 2;
 
-            lowIndexButton = new SpinButtonHexadecimal(0,0xffff);
+            lowIndexButton = new SpinButtonHexadecimal(0,0xff);
             lowIndexButton.ValueChanged += (a,b) => {
                 SetItem(Index);
             };
 //             lowIndexButton.Digits = 2;
 
+            Button addButton = new Gtk.Button();
+            addButton.Clicked += (a,b) => {
+                AddSubIndex(Index>>8);
+                SetItem((Index&0xff00) + 0xff);
+            };
+			addButton.UseStock = true;
+			addButton.UseUnderline = true;
+            addButton.Image = new Gtk.Image(Gtk.Stock.Add, Gtk.IconSize.Button);
+
+            Button removeButton = new Gtk.Button();
+            removeButton.Clicked += (a,b) => {
+                RemoveSubIndex(Index>>8);
+                SetItem((Index&0xff00) + 0xff);
+            };
+			removeButton.UseStock = true;
+			removeButton.UseUnderline = true;
+            removeButton.Image = new Gtk.Image(Gtk.Stock.Remove, Gtk.IconSize.Button);
+
+            var table = new Table(3,2,false);
+
+            uint y=0;
+            table.Attach(new Gtk.Label("High Item Index:"), 0, 1, y, y+1);
+            table.Attach(highIndexButton, 1, 2, y, y+1);
+            y++;
+            table.Attach(new Gtk.Label("Low Index:"), 0,1,y,y+1);
+            table.Attach(lowIndexButton, 1,2,y,y+1);
+            table.Attach(addButton,2,3,y,y+1);
+            table.Attach(removeButton,3,4,y,y+1);
+
             vrContainer = new Alignment(1.0f,1.0f,1.0f,1.0f);
 
-            HBox indexBox = new HBox();
-            indexBox.Add(new Gtk.Label("High Item Index:"));
-            indexBox.Add(highIndexButton);
-            indexBox.Add(new Gtk.Label("Low Index:"));
-            indexBox.Add(lowIndexButton);
-
             VBox vbox = new VBox();
-            vbox.Add(indexBox);
+            vbox.Add(table);
             vbox.Add(vrContainer);
 
             Add(vbox);
@@ -114,19 +137,27 @@ namespace Plugins
         }
 
         public void SetItem(int index) {
-            highIndexButton.Value = index>>8;
-            lowIndexButton.Value = index&0xff;
+            int hIndex = index>>8;
+            int lIndex = index&0xff;
+
+            int max = GetNumLowIndices(hIndex);
+            if (lIndex >= max)
+                lIndex = max-1;
+
+            lowIndexButton.Adjustment.Upper = max-1;
+            highIndexButton.Value = hIndex;
+            lowIndexButton.Value = lIndex;
 
             vrContainer.Remove(vrEditor);
 
             FileParser parser = Project.GetFileWithLabel("itemData");
-            Data data = parser.GetData("itemData", (index>>8)*4);
+            Data data = parser.GetData("itemData", hIndex*4);
 
-            if ((data.GetIntValue(0) & 0x80) != 0) {
+            if (HighIndexUsesPointer(hIndex)) {
                 string s = data.NextData.GetValue(0);
                 data = Project.GetData(s);
-            }
-            else {
+                for (int i=0;i<4*lIndex;i++)
+                    data = data.NextData;
             }
             ValueReference v1 = new ValueReference("Flags", 0, DataValueType.Byte);
             v1.SetData(data);
@@ -141,6 +172,9 @@ namespace Plugins
             v4.SetData(data);
             data = data.NextData;
 
+            // Byte 1 is sometimes set to 0x80 for unused items?
+            v1.SetValue(v1.GetIntValue()&0x7f);
+
             var vr = new ValueReferenceEditor(
                     Project,
                     new ValueReference[] {v1, v2, v3, v4},
@@ -149,6 +183,106 @@ namespace Plugins
 
             vrEditor = vr;
             vrContainer.Add(vrEditor);
+        }
+
+        void AddSubIndex(int hIndex) {
+            int n = GetNumLowIndices(hIndex);
+            if (n == 256)
+                return;
+
+            Data data = GetHighIndexDataBase(hIndex);
+            FileParser parser = data.FileParser;
+
+            if (!HighIndexUsesPointer(hIndex)) {
+                string pointerString = "itemData" + hIndex.ToString("x2");
+
+                parser.InsertParseableTextBefore(data,
+                        new string[] {
+                        "\t.db $80",
+                        "\t.dw " + pointerString,
+                        "\t.db $00",
+                        });
+
+                string output = "\t.db";
+
+                for (int i=0;i<4;i++) {
+                    output += " " + data.GetValue(0);
+                    Data d2 = data;
+                    data = data.NextData;
+                    parser.RemoveFileComponent(d2);
+                }
+
+
+                parser.InsertParseableTextAfter(null,
+                        new string[] {
+                        pointerString + ":"
+                        });
+
+                parser.InsertParseableTextAfter(null,
+                        new string[] { output });
+
+                data = parser.GetData(pointerString);
+            }
+            else {
+                data = Project.GetData(data.NextData.GetValue(0));
+            }
+
+            for (int i=0;i<(n-1)*4+3;i++)
+                data = data.NextData;
+
+            parser.InsertParseableTextAfter(data,
+                    new string[] {
+                    "\t.db $00 $00 $00 $00",
+                    });
+        }
+
+        void RemoveSubIndex(int hIndex) {
+            int n = GetNumLowIndices(hIndex);
+            if (n <= 1)
+                return;
+
+            Data data = GetHighIndexDataBase(hIndex);
+            FileParser parser = data.FileParser;
+
+            data = Project.GetData(data.NextData.GetValue(0));
+
+            for (int i=0;i<(n-1)*4;i++)
+                data = data.NextData;
+
+            for (int i=0;i<4;i++) {
+                Data d2 = data;
+                data = data.NextData;
+                FileParser.RemoveFileComponent(d2);
+            }
+        }
+
+        Data GetHighIndexDataBase(int hIndex) {
+            return Project.GetData("itemData", hIndex*4);
+        }
+
+        bool HighIndexUsesPointer(int hIndex) {
+            Data data = GetHighIndexDataBase(hIndex);
+            if ((data.GetIntValue(0) & 0x80) == 0)
+                return false;
+            return data.NextData.CommandLowerCase == ".dw";
+        }
+
+        int GetNumLowIndices(int hIndex) {
+            Data data = GetHighIndexDataBase(hIndex);
+            if (!HighIndexUsesPointer(hIndex))
+                return 1;
+            data = data.NextData;
+            FileParser parser = Project.GetFileWithLabel(data.GetValue(0));
+            data = parser.GetData(data.GetValue(0));
+            int count=0;
+            do {
+                for (int i=0;i<4;i++)
+                    data = data.NextData;
+                count++;
+            }
+            while (data != null && parser.GetDataLabel(data) == null);
+
+            return count;
         }
     }
 

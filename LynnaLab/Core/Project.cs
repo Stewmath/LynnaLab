@@ -206,8 +206,8 @@ namespace LynnaLab
                 return false;
             }
         }
-        public Data GetData(string label) {
-            return GetFileWithLabel(label).GetData(label);
+        public Data GetData(string label, int offset=0) {
+            return GetFileWithLabel(label).GetData(label, offset);
         }
 
         // Handles only simple substitution

@@ -104,6 +104,8 @@ namespace LynnaLab
             if (spacing == null) {
                 this.spacing = new List<int>{0,0};
             }
+            while (this.spacing.Count < 2)
+                this.spacing.Add(0);
         }
 
         public override string GetString() {
