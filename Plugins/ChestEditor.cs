@@ -46,18 +46,43 @@ namespace Plugins
         public override void Clicked() {
             Gtk.Window win = new Window(WindowType.Toplevel);
 
+            VBox vbox = new VBox();
+
             var chestGui = new ChestEditorGui(manager);
             chestGui.SetRoom(manager.GetActiveRoom().Index);
             chestGui.Destroyed += (sender2, e2) => win.Destroy();
 
+            Frame chestFrame = new Frame();
+            chestFrame.Label = "Chest Data";
+            chestFrame.Add(chestGui);
+
             var itemGui = new ItemEditorGui(manager);
+            Frame itemFrame = new Frame();
+            itemFrame.Label = "Item Data";
+            itemFrame.Add(itemGui);
+
+            chestGui.SetItemEditor(itemGui);
 
             HBox hbox = new Gtk.HBox();
             hbox.Spacing = 6;
-            hbox.Add(chestGui);
-            hbox.Add(new VSeparator());
-            hbox.Add(itemGui);
-            win.Add(hbox);
+            hbox.Add(chestFrame);
+//             hbox.Add(new VSeparator());
+            hbox.Add(itemFrame);
+
+            Button okButton = new Gtk.Button();
+            okButton.UseStock = true;
+            okButton.Label = "gtk-ok";
+            okButton.Clicked += (a,b) => {
+                win.Destroy();
+            };
+
+            Alignment buttonAlign = new Alignment(0.5f,0.5f,0f,0f);
+            buttonAlign.Add(okButton);
+
+            vbox.Add(hbox);
+            vbox.Add(buttonAlign);
+
+            win.Add(vbox);
             win.ShowAll();
         }
 
@@ -90,6 +115,37 @@ namespace Plugins
             };
 //             highIndexButton.Digits = 2;
 
+            Button hAddButton = new Gtk.Button();
+            hAddButton.Clicked += (a,b) => {
+                AddHighIndex();
+                SetItem(0xffff);
+            };
+			hAddButton.UseStock = true;
+			hAddButton.UseUnderline = true;
+            hAddButton.Image = new Gtk.Image(Gtk.Stock.Add, Gtk.IconSize.Button);
+
+            Button hRemoveButton = new Gtk.Button();
+            hRemoveButton.Clicked += (a,b) => {
+                if ((Index>>8) < GetNumHighIndices()-1) {
+                    Gtk.MessageDialog d = new MessageDialog(null,
+                            DialogFlags.DestroyWithParent,
+                            MessageType.Warning,
+                            ButtonsType.YesNo,
+                            "This will shift the indices for all items starting from" + 
+                            Wla.ToByte((byte)(Index>>8)) + "! Are you sure you want to continue?"
+                            );
+                    var r = (ResponseType)d.Run();
+                    d.Destroy();
+                    if (r != Gtk.ResponseType.Yes)
+                        return;
+                }
+                RemoveHighIndex(Index>>8);
+                SetItem(Index);
+            };
+			hRemoveButton.UseStock = true;
+			hRemoveButton.UseUnderline = true;
+            hRemoveButton.Image = new Gtk.Image(Gtk.Stock.Remove, Gtk.IconSize.Button);
+
             lowIndexButton = new SpinButtonHexadecimal(0,0xff);
             lowIndexButton.ValueChanged += (a,b) => {
                 SetItem(Index);
@@ -107,7 +163,21 @@ namespace Plugins
 
             Button removeButton = new Gtk.Button();
             removeButton.Clicked += (a,b) => {
-                RemoveSubIndex(Index>>8);
+                if ((Index&0xff) < GetNumLowIndices(Index>>8)-1) {
+                    Gtk.MessageDialog d = new MessageDialog(null,
+                            DialogFlags.DestroyWithParent,
+                            MessageType.Warning,
+                            ButtonsType.YesNo,
+                            "This will shift all sub-indices for item " +
+                            Wla.ToByte((byte)(Index>>8)) + " starting from sub-index" +
+                            Wla.ToByte((byte)(Index&0xff)) + "! Are you sure you want to continue?"
+                            );
+                    var r = (ResponseType)d.Run();
+                    d.Destroy();
+                    if (r != Gtk.ResponseType.Yes)
+                        return;
+                }
+                RemoveSubIndex(Index);
                 SetItem((Index&0xff00) + 0xff);
             };
 			removeButton.UseStock = true;
@@ -119,6 +189,8 @@ namespace Plugins
             uint y=0;
             table.Attach(new Gtk.Label("High Item Index:"), 0, 1, y, y+1);
             table.Attach(highIndexButton, 1, 2, y, y+1);
+            table.Attach(hAddButton,2,3,y,y+1);
+            table.Attach(hRemoveButton,3,4,y,y+1);
             y++;
             table.Attach(new Gtk.Label("Low Index:"), 0,1,y,y+1);
             table.Attach(lowIndexButton, 1,2,y,y+1);
@@ -140,11 +212,16 @@ namespace Plugins
             int hIndex = index>>8;
             int lIndex = index&0xff;
 
-            int max = GetNumLowIndices(hIndex);
-            if (lIndex >= max)
-                lIndex = max-1;
+            int hMax = GetNumHighIndices();
+            if (hIndex >= hMax)
+                hIndex = hMax-1;
 
-            lowIndexButton.Adjustment.Upper = max-1;
+            int lMax = GetNumLowIndices(hIndex);
+            if (lIndex >= lMax)
+                lIndex = lMax-1;
+
+            highIndexButton.Adjustment.Upper = hMax-1;
+            lowIndexButton.Adjustment.Upper = lMax-1;
             highIndexButton.Value = hIndex;
             lowIndexButton.Value = lIndex;
 
@@ -236,7 +313,10 @@ namespace Plugins
                     });
         }
 
-        void RemoveSubIndex(int hIndex) {
+        void RemoveSubIndex(int index) {
+            int hIndex = index>>8;
+            int lIndex = index&0xff;
+
             int n = GetNumLowIndices(hIndex);
             if (n <= 1)
                 return;
@@ -246,14 +326,92 @@ namespace Plugins
 
             data = Project.GetData(data.NextData.GetValue(0));
 
-            for (int i=0;i<(n-1)*4;i++)
+            for (int i=0;i<lIndex*4;i++)
                 data = data.NextData;
 
             for (int i=0;i<4;i++) {
                 Data d2 = data;
                 data = data.NextData;
-                FileParser.RemoveFileComponent(d2);
+                parser.RemoveFileComponent(d2);
             }
+        }
+
+        void AddHighIndex() {
+            int max = GetNumHighIndices();
+            Data data = GetHighIndexDataBase(max-1);
+            FileParser parser = data.FileParser;
+
+            int n = 4;
+            if (HighIndexUsesPointer(max-1))
+                n = 3;
+            for (int i=0;i<n-1;i++)
+                data = data.NextData;
+
+            parser.InsertParseableTextAfter(data,
+                    new string[] {
+                    "",
+                    "\t.db $00 $00 $00 $00",
+                    });
+        }
+
+        void RemoveHighIndex(int hIndex) {
+            if (hIndex >= GetNumHighIndices())
+                return;
+
+            Data data = GetHighIndexDataBase(hIndex);
+            FileParser parser = data.FileParser;
+
+            string pointerString = "";
+            int n=4;
+            if (HighIndexUsesPointer(hIndex)) {
+                pointerString = data.NextData.GetValue(0);
+                n=3;
+            }
+
+            for (int i=0;i<n;i++) {
+                if (i == 3) {
+                    FileComponent next = parser.GetNextFileComponent(data);
+                    var s = next as StringFileComponent;
+                    if (s != null && s.GetString() == "") {
+                        parser.RemoveFileComponent(next);
+                    }
+                }
+
+                Data d2 = data;
+                data = data.NextData;
+
+                parser.RemoveFileComponent(d2);
+            }
+
+            if (pointerString != "") {
+                data = parser.GetData(pointerString);
+                LynnaLab.Label l = parser.GetDataLabel(data);
+                parser.RemoveFileComponent(l);
+                do {
+                    Data d2 = data;
+                    data = data.NextData;
+                    parser.RemoveFileComponent(d2);
+                }
+                while (data != null && parser.GetDataLabel(data) == null);
+            }
+        }
+
+        int GetNumHighIndices() {
+            // Read until the first label after itemData.
+            FileParser parser = Project.GetFileWithLabel("itemData");
+            Data data = parser.GetData("itemData");
+
+            int count=0;
+            do {
+                for (int i=0; i<4;) {
+                    i += data.Size;
+                    data = data.NextData;
+                }
+                count++;
+            }
+            while (data != null && parser.GetDataLabel(data) == null);
+
+            return count;
         }
 
         Data GetHighIndexDataBase(int hIndex) {
@@ -290,8 +448,17 @@ namespace Plugins
         PluginManager manager;
         Widget vrEditor;
         Alignment vrContainer;
+        SpinButtonHexadecimal indexSpinButton;
 
-        int currentRoom;
+        ItemEditorGui friend;
+
+        ValueReference v1,v2,v3,v4;
+
+        int RoomIndex {
+            get {
+                return indexSpinButton.ValueAsInt;
+            }
+        }
 
         Project Project {
             get {
@@ -304,28 +471,56 @@ namespace Plugins
         {
             manager = m;
 
+            indexSpinButton = new SpinButtonHexadecimal(0,Project.GetNumRooms()-1);
+            indexSpinButton.ValueChanged += (a,b) => {
+                SetRoom(indexSpinButton.ValueAsInt);
+            };
+
+            HBox roomIndexBox = new HBox();
+            roomIndexBox.Add(new Gtk.Label("Room Index:"));
+            roomIndexBox.Add(indexSpinButton);
+
             VBox vbox = new VBox();
+            vbox.Add(roomIndexBox);
+
             vrContainer = new Alignment(1.0F, 1.0F, 1.0F, 1.0F);
             vbox.Add(vrContainer);
 
             Alignment buttonAlign = new Alignment(0.5F, 0.5F, 0.0F, 0.2F);
             buttonAlign.TopPadding = 3;
-            Button okButton = new Button("Ok");
-            okButton.Clicked += (a,b) => Destroy();
-			okButton.UseStock = true;
-			okButton.UseUnderline = true;
-			okButton.Label = "gtk-ok";
-            buttonAlign.Add(okButton);
+
+            Button syncButton = new Button("Sync Item Data");
+            syncButton.Clicked += (a,b) => {
+                SyncItemEditor();
+            };
+            buttonAlign.Add(syncButton);
+
             vbox.Add(buttonAlign);
 
             Add(vbox);
         }
 
+        void SyncItemEditor() {
+            if (friend != null && v3 != null) {
+                friend.SetItem(v3.GetIntValue()<<8 | v4.GetIntValue());
+            }
+        }
+
+        public void SetItemEditor(ItemEditorGui gui) {
+            friend = gui;
+
+            SyncItemEditor();
+        }
+
         public void SetRoom(int room) {
-            currentRoom = room;
+            indexSpinButton.Value = room;
 
             vrContainer.Remove(vrEditor);
             vrEditor = null;
+            v1 = null;
+            v2 = null;
+            v3 = null;
+            v4 = null;
 
             Data data = GetChestData(room);
 
@@ -334,13 +529,13 @@ namespace Plugins
 
                 Button addButton = new Button("Add");
                 addButton.Clicked += (a,b) => {
-                    AddChestData(currentRoom);
-                    SetRoom(currentRoom);
+                    AddChestData(RoomIndex);
+                    SetRoom(RoomIndex);
                 };
                 addButton.Label = "gtk-add";
                 addButton.UseStock = true;
 
-                vbox.Add(new Gtk.Label("No chest data exists for this room."));
+                vbox.Add(new Gtk.Label("No chest data exists\nfor this room."));
                 Alignment btnAlign = new Alignment(0.5f,0.5f,0.0f,0.2f);
                 btnAlign.TopPadding = 3;
                 btnAlign.Add(addButton);
@@ -350,16 +545,16 @@ namespace Plugins
             }
             else {
 
-                ValueReference v1 = new ValueReference("YX", 0, DataValueType.Byte);
+                v1 = new ValueReference("YX", 0, DataValueType.Byte);
                 v1.SetData(data);
                 data = data.NextData;
-                ValueReference v2 = new ValueReference("Room", 0, DataValueType.Byte, false);
+                v2 = new ValueReference("Room", 0, DataValueType.Byte, false);
                 v2.SetData(data);
                 data = data.NextData;
-                ValueReference v3 = new ValueReference("ID1", 0, DataValueType.Byte);
+                v3 = new ValueReference("ID1", 0, DataValueType.Byte);
                 v3.SetData(data);
                 data = data.NextData;
-                ValueReference v4 = new ValueReference("ID2", 0, DataValueType.Byte);
+                v4 = new ValueReference("ID2", 0, DataValueType.Byte);
                 v4.SetData(data);
                 data = data.NextData;
 
@@ -375,8 +570,8 @@ namespace Plugins
 
                 Button delButton = new Button("Remove");
                 delButton.Clicked += (a,b) => {
-                    DeleteChestData(currentRoom);
-                    SetRoom(currentRoom);
+                    DeleteChestData(RoomIndex);
+                    SetRoom(RoomIndex);
                 };
                 delButton.Label = "gtk-delete";
                 delButton.UseStock = true;
