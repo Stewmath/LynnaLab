@@ -8,7 +8,7 @@
     <widget-library name="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <widget-library name="../bin/Debug/LynnaLab.exe" internal="true" />
   </import>
-  <widget class="Gtk.Window" id="MainWindow" design-size="952 540">
+  <widget class="Gtk.Window" id="MainWindow" design-size="952 617">
     <action-group name="Default">
       <action id="FileAction">
         <property name="Type">Action</property>
@@ -86,6 +86,22 @@
         <property name="Label" translatable="yes">Plugins</property>
         <property name="ShortLabel" translatable="yes">Plugins</property>
       </action>
+      <action id="openAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes" />
+        <property name="StockId">gtk-open</property>
+        <signal name="Activated" handler="OnOpenActionActivated" />
+      </action>
+      <action id="saveAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes" />
+        <property name="StockId">gtk-save</property>
+        <signal name="Activated" handler="OnSaveActionActivated" />
+      </action>
+      <action id="Action">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes" />
+      </action>
     </action-group>
     <property name="MemberName" />
     <property name="Title" translatable="yes">Lynna Lab</property>
@@ -116,6 +132,22 @@
           </widget>
           <packing>
             <property name="Position">0</property>
+            <property name="AutoSize">True</property>
+            <property name="Expand">False</property>
+            <property name="Fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Toolbar" id="toolbar1">
+            <property name="MemberName" />
+            <property name="ShowArrow">False</property>
+            <node name="__gtksharp_161_Stetic_Editor_ActionToolbar" type="Toolbar">
+              <node type="Toolitem" action="openAction" />
+              <node type="Toolitem" action="saveAction" />
+            </node>
+          </widget>
+          <packing>
+            <property name="Position">1</property>
             <property name="AutoSize">True</property>
             <property name="Expand">False</property>
             <property name="Fill">False</property>
@@ -325,7 +357,7 @@
                           </widget>
                         </child>
                         <child>
-                          <widget class="Gtk.Label" id="GtkLabel5">
+                          <widget class="Gtk.Label" id="GtkLabel6">
                             <property name="MemberName" />
                             <property name="LabelProp" translatable="yes">Room Properties</property>
                             <property name="UseMarkup">True</property>
@@ -392,7 +424,7 @@
                           </widget>
                         </child>
                         <child>
-                          <widget class="Gtk.Label" id="GtkLabel9">
+                          <widget class="Gtk.Label" id="GtkLabel10">
                             <property name="MemberName" />
                             <property name="LabelProp" translatable="yes">Interactions</property>
                             <property name="UseMarkup">True</property>
@@ -478,7 +510,7 @@
               <widget class="Gtk.Notebook" id="notebook2">
                 <property name="MemberName" />
                 <property name="CanFocus">True</property>
-                <property name="CurrentPage">1</property>
+                <property name="CurrentPage">0</property>
                 <signal name="SwitchPage" handler="OnNotebook2SwitchPage" />
                 <child>
                   <widget class="Gtk.VBox" id="vbox4">
@@ -739,7 +771,7 @@
             </child>
           </widget>
           <packing>
-            <property name="Position">1</property>
+            <property name="Position">2</property>
             <property name="AutoSize">True</property>
             <property name="Expand">False</property>
             <property name="Fill">False</property>
@@ -758,7 +790,7 @@
           </widget>
           <packing>
             <property name="PackType">End</property>
-            <property name="Position">2</property>
+            <property name="Position">3</property>
             <property name="AutoSize">True</property>
             <property name="Expand">False</property>
             <property name="Fill">False</property>

@@ -190,6 +190,13 @@ namespace LynnaLab
                 throw new DuplicateLabelException("Label \"" + label + "\" defined for a second time.");
             labelDictionary.Add(label, source);
         }
+        public void RemoveLabel(string label) {
+            FileParser f;
+            if (!labelDictionary.TryGetValue(label, out f))
+                return;
+            labelDictionary.Remove(label);
+            f.RemoveLabel(label);
+        }
         public FileParser GetFileWithLabel(string label) {
             try {
                 return labelDictionary[label];

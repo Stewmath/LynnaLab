@@ -684,7 +684,20 @@ interactionData:
             fileStructure.RemoveAt(index);
             fileStructureComments.RemoveAt(index);
 
+            Label l = component as Label;
+            if (l != null) {
+                labelDictionary.Remove(l.Name);
+                Project.RemoveLabel(l.Name);
+            }
+
             Modified = true;
+        }
+
+        public void RemoveLabel(string label) {
+            Label l;
+            if (!labelDictionary.TryGetValue(label, out l))
+                return;
+            RemoveFileComponent(l);
         }
 
         // Returns >0 if c2 comes after c1, <0 if c2 comes before c1, or 0 if c1
