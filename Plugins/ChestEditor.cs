@@ -303,7 +303,7 @@ namespace Plugins
             v6.SetData(data);
 
             data = data.NextData;
-            ValueReference v2 = new ValueReference("Unknown", 0, DataValueType.Byte);
+            ValueReference v2 = new ValueReference("Parameter", 0, DataValueType.Byte);
             v2.SetData(data);
             data = data.NextData;
             ValueReference v3 = new ValueReference("Text ID", 0, DataValueType.Byte);
