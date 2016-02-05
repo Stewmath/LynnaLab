@@ -254,8 +254,10 @@ namespace Plugins
             uint y=0;
             table.Attach(new Gtk.Label("High Item Index"), 0, 1, y, y+1);
             table.Attach(highIndexButton, 1, 2, y, y+1);
-            table.Attach(hAddButton,2,3,y,y+1);
-            table.Attach(hRemoveButton,3,4,y,y+1);
+            // Disable high add and remove buttons for now, they're not useful
+            // yet
+//             table.Attach(hAddButton,2,3,y,y+1);
+//             table.Attach(hRemoveButton,3,4,y,y+1);
             y++;
             table.Attach(new Gtk.Label("Low Index"), 0,1,y,y+1);
             table.Attach(lowIndexButton, 1,2,y,y+1);
