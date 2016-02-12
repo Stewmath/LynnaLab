@@ -115,12 +115,12 @@ namespace LynnaLab
         // These 2 functions may be deprecated later if I switch to using
         // constant definitions
         public int GetMusicID() {
-            Stream file = Project.GetBinaryFile("music/group" + (Index>>8) + "IDs.bin");
+            Stream file = Project.GetBinaryFile("audio/group" + (Index>>8) + "IDs.bin");
             file.Position = Index&0xff;
             return file.ReadByte();
         }
         public void SetMusicID(int id) {
-            Stream file = Project.GetBinaryFile("music/group" + (Index>>8) + "IDs.bin");
+            Stream file = Project.GetBinaryFile("audio/group" + (Index>>8) + "IDs.bin");
             file.Position = Index&0xff;
             file.WriteByte((byte)id);
         }
