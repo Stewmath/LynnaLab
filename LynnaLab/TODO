@@ -2,13 +2,13 @@ Before Release:
 
 - Interactions
     - Handle interactions referencing same data
+    - Show the values from constants/interactions.s
 - Tileset collisions
 - Ability to add areas, etc, as well as moving labels which refer to the same
   data
 - Dungeon minimap editor
 - Change floors, other attributes in a dungeon
 - Select multiple tiles from a tileset at once
-- Chest editor
 - Bugs:
     - Crash when changing animation index
     - Crash when area ID is too high
