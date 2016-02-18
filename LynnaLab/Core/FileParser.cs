@@ -164,6 +164,13 @@ namespace LynnaLab
                         }
                         size = 2;
                         goto arbitraryLengthData;
+                    case "dbrev":
+                        if (fTokens.Length < 2) {
+                            log.Warn(warningString + "Expected dbrev to have a value.");
+                            break;
+                        }
+                        size = 1;
+                        goto arbitraryLengthData;
 arbitraryLengthData:
                         PopFileStructure();
                         for (int j=1; j<fTokens.Length; j++) { // Each value is added as individual data

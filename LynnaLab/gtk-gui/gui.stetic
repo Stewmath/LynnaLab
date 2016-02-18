@@ -454,12 +454,6 @@
                         <property name="MemberName" />
                         <property name="WidthRequest">256</property>
                         <property name="HeightRequest">256</property>
-                        <property name="SelectedIndex">0</property>
-                        <property name="Height">16</property>
-                        <property name="Width">16</property>
-                        <property name="TileWidth">16</property>
-                        <property name="TileHeight">16</property>
-                        <property name="Scale">1</property>
                       </widget>
                       <packing>
                         <property name="Position">0</property>
@@ -474,11 +468,6 @@
                         <property name="WidthRequest">240</property>
                         <property name="HeightRequest">224</property>
                         <property name="ViewInteractions">False</property>
-                        <property name="Height">14</property>
-                        <property name="Width">15</property>
-                        <property name="TileWidth">16</property>
-                        <property name="TileHeight">16</property>
-                        <property name="Scale">1</property>
                       </widget>
                       <packing>
                         <property name="Position">1</property>
@@ -576,12 +565,6 @@
                         <property name="WidthRequest">320</property>
                         <property name="HeightRequest">256</property>
                         <property name="Floor">0</property>
-                        <property name="SelectedIndex">0</property>
-                        <property name="Height">16</property>
-                        <property name="Width">16</property>
-                        <property name="TileWidth">20</property>
-                        <property name="TileHeight">16</property>
-                        <property name="Scale">1</property>
                       </widget>
                       <packing>
                         <property name="Position">1</property>
@@ -716,12 +699,6 @@
                         <property name="WidthRequest">240</property>
                         <property name="HeightRequest">176</property>
                         <property name="Floor">0</property>
-                        <property name="SelectedIndex">0</property>
-                        <property name="Height">8</property>
-                        <property name="Width">8</property>
-                        <property name="TileWidth">30</property>
-                        <property name="TileHeight">22</property>
-                        <property name="Scale">1</property>
                       </widget>
                       <packing>
                         <property name="Position">1</property>
@@ -1243,12 +1220,6 @@
                             <property name="MemberName" />
                             <property name="WidthRequest">256</property>
                             <property name="HeightRequest">256</property>
-                            <property name="SelectedIndex">0</property>
-                            <property name="Height">16</property>
-                            <property name="Width">16</property>
-                            <property name="TileWidth">16</property>
-                            <property name="TileHeight">16</property>
-                            <property name="Scale">1</property>
                           </widget>
                           <packing>
                             <property name="Position">0</property>

@@ -6,10 +6,9 @@ namespace LynnaLab
     [System.ComponentModel.ToolboxItem(true)]
     public class Minimap : TileGridSelector
     {
-        const double IMAGE_SCALE = 1.0/8;
-
         Bitmap _image;
         Map _map;
+        double scale;
 
         int _floor;
 
@@ -47,12 +46,23 @@ namespace LynnaLab
 
         public Minimap()
         {
+            scale = 1.0/8;
+        }
+
+        public Minimap(double scale) {
+            this.scale = scale;
         }
 
         public void SetMap(Map m) {
             if (_map != m) {
                 _map = m;
                 _floor = 0;
+
+                Width = Map.MapWidth;
+                Height = Map.MapHeight;
+                TileWidth = (int)(_map.RoomWidth*16*scale);
+                TileHeight = (int)(_map.RoomHeight*16*scale);
+
                 GenerateImage();
             }
         }
@@ -71,8 +81,8 @@ namespace LynnaLab
                 _image = null;
                 return;
             }
-            int width = (int)(_map.RoomWidth*_map.MapWidth*16*IMAGE_SCALE);
-            int height = (int)(_map.RoomHeight*_map.MapHeight*16*IMAGE_SCALE);
+            int width = (int)(_map.RoomWidth*_map.MapWidth*16*scale);
+            int height = (int)(_map.RoomHeight*_map.MapHeight*16*scale);
             _image = new Bitmap(width,height);
 
             idleX = 0;
@@ -89,8 +99,8 @@ namespace LynnaLab
             int x = idleX;
             int y = idleY;
 
-            int width = (int)(_map.RoomWidth*16*IMAGE_SCALE);
-            int height = (int)(_map.RoomHeight*16*IMAGE_SCALE);
+            int width = (int)(_map.RoomWidth*16*scale);
+            int height = (int)(_map.RoomHeight*16*scale);
 
             const System.Drawing.Drawing2D.InterpolationMode interpolationMode =
                 System.Drawing.Drawing2D.InterpolationMode.Default;
