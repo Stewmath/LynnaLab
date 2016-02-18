@@ -318,9 +318,11 @@ namespace Plugins
             // Byte 1 is sometimes set to 0x80 for unused items?
             v1.SetValue(v1.GetIntValue()&0x7f);
 
+            ValueReferenceGroup vrGroup = new ValueReferenceGroup(new ValueReference[] {v1, v5, v6, v2, v3, v4});
+
             var vr = new ValueReferenceEditor(
                     Project,
-                    new ValueReference[] {v1, v5, v6, v2, v3, v4},
+                    vrGroup,
                     "Data");
             vr.SetMaxBound(v1, 0x7f);
 
@@ -676,9 +678,11 @@ namespace Plugins
                 v4.SetData(data);
                 data = data.NextData;
 
+                ValueReferenceGroup vrGroup = new ValueReferenceGroup(new ValueReference[] {v1, v2, v3, v4});
+
                 var vr = new ValueReferenceEditor(
                         Project,
-                        new ValueReference[] {v1, v2, v3, v4},
+                        vrGroup,
                         "Data");
                 vr.SetMaxBound(v1, 0xfe);
 

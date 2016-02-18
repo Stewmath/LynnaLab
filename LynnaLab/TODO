@@ -3,6 +3,7 @@ Before Release:
 - Interactions
     - Handle interactions referencing same data
     - Show the values from constants/interactions.s
+    - Static dungeon objects
 - Tileset collisions
 - Ability to add areas, etc, as well as moving labels which refer to the same
   data

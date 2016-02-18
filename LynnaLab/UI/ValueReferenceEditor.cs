@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace LynnaLab {
     public class ValueReferenceEditor : Gtk.Alignment
     {
-        IList<ValueReference> valueReferences;
+        ValueReferenceGroup valueReferenceGroup;
         IList<int> maxBounds;
 
         Gtk.Frame pointerFrame;
@@ -21,23 +21,23 @@ namespace LynnaLab {
         }
 
         public ValueReferenceEditor(Project p, Data data, string frameText=null) 
-            : this(p, data.GetValueReferences(), frameText)
+            : this(p, data.GetValueReferenceGroup(), frameText)
         {
         }
 
-        public ValueReferenceEditor(Project p, IList<ValueReference> vrs, string frameText=null) 
+        public ValueReferenceEditor(Project p, ValueReferenceGroup vrg, string frameText=null) 
         : base(1.0F,1.0F,1.0F,1.0F)
         {
             Project = p;
 
-            valueReferences = vrs;
-            maxBounds = new int[valueReferences.Count];
+            valueReferenceGroup = vrg;
+            maxBounds = new int[valueReferenceGroup.GetNumValueReferences()];
 
             Gtk.Table table = new Gtk.Table(2, 2, false);
             uint y=0;
 
             int cnt=0;
-            foreach (ValueReference r in valueReferences) {
+            foreach (ValueReference r in valueReferenceGroup.GetValueReferences()) {
                 int index = cnt;
                 cnt++;
 
@@ -236,7 +236,7 @@ loopEnd:
             this.ShowAll();
 
             Data lastData = null;
-            foreach (ValueReference r in valueReferences) {
+            foreach (ValueReference r in valueReferenceGroup.GetValueReferences()) {
                 if (lastData != r.Data) {
                     lastData = r.Data;
                     r.Data.AddDataModifiedHandler(OnDataModifiedExternal);
@@ -253,7 +253,7 @@ loopEnd:
         }
 
         public void SetMaxBound(ValueReference r, int max) {
-            int i = valueReferences.IndexOf(r);
+            int i = valueReferenceGroup.GetIndexOf(r);
             if (i == -1)
                 return;
             maxBounds[i] = max;

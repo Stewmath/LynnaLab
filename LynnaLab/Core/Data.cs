@@ -19,9 +19,9 @@ namespace LynnaLab
         // Event called whenever data is modified
         event EventHandler dataModifiedEvent;
 
-        // These DataValueReferences provide an alternate interface to editing
-        // the values
-        List<ValueReference> valueReferences;
+        // The ValueReferenceGroup provides an alternate method to access the data (via string
+        // names)
+        ValueReferenceGroup valueReferenceGroup;
 
 
         // Properties
@@ -164,24 +164,22 @@ namespace LynnaLab
             Modified = true;
         }
 
+        public ValueReferenceGroup GetValueReferenceGroup() {
+            return valueReferenceGroup;
+        }
         public IList<ValueReference> GetValueReferences() {
-            if (valueReferences == null)
+            if (valueReferenceGroup == null)
                 return null;
-            return valueReferences.AsReadOnly();
+            return valueReferenceGroup.GetValueReferences();
         }
         public ValueReference GetValueReference(string name) {
-            foreach (ValueReference r in valueReferences) {
-                if (r.Name == name) {
-                    return r;
-                }
-            }
-            return null;
+            if (valueReferenceGroup == null)
+                return null;
+            return valueReferenceGroup.GetValueReference(name);
         }
         public void SetValueReferences(IList<ValueReference> references) {
-            valueReferences = new List<ValueReference>();
-            foreach (ValueReference r in references)
-                valueReferences.Add(new ValueReference(r));
-            foreach (ValueReference r in valueReferences)
+            valueReferenceGroup = new ValueReferenceGroup(references);
+            foreach (ValueReference r in valueReferenceGroup.GetValueReferences())
                 r.SetData(this);
         }
 
