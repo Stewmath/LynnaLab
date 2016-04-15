@@ -52,13 +52,17 @@ namespace LynnaLab
         public void ReloadPlugins() {
             UnloadPlugins();
 
-            var files = Directory.GetFiles("Plugins/", "*.cs");
-            foreach (string s in files) {
-                string code = File.ReadAllText(s);
+            try {
+                var files = Directory.GetFiles("Plugins/", "*.cs");
+                foreach (string s in files) {
+                    string code = File.ReadAllText(s);
 
-                Type type = Compile(code, s);
-                if (type != null)
-                    pluginManagers.Add(new PluginManager(this, mainWindow, type));
+                    Type type = Compile(code, s);
+                    if (type != null)
+                        pluginManagers.Add(new PluginManager(this, mainWindow, type));
+                }
+            }
+            catch (DirectoryNotFoundException e) {
             }
         }
 
