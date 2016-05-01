@@ -40,10 +40,13 @@ namespace LynnaLab
         // redrawn, so they'll be ready when they're needed.
         public bool DrawInvalidatedTiles { get; set; }
 
-
+        // The GraphicsState which contains the data as it will be loaded into
+        // vram.
         public GraphicsState GraphicsState {
             get { return graphicsState; }
         }
+
+        // Following properties correspond to the 8 bytes defining the area.
 
         public int Flags1 {
             get { return flags1; }
@@ -263,6 +266,31 @@ namespace LynnaLab
             tilesetHeaderGroup.SetMappingsData(index*8+y*2+x+4, value);
             tileImagesCache[index] = null;
             TileModifiedEvent(index);
+        }
+
+        // Get the "basic collision" of a subtile (whether or not that part is
+        // solid). This ignores the upper half of the collision data bytes and
+        // assumes it is zero.
+        public bool GetSubTileBasicCollision(int index, int x, int y) {
+            byte b = tilesetHeaderGroup.GetCollisionsData(index);
+            byte i = (byte)(1<<(3-(x+y*2)));
+            return (b&i) != 0;
+        }
+        public void SetSubTileBasicCollision(int index, int x, int y, bool val) {
+            byte b = tilesetHeaderGroup.GetCollisionsData(index);
+            byte i = (byte)(1<<(3-(x+y*2)));
+            b = (byte)(b & ~i);
+            if (val)
+                b |= i;
+            tilesetHeaderGroup.SetCollisionsData(index, b);
+        }
+
+        // Get the full collision byte for a tile.
+        public byte GetTileCollision(int index) {
+            return tilesetHeaderGroup.GetCollisionsData(index);
+        }
+        public void SetTileCollision(int index, byte val) {
+            tilesetHeaderGroup.SetCollisionsData(index, val);
         }
 
         // This function doesn't guarantee to return a fully rendered image,

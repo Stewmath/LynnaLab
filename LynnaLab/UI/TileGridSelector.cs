@@ -11,6 +11,9 @@ namespace LynnaLab {
         public bool Selectable { get; set; }
 
         [BrowsableAttribute(false)]
+        public bool Draggable { get; set; }
+
+        [BrowsableAttribute(false)]
         public int SelectedIndex
         {
             get { return selectedIndex; }
@@ -48,8 +51,10 @@ namespace LynnaLab {
 
         public TileGridSelector() : base() {
             this.ButtonPressEvent += new ButtonPressEventHandler(OnButtonPressEvent);
+            this.MotionNotifyEvent += new MotionNotifyEventHandler(OnMotionNotifyEvent);
             this.Events |= Gdk.EventMask.ButtonPressMask | Gdk.EventMask.ButtonReleaseMask;
             Selectable = true;
+            Draggable = false;
         }
 
         protected void OnButtonPressEvent(object o, ButtonPressEventArgs args) {
@@ -59,6 +64,27 @@ namespace LynnaLab {
 
             if (x >= 0 && y >= 0 && x<Width*TileWidth*Scale && y<Height*TileHeight*Scale) {
                 SelectedIndex = (x/TileWidth/Scale) + (y/TileHeight/Scale)*Width;
+            }
+        }
+
+        protected void OnMotionNotifyEvent(object o, MotionNotifyEventArgs args) {
+            if (!Draggable)
+                return;
+
+            int x,y;
+            Gdk.ModifierType state;
+            args.Event.Window.GetPointer(out x, out y, out state);
+
+            if (!state.HasFlag(Gdk.ModifierType.Button1Mask)
+                    || state.HasFlag(Gdk.ModifierType.Button3Mask))
+                return;
+
+            if (x >= 0 && y >= 0 && x<Width*TileWidth*Scale && y<Height*TileHeight*Scale) {
+                int newIndex = (x/TileWidth/Scale) + (y/TileHeight/Scale)*Width;
+                // When dragging, only fire the event when a different square
+                // is reached
+                if (SelectedIndex != newIndex)
+                    SelectedIndex = newIndex;
             }
         }
 
