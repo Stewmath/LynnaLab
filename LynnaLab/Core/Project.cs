@@ -278,8 +278,13 @@ namespace LynnaLab
                 }
                 return EvalToInt(newVal);
             }
+            // else parts.Length == 1
 
-            if (val[0] == '$')
+            if (val[0] == '>')
+                return (EvalToInt(val.Substring(1))>>8)&0xff;
+            else if (val[0] == '<')
+                return EvalToInt(val.Substring(1))&0xff;
+            else if (val[0] == '$')
                 return Convert.ToInt32(val.Substring(1), 16);
             else if (val[val.Length - 1] == 'h')
                 return Convert.ToInt32(val.Substring(0, val.Length - 1), 16);
@@ -299,6 +304,28 @@ namespace LynnaLab
             return stream;
         }
 
+        // Get a set of all rooms used in the dungeons. Used by
+        // HighlightingMinimap.
+        public HashSet<int> GetRoomsUsedInDungeons() {
+            var rooms = new HashSet<int>();
+
+            for (int i=0; i<GetNumDungeons(); i++) {
+                Dungeon d = GetIndexedDataType<Dungeon>(i);
+                for (int f=0; f<d.NumFloors; f++) {
+                    for (int x=0; x<d.MapWidth; x++) {
+                        for (int y=0; y<d.MapHeight; y++) {
+                            rooms.Add(d.GetRoom(x, y, f).Index);
+                        }
+                    }
+                }
+            }
+
+            return rooms;
+        }
+
+        public int GetNumDungeons() {
+            return 16;
+        }
 
         public int GetNumGroups() {
             return 8;

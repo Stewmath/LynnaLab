@@ -24,12 +24,12 @@ namespace LynnaLab
         }
         public override int RoomWidth {
             get {
-                return 10;
+                return GetRoom(0,0).Width;
             }
         }
         public override int RoomHeight {
             get {
-                return 8;
+                return GetRoom(0,0).Height;
             }
         }
 

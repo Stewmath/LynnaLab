@@ -76,56 +76,65 @@ namespace LynnaLab
             return GetRoom(SelectedX, SelectedY);
         }
 
-        public void GenerateImage() {
+        int idleX, idleY;
+        protected void GenerateImage() {
             if (_map == null) {
                 _image = null;
                 return;
             }
+
+            idleX = 0;
+            idleY = 0;
+
+            Func<bool> OnIdleGenerateImage = () => {
+                int x = idleX;
+                int y = idleY;
+
+                if (idleY >= _map.MapHeight)
+                    return false;
+
+                int roomWidth = (int)(_map.RoomWidth*16*scale);
+                int roomHeight = (int)(_map.RoomHeight*16*scale);
+
+                const System.Drawing.Drawing2D.InterpolationMode interpolationMode =
+                    System.Drawing.Drawing2D.InterpolationMode.Default;
+
+                Graphics g = Graphics.FromImage(_image);
+                g.InterpolationMode = interpolationMode;
+
+                Image img = GenerateTileImage(x,y);
+                g.DrawImage(img, (int)(x*roomWidth), (int)(y*roomHeight),
+                        (int)(roomWidth), (int)(roomHeight));
+
+                g.Dispose();
+
+                QueueDrawArea(x*roomWidth, y*roomHeight, roomWidth, roomHeight);
+
+                idleX++;
+                if (idleX >= _map.MapWidth) {
+                    idleY++;
+                    idleX = 0;
+                }
+
+                return true;
+            };
+
             int width = (int)(_map.RoomWidth*_map.MapWidth*16*scale);
             int height = (int)(_map.RoomHeight*_map.MapHeight*16*scale);
             _image = new Bitmap(width,height);
 
+            SetSizeRequest(width, height);
             idleX = 0;
             idleY = 0;
-            GLib.IdleHandler handler = new GLib.IdleHandler(OnIdleGenerateImage);
+            var handler = new GLib.IdleHandler(OnIdleGenerateImage);
             GLib.Idle.Remove(handler);
             GLib.Idle.Add(handler);
-
-            SetSizeRequest(width, height);
         }
 
-        int idleX, idleY;
-        bool OnIdleGenerateImage() {
-            int x = idleX;
-            int y = idleY;
-
-            int width = (int)(_map.RoomWidth*16*scale);
-            int height = (int)(_map.RoomHeight*16*scale);
-
-            const System.Drawing.Drawing2D.InterpolationMode interpolationMode =
-                System.Drawing.Drawing2D.InterpolationMode.Default;
-
-            Graphics g = Graphics.FromImage(_image);
-            g.InterpolationMode = interpolationMode;
-
+        protected virtual Image GenerateTileImage(int x, int y) {
             Room room = GetRoom(x, y);
             Bitmap img = room.GetImage();
-            g.DrawImage(img, (int)(x*width), (int)(y*height),
-                    (int)(width), (int)(height));
-
-            g.Dispose();
-
-            this.QueueDrawArea(x*width, y*height, width, height);
-
-            idleX++;
-            if (idleX >= _map.MapWidth) {
-                idleY++;
-                idleX = 0;
-                if (idleY >= _map.MapHeight)
-                    return false;
-            }
-
-            return true;
+            return img;
         }
 
         protected override bool OnButtonPressEvent(Gdk.EventButton ev)

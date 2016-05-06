@@ -23,7 +23,7 @@ namespace LynnaLab
 
         public override int Group {
             get {
-                return GetDataIndex(0)-0xc9+4;
+                return GetDataIndex(0)-Project.EvalToInt(">wGroup4Flags")+4;
             }
         }
 
@@ -39,12 +39,12 @@ namespace LynnaLab
         }
         public override int RoomWidth {
             get {
-                return 15;
+                return GetRoom(0,0).Width;
             }
         }
         public override int RoomHeight {
             get {
-                return 11;
+                return GetRoom(0,0).Height;
             }
         }
 

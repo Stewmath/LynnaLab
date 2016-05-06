@@ -84,7 +84,7 @@ public partial class MainWindow: Gtk.Window
                         ", " + roomeditor1.HoveringY + ")");
         };
 
-        worldSpinButton.Adjustment = new Adjustment(0, 0, 3, 1, 0, 0);
+        worldSpinButton.Adjustment = new Adjustment(0, 0, 5, 1, 0, 0);
         dungeonSpinButton.Adjustment = new Adjustment(0, 0, 15, 1, 0, 0);
 
         pluginCore = new PluginCore(this);
@@ -456,5 +456,10 @@ public partial class MainWindow: Gtk.Window
 
         openedDungeonEditor = true;
         win.ShowAll();
+    }
+
+    protected void OnDarkenDungeonRoomsCheckboxToggled(object sender, EventArgs e)
+    {
+        worldMinimap.DarkenUsedDungeonRooms = darkenDungeonRoomsCheckbox.Active;
     }
 }
