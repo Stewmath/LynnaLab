@@ -97,8 +97,8 @@ namespace Plugins
                 var vrs = new List<ValueReference>();
                 vrs.Add(new ValueReference("Group", 0, DataValueType.String, false));
                 vrs.Add(new ValueReference("Wallmaster dest room", 0, DataValueType.Byte));
-                vrs.Add(new ValueReference("Bottom floor layout", 0, DataValueType.Byte));
-                vrs.Add(new ValueReference("# of floors", 0, DataValueType.Byte));
+                vrs.Add(new ValueReference("Bottom floor layout", 0, DataValueType.Byte, false));
+                vrs.Add(new ValueReference("# of floors", 0, DataValueType.Byte, false));
                 vrs.Add(new ValueReference("Base floor name", 0, DataValueType.Byte));
                 vrs.Add(new ValueReference("Floors unlocked with compass", 0, DataValueType.Byte));
 
@@ -161,10 +161,107 @@ namespace Plugins
             vbox.Add(tmpAlign);
             vbox.Add(hbox);
 
+            // Leftmost column
+
+            tmpBox = new VBox();
+            tmpBox.Add(dungeonVreContainer);
+
+            var addFloorButton = new Button("Add Floor");
+            addFloorButton.Image = new Gtk.Image(Gtk.Stock.Add, Gtk.IconSize.Button);
+            addFloorButton.Clicked += (a,b) => {
+                Dungeon dungeon = minimap.Map as Dungeon;
+
+                int newFloorIndex = dungeon.FirstLayoutIndex + dungeon.NumFloors;
+
+                // Shift all subsequent layouts 64 bytes down in the data file
+                Stream layoutFile = Project.GetBinaryFile("rooms/dungeonLayouts.bin");
+                layoutFile.SetLength(layoutFile.Length+64);
+                for (int i=(int)layoutFile.Length/64-1; i>newFloorIndex; i--) {
+                    var buf = new byte[64];
+                    layoutFile.Position = (i-1)*64;
+                    layoutFile.Read(buf, 0, 64);
+                    layoutFile.Write(buf, 0, 64);
+                }
+
+                // Clear the new floor
+                layoutFile.Position = newFloorIndex*64;
+                for (int j=0;j<64;j++)
+                    layoutFile.WriteByte(0);
+
+                // Shift each dungeon's "FirstLayoutIndex" to match the shifted layouts.
+                for (int i=0; i<Project.GetNumDungeons(); i++) {
+                    Dungeon d2 = Project.GetIndexedDataType<Dungeon>(i);
+                    if (d2.FirstLayoutIndex >= newFloorIndex)
+                        d2.FirstLayoutIndex++;
+                }
+
+                dungeon.NumFloors = dungeon.NumFloors+1;
+                floorSpinButton.Value = dungeon.NumFloors-1;
+                DungeonChanged();
+            };
+            tmpAlign = new Gtk.Alignment(0.5f,0,0,0);
+            tmpAlign.Add(addFloorButton);
+            tmpBox.PackStart(tmpAlign);
+
+            var removeFloorButton = new Button("Remove Top Floor");
+            removeFloorButton.Image = new Gtk.Image(Gtk.Stock.Remove, Gtk.IconSize.Button);
+            removeFloorButton.Clicked += (a,b) => {
+                Dungeon dungeon = minimap.Map as Dungeon;
+
+                if (dungeon.NumFloors <= 1)
+                    return;
+
+                Gtk.MessageDialog d = new MessageDialog(null,
+                        DialogFlags.DestroyWithParent,
+                        MessageType.Warning,
+                        ButtonsType.YesNo,
+                        "Are you quite certain that you wish to delete the top floor of this dungeon?");
+                var response = (ResponseType)d.Run();
+                d.Destroy();
+
+                if (response == Gtk.ResponseType.Yes) {
+                    int deletedFloorIndex = dungeon.FirstLayoutIndex + dungeon.NumFloors-1;
+
+                    // Shift all subsequent layouts 64 bytes up in the data file
+                    Stream layoutFile = Project.GetBinaryFile("rooms/dungeonLayouts.bin");
+                    for (int i=deletedFloorIndex; i<layoutFile.Length/64-1; i++) {
+                        var buf = new byte[64];
+                        layoutFile.Position = (i+1)*64;
+                        layoutFile.Read(buf, 0, 64);
+                        layoutFile.Position = i*64;
+                        layoutFile.Write(buf, 0, 64);
+                    }
+
+                    layoutFile.SetLength(layoutFile.Length-64);
+
+                    // Shift each dungeon's "FirstLayoutIndex" to match the shifted layouts.
+                    for (int i=0; i<Project.GetNumDungeons(); i++) {
+                        Dungeon d2 = Project.GetIndexedDataType<Dungeon>(i);
+                        if (d2.FirstLayoutIndex > deletedFloorIndex)
+                            d2.FirstLayoutIndex--;
+                    }
+
+                    dungeon.NumFloors = dungeon.NumFloors-1;
+
+                    DungeonChanged();
+                }
+            };
+            tmpAlign = new Gtk.Alignment(0.5f,0,0,0);
+            tmpAlign.Add(removeFloorButton);
+            tmpBox.PackStart(tmpAlign);
+
+            hbox.PackStart(tmpBox);
+
+            // Middle column (minimap)
+
             minimap = new Minimap();
             minimap.TileSelectedEvent += (sender) => {
                 RoomChanged();
             };
+
+            hbox.PackStart(minimap);
+
+            // Rightmost column
 
             tmpAlign = new Alignment(0,0,0,0);
             tmpAlign.Add(roomVreContainer);
@@ -183,13 +280,17 @@ namespace Plugins
             tmpBox.Add(tmpBox2);
             tmpBox.Add(tmpAlign);
 
-            hbox.PackStart(dungeonVreContainer);
-            hbox.PackStart(minimap);
             hbox.PackStart(tmpBox);
+
+
 
             Window w = new Window(null);
             w.Add(frame);
             w.ShowAll();
+
+            Map map = manager.GetActiveMap();
+            if (map is Dungeon)
+                dungeonSpinButton.Value = map.Index;
 
             DungeonChanged();
         }

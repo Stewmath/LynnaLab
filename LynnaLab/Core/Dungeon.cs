@@ -18,10 +18,16 @@ namespace LynnaLab
             get {
                 return GetDataIndex(2);
             }
+            set {
+                SetDataIndex(2, value);
+            }
         }
         public int NumFloors {
             get {
                 return GetDataIndex(3);
+            }
+            set {
+                SetDataIndex(3, value);
             }
         }
 
@@ -67,6 +73,14 @@ namespace LynnaLab
                 d = d.NextData;
             }
             return Project.EvalToInt(d.GetValue(0));
+        }
+
+        void SetDataIndex(int i, int val) {
+            Data d = dataStart;
+            for (int j=0; j<i; j++) {
+                d = d.NextData;
+            }
+            d.SetByteValue(0, (byte)val);
         }
 
         public void SetRoom(int x, int y, int floor, int room) {
