@@ -23,7 +23,8 @@ namespace LynnaLab
         // end of each row
         int fileWidth;
 
-        byte[,] tiles;
+        MemoryFileStream tileDataFile;
+
         Area area;
         Bitmap cachedImage;
 
@@ -42,27 +43,7 @@ namespace LynnaLab
 
         MemoryFileStream TileDataFile {
             get {
-                int layoutGroup = area.LayoutGroup;
-                string label = "room" + ((layoutGroup<<8)+(Index&0xff)).ToString("X4").ToLower();
-                FileParser parserFile = Project.GetFileWithLabel(label);
-                Data data = parserFile.GetData(label);
-                if (data.CommandLowerCase != "m_roomlayoutdata") {
-                    throw new Exception("Expected label \"" + label + "\" to be followed by the m_RoomLayoutData macro.");
-                }
-                string roomString = data.GetValue(0) + ".bin";
-                MemoryFileStream dataFile;
-                try {
-                    dataFile = Project.GetBinaryFile("rooms/small/" + roomString);
-                }
-                catch (FileNotFoundException) {
-                    try {
-                        dataFile = Project.GetBinaryFile("rooms/large/" + roomString);
-                    }
-                    catch (FileNotFoundException) {
-                        throw new FileNotFoundException("Couldn't find \"" + roomString + "\" in \"rooms/small\" or \"rooms/large\".");
-                    }
-                }
-                return dataFile;
+                return tileDataFile;
             }
         }
 
@@ -86,7 +67,7 @@ namespace LynnaLab
 
             for (int x=0; x<width; x++) {
                 for (int y=0; y<height; y++) {
-                    g.DrawImageUnscaled(area.GetTileImage(tiles[x,y]), x*16, y*16);
+                    g.DrawImageUnscaled(area.GetTileImage(GetTile(x,y)), x*16, y*16);
                 }
             }
 
@@ -96,11 +77,13 @@ namespace LynnaLab
         }
 
         public int GetTile(int x, int y) {
-            return tiles[x,y];
+            tileDataFile.Position = y*fileWidth+x;
+            return tileDataFile.ReadByte();
         }
         public void SetTile(int x, int y, int value) {
-            if (tiles[x,y] != value) {
-                tiles[x,y] = (byte)value;
+            if (GetTile(x,y) != value) {
+                tileDataFile.Position = y*fileWidth+x;
+                tileDataFile.WriteByte((byte)value);
                 if (cachedImage != null) {
                     Graphics g = Graphics.FromImage(cachedImage);
                     g.DrawImageUnscaled(area.GetTileImage(value), x*16, y*16);
@@ -156,31 +139,38 @@ namespace LynnaLab
         }
 
         void UpdateRoomData() {
-            MemoryFileStream dataFile = TileDataFile;
-            if (dataFile.Length == 80) { // Small map
+            // Get the TileDataFile
+            int layoutGroup = area.LayoutGroup;
+            string label = "room" + ((layoutGroup<<8)+(Index&0xff)).ToString("X4").ToLower();
+            FileParser parserFile = Project.GetFileWithLabel(label);
+            Data data = parserFile.GetData(label);
+            if (data.CommandLowerCase != "m_roomlayoutdata") {
+                throw new Exception("Expected label \"" + label + "\" to be followed by the m_RoomLayoutData macro.");
+            }
+            string roomString = data.GetValue(0) + ".bin";
+            try {
+                tileDataFile = Project.GetBinaryFile("rooms/small/" + roomString);
+            }
+            catch (FileNotFoundException) {
+                try {
+                    tileDataFile = Project.GetBinaryFile("rooms/large/" + roomString);
+                }
+                catch (FileNotFoundException) {
+                    throw new FileNotFoundException("Couldn't find \"" + roomString + "\" in \"rooms/small\" or \"rooms/large\".");
+                }
+            }
+
+            if (tileDataFile.Length == 80) { // Small map
                 width = fileWidth = 10;
                 height = 8;
-                tiles = new byte[width,height];
-                dataFile.Position = 0;
-                for (int y=0; y<height; y++)
-                    for (int x=0; x<width; x++) {
-                        tiles[x,y] = (byte)dataFile.ReadByte();
-                    }
             }
-            else if (dataFile.Length == 176) { // Large map
+            else if (tileDataFile.Length == 176) { // Large map
                 width = 0xf;
                 fileWidth = 0x10;
                 height = 0xb;
-                tiles = new byte[width,height];
-                dataFile.Position = 0;
-                for (int y=0; y<height; y++) {
-                    for (int x=0; x<width; x++)
-                        tiles[x,y] = (byte)dataFile.ReadByte();
-                    dataFile.ReadByte();
-                }
             }
             else
-                throw new Exception("Size of file \"" + dataFile.Name + "\" was invalid!");
+                throw new Exception("Size of file \"" + tileDataFile.Name + "\" was invalid!");
         }
 
         void ModifiedTileCallback(int tile) {
@@ -191,7 +181,7 @@ namespace LynnaLab
                 for (int y=0; y<Height; y++) {
                     if (GetTile(x, y) == tile) {
                         if (cachedImage != null)
-                            g.DrawImageUnscaled(area.GetTileImage(tiles[x,y]), x*16, y*16);
+                            g.DrawImageUnscaled(area.GetTileImage(GetTile(x,y)), x*16, y*16);
                         if (RoomModifiedEvent != null)
                             RoomModifiedEvent();
                     }
@@ -209,19 +199,6 @@ namespace LynnaLab
         }
 
         public override void Save() {
-            if (Modified) {
-                Stream file = TileDataFile;
-                file.Position = 0;
-                for (int y=0; y<Height; y++) {
-                    for (int x=0; x<Width; x++) {
-                        file.WriteByte(tiles[x,y]);
-                    }
-                    for (int j=width; j<fileWidth; j++)
-                        file.WriteByte(0);
-                }
-
-                Modified = false;
-            }
         }
     }
 }

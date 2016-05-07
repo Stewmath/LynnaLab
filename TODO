@@ -13,10 +13,6 @@ Before Release:
     - Collisions
     - Add/remove tilesets, deal with 00/0c using the same mapping/collision
       files
-- Dungeons:
-    - Dungeon minimap editor
-    - Change floors, other attributes in a dungeon
-    - Unmapped layout
 - Bugs:
     - Crash when changing animation index
     - Crash when area ID is too high
