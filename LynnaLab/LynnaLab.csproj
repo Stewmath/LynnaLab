@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -104,8 +105,6 @@
     <Compile Include="Core\WarpDestGroup.cs" />
     <Compile Include="Core\WarpDestData.cs" />
     <Compile Include="Core\FileParser.cs" />
-    <Compile Include="UI\DungeonEditor.cs" />
-    <Compile Include="gtk-gui\LynnaLab.DungeonEditor.cs" />
     <Compile Include="PluginCore\PluginCore.cs" />
     <Compile Include="PluginCore\PluginManager.cs" />
     <Compile Include="PluginInterfaces\Plugin.cs" />
@@ -117,6 +116,7 @@
     <Compile Include="Core\ValueReferenceGroup.cs" />
     <Compile Include="UI\TileGridSelector.cs" />
     <Compile Include="UI\HighlightingMinimap.cs" />
+    <Compile Include="Core\StreamValueReference.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

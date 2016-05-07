@@ -118,6 +118,17 @@ namespace LynnaLab
             }
             return p;
         }
+
+        public MemoryFileStream GetBinaryFile(string filename) {
+            filename = baseDirectory + filename;
+            MemoryFileStream stream = null;
+            if (!binaryFileDictionary.TryGetValue(filename, out stream)) {
+                stream = new MemoryFileStream(filename);
+                binaryFileDictionary[filename] = stream;
+            }
+            return stream;
+        }
+
         public void Save() {
             foreach (ProjectDataType data in dataStructDictionary.Values) {
                 data.Save();
@@ -292,16 +303,6 @@ namespace LynnaLab
                 return Convert.ToInt32(val.Substring(1), 2);
             else
                 return Convert.ToInt32(val);
-        }
-
-        public MemoryFileStream GetBinaryFile(string filename) {
-            filename = baseDirectory + filename;
-            MemoryFileStream stream = null;
-            if (!binaryFileDictionary.TryGetValue(filename, out stream)) {
-                stream = new MemoryFileStream(filename);
-                binaryFileDictionary[filename] = stream;
-            }
-            return stream;
         }
 
         // Get a set of all rooms used in the dungeons. Used by

@@ -77,7 +77,7 @@ namespace LynnaLab
         }
 
         int idleX, idleY;
-        protected void GenerateImage() {
+        public void GenerateImage() {
             if (_map == null) {
                 _image = null;
                 return;

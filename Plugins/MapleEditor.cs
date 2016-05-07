@@ -12,6 +12,12 @@ namespace Plugins
     {
         PluginManager manager;
 
+        Project Project {
+            get {
+                return manager.Project;
+            }
+        }
+
         public override String Name {
             get {
                 return "Maple Editor";
@@ -25,12 +31,6 @@ namespace Plugins
         public override bool IsDockable {
             get {
                 return false;
-            }
-        }
-
-        Project Project {
-            get {
-                return manager.Project;
             }
         }
 

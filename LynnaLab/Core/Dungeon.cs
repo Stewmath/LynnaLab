@@ -6,8 +6,14 @@ namespace LynnaLab
 {
     public class Dungeon : Map
     {
-        Data dataBase;
+        // The start of the data, at the "dungeonDataXX" label
+        Data dataStart;
 
+        public Data DataStart {
+            get {
+                return dataStart;
+            }
+        }
         public int FirstLayoutIndex {
             get {
                 return GetDataIndex(2);
@@ -52,23 +58,30 @@ namespace LynnaLab
             FileParser dungeonDataFile = Project.GetFileWithLabel("dungeonDataTable");
             Data pointerData = dungeonDataFile.GetData("dungeonDataTable", Index*2);
             string label = pointerData.GetValue(0);
-            dataBase = dungeonDataFile.GetData(label);
+            dataStart = dungeonDataFile.GetData(label);
         }
 
         int GetDataIndex(int i) {
-            Data d = dataBase;
+            Data d = dataStart;
             for (int j=0; j<i; j++) {
                 d = d.NextData;
             }
             return Project.EvalToInt(d.GetValue(0));
         }
 
+        public void SetRoom(int x, int y, int floor, int room) {
+            int i = FirstLayoutIndex + floor;
+            Stream file = Project.GetBinaryFile("rooms/dungeonLayouts.bin");
+            file.Position = i*64+y*8+x;
+            file.WriteByte((byte)(room&0xff));
+        }
+
         // Map methods
 
         public override Room GetRoom(int x, int y, int floor=0) {
             int i = FirstLayoutIndex + floor;
-            Stream file = Project.GetBinaryFile("dungeonLayouts/layout" + i.ToString("X2").ToLower() + ".bin");
-            file.Position = y*8+x;
+            Stream file = Project.GetBinaryFile("rooms/dungeonLayouts.bin");
+            file.Position = i*64+y*8+x;
             int roomIndex = file.ReadByte();
             int group = GetDataIndex(0)-0xc9+4;
             Room room = Project.GetIndexedDataType<Room>(roomIndex + group*0x100);

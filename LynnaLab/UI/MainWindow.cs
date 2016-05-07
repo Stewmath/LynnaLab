@@ -435,28 +435,6 @@ public partial class MainWindow: Gtk.Window
         openedWarpEditor = true;
         win.ShowAll();
     }
-    bool openedDungeonEditor=false;
-    protected void OnDungeonAction1Activated(object sender, EventArgs e)
-    {
-        if (openedDungeonEditor)
-            return;
-        DungeonEditor editor = new DungeonEditor();
-        editor.Dungeon = dungeonMinimap.Map as Dungeon;
-
-        Gtk.Window win = new Window(WindowType.Toplevel);
-        win.Modal = false;
-        win.Add(editor);
-
-        editor.Destroyed += delegate(object sender2, EventArgs e2) {
-            win.Destroy();
-        };
-        win.Destroyed += delegate(object sender2, EventArgs e2) {
-            openedDungeonEditor = false;
-        };
-
-        openedDungeonEditor = true;
-        win.ShowAll();
-    }
 
     protected void OnDarkenDungeonRoomsCheckboxToggled(object sender, EventArgs e)
     {

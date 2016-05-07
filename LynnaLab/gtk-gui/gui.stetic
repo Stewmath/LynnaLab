@@ -70,17 +70,6 @@
         <property name="ShortLabel" translatable="yes">_Warps</property>
         <signal name="Activated" handler="OnWarpsActionActivated" />
       </action>
-      <action id="DungeonAction">
-        <property name="Type">Action</property>
-        <property name="Label" translatable="yes">Dungeon</property>
-        <property name="ShortLabel" translatable="yes">Dungeon</property>
-      </action>
-      <action id="DungeonAction1">
-        <property name="Type">Action</property>
-        <property name="Label" translatable="yes">Dungeon</property>
-        <property name="ShortLabel" translatable="yes">Dungeon</property>
-        <signal name="Activated" handler="OnDungeonAction1Activated" />
-      </action>
       <action id="PluginsAction">
         <property name="Type">Action</property>
         <property name="Label" translatable="yes">Plugins</property>
@@ -102,6 +91,11 @@
         <property name="Type">Action</property>
         <property name="Label" translatable="yes" />
       </action>
+      <action id="aoeuAction">
+        <property name="Type">Action</property>
+        <property name="Label" translatable="yes">aoeu</property>
+        <property name="ShortLabel" translatable="yes">aoeu</property>
+      </action>
     </action-group>
     <property name="MemberName" />
     <property name="Title" translatable="yes">Lynna Lab</property>
@@ -121,7 +115,6 @@
                 <node type="Menuitem" action="QuitAction" />
               </node>
               <node type="Menu" action="EditAction">
-                <node type="Menuitem" action="DungeonAction1" />
                 <node type="Menuitem" action="WarpsAction" />
               </node>
               <node type="Menu" action="ViewAction">
@@ -141,7 +134,7 @@
           <widget class="Gtk.Toolbar" id="toolbar1">
             <property name="MemberName" />
             <property name="ShowArrow">False</property>
-            <node name="__gtksharp_161_Stetic_Editor_ActionToolbar" type="Toolbar">
+            <node name="toolbar1" type="Toolbar">
               <node type="Toolitem" action="openAction" />
               <node type="Toolitem" action="saveAction" />
             </node>
@@ -1965,22 +1958,6 @@
             <property name="Expand">False</property>
             <property name="Fill">False</property>
           </packing>
-        </child>
-      </widget>
-    </child>
-  </widget>
-  <widget class="Gtk.Bin" id="LynnaLab.DungeonEditor" design-size="447 392">
-    <property name="MemberName" />
-    <property name="Visible">False</property>
-    <child>
-      <widget class="Gtk.VBox" id="vbox2">
-        <property name="MemberName" />
-        <property name="Spacing">6</property>
-        <child>
-          <placeholder />
-        </child>
-        <child>
-          <placeholder />
         </child>
       </widget>
     </child>

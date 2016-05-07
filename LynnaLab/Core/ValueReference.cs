@@ -48,11 +48,11 @@ namespace LynnaLab
         }
 
         Data data;
-        int valueIndex;
-        int startBit,endBit;
         string constantsMappingString;
         ConstantsMapping constantsMapping;
-        Func<bool> boundsChecker;
+
+        protected int valueIndex;
+        protected int startBit,endBit;
 
         public DataValueType ValueType {get; set;}
         public string Name {get; set;}

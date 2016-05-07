@@ -324,7 +324,7 @@ namespace Plugins
                     Project,
                     vrGroup,
                     "Data");
-            vr.SetMaxBound(v1, 0x7f);
+            vr.SetMaxBound(0, 0x7f); // Max bound for Spawn Mode
 
             vr.AddDataModifiedHandler(() => {
                     if (ItemChangedEvent != null)
@@ -684,7 +684,7 @@ namespace Plugins
                         Project,
                         vrGroup,
                         "Data");
-                vr.SetMaxBound(v1, 0xfe);
+                vr.SetMaxBound(0, 0xfe); // Max bound for YX
 
                 vr.AddDataModifiedHandler(() => {
                         if (ChestChangedEvent != null)

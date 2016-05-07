@@ -11,8 +11,11 @@ namespace LynnaLab
 
         public ValueReferenceGroup(IList<ValueReference> refs) {
             valueReferences = new List<ValueReference>();
-            foreach (var vref in refs)
-                valueReferences.Add(new ValueReference(vref));
+            foreach (var vref in refs) {
+                ValueReference copy =
+                    (ValueReference)Activator.CreateInstance(vref.GetType(), new object[] { vref });
+                valueReferences.Add(copy);
+            }
         }
 
         public IList<ValueReference> GetValueReferences() {
@@ -31,6 +34,8 @@ namespace LynnaLab
             return valueReferences.Count;
         }
 
+        // This function might not work because it's making copies of the
+        // ValueReferences passed to it in the constructor?
         public int GetIndexOf(ValueReference r) {
             return valueReferences.IndexOf(r);
         }
