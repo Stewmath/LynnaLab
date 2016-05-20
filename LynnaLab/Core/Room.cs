@@ -19,8 +19,7 @@ namespace LynnaLab
 
         // Actual width and height of room
         int width, height;
-        // Width and height of file; large rooms always have an extra 0 at the
-        // end of each row
+        // Actual width of file; large rooms always have an extra 0 at the end of each row
         int fileWidth;
 
         MemoryFileStream tileDataFile;
@@ -39,12 +38,6 @@ namespace LynnaLab
         public Area Area
         {
             get { return area; }
-        }
-
-        MemoryFileStream TileDataFile {
-            get {
-                return tileDataFile;
-            }
         }
 
         internal Room(Project p, int i) : base(p,i) {
@@ -139,7 +132,7 @@ namespace LynnaLab
         }
 
         void UpdateRoomData() {
-            // Get the TileDataFile
+            // Get the tileDataFile
             int layoutGroup = area.LayoutGroup;
             string label = "room" + ((layoutGroup<<8)+(Index&0xff)).ToString("X4").ToLower();
             FileParser parserFile = Project.GetFileWithLabel(label);
