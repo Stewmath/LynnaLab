@@ -2,23 +2,24 @@
 
 namespace LynnaLab
 {
-    public partial class AddInteractionDialog : Gtk.Dialog
+    public partial class AddObjectDialog : Gtk.Dialog
     {
-        InteractionType interactionType;
+        ObjectType objectType;
 
-        public InteractionType InteractionTypeToAdd {
-            get { return interactionType; }
+        public ObjectType ObjectTypeToAdd {
+            get { return objectType; }
         }
 
-        public AddInteractionDialog()
+        public AddObjectDialog()
         {
             this.Build();
             UpdateLabel();
         }
 
         public void UpdateLabel() {
-            interactionType = (InteractionType)typeSpinButton.ValueAsInt;
-            infoLabel.Text = InteractionGroupEditor.InteractionNames[(int)interactionType];
+            objectType = (ObjectType)typeSpinButton.ValueAsInt;
+            infoLabel.Text = ObjectGroupEditor.ObjectNames[(int)objectType];
+            descriptionLabel.Text = ObjectGroupEditor.ObjectDescriptions[(int)objectType];
         }
 
         protected void OnTypeSpinButtonValueChanged(object sender, EventArgs e)
@@ -28,7 +29,7 @@ namespace LynnaLab
 
         protected void OnButtonCancelClicked(object sender, EventArgs e)
         {
-            interactionType = InteractionType.End;
+            objectType = ObjectType.End;
             this.Destroy();
         }
 

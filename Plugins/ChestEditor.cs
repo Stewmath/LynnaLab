@@ -44,7 +44,7 @@ namespace Plugins
         }
 
         public override void Clicked() {
-            Item.Project = Project;
+            Treasure.Project = Project;
             Chest.Project = Project;
 
             Gtk.Window win = new Window(WindowType.Toplevel);
@@ -60,10 +60,10 @@ namespace Plugins
             chestFrame.Label = "Chest Data";
             chestFrame.Add(chestGui);
 
-            var itemGui = new ItemEditorGui(manager);
-            Frame itemFrame = new Frame();
-            itemFrame.Label = "Item Data";
-            itemFrame.Add(itemGui);
+            var treasureGui = new TreasureEditorGui(manager);
+            Frame treasureFrame = new Frame();
+            treasureFrame.Label = "Treasure Data";
+            treasureFrame.Add(treasureGui);
 
             System.Action UpdateWarnings = () => {
                 VBox warningBox = new VBox();
@@ -86,21 +86,21 @@ namespace Plugins
                 foreach (var c in warningsContainer.Children)
                     warningsContainer.Remove(c);
 
-                int index = chestGui.GetItemIndex();
+                int index = chestGui.GetTreasureIndex();
                 if (index < 0)
                     return;
 
-                if (!Item.IndexExists(index)) {
-                    AddWarning("Item " + Wla.ToWord(index) + " does not exist.");
+                if (!Treasure.IndexExists(index)) {
+                    AddWarning("Treasure " + Wla.ToWord(index) + " does not exist.");
                 }
                 else {
-                    if (index != itemGui.Index)
-                        AddWarning("Your item index is different\nfrom the chest you're editing.");
+                    if (index != treasureGui.Index)
+                        AddWarning("Your treasure index is different\nfrom the chest you're editing.");
 
-                    int spawnMode = (Item.GetItemByte(index, 0) >> 4)&7;
+                    int spawnMode = (Treasure.GetTreasureByte(index, 0) >> 4)&7;
 
                     if (spawnMode != 3) {
-                        AddWarning("Item " + Wla.ToWord(index) + " doesn't have spawn\nmode $3 (needed for chests).");
+                        AddWarning("Treasure " + Wla.ToWord(index) + " doesn't have spawn\nmode $3 (needed for chests).");
                     }
 
                     int yx = Chest.GetChestByte(chestGui.RoomIndex, 0);
@@ -117,18 +117,18 @@ namespace Plugins
                 win.ShowAll();
             };
 
-            chestGui.SetItemEditor(itemGui);
+            chestGui.SetTreasureEditor(treasureGui);
             chestGui.ChestChangedEvent += () => {
                 UpdateWarnings();
             };
-            itemGui.ItemChangedEvent += () => {
+            treasureGui.TreasureChangedEvent += () => {
                 UpdateWarnings();
             };
 
             HBox hbox = new Gtk.HBox();
             hbox.Spacing = 6;
             hbox.Add(chestFrame);
-            hbox.Add(itemFrame);
+            hbox.Add(treasureFrame);
 
             Button okButton = new Gtk.Button();
             okButton.UseStock = true;
@@ -152,8 +152,8 @@ namespace Plugins
 
     }
 
-    class ItemEditorGui : Gtk.Alignment {
-        public event System.Action ItemChangedEvent;
+    class TreasureEditorGui : Gtk.Alignment {
+        public event System.Action TreasureChangedEvent;
 
         PluginManager manager;
         Widget vrEditor;
@@ -170,7 +170,7 @@ namespace Plugins
             }
         }
 
-        public ItemEditorGui(PluginManager manager)
+        public TreasureEditorGui(PluginManager manager)
             : base(0.5f,0.0f,0.0f,0.0f)
         {
             this.manager = manager;
@@ -178,13 +178,13 @@ namespace Plugins
             highIndexButton = new SpinButtonHexadecimal(0,0xff);
             highIndexButton.Digits = 2;
             highIndexButton.ValueChanged += (a,b) => {
-                SetItem(Index);
+                SetTreasure(Index);
             };
 
             Button hAddButton = new Gtk.Button();
             hAddButton.Clicked += (a,b) => {
-                Item.AddHighIndex();
-                SetItem(0xffff);
+                Treasure.AddHighIndex();
+                SetTreasure(0xffff);
             };
 			hAddButton.UseStock = true;
 			hAddButton.UseUnderline = true;
@@ -196,16 +196,16 @@ namespace Plugins
                         DialogFlags.DestroyWithParent,
                         MessageType.Warning,
                         ButtonsType.YesNo,
-                        "This will shift the indices for all items starting from " + 
-                        Wla.ToByte((byte)(Index>>8)) + "! All items after this WILL BREAK! " +
+                        "This will shift the indices for all treasures starting from " + 
+                        Wla.ToByte((byte)(Index>>8)) + "! All treasures after this WILL BREAK! " +
                         "Are you sure you want to continue?"
                         );
                 var r = (ResponseType)d.Run();
                 d.Destroy();
                 if (r != Gtk.ResponseType.Yes)
                     return;
-                Item.RemoveHighIndex(Index>>8);
-                SetItem(Index);
+                Treasure.RemoveHighIndex(Index>>8);
+                SetTreasure(Index);
             };
 			hRemoveButton.UseStock = true;
 			hRemoveButton.UseUnderline = true;
@@ -214,13 +214,13 @@ namespace Plugins
             lowIndexButton = new SpinButtonHexadecimal(0,0xff);
             lowIndexButton.Digits = 2;
             lowIndexButton.ValueChanged += (a,b) => {
-                SetItem(Index);
+                SetTreasure(Index);
             };
 
             Button addButton = new Gtk.Button();
             addButton.Clicked += (a,b) => {
-                Item.AddSubIndex(Index>>8);
-                SetItem((Index&0xff00) + 0xff);
+                Treasure.AddSubIndex(Index>>8);
+                SetTreasure((Index&0xff00) + 0xff);
             };
 			addButton.UseStock = true;
 			addButton.UseUnderline = true;
@@ -228,12 +228,12 @@ namespace Plugins
 
             Button removeButton = new Gtk.Button();
             removeButton.Clicked += (a,b) => {
-                if ((Index&0xff) < Item.GetNumLowIndices(Index>>8)-1) {
+                if ((Index&0xff) < Treasure.GetNumLowIndices(Index>>8)-1) {
                     Gtk.MessageDialog d = new MessageDialog(null,
                             DialogFlags.DestroyWithParent,
                             MessageType.Warning,
                             ButtonsType.YesNo,
-                            "This will shift all sub-indices for item " +
+                            "This will shift all sub-indices for treasure " +
                             Wla.ToByte((byte)(Index>>8)) + " starting from sub-index " +
                             Wla.ToByte((byte)(Index&0xff)) + "! Are you sure you want to continue?"
                             );
@@ -242,8 +242,8 @@ namespace Plugins
                     if (r != Gtk.ResponseType.Yes)
                         return;
                 }
-                Item.RemoveSubIndex(Index);
-                SetItem((Index&0xff00) + 0xff);
+                Treasure.RemoveSubIndex(Index);
+                SetTreasure((Index&0xff00) + 0xff);
             };
 			removeButton.UseStock = true;
 			removeButton.UseUnderline = true;
@@ -252,7 +252,7 @@ namespace Plugins
             var table = new Table(3,2,false);
 
             uint y=0;
-            table.Attach(new Gtk.Label("High Item Index"), 0, 1, y, y+1);
+            table.Attach(new Gtk.Label("High Treasure Index"), 0, 1, y, y+1);
             table.Attach(highIndexButton, 1, 2, y, y+1);
             // Disable high add and remove buttons for now, they're not useful
             // yet
@@ -272,18 +272,18 @@ namespace Plugins
 
             Add(vbox);
 
-            SetItem(0);
+            SetTreasure(0);
         }
 
-        public void SetItem(int index) {
+        public void SetTreasure(int index) {
             int hIndex = index>>8;
             int lIndex = index&0xff;
 
-            int hMax = Item.GetNumHighIndices();
+            int hMax = Treasure.GetNumHighIndices();
             if (hIndex >= hMax)
                 hIndex = hMax-1;
 
-            int lMax = Item.GetNumLowIndices(hIndex);
+            int lMax = Treasure.GetNumLowIndices(hIndex);
             if (lIndex >= lMax)
                 lIndex = lMax-1;
 
@@ -296,7 +296,7 @@ namespace Plugins
 
             vrContainer.Remove(vrEditor);
 
-            Data data = Item.GetItemDataBase(index);
+            Data data = Treasure.GetTreasureDataBase(index);
             ValueReference v1 = new ValueReference("Spawn Mode", 0, 4,6, DataValueType.ByteBits);
             v1.SetData(data);
             ValueReference v5 = new ValueReference("Grab Mode", 0, 0,2, DataValueType.ByteBits);
@@ -315,7 +315,7 @@ namespace Plugins
             v4.SetData(data);
             data = data.NextData;
 
-            // Byte 1 is sometimes set to 0x80 for unused items?
+            // Byte 1 is sometimes set to 0x80 for unused treasures?
             v1.SetValue(v1.GetIntValue()&0x7f);
 
             ValueReferenceGroup vrGroup = new ValueReferenceGroup(new ValueReference[] {v1, v5, v6, v2, v3, v4});
@@ -327,19 +327,19 @@ namespace Plugins
             vr.SetMaxBound(0, 0x7f); // Max bound for Spawn Mode
 
             vr.AddDataModifiedHandler(() => {
-                    if (ItemChangedEvent != null)
-                        ItemChangedEvent();
+                    if (TreasureChangedEvent != null)
+                        TreasureChangedEvent();
                 });
 
             vrEditor = vr;
             vrContainer.Add(vrEditor);
 
-            if (ItemChangedEvent != null)
-                ItemChangedEvent();
+            if (TreasureChangedEvent != null)
+                TreasureChangedEvent();
         }
     }
 
-    static class Item {
+    static class Treasure {
         public static Project Project { get; set; }
 
         public static void AddSubIndex(int hIndex) {
@@ -351,7 +351,7 @@ namespace Plugins
             FileParser parser = data.FileParser;
 
             if (!HighIndexUsesPointer(hIndex)) {
-                string pointerString = "itemData" + hIndex.ToString("x2");
+                string pointerString = "treasureData" + hIndex.ToString("x2");
 
                 while (Project.HasLabel(pointerString))
                     pointerString = "_" + pointerString;
@@ -472,9 +472,9 @@ namespace Plugins
         }
 
         public static int GetNumHighIndices() {
-            // Read until the first label after itemData.
-            FileParser parser = Project.GetFileWithLabel("itemData");
-            Data data = parser.GetData("itemData");
+            // Read until the first label after treasureData.
+            FileParser parser = Project.GetFileWithLabel("treasureData");
+            Data data = parser.GetData("treasureData");
 
             int count=0;
             do {
@@ -490,7 +490,7 @@ namespace Plugins
         }
 
         static Data GetHighIndexDataBase(int hIndex) {
-            return Project.GetData("itemData", hIndex*4);
+            return Project.GetData("treasureData", hIndex*4);
         }
 
         public static bool HighIndexUsesPointer(int hIndex) {
@@ -518,9 +518,9 @@ namespace Plugins
             return count;
         }
 
-        public static Data GetItemDataBase(int item) {
-            int hIndex = item>>8;
-            int lIndex = item&0xff;
+        public static Data GetTreasureDataBase(int treasure) {
+            int hIndex = treasure>>8;
+            int lIndex = treasure&0xff;
 
             if (hIndex >= GetNumHighIndices() || lIndex >= GetNumLowIndices(hIndex)) {
                 return null;
@@ -540,16 +540,16 @@ namespace Plugins
             return data;
         }
 
-        public static int GetItemByte(int item, int byteIndex) {
-            Data data = GetItemDataBase(item);
+        public static int GetTreasureByte(int treasure, int byteIndex) {
+            Data data = GetTreasureDataBase(treasure);
 
             for (int i=0;i<byteIndex;i++)
                 data = data.NextData;
             return data.GetIntValue(0);
         }
 
-        public static bool IndexExists(int item) {
-            Data data = GetItemDataBase(item);
+        public static bool IndexExists(int treasure) {
+            Data data = GetTreasureDataBase(treasure);
             return data != null;
         }
     }
@@ -562,7 +562,7 @@ namespace Plugins
         Alignment vrContainer;
         SpinButtonHexadecimal indexSpinButton;
 
-        ItemEditorGui friend;
+        TreasureEditorGui friend;
 
         ValueReference v1,v2,v3,v4;
 
@@ -602,9 +602,9 @@ namespace Plugins
             Alignment buttonAlign = new Alignment(0.5F, 0.5F, 0.0F, 0.2F);
             buttonAlign.TopPadding = 3;
 
-            Button syncButton = new Button("Sync Item Data");
+            Button syncButton = new Button("Sync Treasure Data");
             syncButton.Clicked += (a,b) => {
-                SyncItemEditor();
+                SyncTreasureEditor();
             };
             buttonAlign.Add(syncButton);
 
@@ -613,22 +613,22 @@ namespace Plugins
             Add(vbox);
         }
 
-        public int GetItemIndex() {
+        public int GetTreasureIndex() {
             if (v3 == null)
                 return -1;
             return v3.GetIntValue()<<8 | v4.GetIntValue();
         }
 
-        void SyncItemEditor() {
+        void SyncTreasureEditor() {
             if (friend != null && v3 != null) {
-                friend.SetItem(v3.GetIntValue()<<8 | v4.GetIntValue());
+                friend.SetTreasure(v3.GetIntValue()<<8 | v4.GetIntValue());
             }
         }
 
-        public void SetItemEditor(ItemEditorGui gui) {
+        public void SetTreasureEditor(TreasureEditorGui gui) {
             friend = gui;
 
-            SyncItemEditor();
+            SyncTreasureEditor();
         }
 
         public void SetRoom(int room) {

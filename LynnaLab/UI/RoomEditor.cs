@@ -13,7 +13,7 @@ namespace LynnaLab
             get { return room; }
         }
 
-        public bool ViewInteractions {get; set;}
+        public bool ViewObjects {get; set;}
 
         protected override Bitmap Image {
             get {
@@ -25,13 +25,13 @@ namespace LynnaLab
 
         Room room;
         TileGridSelector client;
-        InteractionGroupEditor interactionEditor;
+        ObjectGroupEditor objectEditor;
         int mouseX=-1,mouseY=-1;
 
-        bool draggingInteraction;
-        // List of indices of interactions, each entry is one "depth" into the
-        // interaction pointers
-        List<int> hoveringInteractionIndices = new List<int>();
+        bool draggingObject;
+        // List of indices of objects, each entry is one "depth" into the
+        // object pointers
+        List<int> hoveringObjectIndices = new List<int>();
 
         public RoomEditor() {
             TileWidth = 16;
@@ -57,7 +57,7 @@ namespace LynnaLab
                 Gdk.ModifierType state;
                 args.Event.Window.GetPointer(out x, out y, out state);
                 if (!state.HasFlag(Gdk.ModifierType.Button1Mask)) {
-                    draggingInteraction = false;
+                    draggingObject = false;
                 }
             };
             this.MotionNotifyEvent += delegate(object o, MotionNotifyEventArgs args) {
@@ -78,10 +78,10 @@ namespace LynnaLab
             this.client = client;
         }
 
-        public void SetInteractionGroupEditor(InteractionGroupEditor editor) {
-            if (interactionEditor != editor) {
-                interactionEditor = editor;
-                interactionEditor.RoomEditor = this;
+        public void SetObjectGroupEditor(ObjectGroupEditor editor) {
+            if (objectEditor != editor) {
+                objectEditor = editor;
+                objectEditor.RoomEditor = this;
             }
         }
 
@@ -101,9 +101,9 @@ namespace LynnaLab
             QueueDraw();
         }
 
-        // Called when a new set of interactions is loaded or interactions are
+        // Called when a new set of objects is loaded or objects are
         // modified or whatever
-        public void OnInteractionsModified() {
+        public void OnObjectsModified() {
             QueueDraw();
         }
 
@@ -112,7 +112,7 @@ namespace LynnaLab
                 mouseX = x;
                 mouseY = y;
 
-                if (ViewInteractions) // Laziness
+                if (ViewObjects) // Laziness
                     QueueDraw();
             }
         }
@@ -120,36 +120,36 @@ namespace LynnaLab
         void OnClicked(int x, int y) {
             x /= TileWidth;
             y /= TileHeight;
-            if (!ViewInteractions) {
+            if (!ViewObjects) {
                 room.SetTile(x, y, client.SelectedIndex);
                 this.QueueDrawArea(x * TileWidth, y * TileWidth, TileWidth - 1, TileHeight - 1);
             }
             else {
-                if (interactionEditor != null) {
-                    InteractionGroupEditor editor = interactionEditor;
-                    while (hoveringInteractionIndices.Count > 1) {
-                        editor.SelectedIndex = hoveringInteractionIndices[0];
-                        hoveringInteractionIndices.RemoveAt(0);
+                if (objectEditor != null) {
+                    ObjectGroupEditor editor = objectEditor;
+                    while (hoveringObjectIndices.Count > 1) {
+                        editor.SelectedIndex = hoveringObjectIndices[0];
+                        hoveringObjectIndices.RemoveAt(0);
                         editor = editor.SubEditor;
                     }
-                    if (hoveringInteractionIndices.Count == 1) {
-                        editor.SelectedIndex = hoveringInteractionIndices[0];
-                        draggingInteraction = true;
+                    if (hoveringObjectIndices.Count == 1) {
+                        editor.SelectedIndex = hoveringObjectIndices[0];
+                        draggingObject = true;
                     }
                 }
             }
         }
 
         void OnDragged(int x, int y) {
-            if (!ViewInteractions)
+            if (!ViewObjects)
                 OnClicked(x,y);
             else {
                 if (!IsInBounds(x,y)) return;
-                if (!draggingInteraction) return;
+                if (!draggingObject) return;
 
-                InteractionData data = interactionEditor.SelectedInteractionData;
+                ObjectData data = objectEditor.SelectedObjectData;
                 if (data != null && data.HasXY()) {
-                    // Move interactions in increments of 16 pixels
+                    // Move objects in increments of 16 pixels
                     int dataX = data.GetX()+8;
                     int dataY = data.GetY()+8;
                     int alignX = (dataX)%16;
@@ -177,25 +177,25 @@ namespace LynnaLab
         {
             Graphics g = Gtk.DotNet.Graphics.FromDrawable(ev.Window);
 
-            if (ViewInteractions)
+            if (ViewObjects)
                 g.DrawImage(Image, 0, 0, Image.Width*Scale, Image.Height*Scale);
             else
                 base.OnExposeEvent(ev);
 
-            if (ViewInteractions && interactionEditor != null) {
-                // Draw interactions
+            if (ViewObjects && objectEditor != null) {
+                // Draw objects
 
                 int cursorX=-1,cursorY=-1;
                 int selectedX=-1,selectedY=-1;
-                hoveringInteractionIndices = new List<int>();
+                hoveringObjectIndices = new List<int>();
 
-                InteractionGroup group = interactionEditor.InteractionGroup;
-                DrawInteractionGroup(g, 0, ref cursorX, ref cursorY, ref selectedX, ref selectedY, group, interactionEditor, ref hoveringInteractionIndices);
+                ObjectGroup group = objectEditor.ObjectGroup;
+                DrawObjectGroup(g, 0, ref cursorX, ref cursorY, ref selectedX, ref selectedY, group, objectEditor, ref hoveringObjectIndices);
 
-                // Interaction hovering over
+                // Object hovering over
                 if (cursorX != -1)
                     g.DrawRectangle(new Pen(Color.Red), cursorX, cursorY, 15, 15);
-                // Interaction selected
+                // Object selected
                 if (selectedX != -1)
                     g.DrawRectangle(new Pen(Color.White), selectedX, selectedY, 15, 15);
             }
@@ -206,29 +206,29 @@ namespace LynnaLab
             return true;
         }
 
-        int DrawInteractionGroup(Graphics g, int index, ref int cursorX, ref int cursorY, ref int selectedX, ref int selectedY, InteractionGroup group, InteractionGroupEditor editor, ref List<int> interactionIndices) {
+        int DrawObjectGroup(Graphics g, int index, ref int cursorX, ref int cursorY, ref int selectedX, ref int selectedY, ObjectGroup group, ObjectGroupEditor editor, ref List<int> objectIndices) {
             if (group == null) return index;
 
-            List<int> localInteractionIndices = new List<int>(interactionIndices);
+            List<int> localObjectIndices = new List<int>(objectIndices);
 
             bool foundHoveringMatch = false;
 
-            for (int i=0; i<group.GetNumInteractions(); i++) {
-                InteractionData data = group.GetInteractionData(i);
-                if (data.GetInteractionType() >= InteractionType.Pointer &&
-                        data.GetInteractionType() <= InteractionType.Conditional) {
-                    InteractionGroup nextGroup = data.GetPointedInteractionGroup();
+            for (int i=0; i<group.GetNumObjects(); i++) {
+                ObjectData data = group.GetObjectData(i);
+                if (data.GetObjectType() >= ObjectType.Pointer &&
+                        data.GetObjectType() <= ObjectType.AntiBossPointer) {
+                    ObjectGroup nextGroup = data.GetPointedObjectGroup();
                     if (nextGroup != null) {
-                        List<int> pointerInteractionIndices = new List<int>(interactionIndices);
-                        pointerInteractionIndices.Add(i);
+                        List<int> pointerObjectIndices = new List<int>(objectIndices);
+                        pointerObjectIndices.Add(i);
                         if (editor != null && i == editor.SelectedIndex)
-                            index = DrawInteractionGroup(g, index, ref cursorX, ref cursorY,
-                                    ref selectedX, ref selectedY, nextGroup, editor.SubEditor, ref pointerInteractionIndices);
+                            index = DrawObjectGroup(g, index, ref cursorX, ref cursorY,
+                                    ref selectedX, ref selectedY, nextGroup, editor.SubEditor, ref pointerObjectIndices);
                         else
-                            index = DrawInteractionGroup(g, index, ref cursorX, ref cursorY,
-                                    ref selectedX, ref selectedY, nextGroup, null, ref pointerInteractionIndices);
-                        if (pointerInteractionIndices.Count > interactionIndices.Count+1)
-                            localInteractionIndices = pointerInteractionIndices;
+                            index = DrawObjectGroup(g, index, ref cursorX, ref cursorY,
+                                    ref selectedX, ref selectedY, nextGroup, null, ref pointerObjectIndices);
+                        if (pointerObjectIndices.Count > objectIndices.Count+1)
+                            localObjectIndices = pointerObjectIndices;
                     }
                 }
                 else {
@@ -239,7 +239,7 @@ namespace LynnaLab
                         x = data.GetX();
                         y = data.GetY();
                         width = 16;
-                        // Interactions with specific positions get
+                        // Objects with specific positions get
                         // transparency
                         color = Color.FromArgb(0xd0,color.R,color.G,color.B);
                     }
@@ -265,11 +265,11 @@ namespace LynnaLab
                     }
                     if (mouseX >= x-8 && mouseX < x+8 &&
                             mouseY >= y-8 && mouseY < y+8) {
-                        if (localInteractionIndices.Count == interactionIndices.Count) {
+                        if (localObjectIndices.Count == objectIndices.Count) {
                             if (foundHoveringMatch)
-                                localInteractionIndices[localInteractionIndices.Count-1] = i;
+                                localObjectIndices[localObjectIndices.Count-1] = i;
                             else
-                                localInteractionIndices.Add(i);
+                                localObjectIndices.Add(i);
                             cursorX = x-8;
                             cursorY = y-8;
                             foundHoveringMatch = true;
@@ -284,7 +284,7 @@ namespace LynnaLab
                 }
             }
 
-            interactionIndices = localInteractionIndices;
+            objectIndices = localObjectIndices;
             return index;
         }
 

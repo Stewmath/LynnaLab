@@ -97,14 +97,14 @@ namespace LynnaLab
             }
             // Parse wram.s
             GetFileParser("include/wram.s");
-            // Parse everything in interactions/
-            foreach (string f in Directory.EnumerateFiles(baseDirectory + "interactions/")) {
+            // Parse everything in objects/
+            foreach (string f in Directory.EnumerateFiles(baseDirectory + "objects/")) {
 
                 string basename = f.Substring(f.LastIndexOf('/') + 1);
                 if (basename == "macros.s") continue; // LynnaLab doesn't understand macros
 
                 if (f.Substring(f.LastIndexOf('.')) == ".s") {
-                    string filename = "interactions/" + basename;
+                    string filename = "objects/" + basename;
                     GetFileParser(filename);
                 }
             }

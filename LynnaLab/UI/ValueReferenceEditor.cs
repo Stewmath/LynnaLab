@@ -16,7 +16,7 @@ namespace LynnaLab {
         Gtk.Table table;
 
         Gtk.Frame pointerFrame;
-        InteractionGroupEditor subEditor;
+        ObjectGroupEditor subEditor;
 
         event Action dataModifiedExternalEvent;
         event Action dataModifiedInternalEvent;
@@ -24,7 +24,7 @@ namespace LynnaLab {
 
         Project Project {get; set;}
 
-        public InteractionGroupEditor SubEditor { // This is only for InteractionPointer values
+        public ObjectGroupEditor SubEditor { // This is only for ObjectPointer values
             get { return subEditor; }
         }
 
@@ -226,7 +226,7 @@ byteCase:
                             widgets[index] = spinButton;
                         }
                         break;
-                    case DataValueType.InteractionPointer:
+                    case DataValueType.ObjectPointer:
                         {
                             table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
 
@@ -327,17 +327,17 @@ loopEnd:
         void UpdatePointerTextBox(Gtk.Entry entry, ValueReference r) {
             pointerFrame.Remove(pointerFrame.Child);
 
-            subEditor = new InteractionGroupEditor();
+            subEditor = new ObjectGroupEditor();
             Gtk.Alignment alignment = new Gtk.Alignment(0.5F, 0.5F, 0.0F, 0.8F);
             try {
                 Project.GetFileWithLabel(entry.Text.Trim());
-                subEditor.SetInteractionGroup(Project.GetDataType<InteractionGroup>(r.GetStringValue()));
+                subEditor.SetObjectGroup(Project.GetDataType<ObjectGroup>(r.GetStringValue()));
                 subEditor.ShowAll();
                 alignment.Add(subEditor);
                 r.SetValue(entry.Text.Trim());
             }
             catch (LabelNotFoundException) {
-                subEditor.SetInteractionGroup(null);
+                subEditor.SetObjectGroup(null);
                 Gtk.Label label = new Gtk.Label("Error: label \"" + entry.Text + "\" not found.");
                 label.Show();
                 alignment.Add(label);

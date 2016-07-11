@@ -355,12 +355,6 @@ namespace LynnaLab
 			this.areaviewer1.WidthRequest = 256;
 			this.areaviewer1.HeightRequest = 256;
 			this.areaviewer1.Name = "areaviewer1";
-			this.areaviewer1.SelectedIndex = 0;
-			this.areaviewer1.Height = 16;
-			this.areaviewer1.Width = 16;
-			this.areaviewer1.TileWidth = 16;
-			this.areaviewer1.TileHeight = 16;
-			this.areaviewer1.Scale = 1;
 			this.vbox1.Add (this.areaviewer1);
 			global::Gtk.Box.BoxChild w21 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.areaviewer1]));
 			w21.Position = 0;
@@ -421,7 +415,6 @@ namespace LynnaLab
 			w30.Fill = false;
 			// Container child vbox2.Gtk.Box+BoxChild
 			this.alignment1 = new global::Gtk.Alignment (0.5F, 0.5F, 0.01F, 1F);
-			this.alignment1.Name = "alignment1";
 			// Container child alignment1.Gtk.Container+ContainerChild
 			this.okButton = new global::Gtk.Button ();
 			this.okButton.CanFocus = true;

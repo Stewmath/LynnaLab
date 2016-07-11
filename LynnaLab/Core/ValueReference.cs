@@ -13,7 +13,7 @@ namespace LynnaLab
         Word,
         ByteBit,
         ByteBits,
-        InteractionPointer,
+        ObjectPointer,
         WarpDestIndex,
     }
 
@@ -29,7 +29,7 @@ namespace LynnaLab
             "$0000",
             "0",
             "$00",
-            "interactionData4000",
+            "objectData4000",
             "$00",
         };
 

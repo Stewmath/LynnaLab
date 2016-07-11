@@ -51,7 +51,7 @@ public partial class MainWindow: Gtk.Window
         Build();
 
         roomeditor1.SetClient(areaviewer1);
-        roomeditor1.SetInteractionGroupEditor(interactionGroupEditor);
+        roomeditor1.SetObjectGroupEditor(objectgroupeditor1);
         dungeonMinimap.TileSelectedEvent += delegate(object sender) {
             Room room = dungeonMinimap.GetRoom();
             SetRoom(room);
@@ -219,7 +219,7 @@ public partial class MainWindow: Gtk.Window
         musicComboBox.Active = Project.MusicMapping.IndexOf((byte)room.GetMusicID());
         roomSpinButton.Value = room.Index;
 
-        interactionGroupEditor.SetInteractionGroup(room.GetInteractionGroup());
+        objectgroupeditor1.SetObjectGroup(room.GetObjectGroup());
     }
 
     void SetDungeon(Dungeon dungeon) {
@@ -408,9 +408,9 @@ public partial class MainWindow: Gtk.Window
         win.ShowAll();
     }
 
-    protected void OnViewInteractionsCheckBoxToggled(object sender, EventArgs e)
+    protected void OnViewObjectsCheckBoxToggled(object sender, EventArgs e)
     {
-        roomeditor1.ViewInteractions = viewInteractionsCheckBox.Active;
+        roomeditor1.ViewObjects = viewObjectsCheckBox.Active;
         roomeditor1.QueueDraw();
     }
 

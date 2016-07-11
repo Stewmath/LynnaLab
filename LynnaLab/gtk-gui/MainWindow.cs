@@ -29,10 +29,6 @@ public partial class MainWindow
 	
 	private global::Gtk.Action saveAction;
 	
-	private global::Gtk.Action Action;
-	
-	private global::Gtk.Action aoeuAction;
-	
 	private global::Gtk.VBox vbox1;
 	
 	private global::Gtk.MenuBar menubar1;
@@ -75,9 +71,9 @@ public partial class MainWindow
 	
 	private global::Gtk.VBox vbox6;
 	
-	private global::Gtk.CheckButton viewInteractionsCheckBox;
+	private global::Gtk.CheckButton viewObjectsCheckBox;
 	
-	private global::LynnaLab.InteractionGroupEditor interactionGroupEditor;
+	private global::LynnaLab.ObjectGroupEditor objectgroupeditor1;
 	
 	private global::Gtk.Label GtkLabel10;
 	
@@ -163,11 +159,6 @@ public partial class MainWindow
 		w1.Add (this.openAction, null);
 		this.saveAction = new global::Gtk.Action ("saveAction", null, null, "gtk-save");
 		w1.Add (this.saveAction, null);
-		this.Action = new global::Gtk.Action ("Action", null, null, null);
-		w1.Add (this.Action, null);
-		this.aoeuAction = new global::Gtk.Action ("aoeuAction", global::Mono.Unix.Catalog.GetString ("aoeu"), null, null);
-		this.aoeuAction.ShortLabel = global::Mono.Unix.Catalog.GetString ("aoeu");
-		w1.Add (this.aoeuAction, null);
 		this.UIManager.InsertActionGroup (w1, 0);
 		this.AddAccelGroup (this.UIManager.AccelGroup);
 		this.Name = "MainWindow";
@@ -340,31 +331,31 @@ public partial class MainWindow
 		this.vbox6.Name = "vbox6";
 		this.vbox6.Spacing = 6;
 		// Container child vbox6.Gtk.Box+BoxChild
-		this.viewInteractionsCheckBox = new global::Gtk.CheckButton ();
-		this.viewInteractionsCheckBox.CanFocus = true;
-		this.viewInteractionsCheckBox.Name = "viewInteractionsCheckBox";
-		this.viewInteractionsCheckBox.Label = global::Mono.Unix.Catalog.GetString ("View Interactions");
-		this.viewInteractionsCheckBox.DrawIndicator = true;
-		this.viewInteractionsCheckBox.UseUnderline = true;
-		this.viewInteractionsCheckBox.FocusOnClick = false;
-		this.vbox6.Add (this.viewInteractionsCheckBox);
-		global::Gtk.Box.BoxChild w15 = ((global::Gtk.Box.BoxChild)(this.vbox6 [this.viewInteractionsCheckBox]));
+		this.viewObjectsCheckBox = new global::Gtk.CheckButton ();
+		this.viewObjectsCheckBox.CanFocus = true;
+		this.viewObjectsCheckBox.Name = "viewObjectsCheckBox";
+		this.viewObjectsCheckBox.Label = global::Mono.Unix.Catalog.GetString ("View Objects");
+		this.viewObjectsCheckBox.DrawIndicator = true;
+		this.viewObjectsCheckBox.UseUnderline = true;
+		this.viewObjectsCheckBox.FocusOnClick = false;
+		this.vbox6.Add (this.viewObjectsCheckBox);
+		global::Gtk.Box.BoxChild w15 = ((global::Gtk.Box.BoxChild)(this.vbox6 [this.viewObjectsCheckBox]));
 		w15.Position = 0;
 		w15.Expand = false;
 		w15.Fill = false;
 		// Container child vbox6.Gtk.Box+BoxChild
-		this.interactionGroupEditor = new global::LynnaLab.InteractionGroupEditor ();
-		this.interactionGroupEditor.Events = ((global::Gdk.EventMask)(256));
-		this.interactionGroupEditor.Name = "interactionGroupEditor";
-		this.interactionGroupEditor.SelectedIndex = 0;
-		this.vbox6.Add (this.interactionGroupEditor);
-		global::Gtk.Box.BoxChild w16 = ((global::Gtk.Box.BoxChild)(this.vbox6 [this.interactionGroupEditor]));
+		this.objectgroupeditor1 = new global::LynnaLab.ObjectGroupEditor ();
+		this.objectgroupeditor1.Events = ((global::Gdk.EventMask)(256));
+		this.objectgroupeditor1.Name = "objectgroupeditor1";
+		this.objectgroupeditor1.SelectedIndex = 0;
+		this.vbox6.Add (this.objectgroupeditor1);
+		global::Gtk.Box.BoxChild w16 = ((global::Gtk.Box.BoxChild)(this.vbox6 [this.objectgroupeditor1]));
 		w16.Position = 1;
 		this.GtkAlignment1.Add (this.vbox6);
 		this.frame2.Add (this.GtkAlignment1);
 		this.GtkLabel10 = new global::Gtk.Label ();
 		this.GtkLabel10.Name = "GtkLabel10";
-		this.GtkLabel10.LabelProp = global::Mono.Unix.Catalog.GetString ("Interactions");
+		this.GtkLabel10.LabelProp = global::Mono.Unix.Catalog.GetString ("Objects");
 		this.GtkLabel10.UseMarkup = true;
 		this.frame2.LabelWidget = this.GtkLabel10;
 		this.vbox5.Add (this.frame2);
@@ -395,7 +386,7 @@ public partial class MainWindow
 		this.roomeditor1.WidthRequest = 240;
 		this.roomeditor1.HeightRequest = 224;
 		this.roomeditor1.Name = "roomeditor1";
-		this.roomeditor1.ViewInteractions = false;
+		this.roomeditor1.ViewObjects = false;
 		this.vbox3.Add (this.roomeditor1);
 		global::Gtk.Box.BoxChild w22 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.roomeditor1]));
 		w22.Position = 1;
@@ -608,7 +599,7 @@ public partial class MainWindow
 		this.musicComboBox.Changed += new global::System.EventHandler (this.OnMusicComboBoxChanged);
 		this.areaSpinButton.ValueChanged += new global::System.EventHandler (this.OnAreaSpinButtonValueChanged);
 		this.areaEditorButton.Clicked += new global::System.EventHandler (this.OnAreaEditorButtonClicked);
-		this.viewInteractionsCheckBox.Toggled += new global::System.EventHandler (this.OnViewInteractionsCheckBoxToggled);
+		this.viewObjectsCheckBox.Toggled += new global::System.EventHandler (this.OnViewObjectsCheckBoxToggled);
 		this.notebook2.SwitchPage += new global::Gtk.SwitchPageHandler (this.OnNotebook2SwitchPage);
 		this.worldSpinButton.ValueChanged += new global::System.EventHandler (this.OnWorldSpinButtonValueChanged);
 		this.darkenDungeonRoomsCheckbox.Toggled += new global::System.EventHandler (this.OnDarkenDungeonRoomsCheckboxToggled);

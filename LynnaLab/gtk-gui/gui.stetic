@@ -87,15 +87,6 @@
         <property name="StockId">gtk-save</property>
         <signal name="Activated" handler="OnSaveActionActivated" />
       </action>
-      <action id="Action">
-        <property name="Type">Action</property>
-        <property name="Label" translatable="yes" />
-      </action>
-      <action id="aoeuAction">
-        <property name="Type">Action</property>
-        <property name="Label" translatable="yes">aoeu</property>
-        <property name="ShortLabel" translatable="yes">aoeu</property>
-      </action>
     </action-group>
     <property name="MemberName" />
     <property name="Title" translatable="yes">Lynna Lab</property>
@@ -381,15 +372,15 @@
                                 <property name="MemberName" />
                                 <property name="Spacing">6</property>
                                 <child>
-                                  <widget class="Gtk.CheckButton" id="viewInteractionsCheckBox">
+                                  <widget class="Gtk.CheckButton" id="viewObjectsCheckBox">
                                     <property name="MemberName" />
                                     <property name="CanFocus">True</property>
-                                    <property name="Label" translatable="yes">View Interactions</property>
+                                    <property name="Label" translatable="yes">View Objects</property>
                                     <property name="DrawIndicator">True</property>
                                     <property name="HasLabel">True</property>
                                     <property name="UseUnderline">True</property>
                                     <property name="FocusOnClick">False</property>
-                                    <signal name="Toggled" handler="OnViewInteractionsCheckBoxToggled" />
+                                    <signal name="Toggled" handler="OnViewObjectsCheckBoxToggled" />
                                   </widget>
                                   <packing>
                                     <property name="Position">0</property>
@@ -399,7 +390,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <widget class="LynnaLab.InteractionGroupEditor" id="interactionGroupEditor">
+                                  <widget class="LynnaLab.ObjectGroupEditor" id="objectgroupeditor1">
                                     <property name="MemberName" />
                                     <property name="Events">ButtonPressMask</property>
                                     <property name="SelectedIndex">0</property>
@@ -416,7 +407,7 @@
                         <child>
                           <widget class="Gtk.Label" id="GtkLabel10">
                             <property name="MemberName" />
-                            <property name="LabelProp" translatable="yes">Interactions</property>
+                            <property name="LabelProp" translatable="yes">Objects</property>
                             <property name="UseMarkup">True</property>
                           </widget>
                           <packing>
@@ -460,7 +451,7 @@
                         <property name="MemberName" />
                         <property name="WidthRequest">240</property>
                         <property name="HeightRequest">224</property>
-                        <property name="ViewInteractions">False</property>
+                        <property name="ViewObjects">False</property>
                       </widget>
                       <packing>
                         <property name="Position">1</property>
@@ -782,7 +773,7 @@
       </widget>
     </child>
   </widget>
-  <widget class="Gtk.Bin" id="LynnaLab.AreaEditor" design-size="810 367">
+  <widget class="Gtk.Bin" id="LynnaLab.AreaEditor" design-size="822 391">
     <property name="MemberName" />
     <property name="Visible">False</property>
     <child>
@@ -1321,6 +1312,7 @@
             <child>
               <widget class="Gtk.Label" id="GtkLabel1">
                 <property name="MemberName" />
+                <property name="LabelProp" translatable="yes" />
                 <property name="UseMarkup">True</property>
               </widget>
               <packing>
@@ -1374,7 +1366,7 @@
       </widget>
     </child>
   </widget>
-  <widget class="Gtk.Bin" id="LynnaLab.InteractionGroupEditor" design-size="324 309">
+  <widget class="Gtk.Bin" id="LynnaLab.ObjectGroupEditor" design-size="346 309">
     <property name="MemberName" />
     <property name="Visible">False</property>
     <child>
@@ -1388,7 +1380,7 @@
             <child>
               <widget class="Gtk.Label" id="label1">
                 <property name="MemberName" />
-                <property name="LabelProp" translatable="yes">Interaction Index</property>
+                <property name="LabelProp" translatable="yes">Object Index</property>
               </widget>
               <packing>
                 <property name="Position">0</property>
@@ -1468,7 +1460,7 @@
                 <property name="Yalign">0</property>
                 <property name="LeftPadding">12</property>
                 <child>
-                  <widget class="Gtk.Alignment" id="interactionDataContainer">
+                  <widget class="Gtk.Alignment" id="objectDataContainer">
                     <property name="MemberName" />
                     <child>
                       <placeholder />
@@ -1480,7 +1472,7 @@
             <child>
               <widget class="Gtk.Label" id="frameLabel">
                 <property name="MemberName" />
-                <property name="LabelProp" translatable="yes">Interaction</property>
+                <property name="LabelProp" translatable="yes">Object</property>
                 <property name="UseMarkup">True</property>
               </widget>
               <packing>
@@ -1499,7 +1491,7 @@
       </widget>
     </child>
   </widget>
-  <widget class="Gtk.Dialog" id="LynnaLab.AddInteractionDialog" design-size="273 206">
+  <widget class="Gtk.Dialog" id="LynnaLab.AddObjectDialog" design-size="405 208">
     <property name="MemberName" />
     <property name="WindowPosition">CenterOnParent</property>
     <property name="Buttons">2</property>
@@ -1513,21 +1505,27 @@
             <property name="MemberName" />
             <property name="Spacing">6</property>
             <child>
-              <placeholder />
-            </child>
-            <child>
-              <widget class="Gtk.SpinButton" id="typeSpinButton">
+              <widget class="Gtk.Alignment" id="alignment2">
                 <property name="MemberName" />
-                <property name="CanFocus">True</property>
-                <property name="Upper">10</property>
-                <property name="PageIncrement">10</property>
-                <property name="StepIncrement">1</property>
-                <property name="ClimbRate">1</property>
-                <property name="Numeric">True</property>
-                <signal name="ValueChanged" handler="OnTypeSpinButtonValueChanged" />
+                <property name="Xscale">0</property>
+                <property name="Yscale">0</property>
+                <property name="Xalign">0</property>
+                <property name="Yalign">0</property>
+                <child>
+                  <widget class="Gtk.SpinButton" id="typeSpinButton">
+                    <property name="MemberName" />
+                    <property name="CanFocus">True</property>
+                    <property name="Upper">10</property>
+                    <property name="PageIncrement">10</property>
+                    <property name="StepIncrement">1</property>
+                    <property name="ClimbRate">1</property>
+                    <property name="Numeric">True</property>
+                    <signal name="ValueChanged" handler="OnTypeSpinButtonValueChanged" />
+                  </widget>
+                </child>
               </widget>
               <packing>
-                <property name="Position">1</property>
+                <property name="Position">0</property>
                 <property name="AutoSize">True</property>
                 <property name="Expand">False</property>
                 <property name="Fill">False</property>
@@ -1536,9 +1534,11 @@
             <child>
               <widget class="Gtk.Label" id="infoLabel">
                 <property name="MemberName" />
+                <property name="Xalign">0</property>
+                <property name="LabelProp" translatable="yes">Info Label</property>
               </widget>
               <packing>
-                <property name="Position">2</property>
+                <property name="Position">1</property>
                 <property name="AutoSize">True</property>
                 <property name="Expand">False</property>
                 <property name="Fill">False</property>
@@ -1547,9 +1547,22 @@
           </widget>
           <packing>
             <property name="Position">0</property>
-            <property name="AutoSize">True</property>
+            <property name="AutoSize">False</property>
             <property name="Expand">False</property>
             <property name="Fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.Label" id="descriptionLabel">
+            <property name="MemberName" />
+            <property name="Xalign">0.2</property>
+            <property name="Yalign">0.1</property>
+            <property name="LabelProp" translatable="yes">Description Label</property>
+            <property name="Wrap">True</property>
+          </widget>
+          <packing>
+            <property name="Position">1</property>
+            <property name="AutoSize">False</property>
           </packing>
         </child>
       </widget>
@@ -1668,6 +1681,7 @@
                         <child>
                           <widget class="Gtk.Label" id="label1">
                             <property name="MemberName" />
+                            <property name="LabelProp" translatable="yes" />
                           </widget>
                           <packing>
                             <property name="Position">0</property>
@@ -1884,6 +1898,7 @@
                         <child>
                           <widget class="Gtk.Label" id="destInfoLabel">
                             <property name="MemberName" />
+                            <property name="LabelProp" translatable="yes" />
                           </widget>
                           <packing>
                             <property name="Position">4</property>

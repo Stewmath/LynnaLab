@@ -8,7 +8,7 @@ namespace LynnaLab
     /* Room class
      * Provides an interface for modifying layout and keeping track of changes
      * to the image.
-     * Doesn't keep track of much else, like interactions or dungeon data,
+     * Doesn't keep track of much else, like objects or dungeon data,
      * though it may have getter functions.
      */
     public class Room : ProjectIndexedDataType {
@@ -126,9 +126,9 @@ namespace LynnaLab
             }
         }
 
-        public InteractionGroup GetInteractionGroup() {
-            String label = "group" + (Index/0x100).ToString("x") + "Map" + (Index%0x100).ToString("x2") + "InteractionData";
-            return Project.GetDataType<InteractionGroup>(label);
+        public ObjectGroup GetObjectGroup() {
+            String label = "group" + (Index/0x100).ToString("x") + "Map" + (Index%0x100).ToString("x2") + "ObjectData";
+            return Project.GetDataType<ObjectGroup>(label);
         }
 
         void UpdateRoomData() {

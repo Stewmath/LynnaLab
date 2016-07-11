@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Drawing;
 
 namespace LynnaLab {
-    public enum InteractionType {
-        Type0=0,
+    public enum ObjectType {
+        Conditional=0,
         NoValue,
         DoubleValue,
         Pointer,
         BossPointer,
-        Conditional,
+        AntiBossPointer,
         RandomEnemy,
         SpecificEnemy,
         Part,
@@ -19,11 +19,11 @@ namespace LynnaLab {
         EndPointer
     }
 
-    public class InteractionData : Data {
+    public class ObjectData : Data {
 
-        public static List<List<ValueReference>> interactionValueReferences =
+        public static List<List<ValueReference>> objectValueReferences =
             new List<List<ValueReference>> {
-                new List<ValueReference> { // Type0
+                new List<ValueReference> { // Conditional
                     new ValueReference("Condition",0,DataValueType.Byte),
                 },
                 new List<ValueReference> { // NoValue
@@ -35,13 +35,13 @@ namespace LynnaLab {
                     new ValueReference("X",2,DataValueType.Byte),
                 },
                 new List<ValueReference> { // Pointer
-                    new ValueReference("Pointer",0,DataValueType.InteractionPointer),
+                    new ValueReference("Pointer",0,DataValueType.ObjectPointer),
                 },
                 new List<ValueReference> { // BossPointer
-                    new ValueReference("Pointer",0,DataValueType.InteractionPointer),
+                    new ValueReference("Pointer",0,DataValueType.ObjectPointer),
                 },
-                new List<ValueReference> { // Conditional
-                    new ValueReference("Pointer",0,DataValueType.InteractionPointer),
+                new List<ValueReference> { // AntiBossPointer
+                    new ValueReference("Pointer",0,DataValueType.ObjectPointer),
                 },
                 new List<ValueReference> { // Random Enemy
                     new ValueReference("Flags",0,DataValueType.Byte),
@@ -59,9 +59,9 @@ namespace LynnaLab {
                     new ValueReference("X",1,0,3,DataValueType.ByteBits),
                 },
                 new List<ValueReference> { // QuadrupleValue
-                    new ValueReference("ID",0,DataValueType.Word),
-                    new ValueReference("Unknown 1",1,DataValueType.Byte),
-                    new ValueReference("Unknown 2",2,DataValueType.Byte),
+                    new ValueReference("Object Type",0,DataValueType.Byte),
+                    new ValueReference("ID",1,DataValueType.Word),
+                    new ValueReference("Unknown",2,DataValueType.Byte),
                     new ValueReference("Y",3,DataValueType.Byte),
                     new ValueReference("X",4,DataValueType.Byte),
                 },
@@ -78,32 +78,32 @@ namespace LynnaLab {
             };
 
 
-        InteractionType type;
+        ObjectType type;
 
-        public InteractionData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<int> spacing, InteractionType type)
+        public ObjectData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<int> spacing, ObjectType type)
             : base(p, command, values, -1, parser, spacing) {
 
             this.type = type;
 
-            SetValueReferences(interactionValueReferences[(int)type]);
+            SetValueReferences(objectValueReferences[(int)type]);
         }
 
-        public InteractionType GetInteractionType() {
+        public ObjectType GetObjectType() {
             return type;
         }
 
         // Same as base.GetValue except this keeps track of values "carried
-        // over" from the last interaction, for SpecificEnemy and ItemDrop
-        // interactions.
+        // over" from the last object, for SpecificEnemy and ItemDrop
+        // objects.
         public override string GetValue(int i) {
             if (IsShortened()) {
-                InteractionData last = LastData as InteractionData;
+                ObjectData last = LastData as ObjectData;
 
-                if (last == null || (last.GetInteractionType() != GetInteractionType()))
-                    this.ThrowException(new Exception("Malformatted interaction"));
+                if (last == null || (last.GetObjectType() != GetObjectType()))
+                    this.ThrowException(new Exception("Malformatted object"));
 
                 if (i == 0)
-                    return (LastData as InteractionData).GetValue(0);
+                    return (LastData as ObjectData).GetValue(0);
                 else
                     return base.GetValue(i-1);
             }
@@ -124,9 +124,9 @@ namespace LynnaLab {
                     i--;
             }
             if (IsShortenable()) {
-                // Check if the next interaction depends on this
-                InteractionData next = NextData as InteractionData;
-                if (next != null && next.GetInteractionType() == GetInteractionType())
+                // Check if the next object depends on this
+                ObjectData next = NextData as ObjectData;
+                if (next != null && next.GetObjectType() == GetObjectType())
                     next.Elongate();
             }
             base.SetValue(i, value);
@@ -144,30 +144,30 @@ namespace LynnaLab {
             return base.GetString();
         }
 
-        // Interaction colors match ZOLE mostly
+        // Object colors match ZOLE mostly
 		public Color GetColor()
 		{
 			switch (type)
 			{
-				case (InteractionType)0: return Color.Black;
-				case (InteractionType)1: return Color.Red;
-				case (InteractionType)2: return Color.DarkOrange;
-				case (InteractionType)3: return Color.Yellow;
-				case (InteractionType)4: return Color.Green;
-				case (InteractionType)5: return Color.Blue;
-				case (InteractionType)6: return Color.Purple;
-				case (InteractionType)7: return Color.FromArgb(128, 64, 0);
-				case (InteractionType)8: return Color.Gray;
-				case (InteractionType)9: return Color.Magenta;
-				case (InteractionType)0xA: return Color.Lime;
+				case (ObjectType)0: return Color.Black;
+				case (ObjectType)1: return Color.Red;
+				case (ObjectType)2: return Color.DarkOrange;
+				case (ObjectType)3: return Color.Yellow;
+				case (ObjectType)4: return Color.Green;
+				case (ObjectType)5: return Color.Blue;
+				case (ObjectType)6: return Color.Purple;
+				case (ObjectType)7: return Color.FromArgb(128, 64, 0);
+				case (ObjectType)8: return Color.Gray;
+				case (ObjectType)9: return Color.Magenta;
+				case (ObjectType)0xA: return Color.Lime;
 			}
             return Color.White;
 		}
 
         // Returns true if XY values are 4 bits rather than 8.
         public bool HasShortenedXY() {
-            return GetInteractionType() == InteractionType.Part ||
-                GetInteractionType() == InteractionType.ItemDrop;
+            return GetObjectType() == ObjectType.Part ||
+                GetObjectType() == ObjectType.ItemDrop;
         }
 
         public bool HasXY() {
@@ -181,7 +181,7 @@ namespace LynnaLab {
             }
         }
 
-        // Return the center x-coordinate of the interaction
+        // Return the center x-coordinate of the object
         public int GetX() {
             int n = GetIntValue("X");
             if (HasShortenedXY()) {
@@ -189,7 +189,7 @@ namespace LynnaLab {
             }
             return n;
         }
-        // Return the center y-coordinate of the interaction
+        // Return the center y-coordinate of the object
         public int GetY() {
             int n = GetIntValue("Y");
             if (HasShortenedXY()) {
@@ -209,14 +209,14 @@ namespace LynnaLab {
             SetValue("Y", n);
         }
 
-        // Get the interaction group pointed to, or null if no such group
+        // Get the object group pointed to, or null if no such group
         // exists.
-        public InteractionGroup GetPointedInteractionGroup() {
-            if (!(type >= InteractionType.Pointer && type <= InteractionType.Conditional)) return null;
+        public ObjectGroup GetPointedObjectGroup() {
+            if (!(type >= ObjectType.Pointer && type <= ObjectType.AntiBossPointer)) return null;
 
             try {
                 Project.GetFileWithLabel(GetValue(0));
-                return Project.GetDataType<InteractionGroup>(GetValue(0));
+                return Project.GetDataType<ObjectGroup>(GetValue(0));
             }
             catch(LabelNotFoundException) {
                 return null;
@@ -224,13 +224,13 @@ namespace LynnaLab {
         }
 
         bool IsShortenable() {
-            return GetInteractionType() == InteractionType.SpecificEnemy ||
-                GetInteractionType() == InteractionType.ItemDrop;
+            return GetObjectType() == ObjectType.SpecificEnemy ||
+                GetObjectType() == ObjectType.ItemDrop;
         }
-        // Returns true if this interaction reuses a byte from the last one
+        // Returns true if this object reuses a byte from the last one
         bool IsShortened() {
-            return ((GetInteractionType() == InteractionType.SpecificEnemy && base.GetNumValues() < 4) ||
-                    (GetInteractionType() == InteractionType.ItemDrop && base.GetNumValues() < 3));
+            return ((GetObjectType() == ObjectType.SpecificEnemy && base.GetNumValues() < 4) ||
+                    (GetObjectType() == ObjectType.ItemDrop && base.GetNumValues() < 3));
         }
         void Elongate() {
             if (IsShortenable() && IsShortened()) {
@@ -239,11 +239,11 @@ namespace LynnaLab {
             }
         }
         void Shorten() {
-            // Shortens the interaction if possible
+            // Shortens the object if possible
             if (IsShortened() || !IsShortenable()) return;
 
-            InteractionData last = LastData as InteractionData;
-            if (last == null || last.GetInteractionType() != GetInteractionType()) return;
+            ObjectData last = LastData as ObjectData;
+            if (last == null || last.GetObjectType() != GetObjectType()) return;
             if (last.GetValue(0) != GetValue(0)) return;
 
             RemoveValue(0);
