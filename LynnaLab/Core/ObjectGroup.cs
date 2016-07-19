@@ -16,7 +16,7 @@ namespace LynnaLab
             "obj_RandomEnemy",
             "obj_SpecificEnemy",
             "obj_Part",
-            "obj_QuadrupleValue",
+            "obj_WithParam",
             "obj_ItemDrop",
             "obj_End",
             "obj_EndPointer"
