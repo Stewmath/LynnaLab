@@ -264,7 +264,6 @@ namespace LynnaLab
                     sourceGroup.FileParser,
                     new List<int>{-1,2});
             data.Map = map;
-            data.Transition = 4;
 
             sourceGroup.AddWarpSourceData(data);
 
