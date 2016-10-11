@@ -299,6 +299,7 @@ namespace LynnaLab
 			w24.Expand = false;
 			// Container child vbox2.Gtk.Box+BoxChild
 			this.alignment1 = new global::Gtk.Alignment (0.5F, 0.5F, 0.06F, 1F);
+			this.alignment1.Name = "alignment1";
 			// Container child alignment1.Gtk.Container+ContainerChild
 			this.okButton = new global::Gtk.Button ();
 			this.okButton.CanFocus = true;

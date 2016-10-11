@@ -88,6 +88,7 @@ namespace LynnaLab
                         FileParser,
                         new List<int>{-1});
                 pointedData.Opcode = 0x80;
+                pointedData.Transition = 4;
                 FileParser.InsertComponentAfter(newLabel, pointedData);
             }
         }
