@@ -119,21 +119,24 @@ public partial class MainWindow: Gtk.Window
              var item = new MenuItem(plugin.Name);
              item.Activated += ((a, b) =>
                      {
+                    #if DEBUG
                         plugin.Clicked();
-//                         try {
-//                             plugin.Clicked();
-//                         }
-//                         catch(Exception e) {
-//                             string msg = "The plugin \"" + plugin.Name + "\" threw an exception:\n\n"
-//                                     + e.Message;
-//                             Gtk.MessageDialog d = new MessageDialog(null,
-//                                     DialogFlags.DestroyWithParent,
-//                                     MessageType.Error,
-//                                     ButtonsType.Ok,
-//                                     msg);
-//                             d.Run();
-//                             d.Destroy();
-//                         }
+                    #else
+                        try {
+                            plugin.Clicked();
+                        }
+                        catch(Exception e) {
+                            string msg = "The plugin \"" + plugin.Name + "\" threw an exception:\n\n"
+                                    + e.Message;
+                            Gtk.MessageDialog d = new MessageDialog(null,
+                                    DialogFlags.DestroyWithParent,
+                                    MessageType.Error,
+                                    ButtonsType.Ok,
+                                    msg);
+                            d.Run();
+                            d.Destroy();
+                        }
+                    #endif
                     });
              pluginSubMenu.Append(item);
         }
