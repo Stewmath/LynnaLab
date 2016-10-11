@@ -251,14 +251,14 @@ namespace Plugins
             var table = new Table(3,2,false);
 
             uint y=0;
-            table.Attach(new Gtk.Label("High Treasure Index"), 0, 1, y, y+1);
+            table.Attach(new Gtk.Label("ID1"), 0, 1, y, y+1);
             table.Attach(highIndexButton, 1, 2, y, y+1);
             // Disable high add and remove buttons for now, they're not useful
             // yet
 //             table.Attach(hAddButton,2,3,y,y+1);
 //             table.Attach(hRemoveButton,3,4,y,y+1);
             y++;
-            table.Attach(new Gtk.Label("Low Index"), 0,1,y,y+1);
+            table.Attach(new Gtk.Label("ID2"), 0,1,y,y+1);
             table.Attach(lowIndexButton, 1,2,y,y+1);
             table.Attach(addButton,2,3,y,y+1);
             table.Attach(removeButton,3,4,y,y+1);
