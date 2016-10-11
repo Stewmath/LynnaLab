@@ -107,7 +107,7 @@ public partial class MainWindow: Gtk.Window
             }
         }
 
-        var reloadItem = new MenuItem("Reload scripts");
+        var reloadItem = new MenuItem("Reload plugins");
         reloadItem.Activated += (a,b) => LoadPlugins();
 
         pluginSubMenu = new Menu();
