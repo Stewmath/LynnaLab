@@ -43,7 +43,14 @@ namespace LynnaLab
             references.Add("LynnaLab.exe");
 
             for (int i=0;i<assemblies.Length;i++) {
-                references.Add(assemblies[i].CodeBase.Replace("file:///", "/"));
+                if (Environment.OSVersion.Platform == PlatformID.Win32Windows
+                    || Environment.OSVersion.Platform == PlatformID.Win32NT
+                    || Environment.OSVersion.Platform == PlatformID.Win32S
+                    || Environment.OSVersion.Platform == PlatformID.WinCE) {
+                    references.Add (assemblies [i].CodeBase.Replace ("file:///", ""));
+                }
+                else
+                    references.Add (assemblies [i].CodeBase.Replace ("file:///", "/"));
                 Console.WriteLine("Reference: \"" + references[i] + "\"");
             }
             referencedAssemblies = references.ToArray();

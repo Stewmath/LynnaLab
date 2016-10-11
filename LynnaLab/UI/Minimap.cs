@@ -97,7 +97,7 @@ namespace LynnaLab
                 int roomHeight = (int)(_map.RoomHeight*16*scale);
 
                 const System.Drawing.Drawing2D.InterpolationMode interpolationMode =
-                    System.Drawing.Drawing2D.InterpolationMode.Default;
+                                System.Drawing.Drawing2D.InterpolationMode.High;
 
                 Graphics g = Graphics.FromImage(_image);
                 g.InterpolationMode = interpolationMode;

@@ -28,6 +28,7 @@ Global
 		$1.inheritsSet = VisualStudio
 		$1.inheritsScope = text/plain
 		$1.scope = text/x-csharp
+		$1.EolMarker = Unix
 		$0.CSharpFormattingPolicy = $2
 		$2.IndentSwitchBody = True
 		$2.BeforeMethodDeclarationParentheses = False
