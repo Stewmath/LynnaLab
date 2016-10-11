@@ -64,6 +64,25 @@ namespace LynnaLab
         }
 
         public void InsertObject(int index, ObjectType type) {
+            if (GetNumObjects() == 0 && !IsIsolated()) {
+                // If this map is sharing data with other maps (as when "blank"), need to make
+                // a unique section for this map.
+
+                parser.RemoveLabel(Identifier);
+
+                parser.InsertParseableTextAfter(null, new String[]{""}); // Newline
+                parser.InsertComponentAfter(null, new Label(parser, Identifier));
+
+                ObjectData endData = new ObjectData(Project,
+                        ObjectCommands[(int)ObjectType.End],
+                        null,
+                        parser,
+                        new int[]{-1}, // Tab at start of line
+                        ObjectType.End);
+                parser.InsertComponentAfter(null, endData);
+                objectDataList[0] = endData;
+            }
+
             ObjectData data = new ObjectData(Project,
                     ObjectCommands[(int)type],
                     null,
@@ -82,6 +101,14 @@ namespace LynnaLab
 
         // Returns true if no data is shared with another label
         bool IsIsolated() {
+            FileComponent d = objectDataList[0];
+
+            d = d.Prev;
+            if (!(d is Label))
+                return true; // This would be an odd case, there should be at least one label...
+
+            if (d.Prev is Label)
+                return false;
             return true;
         }
     }

@@ -475,6 +475,9 @@ arbitraryLengthData:
             Project.AddLabel(label.Name, this);
         }
 
+        public Label GetLabel(string labelStr) {
+            return labelDictionary[labelStr];
+        }
 
         public Data GetData(string labelStr, int offset=0) {
             int origOffset = offset;
