@@ -11,7 +11,7 @@ public partial class MainWindow: Gtk.Window
 {
     private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-    uint animationTimerID;
+    uint animationTimerID = 0;
     PluginCore pluginCore;
 
     Gtk.Menu pluginSubMenu;
@@ -156,7 +156,7 @@ public partial class MainWindow: Gtk.Window
         var area = areaviewer1.Area;
         if (area == null)
             return true;
-//         IList<byte> changedTiles = area.UpdateAnimations(1);
+        IList<byte> changedTiles = area.UpdateAnimations(1);
         return true;
     }
 

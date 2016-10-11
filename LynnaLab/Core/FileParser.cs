@@ -207,6 +207,13 @@ arbitraryLengthData:
                         address += Project.EvalToInt(fTokens[1])*2;
                         break;
 
+                    case "m_animationloop":
+                        {
+                            Data d = new Data(Project, fTokens[0], standardValues, 2,
+                                this, fSpacing);
+                            AddDataAndPopFileStructure(d);
+                            break;
+                        }
                     case "m_rgb16":
                         if (fTokens.Length != 4) {
                             log.Warn(warningString + "Expected " + fTokens[0] + " to take 3 parameters");

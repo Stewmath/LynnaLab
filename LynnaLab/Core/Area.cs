@@ -313,14 +313,14 @@ namespace LynnaLab
                 Animation animation = animationGroup.GetAnimationIndex(i);
                 animationCounter[i] -= frames;
                 while (animationCounter[i] <= 0) {
+                    animationPos[i]++;
+                    if (animationPos[i] >= animation.NumIndices)
+                        animationPos[i] = 0;
                     int pos = animationPos[i];
                     animationCounter[i] += animation.GetCounter(pos);
                     GfxHeaderData header = animation.GetGfxHeader(pos);
                     graphicsState.AddGfxHeader(header, GfxHeaderType.Animation);
 //                     Console.WriteLine(i + ":" + animationPos[i]);
-                    animationPos[i]++;
-                    if (animationPos[i] >= animation.NumIndices)
-                        animationPos[i] = 0;
 
                     // Check which tiles changed
                     if (header.DestAddr >= 0x8800 && header.DestAddr < 0x9800 &&
