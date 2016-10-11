@@ -70,8 +70,7 @@ namespace Plugins
                 warningBox.Spacing = 4;
 
                 System.Action<string> AddWarning = (s) => {
-                    Gdk.Pixbuf p = Gtk.IconTheme.Default.LoadIcon("gtk-dialog-warning", 20, 0);
-                    Image img = new Image(p);
+                    Image img = new Image(Stock.DialogWarning, IconSize.Button);
                     HBox hb = new HBox();
                     hb.Spacing = 10;
                     hb.Add(img);
