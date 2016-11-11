@@ -43,15 +43,21 @@ namespace LynnaLab
             references.Add("LynnaLab.exe");
 
             for (int i=0;i<assemblies.Length;i++) {
-                if (Environment.OSVersion.Platform == PlatformID.Win32Windows
-                    || Environment.OSVersion.Platform == PlatformID.Win32NT
-                    || Environment.OSVersion.Platform == PlatformID.Win32S
-                    || Environment.OSVersion.Platform == PlatformID.WinCE) {
-                    references.Add (assemblies [i].CodeBase.Replace ("file:///", ""));
+                try {
+                    if (Environment.OSVersion.Platform == PlatformID.Win32Windows
+                        || Environment.OSVersion.Platform == PlatformID.Win32NT
+                        || Environment.OSVersion.Platform == PlatformID.Win32S
+                        || Environment.OSVersion.Platform == PlatformID.WinCE) {
+                        references.Add(assemblies[i].CodeBase.Replace("file:///", ""));
+                    }
+                    else {
+                        references.Add(assemblies[i].CodeBase.Replace("file:///", "/"));
+                    }
+                    Console.WriteLine("Reference: \"" + references[references.Count-1] + "\"");
                 }
-                else
-                    references.Add (assemblies [i].CodeBase.Replace ("file:///", "/"));
-                Console.WriteLine("Reference: \"" + references[i] + "\"");
+                catch (System.NotSupportedException) {
+                    Console.WriteLine("1 reference failed: " + assemblies[i]);
+                }
             }
             referencedAssemblies = references.ToArray();
         }
