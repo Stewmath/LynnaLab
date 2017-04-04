@@ -350,7 +350,7 @@ namespace Plugins
             FileParser parser = data.FileParser;
 
             if (!HighIndexUsesPointer(hIndex)) {
-                string pointerString = "treasureData" + hIndex.ToString("x2");
+                string pointerString = "treasureObjectData" + hIndex.ToString("x2");
 
                 while (Project.HasLabel(pointerString))
                     pointerString = "_" + pointerString;
@@ -472,8 +472,8 @@ namespace Plugins
 
         public static int GetNumHighIndices() {
             // Read until the first label after treasureData.
-            FileParser parser = Project.GetFileWithLabel("treasureData");
-            Data data = parser.GetData("treasureData");
+            FileParser parser = Project.GetFileWithLabel("treasureObjectData");
+            Data data = parser.GetData("treasureObjectData");
 
             int count=0;
             do {
@@ -489,7 +489,7 @@ namespace Plugins
         }
 
         static Data GetHighIndexDataBase(int hIndex) {
-            return Project.GetData("treasureData", hIndex*4);
+            return Project.GetData("treasureObjectData", hIndex*4);
         }
 
         public static bool HighIndexUsesPointer(int hIndex) {

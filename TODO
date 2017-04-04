@@ -1,31 +1,38 @@
-Before Release:
-
+- Understand local labels
 - Ability to add areas, etc, as well as moving labels which refer to the same
   data
 - Select multiple tiles from a tileset at once
 - Rectangle select / fill
 - Deal with ConstantsMappings that don't have a mapping for a value 
-- Interactions
+- Figure out how to deal with hard-coded warp destinations (Moblin's Keep)
+- Update "data/gashaSpotRooms.s" as necessary?
+- Provide an interface for editing "data/singleTileChanges.s"?
+- Dungeon editing: can't add more than 4 floors?
+
+- Interactions:
     - Handle interactions referencing same data
     - Show the values from constants/interactions.s
     - Static dungeon objects
+
 - Tileset editing:
     - Collisions
     - Add/remove tilesets, deal with 00/0c using the same mapping/collision
       files
+
 - Bugs:
     - Crash when changing animation index
     - Crash when area ID is too high
 
 - Needed for feature parity with ZOLE:
     - Probably will do these through disassembly:
-    - Palette editing
-    - Dungeon portal editing
-    - Gale seed warp editing
-    - Start editing
-    - Dungeon essence teleport editing
-    - Enemy editing
+        - Dungeon portal editing
+        - Gale seed warp editing
+        - Start editing
+        - Dungeon essence teleport editing
+        - Enemy editing
 
+    - Palette editing
+        - Smooth palette fades
     - Treetop editing
     - Dungeon minimap editing
         - Also change properties like how many floors
