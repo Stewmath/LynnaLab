@@ -42,7 +42,8 @@ namespace LynnaLab
 
         internal Room(Project p, int i) : base(p,i) {
             int areaID;
-            Stream groupAreasFile = Project.GetBinaryFile("rooms/group" + (Index>>8) + "Areas.bin");
+            Stream groupAreasFile = Project.GetBinaryFile(
+                    "rooms/" + Project.GetGameString() + "/group" + (Index>>8) + "Areas.bin");
             groupAreasFile.Position = Index&0xff;
             areaID = groupAreasFile.ReadByte() & 0x7f;
 
@@ -103,7 +104,8 @@ namespace LynnaLab
 
         public void SetArea(Area a) {
             if (area == null || a.Index != area.Index) {
-                Stream groupAreasFile = Project.GetBinaryFile("rooms/group" + (Index>>8) + "Areas.bin");
+                Stream groupAreasFile = Project.GetBinaryFile(
+                    "rooms/" + Project.GetGameString() + "/group" + (Index>>8) + "Areas.bin");
                 groupAreasFile.Position = Index&0xff;
                 int lastValue = groupAreasFile.ReadByte() & 0x80;
                 groupAreasFile.Position = Index&0xff;
@@ -142,11 +144,13 @@ namespace LynnaLab
             }
             string roomString = data.GetValue(0) + ".bin";
             try {
-                tileDataFile = Project.GetBinaryFile("rooms/small/" + roomString);
+                tileDataFile = Project.GetBinaryFile(
+                        "rooms/" + Project.GetGameString() + "/small/" + roomString);
             }
             catch (FileNotFoundException) {
                 try {
-                    tileDataFile = Project.GetBinaryFile("rooms/large/" + roomString);
+                    tileDataFile = Project.GetBinaryFile(
+                            "rooms/" + Project.GetGameString() + "/large/" + roomString);
                 }
                 catch (FileNotFoundException) {
                     throw new FileNotFoundException("Couldn't find \"" + roomString + "\" in \"rooms/small\" or \"rooms/large\".");

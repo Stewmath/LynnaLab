@@ -1,13 +1,14 @@
 using System;
-using System.Reflection;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 
 namespace LynnaLab
 {
     public class Project
     {
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(
+                System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         public readonly ConstantsMapping UniqueGfxMapping;
         public readonly ConstantsMapping MainGfxMapping;
@@ -45,7 +46,8 @@ namespace LynnaLab
 
             logAppender = new log4net.Appender.RollingFileAppender();
             logAppender.AppendToFile = true;
-            logAppender.Layout = new log4net.Layout.PatternLayout("%date{ABSOLUTE} [%logger] %level - %message%newline%exception");
+            logAppender.Layout = new log4net.Layout.PatternLayout(
+                    "%date{ABSOLUTE} [%logger] %level - %message%newline%exception");
             logAppender.File = configDirectory + "Log.txt";
             logAppender.Threshold = log4net.Core.Level.All;
             logAppender.MaxFileSize = 2 * 1024 * 1024;
@@ -95,6 +97,15 @@ namespace LynnaLab
                     GetFileParser(filename);
                 }
             }
+            // Parse data/{game}/
+            string gameSpecificDataFolder = "data/" + GetGameString() + "/";
+            foreach (string f in Directory.EnumerateFiles(baseDirectory + gameSpecificDataFolder)) {
+                if (f.Substring(f.LastIndexOf('.')) == ".s") {
+                    string filename = gameSpecificDataFolder + f.Substring(f.LastIndexOf('/') + 1);
+                    GetFileParser(filename);
+                }
+            }
+
             // Parse wram.s
             GetFileParser("include/wram.s");
             // Parse everything in objects/
@@ -108,6 +119,8 @@ namespace LynnaLab
                     GetFileParser(filename);
                 }
             }
+
+            Console.WriteLine(definesDictionary["wGroup4Flags"]);
         }
 
         public FileParser GetFileParser(string filename) {
@@ -242,67 +255,77 @@ namespace LynnaLab
         // TODO: finish arithmetic parsing
         public int EvalToInt(string val) {
             val = Eval(val).Trim();
-            // Find brackets
-            for (int i = 0; i < val.Length; i++) {
-                if (val[i] == '(') {
-                    int x = 1;
-                    int j = 0;
-                    for (j = i + 1; j < val.Length; j++) {
-                        if (val[j] == '(')
-                            x++;
-                        else if (val[j] == ')') {
-                            x--;
-                            if (x == 0)
-                                break;
+
+            try {
+                // Find brackets
+                for (int i = 0; i < val.Length; i++) {
+                    if (val[i] == '(') {
+                        int x = 1;
+                        int j;
+                        for (j = i + 1; j < val.Length; j++) {
+                            if (val[j] == '(')
+                                x++;
+                            else if (val[j] == ')') {
+                                x--;
+                                if (x == 0)
+                                    break;
+                            }
                         }
+                        if (j == val.Length)
+                            return Convert.ToInt32(val); // Will throw NumberFormatException
+                        string newVal = val.Substring(0, i);
+                        newVal += EvalToInt(val.Substring(i + 1, j));
+                        newVal += val.Substring(j + 1, val.Length);
+                        val = newVal;
                     }
-                    if (j == val.Length)
-                        return Convert.ToInt32(val); // Will throw NumberFormatException
-                    string newVal = val.Substring(0, i);
-                    newVal += EvalToInt(val.Substring(i + 1, j));
-                    newVal += val.Substring(j + 1, val.Length);
-                    val = newVal;
                 }
-            }
-            // Split up string while keeping delimiters
-            string[] delimiters = { "+", "-", "|" };
-            string source = val;
-            foreach (string delimiter in delimiters)
-                source = source.Replace(delimiter, ";" + delimiter + ";");
-            string[] parts = source.Split(';');
+                // Split up string while keeping delimiters
+                string[] delimiters = { "+", "-", "|", "*", "/" };
+                string source = val;
+                foreach (string delimiter in delimiters)
+                    source = source.Replace(delimiter, ";" + delimiter + ";");
+                string[] parts = source.Split(';');
 
-            if (parts.Length > 1) {
-                if (parts.Length < 3)
-                    throw new FormatException();
-                int ret = 0;
-                if (parts[1] == "+")
-                    ret = EvalToInt(parts[0]) + EvalToInt(parts[2]);
-                else if (parts[1] == "-")
-                    ret = EvalToInt(parts[0]) - EvalToInt(parts[2]);
-                else if (parts[1] == "|")
-                    ret = EvalToInt(parts[0]) | EvalToInt(parts[2]);
+                if (parts.Length > 1) {
+                    if (parts.Length < 3)
+                        throw new FormatException();
+                    int ret;
+                    if (parts[1] == "+")
+                        ret = EvalToInt(parts[0]) + EvalToInt(parts[2]);
+                    else if (parts[1] == "-")
+                        ret = EvalToInt(parts[0]) - EvalToInt(parts[2]);
+                    else if (parts[1] == "|")
+                        ret = EvalToInt(parts[0]) | EvalToInt(parts[2]);
+                    else if (parts[1] == "*")
+                        ret = EvalToInt(parts[0]) * EvalToInt(parts[2]);
+                    else if (parts[1] == "/")
+                        ret = EvalToInt(parts[0]) / EvalToInt(parts[2]);
+                    else
+                        throw new FormatException();
+                    string newVal = "" + ret;
+                    for (int j = 3; j < parts.Length; j++) {
+                        newVal += parts[j];
+                    }
+                    return EvalToInt(newVal);
+                }
+                // else parts.Length == 1
+
+                if (val[0] == '>')
+                    return (EvalToInt(val.Substring(1))>>8)&0xff;
+                else if (val[0] == '<')
+                    return EvalToInt(val.Substring(1))&0xff;
+                else if (val[0] == '$')
+                    return Convert.ToInt32(val.Substring(1), 16);
+                else if (val[val.Length - 1] == 'h')
+                    return Convert.ToInt32(val.Substring(0, val.Length - 1), 16);
+                else if (val[0] == '%')
+                    return Convert.ToInt32(val.Substring(1), 2);
                 else
-                    throw new FormatException();
-                string newVal = "" + ret;
-                for (int j = 3; j < parts.Length; j++) {
-                    newVal += parts[j];
-                }
-                return EvalToInt(newVal);
+                    return Convert.ToInt32(val);
             }
-            // else parts.Length == 1
-
-            if (val[0] == '>')
-                return (EvalToInt(val.Substring(1))>>8)&0xff;
-            else if (val[0] == '<')
-                return EvalToInt(val.Substring(1))&0xff;
-            else if (val[0] == '$')
-                return Convert.ToInt32(val.Substring(1), 16);
-            else if (val[val.Length - 1] == 'h')
-                return Convert.ToInt32(val.Substring(0, val.Length - 1), 16);
-            else if (val[0] == '%')
-                return Convert.ToInt32(val.Substring(1), 2);
-            else
-                return Convert.ToInt32(val);
+            catch(FormatException) {
+                throw new FormatException("Couldn't parse '" + val + "'.");
+            }
         }
 
         // Get a set of all rooms used in the dungeons. Used by
@@ -322,6 +345,10 @@ namespace LynnaLab
             }
 
             return rooms;
+        }
+
+        public String GetGameString() {
+            return "ages";
         }
 
         public int GetNumDungeons() {

@@ -85,7 +85,8 @@ namespace LynnaLab
 
         public void SetRoom(int x, int y, int floor, int room) {
             int i = FirstLayoutIndex + floor;
-            Stream file = Project.GetBinaryFile("rooms/dungeonLayouts.bin");
+            Stream file = Project.GetBinaryFile(
+                    "rooms/" + Project.GetGameString() + "/dungeonLayouts.bin");
             file.Position = i*64+y*8+x;
             file.WriteByte((byte)(room&0xff));
         }
@@ -94,11 +95,11 @@ namespace LynnaLab
 
         public override Room GetRoom(int x, int y, int floor=0) {
             int i = FirstLayoutIndex + floor;
-            Stream file = Project.GetBinaryFile("rooms/dungeonLayouts.bin");
+            Stream file = Project.GetBinaryFile(
+                    "rooms/" + Project.GetGameString() + "/dungeonLayouts.bin");
             file.Position = i*64+y*8+x;
             int roomIndex = file.ReadByte();
-            int group = GetDataIndex(0)-0xc9+4;
-            Room room = Project.GetIndexedDataType<Room>(roomIndex + group*0x100);
+            Room room = Project.GetIndexedDataType<Room>(roomIndex + Group*0x100);
             return room;
         }
 

@@ -29,8 +29,9 @@ namespace LynnaLab
         string context = "";
         // Values for context:
         // - "RAMSECTION"
+        // - "ENUM"
 
-        // Variables for when context == RAMSECTION
+        // Variables for when context == RAMSECTION or ENUM
         int bank;
         int address;
 
@@ -138,7 +139,7 @@ namespace LynnaLab
                         }
                         break;
                     case ".dw":
-                        if (context == "RAMSECTION")
+                        if (context == "RAMSECTION" || context == "ENUM")
                             break;
                         if (fTokens.Length < 2) {
                             log.Warn(warningString + "Expected .DW to have a value.");
@@ -147,7 +148,7 @@ namespace LynnaLab
                         size = 2;
                         goto arbitraryLengthData;
                     case ".db":
-                        if (context == "RAMSECTION")
+                        if (context == "RAMSECTION" || context == "ENUM")
                             break;
                         if (fTokens.Length < 2) {
                             log.Warn(warningString + "Expected .DB to have a value.");
@@ -187,22 +188,22 @@ arbitraryLengthData:
                         }
                         break;
                     case "db":
-                        if (context != "RAMSECTION")
+                        if (context != "RAMSECTION" && context != "ENUM")
                             goto default;
                         address++;
                         break;
                     case "dw":
-                        if (context != "RAMSECTION")
+                        if (context != "RAMSECTION" && context != "ENUM")
                             goto default;
                         address+=2;
                         break;
                     case "dsb":
-                        if (context != "RAMSECTION")
+                        if (context != "RAMSECTION" && context != "ENUM")
                             goto default;
                         address += Project.EvalToInt(fTokens[1]);
                         break;
                     case "dsw":
-                        if (context != "RAMSECTION")
+                        if (context != "RAMSECTION" && context != "ENUM")
                             goto default;
                         address += Project.EvalToInt(fTokens[1])*2;
                         break;
@@ -375,35 +376,45 @@ arbitraryLengthData:
             if (tokens.Length > 0) {
                 switch (tokens[0].ToLower()) {
                     // Built-in directives
-                    case ".ramsection":
-                        {
-                            context = "RAMSECTION";
-                            // Find the last token which specifies the name
-                            int tokenIndex = 1;
-                            while (tokens[tokenIndex][tokens[tokenIndex].Length-1] != '"')
-                                tokenIndex++;
+                    case ".ramsection": {
+                        context = "RAMSECTION";
+                        // Find the last token which specifies the name
+                        int tokenIndex = 1;
+                        while (tokens[tokenIndex][tokens[tokenIndex].Length-1] != '"')
                             tokenIndex++;
+                        tokenIndex++;
 
-                            while (tokenIndex < tokens.Length) {
-                                if (tokens[tokenIndex] == "BANK") {
-                                    tokenIndex++;
-                                    bank = Project.EvalToInt(tokens[tokenIndex++]);
-                                }
-                                else if (tokens[tokenIndex] == "SLOT") {
-                                    tokenIndex++;
-                                    string slotString = tokens[tokenIndex++];
-                                    int slot = Project.EvalToInt(slotString);
-                                    if (slot == 2)
-                                        address = 0xc000;
-                                    else { // Assuming slot >= 3
-                                        address = 0xd000;
-                                    }
+                        while (tokenIndex < tokens.Length) {
+                            if (tokens[tokenIndex] == "BANK") {
+                                tokenIndex++;
+                                bank = Project.EvalToInt(tokens[tokenIndex++]);
+                            }
+                            else if (tokens[tokenIndex] == "SLOT") {
+                                tokenIndex++;
+                                string slotString = tokens[tokenIndex++];
+                                int slot = Project.EvalToInt(slotString);
+                                if (slot == 2)
+                                    address = 0xc000;
+                                else { // Assuming slot >= 3
+                                    address = 0xd000;
                                 }
                             }
-                            break;
                         }
+                        break;
+                    }
                     case ".ends":
                         if (context == "RAMSECTION")
+                            context = "";
+                        break;
+
+                    case ".enum":
+                        context = "ENUM";
+                        address = Project.EvalToInt(tokens[1]);
+                        break;
+                        // Not supported: "DESC" (descreasing order)
+
+                    case ".ende":
+                        if (context == "ENUM")
                             context = "";
                         break;
 
@@ -426,9 +437,10 @@ arbitraryLengthData:
                             // Label
                             string s = tokens[0].Substring(0, tokens[0].Length - 1); 
                             FileComponent addedComponent;
-                            if (context == "RAMSECTION") {
+                            if (context == "RAMSECTION" || context == "ENUM") {
                                 AddDefinition(s, address.ToString());
-                                AddDefinition(":"+s, bank.ToString());
+                                if (context == "RAMSECTION")
+                                    AddDefinition(":"+s, bank.ToString());
                                 PopFileStructure();
                                 StringFileComponent sc = new StringFileComponent(this, tokens[0], spacing);
                                 fileStructure.Add(sc);
@@ -446,9 +458,8 @@ arbitraryLengthData:
 
                                 addedComponent.EndsLine = false;
 
-                                // Add raw string to file structure, it'll
-                                // be removed if a better representation is
-                                // found
+                                // Add raw string to file structure, it'll be removed if a better
+                                // representation is found
                                 fileStructure.Add(new StringFileComponent(
                                             this, line.Substring(tokenStartIndices[1]), spacing2));
                                 fileStructureComments.Add(comment);

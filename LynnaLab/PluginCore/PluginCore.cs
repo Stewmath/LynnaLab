@@ -75,7 +75,7 @@ namespace LynnaLab
                         pluginManagers.Add(new PluginManager(this, mainWindow, type));
                 }
             }
-            catch (DirectoryNotFoundException e) {
+            catch (DirectoryNotFoundException) {
             }
         }
 
