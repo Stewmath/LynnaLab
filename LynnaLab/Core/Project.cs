@@ -40,7 +40,7 @@ namespace LynnaLab
 
         // The string to use for navigating game-specific folders in the disassembly
         public string GameString {
-            get { return "seasons"; }
+            get { return "ages"; }
         }
 
         public Project(string d)
