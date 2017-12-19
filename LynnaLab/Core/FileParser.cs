@@ -25,7 +25,13 @@ namespace LynnaLab
         // line
         List<string> fileStructureComments = new List<string>();
 
-        // These variables only used by ParseLine and related functions
+        // The following variables only used by ParseLine and related functions; they provide
+        // context between lines when parsing.
+
+        int ifdefDepth = 0; // The number of nested ifdef statements we're in
+        int failedIfdefDepth = 0; // The depth of the last ifdef that failed (if ifdefCondition is false)
+        bool ifdefCondition = true; // If false, we're currently skipping over some ifdef code
+
         string context = "";
         // Values for context:
         // - "RAMSECTION"
@@ -371,9 +377,26 @@ arbitraryLengthData:
                 }
             }
 
-            string value;
 
             if (tokens.Length > 0) {
+
+                // Check if we're currently skipping over stuff because of .ifdefs
+                if (ifdefCondition == false) {
+                    if (tokens[0].ToLower() == ".ifdef") {
+                        ifdefDepth++;
+                    }
+                    else if (tokens[0].ToLower() == ".else" && failedIfdefDepth == ifdefDepth-1) {
+                        ifdefCondition = true;
+                    }
+                    else if (tokens[0].ToLower() == ".endif") {
+                        ifdefDepth--;
+                        if (ifdefDepth == failedIfdefDepth)
+                            ifdefCondition = true;
+                    }
+
+                    return;
+                }
+
                 switch (tokens[0].ToLower()) {
                     // Built-in directives
                     case ".ramsection": {
@@ -419,17 +442,49 @@ arbitraryLengthData:
                         break;
 
                     case ".define":
-                        if (tokens.Length < 3) {
-                            log.Debug(warningString + "Expected .DEFINE to have a string and a value.");
+                        {
+                            if (tokens.Length < 3) {
+                                log.Debug(warningString + "Expected .DEFINE to have a string and a value.");
+                                break;
+                            }
+                            string value = "";
+                            for (int j = 2; j < tokens.Length; j++) {
+                                value += tokens[j];
+                                value += " ";
+                            }
+                            value = value.Trim();
+                            AddDefinition(tokens[1], value);
                             break;
                         }
-                        value = "";
-                        for (int j = 2; j < tokens.Length; j++) {
-                            value += tokens[j];
-                            value += " ";
+
+                    case ".ifdef":
+                        if (tokens.Length < 2) {
+                            log.Warn(warningString + "Expected .IFDEF to have a value.");
+                            break;
                         }
-                        value = value.Trim();
-                        AddDefinition(tokens[1], value);
+                        ifdefDepth++;
+                        if (Project.GetDefinition(tokens[1]) != null)
+                            ifdefCondition = true;
+                        else {
+                            ifdefCondition = false;
+                            failedIfdefDepth = ifdefDepth-1;
+                        }
+                        break;
+
+                    case ".else":
+                        if (ifdefDepth == 0) {
+                            log.Warn(warningString + "Expected .IFDEF before .ENDIF.");
+                            break;
+                        }
+                        ifdefCondition = false;
+                        break;
+
+                    case ".endif":
+                        if (ifdefDepth == 0) {
+                            log.Warn(warningString + "Expected .IFDEF before .ENDIF.");
+                            break;
+                        }
+                        ifdefDepth--;
                         break;
 
                     default:

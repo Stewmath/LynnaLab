@@ -63,6 +63,11 @@ namespace LynnaLab
 
             log.Info("Opened project at \"" + baseDirectory + "\".");
 
+
+            // Before parsing anything, create the "ROM_AGES" or "ROM_SEASONS" definition for ifdefs
+            // to work
+            definesDictionary.Add("ROM_"+GameString.ToUpper(), "");
+
             // Parse everything in constants/
             foreach (string f in Directory.EnumerateFiles(baseDirectory + "constants/")) {
                 if (f.Substring(f.LastIndexOf('.')) == ".s") {
@@ -246,8 +251,16 @@ namespace LynnaLab
             return GetFileWithLabel(label).GetData(label, offset);
         }
 
+        public string GetDefinition(string val)
+        {
+            string mapping;
+            if (definesDictionary.TryGetValue(val, out mapping))
+                return mapping;
+            return null;
+        }
+
         // Handles only simple substitution
-        public string Eval(string val)
+        private string Eval(string val)
         {
             val = val.Trim();
 
