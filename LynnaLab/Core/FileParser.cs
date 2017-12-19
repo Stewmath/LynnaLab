@@ -293,6 +293,20 @@ arbitraryLengthData:
                             AddComponent(d, "");
                             break;
                         }
+                    case "m_seasonalarea":
+                        // In season's "areas.s", the m_SeasonalArea macro points to a label which
+                        // contains 4 area definitions (one for each season).
+                        if (fTokens.Length != 2) {
+                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
+                            break;
+                        }
+                        {
+                            // Create a data object considered to have a size of 8 bytes
+                            Data d = new Data(Project, fTokens[0], standardValues, 8,
+                                    this, fSpacing);
+                            AddDataAndPopFileStructure(d);
+                            break;
+                        }
 
                     default:
                         {

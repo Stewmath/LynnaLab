@@ -42,14 +42,25 @@ namespace LynnaLab
 
         internal Room(Project p, int i) : base(p,i) {
             int areaID;
-            Stream groupAreasFile = Project.GetBinaryFile(
-                    "rooms/" + Project.GameString + "/group" + (Index>>8) + "Areas.bin");
+            Stream groupAreasFile = GetAreaMappingFile();
             groupAreasFile.Position = Index&0xff;
             areaID = groupAreasFile.ReadByte() & 0x7f;
 
             Area a = Project.GetIndexedDataType<Area>(areaID);
             SetArea(a);
 
+        }
+
+        // Returns a stream for the area mapping file (256 bytes, one byte per room)
+        private Stream GetAreaMappingFile() {
+            Data data = Project.GetData("roomAreasGroupTable", 2*(Index>>8));
+            data = Project.GetData(data.GetValue(0)); // Follow .dw pointer
+
+            string path = data.GetValue(0);
+            path = path.Substring(1, path.Length-2); // Remove quotes
+
+            Stream stream = Project.GetBinaryFile(path);
+            return stream;
         }
 
         public Bitmap GetImage() {
@@ -104,8 +115,7 @@ namespace LynnaLab
 
         public void SetArea(Area a) {
             if (area == null || a.Index != area.Index) {
-                Stream groupAreasFile = Project.GetBinaryFile(
-                    "rooms/" + Project.GameString + "/group" + (Index>>8) + "Areas.bin");
+                Stream groupAreasFile = GetAreaMappingFile();
                 groupAreasFile.Position = Index&0xff;
                 int lastValue = groupAreasFile.ReadByte() & 0x80;
                 groupAreasFile.Position = Index&0xff;

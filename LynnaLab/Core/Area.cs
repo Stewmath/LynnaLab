@@ -135,6 +135,14 @@ namespace LynnaLab
 
             areaData = areaFile.GetData("areaData", Index * 8);
 
+
+            // If this is Seasons, it's possible that areaData does not point to 8 bytes as
+            // expected, but instead to an "m_SeasonalData" macro.
+            if (areaData.CommandLowerCase == "m_seasonalarea") {
+                int season=0;
+                areaData = Project.GetData(areaData.GetValue(0), season*8);
+            }
+
             // Initialize graphics state
             graphicsState = new GraphicsState();
             // Global palettes

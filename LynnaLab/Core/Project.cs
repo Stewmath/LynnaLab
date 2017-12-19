@@ -40,7 +40,7 @@ namespace LynnaLab
 
         // The string to use for navigating game-specific folders in the disassembly
         public string GameString {
-            get { return "ages"; }
+            get { return "seasons"; }
         }
 
         public Project(string d)
@@ -366,19 +366,31 @@ namespace LynnaLab
         }
 
         public int GetNumDungeons() {
-            return 16;
+            if (GameString == "ages")
+                return 16;
+            else
+                return 12;
         }
 
         public int GetNumGroups() {
-            return 8;
+            if (GameString == "ages")
+                return 8;
+            else
+                return 8;
         }
 
         public int GetNumRooms() {
-            return 0x600;
+            if (GameString == "ages")
+                return 0x600;
+            else
+                return 0x600;
         }
 
         public int GetNumAreas() {
-            return 0x67;
+            if (GameString == "ages")
+                return 0x67;
+            else
+                return 0x63;
         }
 
         public int GetFirstDungeonGroup() {
