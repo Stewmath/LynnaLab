@@ -38,6 +38,11 @@ namespace LynnaLab
             get { return baseDirectory; }
         }
 
+        // The string to use for navigating game-specific folders in the disassembly
+        public string GameString {
+            get { return "ages"; }
+        }
+
         public Project(string d)
         {
             baseDirectory = d + '/';
@@ -88,9 +93,9 @@ namespace LynnaLab
 
             // Parse everything in data/
             // A few files need to be loaded before others through
-            GetFileParser("data/tilesetMappings.s");
-            GetFileParser("data/tilesetCollisions.s");
-            GetFileParser("data/tilesetHeaders.s");
+            GetFileParser("data/" + GameString + "/tilesetMappings.s");
+            GetFileParser("data/" + GameString + "/tilesetCollisions.s");
+            GetFileParser("data/" + GameString + "/tilesetHeaders.s");
             foreach (string f in Directory.EnumerateFiles(baseDirectory + "data/")) {
                 if (f.Substring(f.LastIndexOf('.')) == ".s") {
                     string filename = "data/" + f.Substring(f.LastIndexOf('/') + 1);
@@ -98,7 +103,7 @@ namespace LynnaLab
                 }
             }
             // Parse data/{game}/
-            string gameSpecificDataFolder = "data/" + GetGameString() + "/";
+            string gameSpecificDataFolder = "data/" + GameString + "/";
             foreach (string f in Directory.EnumerateFiles(baseDirectory + gameSpecificDataFolder)) {
                 if (f.Substring(f.LastIndexOf('.')) == ".s") {
                     string filename = gameSpecificDataFolder + f.Substring(f.LastIndexOf('/') + 1);
@@ -345,10 +350,6 @@ namespace LynnaLab
             }
 
             return rooms;
-        }
-
-        public String GetGameString() {
-            return "ages";
         }
 
         public int GetNumDungeons() {

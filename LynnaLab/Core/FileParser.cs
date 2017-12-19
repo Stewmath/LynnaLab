@@ -267,7 +267,7 @@ arbitraryLengthData:
                             break;
                         }
                         {
-                            Stream file = Project.GetBinaryFile("tilesets/" + fTokens[1] + ".bin");
+                            Stream file = Project.GetBinaryFile("tilesets/" + Project.GameString + "/" + fTokens[1] + ".bin");
                             Data d = new Data(Project, fTokens[0], standardValues,
                                     (Int32)file.Length, this, fSpacing);
                             AddDataAndPopFileStructure(d);
@@ -433,47 +433,56 @@ arbitraryLengthData:
                         break;
 
                     default:
-                        if (tokens[0][tokens[0].Length - 1] == ':') {
-                            // Label
-                            string s = tokens[0].Substring(0, tokens[0].Length - 1); 
-                            FileComponent addedComponent;
-                            if (context == "RAMSECTION" || context == "ENUM") {
-                                AddDefinition(s, address.ToString());
-                                if (context == "RAMSECTION")
-                                    AddDefinition(":"+s, bank.ToString());
-                                PopFileStructure();
-                                StringFileComponent sc = new StringFileComponent(this, tokens[0], spacing);
-                                fileStructure.Add(sc);
-                                fileStructureComments.Add(comment);
-                                addedComponent = sc;
-                            }
-                            else {
-                                Label label = new Label(this,s,spacing);
-                                AddLabelAndPopFileStructure(label);
-                                addedComponent = label;
-                            }
-                            if (tokens.Length > 1) { // There may be data directly after the label
-                                string[] tokens2 = new string[tokens.Length-1];
-                                List<int> spacing2 = new List<int>();
+                        {
+                            bool isData = ParseData(tokens, spacing);
 
-                                addedComponent.EndsLine = false;
+                            // In ramsections or enums, assume any unidentifiable data is a label.
+                            // Technically this should be the case in any context, but it's more
+                            // useful for the parser to tell me what it doesn't understand.
+                            if (!isData && (tokens[0][tokens[0].Length - 1] == ':' || context == "RAMSECTION" || context == "ENUM")) {
+                                // Label
+                                string s = tokens[0];
+                                if (tokens[0][tokens[0].Length-1] == ':')
+                                    s = tokens[0].Substring(0, tokens[0].Length - 1); 
 
-                                // Add raw string to file structure, it'll be removed if a better
-                                // representation is found
-                                fileStructure.Add(new StringFileComponent(
-                                            this, line.Substring(tokenStartIndices[1]), spacing2));
-                                fileStructureComments.Add(comment);
+                                FileComponent addedComponent;
+                                if (context == "RAMSECTION" || context == "ENUM") {
+                                    AddDefinition(s, address.ToString());
+                                    if (context == "RAMSECTION")
+                                        AddDefinition(":"+s, bank.ToString());
+                                    PopFileStructure();
+                                    StringFileComponent sc = new StringFileComponent(this, tokens[0], spacing);
+                                    fileStructure.Add(sc);
+                                    fileStructureComments.Add(comment);
+                                    addedComponent = sc;
+                                }
+                                else {
+                                    Label label = new Label(this,s,spacing);
+                                    AddLabelAndPopFileStructure(label);
+                                    addedComponent = label;
+                                }
+                                if (tokens.Length > 1) { // There may be data directly after the label
+                                    string[] tokens2 = new string[tokens.Length-1];
+                                    List<int> spacing2 = new List<int>();
 
-                                for (int j=1; j<tokens.Length; j++)
-                                    tokens2[j-1] = tokens[j];
-                                for (int j=1; j<spacing.Count; j++)
-                                    spacing2.Add(spacing[j]);
-                                if (!ParseData(tokens2, spacing2)) {
-                                    log.Debug(warningString + "Error parsing line.");
+                                    addedComponent.EndsLine = false;
+
+                                    // Add raw string to file structure, it'll be removed if a better
+                                    // representation is found
+                                    fileStructure.Add(new StringFileComponent(
+                                                this, line.Substring(tokenStartIndices[1]), spacing2));
+                                    fileStructureComments.Add(comment);
+
+                                    for (int j=1; j<tokens.Length; j++)
+                                        tokens2[j-1] = tokens[j];
+                                    for (int j=1; j<spacing.Count; j++)
+                                        spacing2.Add(spacing[j]);
+                                    if (!ParseData(tokens2, spacing2)) {
+                                        log.Debug(warningString + "Error parsing line.");
+                                    }
                                 }
                             }
-                        } else {
-                            if (!ParseData(tokens, spacing)) {
+                            else {
                                 // Unknown data
                                 log.Debug(warningString + "Did not understand \"" + tokens[0] + "\".");
                             }

@@ -14,8 +14,8 @@ namespace LynnaLab
 
         PaletteHeaderGroup(Project project, int index) : base(project, index)
         {
-            FileParser palettePointerFile = project.GetFileWithLabel("paletteHeaderGroupTable");
-            Data headerPointerData = palettePointerFile.GetData("paletteHeaderGroupTable", index*2);
+            FileParser palettePointerFile = project.GetFileWithLabel("paletteHeaderTable");
+            Data headerPointerData = palettePointerFile.GetData("paletteHeaderTable", index*2);
             FileParser paletteHeaderFile = project.GetFileWithLabel(headerPointerData.GetValue(0));
             Data headerData = paletteHeaderFile.GetData(headerPointerData.GetValue(0));
 

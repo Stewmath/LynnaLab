@@ -74,7 +74,7 @@ namespace Plugins
                 vrs.Add(new StreamValueReference("Boss", room.Index&0xff, 6,6, DataValueType.ByteBit));
                 vrs.Add(new StreamValueReference("Dark", room.Index&0xff, 7,7, DataValueType.ByteBit));
 
-                Stream stream = Project.GetBinaryFile("rooms/group" + dungeon.Group + "DungeonProperties.bin");
+                Stream stream = Project.GetBinaryFile("rooms/" + Project.GameString + "/group" + dungeon.Group + "DungeonProperties.bin");
                 foreach (StreamValueReference r in vrs)
                     r.SetStream(stream);
 
@@ -174,7 +174,7 @@ namespace Plugins
                 int newFloorIndex = dungeon.FirstLayoutIndex + dungeon.NumFloors;
 
                 // Shift all subsequent layouts 64 bytes down in the data file
-                Stream layoutFile = Project.GetBinaryFile("rooms/dungeonLayouts.bin");
+                Stream layoutFile = Project.GetBinaryFile("rooms/" + Project.GameString + "/dungeonLayouts.bin");
                 layoutFile.SetLength(layoutFile.Length+64);
                 for (int i=(int)layoutFile.Length/64-1; i>newFloorIndex; i--) {
                     var buf = new byte[64];
@@ -223,7 +223,7 @@ namespace Plugins
                     int deletedFloorIndex = dungeon.FirstLayoutIndex + dungeon.NumFloors-1;
 
                     // Shift all subsequent layouts 64 bytes up in the data file
-                    Stream layoutFile = Project.GetBinaryFile("rooms/dungeonLayouts.bin");
+                    Stream layoutFile = Project.GetBinaryFile("rooms/" + Project.GameString + "/dungeonLayouts.bin");
                     for (int i=deletedFloorIndex; i<layoutFile.Length/64-1; i++) {
                         var buf = new byte[64];
                         layoutFile.Position = (i+1)*64;

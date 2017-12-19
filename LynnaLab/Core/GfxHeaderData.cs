@@ -8,10 +8,7 @@ namespace LynnaLab
     // m_GfxHeader filename destAddress size/continue [startOffset]
     //              0           1           2           3
     public class GfxHeaderData : Data {
-        static List<string> gfxDirectories = new List<string>() {
-            "gfx/",
-                "gfx_compressible/"
-        };
+        List<string> gfxDirectories = new List<string>();
 
         Stream gfxFile;
 
@@ -26,6 +23,10 @@ namespace LynnaLab
         public GfxHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<int> spacing) 
             : base(p, command, values, 6, parser, spacing)
         {
+            gfxDirectories.Add("gfx/");
+            gfxDirectories.Add("gfx_compressible/");
+            gfxDirectories.Add("gfx/" + Project.GameString + "/");
+            gfxDirectories.Add("gfx_compressible/" + Project.GameString + "/");
 
             string filename = GetValue(0) + ".bin";
 

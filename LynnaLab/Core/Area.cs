@@ -184,19 +184,19 @@ namespace LynnaLab
             tileUpdaterIndex = 0;
             tileUpdaterRedraw = true;
             GLib.IdleHandler handler = new GLib.IdleHandler(TileUpdater);
-            GLib.Idle.Remove(handler);
             GLib.Idle.Add(handler);
         }
         public void DrawAllTiles() {
             tileUpdaterIndex = 0;
             tileUpdaterRedraw = false;
             GLib.IdleHandler handler = new GLib.IdleHandler(TileUpdater);
-            GLib.Idle.Remove(handler);
             GLib.Idle.Add(handler);
         }
 
         bool tileUpdaterRedraw;
         int tileUpdaterIndex;
+
+        // TileUpdater is called by GLib.IdleHandler, which just calls this "when it has time".
         bool TileUpdater() {
             if (tileUpdaterIndex == 256)
                 return false;
@@ -212,6 +212,8 @@ namespace LynnaLab
                     TileModifiedEvent(tileUpdaterIndex);
                 tileUpdaterIndex++;
             }
+
+            // Return true to indicate to GLib that it should call this again later
             return true;
         }
 
@@ -358,8 +360,8 @@ namespace LynnaLab
         void SetMainGfx(int index) {
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Main);
 
-            FileParser gfxHeaderFile = Project.GetFileWithLabel("gfxHeaderGroupTable");
-            Data pointerData = gfxHeaderFile.GetData("gfxHeaderGroupTable", index*2);
+            FileParser gfxHeaderFile = Project.GetFileWithLabel("gfxHeaderTable");
+            Data pointerData = gfxHeaderFile.GetData("gfxHeaderTable", index*2);
             GfxHeaderData header = gfxHeaderFile.GetData(pointerData.GetValue(0))
                 as GfxHeaderData;
             if (header != null) {
@@ -383,9 +385,9 @@ namespace LynnaLab
         void SetUniqueGfx(int index) {
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Unique);
             if (index != 0) {
-                FileParser uniqueGfxHeaderFile = Project.GetFileWithLabel("uniqueGfxHeaderGroupsStart");
+                FileParser uniqueGfxHeaderFile = Project.GetFileWithLabel("uniqueGfxHeadersStart");
                 GfxHeaderData header
-                    = uniqueGfxHeaderFile.GetData("uniqueGfxHeaderGroup" + index.ToString("x2"))
+                    = uniqueGfxHeaderFile.GetData("uniqueGfxHeader" + index.ToString("x2"))
                     as GfxHeaderData;
                 if (header != null) {
                     bool next = true;

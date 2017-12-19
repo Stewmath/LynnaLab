@@ -31,13 +31,13 @@ namespace LynnaLab {
             : base(p, command, values, 8, parser, spacing)
         {
             try {
-                referencedData = Project.GetBinaryFile("tilesets/" + GetValue(1) + ".bin");
+                referencedData = Project.GetBinaryFile("tilesets/" + Project.GameString + "/" + GetValue(1) + ".bin");
             }
             catch (FileNotFoundException) {
                 // Default is to copy from 00 I guess
                 // TODO: copy this into its own file?
                 string filename = GetValue(1).Substring(0, GetValue(1).Length-2);
-                referencedData = Project.GetBinaryFile("tilesets/" + filename + "00.bin");
+                referencedData = Project.GetBinaryFile("tilesets/" + Project.GameString + "/" + filename + "00.bin");
             }
         }
 
