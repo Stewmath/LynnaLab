@@ -6,21 +6,22 @@ namespace LynnaLab
 	{
 		private global::Gtk.ComboBox combobox1;
 
-		protected virtual void Build ()
+		protected virtual void Build()
 		{
-			global::Stetic.Gui.Initialize (this);
+			global::Stetic.Gui.Initialize(this);
 			// Widget LynnaLab.ComboBoxFromConstants
-			global::Stetic.BinContainer.Attach (this);
+			global::Stetic.BinContainer.Attach(this);
 			this.Name = "LynnaLab.ComboBoxFromConstants";
 			// Container child LynnaLab.ComboBoxFromConstants.Gtk.Container+ContainerChild
-			this.combobox1 = global::Gtk.ComboBox.NewText ();
+			this.combobox1 = global::Gtk.ComboBox.NewText();
 			this.combobox1.Name = "combobox1";
-			this.Add (this.combobox1);
-			if ((this.Child != null)) {
-				this.Child.ShowAll ();
+			this.Add(this.combobox1);
+			if ((this.Child != null))
+			{
+				this.Child.ShowAll();
 			}
-			this.Hide ();
-			this.combobox1.Changed += new global::System.EventHandler (this.OnCombobox1Changed);
+			this.Hide();
+			this.combobox1.Changed += new global::System.EventHandler(this.OnCombobox1Changed);
 		}
 	}
 }

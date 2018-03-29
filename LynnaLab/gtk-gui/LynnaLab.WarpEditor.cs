@@ -5,323 +5,324 @@ namespace LynnaLab
 	public partial class WarpEditor
 	{
 		private global::Gtk.VBox vbox2;
-		
+
 		private global::Gtk.HBox hbox3;
-		
+
 		private global::Gtk.Label label3;
-		
+
 		private global::LynnaLab.SpinButtonHexadecimal roomSpinButton;
-		
+
 		private global::Gtk.Frame frame1;
-		
+
 		private global::Gtk.Alignment GtkAlignment;
-		
+
 		private global::Gtk.VBox vbox1;
-		
+
 		private global::Gtk.HBox hbox1;
-		
+
 		private global::Gtk.Label label1;
-		
+
 		private global::Gtk.SpinButton indexSpinButton;
-		
+
 		private global::Gtk.VBox vbox4;
-		
+
 		private global::Gtk.Button addWarpButton;
-		
+
 		private global::Gtk.Button addSpecificWarpButton;
-		
+
 		private global::Gtk.Button removeWarpButton;
-		
+
 		private global::Gtk.Alignment valueEditorContainer;
-		
+
 		private global::Gtk.Label frameLabel;
-		
+
 		private global::Gtk.Frame frame2;
-		
+
 		private global::Gtk.Alignment GtkAlignment2;
-		
+
 		private global::Gtk.VBox vbox3;
-		
+
 		private global::Gtk.HBox hbox2;
-		
+
 		private global::Gtk.Label label2;
-		
+
 		private global::Gtk.SpinButton destGroupSpinButton;
-		
+
 		private global::Gtk.Label destIndexLabel;
-		
+
 		private global::LynnaLab.SpinButtonHexadecimal destIndexSpinButton;
-		
+
 		private global::Gtk.Label destInfoLabel;
-		
+
 		private global::Gtk.Alignment destEditorContainer;
-		
+
 		private global::Gtk.Label GtkLabel3;
-		
+
 		private global::Gtk.Alignment alignment1;
-		
+
 		private global::Gtk.Button okButton;
 
-		protected virtual void Build ()
+		protected virtual void Build()
 		{
-			global::Stetic.Gui.Initialize (this);
+			global::Stetic.Gui.Initialize(this);
 			// Widget LynnaLab.WarpEditor
-			global::Stetic.BinContainer.Attach (this);
+			global::Stetic.BinContainer.Attach(this);
 			this.Name = "LynnaLab.WarpEditor";
 			// Container child LynnaLab.WarpEditor.Gtk.Container+ContainerChild
-			this.vbox2 = new global::Gtk.VBox ();
+			this.vbox2 = new global::Gtk.VBox();
 			this.vbox2.Name = "vbox2";
 			this.vbox2.Spacing = 6;
 			// Container child vbox2.Gtk.Box+BoxChild
-			this.hbox3 = new global::Gtk.HBox ();
+			this.hbox3 = new global::Gtk.HBox();
 			this.hbox3.Name = "hbox3";
 			this.hbox3.Spacing = 6;
 			// Container child hbox3.Gtk.Box+BoxChild
-			this.label3 = new global::Gtk.Label ();
+			this.label3 = new global::Gtk.Label();
 			this.label3.Name = "label3";
-			this.label3.LabelProp = global::Mono.Unix.Catalog.GetString ("Room");
-			this.hbox3.Add (this.label3);
-			global::Gtk.Box.BoxChild w1 = ((global::Gtk.Box.BoxChild)(this.hbox3 [this.label3]));
+			this.label3.LabelProp = global::Mono.Unix.Catalog.GetString("Room");
+			this.hbox3.Add(this.label3);
+			global::Gtk.Box.BoxChild w1 = ((global::Gtk.Box.BoxChild)(this.hbox3[this.label3]));
 			w1.Position = 0;
 			w1.Expand = false;
 			w1.Fill = false;
 			// Container child hbox3.Gtk.Box+BoxChild
-			this.roomSpinButton = new global::LynnaLab.SpinButtonHexadecimal ();
+			this.roomSpinButton = new global::LynnaLab.SpinButtonHexadecimal();
 			this.roomSpinButton.CanFocus = true;
 			this.roomSpinButton.Name = "roomSpinButton";
-			this.roomSpinButton.Adjustment.Upper = 100;
-			this.roomSpinButton.Adjustment.PageIncrement = 10;
-			this.roomSpinButton.Adjustment.StepIncrement = 1;
-			this.roomSpinButton.ClimbRate = 1;
+			this.roomSpinButton.Adjustment.Upper = 100D;
+			this.roomSpinButton.Adjustment.PageIncrement = 10D;
+			this.roomSpinButton.Adjustment.StepIncrement = 1D;
+			this.roomSpinButton.ClimbRate = 1D;
 			this.roomSpinButton.Digits = ((uint)(3));
 			this.roomSpinButton.Numeric = true;
-			this.hbox3.Add (this.roomSpinButton);
-			global::Gtk.Box.BoxChild w2 = ((global::Gtk.Box.BoxChild)(this.hbox3 [this.roomSpinButton]));
+			this.hbox3.Add(this.roomSpinButton);
+			global::Gtk.Box.BoxChild w2 = ((global::Gtk.Box.BoxChild)(this.hbox3[this.roomSpinButton]));
 			w2.Position = 1;
 			w2.Expand = false;
 			w2.Fill = false;
-			this.vbox2.Add (this.hbox3);
-			global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.hbox3]));
+			this.vbox2.Add(this.hbox3);
+			global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.hbox3]));
 			w3.Position = 0;
 			w3.Expand = false;
 			w3.Fill = false;
 			// Container child vbox2.Gtk.Box+BoxChild
-			this.frame1 = new global::Gtk.Frame ();
+			this.frame1 = new global::Gtk.Frame();
 			this.frame1.Name = "frame1";
 			// Container child frame1.Gtk.Container+ContainerChild
-			this.GtkAlignment = new global::Gtk.Alignment (0F, 0F, 1F, 1F);
+			this.GtkAlignment = new global::Gtk.Alignment(0F, 0F, 1F, 1F);
 			this.GtkAlignment.Name = "GtkAlignment";
 			this.GtkAlignment.LeftPadding = ((uint)(12));
 			// Container child GtkAlignment.Gtk.Container+ContainerChild
-			this.vbox1 = new global::Gtk.VBox ();
+			this.vbox1 = new global::Gtk.VBox();
 			this.vbox1.Name = "vbox1";
 			this.vbox1.Spacing = 6;
 			// Container child vbox1.Gtk.Box+BoxChild
-			this.hbox1 = new global::Gtk.HBox ();
+			this.hbox1 = new global::Gtk.HBox();
 			this.hbox1.Name = "hbox1";
 			this.hbox1.Spacing = 6;
 			// Container child hbox1.Gtk.Box+BoxChild
-			this.label1 = new global::Gtk.Label ();
+			this.label1 = new global::Gtk.Label();
 			this.label1.Name = "label1";
-			this.hbox1.Add (this.label1);
-			global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.label1]));
+			this.hbox1.Add(this.label1);
+			global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.hbox1[this.label1]));
 			w4.Position = 0;
 			w4.Expand = false;
 			w4.Fill = false;
 			// Container child hbox1.Gtk.Box+BoxChild
-			this.indexSpinButton = new global::Gtk.SpinButton (0, 100, 1);
+			this.indexSpinButton = new global::Gtk.SpinButton(0D, 100D, 1D);
 			this.indexSpinButton.CanFocus = true;
 			this.indexSpinButton.Name = "indexSpinButton";
-			this.indexSpinButton.Adjustment.PageIncrement = 10;
-			this.indexSpinButton.ClimbRate = 1;
+			this.indexSpinButton.Adjustment.PageIncrement = 10D;
+			this.indexSpinButton.ClimbRate = 1D;
 			this.indexSpinButton.Numeric = true;
-			this.hbox1.Add (this.indexSpinButton);
-			global::Gtk.Box.BoxChild w5 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.indexSpinButton]));
+			this.hbox1.Add(this.indexSpinButton);
+			global::Gtk.Box.BoxChild w5 = ((global::Gtk.Box.BoxChild)(this.hbox1[this.indexSpinButton]));
 			w5.Position = 2;
 			w5.Expand = false;
 			w5.Fill = false;
 			// Container child hbox1.Gtk.Box+BoxChild
-			this.vbox4 = new global::Gtk.VBox ();
+			this.vbox4 = new global::Gtk.VBox();
 			this.vbox4.Name = "vbox4";
 			this.vbox4.Spacing = 6;
 			// Container child vbox4.Gtk.Box+BoxChild
-			this.addWarpButton = new global::Gtk.Button ();
+			this.addWarpButton = new global::Gtk.Button();
 			this.addWarpButton.CanFocus = true;
 			this.addWarpButton.Name = "addWarpButton";
 			this.addWarpButton.UseUnderline = true;
-			this.addWarpButton.Label = global::Mono.Unix.Catalog.GetString ("Add Standard Warp");
-			this.vbox4.Add (this.addWarpButton);
-			global::Gtk.Box.BoxChild w6 = ((global::Gtk.Box.BoxChild)(this.vbox4 [this.addWarpButton]));
+			this.addWarpButton.Label = global::Mono.Unix.Catalog.GetString("Add Standard Warp");
+			this.vbox4.Add(this.addWarpButton);
+			global::Gtk.Box.BoxChild w6 = ((global::Gtk.Box.BoxChild)(this.vbox4[this.addWarpButton]));
 			w6.Position = 0;
 			w6.Expand = false;
 			w6.Fill = false;
 			// Container child vbox4.Gtk.Box+BoxChild
-			this.addSpecificWarpButton = new global::Gtk.Button ();
+			this.addSpecificWarpButton = new global::Gtk.Button();
 			this.addSpecificWarpButton.CanFocus = true;
 			this.addSpecificWarpButton.Name = "addSpecificWarpButton";
 			this.addSpecificWarpButton.UseUnderline = true;
-			this.addSpecificWarpButton.Label = global::Mono.Unix.Catalog.GetString ("Add Specific-pos Warp");
-			this.vbox4.Add (this.addSpecificWarpButton);
-			global::Gtk.Box.BoxChild w7 = ((global::Gtk.Box.BoxChild)(this.vbox4 [this.addSpecificWarpButton]));
+			this.addSpecificWarpButton.Label = global::Mono.Unix.Catalog.GetString("Add Specific-pos Warp");
+			this.vbox4.Add(this.addSpecificWarpButton);
+			global::Gtk.Box.BoxChild w7 = ((global::Gtk.Box.BoxChild)(this.vbox4[this.addSpecificWarpButton]));
 			w7.Position = 1;
 			w7.Expand = false;
 			w7.Fill = false;
-			this.hbox1.Add (this.vbox4);
-			global::Gtk.Box.BoxChild w8 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.vbox4]));
+			this.hbox1.Add(this.vbox4);
+			global::Gtk.Box.BoxChild w8 = ((global::Gtk.Box.BoxChild)(this.hbox1[this.vbox4]));
 			w8.Position = 3;
 			w8.Expand = false;
 			w8.Fill = false;
 			// Container child hbox1.Gtk.Box+BoxChild
-			this.removeWarpButton = new global::Gtk.Button ();
+			this.removeWarpButton = new global::Gtk.Button();
 			this.removeWarpButton.CanFocus = true;
 			this.removeWarpButton.Name = "removeWarpButton";
 			this.removeWarpButton.UseStock = true;
 			this.removeWarpButton.UseUnderline = true;
 			this.removeWarpButton.Label = "gtk-remove";
-			this.hbox1.Add (this.removeWarpButton);
-			global::Gtk.Box.BoxChild w9 = ((global::Gtk.Box.BoxChild)(this.hbox1 [this.removeWarpButton]));
+			this.hbox1.Add(this.removeWarpButton);
+			global::Gtk.Box.BoxChild w9 = ((global::Gtk.Box.BoxChild)(this.hbox1[this.removeWarpButton]));
 			w9.Position = 4;
 			w9.Expand = false;
 			w9.Fill = false;
-			this.vbox1.Add (this.hbox1);
-			global::Gtk.Box.BoxChild w10 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.hbox1]));
+			this.vbox1.Add(this.hbox1);
+			global::Gtk.Box.BoxChild w10 = ((global::Gtk.Box.BoxChild)(this.vbox1[this.hbox1]));
 			w10.Position = 0;
 			w10.Expand = false;
 			w10.Fill = false;
 			// Container child vbox1.Gtk.Box+BoxChild
-			this.valueEditorContainer = new global::Gtk.Alignment (0.5F, 0.5F, 0F, 0F);
+			this.valueEditorContainer = new global::Gtk.Alignment(0.5F, 0.5F, 0F, 0F);
 			this.valueEditorContainer.Name = "valueEditorContainer";
-			this.vbox1.Add (this.valueEditorContainer);
-			global::Gtk.Box.BoxChild w11 = ((global::Gtk.Box.BoxChild)(this.vbox1 [this.valueEditorContainer]));
+			this.vbox1.Add(this.valueEditorContainer);
+			global::Gtk.Box.BoxChild w11 = ((global::Gtk.Box.BoxChild)(this.vbox1[this.valueEditorContainer]));
 			w11.Position = 1;
-			this.GtkAlignment.Add (this.vbox1);
-			this.frame1.Add (this.GtkAlignment);
-			this.frameLabel = new global::Gtk.Label ();
+			this.GtkAlignment.Add(this.vbox1);
+			this.frame1.Add(this.GtkAlignment);
+			this.frameLabel = new global::Gtk.Label();
 			this.frameLabel.Name = "frameLabel";
-			this.frameLabel.LabelProp = global::Mono.Unix.Catalog.GetString ("Map");
+			this.frameLabel.LabelProp = global::Mono.Unix.Catalog.GetString("Map");
 			this.frameLabel.UseMarkup = true;
 			this.frame1.LabelWidget = this.frameLabel;
-			this.vbox2.Add (this.frame1);
-			global::Gtk.Box.BoxChild w14 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame1]));
+			this.vbox2.Add(this.frame1);
+			global::Gtk.Box.BoxChild w14 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.frame1]));
 			w14.Position = 1;
 			w14.Expand = false;
 			// Container child vbox2.Gtk.Box+BoxChild
-			this.frame2 = new global::Gtk.Frame ();
+			this.frame2 = new global::Gtk.Frame();
 			this.frame2.Name = "frame2";
 			// Container child frame2.Gtk.Container+ContainerChild
-			this.GtkAlignment2 = new global::Gtk.Alignment (0F, 0F, 1F, 1F);
+			this.GtkAlignment2 = new global::Gtk.Alignment(0F, 0F, 1F, 1F);
 			this.GtkAlignment2.Name = "GtkAlignment2";
 			this.GtkAlignment2.LeftPadding = ((uint)(12));
 			// Container child GtkAlignment2.Gtk.Container+ContainerChild
-			this.vbox3 = new global::Gtk.VBox ();
+			this.vbox3 = new global::Gtk.VBox();
 			this.vbox3.Name = "vbox3";
 			this.vbox3.Spacing = 6;
 			// Container child vbox3.Gtk.Box+BoxChild
-			this.hbox2 = new global::Gtk.HBox ();
+			this.hbox2 = new global::Gtk.HBox();
 			this.hbox2.Name = "hbox2";
 			this.hbox2.Spacing = 6;
 			// Container child hbox2.Gtk.Box+BoxChild
-			this.label2 = new global::Gtk.Label ();
+			this.label2 = new global::Gtk.Label();
 			this.label2.Name = "label2";
-			this.label2.LabelProp = global::Mono.Unix.Catalog.GetString ("Group");
-			this.hbox2.Add (this.label2);
-			global::Gtk.Box.BoxChild w15 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.label2]));
+			this.label2.LabelProp = global::Mono.Unix.Catalog.GetString("Group");
+			this.hbox2.Add(this.label2);
+			global::Gtk.Box.BoxChild w15 = ((global::Gtk.Box.BoxChild)(this.hbox2[this.label2]));
 			w15.Position = 0;
 			w15.Expand = false;
 			w15.Fill = false;
 			// Container child hbox2.Gtk.Box+BoxChild
-			this.destGroupSpinButton = new global::Gtk.SpinButton (0, 100, 1);
+			this.destGroupSpinButton = new global::Gtk.SpinButton(0D, 100D, 1D);
 			this.destGroupSpinButton.Sensitive = false;
 			this.destGroupSpinButton.CanFocus = true;
 			this.destGroupSpinButton.Name = "destGroupSpinButton";
-			this.destGroupSpinButton.Adjustment.PageIncrement = 10;
-			this.destGroupSpinButton.ClimbRate = 1;
+			this.destGroupSpinButton.Adjustment.PageIncrement = 10D;
+			this.destGroupSpinButton.ClimbRate = 1D;
 			this.destGroupSpinButton.Numeric = true;
-			this.hbox2.Add (this.destGroupSpinButton);
-			global::Gtk.Box.BoxChild w16 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destGroupSpinButton]));
+			this.hbox2.Add(this.destGroupSpinButton);
+			global::Gtk.Box.BoxChild w16 = ((global::Gtk.Box.BoxChild)(this.hbox2[this.destGroupSpinButton]));
 			w16.Position = 1;
 			w16.Expand = false;
 			w16.Fill = false;
 			// Container child hbox2.Gtk.Box+BoxChild
-			this.destIndexLabel = new global::Gtk.Label ();
+			this.destIndexLabel = new global::Gtk.Label();
 			this.destIndexLabel.Name = "destIndexLabel";
-			this.destIndexLabel.LabelProp = global::Mono.Unix.Catalog.GetString ("Index");
-			this.hbox2.Add (this.destIndexLabel);
-			global::Gtk.Box.BoxChild w17 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destIndexLabel]));
+			this.destIndexLabel.LabelProp = global::Mono.Unix.Catalog.GetString("Index");
+			this.hbox2.Add(this.destIndexLabel);
+			global::Gtk.Box.BoxChild w17 = ((global::Gtk.Box.BoxChild)(this.hbox2[this.destIndexLabel]));
 			w17.Position = 2;
 			w17.Expand = false;
 			w17.Fill = false;
 			// Container child hbox2.Gtk.Box+BoxChild
-			this.destIndexSpinButton = new global::LynnaLab.SpinButtonHexadecimal ();
+			this.destIndexSpinButton = new global::LynnaLab.SpinButtonHexadecimal();
 			this.destIndexSpinButton.Sensitive = false;
 			this.destIndexSpinButton.CanFocus = true;
 			this.destIndexSpinButton.Name = "destIndexSpinButton";
-			this.destIndexSpinButton.Adjustment.Upper = 100;
-			this.destIndexSpinButton.Adjustment.PageIncrement = 10;
-			this.destIndexSpinButton.Adjustment.StepIncrement = 1;
-			this.destIndexSpinButton.ClimbRate = 1;
+			this.destIndexSpinButton.Adjustment.Upper = 100D;
+			this.destIndexSpinButton.Adjustment.PageIncrement = 10D;
+			this.destIndexSpinButton.Adjustment.StepIncrement = 1D;
+			this.destIndexSpinButton.ClimbRate = 1D;
 			this.destIndexSpinButton.Digits = ((uint)(2));
 			this.destIndexSpinButton.Numeric = true;
-			this.hbox2.Add (this.destIndexSpinButton);
-			global::Gtk.Box.BoxChild w18 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destIndexSpinButton]));
+			this.hbox2.Add(this.destIndexSpinButton);
+			global::Gtk.Box.BoxChild w18 = ((global::Gtk.Box.BoxChild)(this.hbox2[this.destIndexSpinButton]));
 			w18.Position = 3;
 			w18.Expand = false;
 			w18.Fill = false;
 			// Container child hbox2.Gtk.Box+BoxChild
-			this.destInfoLabel = new global::Gtk.Label ();
+			this.destInfoLabel = new global::Gtk.Label();
 			this.destInfoLabel.Name = "destInfoLabel";
-			this.hbox2.Add (this.destInfoLabel);
-			global::Gtk.Box.BoxChild w19 = ((global::Gtk.Box.BoxChild)(this.hbox2 [this.destInfoLabel]));
+			this.hbox2.Add(this.destInfoLabel);
+			global::Gtk.Box.BoxChild w19 = ((global::Gtk.Box.BoxChild)(this.hbox2[this.destInfoLabel]));
 			w19.Position = 4;
 			w19.Expand = false;
 			w19.Fill = false;
-			this.vbox3.Add (this.hbox2);
-			global::Gtk.Box.BoxChild w20 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.hbox2]));
+			this.vbox3.Add(this.hbox2);
+			global::Gtk.Box.BoxChild w20 = ((global::Gtk.Box.BoxChild)(this.vbox3[this.hbox2]));
 			w20.Position = 0;
 			w20.Expand = false;
 			w20.Fill = false;
 			// Container child vbox3.Gtk.Box+BoxChild
-			this.destEditorContainer = new global::Gtk.Alignment (0.5F, 0.5F, 1F, 1F);
+			this.destEditorContainer = new global::Gtk.Alignment(0.5F, 0.5F, 1F, 1F);
 			this.destEditorContainer.Name = "destEditorContainer";
-			this.vbox3.Add (this.destEditorContainer);
-			global::Gtk.Box.BoxChild w21 = ((global::Gtk.Box.BoxChild)(this.vbox3 [this.destEditorContainer]));
+			this.vbox3.Add(this.destEditorContainer);
+			global::Gtk.Box.BoxChild w21 = ((global::Gtk.Box.BoxChild)(this.vbox3[this.destEditorContainer]));
 			w21.Position = 1;
-			this.GtkAlignment2.Add (this.vbox3);
-			this.frame2.Add (this.GtkAlignment2);
-			this.GtkLabel3 = new global::Gtk.Label ();
+			this.GtkAlignment2.Add(this.vbox3);
+			this.frame2.Add(this.GtkAlignment2);
+			this.GtkLabel3 = new global::Gtk.Label();
 			this.GtkLabel3.Name = "GtkLabel3";
-			this.GtkLabel3.LabelProp = global::Mono.Unix.Catalog.GetString ("Warp Destination");
+			this.GtkLabel3.LabelProp = global::Mono.Unix.Catalog.GetString("Warp Destination");
 			this.GtkLabel3.UseMarkup = true;
 			this.frame2.LabelWidget = this.GtkLabel3;
-			this.vbox2.Add (this.frame2);
-			global::Gtk.Box.BoxChild w24 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.frame2]));
+			this.vbox2.Add(this.frame2);
+			global::Gtk.Box.BoxChild w24 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.frame2]));
 			w24.Position = 2;
 			w24.Expand = false;
 			// Container child vbox2.Gtk.Box+BoxChild
-			this.alignment1 = new global::Gtk.Alignment (0.5F, 0.5F, 0.06F, 1F);
+			this.alignment1 = new global::Gtk.Alignment(0.5F, 0.5F, 0.06F, 1F);
 			this.alignment1.Name = "alignment1";
 			// Container child alignment1.Gtk.Container+ContainerChild
-			this.okButton = new global::Gtk.Button ();
+			this.okButton = new global::Gtk.Button();
 			this.okButton.CanFocus = true;
 			this.okButton.Name = "okButton";
 			this.okButton.UseStock = true;
 			this.okButton.UseUnderline = true;
 			this.okButton.Label = "gtk-ok";
-			this.alignment1.Add (this.okButton);
-			this.vbox2.Add (this.alignment1);
-			global::Gtk.Box.BoxChild w26 = ((global::Gtk.Box.BoxChild)(this.vbox2 [this.alignment1]));
+			this.alignment1.Add(this.okButton);
+			this.vbox2.Add(this.alignment1);
+			global::Gtk.Box.BoxChild w26 = ((global::Gtk.Box.BoxChild)(this.vbox2[this.alignment1]));
 			w26.Position = 3;
 			w26.Expand = false;
 			w26.Fill = false;
-			this.Add (this.vbox2);
-			if ((this.Child != null)) {
-				this.Child.ShowAll ();
+			this.Add(this.vbox2);
+			if ((this.Child != null))
+			{
+				this.Child.ShowAll();
 			}
-			this.Hide ();
-			this.addWarpButton.Clicked += new global::System.EventHandler (this.OnAddWarpButtonClicked);
-			this.addSpecificWarpButton.Clicked += new global::System.EventHandler (this.OnAddSpecificWarpButtonClicked);
-			this.removeWarpButton.Clicked += new global::System.EventHandler (this.OnRemoveWarpButtonClicked);
-			this.okButton.Clicked += new global::System.EventHandler (this.OnOkButtonClicked);
+			this.Hide();
+			this.addWarpButton.Clicked += new global::System.EventHandler(this.OnAddWarpButtonClicked);
+			this.addSpecificWarpButton.Clicked += new global::System.EventHandler(this.OnAddSpecificWarpButtonClicked);
+			this.removeWarpButton.Clicked += new global::System.EventHandler(this.OnRemoveWarpButtonClicked);
+			this.okButton.Clicked += new global::System.EventHandler(this.OnOkButtonClicked);
 		}
 	}
 }
