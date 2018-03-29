@@ -117,6 +117,7 @@
     <Compile Include="UI\AddObjectDialog.cs" />
     <Compile Include="gtk-gui\LynnaLab.AddObjectDialog.cs" />
     <Compile Include="Core\DocumentationFileComponent.cs" />
+    <Compile Include="Core\Documentation.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

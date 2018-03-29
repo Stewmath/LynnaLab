@@ -1379,7 +1379,7 @@
         <child>
           <widget class="Gtk.ComboBoxEntry" id="combobox1">
             <property name="MemberName" />
-            <property name="WidthRequest">34</property>
+            <property name="WidthRequest">33</property>
             <property name="IsTextCombo">True</property>
             <property name="Items" translatable="yes" />
             <signal name="Changed" handler="OnCombobox1Changed" />

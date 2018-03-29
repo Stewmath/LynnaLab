@@ -1,10 +1,8 @@
 using System;
-using System.Drawing;
 using System.Collections.Generic;
 
 namespace LynnaLab
 {
-
     // Enum of types of values that can be had.
     public enum DataValueType {
         String=0,
@@ -21,6 +19,9 @@ namespace LynnaLab
     // This class provides a way of accessing Data values of various different
     // formats.
     public class ValueReference {
+
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         // Static default value stuff
 
         public static string[] defaultDataValues = {
@@ -79,6 +80,9 @@ namespace LynnaLab
         }
         public ConstantsMapping ConstantsMapping {
             get { return constantsMapping; }
+        }
+        public Project Project {
+            get {return Data.Project; }
         }
 
         // Standard constructor for most DataValueTypes
@@ -209,5 +213,55 @@ namespace LynnaLab
                 return null;
             return constantsMapping.GetDocumentationField((byte)GetIntValue(), name);
         }
+
+        /// <summary>
+        ///  Used for reading subid lists. See constants/interactionTypes.s for how it's
+        ///  formatted...
+        ///
+        ///  Each element in the list is (k,d), where k is the subid value (or just the key in
+        ///  general), and d is the description.
+        /// </summary>
+        public IList<Tuple<string,string>> GetDocumentationFieldSubdivisions(string name) {
+            if (constantsMapping == null)
+                return null;
+            string text = GetDocumentationField(name);
+            if (text == null)
+                return null;
+
+            var output = new List<Tuple<string,string>>();
+
+            int openBrace;
+            while ((openBrace = text.IndexOf('[')) != -1) {
+                int closeBrace = openBrace+1;
+                int j = 1;
+                while (closeBrace<text.Length && j>0) {
+                    if (text[closeBrace] == '[')
+                        j++;
+                    if (text[closeBrace] == ']')
+                        j--;
+                    closeBrace++;
+                }
+                closeBrace--;
+                if (text[closeBrace] != ']') {
+                    log.Warn("Missing ']' for \"@" + name + "\"");
+                    return output;
+                }
+
+                int pipe = text.IndexOf('|', openBrace);
+                if (pipe == -1 || pipe > closeBrace) {
+                    log.Warn("Missing ']' for \"@" + name + "\"");
+                    return output;
+                }
+
+                string key = text.Substring(openBrace+1, pipe-(openBrace+1));
+                string desc = text.Substring(pipe+1, closeBrace-(pipe+1));
+                output.Add(new Tuple<string,string>(key,desc));
+
+                text = text.Substring(closeBrace+1);
+            }
+
+            return output;
+        }
+
     }
 }

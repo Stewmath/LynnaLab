@@ -34,7 +34,7 @@ namespace LynnaLab
 			w1.Position = 0;
 			// Container child hbox1.Gtk.Box+BoxChild
 			this.combobox1 = global::Gtk.ComboBoxEntry.NewText();
-			this.combobox1.WidthRequest = 34;
+			this.combobox1.WidthRequest = 33;
 			this.combobox1.Name = "combobox1";
 			this.hbox1.Add(this.combobox1);
 			global::Gtk.Box.BoxChild w2 = ((global::Gtk.Box.BoxChild)(this.hbox1[this.combobox1]));

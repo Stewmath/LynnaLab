@@ -56,9 +56,12 @@ public class DocumentationFileComponent : FileComponent {
 
         int l = 0;
         string[] lines = str.Split('\n');
+        string description = "";
         while (l < lines.Length) {
             string trimmed = TrimLine(lines[l]);
             if (trimmed.Length == 0 || trimmed[0] != '@') {
+                // Description is outside of any tags
+                description += trimmed + " ";
                 l++;
                 continue;
             }
@@ -83,8 +86,10 @@ public class DocumentationFileComponent : FileComponent {
             l++;
 
             documentationParams.Add(key, value);
-            Console.WriteLine("PARAM: " + key + ", \"" + value + "\"");
         }
+
+        description = description.Trim();
+        documentationParams.Add("desc", description);
     }
 }
 }

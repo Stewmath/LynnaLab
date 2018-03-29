@@ -130,11 +130,15 @@ namespace LynnaLab
                 // Update tooltips in case ID has changed
                 var editor = ObjectDataEditor;
                 while (true) {
-                    for (int i=0; i<activeData.GetNumValues(); i++) {
-                        ValueReference r = activeData.GetValueReference(i);
-                        if (r.Name == "ID") {
-                            ObjectDataEditor.SetTooltip(i, r.GetDocumentationField("desc"));
-                            break;
+                    ValueReference r = activeData.GetValueReference("ID");
+                    if (r != null) {
+                        try {
+                            string tooltip = r.ConstantsMapping.ByteToString((byte)r.GetIntValue()) + "\n\n";
+                            tooltip += r.GetDocumentationField("desc");
+                            ObjectDataEditor.SetTooltip(r, tooltip.Trim());
+                        }
+                        catch(KeyNotFoundException) {
+
                         }
                     }
 

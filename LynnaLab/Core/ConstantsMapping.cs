@@ -132,11 +132,51 @@ public class ConstantsMapping
     }
 
 
+    /// <summary>
+    ///  Returns a list of all possible values (human-readable; shows both the byte and the
+    ///  corresponding string), along with their description if they have one.
+    /// </summary>
+    public IList<Tuple<string,string>> GetAllValuesWithDescriptions() {
+        var list = new List<Tuple<string,string>>();
+        foreach (byte key in byteToString.Keys) {
+            string name =  Wla.ToByte(key) + ": " + RemovePrefix(byteToString[key].str);
+            var tup = new Tuple<string,string>(name, GetDocumentationField(key,"desc"));
+            list.Add(tup);
+        }
+        return list;
+    }
+
+
+    /// <summary>
+    ///  Takes a string, and removes any prefix corresponding to one of this ConstantsMapping's
+    ///  prefixes.
+    /// </summary>
+    public string RemovePrefix(string s) {
+        foreach (string prefix in Prefixes) {
+            if (s.Length >= prefix.Length && s.Substring(0,prefix.Length) == prefix) {
+                s = s.Substring(prefix.Length);
+                break;
+            }
+        }
+
+        return s;
+    }
+
     DocumentationFileComponent GetDocumentation(byte b) {
-        return byteToString[b].documentation;
+        try {
+            return byteToString[b].documentation;
+        }
+        catch(KeyNotFoundException) {
+            return null;
+        }
     }
     DocumentationFileComponent GetDocumentation(string s) {
-        return stringToByte[s].documentation;
+        try {
+            return stringToByte[s].documentation;
+        }
+        catch(KeyNotFoundException) {
+            return null;
+        }
     }
 }
 }

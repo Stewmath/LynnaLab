@@ -85,12 +85,6 @@ namespace LynnaLab {
                     table.Attach(comboBox, x+1,x+2,y,y+1);
                     widgets[index] = comboBox;
 
-                    /*
-                    Gtk.Button helpButton = new Gtk.Button("?");
-                    helpButton.Clicked += delegate(object sender, EventArgs e) {
-                    }
-                    */
-
                     goto loopEnd;
                 }
                 // ConstantsMapping == null
