@@ -4,7 +4,11 @@ namespace LynnaLab
 {
 	public partial class ComboBoxFromConstants
 	{
-		private global::Gtk.ComboBox combobox1;
+		private global::Gtk.HBox hbox1;
+
+		private global::LynnaLab.SpinButtonHexadecimal spinButton;
+
+		private global::Gtk.ComboBoxEntry combobox1;
 
 		protected virtual void Build()
 		{
@@ -13,14 +17,36 @@ namespace LynnaLab
 			global::Stetic.BinContainer.Attach(this);
 			this.Name = "LynnaLab.ComboBoxFromConstants";
 			// Container child LynnaLab.ComboBoxFromConstants.Gtk.Container+ContainerChild
-			this.combobox1 = global::Gtk.ComboBox.NewText();
+			this.hbox1 = new global::Gtk.HBox();
+			this.hbox1.Name = "hbox1";
+			// Container child hbox1.Gtk.Box+BoxChild
+			this.spinButton = new global::LynnaLab.SpinButtonHexadecimal();
+			this.spinButton.CanFocus = true;
+			this.spinButton.Name = "spinButton";
+			this.spinButton.Adjustment.Upper = 255D;
+			this.spinButton.Adjustment.PageIncrement = 16D;
+			this.spinButton.Adjustment.StepIncrement = 1D;
+			this.spinButton.ClimbRate = 1D;
+			this.spinButton.Digits = ((uint)(2));
+			this.spinButton.Numeric = true;
+			this.hbox1.Add(this.spinButton);
+			global::Gtk.Box.BoxChild w1 = ((global::Gtk.Box.BoxChild)(this.hbox1[this.spinButton]));
+			w1.Position = 0;
+			// Container child hbox1.Gtk.Box+BoxChild
+			this.combobox1 = global::Gtk.ComboBoxEntry.NewText();
+			this.combobox1.WidthRequest = 34;
 			this.combobox1.Name = "combobox1";
-			this.Add(this.combobox1);
+			this.hbox1.Add(this.combobox1);
+			global::Gtk.Box.BoxChild w2 = ((global::Gtk.Box.BoxChild)(this.hbox1[this.combobox1]));
+			w2.Position = 1;
+			w2.Expand = false;
+			this.Add(this.hbox1);
 			if ((this.Child != null))
 			{
 				this.Child.ShowAll();
 			}
 			this.Hide();
+			this.spinButton.ValueChanged += new global::System.EventHandler(this.OnSpinButtonValueChanged);
 			this.combobox1.Changed += new global::System.EventHandler(this.OnCombobox1Changed);
 		}
 	}

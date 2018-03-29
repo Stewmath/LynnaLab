@@ -1,6 +1,6 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace LynnaLab
@@ -16,7 +16,10 @@ namespace LynnaLab
 
         Dictionary<string,Label> labelDictionary = new Dictionary<string,Label>();
 
-        public Dictionary<string,string> definesDictionary = new Dictionary<string,string>();
+        // Maps a string (key) to a pair (v,d), where v is the value, and d is
+        // a DocumentationFileComponent (possible null).
+        public Dictionary<string,Tuple<string,DocumentationFileComponent>> definesDictionary =
+            new Dictionary<string,Tuple<string,DocumentationFileComponent>>();
 
         // Objects may be raw strings, or Data structures
         // (In the future, maybe have better structures for defines, etc?)
@@ -28,6 +31,19 @@ namespace LynnaLab
         // The following variables only used by ParseLine and related functions; they provide
         // context between lines when parsing.
 
+        // This keeps track of doxygen-like comments in the code.
+        //
+        // This is only for the current "block", which starts when it sees ";;" and ends when
+        // a non-comment line is encountered.
+        //
+        // "context" variable should equal "DOCUMENTATION" while parsing a documentation block.
+        //
+        // TODO: comments will be lost if this is at the very end of the file...
+        string documentationString;
+
+        // Line index (only used for warning strings)
+        int currentLine = -1;
+
         int ifdefDepth = 0; // The number of nested ifdef statements we're in
         int failedIfdefDepth = 0; // The depth of the last ifdef that failed (if ifdefCondition is false)
         bool ifdefCondition = true; // If false, we're currently skipping over some ifdef code
@@ -36,6 +52,7 @@ namespace LynnaLab
         // Values for context:
         // - "RAMSECTION"
         // - "ENUM"
+        // - "DOCUMENTATION"
 
         // Variables for when context == RAMSECTION or ENUM
         int bank;
@@ -50,6 +67,14 @@ namespace LynnaLab
         public string Filename {
             get { return filename; }
         }
+        public string WarningString {
+            get {
+                if (currentLine == -1) // Probably parsing a line given through code, not from the actual file
+                    return "WARNING inserting lines into \"" + Filename + "\": ";
+                else
+                    return "WARNING while parsing \"" + Filename + "\": Line " + currentLine + ": ";
+            }
+        }
         protected string FullFilename {
             get { return fullFilename; }
         }
@@ -63,7 +88,7 @@ namespace LynnaLab
             }
         }
 
-        public Dictionary<string,string> DefinesDictionary {
+        public Dictionary<string,Tuple<string,DocumentationFileComponent>> DefinesDictionary {
             get { return definesDictionary; }
         }
 
@@ -84,7 +109,8 @@ namespace LynnaLab
             string[] lines = File.ReadAllLines(FullFilename);
 
             for (int i=0; i<lines.Length; i++) {
-                ParseLine(lines[i], i, fileStructure, fileStructureComments);
+                currentLine = i;
+                ParseLine(lines[i], fileStructure, fileStructureComments);
             }
 
             context = "";
@@ -94,11 +120,8 @@ namespace LynnaLab
             log.Info("Finished parsing \"" + Filename + "\".");
         }
 
-        void ParseLine(string pureLine, int i, List<FileComponent> fileStructure, List<string> fileStructureComments) {
-            string[] split = pureLine.Split(';');
-            string line = split[0];
-            string comment = pureLine.Substring(split[0].Length);
-            string warningString = "WARNING while parsing \"" + Filename + "\": Line " + (i+1) + ": ";
+        void ParseLine(string pureLine, List<FileComponent> fileStructure, List<string> fileStructureComments) {
+            string warningString = WarningString;
 
             // Helper functions
 
@@ -108,13 +131,7 @@ namespace LynnaLab
                 if (component is Label)
                     AddLabelToDictionaries(component as Label);
             };
-            Action<Label> AddLabelAndPopFileStructure = (label) => {
-                fileStructure.RemoveAt(fileStructure.Count-1);
-                string c = fileStructureComments[fileStructureComments.Count-1];
-                fileStructureComments.RemoveAt(fileStructureComments.Count-1);
-                AddComponent(label, c);
-            };
-            Action<Data> AddDataAndPopFileStructure = (data) => {
+            Action<FileComponent> AddDataAndPopFileStructure = (data) => {
                 fileStructure.RemoveAt(fileStructure.Count-1);
                 string c = fileStructureComments[fileStructureComments.Count-1];
                 fileStructureComments.RemoveAt(fileStructureComments.Count-1);
@@ -137,225 +154,254 @@ namespace LynnaLab
                     standardValues.Add(fTokens[j]);
 
                 switch (fTokens[0].ToLower()) {
-                    case ".incbin":
-                        {
-                            Data d = new Data(Project, fTokens[0], standardValues, -1,
-                                    this, fSpacing);
-                            AddDataAndPopFileStructure(d);
-                        }
+                case ".incbin": {
+                    Data d = new Data(Project, fTokens[0], standardValues, -1,
+                            this, fSpacing);
+                    AddDataAndPopFileStructure(d);
+                    break;
+                }
+                case ".dw":
+                    if (context == "RAMSECTION" || context == "ENUM")
                         break;
-                    case ".dw":
-                        if (context == "RAMSECTION" || context == "ENUM")
-                            break;
-                        if (fTokens.Length < 2) {
-                            log.Warn(warningString + "Expected .DW to have a value.");
-                            break;
-                        }
-                        size = 2;
-                        goto arbitraryLengthData;
-                    case ".db":
-                        if (context == "RAMSECTION" || context == "ENUM")
-                            break;
-                        if (fTokens.Length < 2) {
-                            log.Warn(warningString + "Expected .DB to have a value.");
-                            break;
-                        }
-                        size = 1;
-                        goto arbitraryLengthData;
-                    case "dwbe":
-                        if (fTokens.Length < 2) {
-                            log.Warn(warningString + "Expected dwbe to have a value.");
-                            break;
-                        }
-                        size = 2;
-                        goto arbitraryLengthData;
-                    case "dbrev":
-                        if (fTokens.Length < 2) {
-                            log.Warn(warningString + "Expected dbrev to have a value.");
-                            break;
-                        }
-                        size = 1;
-                        goto arbitraryLengthData;
+                    if (fTokens.Length < 2) {
+                        log.Warn(warningString + "Expected .DW to have a value.");
+                        break;
+                    }
+                    size = 2;
+                    goto arbitraryLengthData;
+                case ".db":
+                    if (context == "RAMSECTION" || context == "ENUM")
+                        break;
+                    if (fTokens.Length < 2) {
+                        log.Warn(warningString + "Expected .DB to have a value.");
+                        break;
+                    }
+                    size = 1;
+                    goto arbitraryLengthData;
+                case "dwbe":
+                    if (fTokens.Length < 2) {
+                        log.Warn(warningString + "Expected dwbe to have a value.");
+                        break;
+                    }
+                    size = 2;
+                    goto arbitraryLengthData;
+                case "dbrev":
+                    if (fTokens.Length < 2) {
+                        log.Warn(warningString + "Expected dbrev to have a value.");
+                        break;
+                    }
+                    size = 1;
+                    goto arbitraryLengthData;
 arbitraryLengthData:
-                        PopFileStructure();
-                        for (int j=1; j<fTokens.Length; j++) { // Each value is added as individual data
-                            string[] values = { fTokens[j] };
-                            List<int> newfSpacing = new List<int> {fSpacing[0],fSpacing[j],0};
-                            if (j == fTokens.Length-1)
-                                newfSpacing[2] = fSpacing[j+1];
+                    PopFileStructure();
+                    for (int j=1; j<fTokens.Length; j++) { // Each value is added as individual data
+                        string[] values = { fTokens[j] };
+                        List<int> newfSpacing = new List<int> {fSpacing[0],fSpacing[j],0};
+                        if (j == fTokens.Length-1)
+                            newfSpacing[2] = fSpacing[j+1];
 
-                            Data d = new Data(Project, fTokens[0], values, size,
-                                    this, newfSpacing);
-                            if (j != fTokens.Length-1)
-                                d.EndsLine = false;
-                            if (j != 1)
-                                d.PrintCommand = false;
-                            AddComponent(d, "");
-                        }
-                        break;
-                    case "db":
-                        if (context != "RAMSECTION" && context != "ENUM")
-                            goto default;
-                        address++;
-                        break;
-                    case "dw":
-                        if (context != "RAMSECTION" && context != "ENUM")
-                            goto default;
-                        address+=2;
-                        break;
-                    case "dsb":
-                        if (context != "RAMSECTION" && context != "ENUM")
-                            goto default;
-                        address += Project.EvalToInt(fTokens[1]);
-                        break;
-                    case "dsw":
-                        if (context != "RAMSECTION" && context != "ENUM")
-                            goto default;
-                        address += Project.EvalToInt(fTokens[1])*2;
-                        break;
+                        Data d = new Data(Project, fTokens[0], values, size,
+                                this, newfSpacing);
+                        if (j != fTokens.Length-1)
+                            d.EndsLine = false;
+                        if (j != 1)
+                            d.PrintCommand = false;
+                        AddComponent(d, "");
+                    }
+                    break;
+                case "db":
+                    if (context != "RAMSECTION" && context != "ENUM")
+                        goto default;
+                    address++;
+                    break;
+                case "dw":
+                    if (context != "RAMSECTION" && context != "ENUM")
+                        goto default;
+                    address+=2;
+                    break;
+                case "dsb":
+                    if (context != "RAMSECTION" && context != "ENUM")
+                        goto default;
+                    address += Project.EvalToInt(fTokens[1]);
+                    break;
+                case "dsw":
+                    if (context != "RAMSECTION" && context != "ENUM")
+                        goto default;
+                    address += Project.EvalToInt(fTokens[1])*2;
+                    break;
 
-                    case "m_animationloop":
-                        {
-                            Data d = new Data(Project, fTokens[0], standardValues, 2,
+                case "m_animationloop":
+                    {
+                        Data d = new Data(Project, fTokens[0], standardValues, 2,
                                 this, fSpacing);
-                            AddDataAndPopFileStructure(d);
-                            break;
-                        }
-                    case "m_rgb16":
-                        if (fTokens.Length != 4) {
-                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 3 parameters");
-                            break;
-                        }
-                        {
-                            Data d = new RgbData(Project, fTokens[0], standardValues,
-                                    this, fSpacing);
-                            AddDataAndPopFileStructure(d);
-                            break;
-                        }
-                    case "m_gfxheader":
-                    case "m_gfxheaderforcemode":
-                        if (fTokens.Length < 4 || fTokens.Length > 5) {
-                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 3-4 parameters");
-                            break;
-                        }
-                        {
-                            Data d = new GfxHeaderData(Project, fTokens[0], standardValues,
-                                    this, fSpacing);
-                            AddDataAndPopFileStructure(d);
-                            break;
-                        }
-                    case "m_paletteheaderbg":
-                    case "m_paletteheaderspr":
-                        if (fTokens.Length != 5) {
-                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 4 parameters");
-                            break;
-                        }
-                        {
-                            Data d = new PaletteHeaderData(Project, fTokens[0], standardValues,
-                                    this, fSpacing);
-                            AddDataAndPopFileStructure(d);
-                            break;
-                        }
-                    case "m_tilesetheader":
-                        if (fTokens.Length != 6) {
-                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 5 parameters");
-                            break;
-                        }
-                        {
-                            Data d = new TilesetHeaderData(Project, fTokens[0], standardValues,
-                                    this, fSpacing);
-                            AddDataAndPopFileStructure(d);
-                            break;
-                        }
-                    case "m_tilesetdata":
-                        if (fTokens.Length != 2) {
-                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
-                            break;
-                        }
-                        {
-                            Stream file = Project.GetBinaryFile("tilesets/" + Project.GameString + "/" + fTokens[1] + ".bin");
-                            Data d = new Data(Project, fTokens[0], standardValues,
-                                    (Int32)file.Length, this, fSpacing);
-                            AddDataAndPopFileStructure(d);
-                            break;
-                        }
-                    case "m_roomlayoutdata":
-                        if (fTokens.Length != 2) {
-                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
-                            break;
-                        }
-                        {
-                            Label l = new Label(this, fTokens[1]);
-                            l.Fake = true;
-                            AddLabelAndPopFileStructure(l);
-                            Data d = new Data(Project, fTokens[0], standardValues, -1,
-                                    this, fSpacing);
-                            AddComponent(d, "");
-                            break;
-                        }
-                    case "m_seasonalarea":
-                        // In season's "areas.s", the m_SeasonalArea macro points to a label which
-                        // contains 4 area definitions (one for each season).
-                        if (fTokens.Length != 2) {
-                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
-                            break;
-                        }
-                        {
-                            // Create a data object considered to have a size of 8 bytes
-                            Data d = new Data(Project, fTokens[0], standardValues, 8,
-                                    this, fSpacing);
-                            AddDataAndPopFileStructure(d);
-                            break;
-                        }
+                        AddDataAndPopFileStructure(d);
+                        break;
+                    }
+                case "m_rgb16":
+                    if (fTokens.Length != 4) {
+                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 3 parameters");
+                        break;
+                    }
+                    {
+                        Data d = new RgbData(Project, fTokens[0], standardValues,
+                                this, fSpacing);
+                        AddDataAndPopFileStructure(d);
+                        break;
+                    }
+                case "m_gfxheader":
+                case "m_gfxheaderforcemode":
+                    if (fTokens.Length < 4 || fTokens.Length > 5) {
+                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 3-4 parameters");
+                        break;
+                    }
+                    {
+                        Data d = new GfxHeaderData(Project, fTokens[0], standardValues,
+                                this, fSpacing);
+                        AddDataAndPopFileStructure(d);
+                        break;
+                    }
+                case "m_paletteheaderbg":
+                case "m_paletteheaderspr":
+                    if (fTokens.Length != 5) {
+                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 4 parameters");
+                        break;
+                    }
+                    {
+                        Data d = new PaletteHeaderData(Project, fTokens[0], standardValues,
+                                this, fSpacing);
+                        AddDataAndPopFileStructure(d);
+                        break;
+                    }
+                case "m_tilesetheader":
+                    if (fTokens.Length != 6) {
+                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 5 parameters");
+                        break;
+                    }
+                    {
+                        Data d = new TilesetHeaderData(Project, fTokens[0], standardValues,
+                                this, fSpacing);
+                        AddDataAndPopFileStructure(d);
+                        break;
+                    }
+                case "m_tilesetdata":
+                    if (fTokens.Length != 2) {
+                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
+                        break;
+                    }
+                    {
+                        Stream file = Project.GetBinaryFile("tilesets/" + Project.GameString + "/" + fTokens[1] + ".bin");
+                        Data d = new Data(Project, fTokens[0], standardValues,
+                                (Int32)file.Length, this, fSpacing);
+                        AddDataAndPopFileStructure(d);
+                        break;
+                    }
+                case "m_roomlayoutdata":
+                    if (fTokens.Length != 2) {
+                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
+                        break;
+                    }
+                    {
+                        Label l = new Label(this, fTokens[1]);
+                        l.Fake = true;
+                        AddDataAndPopFileStructure(l);
+                        Data d = new Data(Project, fTokens[0], standardValues, -1,
+                                this, fSpacing);
+                        AddComponent(d, "");
+                        break;
+                    }
+                case "m_seasonalarea":
+                    // In season's "areas.s", the m_SeasonalArea macro points to a label which
+                    // contains 4 area definitions (one for each season).
+                    if (fTokens.Length != 2) {
+                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
+                        break;
+                    }
+                    {
+                        // Create a data object considered to have a size of 8 bytes
+                        Data d = new Data(Project, fTokens[0], standardValues, 8,
+                                this, fSpacing);
+                        AddDataAndPopFileStructure(d);
+                        break;
+                    }
 
-                    default:
-                        {
-                            Data d = null;
-                            // Try object commands
-                            for (int j=0; j<ObjectGroup.ObjectCommands.Length; j++) {
-                                string s = ObjectGroup.ObjectCommands[j];
+                default:
+                    {
+                        Data d = null;
+                        // Try object commands
+                        for (int j=0; j<ObjectGroup.ObjectCommands.Length; j++) {
+                            string s = ObjectGroup.ObjectCommands[j];
 
-                                if (s.ToLower() == fTokens[0].ToLower()) {
-                                    int minParams = ObjectGroup.ObjectCommandMinParams[j];
-                                    int maxParams = ObjectGroup.ObjectCommandMaxParams[j];
+                            if (s.ToLower() == fTokens[0].ToLower()) {
+                                int minParams = ObjectGroup.ObjectCommandMinParams[j];
+                                int maxParams = ObjectGroup.ObjectCommandMaxParams[j];
 
-                                    if (minParams == -1) minParams = maxParams;
-                                    if (maxParams == -1) maxParams = minParams;
-                                    if (fTokens.Length-1 < minParams || fTokens.Length-1 > maxParams) {
-                                      log.Warn(warningString + "Expected " + fTokens[0] + " to take " +
-                                          minParams + "-" + maxParams + "parameter(s)");
-                                      break;
-                                    }
-
-                                    var objectType = (ObjectType)j;
-
-                                    d = new ObjectData(Project, fTokens[0], standardValues,
-                                        this, fSpacing, objectType);
+                                if (minParams == -1) minParams = maxParams;
+                                if (maxParams == -1) maxParams = minParams;
+                                if (fTokens.Length-1 < minParams || fTokens.Length-1 > maxParams) {
+                                    log.Warn(warningString + "Expected " + fTokens[0] + " to take " +
+                                            minParams + "-" + maxParams + "parameter(s)");
                                     break;
                                 }
-                            }
-                            // Try warp sources
-                            foreach (string s in WarpSourceData.WarpCommands) {
-                                if (s.ToLower() == fTokens[0].ToLower()) {
-                                    d = new WarpSourceData(Project, fTokens[0], standardValues,
-                                            this, fSpacing);
-                                }
-                            }
-                            // Try warp dest
-                            if (WarpDestData.WarpCommand.ToLower() == fTokens[0].ToLower()) {
-                                d = new WarpDestData(Project, fTokens[0], standardValues,
-                                        this, fSpacing);
-                            }
 
-                            if (d != null) {
-                                AddDataAndPopFileStructure(d);
+                                var objectType = (ObjectType)j;
+
+                                d = new ObjectData(Project, fTokens[0], standardValues,
+                                        this, fSpacing, objectType);
                                 break;
                             }
-                            return false;
                         }
+                        // Try warp sources
+                        foreach (string s in WarpSourceData.WarpCommands) {
+                            if (s.ToLower() == fTokens[0].ToLower()) {
+                                d = new WarpSourceData(Project, fTokens[0], standardValues,
+                                        this, fSpacing);
+                            }
+                        }
+                        // Try warp dest
+                        if (WarpDestData.WarpCommand.ToLower() == fTokens[0].ToLower()) {
+                            d = new WarpDestData(Project, fTokens[0], standardValues,
+                                    this, fSpacing);
+                        }
+
+                        if (d != null) {
+                            AddDataAndPopFileStructure(d);
+                            break;
+                        }
+                        return false;
+                    }
                 }
                 return true;
             };
+
+            string pureTrimmedLine = pureLine.Trim();
+
+            // If we're in a documentation block, add any comments to the documentation
+            if (context == "DOCUMENTATION") {
+                if (pureTrimmedLine.Length > 0 && pureTrimmedLine[0] == ';') {
+                    documentationString += pureLine + '\n';
+                    return;
+                }
+                else {
+                    context = "";
+                    AddComponent(new DocumentationFileComponent(this, documentationString), "");
+                    context = "";
+                }
+            }
+
+            // Check if we're starting a documentation block
+            if (pureTrimmedLine.Length >= 2 && pureTrimmedLine.Substring(0,2) == ";;") { // Begin documentation block
+                if (context == "DOCUMENTATION")
+                    log.Warn(warningString + "Documentation block already open.");
+                else {
+                    context = "DOCUMENTATION";
+                    documentationString = pureLine + '\n';
+                }
+                return;
+            }
+
+            string[] split = pureLine.Split(';');
+            string line = split[0];
+            string comment = pureLine.Substring(split[0].Length);
 
             // Add raw string to file structure, it'll be removed if
             // a better representation is found
@@ -527,7 +573,7 @@ arbitraryLengthData:
                                 }
                                 else {
                                     Label label = new Label(this,s,spacing);
-                                    AddLabelAndPopFileStructure(label);
+                                    AddDataAndPopFileStructure(label);
                                     addedComponent = label;
                                 }
                                 if (tokens.Length > 1) { // There may be data directly after the label
@@ -561,9 +607,17 @@ arbitraryLengthData:
             }
         }
 
+        /// <summary>
+        ///  Adds something to the definesDictionary. Expects that we're adding something on the
+        ///  most recent line; it checks the previous line for a DocumentationFileComponent.
+        /// </summary>
         void AddDefinition(string def, string value) {
             Project.AddDefinition(def, value);
-            definesDictionary[def] = value;
+
+            DocumentationFileComponent doc = null;
+            if (fileStructure.Count >= 2)
+                doc = fileStructure[fileStructure.Count-2] as DocumentationFileComponent;
+            definesDictionary[def] = new Tuple<string,DocumentationFileComponent>(value, doc);
         }
 
         void AddLabelToDictionaries(Label label) {
@@ -684,7 +738,8 @@ arbitraryLengthData:
             List<string> structureComments = new List<string>();
 
             for (int i=0;i<text.Length;i++) {
-                ParseLine(text[i], i, structure, structureComments);
+                currentLine = -1;
+                ParseLine(text[i], structure, structureComments);
             }
 
             fileStructure.InsertRange(index+1, structure);
@@ -707,7 +762,8 @@ arbitraryLengthData:
             List<string> structureComments = new List<string>();
 
             for (int i=0;i<text.Length;i++) {
-                ParseLine(text[i], i, structure, structureComments);
+                currentLine = -1;
+                ParseLine(text[i], structure, structureComments);
             }
 
             fileStructure.InsertRange(index, structure);

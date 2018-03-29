@@ -4,6 +4,10 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
+    /// <summary>
+    ///  This usually corresponds to a line in a file, but it can generally also be a logical unit
+    ///  (ie. a documentation block).
+    /// </summary>
     public abstract class FileComponent {
         protected List<int> spacing;
         protected FileParser parser;

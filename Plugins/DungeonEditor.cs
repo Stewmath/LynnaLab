@@ -132,11 +132,11 @@ namespace Plugins
                 dungeonVre.ShowAll();
 
                 // Tooltips
-                dungeonVre.AddTooltip(0, "Also known as the high byte of the room index.");
-                dungeonVre.AddTooltip(1, "The low byte of the room index wallmasters will send you to.");
-                dungeonVre.AddTooltip(2, "The index of the layout for the bottom floor. Subsequent floors will use subsequent indices.");
-                dungeonVre.AddTooltip(4, "Determines what the game will call the bottom floor. For a value of:\n$00: The bottom floor is 'B3'.\n$01: The bottom floor is 'B2'.\n$02: The bottom floor is 'B1'.\n$03: The bottom floor is 'F1'.");
-                dungeonVre.AddTooltip(5, "A bitset of floors that will appear on the map when the compass is obtained.\n\nEg. If this is $05, then floors 0 and 2 will be unlocked (bits 0 and 2 are set).");
+                dungeonVre.SetTooltip(0, "Also known as the high byte of the room index.");
+                dungeonVre.SetTooltip(1, "The low byte of the room index wallmasters will send you to.");
+                dungeonVre.SetTooltip(2, "The index of the layout for the bottom floor. Subsequent floors will use subsequent indices.");
+                dungeonVre.SetTooltip(4, "Determines what the game will call the bottom floor. For a value of:\n$00: The bottom floor is 'B3'.\n$01: The bottom floor is 'B2'.\n$02: The bottom floor is 'B1'.\n$03: The bottom floor is 'F1'.");
+                dungeonVre.SetTooltip(5, "A bitset of floors that will appear on the map when the compass is obtained.\n\nEg. If this is $05, then floors 0 and 2 will be unlocked (bits 0 and 2 are set).");
 
                 dungeonVreContainer.Add(dungeonVre);
                 minimap.SetMap(dungeon);

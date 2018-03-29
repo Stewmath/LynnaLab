@@ -6,7 +6,7 @@
   </configuration>
   <import>
     <widget-library name="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <widget-library name="../bin/Release/LynnaLab.exe" internal="true" />
+    <widget-library name="../bin/Debug/LynnaLab.exe" internal="true" />
   </import>
   <widget class="Gtk.Window" id="MainWindow" design-size="974 627">
     <action-group name="Default">
@@ -177,7 +177,7 @@
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
                             <property name="Upper">1535</property>
-                            <property name="PageIncrement">10</property>
+                            <property name="PageIncrement">16</property>
                             <property name="StepIncrement">1</property>
                             <property name="ClimbRate">1</property>
                             <property name="Digits">3</property>
@@ -255,7 +255,7 @@
                                     <property name="MemberName" />
                                     <property name="CanFocus">True</property>
                                     <property name="Upper">255</property>
-                                    <property name="PageIncrement">10</property>
+                                    <property name="PageIncrement">16</property>
                                     <property name="StepIncrement">1</property>
                                     <property name="ClimbRate">1</property>
                                     <property name="Digits">2</property>
@@ -801,7 +801,7 @@
                 <property name="MemberName" />
                 <property name="CanFocus">True</property>
                 <property name="Upper">255</property>
-                <property name="PageIncrement">10</property>
+                <property name="PageIncrement">16</property>
                 <property name="StepIncrement">1</property>
                 <property name="ClimbRate">1</property>
                 <property name="Digits">2</property>
@@ -848,7 +848,7 @@
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
                             <property name="Upper">100</property>
-                            <property name="PageIncrement">10</property>
+                            <property name="PageIncrement">16</property>
                             <property name="StepIncrement">1</property>
                             <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>
@@ -876,7 +876,7 @@
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
                             <property name="Upper">255</property>
-                            <property name="PageIncrement">10</property>
+                            <property name="PageIncrement">16</property>
                             <property name="StepIncrement">1</property>
                             <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>
@@ -902,7 +902,7 @@
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
                             <property name="Upper">255</property>
-                            <property name="PageIncrement">10</property>
+                            <property name="PageIncrement">16</property>
                             <property name="StepIncrement">1</property>
                             <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>
@@ -1080,7 +1080,7 @@
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
                             <property name="Upper">100</property>
-                            <property name="PageIncrement">10</property>
+                            <property name="PageIncrement">16</property>
                             <property name="StepIncrement">1</property>
                             <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>
@@ -1156,7 +1156,7 @@
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
                             <property name="Upper">100</property>
-                            <property name="PageIncrement">10</property>
+                            <property name="PageIncrement">16</property>
                             <property name="StepIncrement">1</property>
                             <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>
@@ -1353,15 +1353,43 @@
       </widget>
     </child>
   </widget>
-  <widget class="Gtk.Bin" id="LynnaLab.ComboBoxFromConstants" design-size="300 300">
+  <widget class="Gtk.Bin" id="LynnaLab.ComboBoxFromConstants" design-size="302 300">
     <property name="MemberName" />
     <property name="Visible">False</property>
     <child>
-      <widget class="Gtk.ComboBox" id="combobox1">
+      <widget class="Gtk.HBox" id="hbox1">
         <property name="MemberName" />
-        <property name="IsTextCombo">True</property>
-        <property name="Items" translatable="yes" />
-        <signal name="Changed" handler="OnCombobox1Changed" />
+        <child>
+          <widget class="LynnaLab.SpinButtonHexadecimal" id="spinButton">
+            <property name="MemberName" />
+            <property name="CanFocus">True</property>
+            <property name="Upper">255</property>
+            <property name="PageIncrement">16</property>
+            <property name="StepIncrement">1</property>
+            <property name="ClimbRate">1</property>
+            <property name="Digits">2</property>
+            <property name="Numeric">True</property>
+            <signal name="ValueChanged" handler="OnSpinButtonValueChanged" />
+          </widget>
+          <packing>
+            <property name="Position">0</property>
+            <property name="AutoSize">False</property>
+          </packing>
+        </child>
+        <child>
+          <widget class="Gtk.ComboBoxEntry" id="combobox1">
+            <property name="MemberName" />
+            <property name="WidthRequest">34</property>
+            <property name="IsTextCombo">True</property>
+            <property name="Items" translatable="yes" />
+            <signal name="Changed" handler="OnCombobox1Changed" />
+          </widget>
+          <packing>
+            <property name="Position">1</property>
+            <property name="AutoSize">False</property>
+            <property name="Expand">False</property>
+          </packing>
+        </child>
       </widget>
     </child>
   </widget>
@@ -1639,7 +1667,7 @@
                 <property name="MemberName" />
                 <property name="CanFocus">True</property>
                 <property name="Upper">100</property>
-                <property name="PageIncrement">10</property>
+                <property name="PageIncrement">16</property>
                 <property name="StepIncrement">1</property>
                 <property name="ClimbRate">1</property>
                 <property name="Digits">3</property>
@@ -1880,7 +1908,7 @@
                             <property name="Sensitive">False</property>
                             <property name="CanFocus">True</property>
                             <property name="Upper">100</property>
-                            <property name="PageIncrement">10</property>
+                            <property name="PageIncrement">16</property>
                             <property name="StepIncrement">1</property>
                             <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>

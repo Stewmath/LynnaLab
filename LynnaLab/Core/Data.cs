@@ -172,6 +172,9 @@ namespace LynnaLab
                 return null;
             return valueReferenceGroup.GetValueReferences();
         }
+        public ValueReference GetValueReference(int i) {
+            return GetValueReferences()[i];
+        }
         public ValueReference GetValueReference(string name) {
             if (valueReferenceGroup == null)
                 return null;

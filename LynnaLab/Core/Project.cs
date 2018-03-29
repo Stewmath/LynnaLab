@@ -16,6 +16,7 @@ namespace LynnaLab
         public readonly ConstantsMapping MusicMapping;
         public readonly ConstantsMapping SourceTransitionMapping;
         public readonly ConstantsMapping DestTransitionMapping;
+        public readonly ConstantsMapping InteractionMapping;
 
         log4net.Appender.RollingFileAppender logAppender;
 
@@ -78,23 +79,26 @@ namespace LynnaLab
 
             // Initialize constantsMappings
             UniqueGfxMapping = new ConstantsMapping(
-                    GetFileParser("constants/uniqueGfxHeaders.s") as FileParser,
+                    GetFileParser("constants/uniqueGfxHeaders.s"),
                     "UNIQGFXH_");
             MainGfxMapping = new ConstantsMapping(
-                    GetFileParser("constants/gfxHeaders.s") as FileParser,
+                    GetFileParser("constants/gfxHeaders.s"),
                     "GFXH_");
             PaletteHeaderMapping = new ConstantsMapping(
-                    GetFileParser("constants/paletteHeaders.s") as FileParser,
+                    GetFileParser("constants/paletteHeaders.s"),
                     "PALH_");
             MusicMapping = new ConstantsMapping(
-                    GetFileParser("constants/music.s") as FileParser,
+                    GetFileParser("constants/music.s"),
                     new string[] {"MUS_", "SND_"} );
             SourceTransitionMapping = new ConstantsMapping(
-                    GetFileParser("constants/transitions.s") as FileParser,
+                    GetFileParser("constants/transitions.s"),
                     "TRANSITION_SRC_");
             DestTransitionMapping = new ConstantsMapping(
-                    GetFileParser("constants/transitions.s") as FileParser,
+                    GetFileParser("constants/transitions.s"),
                     "TRANSITION_DEST_");
+            InteractionMapping = new ConstantsMapping(
+                    GetFileParser("constants/interactionTypes.s"),
+                    "INTERACID_");
 
             // Parse everything in data/
             // A few files need to be loaded before others through

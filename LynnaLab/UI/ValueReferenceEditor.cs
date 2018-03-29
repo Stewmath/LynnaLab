@@ -28,6 +28,10 @@ namespace LynnaLab {
             get { return subEditor; }
         }
 
+        public ValueReferenceGroup ValueReferenceGroup {
+            get { return valueReferenceGroup; }
+        }
+
         public ValueReferenceEditor(Project p, Data data, string frameText=null) 
             : this(p, data.GetValueReferenceGroup(), frameText)
         {
@@ -63,12 +67,14 @@ namespace LynnaLab {
 
                 widgetPositions[index] = new Tuple<uint,uint>(x,y);
 
+                // If it has a ConstantsMapping, use a combobox instead of anything else
                 if (r.ConstantsMapping != null) {
                     ComboBoxFromConstants comboBox = new ComboBoxFromConstants();
                     comboBox.SetConstantsMapping(r.ConstantsMapping);
 
                     comboBox.Changed += delegate(object sender, EventArgs e) {
                         r.SetValue(comboBox.ActiveValue);
+                        OnDataModifiedInternal();
                     };
 
                     dataModifiedExternalEvent += delegate() {
@@ -78,6 +84,12 @@ namespace LynnaLab {
                     table.Attach(new Gtk.Label(r.Name), x+0,x+1,y,y+1);
                     table.Attach(comboBox, x+1,x+2,y,y+1);
                     widgets[index] = comboBox;
+
+                    /*
+                    Gtk.Button helpButton = new Gtk.Button("?");
+                    helpButton.Clicked += delegate(object sender, EventArgs e) {
+                    }
+                    */
 
                     goto loopEnd;
                 }
@@ -204,12 +216,13 @@ byteCase:
                         }
                         break;
                     case DataValueType.ByteBits:
+                    case DataValueType.WordBits:
                         {
                             table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
                             SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,r.MaxValue);
                             if (!r.Editable)
                                 spinButton.Sensitive = false;
-                            spinButton.Digits = (uint)((r.MaxValue+0xf)/0x10);
+                            spinButton.Digits = (uint)Math.Pow(r.MaxValue, ((double)1)/16)+1;
                             spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                                 Gtk.SpinButton button = sender as Gtk.SpinButton;
                                 if (maxBounds[index] == 0 || button.ValueAsInt <= maxBounds[index]) {
@@ -300,9 +313,15 @@ loopEnd:
             table.Attach(newWidget, pos.Item1+1, pos.Item1+2, pos.Item2, pos.Item2+1);
             widgets[i] = newWidget;
         }
+        public void SetTooltip(ValueReference r, Gtk.Widget newWidget) {
+            ReplaceWidget(valueReferenceGroup.GetIndexOf(r), newWidget);
+        }
 
-        public void AddTooltip(int i, string tooltip) {
+        public void SetTooltip(int i, string tooltip) {
             widgets[i].TooltipText = tooltip;
+        }
+        public void SetTooltip(ValueReference r, string tooltip) {
+            SetTooltip(valueReferenceGroup.GetIndexOf(r), tooltip);
         }
 
         public void AddDataModifiedHandler(Action handler) {

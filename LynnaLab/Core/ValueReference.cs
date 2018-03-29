@@ -13,6 +13,7 @@ namespace LynnaLab
         Word,
         ByteBit,
         ByteBits,
+        WordBits,
         ObjectPointer,
         WarpDestIndex,
     }
@@ -66,10 +67,11 @@ namespace LynnaLab
                         return 0xff;
                     case DataValueType.Word:
                         return 0xffff;
-                    case DataValueType.ByteBits:
-                        return (1<<(endBit-startBit+1))-1;
                     case DataValueType.ByteBit:
                         return 1;
+                    case DataValueType.ByteBits:
+                    case DataValueType.WordBits:
+                        return (1<<(endBit-startBit+1))-1;
                     default:
                         return 0;
                 }
@@ -85,7 +87,7 @@ namespace LynnaLab
             ValueType = t;
             Name = n;
             Editable = editable;
-            if (t == DataValueType.ByteBits || t == DataValueType.ByteBit)
+            if (t == DataValueType.ByteBits || t == DataValueType.ByteBit || t == DataValueType.WordBits)
                 throw new Exception("Wrong constructor");
         }
         // Constructor for DataValueType.ByteBits
@@ -116,7 +118,7 @@ namespace LynnaLab
             Editable = editable;
             this.constantsMappingString = constantsMappingString;
             Console.WriteLine("Mapping string " + this.constantsMappingString);
-            if (t == DataValueType.ByteBits || t == DataValueType.ByteBit)
+            if (t == DataValueType.ByteBits || t == DataValueType.ByteBit || t == DataValueType.WordBits)
                 throw new Exception("Wrong constructor");
         }
 
@@ -145,6 +147,7 @@ namespace LynnaLab
         public virtual int GetIntValue() {
             switch(ValueType) {
                 case DataValueType.ByteBits:
+                case DataValueType.WordBits:
                     {
                         int andValue = (1<<(endBit-startBit+1))-1;
                         return (data.GetIntValue(valueIndex)>>startBit)&andValue;
@@ -177,11 +180,15 @@ namespace LynnaLab
                     data.SetWordValue(valueIndex,i);
                     break;
                 case DataValueType.ByteBits:
+                case DataValueType.WordBits:
                     {
                         int andValue = ((1<<(endBit-startBit+1))-1);
                         int value = data.GetIntValue(valueIndex) & (~(andValue<<startBit));
                         value |= ((i&andValue)<<startBit);
-                        data.SetByteValue(valueIndex,(byte)value);
+                        if (ValueType == DataValueType.ByteBits)
+                            data.SetByteValue(valueIndex,(byte)value);
+                        else
+                            data.SetWordValue(valueIndex,value);
                     }
                     break;
                 case DataValueType.ByteBit:
@@ -192,6 +199,15 @@ namespace LynnaLab
                     }
                     break;
             }
+        }
+
+        /// <summary>
+        ///  Returns a field from documentation (ie. "@desc{An interaction}").
+        /// </summary>
+        public string GetDocumentationField(string name) {
+            if (constantsMapping == null)
+                return null;
+            return constantsMapping.GetDocumentationField((byte)GetIntValue(), name);
         }
     }
 }

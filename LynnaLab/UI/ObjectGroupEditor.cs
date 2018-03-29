@@ -121,12 +121,28 @@ namespace LynnaLab
                 SetObjectData(ObjectGroup.GetObjectData(i));
         }
         void SetObjectData(ObjectData data) {
+            activeData = data;
+
             Action handler = delegate() {
                 if (RoomEditor != null)
                     RoomEditor.OnObjectsModified();
-            };
 
-            activeData = data;
+                // Update tooltips in case ID has changed
+                var editor = ObjectDataEditor;
+                while (true) {
+                    for (int i=0; i<activeData.GetNumValues(); i++) {
+                        ValueReference r = activeData.GetValueReference(i);
+                        if (r.Name == "ID") {
+                            ObjectDataEditor.SetTooltip(i, r.GetDocumentationField("desc"));
+                            break;
+                        }
+                    }
+
+                    if (SubEditor == null)
+                        break;
+                    editor = SubEditor.ObjectDataEditor;
+                }
+            };
 
             foreach (Gtk.Widget widget in objectDataContainer.Children) {
                 objectDataContainer.Remove(widget);

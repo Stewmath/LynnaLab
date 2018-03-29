@@ -3,69 +3,140 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
-    // ConstantsMapping: takes a file from the constants folder and creates
-    // a 1:1 mapping between definitions and values.
-	public class ConstantsMapping
-	{
-        public Project Project {
-            get { return parser.Project; }
+/// <summary>
+///  Takes a file from the constants folder and creates a 1:1 mapping between definitions and
+///  values.
+/// </summary>
+public class ConstantsMapping
+{
+    /// <summary>
+    ///  A string/byte pair.
+    /// </summary>
+    class Entry {
+        public string str;
+        public byte b;
+        public DocumentationFileComponent documentation; // Documentation, if available (null otherwise)
+
+        public Entry(string _str, byte _b, DocumentationFileComponent _doc) {
+            str = _str;
+            b = _b;
+            documentation = _doc;
         }
+    }
 
-        // This list is only necessary to preserve ordering
-        List<string> stringList = new List<string>();
+    // This list is only necessary to preserve ordering
+    List<string> stringList = new List<string>();
 
-		Dictionary<string,byte> stringToByte = new Dictionary<string,byte>();
-		Dictionary<byte,string> byteToString = new Dictionary<byte,string>();
+    // Mappings in both directions
+    Dictionary<string,Entry> stringToByte = new Dictionary<string,Entry>();
+    Dictionary<byte,Entry> byteToString = new Dictionary<byte,Entry>();
 
-        FileParser parser;
+    string[] prefixes;
 
-        public ConstantsMapping(FileParser parser, string prefix)
-            : this(parser, new string[] { prefix }) {}
+    FileParser parser;
 
-		public ConstantsMapping(FileParser parser, string[] prefixes)
-		{
-            this.parser = parser;
 
-            Dictionary<string,string> definesDictionary = parser.DefinesDictionary;
-            foreach (string key in definesDictionary.Keys) {
-                bool acceptable = false;
-                foreach (string prefix in prefixes)
-                    if (key.Substring(0, prefix.Length) == prefix) {
-                        acceptable = true;
-                        break;
+    public Project Project {
+        get { return parser.Project; }
+    }
+
+    public string[] Prefixes {
+        get { return prefixes; }
+    }
+
+    public ConstantsMapping(FileParser parser, string prefix)
+        : this(parser, new string[] { prefix }) {}
+
+    public ConstantsMapping(FileParser _parser, string[] _prefixes)
+    {
+        this.parser = _parser;
+        this.prefixes = _prefixes;
+
+        Dictionary<string,Tuple<string,DocumentationFileComponent>> definesDictionary = parser.DefinesDictionary;
+        foreach (string key in definesDictionary.Keys) {
+            bool acceptable = false;
+            foreach (string prefix in prefixes)
+                if (key.Substring(0, prefix.Length) == prefix) {
+                    acceptable = true;
+                    break;
+                }
+
+            if (acceptable) {
+                Entry tmp;
+                if (!stringToByte.TryGetValue(key, out tmp)) {
+                    try {
+                        var tup = definesDictionary[key];
+                        string val = tup.Item1;
+                        var docComponent = tup.Item2;
+
+                        byte b = (byte)Project.EvalToInt(val);
+                        stringList.Add(key);
+
+                        Entry ent = new Entry(key, b, docComponent);
+
+                        stringToByte[key] = ent;
+                        byteToString[b] = ent;
                     }
-
-                if (acceptable) {
-                    byte tmp;
-                    if (!stringToByte.TryGetValue(key, out tmp)) {
-                        try {
-                            byte b = (byte)Project.EvalToInt(definesDictionary[key]);
-                            stringList.Add(key);
-                            stringToByte[key] = b;
-                            byteToString[b] = key;
-                        }
-                        catch (FormatException) {}
-                    }
+                    catch (FormatException) {}
                 }
             }
-		}
+        }
+    }
 
-		public byte StringToByte(string key) {
-            return stringToByte[key];
-		}
-		public string ByteToString(byte key) {
-            return byteToString[key];
-		}
-        public int IndexOf(string key) {
-            var list = GetAllStrings();
-            return list.IndexOf(key);
-        }
-        public int IndexOf(byte val) {
-            return IndexOf(ByteToString(val));
-        }
+    // May throw KeyNotFoundException
+    public byte StringToByte(string key) {
+        return stringToByte[key].b;
+    }
+    public string ByteToString(byte key) {
+        return byteToString[key].str;
+    }
 
-        public IList<string> GetAllStrings() {
-            return stringList;
+    public int IndexOf(string key) {
+        var list = GetAllStrings();
+        return list.IndexOf(key); // TODO: optimize
+    }
+    public int IndexOf(byte val) {
+        try {
+            return IndexOf(ByteToString((byte)val));
         }
-	}
+        catch(KeyNotFoundException) {
+            return -1;
+        }
+    }
+
+
+    public byte GetIndexByte(int i) {
+        return StringToByte(stringList[i]);
+    }
+    public string GetIndexString(int i) {
+        return stringList[i];
+    }
+
+
+    public IList<string> GetAllStrings() {
+        return stringList;
+    }
+
+
+    public string GetDocumentationField(byte key, string name) {
+        var doc = GetDocumentation(key);
+        if (doc == null)
+            return null;
+        return doc.GetField(name);
+    }
+    public string GetDocumentationField(string key, string name) {
+        var doc = GetDocumentation(key);
+        if (doc == null)
+            return null;
+        return doc.GetField(name);
+    }
+
+
+    DocumentationFileComponent GetDocumentation(byte b) {
+        return byteToString[b].documentation;
+    }
+    DocumentationFileComponent GetDocumentation(string s) {
+        return stringToByte[s].documentation;
+    }
+}
 }
