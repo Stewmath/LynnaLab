@@ -12,6 +12,9 @@ namespace LynnaLab {
         // The widgets by index.
         IList<Gtk.Widget> widgets;
 
+        // List of container widgets for help buttons (1 per item)
+        IList<Gtk.Container> helpButtonContainers;
+
         // The main table which holds all the widgets.
         Gtk.Table table;
 
@@ -51,6 +54,7 @@ namespace LynnaLab {
             maxBounds = new int[valueReferenceGroup.GetNumValueReferences()];
             widgetPositions = new Tuple<uint,uint>[maxBounds.Count];
             widgets = new Gtk.Widget[maxBounds.Count];
+            helpButtonContainers = new Gtk.Container[maxBounds.Count];
 
             table = new Gtk.Table(2, 2, false);
             uint x=0,y=0;
@@ -69,7 +73,7 @@ namespace LynnaLab {
 
                 // If it has a ConstantsMapping, use a combobox instead of anything else
                 if (r.ConstantsMapping != null) {
-                    ComboBoxFromConstants comboBox = new ComboBoxFromConstants();
+                    ComboBoxFromConstants comboBox = new ComboBoxFromConstants(false);
                     comboBox.SetConstantsMapping(r.ConstantsMapping);
 
                     comboBox.Changed += delegate(object sender, EventArgs e) {
@@ -78,12 +82,15 @@ namespace LynnaLab {
                     };
 
                     dataModifiedExternalEvent += delegate() {
-                        comboBox.ActiveValue = r.GetIntValue();
+                        comboBox.ActiveValue = r.GetIntValue ();
                     };
 
                     table.Attach(new Gtk.Label(r.Name), x+0,x+1,y,y+1);
                     table.Attach(comboBox, x+1,x+2,y,y+1);
                     widgets[index] = comboBox;
+
+                    helpButtonContainers[index] = new Gtk.HBox();
+                    table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
 
                     goto loopEnd;
                 }
@@ -103,6 +110,9 @@ namespace LynnaLab {
                             };
                             table.Attach(entry, x+1,x+2, y, y+1);
                             widgets[index] = entry;
+
+                            helpButtonContainers[index] = new Gtk.HBox();
+                            table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
                             break;
                         }
                     case DataValueType.Byte:
@@ -133,6 +143,9 @@ byteCase:
                             };
                             table.Attach(spinButton, x+1,x+2, y, y+1);
                             widgets[index] = spinButton;
+
+                            helpButtonContainers[index] = new Gtk.HBox();
+                            table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
                         }
                         break;
 
@@ -188,6 +201,9 @@ byteCase:
                             };
                             table.Attach(spinButton, x+1,x+2, y, y+1);
                             widgets[index] = spinButton;
+
+                            helpButtonContainers[index] = new Gtk.HBox();
+                            table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
                         }
                         break;
                     case DataValueType.ByteBit:
@@ -207,6 +223,9 @@ byteCase:
                             };
                             table.Attach(checkButton, x+1,x+2, y, y+1);
                             widgets[index] = checkButton;
+
+                            helpButtonContainers[index] = new Gtk.HBox();
+                            table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
                         }
                         break;
                     case DataValueType.ByteBits:
@@ -231,6 +250,9 @@ byteCase:
                             };
                             table.Attach(spinButton, x+1,x+2, y, y+1);
                             widgets[index] = spinButton;
+
+                            helpButtonContainers[index] = new Gtk.HBox();
+                            table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
                         }
                         break;
                     case DataValueType.ObjectPointer:
@@ -258,6 +280,9 @@ byteCase:
                                 entry.Text = r.GetStringValue();
                                 UpdatePointerTextBox(entry, r);
                             };
+
+                            helpButtonContainers[index] = new Gtk.HBox();
+                            table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
                         }
                         break;
                 }
@@ -293,6 +318,8 @@ loopEnd:
             // Initial values
             if (dataModifiedExternalEvent != null)
                 dataModifiedExternalEvent();
+
+            UpdateHelpButtons();
         }
 
         public void SetMaxBound(int i, int max) {
@@ -306,9 +333,6 @@ loopEnd:
             var pos = widgetPositions[i];
             table.Attach(newWidget, pos.Item1+1, pos.Item1+2, pos.Item2, pos.Item2+1);
             widgets[i] = newWidget;
-        }
-        public void SetTooltip(ValueReference r, Gtk.Widget newWidget) {
-            ReplaceWidget(valueReferenceGroup.GetIndexOf(r), newWidget);
         }
 
         public void SetTooltip(int i, string tooltip) {
@@ -360,5 +384,34 @@ loopEnd:
             pointerFrame.ShowAll();
         }
 
+        // Check if there are entries that should have help buttons
+        public void UpdateHelpButtons() {
+            IList<ValueReference> refs = valueReferenceGroup.GetValueReferences();
+
+            for (int i=0; i<refs.Count; i++) {
+                Gtk.Container container = helpButtonContainers[i];
+                if (container == null)
+                    continue;
+
+                // Remove previous help button
+                foreach (Gtk.Widget widget in container.Children) {
+                    container.Remove(widget);
+                    widget.Destroy();
+                }
+
+                ValueReference r = refs[i];
+                if (r.Documentation != null) {
+                    Gtk.Button helpButton = new Gtk.Button("?");
+                    helpButton.CanFocus = false;
+                    helpButton.Clicked += delegate(object sender, EventArgs e) {
+                        DocumentationDialog d = new DocumentationDialog(r.Documentation);
+                        d.Run();
+                        d.Destroy();
+                    };
+                    container.Add(helpButton);
+                }
+            }
+            this.ShowAll();
+        }
     }
 }

@@ -7,6 +7,7 @@
     - View and edit object animations
 
 - Technicalities:
+    - Treat no-value, 2-value, and quad-value interactions the same
     - Understand local labels
     - Deal with ConstantsMappings that don't have a mapping for a value
     - Figure out how to deal with hard-coded warp destinations:

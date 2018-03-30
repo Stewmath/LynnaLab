@@ -218,7 +218,7 @@ public partial class MainWindow
 		this.roomSpinButton.CanFocus = true;
 		this.roomSpinButton.Name = "roomSpinButton";
 		this.roomSpinButton.Adjustment.Upper = 1535D;
-		this.roomSpinButton.Adjustment.PageIncrement = 10D;
+		this.roomSpinButton.Adjustment.PageIncrement = 16D;
 		this.roomSpinButton.Adjustment.StepIncrement = 1D;
 		this.roomSpinButton.ClimbRate = 1D;
 		this.roomSpinButton.Digits = ((uint)(3));
@@ -265,7 +265,7 @@ public partial class MainWindow
 		this.areaSpinButton.CanFocus = true;
 		this.areaSpinButton.Name = "areaSpinButton";
 		this.areaSpinButton.Adjustment.Upper = 255D;
-		this.areaSpinButton.Adjustment.PageIncrement = 10D;
+		this.areaSpinButton.Adjustment.PageIncrement = 16D;
 		this.areaSpinButton.Adjustment.StepIncrement = 1D;
 		this.areaSpinButton.ClimbRate = 1D;
 		this.areaSpinButton.Digits = ((uint)(2));

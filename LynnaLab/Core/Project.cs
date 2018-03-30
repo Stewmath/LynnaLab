@@ -17,6 +17,10 @@ namespace LynnaLab
         public readonly ConstantsMapping SourceTransitionMapping;
         public readonly ConstantsMapping DestTransitionMapping;
         public readonly ConstantsMapping InteractionMapping;
+        public readonly ConstantsMapping EnemyMapping;
+        public readonly ConstantsMapping PartMapping;
+        public readonly ConstantsMapping ItemMapping;
+        public readonly ConstantsMapping SpecialObjectMapping;
 
         log4net.Appender.RollingFileAppender logAppender;
 
@@ -99,6 +103,18 @@ namespace LynnaLab
             InteractionMapping = new ConstantsMapping(
                     GetFileParser("constants/interactionTypes.s"),
                     "INTERACID_");
+            EnemyMapping = new ConstantsMapping(
+                    GetFileParser("constants/enemyTypes.s"),
+                    "ENEMYID_");
+            PartMapping = new ConstantsMapping(
+                    GetFileParser("constants/partTypes.s"),
+                    "PARTID_");
+            ItemMapping = new ConstantsMapping(
+                    GetFileParser("constants/itemTypes.s"),
+                    "ITEMID_");
+            SpecialObjectMapping = new ConstantsMapping(
+                    GetFileParser("constants/specialObjectTypes.s"),
+                    "SPECIALOBJECTID_");
 
             // Parse everything in data/
             // A few files need to be loaded before others through

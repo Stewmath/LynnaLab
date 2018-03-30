@@ -127,25 +127,7 @@ namespace LynnaLab
                 if (RoomEditor != null)
                     RoomEditor.OnObjectsModified();
 
-                // Update tooltips in case ID has changed
-                var editor = ObjectDataEditor;
-                while (true) {
-                    ValueReference r = activeData.GetValueReference("ID");
-                    if (r != null) {
-                        try {
-                            string tooltip = r.ConstantsMapping.ByteToString((byte)r.GetIntValue()) + "\n\n";
-                            tooltip += r.GetDocumentationField("desc");
-                            ObjectDataEditor.SetTooltip(r, tooltip.Trim());
-                        }
-                        catch(KeyNotFoundException) {
-
-                        }
-                    }
-
-                    if (SubEditor == null)
-                        break;
-                    editor = SubEditor.ObjectDataEditor;
-                }
+                UpdateDocumentation();
             };
 
             foreach (Gtk.Widget widget in objectDataContainer.Children) {
@@ -176,8 +158,11 @@ namespace LynnaLab
 
             objectDataContainer.Add(ObjectDataEditor);
             objectDataContainer.ShowAll();
+
+            UpdateDocumentation();
         }
 
+        // Update the boundaries for indexSpinButton (how many objects there are)
         void UpdateBoundaries() {
             int origValue = indexSpinButton.ValueAsInt;
 
@@ -195,6 +180,48 @@ namespace LynnaLab
 
             if (origValue != indexSpinButton.ValueAsInt)
                 SetObjectDataIndex(indexSpinButton.ValueAsInt);
+        }
+
+        void UpdateDocumentation() {
+            // Update tooltips in case ID has changed
+            if (activeData == null)
+                return;
+
+            var editor = ObjectDataEditor;
+            if (editor == null)
+                return;
+
+            while (true) {
+                ValueReference r;
+                try {
+                    r = activeData.GetValueReference("ID");
+                }
+                catch(NotFoundException) {
+                    goto next;
+                }
+
+                if (r != null) {
+                    activeData.GetValueReference("SubID").Documentation = null; // Set it to null now, might replace it below
+                    if (r.ConstantsMapping != null) {
+                        try {
+                            string objectName = r.ConstantsMapping.ByteToString((byte)r.GetIntValue());
+                            string tooltip = objectName + "\n\n";
+                            tooltip += r.GetDocumentationField("desc");
+                            editor.SetTooltip(r, tooltip.Trim());
+
+                            activeData.GetValueReference("SubID").Documentation = r.ConstantsMapping.GetDocumentation((byte)r.GetIntValue());
+                        }
+                        catch(KeyNotFoundException) {
+                        }
+                    }
+                }
+                editor.UpdateHelpButtons();
+
+next:
+                if (editor.SubEditor == null || editor.SubEditor.ObjectDataEditor == null)
+                    break;
+                editor = editor.SubEditor.ObjectDataEditor;
+            }
         }
 
         protected void OnDeleteButtonClicked(object sender, EventArgs e)

@@ -47,18 +47,18 @@ namespace LynnaLab {
                 },
                 new List<ValueReference> { // Random Enemy
                     new ValueReference("Flags",0,DataValueType.Byte),
-                    new ValueReference("ID",1,8,15,DataValueType.WordBits),
+                    new ValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
                     new ValueReference("SubID",1,0,7,DataValueType.WordBits),
                 },
                 new List<ValueReference> { // Specific Enemy
                     new ValueReference("Flags",0,DataValueType.Byte),
-                    new ValueReference("ID",1,8,15,DataValueType.WordBits),
+                    new ValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
                     new ValueReference("SubID",1,0,7,DataValueType.WordBits),
                     new ValueReference("Y",2,DataValueType.Byte),
                     new ValueReference("X",3,DataValueType.Byte),
                 },
                 new List<ValueReference> { // Part
-                    new ValueReference("ID",0,8,15,DataValueType.WordBits),
+                    new ValueReference("ID",0,8,15,DataValueType.WordBits,true,"PartMapping"),
                     new ValueReference("SubID",0,0,7,DataValueType.WordBits),
                     new ValueReference("Y",1,4,7,DataValueType.ByteBits),
                     new ValueReference("X",1,0,3,DataValueType.ByteBits),
@@ -171,7 +171,9 @@ namespace LynnaLab {
 		}
 
         // Returns true if XY values are 4 bits rather than 8.
-        public bool HasShortenedXY() {
+        // (DOES NOT account for "@postype" parameter which can set interactions to have both Y/X
+        // positions stored in the Y variable.)
+        bool HasShortenedXY() {
             return GetObjectType() == ObjectType.Part ||
                 GetObjectType() == ObjectType.ItemDrop;
         }
@@ -187,32 +189,57 @@ namespace LynnaLab {
             }
         }
 
-        // Return the center x-coordinate of the object
-        public int GetX() {
-            int n = GetIntValue("X");
-            if (HasShortenedXY()) {
-                n = n*16+8;
+        // Return the center x-coordinate of the object.
+        // This is different from 'GetIntValue("X")' because sometimes objects store both their Y and
+        // X values in one byte. This will take care of that, and will multiply the value when the
+        // positions are in this short format (ie. range $0-$f becomes $08-$f8).
+        public byte GetX() {
+            if (GetValueReference("ID").GetDocumentationField("postype") == "short") {
+                int n = GetIntValue("Y")&0xf;
+                return (byte)(n*16+8);
             }
-            return n;
+            else if (HasShortenedXY()) {
+                int n = GetIntValue("X");
+                return (byte)(n*16+8);
+            }
+            else
+                return (byte)GetIntValue("X");
         }
         // Return the center y-coordinate of the object
-        public int GetY() {
-            int n = GetIntValue("Y");
-            if (HasShortenedXY()) {
-                n = n*16+8;
+        public byte GetY() {
+            if (GetValueReference("ID").GetDocumentationField("postype") == "short") {
+                int n = GetIntValue("Y")>>4;
+                return (byte)(n*16+8);
             }
-            return n;
+            else if (HasShortenedXY()) {
+                int n = GetIntValue("Y");
+                return (byte)(n*16+8);
+            }
+            else
+                return (byte)GetIntValue("Y");
         }
 
-        public void SetX(int n) {
-            if (HasShortenedXY())
-                n /= 16;
-            SetValue("X", n);
+        public void SetX(byte n) {
+            if (GetValueReference("ID").GetDocumentationField("postype") == "short") {
+                byte y = (byte)(GetIntValue("Y")&0xf0);
+                y |= (byte)(n/16);
+                SetValue("Y", y);
+            }
+            else if (HasShortenedXY())
+                SetValue("X", n/16);
+            else
+                SetValue("X", n);
         }
-        public void SetY(int n) {
-            if (HasShortenedXY())
-                n /= 16;
-            SetValue("Y", n);
+        public void SetY(byte n) {
+            if (GetValueReference("ID").GetDocumentationField("postype") == "short") {
+                byte y = (byte)(GetIntValue("Y")&0x0f);
+                y |= (byte)(n&0xf0);
+                SetValue("Y", y);
+            }
+            else if (HasShortenedXY())
+                SetValue("Y", n/16);
+            else
+                SetValue("Y", n);
         }
 
         // Get the object group pointed to, or null if no such group

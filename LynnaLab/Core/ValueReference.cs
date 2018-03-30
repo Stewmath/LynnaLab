@@ -49,9 +49,12 @@ namespace LynnaLab
             }
         }
 
+
+
         Data data;
         string constantsMappingString;
         ConstantsMapping constantsMapping;
+        Documentation _documentation;
 
         protected int valueIndex;
         protected int startBit,endBit;
@@ -83,6 +86,14 @@ namespace LynnaLab
         }
         public Project Project {
             get {return Data.Project; }
+        }
+        public Documentation Documentation {
+            get {
+                return _documentation;
+            }
+            set {
+                _documentation = value;
+            }
         }
 
         // Standard constructor for most DataValueTypes
@@ -136,12 +147,17 @@ namespace LynnaLab
             Editable = r.Editable;
             constantsMappingString = r.constantsMappingString;
             constantsMapping = r.constantsMapping;
+            _documentation = r._documentation;
         }
 
         public void SetData(Data d) {
             data = d;
             if (data != null && constantsMappingString != null) {
                 constantsMapping = (ConstantsMapping)typeof(Project).GetField(constantsMappingString).GetValue(data.Project);
+                if (_documentation == null) {
+                    _documentation = constantsMapping.DefaultDocumentation;
+                    _documentation.Name = "Field: " + Name;
+                }
             }
         }
 
@@ -214,53 +230,18 @@ namespace LynnaLab
             return constantsMapping.GetDocumentationField((byte)GetIntValue(), name);
         }
 
-        /// <summary>
-        ///  Used for reading subid lists. See constants/interactionTypes.s for how it's
-        ///  formatted...
-        ///
-        ///  Each element in the list is (k,d), where k is the subid value (or just the key in
-        ///  general), and d is the description.
-        /// </summary>
         public IList<Tuple<string,string>> GetDocumentationFieldSubdivisions(string name) {
             if (constantsMapping == null)
                 return null;
-            string text = GetDocumentationField(name);
-            if (text == null)
-                return null;
-
-            var output = new List<Tuple<string,string>>();
-
-            int openBrace;
-            while ((openBrace = text.IndexOf('[')) != -1) {
-                int closeBrace = openBrace+1;
-                int j = 1;
-                while (closeBrace<text.Length && j>0) {
-                    if (text[closeBrace] == '[')
-                        j++;
-                    if (text[closeBrace] == ']')
-                        j--;
-                    closeBrace++;
-                }
-                closeBrace--;
-                if (text[closeBrace] != ']') {
-                    log.Warn("Missing ']' for \"@" + name + "\"");
-                    return output;
-                }
-
-                int pipe = text.IndexOf('|', openBrace);
-                if (pipe == -1 || pipe > closeBrace) {
-                    log.Warn("Missing ']' for \"@" + name + "\"");
-                    return output;
-                }
-
-                string key = text.Substring(openBrace+1, pipe-(openBrace+1));
-                string desc = text.Substring(pipe+1, closeBrace-(pipe+1));
-                output.Add(new Tuple<string,string>(key,desc));
-
-                text = text.Substring(closeBrace+1);
+            try {
+                Documentation d = constantsMapping.GetDocumentation((byte)GetIntValue());
+                if (d == null)
+                    return null;
+                return d.GetDocumentationFieldSubdivisions(name);
             }
-
-            return output;
+            catch(NotFoundException) {
+                return null;
+            }
         }
 
     }

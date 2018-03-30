@@ -8,14 +8,18 @@ namespace LynnaLab
     {
         public SpinButtonHexadecimal() : base(0,255,1)
         {
-            this.Numeric = false;
+            Initialize();
         }
         public SpinButtonHexadecimal(int start,int end) : base(start,end,1)
         {
-            this.Numeric = false;
+            Initialize();
         }
         public SpinButtonHexadecimal(int start,int end,int interval) : base(start,end,interval)
         {
+            Initialize();
+        }
+
+        void Initialize () {
             this.Numeric = false;
         }
 

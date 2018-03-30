@@ -90,7 +90,7 @@ namespace LynnaLab
 			this.roomSpinButton.CanFocus = true;
 			this.roomSpinButton.Name = "roomSpinButton";
 			this.roomSpinButton.Adjustment.Upper = 100D;
-			this.roomSpinButton.Adjustment.PageIncrement = 10D;
+			this.roomSpinButton.Adjustment.PageIncrement = 16D;
 			this.roomSpinButton.Adjustment.StepIncrement = 1D;
 			this.roomSpinButton.ClimbRate = 1D;
 			this.roomSpinButton.Digits = ((uint)(3));
@@ -257,7 +257,7 @@ namespace LynnaLab
 			this.destIndexSpinButton.CanFocus = true;
 			this.destIndexSpinButton.Name = "destIndexSpinButton";
 			this.destIndexSpinButton.Adjustment.Upper = 100D;
-			this.destIndexSpinButton.Adjustment.PageIncrement = 10D;
+			this.destIndexSpinButton.Adjustment.PageIncrement = 16D;
 			this.destIndexSpinButton.Adjustment.StepIncrement = 1D;
 			this.destIndexSpinButton.ClimbRate = 1D;
 			this.destIndexSpinButton.Digits = ((uint)(2));

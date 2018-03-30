@@ -102,7 +102,7 @@ namespace LynnaLab
 			this.areaSpinButton.CanFocus = true;
 			this.areaSpinButton.Name = "areaSpinButton";
 			this.areaSpinButton.Adjustment.Upper = 255D;
-			this.areaSpinButton.Adjustment.PageIncrement = 10D;
+			this.areaSpinButton.Adjustment.PageIncrement = 16D;
 			this.areaSpinButton.Adjustment.StepIncrement = 1D;
 			this.areaSpinButton.ClimbRate = 1D;
 			this.areaSpinButton.Digits = ((uint)(2));
@@ -138,7 +138,7 @@ namespace LynnaLab
 			this.animationsSpinButton.CanFocus = true;
 			this.animationsSpinButton.Name = "animationsSpinButton";
 			this.animationsSpinButton.Adjustment.Upper = 100D;
-			this.animationsSpinButton.Adjustment.PageIncrement = 10D;
+			this.animationsSpinButton.Adjustment.PageIncrement = 16D;
 			this.animationsSpinButton.Adjustment.StepIncrement = 1D;
 			this.animationsSpinButton.ClimbRate = 1D;
 			this.animationsSpinButton.Digits = ((uint)(2));
@@ -156,7 +156,7 @@ namespace LynnaLab
 			this.flags1SpinButton.CanFocus = true;
 			this.flags1SpinButton.Name = "flags1SpinButton";
 			this.flags1SpinButton.Adjustment.Upper = 255D;
-			this.flags1SpinButton.Adjustment.PageIncrement = 10D;
+			this.flags1SpinButton.Adjustment.PageIncrement = 16D;
 			this.flags1SpinButton.Adjustment.StepIncrement = 1D;
 			this.flags1SpinButton.ClimbRate = 1D;
 			this.flags1SpinButton.Digits = ((uint)(2));
@@ -172,7 +172,7 @@ namespace LynnaLab
 			this.flags2SpinButton.CanFocus = true;
 			this.flags2SpinButton.Name = "flags2SpinButton";
 			this.flags2SpinButton.Adjustment.Upper = 255D;
-			this.flags2SpinButton.Adjustment.PageIncrement = 10D;
+			this.flags2SpinButton.Adjustment.PageIncrement = 16D;
 			this.flags2SpinButton.Adjustment.StepIncrement = 1D;
 			this.flags2SpinButton.ClimbRate = 1D;
 			this.flags2SpinButton.Digits = ((uint)(2));
@@ -268,7 +268,7 @@ namespace LynnaLab
 			this.layoutGroupSpinButton.CanFocus = true;
 			this.layoutGroupSpinButton.Name = "layoutGroupSpinButton";
 			this.layoutGroupSpinButton.Adjustment.Upper = 100D;
-			this.layoutGroupSpinButton.Adjustment.PageIncrement = 10D;
+			this.layoutGroupSpinButton.Adjustment.PageIncrement = 16D;
 			this.layoutGroupSpinButton.Adjustment.StepIncrement = 1D;
 			this.layoutGroupSpinButton.ClimbRate = 1D;
 			this.layoutGroupSpinButton.Digits = ((uint)(2));
@@ -314,7 +314,7 @@ namespace LynnaLab
 			this.tilesetSpinButton.CanFocus = true;
 			this.tilesetSpinButton.Name = "tilesetSpinButton";
 			this.tilesetSpinButton.Adjustment.Upper = 100D;
-			this.tilesetSpinButton.Adjustment.PageIncrement = 10D;
+			this.tilesetSpinButton.Adjustment.PageIncrement = 16D;
 			this.tilesetSpinButton.Adjustment.StepIncrement = 1D;
 			this.tilesetSpinButton.ClimbRate = 1D;
 			this.tilesetSpinButton.Digits = ((uint)(2));

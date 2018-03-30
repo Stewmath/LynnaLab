@@ -15,9 +15,9 @@ public class ConstantsMapping
     class Entry {
         public string str;
         public byte b;
-        public DocumentationFileComponent documentation; // Documentation, if available (null otherwise)
+        public Documentation documentation; // Documentation, if available (null otherwise)
 
-        public Entry(string _str, byte _b, DocumentationFileComponent _doc) {
+        public Entry(string _str, byte _b, Documentation _doc) {
             str = _str;
             b = _b;
             documentation = _doc;
@@ -42,6 +42,12 @@ public class ConstantsMapping
 
     public string[] Prefixes {
         get { return prefixes; }
+    }
+
+    public Documentation DefaultDocumentation {
+        get {
+            return new Documentation("", "", GetAllValuesWithDescriptions());
+        }
     }
 
     public ConstantsMapping(FileParser parser, string prefix)
@@ -72,7 +78,8 @@ public class ConstantsMapping
                         byte b = (byte)Project.EvalToInt(val);
                         stringList.Add(key);
 
-                        Entry ent = new Entry(key, b, docComponent);
+                        Documentation doc = (docComponent == null ? null : new Documentation("", docComponent, "subid"));
+                        Entry ent = new Entry(key, b, doc); // TODO: remove subid from here
 
                         stringToByte[key] = ent;
                         byteToString[b] = ent;
@@ -122,13 +129,13 @@ public class ConstantsMapping
         var doc = GetDocumentation(key);
         if (doc == null)
             return null;
-        return doc.GetField(name);
+        return doc.FileComponent.GetDocumentationField(name);
     }
     public string GetDocumentationField(string key, string name) {
         var doc = GetDocumentation(key);
         if (doc == null)
             return null;
-        return doc.GetField(name);
+        return doc.FileComponent.GetDocumentationField(name);
     }
 
 
@@ -162,7 +169,7 @@ public class ConstantsMapping
         return s;
     }
 
-    DocumentationFileComponent GetDocumentation(byte b) {
+    public Documentation GetDocumentation(byte b) {
         try {
             return byteToString[b].documentation;
         }
@@ -170,7 +177,7 @@ public class ConstantsMapping
             return null;
         }
     }
-    DocumentationFileComponent GetDocumentation(string s) {
+    public Documentation GetDocumentation(string s) {
         try {
             return stringToByte[s].documentation;
         }

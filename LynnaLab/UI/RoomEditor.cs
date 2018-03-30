@@ -159,8 +159,8 @@ namespace LynnaLab
                     newX = (newX*16+alignX+8)%256;
                     newY = (newY*16+alignY+8)%256;
 
-                    data.SetX(newX);
-                    data.SetY(newY);
+                    data.SetX((byte)newX);
+                    data.SetY((byte)newY);
 
                     QueueDraw();
                 }

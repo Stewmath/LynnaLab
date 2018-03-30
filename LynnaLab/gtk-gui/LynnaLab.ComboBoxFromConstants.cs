@@ -8,7 +8,7 @@ namespace LynnaLab
 
 		private global::LynnaLab.SpinButtonHexadecimal spinButton;
 
-		private global::Gtk.ComboBoxEntry combobox1;
+		private global::Gtk.ComboBox combobox1;
 
 		protected virtual void Build()
 		{
@@ -32,14 +32,14 @@ namespace LynnaLab
 			this.hbox1.Add(this.spinButton);
 			global::Gtk.Box.BoxChild w1 = ((global::Gtk.Box.BoxChild)(this.hbox1[this.spinButton]));
 			w1.Position = 0;
+			w1.Expand = false;
 			// Container child hbox1.Gtk.Box+BoxChild
-			this.combobox1 = global::Gtk.ComboBoxEntry.NewText();
-			this.combobox1.WidthRequest = 33;
+			this.combobox1 = global::Gtk.ComboBox.NewText();
+			this.combobox1.WidthRequest = 160;
 			this.combobox1.Name = "combobox1";
 			this.hbox1.Add(this.combobox1);
 			global::Gtk.Box.BoxChild w2 = ((global::Gtk.Box.BoxChild)(this.hbox1[this.combobox1]));
 			w2.Position = 1;
-			w2.Expand = false;
 			this.Add(this.hbox1);
 			if ((this.Child != null))
 			{
