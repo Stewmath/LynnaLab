@@ -213,7 +213,7 @@ namespace LynnaLab
 
             bool foundHoveringMatch = false;
 
-            for (int i=group.GetNumObjects()-1; i>=0; i--) {
+            for (int i=0; i<group.GetNumObjects(); i++) {
                 ObjectData data = group.GetObjectData(i);
                 if (data.GetObjectType() >= ObjectType.Pointer &&
                         data.GetObjectType() <= ObjectType.AntiBossPointer) {
@@ -282,7 +282,6 @@ namespace LynnaLab
 
                     if (data.GetGameObject() != null && data.GetGameObject().DataValid) {
                         try {
-                            //var o = new ObjectAnimationFrame(room.Project, room.Project.GetNpcGfxHeaderData(0x45), room.Project.GetData("oamData50388"), 0x10, 0);
                             ObjectAnimationFrame o = data.GetGameObject().DefaultAnimation.GetFrame(0);
                             o.Draw(g, x, y);
                         }

@@ -4,7 +4,8 @@ using System.Collections.Generic;
 namespace LynnaLab
 {
 /// <summary>
-///  This class represents a block of doxygen-like comments in a file. Read-only.
+///  This class represents a block of doxygen-like comments in a file. Read-only. Fields are
+///  case-insensitive (set to lower case).
 /// </summary>
 public class DocumentationFileComponent : FileComponent {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -38,6 +39,7 @@ public class DocumentationFileComponent : FileComponent {
     ///  had "@name{Test}", then GetField("name") would return "Test".
     /// </summary>
     public string GetDocumentationField(string name) {
+        name = name.ToLower();
         string output;
         documentationParams.TryGetValue(name, out output);
         if (output == null)
@@ -99,7 +101,7 @@ public class DocumentationFileComponent : FileComponent {
             value = value.Trim();
             l++;
 
-            documentationParams.Add(key, value);
+            documentationParams.Add(key.ToLower(), value);
         }
 
         description = description.Trim();
@@ -115,6 +117,8 @@ public class DocumentationFileComponent : FileComponent {
     ///  general), and d is the description.
     /// </summary>
     public IList<Tuple<string,string>> GetDocumentationFieldSubdivisions(string name) {
+        name = name.ToLower();
+
         string text = GetDocumentationField(name);
         if (text == null)
             return null;

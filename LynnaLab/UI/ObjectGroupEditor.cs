@@ -101,14 +101,8 @@ namespace LynnaLab
 
         public void SetObjectGroup(ObjectGroup group) {
             _ObjectGroup = group;
-            if (ObjectGroup != null && ObjectGroup.GetNumObjects() != 0) {
-                indexSpinButton.Value = 0;
-                SetObjectData(ObjectGroup.GetObjectData(0));
-            }
-            else {
-                indexSpinButton.Value = -1;
-                SetObjectData(null);
-            }
+            indexSpinButton.Value = -1;
+            SetObjectData(null);
 
             UpdateBoundaries();
         }

@@ -260,6 +260,9 @@ namespace LynnaLab {
             if (type == ObjectType.NoValue || type == ObjectType.DoubleValue || (type == ObjectType.QuadrupleValue && GetIntValue("Object Type") == 0)) {
                 return Project.GetIndexedDataType<InteractionObject>((GetIntValue("ID")<<8) | GetIntValue("SubID"));
             }
+            else if (type == ObjectType.RandomEnemy || type == ObjectType.SpecificEnemy || (type == ObjectType.QuadrupleValue && GetIntValue("Object Type") == 1)) {
+                return Project.GetIndexedDataType<EnemyObject>((GetIntValue("ID")<<8) | GetIntValue("SubID"));
+            }
             // TODO: other types
             return null;
         }

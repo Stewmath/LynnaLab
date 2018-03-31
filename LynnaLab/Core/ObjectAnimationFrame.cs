@@ -48,17 +48,28 @@ public class ObjectAnimationFrame {
                 data = data.NextData;
                 int x = (sbyte)data.GetIntValue(0) - 8;
                 data = data.NextData;
-                int tileIndex = data.GetIntValue(0);
-                int tileOffset = ((_animation.TileIndexBase+tileIndex)&0xfe)*16;
+                int tileIndex = data.GetIntValue(0) + _animation.TileIndexBase;
                 data = data.NextData;
                 byte flags = (byte)(data.GetIntValue(0) | _animation.OamFlagsBase);
                 data = data.NextData;
 
-                Stream gfxStream = _animation.NpcGfxHeaderData.GfxStream;
+                ObjectGfxHeaderData gfxHeader = _animation.ObjectGfxHeaderData;
+                int origTileIndex = tileIndex;
 
-                if (gfxStream.Length - tileOffset < 0x20) {
-                    throw new InvalidAnimationException("Tileindex out of range (" + tileIndex + ")");
+                while (tileIndex >= 0x20) {
+                    if (gfxHeader.ShouldHaveNext) {
+                        gfxHeader = gfxHeader.NextGfxHeader;
+                        tileIndex -= 0x20;
+                    }
+                    else
+                        throw new InvalidAnimationException("Tileindex out of range (" + tileIndex + ")");
                 }
+
+                int tileOffset = (tileIndex&0xfe)*16;
+                Stream gfxStream = gfxHeader.GfxStream;
+
+                if (gfxStream.Length - tileOffset < 0x20)
+                    throw new InvalidAnimationException("Sprite not defined in gfx data");
 
                 gfxStream.Seek(tileOffset, SeekOrigin.Begin);
                 byte[] gfxData = new byte[0x20];
@@ -82,7 +93,8 @@ public class ObjectAnimationFrame {
     public void Draw(Graphics g, int xPos, int yPos) {
         int _numSprites = _oamData.GetIntValue(0);
 
-        for (int i=0; i<_numSprites; i++) {
+        // Draw sprites in backwards order to respect priority properly
+        for (int i=bitmaps.Count-1; i>=0; i--) {
             Tuple<Bitmap,int,int> tup = bitmaps[i];
             Bitmap bitmap = tup.Item1;
             int x = tup.Item2 + xPos;

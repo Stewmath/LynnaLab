@@ -253,12 +253,12 @@ arbitraryLengthData:
                         AddDataAndPopFileStructure(d);
                         break;
                     }
-                case "m_npcgfxheader": {
+                case "m_objectgfxheader": {
                     if (!(fTokens.Count >= 3 && fTokens.Count <= 4)) {
                         log.Warn(warningString + "Expected " + fTokens[0] + " to take 2-3 parameters");
                         break;
                     }
-                    Data d = new NpcGfxHeaderData(Project, fTokens[0], standardValues, this, fSpacing);
+                    Data d = new ObjectGfxHeaderData(Project, fTokens[0], standardValues, this, fSpacing);
                     AddDataAndPopFileStructure(d);
                     break;
                 }
@@ -329,6 +329,15 @@ arbitraryLengthData:
                         break;
                     }
                     Data d = new Data(Project, fTokens[0], standardValues, 3, this, fSpacing);
+                    AddDataAndPopFileStructure(d);
+                    break;
+                }
+                case "m_enemydata": {
+                    if (!(fTokens.Count == 4 || fTokens.Count == 5)) {
+                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 3-4 parameters");
+                        break;
+                    }
+                    Data d = new Data(Project, fTokens[0], standardValues, 4, this, fSpacing);
                     AddDataAndPopFileStructure(d);
                     break;
                 }

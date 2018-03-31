@@ -8,7 +8,7 @@ namespace LynnaLab
     // m_GfxHeader filename destAddress size/continue [startOffset]
     //              0           1           2           3
     // Other types of gfx headers not supported here.
-    public class NpcGfxHeaderData : Data,IGfxHeader {
+    public class ObjectGfxHeaderData : Data,IGfxHeader {
         List<string> gfxDirectories = new List<string>();
 
         Stream gfxFile;
@@ -29,10 +29,18 @@ namespace LynnaLab
 
         // True if the bit indicating that there is a next value is set.
         public bool ShouldHaveNext {
-            get { return false; } // TODO
+            get { return (GetIntValue(1)&0x80) == 0; }
         }
 
-        public NpcGfxHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing) 
+        // Should only request this if the "ShouldHaveNext" property is true.
+        public ObjectGfxHeaderData NextGfxHeader {
+            get {
+                return NextData as ObjectGfxHeaderData;
+            }
+        }
+
+
+        public ObjectGfxHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing) 
             : base(p, command, values, 3, parser, spacing)
         {
             string filename = GetValue(0) + ".bin";

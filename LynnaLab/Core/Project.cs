@@ -250,11 +250,11 @@ namespace LynnaLab
         }
 
         /// <summary>
-        ///  Get an npc gfx header. It would make sense for this to be a "ProjectIndexedDataType",
+        ///  Get an object gfx header. It would make sense for this to be a "ProjectIndexedDataType",
         ///  but that's not possible due to lack of multiple inheritance...
         /// </summary>
-        public NpcGfxHeaderData GetNpcGfxHeaderData(int index) {
-            return GetData("npcGfxHeaderTable", 3*index) as NpcGfxHeaderData;
+        public ObjectGfxHeaderData GetObjectGfxHeaderData(int index) {
+            return GetData("objectGfxHeaderTable", 3*index) as ObjectGfxHeaderData;
         }
 
         public void AddDataType(ProjectDataType data) {

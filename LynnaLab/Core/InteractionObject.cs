@@ -32,7 +32,7 @@ public class InteractionObject : GameObject {
             b1 = (byte)objectData.GetIntValue(1);
             b2 = (byte)objectData.GetIntValue(2);
 
-            if (b0 == 0) // NpcGfxHeaderIndex is 0
+            if (b0 == 0) // ObjectGfxHeaderIndex is 0
                 objectData = null;
         }
         catch(InvalidLookupException) {
@@ -54,14 +54,14 @@ public class InteractionObject : GameObject {
         get { return objectData != null; }
     }
 
-    public override byte NpcGfxHeaderIndex {
+    public override byte ObjectGfxHeaderIndex {
         get { return b0; }
     }
     public override byte TileIndexBase {
         get { return (byte)(b1&0x7f); }
     }
     public override byte OamFlagsBase {
-        get { return (byte)((b2>>4)&7); }
+        get { return (byte)((b2>>4)&0xf); }
     }
     public override byte DefaultAnimationIndex {
         get { return (byte)(b2&0xf); }

@@ -122,12 +122,13 @@
     <Compile Include="UI\DocumentationDialog.cs" />
     <Compile Include="gtk-gui\LynnaLab.DocumentationDialog.cs" />
     <Compile Include="Core/IGfxHeader.cs" />
-    <Compile Include="Core/NpcGfxHeaderData.cs" />
+    <Compile Include="Core/ObjectGfxHeaderData.cs" />
     <Compile Include="Core/ObjectAnimation.cs" />
     <Compile Include="Core/ObjectAnimationFrame.cs" />
     <Compile Include="Core/GameObject.cs" />
     <Compile Include="Core/InteractionObject.cs" />
     <Compile Include="Tests\NUnitTestClass.cs" />
+    <Compile Include="Core\EnemyObject.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

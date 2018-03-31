@@ -28,21 +28,22 @@ public abstract class GameObject : ProjectIndexedDataType {
 
     public abstract string TypeName { get; }
 
+
     /// <summary>
-    /// If an invalid object is specified, it won't have data. In this case, all fields below here
-    /// should be considered invalid.
-    /// However, it might still be considered valid  if it ends up reading bytes from somewhere else
-    /// on accident.
+    ///  If an invalid object is specified, it won't have data. In this case, all fields below here
+    ///  should be considered invalid.
+    ///  However, it might still be considered valid if it ends up reading bytes from somewhere else
+    ///  on accident.
     /// </summary>
     public abstract bool DataValid { get; }
 
     /// <summary>
-    ///  The "npc gfx header" used by this object.
+    ///  The "object gfx header" used by this object.
     /// </summary>
-    public abstract byte NpcGfxHeaderIndex { get; }
+    public abstract byte ObjectGfxHeaderIndex { get; }
 
     /// <summary>
-    ///  The base tileindex for this object (relative to the graphics in the NpcGfxHeader)
+    ///  The base tileindex for this object (relative to the graphics in the ObjectGfxHeader)
     /// </summary>
     public abstract byte TileIndexBase { get; }
 
@@ -57,8 +58,8 @@ public abstract class GameObject : ProjectIndexedDataType {
     public abstract byte DefaultAnimationIndex { get; }
 
 
-    public NpcGfxHeaderData NpcGfxHeaderData {
-        get { return Project.GetNpcGfxHeaderData(NpcGfxHeaderIndex); }
+    public ObjectGfxHeaderData ObjectGfxHeaderData {
+        get { return Project.GetObjectGfxHeaderData(ObjectGfxHeaderIndex); }
     }
     public ObjectAnimation DefaultAnimation {
         get { return GetAnimation(DefaultAnimationIndex); }

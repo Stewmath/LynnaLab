@@ -34,8 +34,8 @@ public class ObjectAnimation {
         }
     }
 
-    public NpcGfxHeaderData NpcGfxHeaderData {
-        get { return _gameObject.NpcGfxHeaderData; }
+    public ObjectGfxHeaderData ObjectGfxHeaderData {
+        get { return _gameObject.ObjectGfxHeaderData; }
     }
     public byte TileIndexBase {
         get { return _gameObject.TileIndexBase; }
