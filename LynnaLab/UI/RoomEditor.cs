@@ -213,7 +213,7 @@ namespace LynnaLab
 
             bool foundHoveringMatch = false;
 
-            for (int i=0; i<group.GetNumObjects(); i++) {
+            for (int i=group.GetNumObjects()-1; i>=0; i--) {
                 ObjectData data = group.GetObjectData(i);
                 if (data.GetObjectType() >= ObjectType.Pointer &&
                         data.GetObjectType() <= ObjectType.AntiBossPointer) {
@@ -276,11 +276,23 @@ namespace LynnaLab
                         }
                     }
 
-                    x -= width/2;
-                    y -= width/2;
+                    // x and y are the center coordinates for the object
 
+                    g.FillRectangle(new SolidBrush(color), x-width/2, y-width/2, width, width);
 
-                    g.FillRectangle(new SolidBrush(color), x, y, width, width);
+                    if (data.GetGameObject() != null && data.GetGameObject().DataValid) {
+                        try {
+                            //var o = new ObjectAnimationFrame(room.Project, room.Project.GetNpcGfxHeaderData(0x45), room.Project.GetData("oamData50388"), 0x10, 0);
+                            ObjectAnimationFrame o = data.GetGameObject().DefaultAnimation.GetFrame(0);
+                            o.Draw(g, x, y);
+                        }
+                        catch(InvalidAnimationException) {
+                            int xPos = x-width/2;
+                            int yPos = y-width/2;
+                            g.DrawLine(new Pen(Color.Blue), xPos, yPos, xPos+width-1, yPos+width-1);
+                            g.DrawLine(new Pen(Color.Blue), xPos+width-1, yPos, xPos, yPos+width-1);
+                        }
+                    }
                 }
             }
 

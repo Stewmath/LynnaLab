@@ -59,7 +59,8 @@ namespace LynnaLab
             WarpDestData newData = new WarpDestData(Project,
                     WarpDestData.WarpCommand,
                     null,
-                    fileParser, new List<int>{-1});
+                    fileParser,
+                    new List<string>{"\t"});
 
             ValueReference.InitializeDataValues(newData, newData.GetValueReferences());
 

@@ -239,7 +239,7 @@ namespace LynnaLab
                     return null;
                 return d.GetDocumentationFieldSubdivisions(name);
             }
-            catch(NotFoundException) {
+            catch(InvalidLookupException) {
                 return null;
             }
         }

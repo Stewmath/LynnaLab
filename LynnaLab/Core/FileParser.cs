@@ -24,9 +24,6 @@ namespace LynnaLab
         // Objects may be raw strings, or Data structures
         // (In the future, maybe have better structures for defines, etc?)
         List<FileComponent> fileStructure = new List<FileComponent>();
-        // Parallel array keeping track of comments tacked on to the end of the
-        // line
-        List<string> fileStructureComments = new List<string>();
 
         // The following variables only used by ParseLine and related functions; they provide
         // context between lines when parsing.
@@ -110,7 +107,7 @@ namespace LynnaLab
 
             for (int i=0; i<lines.Length; i++) {
                 currentLine = i;
-                ParseLine(lines[i], fileStructure, fileStructureComments);
+                ParseLine(lines[i], fileStructure);
             }
 
             context = "";
@@ -120,37 +117,33 @@ namespace LynnaLab
             log.Info("Finished parsing \"" + Filename + "\".");
         }
 
-        void ParseLine(string pureLine, List<FileComponent> fileStructure, List<string> fileStructureComments) {
+        void ParseLine(string pureLine, List<FileComponent> fileStructure) {
             string warningString = WarningString;
 
             // Helper functions
 
-            Action<FileComponent,string> AddComponent = (component, c) => {
+            Action<FileComponent> AddComponent = (component) => {
                 fileStructure.Add(component);
-                fileStructureComments.Add(c);
                 if (component is Label)
                     AddLabelToDictionaries(component as Label);
             };
             Action<FileComponent> AddDataAndPopFileStructure = (data) => {
                 fileStructure.RemoveAt(fileStructure.Count-1);
-                string c = fileStructureComments[fileStructureComments.Count-1];
-                fileStructureComments.RemoveAt(fileStructureComments.Count-1);
-                AddComponent(data, c);
+                AddComponent(data);
             };
             Action PopFileStructure = () => {
                 fileStructure.RemoveAt(fileStructure.Count-1);
-                fileStructureComments.RemoveAt(fileStructureComments.Count-1);
             };
 
             // Sub-function: returns true if a meaning for the token was found.
-            Func<string[],IList<int>,bool> ParseData = (fTokens,fSpacing) =>
+            Func<IList<string>,IList<string>,bool> ParseData = (fTokens,fSpacing) =>
             {
                 List<string> standardValues = new List<string>();
 
                 // Variables used for some of the goto's
                 int size=-1;
 
-                for (int j = 1; j < fTokens.Length; j++)
+                for (int j = 1; j < fTokens.Count; j++)
                     standardValues.Add(fTokens[j]);
 
                 switch (fTokens[0].ToLower()) {
@@ -163,7 +156,7 @@ namespace LynnaLab
                 case ".dw":
                     if (context == "RAMSECTION" || context == "ENUM")
                         break;
-                    if (fTokens.Length < 2) {
+                    if (fTokens.Count < 2) {
                         log.Warn(warningString + "Expected .DW to have a value.");
                         break;
                     }
@@ -172,21 +165,21 @@ namespace LynnaLab
                 case ".db":
                     if (context == "RAMSECTION" || context == "ENUM")
                         break;
-                    if (fTokens.Length < 2) {
+                    if (fTokens.Count < 2) {
                         log.Warn(warningString + "Expected .DB to have a value.");
                         break;
                     }
                     size = 1;
                     goto arbitraryLengthData;
                 case "dwbe":
-                    if (fTokens.Length < 2) {
+                    if (fTokens.Count < 2) {
                         log.Warn(warningString + "Expected dwbe to have a value.");
                         break;
                     }
                     size = 2;
                     goto arbitraryLengthData;
                 case "dbrev":
-                    if (fTokens.Length < 2) {
+                    if (fTokens.Count < 2) {
                         log.Warn(warningString + "Expected dbrev to have a value.");
                         break;
                     }
@@ -194,19 +187,19 @@ namespace LynnaLab
                     goto arbitraryLengthData;
 arbitraryLengthData:
                     PopFileStructure();
-                    for (int j=1; j<fTokens.Length; j++) { // Each value is added as individual data
+                    for (int j=1; j<fTokens.Count; j++) { // Each value is added as individual data
                         string[] values = { fTokens[j] };
-                        List<int> newfSpacing = new List<int> {fSpacing[0],fSpacing[j],0};
-                        if (j == fTokens.Length-1)
+                        List<string> newfSpacing = new List<string> {fSpacing[0],fSpacing[j],""};
+                        if (j == fTokens.Count-1)
                             newfSpacing[2] = fSpacing[j+1];
 
                         Data d = new Data(Project, fTokens[0], values, size,
                                 this, newfSpacing);
-                        if (j != fTokens.Length-1)
+                        if (j != fTokens.Count-1)
                             d.EndsLine = false;
                         if (j != 1)
                             d.PrintCommand = false;
-                        AddComponent(d, "");
+                        AddComponent(d);
                     }
                     break;
                 case "db":
@@ -238,7 +231,7 @@ arbitraryLengthData:
                         break;
                     }
                 case "m_rgb16":
-                    if (fTokens.Length != 4) {
+                    if (fTokens.Count != 4) {
                         log.Warn(warningString + "Expected " + fTokens[0] + " to take 3 parameters");
                         break;
                     }
@@ -250,7 +243,7 @@ arbitraryLengthData:
                     }
                 case "m_gfxheader":
                 case "m_gfxheaderforcemode":
-                    if (fTokens.Length < 4 || fTokens.Length > 5) {
+                    if (fTokens.Count < 4 || fTokens.Count > 5) {
                         log.Warn(warningString + "Expected " + fTokens[0] + " to take 3-4 parameters");
                         break;
                     }
@@ -260,9 +253,18 @@ arbitraryLengthData:
                         AddDataAndPopFileStructure(d);
                         break;
                     }
+                case "m_npcgfxheader": {
+                    if (!(fTokens.Count >= 3 && fTokens.Count <= 4)) {
+                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 2-3 parameters");
+                        break;
+                    }
+                    Data d = new NpcGfxHeaderData(Project, fTokens[0], standardValues, this, fSpacing);
+                    AddDataAndPopFileStructure(d);
+                    break;
+                }
                 case "m_paletteheaderbg":
                 case "m_paletteheaderspr":
-                    if (fTokens.Length != 5) {
+                    if (fTokens.Count != 5) {
                         log.Warn(warningString + "Expected " + fTokens[0] + " to take 4 parameters");
                         break;
                     }
@@ -273,7 +275,7 @@ arbitraryLengthData:
                         break;
                     }
                 case "m_tilesetheader":
-                    if (fTokens.Length != 6) {
+                    if (fTokens.Count != 6) {
                         log.Warn(warningString + "Expected " + fTokens[0] + " to take 5 parameters");
                         break;
                     }
@@ -284,7 +286,7 @@ arbitraryLengthData:
                         break;
                     }
                 case "m_tilesetdata":
-                    if (fTokens.Length != 2) {
+                    if (fTokens.Count != 2) {
                         log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
                         break;
                     }
@@ -296,7 +298,7 @@ arbitraryLengthData:
                         break;
                     }
                 case "m_roomlayoutdata":
-                    if (fTokens.Length != 2) {
+                    if (fTokens.Count != 2) {
                         log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
                         break;
                     }
@@ -306,23 +308,30 @@ arbitraryLengthData:
                         AddDataAndPopFileStructure(l);
                         Data d = new Data(Project, fTokens[0], standardValues, -1,
                                 this, fSpacing);
-                        AddComponent(d, "");
+                        AddComponent(d);
                         break;
                     }
-                case "m_seasonalarea":
+                case "m_seasonalarea": {
                     // In season's "areas.s", the m_SeasonalArea macro points to a label which
                     // contains 4 area definitions (one for each season).
-                    if (fTokens.Length != 2) {
+                    if (fTokens.Count != 2) {
                         log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
                         break;
                     }
-                    {
-                        // Create a data object considered to have a size of 8 bytes
-                        Data d = new Data(Project, fTokens[0], standardValues, 8,
-                                this, fSpacing);
-                        AddDataAndPopFileStructure(d);
+                    // Create a data object considered to have a size of 8 bytes
+                    Data d = new Data(Project, fTokens[0], standardValues, 8, this, fSpacing);
+                    AddDataAndPopFileStructure(d);
+                    break;
+                }
+                case "m_interactiondata": {
+                    if (!(fTokens.Count == 2 || fTokens.Count == 4)) {
+                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 or 3 parameters");
                         break;
                     }
+                    Data d = new Data(Project, fTokens[0], standardValues, 3, this, fSpacing);
+                    AddDataAndPopFileStructure(d);
+                    break;
+                }
 
                 default:
                     {
@@ -337,7 +346,7 @@ arbitraryLengthData:
 
                                 if (minParams == -1) minParams = maxParams;
                                 if (maxParams == -1) maxParams = minParams;
-                                if (fTokens.Length-1 < minParams || fTokens.Length-1 > maxParams) {
+                                if (fTokens.Count-1 < minParams || fTokens.Count-1 > maxParams) {
                                     log.Warn(warningString + "Expected " + fTokens[0] + " to take " +
                                             minParams + "-" + maxParams + "parameter(s)");
                                     break;
@@ -383,7 +392,7 @@ arbitraryLengthData:
                 }
                 else {
                     context = "";
-                    AddComponent(new DocumentationFileComponent(this, documentationString), "");
+                    AddComponent(new DocumentationFileComponent(this, documentationString));
                     context = "";
                 }
             }
@@ -399,46 +408,23 @@ arbitraryLengthData:
                 return;
             }
 
-            string[] split = pureLine.Split(';');
-            string line = split[0];
-            string comment = pureLine.Substring(split[0].Length);
+            string line = pureLine;
 
             // Add raw string to file structure, it'll be removed if
             // a better representation is found
             fileStructure.Add(new StringFileComponent(this, line, null));
-            fileStructureComments.Add(comment);
 
             if (line.Trim().Length == 0)
                 return;
 
             // TODO: split tokens more intelligently, ie: recognize this as one token: $8000 | $03
             //string[] tokens = line.Split(new char[] { ' ', '\t'} );
-            string[] tokens = Regex.Split(line.Trim(), @"\s+");
-
-            List<int> spacing = new List<int>();
-            int[] tokenStartIndices = new int[tokens.Length];
-            {
-                // Generate "spacing" list, keeps track of whitespace
-                // between arguments (+'ve = spaces, -'ve = tabs)
-                int index = 0;
-
-                for (int j=0; j<tokens.Length+1; j++) {
-                    int spaces=0;
-                    while (index < line.Length && (line[index] == ' ' || line[index] == '\t')) {
-                        if (line[index] == ' ' && spaces >= 0) spaces++;
-                        else if (line[index] == '\t' && spaces <= 0) spaces--;
-                        index++;
-                    }
-                    if (j<tokens.Length)
-                        tokenStartIndices[j] = index;
-                    spacing.Add(spaces);
-                    while (index < line.Length && line[index] != ' ' && line[index] != '\t')
-                        index++;
-                }
-            }
+            var tup = Tokenize(line);
+            IList<string> tokens = tup.Item1;
+            IList<string> spacing = tup.Item2;
 
 
-            if (tokens.Length > 0) {
+            if (tokens.Count > 0) {
 
                 // Check if we're currently skipping over stuff because of .ifdefs
                 if (ifdefCondition == false) {
@@ -467,7 +453,7 @@ arbitraryLengthData:
                             tokenIndex++;
                         tokenIndex++;
 
-                        while (tokenIndex < tokens.Length) {
+                        while (tokenIndex < tokens.Count) {
                             if (tokens[tokenIndex] == "BANK") {
                                 tokenIndex++;
                                 bank = Project.EvalToInt(tokens[tokenIndex++]);
@@ -503,12 +489,12 @@ arbitraryLengthData:
 
                     case ".define":
                         {
-                            if (tokens.Length < 3) {
+                            if (tokens.Count < 3) {
                                 log.Debug(warningString + "Expected .DEFINE to have a string and a value.");
                                 break;
                             }
                             string value = "";
-                            for (int j = 2; j < tokens.Length; j++) {
+                            for (int j = 2; j < tokens.Count; j++) {
                                 value += tokens[j];
                                 value += " ";
                             }
@@ -518,7 +504,7 @@ arbitraryLengthData:
                         }
 
                     case ".ifdef":
-                        if (tokens.Length < 2) {
+                        if (tokens.Count < 2) {
                             log.Warn(warningString + "Expected .IFDEF to have a value.");
                             break;
                         }
@@ -568,7 +554,6 @@ arbitraryLengthData:
                                     PopFileStructure();
                                     StringFileComponent sc = new StringFileComponent(this, tokens[0], spacing);
                                     fileStructure.Add(sc);
-                                    fileStructureComments.Add(comment);
                                     addedComponent = sc;
                                 }
                                 else {
@@ -576,19 +561,18 @@ arbitraryLengthData:
                                     AddDataAndPopFileStructure(label);
                                     addedComponent = label;
                                 }
-                                if (tokens.Length > 1) { // There may be data directly after the label
-                                    string[] tokens2 = new string[tokens.Length-1];
-                                    List<int> spacing2 = new List<int>();
+                                if (tokens.Count > 1) { // There may be data directly after the label
+                                    string[] tokens2 = new string[tokens.Count-1];
+                                    List<string> spacing2 = new List<string>();
 
                                     addedComponent.EndsLine = false;
 
                                     // Add raw string to file structure, it'll be removed if a better
                                     // representation is found
                                     fileStructure.Add(new StringFileComponent(
-                                                this, line.Substring(tokenStartIndices[1]), spacing2));
-                                    fileStructureComments.Add(comment);
+                                                this, line.Substring(spacing[0].Length+tokens[0].Length), spacing2));
 
-                                    for (int j=1; j<tokens.Length; j++)
+                                    for (int j=1; j<tokens.Count; j++)
                                         tokens2[j-1] = tokens[j];
                                     for (int j=1; j<spacing.Count; j++)
                                         spacing2.Add(spacing[j]);
@@ -650,7 +634,7 @@ arbitraryLengthData:
                     data = data.NextData;
                 }
             }
-            throw new Exception("Provided offset (" + origOffset + ") relative to label \"" + labelStr +
+            throw new InvalidLookupException("Provided offset (" + origOffset + ") relative to label \"" + labelStr +
                     "\" was invalid.");
         }
 
@@ -673,7 +657,7 @@ arbitraryLengthData:
         // refComponent is null
         // Returns false if failed (refComponent doesn't exist or newComponent already
         // exists in this file).
-        public bool InsertComponentAfter(FileComponent refComponent, FileComponent newComponent, string comment="") {
+        public bool InsertComponentAfter(FileComponent refComponent, FileComponent newComponent) {
             int i;
             if (refComponent == null)
                 i = fileStructure.Count-1;
@@ -691,7 +675,6 @@ arbitraryLengthData:
             }
 
             fileStructure.Insert(i+1, newComponent);
-            fileStructureComments.Insert(i+1, comment);
             newComponent.SetFileParser(this);
 
             Modified = true;
@@ -699,7 +682,7 @@ arbitraryLengthData:
             return true;
         }
         // Insert at the beginning if refComponent is null.
-        public bool InsertComponentBefore(FileComponent refComponent, FileComponent newComponent, string comment="") {
+        public bool InsertComponentBefore(FileComponent refComponent, FileComponent newComponent) {
             int i;
             if (refComponent == null)
                 i = 0;
@@ -714,7 +697,6 @@ arbitraryLengthData:
             }
 
             fileStructure.Insert(i, newComponent);
-            fileStructureComments.Insert(i, comment);
             newComponent.SetFileParser(this);
 
             Modified = true;
@@ -735,15 +717,13 @@ arbitraryLengthData:
 
             context = "";
             List<FileComponent> structure = new List<FileComponent>();
-            List<string> structureComments = new List<string>();
 
             for (int i=0;i<text.Length;i++) {
                 currentLine = -1;
-                ParseLine(text[i], structure, structureComments);
+                ParseLine(text[i], structure);
             }
 
             fileStructure.InsertRange(index+1, structure);
-            fileStructureComments.InsertRange(index+1, structureComments);
 
             return true;
         }
@@ -759,15 +739,13 @@ arbitraryLengthData:
 
             context = "";
             List<FileComponent> structure = new List<FileComponent>();
-            List<string> structureComments = new List<string>();
 
             for (int i=0;i<text.Length;i++) {
                 currentLine = -1;
-                ParseLine(text[i], structure, structureComments);
+                ParseLine(text[i], structure);
             }
 
             fileStructure.InsertRange(index, structure);
-            fileStructureComments.InsertRange(index, structureComments);
 
             return true;
         }
@@ -793,7 +771,6 @@ arbitraryLengthData:
             if (index == -1) return;
 
             fileStructure.RemoveAt(index);
-            fileStructureComments.RemoveAt(index);
 
             Label l = component as Label;
             if (l != null) {
@@ -819,7 +796,7 @@ arbitraryLengthData:
             int p1 = fileStructure.IndexOf(c1);
             int p2 = fileStructure.IndexOf(c2);
             if (p1 == -1 || p2 == -1)
-                throw new NotFoundException();
+                throw new InvalidLookupException();
             return p2.CompareTo(p1);
         }
 
@@ -841,8 +818,6 @@ arbitraryLengthData:
                         output.RemoveAt(output.Count-1);
                     }
                     s += d.GetString();
-                    if (d.EndsLine)
-                        s += fileStructureComments[i];
                 }
 
                 if (s != null)
@@ -856,6 +831,113 @@ arbitraryLengthData:
             File.WriteAllLines(FullFilename, output);
 
             Modified = false;
+        }
+
+        /// <summary>
+        ///  Tokenize a string into "tokens" and "spacing" between the tokens.
+        ///
+        ///  Returns a tuple, where Item1 is the list of tokens, and Item2 is the list of spacing
+        ///  between the tokens. There is one more element in the spacing array than the tokens
+        ///  array.
+        ///
+        ///  TODO: though this checks for block comments within a line, it doesn't work when they
+        ///  span multiple lines...
+        /// </summary>
+        public static Tuple<List<string>,List<string>> Tokenize(string line) {
+            List<string> tokens = new List<string>();
+            List<string> spacing = new List<string>();
+
+            Func<string,int,bool> spacingStart = (s, i2) => {
+                if (s[i2] == ' ' || s[i2] == '\t' || s[i2] == ';')
+                    return true;
+                if (i2 < s.Length-1 && s.Substring(i2,2) == "/*")
+                    return true;
+                return false;
+            };
+
+            int i = 0;
+            int tokenStartPos = -1;
+            int spacingStartPos = -1;
+            bool inComment = false; // Inside a /* block comment */
+
+            if (line.Length == 0) {
+                spacing.Add(" ");
+            }
+            else {
+                if (spacingStart(line,i)) {
+                    spacingStartPos = 0;
+                    if (line[i] == '/')
+                        inComment = true;
+                }
+                else {
+                    spacing.Add("");
+                    tokenStartPos = 0;
+                }
+            }
+
+            while (i < line.Length) {
+                if (line[i] == ';') {
+                    if (tokenStartPos >= 0) {
+                        tokens.Add(line.Substring(tokenStartPos, i-tokenStartPos));
+                        tokenStartPos = -1;
+                        spacingStartPos = i;
+                    }
+                    break;
+                }
+                else if (tokenStartPos >= 0) {
+                    if (spacingStart(line, i)) {
+                        tokens.Add(line.Substring(tokenStartPos, i-tokenStartPos));
+                        tokenStartPos = -1;
+                        if (line[i] == '/') {
+                            i++;
+                            inComment = true;
+                        }
+                        spacingStartPos = i++;
+                        continue;
+                    }
+                    else {
+                        i++;
+                        continue;
+                    }
+                }
+                else if (spacingStartPos >= 0 && inComment) {
+                    if (i < line.Length-1 && line.Substring(i,2) == "*/") {
+                        i+=2;
+                        inComment = false;
+                        continue;
+                    }
+                    else {
+                        i++;
+                        continue;
+                    }
+                }
+                else if (spacingStartPos >= 0) {
+                    if (i < line.Length-1 && line.Substring(i,2) == "/*") {
+                        inComment = true;
+                        i+=2;
+                        continue;
+                    }
+                    else if (!spacingStart(line,i)) {
+                        spacing.Add(line.Substring(spacingStartPos, i-spacingStartPos));
+                        spacingStartPos = -1;
+                        tokenStartPos = i++;
+                        continue;
+                    }
+                    else {
+                        i++;
+                        continue;
+                    }
+                }
+            }
+
+            if (tokenStartPos >= 0) {
+                tokens.Add(line.Substring(tokenStartPos));
+                spacing.Add("");
+            }
+            else if (spacingStartPos >= 0)
+                spacing.Add(line.Substring(spacingStartPos));
+
+            return new Tuple<List<string>,List<string>>(tokens,spacing);
         }
     }
 }

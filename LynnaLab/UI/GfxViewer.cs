@@ -73,7 +73,7 @@ namespace LynnaLab
             }
             byte[] data = new byte[16];
             Array.Copy(graphicsState.VramBuffer[bank], offset, data, 0, 16);
-            Bitmap subImage = GbGraphics.TileToImage(data);
+            Bitmap subImage = GbGraphics.TileToBitmap(data);
             Graphics g = Graphics.FromImage(image);
             g.DrawImage(subImage, x*8, y*8);
 

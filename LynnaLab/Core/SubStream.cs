@@ -3,16 +3,16 @@ using System.IO;
 
 public class SubStream : Stream {
     public override bool CanRead {
-        get { return true; }
+        get { return stream.CanRead; }
     }
     public override bool CanSeek {
-        get { return true; }
+        get { return stream.CanSeek; }
     }
     public override bool CanTimeout {
-        get { return false; }
+        get { return stream.CanTimeout; }
     }
     public override bool CanWrite {
-        get { return true; }
+        get { return stream.CanWrite; }
     }
     public override long Length {
         get { return _length; }

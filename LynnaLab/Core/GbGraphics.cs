@@ -7,18 +7,31 @@ using System.Collections.Generic;
 namespace LynnaLab
 {
 	public class GbGraphics {
-        static readonly Color[] standardPalette = {
+        // Black & white palette; use when no other palette makes sense.
+        public static readonly Color[] GrayPalette = {
             Color.FromArgb(255, 255, 255),
             Color.FromArgb(198, 198, 198),
             Color.FromArgb(100, 100, 100),
             Color.FromArgb(0, 0, 0)
         };
 
-		public unsafe static Bitmap TileToImage(IList<byte> data, Color[] palette = null, int flags=0) {
+        /// <summary>
+        ///  Convert a single tile to an image. (Supports 8x8 or 8x16 tiles; 8x16 are treated as
+        ///  sprites.)
+        /// </summary>
+		public unsafe static Bitmap TileToBitmap(IList<byte> data, Color[] palette = null, int flags=0) {
             if (palette == null)
-                palette = standardPalette;
+                palette = GrayPalette;
 
-			Bitmap ret = new Bitmap(8, 8);
+            // Use this as transparent color for sprites
+            Color transparentColor = Color.FromArgb(1,1,1);
+
+            bool sprite = (data.Count == 32);
+            int height = (sprite ? 16 : 8);
+            Bitmap ret;
+
+            ret = new Bitmap(8, height, PixelFormat.Format24bppRgb);
+
             BitmapData imageData = ret.LockBits(new Rectangle(0, 0, ret.Width, 
                         ret.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
@@ -28,12 +41,12 @@ namespace LynnaLab
             bool hflip = (flags&0x20) == 0x20;
             bool vflip = (flags&0x40) == 0x40;
 
-			for (int y = 0; y < 8; y++) {
+			for (int y = 0; y < height; y++) {
 				int b1 = data[y * 2];
 				int b2 = data[y * 2 + 1] << 1;
                 byte* row;
                 if (vflip)
-                    row = pixels + (7-y)*imageData.Stride;
+                    row = pixels + (height-1-y)*imageData.Stride;
                 else
                     row = pixels + y*imageData.Stride;
 				for (int x = 0; x < 8; x++) {
@@ -50,13 +63,15 @@ namespace LynnaLab
                     else
                         realX = 7-x;
 
-                    row[realX*bytesPerPixel+0] = palette[color].B;
-                    row[realX*bytesPerPixel+1] = palette[color].G;
-                    row[realX*bytesPerPixel+2] = palette[color].R;
+                    Color c = (sprite && color == 0 ? transparentColor : palette[color]);
+                    row[realX*bytesPerPixel+0] = c.B;
+                    row[realX*bytesPerPixel+1] = c.G;
+                    row[realX*bytesPerPixel+2] = c.R;
 				}
 			}
 
             ret.UnlockBits(imageData);
+            ret.MakeTransparent(transparentColor);
 			return ret;
 		}
 

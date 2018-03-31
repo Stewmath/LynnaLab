@@ -67,7 +67,7 @@ namespace LynnaLab {
                     new ValueReference("Object Type",0,DataValueType.Byte),
                     new ValueReference("ID",1,8,15,DataValueType.WordBits),
                     new ValueReference("SubID",1,0,7,DataValueType.WordBits),
-                    new ValueReference("Unknown",2,DataValueType.Byte),
+                    new ValueReference("Var03",2,DataValueType.Byte),
                     new ValueReference("Y",3,DataValueType.Byte),
                     new ValueReference("X",4,DataValueType.Byte),
                 },
@@ -86,7 +86,7 @@ namespace LynnaLab {
 
         ObjectType type;
 
-        public ObjectData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<int> spacing, ObjectType type)
+        public ObjectData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, ObjectType type)
             : base(p, command, values, -1, parser, spacing) {
 
             this.type = type;
@@ -184,7 +184,7 @@ namespace LynnaLab {
                 GetValue("Y");
                 return true;
             }
-            catch (NotFoundException) {
+            catch (InvalidLookupException) {
                 return false;
             }
         }
@@ -194,7 +194,7 @@ namespace LynnaLab {
         // X values in one byte. This will take care of that, and will multiply the value when the
         // positions are in this short format (ie. range $0-$f becomes $08-$f8).
         public byte GetX() {
-            if (GetValueReference("ID").GetDocumentationField("postype") == "short") {
+            if (GetValueReference("ID")?.GetDocumentationField("postype") == "short") {
                 int n = GetIntValue("Y")&0xf;
                 return (byte)(n*16+8);
             }
@@ -207,7 +207,7 @@ namespace LynnaLab {
         }
         // Return the center y-coordinate of the object
         public byte GetY() {
-            if (GetValueReference("ID").GetDocumentationField("postype") == "short") {
+            if (GetValueReference("ID")?.GetDocumentationField("postype") == "short") {
                 int n = GetIntValue("Y")>>4;
                 return (byte)(n*16+8);
             }
@@ -220,7 +220,7 @@ namespace LynnaLab {
         }
 
         public void SetX(byte n) {
-            if (GetValueReference("ID").GetDocumentationField("postype") == "short") {
+            if (GetValueReference("ID")?.GetDocumentationField("postype") == "short") {
                 byte y = (byte)(GetIntValue("Y")&0xf0);
                 y |= (byte)(n/16);
                 SetValue("Y", y);
@@ -231,7 +231,7 @@ namespace LynnaLab {
                 SetValue("X", n);
         }
         public void SetY(byte n) {
-            if (GetValueReference("ID").GetDocumentationField("postype") == "short") {
+            if (GetValueReference("ID")?.GetDocumentationField("postype") == "short") {
                 byte y = (byte)(GetIntValue("Y")&0x0f);
                 y |= (byte)(n&0xf0);
                 SetValue("Y", y);
@@ -251,9 +251,17 @@ namespace LynnaLab {
                 Project.GetFileWithLabel(GetValue(0));
                 return Project.GetDataType<ObjectGroup>(GetValue(0));
             }
-            catch(LabelNotFoundException) {
+            catch(InvalidLookupException) {
                 return null;
             }
+        }
+
+        public GameObject GetGameObject() {
+            if (type == ObjectType.NoValue || type == ObjectType.DoubleValue || (type == ObjectType.QuadrupleValue && GetIntValue("Object Type") == 0)) {
+                return Project.GetIndexedDataType<InteractionObject>((GetIntValue("ID")<<8) | GetIntValue("SubID"));
+            }
+            // TODO: other types
+            return null;
         }
 
         bool IsShortenable() {
@@ -267,7 +275,7 @@ namespace LynnaLab {
         }
         void Elongate() {
             if (IsShortenable() && IsShortened()) {
-                SetSpacing(1,1);
+                SetSpacing(1, " ");
                 base.InsertValue(0, GetValue(0));
             }
         }
@@ -280,7 +288,7 @@ namespace LynnaLab {
             if (last.GetValue(0) != GetValue(0)) return;
 
             RemoveValue(0);
-            SetSpacing(1, 5);
+            SetSpacing(1, "     ");
         }
     }
 }

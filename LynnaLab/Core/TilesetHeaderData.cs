@@ -27,7 +27,7 @@ namespace LynnaLab {
         }
 
 
-        public TilesetHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<int> spacing) 
+        public TilesetHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing) 
             : base(p, command, values, 8, parser, spacing)
         {
             try {

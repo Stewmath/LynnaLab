@@ -86,7 +86,7 @@ namespace LynnaLab
                         WarpSourceData.WarpCommands[(int)WarpSourceType.PointedWarp],
                         WarpSourceData.DefaultValues[(int)WarpSourceType.PointedWarp],
                         FileParser,
-                        new List<int>{-1});
+                        new List<string>{"\t"});
                 pointedData.Opcode = 0x80;
                 pointedData.Transition = 4;
                 FileParser.InsertComponentAfter(newLabel, pointedData);

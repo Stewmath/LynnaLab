@@ -9,7 +9,7 @@ namespace LynnaLab
     ///  (ie. a documentation block).
     /// </summary>
     public abstract class FileComponent {
-        protected List<int> spacing;
+        protected List<string> spacing;
         protected FileParser parser;
 
         Project _project;
@@ -37,21 +37,21 @@ namespace LynnaLab
             get { return _project; }
         }
 
-        public FileComponent(FileParser parser, IList<int> spacing) {
+        public FileComponent(FileParser parser, IList<string> spacing) {
             if (parser != null)
                 _project = parser.Project;
             EndsLine = true;
             Fake = false;
             if (spacing != null)
-                this.spacing = new List<int>(spacing);
+                this.spacing = new List<string>(spacing);
             this.parser = parser;
         }
 
-        public int GetSpacing(int index) {
+        public string GetSpacing(int index) {
             return spacing[index];
         }
-        public void SetSpacing(int index, int spaces) {
-            spacing[index] = spaces;
+        public void SetSpacing(int index, string space) {
+            spacing[index] = space;
         }
         public void SetFileParser(FileParser p) {
             parser = p;
@@ -64,35 +64,21 @@ namespace LynnaLab
         protected void SetProject(Project p) {
             _project = p;
         }
-
-        // Returns a string representing the given space value
-        protected static string GetSpacingHelper(int spaces) {
-            string s = "";
-            while (spaces > 0) {
-                s += ' ';
-                spaces--;
-            }
-            while (spaces < 0) {
-                s += '\t';
-                spaces++;
-            }
-            return s;
-        }
     }
 
     public class StringFileComponent : FileComponent {
         string str;
 
-        public StringFileComponent(FileParser parser, string s, IList<int> spacing) : base(parser, spacing) {
+        public StringFileComponent(FileParser parser, string s, IList<string> spacing) : base(parser, spacing) {
             str = s;
             if (this.spacing == null)
-                this.spacing = new List<int>();
+                this.spacing = new List<string>();
             while (this.spacing.Count < 2)
-                this.spacing.Add(0);
+                this.spacing.Add("");
         }
 
         public override string GetString() {
-            return GetSpacingHelper(spacing[0]) + str + GetSpacingHelper(spacing[1]);
+            return spacing[0] + str + spacing[1];
         }
     }
 
@@ -103,17 +89,17 @@ namespace LynnaLab
             get { return name; }
         }
 
-        public Label(FileParser parser, string n, IList<int> spacing=null) : base(parser, spacing) {
+        public Label(FileParser parser, string n, IList<string> spacing=null) : base(parser, spacing) {
             name = n;
             if (spacing == null) {
-                this.spacing = new List<int>{0,0};
+                this.spacing = new List<string>{"",""};
             }
             while (this.spacing.Count < 2)
-                this.spacing.Add(0);
+                this.spacing.Add("");
         }
 
         public override string GetString() {
-            return GetSpacingHelper(spacing[0]) + name + ":" + GetSpacingHelper(spacing[1]);
+            return spacing[0] + name + ":" + spacing[1];
         }
     }
 }

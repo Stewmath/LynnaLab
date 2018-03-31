@@ -100,7 +100,7 @@ namespace LynnaLab
                 try {
                     return GetIntValue("Map");
                 }
-                catch (NotFoundException) {
+                catch (InvalidLookupException) {
                     return -1;
                 }
             }
@@ -113,7 +113,7 @@ namespace LynnaLab
                 try {
                     return GetIntValue("Dest Index");
                 }
-                catch (NotFoundException) {
+                catch (InvalidLookupException) {
                     return -1;
                 }
             }
@@ -126,7 +126,7 @@ namespace LynnaLab
                 try {
                     return GetIntValue("Dest Group");
                 }
-                catch (NotFoundException) {
+                catch (InvalidLookupException) {
                     return -1;
                 }
             }
@@ -139,7 +139,7 @@ namespace LynnaLab
                 try {
                     return GetIntValue("Transition");
                 }
-                catch (NotFoundException) {
+                catch (InvalidLookupException) {
                     return -1;
                 }
             }
@@ -152,7 +152,7 @@ namespace LynnaLab
                 try {
                     return GetIntValue("X");
                 }
-                catch (NotFoundException) {
+                catch (InvalidLookupException) {
                     return -1;
                 }
             }
@@ -165,7 +165,7 @@ namespace LynnaLab
                 try {
                     return GetIntValue("Y");
                 }
-                catch (NotFoundException) {
+                catch (InvalidLookupException) {
                     return -1;
                 }
             }
@@ -187,7 +187,7 @@ namespace LynnaLab
 
 
         public WarpSourceData(Project p, string command, IEnumerable<string> values,
-                FileParser parser, IList<int> spacing)
+                FileParser parser, IList<string> spacing)
             : base(p, command, values, -1, parser, spacing)
         {
             // Find type

@@ -42,8 +42,7 @@ namespace LynnaLab
 
         Project Project {
             get {
-                if (ObjectGroup == null) return null;
-                return ObjectGroup.Project;
+                return ObjectGroup?.Project;
             }
         }
         public ObjectGroup ObjectGroup {
@@ -196,7 +195,7 @@ namespace LynnaLab
                 try {
                     r = activeData.GetValueReference("ID");
                 }
-                catch(NotFoundException) {
+                catch(InvalidLookupException) {
                     goto next;
                 }
 

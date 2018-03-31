@@ -749,7 +749,7 @@ namespace Plugins
             string pointerString = chestPointer.GetValue(0);
             Data chestGroupData = Project.GetData(pointerString);
 
-            Data newData = new Data(Project, ".db", new string[] {"$00"}, -1, null, new List<int>{-1});
+            Data newData = new Data(Project, ".db", new string[] {"$00"}, -1, null, new List<string>{"\t"});
             newData.EndsLine = false;
             chestFileParser.InsertComponentBefore(chestGroupData, newData);
 

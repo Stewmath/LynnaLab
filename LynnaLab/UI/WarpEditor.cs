@@ -137,7 +137,7 @@ namespace LynnaLab
                             WarpSourceData.WarpCommands[(int)WarpSourceType.PointedWarp],
                             WarpSourceData.DefaultValues[(int)WarpSourceType.PointedWarp],
                             pointedData.FileParser,
-                            new List<int>{-1});
+                            new List<string>{"\t"});
                     pointedData.SetNextWarp(nextData);
 
                     pointerSpinButton.Adjustment.Upper++;
@@ -226,7 +226,7 @@ namespace LynnaLab
                     WarpSourceData.WarpCommands[(int)WarpSourceType.StandardWarp],
                     WarpSourceData.DefaultValues[(int)WarpSourceType.StandardWarp],
                     sourceGroup.FileParser,
-                    new List<int>{-1});
+                    new List<string>{"\t"});
             data.Map = map;
             data.Transition = 4;
 
@@ -262,7 +262,7 @@ namespace LynnaLab
                     WarpSourceData.WarpCommands[(int)WarpSourceType.PointerWarp],
                     WarpSourceData.DefaultValues[(int)WarpSourceType.PointerWarp],
                     sourceGroup.FileParser,
-                    new List<int>{-1,2});
+                    new List<string>{"\t","  "});
             data.Map = map;
 
             sourceGroup.AddWarpSourceData(data);

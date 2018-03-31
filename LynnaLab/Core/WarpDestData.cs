@@ -38,7 +38,7 @@ namespace LynnaLab
 
 
         public WarpDestData(Project p, string command, IEnumerable<string> values,
-                FileParser parser, IList<int> spacing)
+                FileParser parser, IList<string> spacing)
             : base(p, command, values, 3, parser, spacing)
         {
             SetValueReferences(warpValueReferences);

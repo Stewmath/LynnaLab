@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Drawing;
 
 namespace LynnaLab
 {
@@ -38,6 +39,11 @@ namespace LynnaLab
 
         // Data structures which should be linked to a particular project
         Dictionary<string,ProjectDataType> dataStructDictionary = new Dictionary<string,ProjectDataType>();
+
+
+        // See "GetStandardSpritePalettes"
+        Color[][] _standardSpritePalettes;
+
 
         public string BaseDirectory {
             get { return baseDirectory; }
@@ -149,8 +155,6 @@ namespace LynnaLab
                     GetFileParser(filename);
                 }
             }
-
-            Console.WriteLine(definesDictionary["wGroup4Flags"]);
         }
 
         public FileParser GetFileParser(string filename) {
@@ -170,6 +174,26 @@ namespace LynnaLab
                 binaryFileDictionary[filename] = stream;
             }
             return stream;
+        }
+
+        /// <summary>
+        ///  Searches for a gfx file in all gfx directories (for the current game).
+        /// </summary>
+        public MemoryFileStream FindGfxFile(string filename) {
+            var directories = new List<string>();
+
+            directories.Add("gfx/");
+            directories.Add("gfx_compressible/");
+            directories.Add("gfx/" + GameString + "/");
+            directories.Add("gfx_compressible/" + GameString + "/");
+
+            foreach (string directory in directories) {
+                if (File.Exists(BaseDirectory + directory + filename)) {
+                    return GetBinaryFile(directory + filename);
+                }
+            }
+
+            return null;
         }
 
         public void Save() {
@@ -225,6 +249,14 @@ namespace LynnaLab
             return o as T;
         }
 
+        /// <summary>
+        ///  Get an npc gfx header. It would make sense for this to be a "ProjectIndexedDataType",
+        ///  but that's not possible due to lack of multiple inheritance...
+        /// </summary>
+        public NpcGfxHeaderData GetNpcGfxHeaderData(int index) {
+            return GetData("npcGfxHeaderTable", 3*index) as NpcGfxHeaderData;
+        }
+
         public void AddDataType(ProjectDataType data) {
             string s = data.GetIdentifier();
             if (dataStructDictionary.ContainsKey(s))
@@ -255,7 +287,7 @@ namespace LynnaLab
             try {
                 return labelDictionary[label];
             } catch(KeyNotFoundException) {
-                throw new LabelNotFoundException("Label \"" + label + "\" was needed but could not be located!");
+                throw new InvalidLookupException("Label \"" + label + "\" was needed but could not be located!");
             }
         }
         public bool HasLabel(string label) {
@@ -267,6 +299,8 @@ namespace LynnaLab
                 return false;
             }
         }
+
+        // Throws a NotFoundException when the data doesn't exist.
         public Data GetData(string label, int offset=0) {
             return GetFileWithLabel(label).GetData(label, offset);
         }
@@ -310,7 +344,7 @@ namespace LynnaLab
                             }
                         }
                         if (j == val.Length)
-                            return Convert.ToInt32(val); // Will throw NumberFormatException
+                            return Convert.ToInt32(val); // Will throw FormatException
                         string newVal = val.Substring(0, i);
                         newVal += EvalToInt(val.Substring(i + 1, j));
                         newVal += val.Substring(j + 1, val.Length);
@@ -383,6 +417,28 @@ namespace LynnaLab
             }
 
             return rooms;
+        }
+
+        /// <summary>
+        ///  Returns the standard sprite palettes (first 6 palettes used by most sprites).
+        /// </summary>
+        public Color[][] GetStandardSpritePalettes() {
+            if (_standardSpritePalettes != null)
+                return _standardSpritePalettes;
+
+            _standardSpritePalettes = new Color[6][];
+
+            RgbData data = GetData("standardSpritePaletteData") as RgbData;
+
+            for (int i=0;i<4;i++) {
+                _standardSpritePalettes[i] = new Color[4];
+                for (int j=0;j<4;j++) {
+                    _standardSpritePalettes[i][j] = data.Color;
+                    data = data.NextData as RgbData;
+                }
+            }
+
+            return _standardSpritePalettes;
         }
 
         public int GetNumDungeons() {

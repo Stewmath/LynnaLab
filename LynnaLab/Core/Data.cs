@@ -71,7 +71,7 @@ namespace LynnaLab
 
         // Constructor
 
-        public Data(Project p, string command, IEnumerable<string> values, int size, FileParser parser, IList<int> spacing) : base(parser, spacing) {
+        public Data(Project p, string command, IEnumerable<string> values, int size, FileParser parser, IList<string> spacing) : base(parser, spacing) {
             base.SetProject(p);
             this.command = command;
             if (values == null)
@@ -81,9 +81,9 @@ namespace LynnaLab
             this.size = size;
 
             if (this.spacing == null)
-                this.spacing = new List<int>();
+                this.spacing = new List<string>();
             while (this.spacing.Count < this.values.Count+2)
-                this.spacing.Add(0);
+                this.spacing.Add("");
 
             PrintCommand = true;
             _modified = false;
@@ -91,6 +91,8 @@ namespace LynnaLab
 
 
         public virtual string GetValue(int i) {
+            if (i >= GetNumValues())
+                throw new InvalidLookupException("Value " + i + " is out of range in Data object.");
             return values[i];
         }
         public int GetIntValue(int i) {
@@ -105,13 +107,13 @@ namespace LynnaLab
         public string GetValue(string s) { // Get a value based on a value reference name
             ValueReference r = GetValueReference(s);
             if (r == null)
-                ThrowException(new NotFoundException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
+                ThrowException(new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
             return r.GetStringValue();
         }
         public int GetIntValue(string s) {
             ValueReference r = GetValueReference(s);
             if (r == null) {
-                throw new NotFoundException("Couldn't find ValueReference corresponding to \"" + s + "\".");
+                throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + s + "\".");
             }
             else {
                 return r.GetIntValue();
@@ -158,7 +160,7 @@ namespace LynnaLab
             spacing.RemoveAt(i+1);
             Modified = true;
         }
-        public void InsertValue(int i, string value, int priorSpaces=1) {
+        public void InsertValue(int i, string value, string priorSpaces=" ") {
             values.Insert(i, value);
             spacing.Insert(i+1, priorSpaces);
             Modified = true;
@@ -219,11 +221,9 @@ namespace LynnaLab
 
         // Helper function for GetString
         string GetSpacingIndex(int i) {
-            string s = "";
-            int spaces = spacing[i];
-            if (spaces == 0 && i != 0 && i != values.Count+1) spaces = 1;
-            s = GetSpacingHelper(spaces);
-            return s;
+            string space = spacing[i];
+            if (space.Length == 0 && i != 0 && i != values.Count+1) space = " ";
+            return space;
         }
 
         public void ThrowException(Exception e) {
@@ -242,7 +242,7 @@ namespace LynnaLab
             }
         }
 
-        public RgbData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<int> spacing)
+        public RgbData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
             : base(p, command, values, 2, parser, spacing)
         {
         }

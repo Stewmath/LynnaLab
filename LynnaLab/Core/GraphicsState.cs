@@ -201,7 +201,7 @@ namespace LynnaLab
             if (header.DestAddr < 0x8000 || header.DestAddr > 0x9fff)
                 return;
 
-            for (int t=0; t<header.GetBlockCount(); t++) {
+            for (int t=0; t<header.BlockCount; t++) {
                 int tile = t+(header.DestAddr-0x8000)/16;
                 tileModifiedEvent(header.DestBank, tile);
             }

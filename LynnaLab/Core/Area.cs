@@ -242,7 +242,7 @@ namespace LynnaLab
 
                     byte[] src = new byte[16];
                     Array.Copy(graphicsState.VramBuffer[1], tileOffset, src, 0, 16);
-                    Bitmap subImage = GbGraphics.TileToImage(src, GraphicsState.GetBackgroundPalettes()[flags&7], flags);
+                    Bitmap subImage = GbGraphics.TileToBitmap(src, GraphicsState.GetBackgroundPalettes()[flags&7], flags);
 
                     g.DrawImageUnscaled(subImage, x*8, y*8);
                 }
@@ -377,7 +377,7 @@ namespace LynnaLab
                 while (next) {
                     graphicsState.AddGfxHeader(header, GfxHeaderType.Main);
                     next = false;
-                    if (header.ShouldHaveNext()) {
+                    if (header.ShouldHaveNext) {
                         GfxHeaderData nextHeader = header.NextData as GfxHeaderData;
                         if (nextHeader != null) {
                             header = nextHeader;
@@ -402,7 +402,7 @@ namespace LynnaLab
                     while (next) {
                         graphicsState.AddGfxHeader(header, GfxHeaderType.Unique);
                         next = false;
-                        if (header.ShouldHaveNext()) {
+                        if (header.ShouldHaveNext) {
                             GfxHeaderData nextHeader = header.NextData as GfxHeaderData;
                             if (nextHeader != null) {
                                 header = nextHeader;

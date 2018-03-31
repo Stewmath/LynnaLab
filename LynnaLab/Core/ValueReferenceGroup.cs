@@ -45,14 +45,14 @@ namespace LynnaLab
                 if (r.Name == name)
                     return r.GetStringValue();
             }
-            throw new NotFoundException("Couldn't find ValueReference corresponding to \"" + name + "\".");
+            throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
         }
         public int GetIntValue(string name) {
             foreach (var r in valueReferences) {
                 if (r.Name == name)
                     return r.GetIntValue();
             }
-            throw new NotFoundException("Couldn't find ValueReference corresponding to \"" + name + "\".");
+            throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
         }
 
         public void SetValue(string name, string val) {
@@ -62,7 +62,7 @@ namespace LynnaLab
                     return;
                 }
             }
-            throw new NotFoundException("Couldn't find ValueReference corresponding to \"" + name + "\".");
+            throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
         }
         public void SetValue(string name, int val) {
             foreach (var r in valueReferences) {
@@ -71,7 +71,7 @@ namespace LynnaLab
                     return;
                 }
             }
-            throw new NotFoundException("Couldn't find ValueReference corresponding to \"" + name + "\".");
+            throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
         }
     }
 }

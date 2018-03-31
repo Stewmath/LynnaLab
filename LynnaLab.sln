@@ -42,5 +42,16 @@ Global
 		$2.inheritsSet = Mono
 		$2.inheritsScope = text/x-csharp
 		$2.scope = text/x-csharp
+		$2.NewLinesForBracesInMethods = False
+		$2.NewLineForCatch = True
+		$2.NewLineForFinally = True
+		$2.SpacingAfterMethodDeclarationName = False
+		$2.SpaceBeforeOpenSquareBracket = False
+		$0.DotNetNamingPolicy = $3
+		$3.DirectoryNamespaceAssociation = None
+		$3.ResourceNamePolicy = FileFormatDefault
+		$0.StandardHeader = $4
+		$4.Text = 
+		$4.IncludeInNewFiles = True
 	EndGlobalSection
 EndGlobal

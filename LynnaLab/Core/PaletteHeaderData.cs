@@ -34,7 +34,7 @@ namespace LynnaLab {
             get { return Project.EvalToInt(GetValue(1)); }
         }
 
-        public PaletteHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<int> spacing)
+        public PaletteHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
             : base(p, command, values, 3, parser, spacing)
         {
 
