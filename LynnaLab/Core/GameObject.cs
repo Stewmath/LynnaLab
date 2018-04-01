@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace LynnaLab {
 
@@ -15,8 +15,6 @@ public abstract class GameObject : ProjectIndexedDataType {
 
     // Using a dictionary because I don't know what the upper limit is to # of animations...
     Dictionary<int,ObjectAnimation> _animations = new Dictionary<int,ObjectAnimation>();
-
-    Documentation _subidDocumentation = null;
 
 
     public GameObject(Project p, int index) : base(p, index) {
@@ -74,6 +72,12 @@ public abstract class GameObject : ProjectIndexedDataType {
     }
 
 
+    public Color[][] GetCustomPalettes() {
+        string field = GetSubIDDocumentation()?.GetField("palette");
+        if (field == null)
+            return null;
+        return Project.GetIndexedDataType<PaletteHeaderGroup>(Project.EvalToInt(field)).GetObjPalettes(); // TODO: error handling
+    }
 
     public ObjectAnimation GetAnimation(int i) {
         try {

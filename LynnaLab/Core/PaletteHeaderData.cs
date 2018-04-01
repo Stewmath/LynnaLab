@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Drawing;
 
-namespace LynnaLab {
+namespace LynnaLab
+{
     public enum PaletteType {
         Background=0,
         Sprite
@@ -53,6 +54,22 @@ namespace LynnaLab {
                 if (!(paletteDataFile.GetData(GetValue(2)) is RgbData))
                     throw new Exception("Label \"" + GetValue(2) + "\" was expected to reference data defined with m_RGB16");
             }
+        }
+
+        public Color[][] GetPalettes() {
+            Color[][] ret = new Color[NumPalettes][];
+
+            RgbData data = Data;
+
+            for (int i=0; i<NumPalettes; i++) {
+                ret[i] = new Color[4];
+                for (int j=0; j<4; j++) {
+                    ret[i][j] = data.Color;
+                    data = data.NextData as RgbData;
+                }
+            }
+
+            return ret;
         }
 
         public bool ShouldHaveNext() {

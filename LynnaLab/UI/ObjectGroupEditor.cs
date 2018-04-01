@@ -69,6 +69,8 @@ namespace LynnaLab
             set {
                 if (roomEditor != value) {
                     roomEditor = value;
+                    if (SubEditor != null)
+                        SubEditor.RoomEditor = value;
                 }
             }
         }
@@ -84,6 +86,8 @@ namespace LynnaLab
         public ObjectGroupEditor()
         {
             this.Build();
+
+            indexSpinButton.Adjustment.Lower = -1;
 
             addButton.Image = new Gtk.Image(Gtk.Stock.Add, Gtk.IconSize.Button);
             addButton.Label = "";
@@ -101,8 +105,10 @@ namespace LynnaLab
 
         public void SetObjectGroup(ObjectGroup group) {
             _ObjectGroup = group;
-            indexSpinButton.Value = -1;
-            SetObjectData(null);
+            if (ObjectGroup.GetNumObjects() >= 1) {
+                indexSpinButton.Value = 0;
+                SetObjectDataIndex(0);
+            }
 
             UpdateBoundaries();
         }
@@ -144,9 +150,8 @@ namespace LynnaLab
             ObjectDataEditor = new ValueReferenceEditor(Project,data);
             ObjectDataEditor.AddDataModifiedHandler(handler);
 
-            if (ObjectDataEditor.SubEditor != null) {
-                // What if there's more than 2 layers of editors
-                ObjectDataEditor.SubEditor.RoomEditor = RoomEditor;
+            if (SubEditor != null) {
+                SubEditor.RoomEditor = RoomEditor;
             }
 
             objectDataContainer.Add(ObjectDataEditor);
@@ -188,7 +193,6 @@ namespace LynnaLab
                 ValueReference r;
                 try {
                     r = activeData.GetValueReference("ID");
-                    r.Documentation = r.ConstantsMapping?.OverallDocumentation;
                 }
                 catch(InvalidLookupException) {
                     goto next;

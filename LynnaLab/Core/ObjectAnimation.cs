@@ -1,6 +1,7 @@
-using System;
+using System.Drawing;
 
-namespace LynnaLab {
+namespace LynnaLab
+{
 
 /// <summary>
 ///  Represents an animation for an object.
@@ -76,6 +77,30 @@ public class ObjectAnimation {
         catch(InvalidLookupException e) {
             throw new InvalidAnimationException(e);
         }
+    }
+
+    /// <summary>
+    ///  Returns the array of palettes (8 palettes of 4 colors each) in use.
+    ///
+    ///  If a particular palette is undefined, it will be null (ie. palette[i] == null)
+    /// </summary>
+    public Color[][] GetPalettes() {
+        Color[][] palettes = new Color[8][];
+        Color[][] standardPal = Project.GetStandardSpritePalettes();
+        Color[][] customPal = _gameObject.GetCustomPalettes();
+
+        for (int i=0;i<6;i++) {
+            palettes[i] = standardPal[i];
+        }
+
+        if (customPal == null)
+            return palettes;
+
+        for (int i=0;i<8;i++) {
+            if (customPal[i] != null)
+                palettes[i] = customPal[i];
+        }
+        return palettes;
     }
 }
 

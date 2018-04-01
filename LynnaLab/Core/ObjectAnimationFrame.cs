@@ -29,6 +29,8 @@ public class ObjectAnimationFrame {
         _animation = anim;
         _animData = animData;
 
+        Color[][] palettes = anim.GetPalettes();
+
         try {
 
             // Note: this "index" is more like index*2, since it's added directly to the offset
@@ -75,13 +77,7 @@ public class ObjectAnimationFrame {
                 byte[] gfxData = new byte[0x20];
                 gfxStream.Read(gfxData, 0, 0x20);
 
-                Color[] palette;
-                if ((flags&7) >= 6)
-                    palette = GbGraphics.GrayPalette;
-                else
-                    palette = Project.GetStandardSpritePalettes()[flags&7];
-
-                Bitmap bitmap = GbGraphics.TileToBitmap(gfxData, palette, flags);
+                Bitmap bitmap = GbGraphics.TileToBitmap(gfxData, palettes[flags&7], flags);
                 bitmaps.Add(new Tuple<Bitmap,int,int>(bitmap,x,y));
             }
         }

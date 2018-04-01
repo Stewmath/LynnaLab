@@ -90,19 +90,33 @@ namespace LynnaLab
             }
         }
 
+        bool fromCombo = false;
+        bool fromSpin = false;
+
         protected void OnCombobox1Changed(object sender, EventArgs e)
         {
+            fromCombo = true;
+
             if (!(mapping == null || combobox1.Active == -1))
                 spinButton.Value = mapping.GetIndexByte(combobox1.Active);
 
-            if (Changed != null)
+            if (Changed != null && !fromSpin)
                 Changed(sender, e);
+
+            fromCombo = false;
         }
 
         protected void OnSpinButtonValueChanged (object sender, EventArgs e)
         {
+            fromSpin = true;
+
             // This will invoke the combobox1 callback
             combobox1.Active = mapping.IndexOf((byte)spinButton.ValueAsInt);
+
+            if (Changed != null && !fromCombo)
+                Changed(sender, e);
+
+            fromSpin = false;
         }
     }
 }

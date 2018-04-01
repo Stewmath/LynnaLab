@@ -1,6 +1,5 @@
 using System;
-using System.IO;
-using System.Collections.Generic;
+using System.Drawing;
 
 namespace LynnaLab
 {
@@ -22,6 +21,25 @@ namespace LynnaLab
             if (!(headerData is PaletteHeaderData))
                 throw new Exception("Expected palette header group " + index.ToString("X") + " to start with palette header data");
             firstPaletteHeader = (PaletteHeaderData)headerData;
+        }
+
+        // TODO: error handling
+        public Color[][] GetObjPalettes() {
+            Color[][] ret = new Color[8][];
+
+            PaletteHeaderData palette = firstPaletteHeader;
+            while (true) {
+                Color[][] palettes = palette.GetPalettes();
+                if (palette.PaletteType == PaletteType.Sprite) {
+                    for (int i=0; i<palette.NumPalettes; i++) {
+                        ret[i+palette.FirstPalette] = palettes[i];
+                    }
+                }
+                if (!palette.ShouldHaveNext())
+                    break;
+                palette = palette.NextData as PaletteHeaderData;
+            }
+            return ret;
         }
 
         public override void Save() {
