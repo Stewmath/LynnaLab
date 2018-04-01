@@ -85,6 +85,10 @@ public class ObjectAnimationFrame {
             bitmaps = null;
             throw new InvalidAnimationException(e);
         }
+        catch(FormatException e) {
+            bitmaps = null;
+            throw new InvalidAnimationException(e);
+        }
     }
 
     /// <summary>
