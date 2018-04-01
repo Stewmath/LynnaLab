@@ -8,7 +8,7 @@
     <widget-library name="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <widget-library name="../bin/Debug/LynnaLab.exe" internal="true" />
   </import>
-  <widget class="Gtk.Window" id="MainWindow" design-size="974 627">
+  <widget class="Gtk.Window" id="MainWindow" design-size="1030 640">
     <action-group name="Default">
       <action id="FileAction">
         <property name="Type">Action</property>
@@ -178,10 +178,7 @@
                             <property name="CanFocus">True</property>
                             <property name="Upper">1535</property>
                             <property name="PageIncrement">16</property>
-                            <property name="StepIncrement">1</property>
-                            <property name="ClimbRate">1</property>
                             <property name="Digits">3</property>
-                            <property name="Numeric">True</property>
                             <signal name="ValueChanged" handler="OnRoomSpinButtonValueChanged" />
                           </widget>
                           <packing>
@@ -256,10 +253,7 @@
                                     <property name="CanFocus">True</property>
                                     <property name="Upper">255</property>
                                     <property name="PageIncrement">16</property>
-                                    <property name="StepIncrement">1</property>
-                                    <property name="ClimbRate">1</property>
                                     <property name="Digits">2</property>
-                                    <property name="Numeric">True</property>
                                     <signal name="ValueChanged" handler="OnAreaSpinButtonValueChanged" />
                                   </widget>
                                   <packing>
@@ -361,6 +355,7 @@
                     <child>
                       <widget class="Gtk.Frame" id="frame2">
                         <property name="MemberName" />
+                        <property name="WidthRequest">390</property>
                         <child>
                           <widget class="Gtk.Alignment" id="GtkAlignment1">
                             <property name="MemberName" />
@@ -449,8 +444,8 @@
                     <child>
                       <widget class="LynnaLab.RoomEditor" id="roomeditor1">
                         <property name="MemberName" />
-                        <property name="WidthRequest">240</property>
-                        <property name="HeightRequest">224</property>
+                        <property name="WidthRequest">272</property>
+                        <property name="HeightRequest">272</property>
                         <property name="ViewObjects">False</property>
                       </widget>
                       <packing>
@@ -514,11 +509,6 @@
                           <widget class="Gtk.SpinButton" id="worldSpinButton">
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
-                            <property name="Upper">100</property>
-                            <property name="PageIncrement">10</property>
-                            <property name="StepIncrement">1</property>
-                            <property name="ClimbRate">1</property>
-                            <property name="Numeric">True</property>
                             <signal name="ValueChanged" handler="OnWorldSpinButtonValueChanged" />
                           </widget>
                           <packing>
@@ -564,6 +554,8 @@
                     <child>
                       <widget class="LynnaLab.HighlightingMinimap" id="worldMinimap">
                         <property name="MemberName" />
+                        <property name="WidthRequest">300</property>
+                        <property name="HeightRequest">210</property>
                         <property name="Floor">0</property>
                       </widget>
                       <packing>
@@ -599,11 +591,6 @@
                           <widget class="Gtk.SpinButton" id="dungeonSpinButton">
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
-                            <property name="Upper">100</property>
-                            <property name="PageIncrement">10</property>
-                            <property name="StepIncrement">1</property>
-                            <property name="ClimbRate">1</property>
-                            <property name="Numeric">True</property>
                             <signal name="ValueChanged" handler="OnDungeonSpinButtonValueChanged" />
                           </widget>
                           <packing>
@@ -624,11 +611,6 @@
                           <widget class="Gtk.SpinButton" id="floorSpinButton">
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
-                            <property name="Upper">100</property>
-                            <property name="PageIncrement">10</property>
-                            <property name="StepIncrement">1</property>
-                            <property name="ClimbRate">1</property>
-                            <property name="Numeric">True</property>
                             <signal name="ValueChanged" handler="OnFloorSpinButtonValueChanged" />
                           </widget>
                           <packing>
@@ -729,20 +711,6 @@
                 <property name="Fill">False</property>
               </packing>
             </child>
-            <child>
-              <widget class="Gtk.Alignment" id="alignment2">
-                <property name="MemberName" />
-                <property name="Yscale">0.53</property>
-                <property name="Yalign">0</property>
-                <child>
-                  <placeholder />
-                </child>
-              </widget>
-              <packing>
-                <property name="Position">2</property>
-                <property name="AutoSize">True</property>
-              </packing>
-            </child>
           </widget>
           <packing>
             <property name="Position">2</property>
@@ -802,10 +770,7 @@
                 <property name="CanFocus">True</property>
                 <property name="Upper">255</property>
                 <property name="PageIncrement">16</property>
-                <property name="StepIncrement">1</property>
-                <property name="ClimbRate">1</property>
                 <property name="Digits">2</property>
-                <property name="Numeric">True</property>
                 <signal name="ValueChanged" handler="OnAreaSpinButtonValueChanged" />
               </widget>
               <packing>
@@ -847,12 +812,8 @@
                           <widget class="LynnaLab.SpinButtonHexadecimal" id="animationsSpinButton">
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
-                            <property name="Upper">100</property>
                             <property name="PageIncrement">16</property>
-                            <property name="StepIncrement">1</property>
-                            <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>
-                            <property name="Numeric">True</property>
                             <signal name="ValueChanged" handler="OnAnimationsSpinButtonValueChanged" />
                           </widget>
                           <packing>
@@ -877,10 +838,7 @@
                             <property name="CanFocus">True</property>
                             <property name="Upper">255</property>
                             <property name="PageIncrement">16</property>
-                            <property name="StepIncrement">1</property>
-                            <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>
-                            <property name="Numeric">True</property>
                             <signal name="ValueChanged" handler="OnFlags1SpinButtonValueChanged" />
                           </widget>
                           <packing>
@@ -903,10 +861,7 @@
                             <property name="CanFocus">True</property>
                             <property name="Upper">255</property>
                             <property name="PageIncrement">16</property>
-                            <property name="StepIncrement">1</property>
-                            <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>
-                            <property name="Numeric">True</property>
                             <signal name="ValueChanged" handler="OnFlags2SpinButtonValueChanged" />
                           </widget>
                           <packing>
@@ -1079,12 +1034,8 @@
                           <widget class="LynnaLab.SpinButtonHexadecimal" id="layoutGroupSpinButton">
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
-                            <property name="Upper">100</property>
                             <property name="PageIncrement">16</property>
-                            <property name="StepIncrement">1</property>
-                            <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>
-                            <property name="Numeric">True</property>
                             <signal name="ValueChanged" handler="OnLayoutGroupSpinButtonValueChanged" />
                           </widget>
                           <packing>
@@ -1155,12 +1106,8 @@
                           <widget class="LynnaLab.SpinButtonHexadecimal" id="tilesetSpinButton">
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
-                            <property name="Upper">100</property>
                             <property name="PageIncrement">16</property>
-                            <property name="StepIncrement">1</property>
-                            <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>
-                            <property name="Numeric">True</property>
                             <signal name="ValueChanged" handler="OnTilesetSpinButtonValueChanged" />
                           </widget>
                           <packing>
@@ -1365,10 +1312,7 @@
             <property name="CanFocus">True</property>
             <property name="Upper">255</property>
             <property name="PageIncrement">16</property>
-            <property name="StepIncrement">1</property>
-            <property name="ClimbRate">1</property>
             <property name="Digits">2</property>
-            <property name="Numeric">True</property>
             <signal name="ValueChanged" handler="OnSpinButtonValueChanged" />
           </widget>
           <packing>
@@ -1419,11 +1363,6 @@
             <child>
               <widget class="Gtk.SpinButton" id="indexSpinButton">
                 <property name="MemberName" />
-                <property name="Upper">100</property>
-                <property name="PageIncrement">10</property>
-                <property name="StepIncrement">1</property>
-                <property name="ClimbRate">1</property>
-                <property name="Numeric">True</property>
               </widget>
               <packing>
                 <property name="Position">1</property>
@@ -1543,10 +1482,6 @@
                     <property name="MemberName" />
                     <property name="CanFocus">True</property>
                     <property name="Upper">10</property>
-                    <property name="PageIncrement">10</property>
-                    <property name="StepIncrement">1</property>
-                    <property name="ClimbRate">1</property>
-                    <property name="Numeric">True</property>
                     <signal name="ValueChanged" handler="OnTypeSpinButtonValueChanged" />
                   </widget>
                 </child>
@@ -1666,12 +1601,8 @@
               <widget class="LynnaLab.SpinButtonHexadecimal" id="roomSpinButton">
                 <property name="MemberName" />
                 <property name="CanFocus">True</property>
-                <property name="Upper">100</property>
                 <property name="PageIncrement">16</property>
-                <property name="StepIncrement">1</property>
-                <property name="ClimbRate">1</property>
                 <property name="Digits">3</property>
-                <property name="Numeric">True</property>
               </widget>
               <packing>
                 <property name="Position">1</property>
@@ -1723,11 +1654,6 @@
                           <widget class="Gtk.SpinButton" id="indexSpinButton">
                             <property name="MemberName" />
                             <property name="CanFocus">True</property>
-                            <property name="Upper">100</property>
-                            <property name="PageIncrement">10</property>
-                            <property name="StepIncrement">1</property>
-                            <property name="ClimbRate">1</property>
-                            <property name="Numeric">True</property>
                           </widget>
                           <packing>
                             <property name="Position">2</property>
@@ -1877,11 +1803,6 @@
                             <property name="MemberName" />
                             <property name="Sensitive">False</property>
                             <property name="CanFocus">True</property>
-                            <property name="Upper">100</property>
-                            <property name="PageIncrement">10</property>
-                            <property name="StepIncrement">1</property>
-                            <property name="ClimbRate">1</property>
-                            <property name="Numeric">True</property>
                           </widget>
                           <packing>
                             <property name="Position">1</property>
@@ -1907,12 +1828,8 @@
                             <property name="MemberName" />
                             <property name="Sensitive">False</property>
                             <property name="CanFocus">True</property>
-                            <property name="Upper">100</property>
                             <property name="PageIncrement">16</property>
-                            <property name="StepIncrement">1</property>
-                            <property name="ClimbRate">1</property>
                             <property name="Digits">2</property>
-                            <property name="Numeric">True</property>
                           </widget>
                           <packing>
                             <property name="Position">3</property>

@@ -170,10 +170,18 @@ namespace LynnaLab {
             return Color.White;
 		}
 
-        // Returns true if XY values are 4 bits rather than 8.
+        /// <summary>
+        ///  Returns true if the X/Y variables are 4-bits instead of 8 (assuming it has X/Y in the
+        ///  first place).
+        /// </summary>
+        public bool HasShortenedXY() {
+            return IsTypeWithShortenedXY() || GetSubIDDocumentation()?.GetField("postype") == "short";
+        }
+
+        // Returns true if the object's type causes the XY values to have 4 bits rather than 8.
         // (DOES NOT account for "@postype" parameter which can set interactions to have both Y/X
         // positions stored in the Y variable.)
-        bool HasShortenedXY() {
+        bool IsTypeWithShortenedXY() {
             return GetObjectType() == ObjectType.Part ||
                 GetObjectType() == ObjectType.ItemDrop;
         }
@@ -198,7 +206,7 @@ namespace LynnaLab {
                 int n = GetIntValue("Y")&0xf;
                 return (byte)(n*16+8);
             }
-            else if (HasShortenedXY()) {
+            else if (IsTypeWithShortenedXY()) {
                 int n = GetIntValue("X");
                 return (byte)(n*16+8);
             }
@@ -211,7 +219,7 @@ namespace LynnaLab {
                 int n = GetIntValue("Y")>>4;
                 return (byte)(n*16+8);
             }
-            else if (HasShortenedXY()) {
+            else if (IsTypeWithShortenedXY()) {
                 int n = GetIntValue("Y");
                 return (byte)(n*16+8);
             }
@@ -225,7 +233,7 @@ namespace LynnaLab {
                 y |= (byte)(n/16);
                 SetValue("Y", y);
             }
-            else if (HasShortenedXY())
+            else if (IsTypeWithShortenedXY())
                 SetValue("X", n/16);
             else
                 SetValue("X", n);
@@ -236,7 +244,7 @@ namespace LynnaLab {
                 y |= (byte)(n&0xf0);
                 SetValue("Y", y);
             }
-            else if (HasShortenedXY())
+            else if (IsTypeWithShortenedXY())
                 SetValue("Y", n/16);
             else
                 SetValue("Y", n);

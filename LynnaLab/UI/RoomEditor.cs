@@ -14,6 +14,7 @@ namespace LynnaLab
         }
 
         public bool ViewObjects {get; set;}
+        public bool ViewObjectBoxes {get; set;}
 
         protected override Bitmap Image {
             get {
@@ -33,30 +34,34 @@ namespace LynnaLab
         // object pointers
         List<int> hoveringObjectIndices = new List<int>();
 
+        Gdk.ModifierType gdkState;
+
         public RoomEditor() {
             TileWidth = 16;
             TileHeight = 16;
+            XOffset = 8;
+            YOffset = 8;
+
+            ViewObjectBoxes = true;
 
             this.ButtonPressEvent += delegate(object o, ButtonPressEventArgs args)
             {
                 if (client == null)
                     return;
                 int x,y;
-                Gdk.ModifierType state;
-                args.Event.Window.GetPointer(out x, out y, out state);
+                args.Event.Window.GetPointer(out x, out y, out gdkState);
                 UpdateMouse(x,y);
+                if (gdkState.HasFlag(Gdk.ModifierType.Button1Mask))
+                    OnClicked(x, y);
                 if (IsInBounds(x, y)) {
-                    if (state.HasFlag(Gdk.ModifierType.Button1Mask))
-                        OnClicked(x, y);
-                    else if (state.HasFlag(Gdk.ModifierType.Button3Mask))
-                        client.SelectedIndex = room.GetTile(x/TileWidth, y/TileWidth);
+                    if (gdkState.HasFlag(Gdk.ModifierType.Button3Mask))
+                        client.SelectedIndex = room.GetTile(HoveringX, HoveringY);
                 }
             };
             this.ButtonReleaseEvent += delegate(object o, ButtonReleaseEventArgs args) {
                 int x,y;
-                Gdk.ModifierType state;
-                args.Event.Window.GetPointer(out x, out y, out state);
-                if (!state.HasFlag(Gdk.ModifierType.Button1Mask)) {
+                args.Event.Window.GetPointer(out x, out y, out gdkState);
+                if (!gdkState.HasFlag(Gdk.ModifierType.Button1Mask)) {
                     draggingObject = false;
                 }
             };
@@ -64,13 +69,10 @@ namespace LynnaLab
                 if (client == null)
                     return;
                 int x,y;
-                Gdk.ModifierType state;
-                args.Event.Window.GetPointer(out x, out y, out state);
+                args.Event.Window.GetPointer(out x, out y, out gdkState);
                 UpdateMouse(x,y);
-                if (IsInBounds(x, y)) {
-                    if (state.HasFlag(Gdk.ModifierType.Button1Mask))
-                        OnDragged(x, y);
-                }
+                if (gdkState.HasFlag(Gdk.ModifierType.Button1Mask))
+                    OnDragged(x, y);
             };
         }
 
@@ -117,12 +119,14 @@ namespace LynnaLab
             }
         }
 
-        void OnClicked(int x, int y) {
-            x /= TileWidth;
-            y /= TileHeight;
+        void OnClicked(int posX, int posY) {
+            int x = (posX - XOffset) / TileWidth;
+            int y = (posY - YOffset) / TileHeight;
             if (!ViewObjects) {
+                if (!IsInBounds(posX,posY))
+                    return;
                 room.SetTile(x, y, client.SelectedIndex);
-                this.QueueDrawArea(x * TileWidth, y * TileWidth, TileWidth - 1, TileHeight - 1);
+                this.QueueDrawArea(x * TileWidth + XOffset, y * TileWidth + YOffset, TileWidth - 1, TileHeight - 1);
             }
             else {
                 if (objectEditor != null) {
@@ -144,23 +148,34 @@ namespace LynnaLab
             if (!ViewObjects)
                 OnClicked(x,y);
             else {
-                if (!IsInBounds(x,y)) return;
                 if (!draggingObject) return;
 
                 ObjectData data = objectEditor.SelectedObjectData;
                 if (data != null && data.HasXY()) {
-                    // Move objects in increments of 16 pixels
-                    int dataX = data.GetX()+8;
-                    int dataY = data.GetY()+8;
-                    int alignX = (dataX)%16;
-                    int alignY = (dataY)%16;
-                    int newX = (x-alignX)/16;
-                    int newY = (y-alignY)/16;
-                    newX = (newX*16+alignX+8)%256;
-                    newY = (newY*16+alignY+8)%256;
+                    int newX,newY;
+                    if (gdkState.HasFlag(Gdk.ModifierType.ControlMask) || data.HasShortenedXY()) {
+                        newX = x-XOffset;
+                        newY = y-XOffset;
+                    }
+                    else {
+                        // Move objects in increments of 8 pixels
+                        int unit = 8;
+                        int unitLog = (int)Math.Log(unit, 2);
 
-                    data.SetX((byte)newX);
-                    data.SetY((byte)newY);
+                        int dataX = data.GetX()+unit/2;
+                        int dataY = data.GetY()+unit/2;
+                        int alignX = (dataX)%unit;
+                        int alignY = (dataY)%unit;
+                        newX = (x-XOffset-alignX)>>unitLog;
+                        newY = (y-YOffset-alignY)>>unitLog;
+                        newX = newX*unit+alignX+unit/2;
+                        newY = newY*unit+alignY+unit/2;
+                    }
+
+                    if (newX >= 0 && newX < 256 && newY >= 0 && newY < 256) {
+                        data.SetX((byte)newX);
+                        data.SetY((byte)newY);
+                    }
 
                     QueueDraw();
                 }
@@ -178,7 +193,7 @@ namespace LynnaLab
             Graphics g = Gtk.DotNet.Graphics.FromDrawable(ev.Window);
 
             if (ViewObjects)
-                g.DrawImage(Image, 0, 0, Image.Width*Scale, Image.Height*Scale);
+                g.DrawImage(Image, XOffset, YOffset, Image.Width*Scale, Image.Height*Scale);
             else
                 base.OnExposeEvent(ev);
 
@@ -260,38 +275,39 @@ namespace LynnaLab
                     }
 
                     if (editor != null && i == editor.SelectedIndex) {
-                        selectedX = x-8;
-                        selectedY = y-8;
+                        selectedX = x-8 + XOffset;
+                        selectedY = y-8 + YOffset;
                     }
-                    if (mouseX >= x-8 && mouseX < x+8 &&
-                            mouseY >= y-8 && mouseY < y+8) {
+                    if (mouseX-XOffset >= x-8 && mouseX-XOffset < x+8 &&
+                            mouseY-YOffset >= y-8 && mouseY-YOffset < y+8) {
                         if (localObjectIndices.Count == objectIndices.Count) {
                             if (foundHoveringMatch)
                                 localObjectIndices[localObjectIndices.Count-1] = i;
                             else
                                 localObjectIndices.Add(i);
-                            cursorX = x-8;
-                            cursorY = y-8;
+                            cursorX = x-8 + XOffset;
+                            cursorY = y-8 + YOffset;
                             foundHoveringMatch = true;
                         }
                     }
 
                     // x and y are the center coordinates for the object
 
-                    g.FillRectangle(new SolidBrush(color), x-width/2, y-width/2, width, width);
+                    if (ViewObjectBoxes)
+                        g.FillRectangle(new SolidBrush(color), x-width/2 + XOffset, y-width/2 + YOffset, width, width);
 
                     if (data.GetGameObject() != null) {
                         try {
                             ObjectAnimationFrame o = data.GetGameObject().DefaultAnimation.GetFrame(0);
-                            o.Draw(g, x, y);
+                            o.Draw(g, x+XOffset, y+YOffset);
                         }
                         catch(NoAnimationException) {
                             // No animation defined
                         }
                         catch(InvalidAnimationException) {
                             // Error parsing an animation; draw a blue X to indicate the error
-                            int xPos = x-width/2;
-                            int yPos = y-width/2;
+                            int xPos = x-width/2 + XOffset;
+                            int yPos = y-width/2 + YOffset;
                             g.DrawLine(new Pen(Color.Blue), xPos, yPos, xPos+width-1, yPos+width-1);
                             g.DrawLine(new Pen(Color.Blue), xPos+width-1, yPos, xPos, yPos+width-1);
                         }
@@ -312,8 +328,8 @@ namespace LynnaLab
         protected override void OnSizeRequested(ref Gtk.Requisition requisition)
         {
             // Calculate desired size here.
-            requisition.Width = 0xf*16;
-            requisition.Height = 0xb*16;
+            requisition.Width = 0x10*16;
+            requisition.Height = 0x10*16;
         }
     }
 }

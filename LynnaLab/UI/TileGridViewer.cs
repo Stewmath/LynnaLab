@@ -21,6 +21,13 @@ namespace LynnaLab
         [BrowsableAttribute(false)]
         public int Scale { get; set; }
 
+        [BrowsableAttribute(false)]
+        // Pixel offset where grid starts
+        public int XOffset { get; set; }
+
+        [BrowsableAttribute(false)]
+        public int YOffset { get; set; }
+
         public int HoveringIndex
         {
             get { return hoveringIndex; }
@@ -56,8 +63,8 @@ namespace LynnaLab
         }
 
         public bool IsInBounds(int x, int y) {
-            return (x >= 0 && y >= 0 && x < Width * TileWidth * Scale &&
-                    y < Height * TileHeight * Scale);
+            return (x >= XOffset && y >= YOffset && x < Width * TileWidth * Scale + XOffset &&
+                    y < Height * TileHeight * Scale + YOffset);
         }
 
         protected void OnMoveMouse(object o, MotionNotifyEventArgs args) {
@@ -66,18 +73,18 @@ namespace LynnaLab
             args.Event.Window.GetPointer(out x, out y, out state);
 
             int nextHoveringIndex;
-            if (x >= 0 && y >= 0 && x<Width*TileWidth*Scale && y<Height*TileHeight*Scale) {
-                nextHoveringIndex = (x/TileWidth/Scale) + (y/TileHeight/Scale)*Width;
+            if (IsInBounds(x,y)) {
+                nextHoveringIndex = ((x-XOffset)/TileWidth/Scale) + ((y-YOffset)/TileHeight/Scale)*Width;
             }
             else {
                 nextHoveringIndex = -1;
             }
 
             if (nextHoveringIndex != hoveringIndex) {
-                this.QueueDrawArea(HoveringX*TileWidth*Scale, HoveringY*TileHeight*Scale,
+                this.QueueDrawArea(XOffset+HoveringX*TileWidth*Scale, YOffset+HoveringY*TileHeight*Scale,
                         TileWidth*Scale, TileHeight*Scale);
                 hoveringIndex = nextHoveringIndex;
-                this.QueueDrawArea(HoveringX*TileWidth*Scale, HoveringY*TileHeight*Scale,
+                this.QueueDrawArea(XOffset+HoveringX*TileWidth*Scale, YOffset+HoveringY*TileHeight*Scale,
                         TileWidth*Scale, TileHeight*Scale);
 
                 if (HoverChangedEvent != null)
@@ -88,7 +95,7 @@ namespace LynnaLab
         protected void OnMouseLeave(object o, LeaveNotifyEventArgs args) {
             bool changed = false;
             if (hoveringIndex != -1) {
-                this.QueueDrawArea(HoveringX * TileWidth * Scale, HoveringY * TileHeight * Scale,
+                this.QueueDrawArea(XOffset + HoveringX * TileWidth * Scale, YOffset + HoveringY * TileHeight * Scale,
                     TileWidth * Scale, TileHeight * Scale);
 
                 changed = true;
@@ -108,9 +115,9 @@ namespace LynnaLab
             g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
 
             if (Image != null)
-                g.DrawImage(Image, 0, 0, Image.Width*Scale, Image.Height*Scale);
+                g.DrawImage(Image, XOffset, YOffset, Image.Width*Scale, Image.Height*Scale);
             if (hoveringIndex != -1) {
-                g.DrawRectangle(new Pen(Color.Red), HoveringX*TileWidth*Scale, HoveringY*TileHeight*Scale,
+                g.DrawRectangle(new Pen(Color.Red), XOffset+HoveringX*TileWidth*Scale, YOffset+HoveringY*TileHeight*Scale,
                         TileWidth*Scale-1, TileHeight*Scale-1);
             }
 
@@ -120,8 +127,8 @@ namespace LynnaLab
         }
 
         protected override void OnSizeRequested(ref Requisition req) {
-            req.Width = Width*TileWidth*Scale;
-            req.Height = Height*TileHeight*Scale;
+            req.Width = XOffset+Width*TileWidth*Scale;
+            req.Height = YOffset+Height*TileHeight*Scale;
         }
     }
 
