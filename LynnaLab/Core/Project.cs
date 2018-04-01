@@ -430,7 +430,7 @@ namespace LynnaLab
 
             RgbData data = GetData("standardSpritePaletteData") as RgbData;
 
-            for (int i=0;i<4;i++) {
+            for (int i=0;i<6;i++) {
                 _standardSpritePalettes[i] = new Color[4];
                 for (int j=0;j<4;j++) {
                     _standardSpritePalettes[i][j] = data.Color;
