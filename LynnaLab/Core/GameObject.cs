@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace LynnaLab {
@@ -13,7 +14,9 @@ namespace LynnaLab {
 public abstract class GameObject : ProjectIndexedDataType {
 
     // Using a dictionary because I don't know what the upper limit is to # of animations...
-    Dictionary<int,ObjectAnimation> animations = new Dictionary<int,ObjectAnimation>();
+    Dictionary<int,ObjectAnimation> _animations = new Dictionary<int,ObjectAnimation>();
+
+    Documentation _subidDocumentation = null;
 
 
     public GameObject(Project p, int index) : base(p, index) {
@@ -27,6 +30,11 @@ public abstract class GameObject : ProjectIndexedDataType {
     }
 
     public abstract string TypeName { get; }
+
+    /// <summary>
+    ///  The ConstantsMapping for the Main ID.
+    /// </summary>
+    public abstract ConstantsMapping IDConstantsMapping { get; }
 
 
     /// <summary>
@@ -69,13 +77,68 @@ public abstract class GameObject : ProjectIndexedDataType {
 
     public ObjectAnimation GetAnimation(int i) {
         try {
-            return animations[i];
+            return _animations[i];
         }
         catch(KeyNotFoundException) {
             var anim = new ObjectAnimation(this, i);
-            animations[i] = anim;
+            _animations[i] = anim;
             return anim;
         }
+    }
+
+    /// <summary>
+    ///  Returns the documentation for the object with this ID (not specific to subID).
+    /// </summary>
+    public Documentation GetIDDocumentation() {
+        Documentation doc = IDConstantsMapping.GetDocumentationForValue(ID);
+
+        if (doc == null)
+            return null;
+
+        var keys = new HashSet<string>(doc.Keys);
+        foreach (string key in keys) {
+            switch(key) {
+            case "X":
+            case "Y":
+                doc.Description += "\n\n" + key + ": " + doc.GetField(key);
+                doc.RemoveField(key);
+                break;
+            default:
+                if (key.Length >= 6 && key.Substring(0,6) == "subid_") {
+                    string subidName = key.Substring(6);
+                    doc.SetField(subidName, doc.GetSubDocumentation(key).GetField("desc"));
+                }
+                doc.RemoveField(key);
+                break;
+            }
+        }
+
+        return doc;
+    }
+
+    /// <summary>
+    ///  Returns the documentation for the object with this ID and SubID combination.
+    ///
+    ///  (TODO: cache, and make it so that not every object stores the subid values for everything;
+    ///  might need some kind of new "BaseObject" class that only has ID, not SubID.)
+    /// </summary>
+    public Documentation GetSubIDDocumentation() {
+        Documentation doc = IDConstantsMapping.GetDocumentationForValue(ID);
+
+        if (doc == null)
+            return null;
+
+        foreach (string key in doc.Keys) {
+            if (key.Length >= 6 && key.Substring(0,6) == "subid_") {
+                string range = key.Substring(6);
+                if (Helper.GetIntListFromRange(range).Contains(SubID)) {
+                    Documentation subidDoc = doc.GetSubDocumentation(key);
+                    return subidDoc;
+                }
+            }
+        }
+
+        return doc;
     }
 }
 }

@@ -31,9 +31,6 @@ public class InteractionObject : GameObject {
             b0 = (byte)objectData.GetIntValue(0);
             b1 = (byte)objectData.GetIntValue(1);
             b2 = (byte)objectData.GetIntValue(2);
-
-            if (b0 == 0) // ObjectGfxHeaderIndex is 0
-                objectData = null;
         }
         catch(InvalidLookupException) {
             objectData = null;
@@ -47,6 +44,10 @@ public class InteractionObject : GameObject {
     // GameObject properties
     public override string TypeName {
         get { return "Interaction"; }
+    }
+
+    public override ConstantsMapping IDConstantsMapping {
+        get { return Project.InteractionMapping; }
     }
 
 

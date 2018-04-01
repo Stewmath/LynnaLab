@@ -43,9 +43,6 @@ public class EnemyObject : GameObject {
 
             _tileIndexBase = (byte)((b3&0xf)*2);
             _oamFlagsBase = (byte)(b3>>4);
-
-            if (_objectGfxHeaderIndex == null)
-                objectData = null;
         }
         catch(InvalidLookupException e) {
             Console.WriteLine(e.ToString());
@@ -61,6 +58,10 @@ public class EnemyObject : GameObject {
     // GameObject properties
     public override string TypeName {
         get { return "Enemy"; }
+    }
+
+    public override ConstantsMapping IDConstantsMapping {
+        get { return Project.EnemyMapping; }
     }
 
 

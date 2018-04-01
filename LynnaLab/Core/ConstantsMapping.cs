@@ -44,7 +44,10 @@ public class ConstantsMapping
         get { return prefixes; }
     }
 
-    public Documentation DefaultDocumentation {
+    /// <summary>
+    ///  Returns a Documentation object for this entire set of values.
+    /// </summary>
+    public Documentation OverallDocumentation {
         get {
             return new Documentation("", "", GetAllValuesWithDescriptions());
         }
@@ -73,13 +76,15 @@ public class ConstantsMapping
                     try {
                         var tup = definesDictionary[key];
                         string val = tup.Item1;
-                        var docComponent = tup.Item2;
+                        var docComponent = tup.Item2; // May be null
 
                         byte b = (byte)Project.EvalToInt(val);
                         stringList.Add(key);
 
-                        Documentation doc = (docComponent == null ? null : new Documentation("", docComponent, "subid"));
-                        Entry ent = new Entry(key, b, doc); // TODO: remove subid from here
+                        Documentation doc = null;
+                        if (docComponent != null)
+                            doc = new Documentation(docComponent, key);
+                        Entry ent = new Entry(key, b, doc); // TODO: remove doc from here
 
                         stringToByte[key] = ent;
                         byteToString[b] = ent;
@@ -125,20 +130,6 @@ public class ConstantsMapping
     }
 
 
-    public string GetDocumentationField(byte key, string name) {
-        var doc = GetDocumentation(key);
-        if (doc == null)
-            return null;
-        return doc.FileComponent.GetDocumentationField(name);
-    }
-    public string GetDocumentationField(string key, string name) {
-        var doc = GetDocumentation(key);
-        if (doc == null)
-            return null;
-        return doc.FileComponent.GetDocumentationField(name);
-    }
-
-
     /// <summary>
     ///  Returns a list of all possible values (human-readable; shows both the byte and the
     ///  corresponding string), along with their description if they have one.
@@ -147,7 +138,8 @@ public class ConstantsMapping
         var list = new List<Tuple<string,string>>();
         foreach (byte key in byteToString.Keys) {
             string name =  Wla.ToByte(key) + ": " + RemovePrefix(byteToString[key].str);
-            var tup = new Tuple<string,string>(name, GetDocumentationField(key,"desc"));
+            string desc = GetDocumentationForValue(key)?.GetField("desc") ?? "";
+            var tup = new Tuple<string,string>(name, desc);
             list.Add(tup);
         }
         return list;
@@ -169,17 +161,26 @@ public class ConstantsMapping
         return s;
     }
 
-    public Documentation GetDocumentation(byte b) {
+    /// <summary>
+    ///  Returns a "default" documentation object for a particular value of this ConstantsMapping.
+    ///  </summary>
+    public Documentation GetDocumentationForValue(byte b) {
         try {
-            return byteToString[b].documentation;
+            Documentation d = byteToString[b].documentation;
+            if (d == null)
+                return null;
+            return new Documentation(d);
         }
         catch(KeyNotFoundException) {
             return null;
         }
     }
-    public Documentation GetDocumentation(string s) {
+    public Documentation GetDocumentationForValue(string s) {
         try {
-            return stringToByte[s].documentation;
+            Documentation d = stringToByte[s].documentation;
+            if (d == null)
+                return null;
+            return new Documentation(d);
         }
         catch(KeyNotFoundException) {
             return null;

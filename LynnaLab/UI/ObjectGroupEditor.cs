@@ -188,6 +188,7 @@ namespace LynnaLab
                 ValueReference r;
                 try {
                     r = activeData.GetValueReference("ID");
+                    r.Documentation = r.ConstantsMapping?.OverallDocumentation;
                 }
                 catch(InvalidLookupException) {
                     goto next;
@@ -197,12 +198,14 @@ namespace LynnaLab
                     activeData.GetValueReference("SubID").Documentation = null; // Set it to null now, might replace it below
                     if (r.ConstantsMapping != null) {
                         try {
+                            // Set tooltip based on ID field documentation
                             string objectName = r.ConstantsMapping.ByteToString((byte)r.GetIntValue());
                             string tooltip = objectName + "\n\n";
-                            tooltip += r.GetDocumentationField("desc");
+                            //tooltip += r.GetDocumentationField("desc");
                             editor.SetTooltip(r, tooltip.Trim());
 
-                            activeData.GetValueReference("SubID").Documentation = r.ConstantsMapping.GetDocumentation((byte)r.GetIntValue());
+                            Documentation doc = activeData.GetIDDocumentation();
+                            activeData.GetValueReference("SubID").Documentation = doc;
                         }
                         catch(KeyNotFoundException) {
                         }

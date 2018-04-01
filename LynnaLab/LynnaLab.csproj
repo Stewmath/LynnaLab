@@ -129,6 +129,8 @@
     <Compile Include="Core/InteractionObject.cs" />
     <Compile Include="Tests\NUnitTestClass.cs" />
     <Compile Include="Core\EnemyObject.cs" />
+    <Compile Include="Core\PartObject.cs" />
+    <Compile Include="Core\Helper.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

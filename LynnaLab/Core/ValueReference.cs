@@ -87,6 +87,8 @@ namespace LynnaLab
         public Project Project {
             get {return Data.Project; }
         }
+
+        // This documentation tends to change based on what the current value is...
         public Documentation Documentation {
             get {
                 return _documentation;
@@ -155,7 +157,7 @@ namespace LynnaLab
             if (data != null && constantsMappingString != null) {
                 constantsMapping = (ConstantsMapping)typeof(Project).GetField(constantsMappingString).GetValue(data.Project);
                 if (_documentation == null) {
-                    _documentation = constantsMapping.DefaultDocumentation;
+                    _documentation = constantsMapping.OverallDocumentation;
                     _documentation.Name = "Field: " + Name;
                 }
             }
@@ -225,24 +227,9 @@ namespace LynnaLab
         ///  Returns a field from documentation (ie. "@desc{An interaction}").
         /// </summary>
         public string GetDocumentationField(string name) {
-            if (constantsMapping == null)
+            if (_documentation == null)
                 return null;
-            return constantsMapping.GetDocumentationField((byte)GetIntValue(), name);
+            return _documentation.GetField(name);
         }
-
-        public IList<Tuple<string,string>> GetDocumentationFieldSubdivisions(string name) {
-            if (constantsMapping == null)
-                return null;
-            try {
-                Documentation d = constantsMapping.GetDocumentation((byte)GetIntValue());
-                if (d == null)
-                    return null;
-                return d.GetDocumentationFieldSubdivisions(name);
-            }
-            catch(InvalidLookupException) {
-                return null;
-            }
-        }
-
     }
 }

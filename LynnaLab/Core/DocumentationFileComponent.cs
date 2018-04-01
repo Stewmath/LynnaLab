@@ -11,26 +11,33 @@ public class DocumentationFileComponent : FileComponent {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
     readonly Dictionary<string,string> documentationParams;
-    string str;
+    string origString;
+
+    List<string> _keys; // Maintained separately from documentationParams to preserve original case
+
 
     // Default field values
     readonly Dictionary<string,string> defaultFields = new Dictionary<string,string>();
+
+
+    public ICollection<string> Keys {
+        get { return _keys; }
+    }
 
     public DocumentationFileComponent(FileParser parser, string str) : base(parser, null) {
         // Setup default fields
         defaultFields["postype"] = "normal";
 
+        _keys = new List<string>();
 
         this.EndsLine = false;
-        this.str = str;
+        this.origString = str;
 
-        documentationParams = new Dictionary<string,string>();
-
-        ParseDoc(str);
+        documentationParams = ParseDoc(str, _keys);
     }
 
     public override string GetString() {
-        return str;
+        return origString;
     }
 
 
@@ -38,7 +45,7 @@ public class DocumentationFileComponent : FileComponent {
     ///  Returns the string corresponding to a documentation block. Example: if the file
     ///  had "@name{Test}", then GetField("name") would return "Test".
     /// </summary>
-    public string GetDocumentationField(string name) {
+    public string GetField(string name) {
         name = name.ToLower();
         string output;
         documentationParams.TryGetValue(name, out output);
@@ -48,14 +55,25 @@ public class DocumentationFileComponent : FileComponent {
     }
 
 
+
     /// <summary>
-    ///  Takes a block of documentation comments as they appear in the file (ie. with semicolons
-    ///  still in) and divides it into key-value pairs.
+    ///  Static method; Takes a block of documentation comments as they appear in the file (ie. with
+    ///  semicolons possibly still in) and divides it into key-value pairs.
     ///
     ///  This needs to fix spacing, since newlines should be ignored (unless there are two newlines
     ///  in a row).
+    ///
+    ///  This is also used when parsing a "second layer", ie. parsing the inside of a field with
+    ///  Documentation.GetSubDocumetation().
+    ///
+    ///  The dictionary it returns has all its keys set to lowercase. That's why it takes a "keys"
+    ///  list to return the original keys with their case intact.
+    ///
+    ///  TODO: use StringBuilder
     /// </summary>
-    void ParseDoc(string str) {
+    public static Dictionary<string,string> ParseDoc(string str, List<string> keys = null) {
+        var fields = new Dictionary<string,string>();
+
         // Helper function: Trim out the initial comments in a line along with all spaces at start
         // and end.
         Func<string,string> TrimLine = (s) => {
@@ -65,97 +83,69 @@ public class DocumentationFileComponent : FileComponent {
             return s.Substring(i).Trim();
         };
 
-        int l = 0;
+        // Trim all lines of semicolons and spaces, concatenate lines when necessary, before
+        // continuing
         string[] lines = str.Split('\n');
-        string description = "";
-        while (l < lines.Length) {
-            string trimmed = TrimLine(lines[l]);
-            if (trimmed.Length == 0) {
-                description += "\n\n";
-                l++;
-                continue;
-            }
-            if (trimmed[0] != '@') {
-                // Description is outside of any tags
-                description += trimmed + " ";
-                l++;
-                continue;
-            }
-            int openPos = trimmed.IndexOf('{');
-            string key = trimmed.Substring(1, openPos-1).Trim();
+        string text = "";
 
-            trimmed = trimmed.Substring(openPos+1).Trim();
-            string value = "";
-            int closePos = -1;
-            while (l < lines.Length-1 && (closePos = trimmed.IndexOf('}')) == -1) {
-                value += trimmed + " ";
-                trimmed = TrimLine(lines[++l]);
-            }
-
-            if (closePos == -1) {
-                log.Warn(parser.WarningString + "No closing brace for \"" + key + "\".");
-                return;
-            }
-
-            value += trimmed.Substring(0,closePos);
-            value = value.Trim();
-            l++;
-
-            documentationParams.Add(key.ToLower(), value);
+        for (int l=0;l<lines.Length;l++) {
+            string line = TrimLine(lines[l]);
+            if (line == "")
+                text += "\n\n";
+            else
+                text += " " + line;
         }
+        text = text.Trim();
+
+        // Now parse the text
+        string description="";
+        int j=0;
+        while (j < text.Length) {
+            int nextAt = text.IndexOf('@');
+            if (nextAt == -1) {
+                break;
+            }
+
+            int openPos = text.IndexOf('{',nextAt);
+            if (openPos == -1)
+                break;
+
+            int closePos = openPos+1;
+            int depth = 1;
+            while (closePos < text.Length) {
+                if (text[closePos] == '{')
+                    depth++;
+                if (text[closePos] == '}') {
+                    depth--;
+                    if (depth == 0)
+                        break;
+                }
+                closePos++;
+            }
+
+            if (closePos >= text.Length)
+                break;
+
+            string field = text.Substring(nextAt+1, openPos-(nextAt+1)).Trim();
+            string value = text.Substring(openPos+1, closePos-(openPos+1)).Trim();
+            fields[field.ToLower()] = value;
+            if (keys != null)
+                keys.Add(field);
+
+            string addToDesc = text.Substring(0,nextAt);
+            if (addToDesc.Trim() != "")
+                description += addToDesc;
+            text = text.Substring(closePos+1);
+        }
+        // On end, text should contain anything remaining to be added to description
+
+        description += text;
 
         description = description.Trim();
-        documentationParams.Add("desc", description);
-    }
+        fields.Add("desc", description);
+        keys.Add("desc");
 
-
-    /// <summary>
-    ///  Used for reading subid lists. See constants/interactionTypes.s for how it's
-    ///  formatted...
-    ///
-    ///  Each element in the list is (k,d), where k is the subid value (or just the key in
-    ///  general), and d is the description.
-    /// </summary>
-    public IList<Tuple<string,string>> GetDocumentationFieldSubdivisions(string name) {
-        name = name.ToLower();
-
-        string text = GetDocumentationField(name);
-        if (text == null)
-            return null;
-
-        var output = new List<Tuple<string,string>>();
-
-        int openBrace;
-        while ((openBrace = text.IndexOf('[')) != -1) {
-            int closeBrace = openBrace+1;
-            int j = 1;
-            while (closeBrace<text.Length && j>0) {
-                if (text[closeBrace] == '[')
-                    j++;
-                if (text[closeBrace] == ']')
-                    j--;
-                closeBrace++;
-            }
-            closeBrace--;
-            if (text[closeBrace] != ']') {
-                log.Warn("Missing ']' for \"@" + name + "\"");
-                return output;
-            }
-
-            int pipe = text.IndexOf('|', openBrace);
-            if (pipe == -1 || pipe > closeBrace) {
-                log.Warn("Missing ']' for \"@" + name + "\"");
-                return output;
-            }
-
-            string key = text.Substring(openBrace+1, pipe-(openBrace+1));
-            string desc = text.Substring(pipe+1, closeBrace-(pipe+1));
-            output.Add(new Tuple<string,string>(key,desc));
-
-            text = text.Substring(closeBrace+1);
-        }
-
-        return output;
+        return fields;
     }
 }
 }

@@ -4,7 +4,6 @@
     - Select multiple tiles from a tileset at once
     - Rectangle select / fill
     - Provide an interface for editing "data/singleTileChanges.s"?
-    - View and edit object animations
 
 - Technicalities:
     - Treat no-value, 2-value, and quad-value interactions the same
@@ -17,10 +16,11 @@
     - Dungeon editing: can't add more than 4 floors?
 
 - Objects:
+    - View and edit object animations
+        - Allow specifying the palette based on ID and SubID
     - Handle interactions referencing same data
-    - Show the values from constants/interactions.s
     - Static dungeon objects
-    - Show and edit object animations
+    X Show the values from constants/interactions.s
 
 - Tileset editing:
     - Collisions
@@ -44,8 +44,3 @@
     - Treetop editing
 
     - Provide info for asm hacks (remove beginning locks, etc)
-
-
-Complete:
-    - Dungeon minimap editing
-        - Also change properties like how many floors

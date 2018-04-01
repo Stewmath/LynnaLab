@@ -50,6 +50,8 @@ public class ObjectAnimation {
 
         if (!_gameObject.DataValid)
             throw new InvalidAnimationException();
+        if (_gameObject.ObjectGfxHeaderIndex == 0)
+            throw new NoAnimationException();
 
         try {
             _animationData = Project.GetData(Project.GetData(AnimationTableName, animationIndex*2).GetValue(0));

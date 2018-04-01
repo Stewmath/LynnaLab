@@ -280,12 +280,16 @@ namespace LynnaLab
 
                     g.FillRectangle(new SolidBrush(color), x-width/2, y-width/2, width, width);
 
-                    if (data.GetGameObject() != null && data.GetGameObject().DataValid) {
+                    if (data.GetGameObject() != null) {
                         try {
                             ObjectAnimationFrame o = data.GetGameObject().DefaultAnimation.GetFrame(0);
                             o.Draw(g, x, y);
                         }
+                        catch(NoAnimationException) {
+                            // No animation defined
+                        }
                         catch(InvalidAnimationException) {
+                            // Error parsing an animation; draw a blue X to indicate the error
                             int xPos = x-width/2;
                             int yPos = y-width/2;
                             g.DrawLine(new Pen(Color.Blue), xPos, yPos, xPos+width-1, yPos+width-1);

@@ -47,7 +47,7 @@ namespace LynnaLab
         }
         public Documentation DefaultDocumentation {
             get {
-                return mapping.DefaultDocumentation;
+                return mapping.OverallDocumentation;
             }
         }
 

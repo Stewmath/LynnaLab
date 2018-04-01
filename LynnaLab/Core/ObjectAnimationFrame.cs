@@ -86,15 +86,22 @@ public class ObjectAnimationFrame {
             }
         }
         catch(InvalidLookupException e) {
+            bitmaps = null;
             throw new InvalidAnimationException(e);
         }
     }
 
+    /// <summary>
+    ///  Will throw InvalidAnimationException if initialization failed earlier...
+    /// </summary>
     public void Draw(Graphics g, int xPos, int yPos) {
+        if (bitmaps == null)
+            throw new InvalidAnimationException();
+
         int _numSprites = _oamData.GetIntValue(0);
 
         // Draw sprites in backwards order to respect priority properly
-        for (int i=bitmaps.Count-1; i>=0; i--) {
+        for (int i=_numSprites-1; i>=0; i--) {
             Tuple<Bitmap,int,int> tup = bitmaps[i];
             Bitmap bitmap = tup.Item1;
             int x = tup.Item2 + xPos;

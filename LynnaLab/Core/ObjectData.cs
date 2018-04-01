@@ -194,7 +194,7 @@ namespace LynnaLab {
         // X values in one byte. This will take care of that, and will multiply the value when the
         // positions are in this short format (ie. range $0-$f becomes $08-$f8).
         public byte GetX() {
-            if (GetValueReference("ID")?.GetDocumentationField("postype") == "short") {
+            if (GetSubIDDocumentation()?.GetField("postype") == "short") {
                 int n = GetIntValue("Y")&0xf;
                 return (byte)(n*16+8);
             }
@@ -207,7 +207,7 @@ namespace LynnaLab {
         }
         // Return the center y-coordinate of the object
         public byte GetY() {
-            if (GetValueReference("ID")?.GetDocumentationField("postype") == "short") {
+            if (GetSubIDDocumentation()?.GetField("postype") == "short") {
                 int n = GetIntValue("Y")>>4;
                 return (byte)(n*16+8);
             }
@@ -220,7 +220,7 @@ namespace LynnaLab {
         }
 
         public void SetX(byte n) {
-            if (GetValueReference("ID")?.GetDocumentationField("postype") == "short") {
+            if (GetSubIDDocumentation()?.GetField("postype") == "short") {
                 byte y = (byte)(GetIntValue("Y")&0xf0);
                 y |= (byte)(n/16);
                 SetValue("Y", y);
@@ -231,7 +231,7 @@ namespace LynnaLab {
                 SetValue("X", n);
         }
         public void SetY(byte n) {
-            if (GetValueReference("ID")?.GetDocumentationField("postype") == "short") {
+            if (GetSubIDDocumentation()?.GetField("postype") == "short") {
                 byte y = (byte)(GetIntValue("Y")&0x0f);
                 y |= (byte)(n&0xf0);
                 SetValue("Y", y);
@@ -263,8 +263,19 @@ namespace LynnaLab {
             else if (type == ObjectType.RandomEnemy || type == ObjectType.SpecificEnemy || (type == ObjectType.QuadrupleValue && GetIntValue("Object Type") == 1)) {
                 return Project.GetIndexedDataType<EnemyObject>((GetIntValue("ID")<<8) | GetIntValue("SubID"));
             }
+            else if (type == ObjectType.Part || (type == ObjectType.QuadrupleValue && GetIntValue("Object Type") == 2)) {
+                return Project.GetIndexedDataType<PartObject>((GetIntValue("ID")<<8) | GetIntValue("SubID"));
+            }
             // TODO: other types
             return null;
+        }
+
+        public Documentation GetIDDocumentation() {
+            return GetGameObject()?.GetIDDocumentation();
+        }
+
+        public Documentation GetSubIDDocumentation() {
+            return GetGameObject()?.GetSubIDDocumentation();
         }
 
         bool IsShortenable() {
