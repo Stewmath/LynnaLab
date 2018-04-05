@@ -62,22 +62,19 @@ namespace LynnaLab
             return base.OnButtonPressEvent(ev);
         }
 
-        protected override bool OnExposeEvent(Gdk.EventExpose ev)
-        {
-            return base.OnExposeEvent(ev);
-        }
-
         protected override void OnSizeAllocated(Gdk.Rectangle allocation)
         {
             base.OnSizeAllocated(allocation);
             // Insert layout code here.
         }
 
-        protected override void OnSizeRequested(ref Gtk.Requisition requisition)
-        {
-            // Calculate desired size here.
-            requisition.Height = 16*16;
-            requisition.Width = 16*16;
+        protected override void OnGetPreferredWidth(out int minimum_width, out int natural_width) {
+            minimum_width = 16*16;
+            natural_width = minimum_width;
+        }
+        protected override void OnGetPreferredHeight(out int minimum_height, out int natural_height) {
+            minimum_height = 16*16;
+            natural_height = minimum_height;
         }
     }
 }

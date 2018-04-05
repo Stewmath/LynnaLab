@@ -47,6 +47,7 @@ Global
 		$2.NewLineForFinally = True
 		$2.SpacingAfterMethodDeclarationName = False
 		$2.SpaceBeforeOpenSquareBracket = False
+		$2.SpaceAfterMethodCallName = False
 		$0.DotNetNamingPolicy = $3
 		$3.DirectoryNamespaceAssociation = None
 		$3.ResourceNamePolicy = FileFormatDefault

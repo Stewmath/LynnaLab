@@ -96,6 +96,7 @@ public partial class MainWindow: Gtk.Window
     }
 
     void LoadPlugins() {
+        return;
         pluginCore.ReloadPlugins();
 
         MenuItem pluginMenuItem = null;
@@ -266,8 +267,8 @@ public partial class MainWindow: Gtk.Window
         Alignment a = new Alignment(1,0.25f,1,0);
         a.SetSizeRequest(0, 50);
         a.Add(new Gtk.Label(info));
-        d.VBox.Add(a);
-        d.VBox.ShowAll();
+        d.Add(a);
+        d.ShowAll();
         response = (ResponseType)d.Run();
         d.Destroy();
         if (response == ResponseType.Yes) {

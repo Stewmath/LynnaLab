@@ -93,8 +93,9 @@ public class ObjectAnimationFrame {
 
     /// <summary>
     ///  Will throw InvalidAnimationException if initialization failed earlier...
+    ///  TODO: does drawing code really belong here?
     /// </summary>
-    public void Draw(Graphics g, int xPos, int yPos) {
+    public void Draw(Cairo.Context cr, int xPos, int yPos) {
         if (bitmaps == null)
             throw new InvalidAnimationException();
 
@@ -106,7 +107,12 @@ public class ObjectAnimationFrame {
             Bitmap bitmap = tup.Item1;
             int x = tup.Item2 + xPos;
             int y = tup.Item3 + yPos;
-            g.DrawImage(bitmap, x, y);
+
+            using (Cairo.Surface s = CairoHelper.LockBitmap(bitmap)) {
+                cr.SetSourceSurface(s,x,y);
+                cr.Paint();
+                CairoHelper.UnlockBitmap(bitmap);
+            }
         }
     }
 

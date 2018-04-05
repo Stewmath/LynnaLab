@@ -13,6 +13,7 @@ namespace LynnaLab
         public AddObjectDialog()
         {
             this.Build();
+            //this.Add(w1);
             UpdateLabel();
         }
 

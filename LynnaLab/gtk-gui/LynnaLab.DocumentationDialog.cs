@@ -17,7 +17,7 @@ namespace LynnaLab
 			w1.Name = "dialog1_VBox";
 			w1.BorderWidth = ((uint)(2));
 			// Internal child LynnaLab.DocumentationDialog.ActionArea
-			global::Gtk.HButtonBox w2 = this.ActionArea;
+            global::Gtk.HButtonBox w2 = (Gtk.HButtonBox)this.ActionArea;
 			w2.Name = "dialog1_ActionArea";
 			w2.Spacing = 10;
 			w2.BorderWidth = ((uint)(5));
