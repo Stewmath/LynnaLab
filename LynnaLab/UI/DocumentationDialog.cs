@@ -10,9 +10,9 @@ namespace LynnaLab
 
         public DocumentationDialog (Documentation _doc)
         {
-            documentation = _doc;
+            ContentArea.PackStart(VBox, true, true, 0);
 
-            this.Add(VBox);
+            documentation = _doc;
 
             Gtk.Label nameLabel = new Gtk.Label("<b>"+documentation.Name+"</b>");
             nameLabel.Wrap = true;
@@ -31,6 +31,8 @@ namespace LynnaLab
             descLabel.Wrap = true;
             descLabel.UseUnderline = false;
             descLabel.Xalign = 0;
+            descLabel.WidthChars = 50;
+            descLabel.MaxWidthChars = 50;
             VBox.PackStart(descLabel, false, false, 0);
 
 
@@ -43,7 +45,7 @@ namespace LynnaLab
                 Gtk.Label valuesLabel = new Gtk.Label("\nValues:");
                 valuesLabel.UseUnderline = false;
                 valuesLabel.Xalign = 0;
-                VBox.Add(valuesLabel);
+                VBox.PackStart(valuesLabel, false, false, 0);
 
                 Gtk.Table subidTable = new Gtk.Table(2,(uint)subidEntries.Count*2,false);
 
@@ -63,6 +65,8 @@ namespace LynnaLab
                     l2.Wrap = true;
                     l2.Xalign = 0;
                     l2.Yalign = 0;
+                    l2.WidthChars = 50;
+                    l2.MaxWidthChars = 50;
 
                     subidTable.Attach(l1, subidX+0,subidX+1, subidY,subidY+1, Gtk.AttachOptions.Fill, Gtk.AttachOptions.Fill, 4, 0);
                     subidTable.Attach(l2, subidX+2,subidX+3, subidY,subidY+1);
@@ -76,7 +80,7 @@ namespace LynnaLab
                 Gtk.ScrolledWindow scrolledWindow = new Gtk.ScrolledWindow();
                 scrolledWindow.AddWithViewport(subidTable);
                 scrolledWindow.ShadowType = Gtk.ShadowType.EtchedIn;
-                scrolledWindow.SetPolicy(Gtk.PolicyType.Automatic, Gtk.PolicyType.Automatic);
+                scrolledWindow.SetPolicy(Gtk.PolicyType.Never, Gtk.PolicyType.Automatic);
                 subidTable.ShowAll();
 
                 // Determine width/height to request on scrolledWindow
@@ -91,9 +95,14 @@ namespace LynnaLab
             }
 
             AddActionWidget(new Gtk.Button("gtk-ok"), 0);
-            //SetSizeRequest(500, 500);
 
             ShowAll();
+        }
+
+        protected override void OnResponse(Gtk.ResponseType response_id) {
+            base.OnResponse(response_id);
+
+            Destroy();
         }
 
         void AddGenericField(string field) {

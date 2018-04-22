@@ -405,8 +405,6 @@ loopEnd:
                     helpButton.CanFocus = false;
                     helpButton.Clicked += delegate(object sender, EventArgs e) {
                         DocumentationDialog d = new DocumentationDialog(r.Documentation);
-                        d.Run();
-                        d.Destroy();
                     };
                     container.Add(helpButton);
                 }

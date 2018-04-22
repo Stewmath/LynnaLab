@@ -138,7 +138,8 @@ public class ConstantsMapping
         var list = new List<Tuple<string,string>>();
         foreach (byte key in byteToString.Keys) {
             string name =  Wla.ToByte(key) + ": " + RemovePrefix(byteToString[key].str);
-            string desc = GetDocumentationForValue(key)?.GetField("desc") ?? "";
+            string desc = GetDocumentationForValue(key)?.Description ?? "";
+
             var tup = new Tuple<string,string>(name, desc);
             list.Add(tup);
         }
