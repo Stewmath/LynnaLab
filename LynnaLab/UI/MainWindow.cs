@@ -96,13 +96,12 @@ public partial class MainWindow: Gtk.Window
     }
 
     void LoadPlugins() {
-        return;
         pluginCore.ReloadPlugins();
 
         MenuItem pluginMenuItem = null;
 
         foreach (Widget w in menubar1.AllChildren) {
-            if ((w as MenuItem).Name == "PluginsAction") {
+            if ((w as MenuItem)?.Name == "PluginsAction") {
                 pluginMenuItem = w as MenuItem;
                 break;
             }

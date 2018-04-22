@@ -38,15 +38,15 @@ namespace Stetic
 				args.Requisition = this.child.SizeRequest();
 			}
 		}
-*/
 
 		private void OnSizeAllocated(object sender, Gtk.SizeAllocatedArgs args)
 		{
 			if ((this.child != null))
 			{
-				//this.child.Allocation = args.Allocation;
+				this.child.Allocation = args.Allocation;
 			}
 		}
+*/
 
 		private void OnAdded(object sender, Gtk.AddedArgs args)
 		{

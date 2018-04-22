@@ -4,6 +4,8 @@
     - Select multiple tiles from a tileset at once
     - Rectangle select / fill
     - Provide an interface for editing "data/singleTileChanges.s"?
+    - Edit "underwater surface data" for ages
+    - Edit room packs
 
 - Technicalities:
     - Treat no-value, 2-value, and quad-value interactions the same

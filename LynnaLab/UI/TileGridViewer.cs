@@ -54,7 +54,7 @@ namespace LynnaLab
             get { return TileWidth*Scale; }
         }
         public int ScaledTileHeight {
-            get { return TileHeight; }
+            get { return TileHeight*Scale; }
         }
 
         protected abstract Bitmap Image { get; }
