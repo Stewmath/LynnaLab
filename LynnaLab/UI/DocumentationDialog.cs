@@ -36,10 +36,6 @@ namespace LynnaLab
             VBox.PackStart(descLabel, false, false, 0);
 
 
-            // Display X and Y (TODO: just display all unrecognized fields?)
-            AddGenericField("Y");
-            AddGenericField("X");
-
             // Create SubID table
             if (subidEntries.Count > 0) {
                 Gtk.Label valuesLabel = new Gtk.Label("\nValues:");
