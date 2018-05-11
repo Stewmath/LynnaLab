@@ -4,6 +4,7 @@
     - Select multiple tiles from a tileset at once
     - Rectangle select / fill
     - Provide an interface for editing "data/singleTileChanges.s"?
+    - Understand unions in wla
 
 - Technicalities:
     - Treat no-value, 2-value, and quad-value interactions the same
@@ -16,11 +17,13 @@
     - Dungeon editing: can't add more than 4 floors?
 
 - Objects:
+    - Animations: support miniboss portal (uses gfx bank 1)
     - Figure out how to handle "condition" objects and object pointers (flatten them?)
     - View and edit object animations
         X Allow specifying the palette based on ID and SubID
     - Handle interactions referencing same data
     - Static dungeon objects
+    - Initial spinner values?
     X Show the values from constants/interactions.s
 
 - Tileset editing:
