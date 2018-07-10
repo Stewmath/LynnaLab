@@ -352,7 +352,7 @@ namespace LynnaLab
                     }
                 }
                 // Split up string while keeping delimiters
-                string[] delimiters = { "+", "-", "|", "*", "/" };
+                string[] delimiters = { "+", "-", "|", "*", "/", ">>", "<<" };
                 string source = val;
                 foreach (string delimiter in delimiters)
                     source = source.Replace(delimiter, ";" + delimiter + ";");
@@ -372,6 +372,10 @@ namespace LynnaLab
                         ret = EvalToInt(parts[0]) * EvalToInt(parts[2]);
                     else if (parts[1] == "/")
                         ret = EvalToInt(parts[0]) / EvalToInt(parts[2]);
+                    else if (parts[1] == ">>")
+                        ret = EvalToInt(parts[0]) >> EvalToInt(parts[2]);
+                    else if (parts[1] == "<<")
+                        ret = EvalToInt(parts[0]) << EvalToInt(parts[2]);
                     else
                         throw new FormatException();
                     string newVal = "" + ret;

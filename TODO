@@ -5,6 +5,10 @@
     - Rectangle select / fill
     - Provide an interface for editing "data/singleTileChanges.s"?
     - Understand unions in wla
+    - Treasure editing: Allow dynamic management of subids; existing ones must have
+      a "don't edit dynamically" checkbox set so it doesn't mess up existing code.
+        - Alternatively, at least allow the user to give "names" to each treasure subID.
+        - Similar with warps
 
 - Technicalities:
     - Treat no-value, 2-value, and quad-value interactions the same
