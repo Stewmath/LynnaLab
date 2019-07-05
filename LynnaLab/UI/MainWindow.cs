@@ -165,12 +165,13 @@ public partial class MainWindow: Gtk.Window
 
     void OpenProject(string dir) {
         ResponseType response = ResponseType.Yes;
-        if (!File.Exists(dir + "/main.s")) {
+        string mainFile = "ages.s";
+        if (!File.Exists(dir + "/" + mainFile)) {
             Gtk.MessageDialog d = new MessageDialog(this,
                     DialogFlags.DestroyWithParent,
                     MessageType.Warning,
                     ButtonsType.YesNo,
-                    "The folder you selected does not have a main.s file. This probably indicates the folder does not contain the ages disassembly. Attempt to continue anyway?");
+                    "The folder you selected does not have a " + mainFile + " file. This probably indicates the folder does not contain the ages disassembly. Attempt to continue anyway?");
             response = (ResponseType)d.Run();
             d.Destroy();
         }
