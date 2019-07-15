@@ -125,10 +125,14 @@ namespace LynnaLab
                 cr.Paint();
             }
             else if (Image != null) {
-                using (Surface source = CairoHelper.LockBitmap(Image)) {
-                    cr.SetSourceSurface(source, XOffset, YOffset);
+		Bitmap orig = Image;
+                using (Surface source = CairoHelper.LockBitmap(orig)) {
+		    cr.Scale(Scale, Scale);
+                    cr.SetSource(source, XOffset, YOffset);
+		    ((SurfacePattern)cr.Source).Filter = Filter.Nearest;
+		    cr.Scale(1.0/Scale, 1.0/Scale);
                     cr.Paint();
-                    CairoHelper.UnlockBitmap(Image);
+                    CairoHelper.UnlockBitmap(orig);
                 }
             }
 
