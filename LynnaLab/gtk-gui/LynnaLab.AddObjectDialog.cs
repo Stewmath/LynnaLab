@@ -23,9 +23,10 @@ namespace LynnaLab
 			global::Stetic.Gui.Initialize(this);
 			// Widget LynnaLab.AddObjectDialog
 			this.Name = "LynnaLab.AddObjectDialog";
+			this.Title = global::Mono.Unix.Catalog.GetString("window1");
 			this.WindowPosition = ((global::Gtk.WindowPosition)(4));
 			// Internal child LynnaLab.AddObjectDialog.VBox
-			global::Gtk.VBox w1 = this.VBox;
+            global::Gtk.VBox w1 = new Gtk.VBox();
 			w1.Name = "dialog1_VBox";
 			w1.BorderWidth = ((uint)(2));
 			// Container child dialog1_VBox.Gtk.Box+BoxChild
@@ -74,7 +75,7 @@ namespace LynnaLab
 			global::Gtk.Box.BoxChild w6 = ((global::Gtk.Box.BoxChild)(w1[this.descriptionLabel]));
 			w6.Position = 1;
 			// Internal child LynnaLab.AddObjectDialog.ActionArea
-			global::Gtk.HButtonBox w7 = this.ActionArea;
+            global::Gtk.HButtonBox w7 = (Gtk.HButtonBox)this.ActionArea;
 			w7.Name = "dialog1_ActionArea";
 			w7.Spacing = 10;
 			w7.BorderWidth = ((uint)(5));

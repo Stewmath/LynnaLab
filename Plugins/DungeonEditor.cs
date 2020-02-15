@@ -201,7 +201,7 @@ namespace Plugins
             };
             tmpAlign = new Gtk.Alignment(0.5f,0,0,0);
             tmpAlign.Add(addFloorButton);
-            tmpBox.PackStart(tmpAlign);
+            tmpBox.Add(tmpAlign);
 
             var removeFloorButton = new Button("Remove Top Floor");
             removeFloorButton.Image = new Gtk.Image(Gtk.Stock.Remove, Gtk.IconSize.Button);
@@ -248,9 +248,9 @@ namespace Plugins
             };
             tmpAlign = new Gtk.Alignment(0.5f,0,0,0);
             tmpAlign.Add(removeFloorButton);
-            tmpBox.PackStart(tmpAlign);
+            tmpBox.Add(tmpAlign);
 
-            hbox.PackStart(tmpBox);
+            hbox.Add(tmpBox);
 
             // Middle column (minimap)
 
@@ -259,7 +259,7 @@ namespace Plugins
                 RoomChanged();
             };
 
-            hbox.PackStart(minimap);
+            hbox.Add(minimap);
 
             // Rightmost column
 
@@ -280,7 +280,7 @@ namespace Plugins
             tmpBox.Add(tmpBox2);
             tmpBox.Add(tmpAlign);
 
-            hbox.PackStart(tmpBox);
+            hbox.Add(tmpBox);
 
 
 

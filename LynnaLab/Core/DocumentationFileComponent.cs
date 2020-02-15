@@ -97,6 +97,10 @@ public class DocumentationFileComponent : FileComponent {
         }
         text = text.Trim();
 
+        // Add newlines where explicitly requested
+        text = text.Replace("\\n", "\n");
+
+
         // Now parse the text
         string description="";
         int j=0;

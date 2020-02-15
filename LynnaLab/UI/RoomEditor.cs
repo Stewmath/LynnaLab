@@ -8,6 +8,8 @@ namespace LynnaLab
     [System.ComponentModel.ToolboxItem(true)]
     public class RoomEditor : TileGridViewer
     {
+        Cairo.Surface _surface;
+
         public Room Room
         {
             get { return room; }
@@ -21,6 +23,11 @@ namespace LynnaLab
                 if (room == null)
                     return null;
                 return room.GetImage();
+            }
+        }
+        protected override Cairo.Surface Surface {
+            get {
+                return _surface;
             }
         }
 
@@ -96,17 +103,29 @@ namespace LynnaLab
             room = r;
             Width = room.Width;
             Height = room.Height;
-            QueueDraw();
+            RedrawSurface();
         }
 
         public void OnRoomModified() {
-            QueueDraw();
+            RedrawSurface();
         }
 
         // Called when a new set of objects is loaded or objects are
         // modified or whatever
         public void OnObjectsModified() {
             QueueDraw();
+        }
+
+        /// <summary>
+        ///  Draw the Cairo.Surface (currently just a copy of the room's bitmap)
+        /// </summary>
+        void RedrawSurface() {
+            /*
+            if (_surface != null)
+                _surface.Dispose();
+            _surface = CairoHelper.CopyBitmap(room.GetImage());
+            QueueDraw();
+*/
         }
 
         void UpdateMouse(int x, int y) {
@@ -188,6 +207,50 @@ namespace LynnaLab
             return base.OnButtonPressEvent(ev);
         }
 
+        protected override bool OnDrawn(Cairo.Context cr) {
+            if (!base.OnDrawn(cr))
+                return false;
+
+            if (ViewObjects) {
+                using (Cairo.Surface source = CairoHelper.LockBitmap(Image)) {
+                    cr.SetSourceSurface(source, XOffset, YOffset);
+                    cr.Paint();
+                    CairoHelper.UnlockBitmap(Image);
+                }
+            }
+            else
+                base.OnDrawn(cr);
+
+            if (ViewObjects && objectEditor != null) {
+                // Draw objects
+
+                int cursorX=-1,cursorY=-1;
+                int selectedX=-1,selectedY=-1;
+                hoveringObjectIndices = new List<int>();
+
+                ObjectGroup group = objectEditor.ObjectGroup;
+                DrawObjectGroup(cr, 0, ref cursorX, ref cursorY, ref selectedX, ref selectedY, group, objectEditor, ref hoveringObjectIndices);
+
+                // Object hovering over
+                if (cursorX != -1) {
+                    cr.Rectangle(cursorX+0.5, cursorY+0.5, 15, 15);
+                    cr.SetSourceColor(TileGridViewer.HoverColor);
+                    cr.LineWidth = 1;
+                    cr.Stroke();
+                }
+                // Object selected
+                if (selectedX != -1) {
+                    cr.Rectangle(selectedX+0.5, selectedY+0.5, 15, 15);
+                    cr.SetSourceColor(TileGridSelector.SelectionColor);
+                    cr.LineWidth = 1;
+                    cr.Stroke();
+                }
+            }
+
+            return true;
+        }
+
+        /*
         protected override bool OnExposeEvent(Gdk.EventExpose ev)
         {
             Graphics g = Gtk.DotNet.Graphics.FromDrawable(ev.Window);
@@ -220,8 +283,9 @@ namespace LynnaLab
 
             return true;
         }
+*/
 
-        int DrawObjectGroup(Graphics g, int index, ref int cursorX, ref int cursorY, ref int selectedX, ref int selectedY, ObjectGroup group, ObjectGroupEditor editor, ref List<int> objectIndices) {
+        int DrawObjectGroup(Cairo.Context cr, int index, ref int cursorX, ref int cursorY, ref int selectedX, ref int selectedY, ObjectGroup group, ObjectGroupEditor editor, ref List<int> objectIndices) {
             if (group == null) return index;
 
             List<int> localObjectIndices = new List<int>(objectIndices);
@@ -237,10 +301,10 @@ namespace LynnaLab
                         List<int> pointerObjectIndices = new List<int>(objectIndices);
                         pointerObjectIndices.Add(i);
                         if (editor != null && i == editor.SelectedIndex)
-                            index = DrawObjectGroup(g, index, ref cursorX, ref cursorY,
+                            index = DrawObjectGroup(cr, index, ref cursorX, ref cursorY,
                                     ref selectedX, ref selectedY, nextGroup, editor.SubEditor, ref pointerObjectIndices);
                         else
-                            index = DrawObjectGroup(g, index, ref cursorX, ref cursorY,
+                            index = DrawObjectGroup(cr, index, ref cursorX, ref cursorY,
                                     ref selectedX, ref selectedY, nextGroup, null, ref pointerObjectIndices);
                         if (pointerObjectIndices.Count > objectIndices.Count+1)
                             localObjectIndices = pointerObjectIndices;
@@ -293,23 +357,29 @@ namespace LynnaLab
 
                     // x and y are the center coordinates for the object
 
-                    if (ViewObjectBoxes)
-                        g.FillRectangle(new SolidBrush(color), x-width/2 + XOffset, y-width/2 + YOffset, width, width);
+                    if (ViewObjectBoxes) {
+                        cr.SetSourceColor(CairoHelper.ConvertColor(color));
+                        cr.Rectangle(x-width/2+XOffset, y-width/2+YOffset, width, width);
+                        cr.Fill();
+                    }
 
                     if (data.GetGameObject() != null) {
                         try {
                             ObjectAnimationFrame o = data.GetGameObject().DefaultAnimation.GetFrame(0);
-                            o.Draw(g, x+XOffset, y+YOffset);
+                            o.Draw(cr, x+XOffset, y+YOffset);
                         }
                         catch(NoAnimationException) {
                             // No animation defined
                         }
                         catch(InvalidAnimationException) {
                             // Error parsing an animation; draw a blue X to indicate the error
+                            // TODO: cairo
                             int xPos = x-width/2 + XOffset;
                             int yPos = y-width/2 + YOffset;
+                            /*
                             g.DrawLine(new Pen(Color.Blue), xPos, yPos, xPos+width-1, yPos+width-1);
                             g.DrawLine(new Pen(Color.Blue), xPos+width-1, yPos, xPos, yPos+width-1);
+*/
                         }
                     }
                 }
@@ -325,11 +395,13 @@ namespace LynnaLab
             // Insert layout code here.
         }
 
-        protected override void OnSizeRequested(ref Gtk.Requisition requisition)
-        {
-            // Calculate desired size here.
-            requisition.Width = 0x10*16;
-            requisition.Height = 0x10*16;
-        }
+        protected override void OnGetPreferredHeight(out int minimum_height, out int natural_height) {
+            minimum_height = 0x10*16;
+            natural_height = minimum_height;
+        }        
+        protected override void OnGetPreferredWidth(out int minimum_width, out int natural_width) {
+            minimum_width = 0x10*16;
+            natural_width = minimum_width;
+        }        
     }
 }

@@ -159,22 +159,22 @@ namespace LynnaLab
 
         protected void OnUniqueGfxComboBoxChanged(object sender, EventArgs e) {
             var comboBox = sender as ComboBox;
-            if (comboBox.ActiveText != null)
-                SetUniqueGfx(comboBox.ActiveText);
+            if (comboBox.Active != -1)
+                SetUniqueGfx(comboBox.ActiveId);
         }
 
         protected void OnMainGfxComboBoxChanged(object sender, EventArgs e)
         {
             var comboBox = sender as ComboBox;
-            if (comboBox.ActiveText != null)
-                SetMainGfx(comboBox.ActiveText);
+            if (comboBox.Active != -1)
+                SetMainGfx(comboBox.ActiveId);
         }
 
         protected void OnPalettesComboBoxChanged(object sender, EventArgs e)
         {
             var comboBox = sender as ComboBox;
-            if (comboBox.ActiveText != null)
-                SetPaletteHeader(comboBox.ActiveText);
+            if (comboBox.Active != -1)
+                SetPaletteHeader(comboBox.ActiveId);
         }
 
         protected void OnTilesetSpinButtonValueChanged(object sender, EventArgs e)
@@ -398,11 +398,11 @@ namespace LynnaLab
 
             Alignment hAlign = new Alignment(0.5f, 0, 0, 0);
             Gtk.HBox hbox = new HBox(false, 2);
-            hbox.PackStart(subTileViewer);
-            hbox.PackStart(subTileCollisionEditor);
+            hbox.Add(subTileViewer);
+            hbox.Add(subTileCollisionEditor);
             hAlign.Add(hbox);
 
-            vbox.PackStart(hAlign);
+            vbox.Add(hAlign);
 
             // Next row: collision value
 
@@ -417,9 +417,9 @@ namespace LynnaLab
             Gtk.Label collisionLabel = new Gtk.Label("Collisions");
 
             tmpBox = new Gtk.HBox(false, 2);
-            tmpBox.PackStart(collisionLabel);
-            tmpBox.PackStart(collisionSpinButton);
-            vbox.PackStart(tmpBox);
+            tmpBox.Add(collisionLabel);
+            tmpBox.Add(collisionSpinButton);
+            vbox.Add(tmpBox);
 
             // Next rows: subtile properties
 
@@ -495,7 +495,7 @@ namespace LynnaLab
             table.Attach(bankCheckButton, 1, 2, y, y+1);
             y++;
 
-            vbox.PackStart(table);
+            vbox.Add(table);
             this.Add(vbox);
 
             ShowAll();

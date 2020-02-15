@@ -101,7 +101,7 @@ public partial class MainWindow: Gtk.Window
         MenuItem pluginMenuItem = null;
 
         foreach (Widget w in menubar1.AllChildren) {
-            if ((w as MenuItem).Name == "PluginsAction") {
+            if ((w as MenuItem)?.Name == "PluginsAction") {
                 pluginMenuItem = w as MenuItem;
                 break;
             }
@@ -165,12 +165,13 @@ public partial class MainWindow: Gtk.Window
 
     void OpenProject(string dir) {
         ResponseType response = ResponseType.Yes;
-        if (!File.Exists(dir + "/main.s")) {
+        string mainFile = "ages.s";
+        if (!File.Exists(dir + "/" + mainFile)) {
             Gtk.MessageDialog d = new MessageDialog(this,
                     DialogFlags.DestroyWithParent,
                     MessageType.Warning,
                     ButtonsType.YesNo,
-                    "The folder you selected does not have a main.s file. This probably indicates the folder does not contain the ages disassembly. Attempt to continue anyway?");
+                    "The folder you selected does not have a " + mainFile + " file. This probably indicates the folder does not contain the ages disassembly. Attempt to continue anyway?");
             response = (ResponseType)d.Run();
             d.Destroy();
         }
@@ -266,8 +267,8 @@ public partial class MainWindow: Gtk.Window
         Alignment a = new Alignment(1,0.25f,1,0);
         a.SetSizeRequest(0, 50);
         a.Add(new Gtk.Label(info));
-        d.VBox.Add(a);
-        d.VBox.ShowAll();
+        d.Add(a);
+        d.ShowAll();
         response = (ResponseType)d.Run();
         d.Destroy();
         if (response == ResponseType.Yes) {

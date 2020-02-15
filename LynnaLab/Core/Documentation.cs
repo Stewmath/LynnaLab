@@ -74,7 +74,7 @@ public class Documentation {
         try {
             return _fieldDict[field];
         }
-        catch(KeyNotFoundException e) {
+        catch(KeyNotFoundException) {
             return null;
         }
     }

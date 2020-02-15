@@ -51,7 +51,7 @@ namespace LynnaLab
 
         // The string to use for navigating game-specific folders in the disassembly
         public string GameString {
-            get { return "ages"; }
+            get { return "seasons"; }
         }
 
         public Project(string d)
@@ -145,13 +145,13 @@ namespace LynnaLab
             // Parse wram.s
             GetFileParser("include/wram.s");
             // Parse everything in objects/
-            foreach (string f in Directory.EnumerateFiles(baseDirectory + "objects/")) {
+            foreach (string f in Directory.EnumerateFiles(baseDirectory + "objects/" + GameString + "/")) {
 
                 string basename = f.Substring(f.LastIndexOf('/') + 1);
                 if (basename == "macros.s") continue; // LynnaLab doesn't understand macros
 
                 if (f.Substring(f.LastIndexOf('.')) == ".s") {
-                    string filename = "objects/" + basename;
+                    string filename = "objects/" + GameString + "/" + basename;
                     GetFileParser(filename);
                 }
             }

@@ -101,20 +101,15 @@ public abstract class GameObject : ProjectIndexedDataType {
 
         var keys = new HashSet<string>(doc.Keys);
         foreach (string key in keys) {
-            switch(key) {
-            case "X":
-            case "Y":
+            if (key.Length >= 6 && key.Substring(0,6) == "subid_") {
+                string subidName = key.Substring(6);
+                doc.SetField(subidName, doc.GetSubDocumentation(key).GetField("desc"));
+            }
+            else {
                 doc.Description += "\n\n" + key + ": " + doc.GetField(key);
                 doc.RemoveField(key);
-                break;
-            default:
-                if (key.Length >= 6 && key.Substring(0,6) == "subid_") {
-                    string subidName = key.Substring(6);
-                    doc.SetField(subidName, doc.GetSubDocumentation(key).GetField("desc"));
-                }
-                doc.RemoveField(key);
-                break;
             }
+            doc.RemoveField(key);
         }
 
         return doc;

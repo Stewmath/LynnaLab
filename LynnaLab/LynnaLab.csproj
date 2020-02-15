@@ -19,6 +19,7 @@
     <ConsolePause>false</ConsolePause>
     <PlatformTarget>x86</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>6</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>full</DebugType>
@@ -29,30 +30,27 @@
     <ConsolePause>false</ConsolePause>
     <PlatformTarget>x86</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>6</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="Mono.Posix" />
-    <Reference Include="Mono.Cairo" />
     <Reference Include="System.Drawing" />
-    <Reference Include="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="gdk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="glib-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="atk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="gtk-dotnet, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <Reference Include="System.Xml" />
     <Reference Include="log4net">
       <HintPath>..\packages\log4net.2.0.5\lib\net45-full\log4net.dll</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="nunit.framework" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="gtk-gui\gui.stetic">
-      <LogicalName>gui.stetic</LogicalName>
-    </EmbeddedResource>
+    <Reference Include="gtk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="gdk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="glib-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="glade-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="pango-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="atk-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="gtk-dotnet, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="cairo-sharp, Version=1.10.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
+    <Reference Include="gio-sharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="gtk-gui\generated.cs" />
@@ -63,10 +61,8 @@
     <Compile Include="Core\ConstantsMapping.cs" />
     <Compile Include="Core\Area.cs" />
     <Compile Include="Core\GraphicsState.cs" />
-    <Compile Include="Core\GfxHeaderData.cs" />
     <Compile Include="UI\AreaViewer.cs" />
     <Compile Include="Core\PaletteHeaderData.cs" />
-    <Compile Include="Core\Data.cs" />
     <Compile Include="Core\TilesetHeaderData.cs" />
     <Compile Include="Core\TilesetHeaderGroup.cs" />
     <Compile Include="Core\GbGraphics.cs" />
@@ -76,10 +72,8 @@
     <Compile Include="Core\ProjectDataType.cs" />
     <Compile Include="UI\Minimap.cs" />
     <Compile Include="Core\Dungeon.cs" />
-    <Compile Include="Core\MemoryFileStream.cs" />
     <Compile Include="Core\Animation.cs" />
     <Compile Include="Core\AnimationGroup.cs" />
-    <Compile Include="Core\SubStream.cs" />
     <Compile Include="UI\AreaEditor.cs" />
     <Compile Include="gtk-gui\LynnaLab.AreaEditor.cs" />
     <Compile Include="Wla.cs" />
@@ -88,7 +82,6 @@
     <Compile Include="Widgets\SpinButtonHexadecimal.cs" />
     <Compile Include="Widgets\ComboBoxFromConstants.cs" />
     <Compile Include="UI\GfxViewer.cs" />
-    <Compile Include="Core\FileComponent.cs" />
     <Compile Include="Core\Exceptions.cs" />
     <Compile Include="Core\ValueReference.cs" />
     <Compile Include="UI\ValueReferenceEditor.cs" />
@@ -98,7 +91,6 @@
     <Compile Include="UI\WarpEditor.cs" />
     <Compile Include="Core\WarpDestGroup.cs" />
     <Compile Include="Core\WarpDestData.cs" />
-    <Compile Include="Core\FileParser.cs" />
     <Compile Include="PluginCore\PluginCore.cs" />
     <Compile Include="PluginCore\PluginManager.cs" />
     <Compile Include="PluginInterfaces\Plugin.cs" />
@@ -117,7 +109,6 @@
     <Compile Include="Core\ObjectData.cs" />
     <Compile Include="UI\AddObjectDialog.cs" />
     <Compile Include="gtk-gui\LynnaLab.AddObjectDialog.cs" />
-    <Compile Include="Core\DocumentationFileComponent.cs" />
     <Compile Include="Core\Documentation.cs" />
     <Compile Include="UI\DocumentationDialog.cs" />
     <Compile Include="gtk-gui\LynnaLab.DocumentationDialog.cs" />
@@ -131,6 +122,14 @@
     <Compile Include="Core\EnemyObject.cs" />
     <Compile Include="Core\PartObject.cs" />
     <Compile Include="Core\Helper.cs" />
+    <Compile Include="Core\Data.cs" />
+    <Compile Include="Core\DocumentationFileComponent.cs" />
+    <Compile Include="Core\FileComponent.cs" />
+    <Compile Include="Core\FileParser.cs" />
+    <Compile Include="Core\GfxHeaderData.cs" />
+    <Compile Include="Core\MemoryFileStream.cs" />
+    <Compile Include="Core\SubStream.cs" />
+    <Compile Include="UI\CairoHelper.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

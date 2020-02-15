@@ -143,22 +143,19 @@ namespace LynnaLab
             return base.OnButtonPressEvent(ev);
         }
 
+        /*
         protected override bool OnExposeEvent(Gdk.EventExpose ev)
         {
             base.OnExposeEvent(ev);
             
             return true;
         }
+        */
 
         protected override void OnSizeAllocated(Gdk.Rectangle allocation)
         {
             base.OnSizeAllocated(allocation);
             // Insert layout code here.
-        }
-
-        protected override void OnSizeRequested(ref Gtk.Requisition requisition)
-        {
-            base.OnSizeRequested(ref requisition);
         }
     }
 }

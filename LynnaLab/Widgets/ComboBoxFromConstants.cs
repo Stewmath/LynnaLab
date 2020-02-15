@@ -83,7 +83,7 @@ namespace LynnaLab
             foreach (string key in mapping.GetAllStrings()) {
                 string text = mapping.RemovePrefix(key);
                 //int value = mapping.StringToByte(key);
-                combobox1.AppendText(text);
+                //combobox1.AppendText(text); // TODO
 
                 keyText[i] = key;
                 i++;

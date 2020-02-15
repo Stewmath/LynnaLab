@@ -4,6 +4,8 @@
     - Select multiple tiles from a tileset at once
     - Rectangle select / fill
     - Provide an interface for editing "data/singleTileChanges.s"?
+    - Edit "underwater surface data" for ages
+    - Edit room packs
     - Understand unions in wla
     - Treasure editing: Allow dynamic management of subids; existing ones must have
       a "don't edit dynamically" checkbox set so it doesn't mess up existing code.
@@ -24,6 +26,7 @@
     - Animations: support miniboss portal (uses gfx bank 1)
     - Figure out how to handle "condition" objects and object pointers (flatten them?)
     - View and edit object animations
+        - Import animations between games
         X Allow specifying the palette based on ID and SubID
     - Handle interactions referencing same data
     - Static dungeon objects

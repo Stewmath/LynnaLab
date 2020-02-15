@@ -7,6 +7,8 @@ namespace LynnaLab {
 
     public abstract class TileGridSelector : TileGridViewer {
 
+        public static readonly Cairo.Color SelectionColor = new Cairo.Color(255,255,255);
+
         [BrowsableAttribute(false)]
         public bool Selectable { get; set; }
 
@@ -88,6 +90,21 @@ namespace LynnaLab {
             }
         }
 
+        protected override bool OnDrawn(Cairo.Context cr) {
+            base.OnDrawn(cr);
+
+            if (!Selectable)
+                return true;
+
+            cr.NewPath();
+            cr.SetSourceColor(SelectionColor);
+            cr.Rectangle(XOffset+SelectedX*TileWidth*Scale+0.5, SelectedY*TileHeight*Scale+0.5, TileWidth*Scale-1, TileHeight*Scale-1);
+            cr.LineWidth = 1;
+            cr.Stroke();
+
+            return true;
+        }
+        /*
         protected override bool OnExposeEvent(Gdk.EventExpose ev)
         {
             base.OnExposeEvent(ev);
@@ -108,5 +125,6 @@ namespace LynnaLab {
 
             return true;
         }
+        */
     }
 }

@@ -154,6 +154,15 @@ namespace Plugins
                 QueueDrawArea(x*TileWidth, y*TileHeight, TileWidth, TileHeight);
             }
 
+            protected override bool OnDrawn(Cairo.Context cr) {
+                if (!base.OnDrawn(cr))
+                    return false;
+
+
+                return true;
+            }
+
+            /*
             protected override bool OnExposeEvent(Gdk.EventExpose ev)
             {
                 base.OnExposeEvent(ev);
@@ -176,6 +185,7 @@ namespace Plugins
 
                 return true;
             }
+*/
         }
     }
 }

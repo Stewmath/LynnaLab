@@ -1,11 +1,14 @@
 using System;
 using System.Drawing;
 using System.ComponentModel;
+using Cairo;
 using Gtk;
 
 namespace LynnaLab
 {
     public abstract class TileGridViewer : Gtk.DrawingArea {
+        public static readonly Cairo.Color HoverColor = new Cairo.Color(255,0,0);
+
         [BrowsableAttribute(false)]
         public int Width { get; set; }
 
@@ -47,7 +50,15 @@ namespace LynnaLab
             }
         }
 
+        public int ScaledTileWidth {
+            get { return TileWidth*Scale; }
+        }
+        public int ScaledTileHeight {
+            get { return TileHeight*Scale; }
+        }
+
         protected abstract Bitmap Image { get; }
+        protected virtual Surface Surface { get; }
 
         public event System.Action HoverChangedEvent;
 
@@ -106,6 +117,38 @@ namespace LynnaLab
                 HoverChangedEvent();
         }
 
+        protected override bool OnDrawn(Cairo.Context cr) {
+            base.OnDrawn(cr);
+
+            if (Surface != null) {
+                cr.SetSourceSurface(Surface, XOffset, YOffset);
+                cr.Paint();
+            }
+            else if (Image != null) {
+		Bitmap orig = Image;
+                using (Surface source = CairoHelper.LockBitmap(orig)) {
+		    cr.Scale(Scale, Scale);
+                    cr.SetSource(source, XOffset, YOffset);
+		    ((SurfacePattern)cr.Source).Filter = Filter.Nearest;
+		    cr.Scale(1.0/Scale, 1.0/Scale);
+                    cr.Paint();
+                    CairoHelper.UnlockBitmap(orig);
+                }
+            }
+
+            if (hoveringIndex != -1) {
+                cr.NewPath();
+                cr.SetSourceColor(HoverColor);
+                cr.Rectangle(new Cairo.Rectangle(XOffset+HoveringX*TileWidth*Scale+0.5, YOffset+HoveringY*TileHeight*Scale+0.5, ScaledTileWidth-1, ScaledTileHeight-1));
+                cr.LineWidth = 1;
+                cr.LineJoin = LineJoin.Bevel;
+                cr.Stroke();
+            }
+
+            return true;
+        }
+
+        /*
         protected override bool OnExposeEvent(Gdk.EventExpose ev)
         {
             base.OnExposeEvent(ev);
@@ -125,10 +168,15 @@ namespace LynnaLab
 
             return true;
         }
+        */
 
-        protected override void OnSizeRequested(ref Requisition req) {
-            req.Width = XOffset+Width*TileWidth*Scale;
-            req.Height = YOffset+Height*TileHeight*Scale;
+        protected override void OnGetPreferredWidth(out int minimum_width, out int natural_width) {
+            minimum_width = XOffset + Width * TileWidth * Scale;
+            natural_width = minimum_width;
+        }
+        protected override void OnGetPreferredHeight(out int minimum_height, out int natural_height) {
+            minimum_height = YOffset + Height * TileHeight * Scale;
+            natural_height = minimum_height;
         }
     }
 

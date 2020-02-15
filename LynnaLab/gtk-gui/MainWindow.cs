@@ -217,7 +217,10 @@ public partial class MainWindow
 		this.roomSpinButton.Name = "roomSpinButton";
 		this.roomSpinButton.Adjustment.Upper = 1535D;
 		this.roomSpinButton.Adjustment.PageIncrement = 16D;
+		this.roomSpinButton.Adjustment.StepIncrement = 1D;
+		this.roomSpinButton.ClimbRate = 1D;
 		this.roomSpinButton.Digits = ((uint)(3));
+		this.roomSpinButton.Numeric = true;
 		this.table4.Add(this.roomSpinButton);
 		global::Gtk.Table.TableChild w5 = ((global::Gtk.Table.TableChild)(this.table4[this.roomSpinButton]));
 		w5.LeftAttach = ((uint)(1));
@@ -261,7 +264,10 @@ public partial class MainWindow
 		this.areaSpinButton.Name = "areaSpinButton";
 		this.areaSpinButton.Adjustment.Upper = 255D;
 		this.areaSpinButton.Adjustment.PageIncrement = 16D;
+		this.areaSpinButton.Adjustment.StepIncrement = 1D;
+		this.areaSpinButton.ClimbRate = 1D;
 		this.areaSpinButton.Digits = ((uint)(2));
+		this.areaSpinButton.Numeric = true;
 		this.table3.Add(this.areaSpinButton);
 		global::Gtk.Table.TableChild w8 = ((global::Gtk.Table.TableChild)(this.table3[this.areaSpinButton]));
 		w8.TopAttach = ((uint)(1));
@@ -381,6 +387,7 @@ public partial class MainWindow
 		this.roomeditor1.HeightRequest = 272;
 		this.roomeditor1.Name = "roomeditor1";
 		this.roomeditor1.ViewObjects = false;
+		this.roomeditor1.ViewObjectBoxes = false;
 		this.vbox3.Add(this.roomeditor1);
 		global::Gtk.Box.BoxChild w22 = ((global::Gtk.Box.BoxChild)(this.vbox3[this.roomeditor1]));
 		w22.Position = 1;
@@ -423,6 +430,9 @@ public partial class MainWindow
 		this.worldSpinButton = new global::Gtk.SpinButton(0D, 100D, 1D);
 		this.worldSpinButton.CanFocus = true;
 		this.worldSpinButton.Name = "worldSpinButton";
+		this.worldSpinButton.Adjustment.PageIncrement = 10D;
+		this.worldSpinButton.ClimbRate = 1D;
+		this.worldSpinButton.Numeric = true;
 		this.table2.Add(this.worldSpinButton);
 		global::Gtk.Table.TableChild w26 = ((global::Gtk.Table.TableChild)(this.table2[this.worldSpinButton]));
 		w26.LeftAttach = ((uint)(1));
@@ -478,6 +488,9 @@ public partial class MainWindow
 		this.dungeonSpinButton = new global::Gtk.SpinButton(0D, 100D, 1D);
 		this.dungeonSpinButton.CanFocus = true;
 		this.dungeonSpinButton.Name = "dungeonSpinButton";
+		this.dungeonSpinButton.Adjustment.PageIncrement = 10D;
+		this.dungeonSpinButton.ClimbRate = 1D;
+		this.dungeonSpinButton.Numeric = true;
 		this.table1.Add(this.dungeonSpinButton);
 		global::Gtk.Table.TableChild w31 = ((global::Gtk.Table.TableChild)(this.table1[this.dungeonSpinButton]));
 		w31.LeftAttach = ((uint)(1));
@@ -488,6 +501,9 @@ public partial class MainWindow
 		this.floorSpinButton = new global::Gtk.SpinButton(0D, 100D, 1D);
 		this.floorSpinButton.CanFocus = true;
 		this.floorSpinButton.Name = "floorSpinButton";
+		this.floorSpinButton.Adjustment.PageIncrement = 10D;
+		this.floorSpinButton.ClimbRate = 1D;
+		this.floorSpinButton.Numeric = true;
 		this.table1.Add(this.floorSpinButton);
 		global::Gtk.Table.TableChild w32 = ((global::Gtk.Table.TableChild)(this.table1[this.floorSpinButton]));
 		w32.TopAttach = ((uint)(1));
