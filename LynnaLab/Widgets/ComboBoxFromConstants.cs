@@ -15,6 +15,7 @@ namespace LynnaLab
         // a little bit)
         string[] keyText;
 
+        // Index of the entry in the combobox
         public int Active {
             get { return combobox1.Active; }
             set {
@@ -23,15 +24,18 @@ namespace LynnaLab
                     spinButton.Value = mapping.GetIndexByte(combobox1.Active);
             }
         }
+        // Byte value of the entry in the combobox
         public int ActiveValue {
             get { return spinButton.ValueAsInt; }
             set {
-                if (mapping != null)
-                    combobox1.Active = mapping.IndexOf((byte)value);
+                if (mapping != null && mapping.HasValue(value))
+                    combobox1.Active = mapping.IndexOf(value);
                 spinButton.Value = value;
             }
         }
-        public string ActiveText {
+        // String value of the entry in the combobox (formerly "ActiveText" in
+        // gtk2)
+        public string ActiveId {
             get {
                 if (combobox1.Active == -1)
                     return "";
@@ -101,7 +105,7 @@ namespace LynnaLab
                 spinButton.Value = mapping.GetIndexByte(combobox1.Active);
 
             if (Changed != null && !fromSpin)
-                Changed(sender, e);
+                Changed(this, e);
 
             fromCombo = false;
         }
@@ -111,10 +115,11 @@ namespace LynnaLab
             fromSpin = true;
 
             // This will invoke the combobox1 callback
-            combobox1.Active = mapping.IndexOf((byte)spinButton.ValueAsInt);
+            if (mapping != null)
+                combobox1.Active = mapping.IndexOf((byte)spinButton.ValueAsInt);
 
             if (Changed != null && !fromCombo)
-                Changed(sender, e);
+                Changed(this, e);
 
             fromSpin = false;
         }

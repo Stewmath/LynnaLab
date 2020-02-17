@@ -3,17 +3,19 @@ using System;
 // Class of static functions
 
 public class Wla {
+    public static string ToHex(int data, int digits) {
+        return "$"+data.ToString("x" + digits);
+    }
     public static string ToHalfByte(byte data) {
-        string s = "$"+data.ToString("x1");
-        return s;
+        // TODO: assert size?
+        return ToHex(data, 1);
     }
     public static string ToByte(byte data) {
-        string s = "$"+data.ToString("x2");
-        return s;
+        return ToHex(data, 2);
     }
     public static string ToWord(int data) {
-        string s = "$"+data.ToString("x4");
-        return s;
+        // TODO: assert size?
+        return ToHex(data, 4);
     }
     public static string ToBinary(int data) {
         string s = Convert.ToString(data, 2);

@@ -25,8 +25,7 @@ namespace LynnaLab
 
         log4net.Appender.RollingFileAppender logAppender;
 
-        string baseDirectory;
-        string configDirectory;
+        string baseDirectory, configDirectory, logDirectory;
 
         Dictionary<string,FileParser> fileParserDictionary = new Dictionary<string,FileParser>();
 
@@ -44,6 +43,14 @@ namespace LynnaLab
         // See "GetStandardSpritePalettes"
         Color[][] _standardSpritePalettes;
 
+        ProjectConfig config;
+
+
+        public ProjectConfig Config {
+            get {
+                return config;
+            }
+        }
 
         public string BaseDirectory {
             get { return baseDirectory; }
@@ -51,20 +58,23 @@ namespace LynnaLab
 
         // The string to use for navigating game-specific folders in the disassembly
         public string GameString {
-            get { return "seasons"; }
+            get { return "ages"; }
         }
 
         public Project(string d)
         {
             baseDirectory = d + '/';
             configDirectory = baseDirectory + "LynnaLab/";
+            logDirectory = configDirectory + "Logs/";
+
             System.IO.Directory.CreateDirectory(configDirectory);
+            System.IO.Directory.CreateDirectory(logDirectory);
 
             logAppender = new log4net.Appender.RollingFileAppender();
             logAppender.AppendToFile = true;
             logAppender.Layout = new log4net.Layout.PatternLayout(
                     "%date{ABSOLUTE} [%logger] %level - %message%newline%exception");
-            logAppender.File = configDirectory + "Log.txt";
+            logAppender.File = logDirectory + "Log.txt";
             logAppender.Threshold = log4net.Core.Level.All;
             logAppender.MaxFileSize = 2 * 1024 * 1024;
             logAppender.MaxSizeRollBackups = 3;
@@ -72,7 +82,16 @@ namespace LynnaLab
             logAppender.ActivateOptions();
             LogHelper.AddAppenderToRootLogger(logAppender);
 
-            log.Info("Opened project at \"" + baseDirectory + "\".");
+            log.Info("Opening project at \"" + baseDirectory + "\".");
+
+            string configFile = configDirectory + "config.yaml";
+            try {
+                config = ProjectConfig.Load(File.ReadAllText(configFile));
+            }
+            catch (FileNotFoundException) {
+                log.Warn("Couldn't open config file '" + configFile + "'.");
+                config = new ProjectConfig();
+            }
 
 
             // Before parsing anything, create the "ROM_AGES" or "ROM_SEASONS" definition for ifdefs
@@ -127,6 +146,7 @@ namespace LynnaLab
             GetFileParser("data/" + GameString + "/tilesetMappings.s");
             GetFileParser("data/" + GameString + "/tilesetCollisions.s");
             GetFileParser("data/" + GameString + "/tilesetHeaders.s");
+            GetFileParser("data/" + GameString + "/paletteData.s");
             foreach (string f in Directory.EnumerateFiles(baseDirectory + "data/")) {
                 if (f.Substring(f.LastIndexOf('.')) == ".s") {
                     string filename = "data/" + f.Substring(f.LastIndexOf('/') + 1);
@@ -267,7 +287,7 @@ namespace LynnaLab
 
         public void AddDefinition(string name, string value) {
             if (definesDictionary.ContainsKey(name)) {
-                log.Warn("WARNING: \"" + name + "\" defined multiple times");
+                log.Warn("\"" + name + "\" defined multiple times");
             }
             definesDictionary[name] = value;
         }
@@ -402,6 +422,14 @@ namespace LynnaLab
             catch(FormatException) {
                 throw new FormatException("Couldn't parse '" + val + "'.");
             }
+        }
+
+        // Same as above but verifies the value is a byte.
+        public byte EvalToByte(string val) {
+            int byteVal = EvalToInt(val);
+            if (byteVal < 0 || byteVal >= 256)
+                throw new FormatException("Value '" + val + "' resolves to '" + byteVal + "', which isn't a byte.");
+            return (byte)byteVal;
         }
 
         // Get a set of all rooms used in the dungeons. Used by

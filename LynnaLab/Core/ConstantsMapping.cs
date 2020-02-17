@@ -14,12 +14,12 @@ public class ConstantsMapping
     /// </summary>
     class Entry {
         public string str;
-        public byte b;
+        public int val;
         public Documentation documentation; // Documentation, if available (null otherwise)
 
-        public Entry(string _str, byte _b, Documentation _doc) {
+        public Entry(string _str, int _val, Documentation _doc) {
             str = _str;
-            b = _b;
+            val = _val;
             documentation = _doc;
         }
     }
@@ -29,7 +29,7 @@ public class ConstantsMapping
 
     // Mappings in both directions
     Dictionary<string,Entry> stringToByte = new Dictionary<string,Entry>();
-    Dictionary<byte,Entry> byteToString = new Dictionary<byte,Entry>();
+    Dictionary<int,Entry> byteToString = new Dictionary<int,Entry>();
 
     string[] prefixes;
 
@@ -75,19 +75,19 @@ public class ConstantsMapping
                 if (!stringToByte.TryGetValue(key, out tmp)) {
                     try {
                         var tup = definesDictionary[key];
-                        string val = tup.Item1;
+                        string valStr = tup.Item1;
                         var docComponent = tup.Item2; // May be null
 
-                        byte b = (byte)Project.EvalToInt(val);
+                        int val = Project.EvalToInt(valStr);
                         stringList.Add(key);
 
                         Documentation doc = null;
                         if (docComponent != null)
                             doc = new Documentation(docComponent, key);
-                        Entry ent = new Entry(key, b, doc); // TODO: remove doc from here
+                        Entry ent = new Entry(key, val, doc); // TODO: remove doc from here
 
                         stringToByte[key] = ent;
-                        byteToString[b] = ent;
+                        byteToString[val] = ent;
                     }
                     catch (FormatException) {}
                 }
@@ -96,20 +96,28 @@ public class ConstantsMapping
     }
 
     // May throw KeyNotFoundException
-    public byte StringToByte(string key) {
-        return stringToByte[key].b;
+    public int StringToByte(string key) {
+        return stringToByte[key].val;
     }
-    public string ByteToString(byte key) {
-        return byteToString[key].str;
+    // Will always return something (either the string, or the number in hex)
+    // TODO: Rename to "ValueToString" or something
+    public string ByteToString(int key) {
+        try {
+            return byteToString[key].str;
+        }
+        catch(KeyNotFoundException) { // Fallback
+            return Wla.ToHex(key, 2);
+        }
     }
 
+    // These functions return -1 if values aren't found
     public int IndexOf(string key) {
         var list = GetAllStrings();
         return list.IndexOf(key); // TODO: optimize
     }
-    public int IndexOf(byte val) {
+    public int IndexOf(int val) {
         try {
-            return IndexOf(ByteToString((byte)val));
+            return IndexOf(ByteToString(val));
         }
         catch(KeyNotFoundException) {
             return -1;
@@ -117,11 +125,19 @@ public class ConstantsMapping
     }
 
 
-    public byte GetIndexByte(int i) {
+    public int GetIndexByte(int i) {
         return StringToByte(stringList[i]);
     }
     public string GetIndexString(int i) {
         return stringList[i];
+    }
+
+
+    public bool HasValue(int val) {
+        return byteToString.ContainsKey(val);
+    }
+    public bool HasString(string s) {
+        return stringToByte.ContainsKey(s);
     }
 
 
@@ -136,8 +152,8 @@ public class ConstantsMapping
     /// </summary>
     public IList<Tuple<string,string>> GetAllValuesWithDescriptions() {
         var list = new List<Tuple<string,string>>();
-        foreach (byte key in byteToString.Keys) {
-            string name =  Wla.ToByte(key) + ": " + RemovePrefix(byteToString[key].str);
+        foreach (int key in byteToString.Keys) {
+            string name =  Wla.ToHex(key,2) + ": " + RemovePrefix(byteToString[key].str);
             string desc = GetDocumentationForValue(key)?.Description ?? "";
 
             var tup = new Tuple<string,string>(name, desc);
@@ -165,7 +181,7 @@ public class ConstantsMapping
     /// <summary>
     ///  Returns a "default" documentation object for a particular value of this ConstantsMapping.
     ///  </summary>
-    public Documentation GetDocumentationForValue(byte b) {
+    public Documentation GetDocumentationForValue(int b) {
         try {
             Documentation d = byteToString[b].documentation;
             if (d == null)

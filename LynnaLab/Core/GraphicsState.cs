@@ -17,6 +17,7 @@ namespace LynnaLab
 
 	public class GraphicsState
 	{
+        // Called when a tile is changed ("-1, -1" means full invalidation)
         public delegate void TileModifiedHandler(int bank, int tile);
         event TileModifiedHandler tileModifiedEvent;
 
@@ -177,6 +178,9 @@ namespace LynnaLab
             }
 
             gfxModified = false;
+
+            if (tileModifiedEvent != null)
+              tileModifiedEvent(-1, -1);
         }
         void RegeneratePalettes() {
             paletteBuffer = new Color[2][][];

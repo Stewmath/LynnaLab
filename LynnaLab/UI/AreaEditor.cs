@@ -78,9 +78,9 @@ namespace LynnaLab
             areaSpinButton.Value = area.Index;
             SetFlags1(a.Flags1);
             SetFlags2(a.Flags2);
-            SetUniqueGfx(a.UniqueGfxString);
-            SetMainGfx(a.MainGfxString);
-            SetPaletteHeader(a.PaletteHeaderString);
+            SetUniqueGfx(a.UniqueGfx);
+            SetMainGfx(a.MainGfx);
+            SetPaletteHeader(a.PaletteHeader);
             SetTileset(a.TilesetIndex);
             SetLayoutGroup(a.LayoutGroup);
             SetAnimation(a.AnimationIndex);
@@ -94,26 +94,26 @@ namespace LynnaLab
             flags2SpinButton.Value = value;
             area.Flags2 = value;
         }
-        void SetUniqueGfx(string value) {
+        void SetUniqueGfx(int value) {
             try {
-                uniqueGfxComboBox.Active = Project.UniqueGfxMapping.IndexOf(value);
-                area.UniqueGfxString = value;
+                uniqueGfxComboBox.ActiveValue = value;
+                area.UniqueGfx = value;
             }
             catch (FormatException) {
             }
         }
-        void SetMainGfx(string value) {
+        void SetMainGfx(int value) {
             try {
-                mainGfxComboBox.Active = Project.MainGfxMapping.IndexOf(value);
-                area.MainGfxString = value;
+                mainGfxComboBox.ActiveValue = value;
+                area.MainGfx = value;
             }
             catch (FormatException) {
             }
         }
-        void SetPaletteHeader(string value) {
+        void SetPaletteHeader(int value) {
             try {
-                palettesComboBox.Active = Project.PaletteHeaderMapping.IndexOf(value);
-                area.PaletteHeaderString = value;
+                palettesComboBox.ActiveValue = value;
+                area.PaletteHeader = value;
             }
             catch (FormatException) {
             }
@@ -158,23 +158,23 @@ namespace LynnaLab
         }
 
         protected void OnUniqueGfxComboBoxChanged(object sender, EventArgs e) {
-            var comboBox = sender as ComboBox;
-            if (comboBox.Active != -1)
-                SetUniqueGfx(comboBox.ActiveId);
+            var comboBox = sender as ComboBoxFromConstants;
+            if (comboBox.ActiveValue != -1)
+                SetUniqueGfx(comboBox.ActiveValue);
         }
 
         protected void OnMainGfxComboBoxChanged(object sender, EventArgs e)
         {
-            var comboBox = sender as ComboBox;
-            if (comboBox.Active != -1)
-                SetMainGfx(comboBox.ActiveId);
+            var comboBox = sender as ComboBoxFromConstants;
+            if (comboBox.ActiveValue != -1)
+                SetMainGfx(comboBox.ActiveValue);
         }
 
         protected void OnPalettesComboBoxChanged(object sender, EventArgs e)
         {
-            var comboBox = sender as ComboBox;
-            if (comboBox.Active != -1)
-                SetPaletteHeader(comboBox.ActiveId);
+            var comboBox = sender as ComboBoxFromConstants;
+            if (comboBox.ActiveValue != -1)
+                SetPaletteHeader(comboBox.ActiveValue);
         }
 
         protected void OnTilesetSpinButtonValueChanged(object sender, EventArgs e)

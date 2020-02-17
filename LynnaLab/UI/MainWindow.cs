@@ -398,7 +398,7 @@ public partial class MainWindow: Gtk.Window
     protected void OnMusicComboBoxChanged(object sender, EventArgs e) {
         if (Project == null)
             return;
-        roomeditor1.Room.SetMusicID(Project.MusicMapping.StringToByte(musicComboBox.ActiveText));
+        roomeditor1.Room.SetMusicID(Project.MusicMapping.StringToByte(musicComboBox.ActiveId));
     }
 
     protected void OnAreaEditorButtonClicked(object sender, EventArgs e)

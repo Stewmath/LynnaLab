@@ -54,6 +54,9 @@
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.3.12.0\lib\net45\nunit.framework.dll</HintPath>
     </Reference>
+    <Reference Include="YamlDotNet">
+      <HintPath>..\packages\YamlDotNet.8.1.0\lib\net45\YamlDotNet.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="gtk-gui\generated.cs" />
@@ -132,6 +135,7 @@
     <Compile Include="Core\GfxHeaderData.cs" />
     <Compile Include="Core\MemoryFileStream.cs" />
     <Compile Include="Core\SubStream.cs" />
+    <Compile Include="Core\ProjectConfig.cs" />
     <Compile Include="UI\CairoHelper.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

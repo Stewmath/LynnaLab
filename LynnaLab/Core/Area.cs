@@ -75,6 +75,14 @@ namespace LynnaLab
                 SetUniqueGfx(Project.EvalToInt(value));
             }
         }
+        public int UniqueGfx {
+            get {
+                return Project.EvalToInt(UniqueGfxString);
+            }
+            set {
+                UniqueGfxString = Project.UniqueGfxMapping.ByteToString(value);
+            }
+        }
         public string MainGfxString {
             get {
                 Data d = GetDataIndex(3);
@@ -86,6 +94,14 @@ namespace LynnaLab
                 SetMainGfx(Project.EvalToInt(value));
             }
         }
+        public int MainGfx {
+            get {
+                return Project.EvalToInt(MainGfxString);
+            }
+            set {
+                MainGfxString = Project.MainGfxMapping.ByteToString(value);
+            }
+        }
         public string PaletteHeaderString {
             get {
                 Data d = GetDataIndex(4);
@@ -95,6 +111,14 @@ namespace LynnaLab
                 Data d = GetDataIndex(4);
                 d.SetValue(0, value);
                 SetPaletteHeader(Project.EvalToInt(value));
+            }
+        }
+        public int PaletteHeader {
+            get {
+                return Project.EvalToInt(PaletteHeaderString);
+            }
+            set {
+                PaletteHeaderString = Project.PaletteHeaderMapping.ByteToString(value);
             }
         }
         public int TilesetIndex {

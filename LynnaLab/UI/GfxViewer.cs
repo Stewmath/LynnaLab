@@ -27,7 +27,10 @@ namespace LynnaLab
         {
             GraphicsState.TileModifiedHandler tileModifiedHandler = delegate(int bank, int tile)
             {
-                draw(tile+bank*0x180);
+                if (bank == -1 && tile == -1) // Full invalidation
+                    redrawAll();
+                else
+                    draw(tile+bank*0x180);
             };
 
             if (graphicsState != null)
@@ -53,6 +56,10 @@ namespace LynnaLab
 
             image = new Bitmap(Width*TileWidth,Height*TileHeight);
 
+            redrawAll();
+        }
+
+        void redrawAll() {
             for (int i=offsetStart/16; i<offsetEnd/16; i++)
                 draw(i);
         }
