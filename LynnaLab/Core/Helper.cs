@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace LynnaLab {
 
@@ -36,6 +37,13 @@ public class Helper {
         HashSet<int> ret2 = GetIntListFromRange(s.Substring(0,ind));
         ret2.UnionWith(GetIntListFromRange(s.Substring(ind+1)));
         return ret2;
+    }
+
+    // Like Directory.GetFiles(), but guaranteed to be sorted.
+    public static IList<string> GetSortedFiles(string dir) {
+        List<string> files = new List<string>(Directory.GetFiles(dir));
+        files.Sort();
+        return files;
     }
 }
 

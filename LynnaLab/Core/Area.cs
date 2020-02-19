@@ -197,6 +197,14 @@ namespace LynnaLab
 
             data = data.NextData;
             SetAnimation((byte)Project.EvalToInt(data.GetValue(0)));
+
+            if (Project.Config.ExpandedTilesets) {
+                MemoryFileStream stream = Project.GetBinaryFile(
+                        String.Format("gfx/{0}/gfx_tileset{1:x2}.bin", Project.GameString, Index));
+                byte[] gfx = new byte[0x1000];
+                stream.Read(gfx, 0, 0x1000);
+                graphicsState.AddRawVram(1, 0x800, gfx);
+            }
         }
 
         Data GetDataIndex(int i) {
@@ -288,43 +296,86 @@ namespace LynnaLab
 
         // Functions dealing with subtiles
         public byte GetSubTileIndex(int index, int x, int y) {
-            return tilesetHeaderGroup.GetMappingsData(index*8+y*2+x);
+            if (Project.Config.ExpandedTilesets) {
+                MemoryFileStream stream = Project.GetBinaryFile(
+                        String.Format("tilesets/{0}/tilesetMappings{1:x2}.bin", Project.GameString, Index));
+                stream.Seek(index * 8 + y * 2 + x, SeekOrigin.Begin);
+                return (byte)stream.ReadByte();
+            }
+            else
+                return tilesetHeaderGroup.GetMappingsData(index*8+y*2+x);
         }
         public void SetSubTileIndex(int index, int x, int y, byte value) {
-            tilesetHeaderGroup.SetMappingsData(index*8+y*2+x, value);
+            if (Project.Config.ExpandedTilesets) {
+                // TODO
+            }
+            else
+                tilesetHeaderGroup.SetMappingsData(index*8+y*2+x, value);
         }
         public byte GetSubTileFlags(int index, int x, int y) {
-            return tilesetHeaderGroup.GetMappingsData(index*8+y*2+x+4);
+            if (Project.Config.ExpandedTilesets) {
+                MemoryFileStream stream = Project.GetBinaryFile(
+                        String.Format("tilesets/{0}/tilesetMappings{1:x2}.bin", Project.GameString, Index));
+                stream.Seek(index * 8 + 4 + y * 2 + x, SeekOrigin.Begin);
+                return (byte)stream.ReadByte();
+            }
+            else
+                return tilesetHeaderGroup.GetMappingsData(index*8+y*2+x+4);
         }
         public void SetSubTileFlags(int index, int x, int y, byte value) {
-            tilesetHeaderGroup.SetMappingsData(index*8+y*2+x+4, value);
-            tileImagesCache[index] = null;
-            TileModifiedEvent(index);
+            if (Project.Config.ExpandedTilesets) {
+                // TODO
+            }
+            else {
+                tilesetHeaderGroup.SetMappingsData(index*8+y*2+x+4, value);
+                tileImagesCache[index] = null;
+                TileModifiedEvent(index);
+            }
         }
 
         // Get the "basic collision" of a subtile (whether or not that part is
         // solid). This ignores the upper half of the collision data bytes and
         // assumes it is zero.
         public bool GetSubTileBasicCollision(int index, int x, int y) {
-            byte b = tilesetHeaderGroup.GetCollisionsData(index);
-            byte i = (byte)(1<<(3-(x+y*2)));
-            return (b&i) != 0;
+            if (Project.Config.ExpandedTilesets) {
+                // TODO
+                return false;
+            }
+            else {
+                byte b = tilesetHeaderGroup.GetCollisionsData(index);
+                byte i = (byte)(1<<(3-(x+y*2)));
+                return (b&i) != 0;
+            }
         }
         public void SetSubTileBasicCollision(int index, int x, int y, bool val) {
-            byte b = tilesetHeaderGroup.GetCollisionsData(index);
-            byte i = (byte)(1<<(3-(x+y*2)));
-            b = (byte)(b & ~i);
-            if (val)
-                b |= i;
-            tilesetHeaderGroup.SetCollisionsData(index, b);
+            if (Project.Config.ExpandedTilesets) {
+                // TODO
+            }
+            else {
+                byte b = tilesetHeaderGroup.GetCollisionsData(index);
+                byte i = (byte)(1<<(3-(x+y*2)));
+                b = (byte)(b & ~i);
+                if (val)
+                    b |= i;
+                tilesetHeaderGroup.SetCollisionsData(index, b);
+            }
         }
 
         // Get the full collision byte for a tile.
         public byte GetTileCollision(int index) {
-            return tilesetHeaderGroup.GetCollisionsData(index);
+            if (Project.Config.ExpandedTilesets) {
+                // TODO
+                return 0;
+            }
+            else
+                return tilesetHeaderGroup.GetCollisionsData(index);
         }
         public void SetTileCollision(int index, byte val) {
-            tilesetHeaderGroup.SetCollisionsData(index, val);
+            if (Project.Config.ExpandedTilesets) {
+                // TODO
+            }
+            else
+                tilesetHeaderGroup.SetCollisionsData(index, val);
         }
 
         // This function doesn't guarantee to return a fully rendered image,
@@ -390,6 +441,9 @@ namespace LynnaLab
         }
 
         void SetMainGfx(int index) {
+            if (Project.Config.ExpandedTilesets) // Field has no effect in this case
+                return;
+
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Main);
 
             FileParser gfxHeaderFile = Project.GetFileWithLabel("gfxHeaderTable");
@@ -415,6 +469,9 @@ namespace LynnaLab
         }
 
         void SetUniqueGfx(int index) {
+            if (Project.Config.ExpandedTilesets) // Field has no effect in this case
+                return;
+
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Unique);
             if (index != 0) {
                 FileParser uniqueGfxHeaderFile = Project.GetFileWithLabel("uniqueGfxHeadersStart");
@@ -449,6 +506,9 @@ namespace LynnaLab
         }
 
         void SetTileset(int index) {
+            if (Project.Config.ExpandedTilesets) // Field has no effect in this case
+                return;
+
             tilesetHeaderGroup = Project.GetIndexedDataType<TilesetHeaderGroup>(index);
 
             // Generate usedTileList for quick lookup of which metatiles use

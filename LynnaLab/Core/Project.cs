@@ -99,7 +99,7 @@ namespace LynnaLab
             definesDictionary.Add("ROM_"+GameString.ToUpper(), "");
 
             // Parse everything in constants/
-            foreach (string f in Directory.EnumerateFiles(baseDirectory + "constants/")) {
+            foreach (string f in Helper.GetSortedFiles(baseDirectory + "constants/")) {
                 if (f.Substring(f.LastIndexOf('.')) == ".s") {
                     string filename = "constants/" + f.Substring(f.LastIndexOf('/') + 1);
                     GetFileParser(filename);
@@ -143,11 +143,13 @@ namespace LynnaLab
 
             // Parse everything in data/
             // A few files need to be loaded before others through
-            GetFileParser("data/" + GameString + "/tilesetMappings.s");
-            GetFileParser("data/" + GameString + "/tilesetCollisions.s");
-            GetFileParser("data/" + GameString + "/tilesetHeaders.s");
+            if (!Config.ExpandedTilesets) {
+                GetFileParser("data/" + GameString + "/tilesetMappings.s");
+                GetFileParser("data/" + GameString + "/tilesetCollisions.s");
+                GetFileParser("data/" + GameString + "/tilesetHeaders.s");
+            }
             GetFileParser("data/" + GameString + "/paletteData.s");
-            foreach (string f in Directory.EnumerateFiles(baseDirectory + "data/")) {
+            foreach (string f in Helper.GetSortedFiles(baseDirectory + "data/")) {
                 if (f.Substring(f.LastIndexOf('.')) == ".s") {
                     string filename = "data/" + f.Substring(f.LastIndexOf('/') + 1);
                     GetFileParser(filename);
@@ -155,7 +157,7 @@ namespace LynnaLab
             }
             // Parse data/{game}/
             string gameSpecificDataFolder = "data/" + GameString + "/";
-            foreach (string f in Directory.EnumerateFiles(baseDirectory + gameSpecificDataFolder)) {
+            foreach (string f in Helper.GetSortedFiles(baseDirectory + gameSpecificDataFolder)) {
                 if (f.Substring(f.LastIndexOf('.')) == ".s") {
                     string filename = gameSpecificDataFolder + f.Substring(f.LastIndexOf('/') + 1);
                     GetFileParser(filename);
@@ -165,7 +167,7 @@ namespace LynnaLab
             // Parse wram.s
             GetFileParser("include/wram.s");
             // Parse everything in objects/
-            foreach (string f in Directory.EnumerateFiles(baseDirectory + "objects/" + GameString + "/")) {
+            foreach (string f in Helper.GetSortedFiles(baseDirectory + "objects/" + GameString + "/")) {
 
                 string basename = f.Substring(f.LastIndexOf('/') + 1);
                 if (basename == "macros.s") continue; // LynnaLab doesn't understand macros

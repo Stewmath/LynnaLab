@@ -27,6 +27,8 @@ namespace LynnaLab
 		byte[][] wramBuffer;
 		Color[][][] paletteBuffer;
 
+        List<Tuple<int,int,byte[]>> rawDataList = new List<Tuple<int,int,byte[]>>();
+
         // Parallel lists
         List<GfxHeaderData> gfxHeaderDataList = new List<GfxHeaderData>();
         List<GfxHeaderType> gfxHeaderDataTypes = new List<GfxHeaderType>();
@@ -34,8 +36,9 @@ namespace LynnaLab
         List<PaletteHeaderGroup> paletteHeaderGroupList = new List<PaletteHeaderGroup>();
         List<PaletteGroupType> paletteHeaderGroupTypes = new List<PaletteGroupType>();
 
+        // No writing to the array pls
 		public byte[][] VramBuffer {
-			get { 
+			get {
                 if (gfxModified)
                     RegenerateBuffers();
                 return vramBuffer;
@@ -66,6 +69,11 @@ namespace LynnaLab
         }
         public Color[][] GetSpritePalettes() {
             return GetPalettes(PaletteType.Sprite);
+        }
+
+        public void AddRawVram(int bank, int start, byte[] data) {
+            rawDataList.Add(new Tuple<int,int,byte[]>(bank, start, data));
+            gfxModified = true;
         }
 
         public void AddGfxHeader(GfxHeaderData header, GfxHeaderType group) {
@@ -175,6 +183,13 @@ namespace LynnaLab
 
             foreach (GfxHeaderData header in gfxHeaderDataList) {
                 LoadGfxHeader(header);
+            }
+
+            foreach (var tup in rawDataList) {
+                int bank = tup.Item1;
+                int start = tup.Item2;
+                byte[] data = tup.Item3;
+                Array.Copy(data, 0, vramBuffer[bank], start, data.Length);
             }
 
             gfxModified = false;
