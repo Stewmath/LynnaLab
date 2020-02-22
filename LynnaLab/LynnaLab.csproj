@@ -83,7 +83,6 @@
     <Compile Include="UI\AreaEditor.cs" />
     <Compile Include="gtk-gui\LynnaLab.AreaEditor.cs" />
     <Compile Include="Wla.cs" />
-    <Compile Include="gtk-gui\LynnaLab.ComboBoxFromConstants.cs" />
     <Compile Include="UI\TileGridViewer.cs" />
     <Compile Include="Widgets\SpinButtonHexadecimal.cs" />
     <Compile Include="Widgets\ComboBoxFromConstants.cs" />

@@ -4,10 +4,15 @@ using Gtk;
 
 namespace LynnaLab
 {
-    [System.ComponentModel.ToolboxItem(true)]
-    public partial class ComboBoxFromConstants : Gtk.Bin
+    // Combination of SpinButtonHexadecimal + ComboBox components.
+    // Currently only supports values up to 255.
+    public class ComboBoxFromConstants : Gtk.Bin
     {
         public event EventHandler Changed;
+
+        private Gtk.HBox hbox1;
+        private LynnaLab.SpinButtonHexadecimal spinButton;
+        private Gtk.ComboBoxText combobox1;
 
         ConstantsMapping mapping;
 
@@ -59,7 +64,38 @@ namespace LynnaLab
         // TODO: pass in a label which it will update with the name from the combobox?
         public ComboBoxFromConstants(bool showHelp=true)
         {
-            this.Build();
+            this.Name = "LynnaLab.ComboBoxFromConstants";
+            // Container child LynnaLab.ComboBoxFromConstants.Gtk.Container+ContainerChild
+            this.hbox1 = new Gtk.HBox();
+            this.hbox1.Name = "hbox1";
+            // Container child hbox1.Gtk.Box+BoxChild
+            this.spinButton = new LynnaLab.SpinButtonHexadecimal();
+            this.spinButton.CanFocus = true;
+            this.spinButton.Name = "spinButton";
+            this.spinButton.Adjustment.Upper = 255D;
+            this.spinButton.Adjustment.PageIncrement = 16D;
+            this.spinButton.Adjustment.StepIncrement = 1D;
+            this.spinButton.ClimbRate = 1D;
+            this.spinButton.Digits = 2;
+            this.spinButton.Numeric = true;
+            this.hbox1.Add(this.spinButton);
+            Gtk.Box.BoxChild w1 = (Gtk.Box.BoxChild)(this.hbox1[this.spinButton]);
+            w1.Position = 0;
+            w1.Expand = true;
+            w1.Fill = true;
+
+            // Container child hbox1.Gtk.Box+BoxChild
+            this.combobox1 = new Gtk.ComboBoxText();
+            this.combobox1.Name = "combobox1";
+            this.hbox1.Add(this.combobox1);
+            Gtk.Box.BoxChild w2 = (Gtk.Box.BoxChild)(this.hbox1[this.combobox1]);
+            w2.Position = 1;
+            w2.Expand = false;
+            w2.Fill = false;
+            this.Add(this.hbox1);
+
+            this.spinButton.ValueChanged += new System.EventHandler(this.OnSpinButtonValueChanged);
+            this.combobox1.Changed += new System.EventHandler(this.OnCombobox1Changed);
 
             if (showHelp) {
                 // When clicking the "help" button, create a popup with documentation for
@@ -86,8 +122,8 @@ namespace LynnaLab
             int i=0;
             foreach (string key in mapping.GetAllStrings()) {
                 string text = mapping.RemovePrefix(key);
-                //int value = mapping.StringToByte(key);
-                //combobox1.AppendText(text); // TODO
+                int value = mapping.StringToByte(key);
+                combobox1.AppendText(text);
 
                 keyText[i] = key;
                 i++;
@@ -110,7 +146,7 @@ namespace LynnaLab
             fromCombo = false;
         }
 
-        protected void OnSpinButtonValueChanged (object sender, EventArgs e)
+        protected void OnSpinButtonValueChanged(object sender, EventArgs e)
         {
             fromSpin = true;
 

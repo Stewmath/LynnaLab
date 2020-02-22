@@ -3,8 +3,7 @@ using Gtk;
 
 namespace LynnaLab
 {
-    [System.ComponentModel.ToolboxItem(true)]
-    public partial class SpinButtonHexadecimal : Gtk.SpinButton
+    public class SpinButtonHexadecimal : Gtk.SpinButton
     {
         public SpinButtonHexadecimal() : base(0,255,1)
         {
