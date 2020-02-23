@@ -92,7 +92,6 @@
     <Compile Include="UI\ValueReferenceEditor.cs" />
     <Compile Include="Core\WarpSourceData.cs" />
     <Compile Include="Core\WarpSourceGroup.cs" />
-    <Compile Include="gtk-gui\LynnaLab.WarpEditor.cs" />
     <Compile Include="UI\WarpEditor.cs" />
     <Compile Include="Core\WarpDestGroup.cs" />
     <Compile Include="Core\WarpDestData.cs" />
@@ -116,7 +115,6 @@
     <Compile Include="gtk-gui\LynnaLab.AddObjectDialog.cs" />
     <Compile Include="Core\Documentation.cs" />
     <Compile Include="UI\DocumentationDialog.cs" />
-    <Compile Include="gtk-gui\LynnaLab.DocumentationDialog.cs" />
     <Compile Include="Core/IGfxHeader.cs" />
     <Compile Include="Core/ObjectGfxHeaderData.cs" />
     <Compile Include="Core/ObjectAnimation.cs" />
@@ -152,5 +150,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Glade/WarpEditor.ui">
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

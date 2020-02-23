@@ -4,9 +4,16 @@ using Gtk;
 
 namespace LynnaLab
 {
-    [System.ComponentModel.ToolboxItem(true)]
-    public partial class WarpEditor : Gtk.Bin
+    public class WarpEditor : Gtk.Bin
     {
+        // GUI stuff
+        Gtk.Button addWarpButton, addSpecificWarpButton;
+        SpinButtonHexadecimal roomSpinButton, destIndexSpinButton;
+        Gtk.SpinButton indexSpinButton, destGroupSpinButton;
+        Gtk.Label frameLabel, destInfoLabel;
+        Gtk.Alignment valueEditorContainer, destEditorContainer;
+        Gtk.Frame frame2;
+
         // Properties
 
         Project Project {get; set;}
@@ -24,8 +31,32 @@ namespace LynnaLab
         // Constructor
 
         public WarpEditor(Project p) {
+            Gtk.Builder builder = new Builder();
+            builder.AddFromString(Helper.ReadResourceFile("LynnaLab.Glade.WarpEditor.ui"));
+            builder.Autoconnect(this);
+
+            addWarpButton = (Gtk.Button)builder.GetObject("addWarpButton");
+            addSpecificWarpButton = (Gtk.Button)builder.GetObject("addSpecificWarpButton");
+            indexSpinButton = (Gtk.SpinButton)builder.GetObject("indexSpinButton");
+            destGroupSpinButton = (Gtk.SpinButton)builder.GetObject("destGroupSpinButton");
+            frameLabel = (Gtk.Label)builder.GetObject("frameLabel");
+            destInfoLabel = (Gtk.Label)builder.GetObject("destInfoLabel");
+            valueEditorContainer = (Gtk.Alignment)builder.GetObject("valueEditorContainer");
+            destEditorContainer = (Gtk.Alignment)builder.GetObject("destEditorContainer");
+            frame2 = (Gtk.Frame)builder.GetObject("frame2");
+
+            roomSpinButton = new SpinButtonHexadecimal();
+            roomSpinButton.Digits = 3;
+            ((Gtk.Box)builder.GetObject("roomSpinButtonHolder")).Add(roomSpinButton);
+
+            destIndexSpinButton = new SpinButtonHexadecimal();
+            destIndexSpinButton.Digits = 3;
+            ((Gtk.Box)builder.GetObject("destIndexSpinButtonHolder")).Add(destIndexSpinButton);
+
+
+            this.Child = (Gtk.Widget)builder.GetObject("WarpEditor");
+
             Project = p;
-            this.Build();
 
             addWarpButton.Image = new Gtk.Image(Stock.Add, Gtk.IconSize.Button);
             addSpecificWarpButton.Image = new Gtk.Image(Stock.Add, Gtk.IconSize.Button);
@@ -272,9 +303,11 @@ namespace LynnaLab
 
         protected void OnRemoveWarpButtonClicked(object sender, EventArgs e)
         {
-            List<WarpSourceData> dataList = sourceGroup.GetMapWarpSourceData(map);
-            sourceGroup.RemoveWarpSourceData(dataList[indexSpinButton.ValueAsInt]);
-            SetWarpIndex(indexSpinButton.ValueAsInt);
+            if (indexSpinButton.ValueAsInt != -1) {
+                List<WarpSourceData> dataList = sourceGroup.GetMapWarpSourceData(map);
+                sourceGroup.RemoveWarpSourceData(dataList[indexSpinButton.ValueAsInt]);
+                SetWarpIndex(indexSpinButton.ValueAsInt);
+            }
         }
 
         protected void OnOkButtonClicked(object sender, EventArgs e)
