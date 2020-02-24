@@ -180,7 +180,7 @@ namespace LynnaLab
             // Sanity check: make sure there's only one PointerWarp and it's at the end.
             for (int i=0; i<sourceDataList.Count-1; i++) {
                 if (sourceDataList[i].WarpSourceType == WarpSourceType.PointerWarp) {
-                    infoBar.Push(InfoLevel.Error, "Warp data formatting error: Warp #" + i + " is a PointerWarp, but there are StandardWarps after it which won't be read. You may need to fix this manually.");
+                    infoBar.Push(InfoLevel.Error, "Warp data formatting error: Warp #" + i + " is a PointerWarp, but there are other warps after it which won't be read. You may need to fix this manually.");
                     break;
                 }
             }

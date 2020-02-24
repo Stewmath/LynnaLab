@@ -74,5 +74,18 @@ namespace LynnaLab
 
             return newData;
         }
+
+        // Returns either an unused WarpDestData, or creates a new one if no unused ones exist.
+        public WarpDestData GetNewOrUnusedDestData() {
+            // Check if there's unused destination data already
+            for (int i=0; i<GetNumWarpDests(); i++) {
+                WarpDestData destData = GetWarpDest(i);
+                if (destData.GetNumReferences() == 0) {
+                    return GetWarpDest(i);
+                }
+            }
+            // TODO: check if there's room to add data
+            return AddDestData();
+        }
     }
 }

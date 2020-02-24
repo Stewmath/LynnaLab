@@ -151,30 +151,12 @@ byteCase:
 
                     case DataValueType.WarpDestIndex:
                         {
-                            Gtk.Button newDestButton = new Gtk.Button("New\nDestination");
+                            Gtk.Button newDestButton = new Gtk.Button("New/Unused\nDestination");
+                            newDestButton.FocusOnClick = false;
                             newDestButton.Clicked += delegate(object sender, EventArgs e) {
                                 WarpSourceData warpData = (WarpSourceData)r.Data;
                                 WarpDestGroup destGroup = warpData.GetReferencedDestGroup();
-                                // Check if there's unused destination data
-                                // already
-                                for (int i=0; i<destGroup.GetNumWarpDests(); i++) {
-                                    WarpDestData destData = destGroup.GetWarpDest(i);
-                                    if (destData.GetNumReferences() == 0) {
-                                        Gtk.MessageDialog d = new Gtk.MessageDialog(null,
-                                                Gtk.DialogFlags.DestroyWithParent,
-                                                Gtk.MessageType.Warning,
-                                                Gtk.ButtonsType.YesNo,
-                                                "Destination index " + i.ToString("X2") + " is not used by any sources. Use this index?\n\n(\"No\" will create a new destination instead.)");
-                                        Gtk.ResponseType response = (Gtk.ResponseType)d.Run();
-                                        d.Destroy();
-
-                                        if (response == Gtk.ResponseType.Yes)
-                                            warpData.SetDestData(destGroup.GetWarpDest(i));
-                                        else if (response == Gtk.ResponseType.No)
-                                            warpData.SetDestData(destGroup.AddDestData());
-                                        break;
-                                    }
-                                }
+                                warpData.SetDestData(destGroup.GetNewOrUnusedDestData());
                             };
                             table.Attach(newDestButton, x+2,x+3, y, y+2);
                         }
@@ -210,7 +192,7 @@ byteCase:
                         {
                             table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
                             Gtk.CheckButton checkButton = new Gtk.CheckButton();
-                            checkButton.CanFocus = false;
+                            checkButton.FocusOnClick = false;
                             if (!r.Editable)
                                 checkButton.Sensitive = false;
                             checkButton.Toggled += delegate(object sender, EventArgs e) {
@@ -402,7 +384,7 @@ loopEnd:
                 ValueReference r = refs[i];
                 if (r.Documentation != null) {
                     Gtk.Button helpButton = new Gtk.Button("?");
-                    helpButton.CanFocus = false;
+                    helpButton.FocusOnClick = false;
                     helpButton.Clicked += delegate(object sender, EventArgs e) {
                         DocumentationDialog d = new DocumentationDialog(r.Documentation);
                     };

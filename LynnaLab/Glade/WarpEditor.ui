@@ -102,6 +102,7 @@
                           <object class="GtkButton" id="removeWarpButton">
                             <property name="label">gtk-remove</property>
                             <property name="can_focus">True</property>
+                            <property name="focus_on_click">False</property>
                             <property name="receives_default">False</property>
                             <property name="valign">center</property>
                             <property name="use_stock">True</property>
@@ -122,6 +123,7 @@
                               <object class="GtkButton" id="addScreenWarpButton">
                                 <property name="label" translatable="yes">Add Screen Warp</property>
                                 <property name="can_focus">True</property>
+                                <property name="focus_on_click">False</property>
                                 <property name="receives_default">False</property>
                                 <property name="use_underline">True</property>
                                 <signal name="clicked" handler="OnAddScreenWarpButtonClicked" swapped="no"/>
@@ -135,8 +137,8 @@
                             <child>
                               <object class="GtkButton" id="addPositionWarpButton">
                                 <property name="label" translatable="yes">Add Position Warp</property>
-                                <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="focus_on_click">False</property>
                                 <property name="receives_default">True</property>
                                 <signal name="clicked" handler="OnAddPositionWarpButtonClicked" swapped="no"/>
                               </object>
@@ -324,6 +326,7 @@
               <object class="GtkButton" id="okButton">
                 <property name="label">gtk-ok</property>
                 <property name="can_focus">True</property>
+                <property name="focus_on_click">False</property>
                 <property name="receives_default">False</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="OnOkButtonClicked" swapped="no"/>
