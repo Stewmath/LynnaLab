@@ -19,6 +19,14 @@ namespace LynnaLab
 
         // Properties
 
+        public int Map {
+            get {
+                return GetIntValue("Map");
+            }
+            set {
+                SetValue("Map", value);
+            }
+        }
         public int Transition {
             get {
                 return GetIntValue("Transition");

@@ -9,6 +9,7 @@ namespace LynnaLab
         // GUI stuff
         Gtk.Box mainVBox;
         Gtk.Button addScreenWarpButton, addPositionWarpButton;
+        Gtk.CheckButton syncCheckButton;
         SpinButtonHexadecimal roomSpinButton;
         Gtk.SpinButton indexSpinButton;
         Gtk.Label destInfoLabel, warpSourceTypeLabel;
@@ -17,14 +18,20 @@ namespace LynnaLab
         Gtk.Box infoBarHolder;
         InfoBar infoBar;
 
+        MainWindow mainWindow;
+
         // Properties
 
         Project Project {get; set;}
+        public bool SyncWithMainWindow {
+            get { return syncCheckButton.Active; }
+        }
 
         // Variables
 
         WarpSourceGroup sourceGroup;
         WarpDestGroup destGroup;
+        WarpDestData destData;
 
         ValueReferenceEditor sourceEditor;
         ValueReferenceEditor destEditor;
@@ -33,8 +40,9 @@ namespace LynnaLab
 
         // Constructor
 
-        public WarpEditor(Project p) {
+        public WarpEditor(Project p, MainWindow main) {
             Project = p;
+            mainWindow = main;
 
             Gtk.Builder builder = new Builder();
             builder.AddFromString(Helper.ReadResourceFile("LynnaLab.Glade.WarpEditor.ui"));
@@ -43,6 +51,7 @@ namespace LynnaLab
             mainVBox = (Gtk.Box)builder.GetObject("mainVBox");
             addScreenWarpButton = (Gtk.Button)builder.GetObject("addScreenWarpButton");
             addPositionWarpButton = (Gtk.Button)builder.GetObject("addPositionWarpButton");
+            syncCheckButton = (Gtk.CheckButton)builder.GetObject("syncCheckButton");
             indexSpinButton = (Gtk.SpinButton)builder.GetObject("indexSpinButton");
             destInfoLabel = (Gtk.Label)builder.GetObject("destInfoLabel");
             warpSourceTypeLabel = (Gtk.Label)builder.GetObject("warpSourceTypeLabel");
@@ -152,19 +161,24 @@ namespace LynnaLab
             if (group == -1 || group >= Project.GetNumGroups() ||
                     index == -1 || index >= destGroup.GetNumWarpDests())
             {
+                destGroup = null;
+                destData = null;
                 warpDestFrame.Hide();
                 return;
             }
 
-            WarpDestData destData = destGroup.GetWarpDest(index);
+            destData = destGroup.GetWarpDest(index);
             ValueReferenceEditor editor = new ValueReferenceEditor(Project,destData);
 
             destInfoLabel.Text = "Group " + group + " Index " + Wla.ToHex(index, 2) + ": ";
             int numReferences = destData.GetNumReferences()-1;
-            if (numReferences == 1)
-                destInfoLabel.Text += "Used by " + numReferences + " other source";
+            if (numReferences == 0)
+                destInfoLabel.Text += "Used by no other sources";
+            else if (numReferences == 1)
+                destInfoLabel.Text += "Used by <span foreground=\"red\">" + numReferences + " other source</span>";
             else
-                destInfoLabel.Text += "Used by " + numReferences + " other sources";
+                destInfoLabel.Text += "Used by <span foreground=\"red\">" + numReferences + " other sources</span>";
+            destInfoLabel.UseMarkup = true;
 
             destEditorContainer.Add(editor);
             destEditorContainer.ShowAll();
@@ -235,6 +249,22 @@ namespace LynnaLab
                 UpdateIndexSpinButtonRange();
                 SetWarpIndex(indexSpinButton.ValueAsInt);
             }
+        }
+
+        protected void OnJumpToSourceClicked(object sender, EventArgs e) {
+            mainWindow.SetRoom(roomSpinButton.ValueAsInt);
+        }
+
+        protected void OnJumpToDestClicked(object sender, EventArgs e) {
+            if (destData != null) {
+                syncCheckButton.Active = false;
+                mainWindow.SetRoom((destData.DestGroup.Index<<8) | destData.Map);
+            }
+        }
+
+        protected void OnSyncCheckButtonToggled(object sender, EventArgs e) {
+            if (syncCheckButton.Active)
+                SetMap(mainWindow.ActiveRoom.Index>>8, mainWindow.ActiveRoom.Index&0xff);
         }
 
         protected void OnOkButtonClicked(object sender, EventArgs e)

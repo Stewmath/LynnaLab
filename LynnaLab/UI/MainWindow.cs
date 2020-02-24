@@ -215,7 +215,13 @@ public partial class MainWindow: Gtk.Window
         roomeditor1.QueueDraw();
     }
 
-    void SetRoom(Room room) {
+    public void SetRoom(int room) {
+        if (Project == null)
+            return;
+        SetRoom(Project.GetIndexedDataType<Room>(room));
+    }
+
+    public void SetRoom(Room room) {
         if (Project == null)
             return;
         roomeditor1.SetRoom(room);
@@ -224,6 +230,10 @@ public partial class MainWindow: Gtk.Window
         roomSpinButton.Value = room.Index;
 
         objectgroupeditor1.SetObjectGroup(room.GetObjectGroup());
+
+        if (warpEditor != null && warpEditor.SyncWithMainWindow) {
+            warpEditor.SetMap(room.Index>>8, room.Index&0xff);
+        }
     }
 
     void SetDungeon(Dungeon dungeon) {
@@ -418,25 +428,25 @@ public partial class MainWindow: Gtk.Window
         roomeditor1.QueueDraw();
     }
 
-    bool openedWarpEditor = false;
+    WarpEditor warpEditor = null;
     protected void OnWarpsActionActivated(object sender, EventArgs e) {
-        if (openedWarpEditor)
+        if (warpEditor != null)
             return;
-        WarpEditor editor = new WarpEditor(Project);
-        editor.SetMap(roomSpinButton.ValueAsInt >> 8, roomSpinButton.ValueAsInt & 0xff);
+        warpEditor = new WarpEditor(Project, this);
+        warpEditor.SetMap(roomSpinButton.ValueAsInt >> 8, roomSpinButton.ValueAsInt & 0xff);
 
         Gtk.Window win = new Window(WindowType.Toplevel);
         win.Modal = false;
-        win.Add(editor);
+        win.Add(warpEditor);
 
-        editor.Destroyed += delegate(object sender2, EventArgs e2) {
+        warpEditor.Destroyed += delegate(object sender2, EventArgs e2) {
             win.Destroy();
+            warpEditor = null;
         };
         win.Destroyed += delegate(object sender2, EventArgs e2) {
-            openedWarpEditor = false;
+            warpEditor = null;
         };
 
-        openedWarpEditor = true;
         win.ShowAll();
     }
 
