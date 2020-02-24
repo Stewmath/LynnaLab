@@ -134,6 +134,7 @@
     <Compile Include="Core\SubStream.cs" />
     <Compile Include="Core\ProjectConfig.cs" />
     <Compile Include="UI\CairoHelper.cs" />
+    <Compile Include="Widgets\InfoBar.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

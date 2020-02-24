@@ -13,8 +13,8 @@ namespace LynnaLab
                 new ValueReference("Map",0,DataValueType.Byte),
                 new ValueReference("Y",1,4,7,DataValueType.ByteBits),
                 new ValueReference("X",1,0,3,DataValueType.ByteBits),
-                new ValueReference("Parameter",2,4,7,DataValueType.ByteBits),
-                new ValueReference("Transition",2,0,3,DataValueType.ByteBits,true,"DestTransitionMapping"),
+                new ValueReference("Parameter",2,DataValueType.HalfByte),
+                new ValueReference("Transition",3,DataValueType.HalfByte,true,"DestTransitionMapping"),
             };
 
         // Properties

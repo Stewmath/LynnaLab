@@ -26,14 +26,14 @@ namespace LynnaLab
                 "$00",
                 "$00",
                 "$0",
-                "$0",
+                "$4", // Instant fade
             },
             new List<string> { // PointedWarp
                 "$00",
                 "$00",
                 "$00",
                 "$0",
-                "$0",
+                "$4", // Instant fade
             },
             new List<string> { // PointerWarp
                 "$40",
@@ -221,7 +221,8 @@ namespace LynnaLab
         // If this is the kind of warp which points to another warp, return the
         // pointed warp, otherwise return null
         public WarpSourceData GetPointedWarp() {
-            if (WarpSourceType != WarpSourceType.PointerWarp) return null;
+            if (WarpSourceType != WarpSourceType.PointerWarp)
+                throw new ArgumentException("Invalid warp type for 'GetPointedWarp' call.");
 
             WarpSourceData data = (WarpSourceData)Project.GetData(GetValue("Pointer"));
             return data;
@@ -230,7 +231,8 @@ namespace LynnaLab
         // If this is a WarpSourceData which is pointed to from another one,
         // return the next in the sequence, or null if the sequence is over.
         public WarpSourceData GetNextWarp() {
-            if (WarpSourceType != WarpSourceType.PointedWarp) return null;
+            if (WarpSourceType != WarpSourceType.PointedWarp)
+                throw new ArgumentException("Invalid warp type for 'GetNextWarp' call.");
 
             // A warp with opcode bit 7 set signals the end of the sequence
             if ((Opcode & 0x80) != 0) return null;
@@ -250,17 +252,6 @@ namespace LynnaLab
             return null;
         }
 
-        public bool SetNextWarp(WarpSourceData next) {
-            if (!FileParser.InsertComponentAfter(this, next)) return false;
-
-            this.Opcode &= ~0x80;
-            if (next.GetNextWarp() == null)
-                next.Opcode |= 0x80;
-            else
-                next.Opcode &= 0x80;
-            return true;
-        }
-
         // Returns the number of PointedWarps there are after and including
         // this one. This is the number of times (plus one) that you can call
         // GetNextWarp() before you get a null value.
@@ -270,11 +261,26 @@ namespace LynnaLab
         public int GetPointedChainLength() {
             if (WarpSourceType == WarpSourceType.PointerWarp)
                 return GetPointedWarp().GetPointedChainLength();
+            else if (WarpSourceType != WarpSourceType.PointedWarp)
+                throw new ArgumentException("Invalid warp type for 'GetPointedChainLength' call.");
 
             WarpSourceData next = GetNextWarp();
             if (next == null) return 1;
 
             return 1+next.GetPointedChainLength();
+        }
+
+        // Returns the WarpSourceData object that's "index" entries after this one.
+        // (Assumes this is a PointedWarp or PointerWarp..)
+        public WarpSourceData TraversePointedChain(int count) {
+            if (WarpSourceType == WarpSourceType.PointerWarp)
+                return GetPointedWarp().TraversePointedChain(count);
+            else if (WarpSourceType != WarpSourceType.PointedWarp)
+                throw new ArgumentException("Invalid warp type for 'TraversePointedWarpChain' call.");
+
+            if (count == 0)
+                return this;
+            return GetNextWarp().TraversePointedChain(count-1);
         }
 
         public WarpDestData GetReferencedDestData() {

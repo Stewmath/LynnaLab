@@ -7,12 +7,15 @@ namespace LynnaLab
     public class WarpEditor : Gtk.Bin
     {
         // GUI stuff
-        Gtk.Button addWarpButton, addSpecificWarpButton;
-        SpinButtonHexadecimal roomSpinButton, destIndexSpinButton;
-        Gtk.SpinButton indexSpinButton, destGroupSpinButton;
-        Gtk.Label frameLabel, destInfoLabel;
+        Gtk.Box mainVBox;
+        Gtk.Button addScreenWarpButton, addPositionWarpButton;
+        SpinButtonHexadecimal roomSpinButton;
+        Gtk.SpinButton indexSpinButton;
+        Gtk.Label destInfoLabel, warpSourceTypeLabel;
         Gtk.Alignment valueEditorContainer, destEditorContainer;
-        Gtk.Frame frame2;
+        Gtk.Frame warpSourceFrame, warpDestFrame;
+        Gtk.Box infoBarHolder;
+        InfoBar infoBar;
 
         // Properties
 
@@ -31,35 +34,32 @@ namespace LynnaLab
         // Constructor
 
         public WarpEditor(Project p) {
+            Project = p;
+
             Gtk.Builder builder = new Builder();
             builder.AddFromString(Helper.ReadResourceFile("LynnaLab.Glade.WarpEditor.ui"));
             builder.Autoconnect(this);
 
-            addWarpButton = (Gtk.Button)builder.GetObject("addWarpButton");
-            addSpecificWarpButton = (Gtk.Button)builder.GetObject("addSpecificWarpButton");
+            mainVBox = (Gtk.Box)builder.GetObject("mainVBox");
+            addScreenWarpButton = (Gtk.Button)builder.GetObject("addScreenWarpButton");
+            addPositionWarpButton = (Gtk.Button)builder.GetObject("addPositionWarpButton");
             indexSpinButton = (Gtk.SpinButton)builder.GetObject("indexSpinButton");
-            destGroupSpinButton = (Gtk.SpinButton)builder.GetObject("destGroupSpinButton");
-            frameLabel = (Gtk.Label)builder.GetObject("frameLabel");
             destInfoLabel = (Gtk.Label)builder.GetObject("destInfoLabel");
+            warpSourceTypeLabel = (Gtk.Label)builder.GetObject("warpSourceTypeLabel");
             valueEditorContainer = (Gtk.Alignment)builder.GetObject("valueEditorContainer");
             destEditorContainer = (Gtk.Alignment)builder.GetObject("destEditorContainer");
-            frame2 = (Gtk.Frame)builder.GetObject("frame2");
+            warpSourceFrame = (Gtk.Frame)builder.GetObject("warpSourceFrame");
+            warpDestFrame = (Gtk.Frame)builder.GetObject("warpDestFrame");
+            infoBarHolder = (Gtk.Box)builder.GetObject("infoBarHolder");
 
             roomSpinButton = new SpinButtonHexadecimal();
             roomSpinButton.Digits = 3;
             ((Gtk.Box)builder.GetObject("roomSpinButtonHolder")).Add(roomSpinButton);
 
-            destIndexSpinButton = new SpinButtonHexadecimal();
-            destIndexSpinButton.Digits = 3;
-            ((Gtk.Box)builder.GetObject("destIndexSpinButtonHolder")).Add(destIndexSpinButton);
+            base.Child = (Gtk.Widget)builder.GetObject("WarpEditor");
 
-
-            this.Child = (Gtk.Widget)builder.GetObject("WarpEditor");
-
-            Project = p;
-
-            addWarpButton.Image = new Gtk.Image(Stock.Add, Gtk.IconSize.Button);
-            addSpecificWarpButton.Image = new Gtk.Image(Stock.Add, Gtk.IconSize.Button);
+            addScreenWarpButton.Image = new Gtk.Image(Stock.Add, Gtk.IconSize.Button);
+            addPositionWarpButton.Image = new Gtk.Image(Stock.Add, Gtk.IconSize.Button);
 
             roomSpinButton.Adjustment.Lower = 0;
             roomSpinButton.Adjustment.Upper = Project.GetNumRooms()-1;
@@ -69,6 +69,9 @@ namespace LynnaLab
             indexSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
                 SetWarpIndex(indexSpinButton.ValueAsInt);
             };
+
+            infoBar = new InfoBar();
+            infoBarHolder.Add(infoBar);
         }
 
         public void SetMap(int group, int map) {
@@ -77,17 +80,12 @@ namespace LynnaLab
 
             this.map = map;
 
-            frameLabel.Text = "Room " + ((group<<8)+map).ToString("X3") + " Warp Sources";
+            UpdateIndexSpinButtonRange();
             SetWarpIndex(0);
         }
 
         // Load the i'th warp in the current map.
         void SetWarpIndex(int i) {
-            List<WarpSourceData> sourceDataList = sourceGroup.GetMapWarpSourceData(map);
-
-            indexSpinButton.Adjustment.Lower = -1;
-            indexSpinButton.Adjustment.Upper = sourceDataList.Count-1;
-
             if (i > indexSpinButton.Adjustment.Upper)
                 i = (int)indexSpinButton.Adjustment.Upper;
 
@@ -96,135 +94,56 @@ namespace LynnaLab
             valueEditorContainer.Remove(valueEditorContainer.Child);
 
             if (i == -1) {
+                warpSourceFrame.Visible = false;
+                warpSourceFrame.Hide();
                 SetDestIndex(-1,-1);
                 return;
             }
 
             Gtk.HBox hbox = new Gtk.HBox();
 
-            WarpSourceData warpSourceData = sourceDataList[i];
+            WarpSourceData warpSourceData = GetWarpSourceDataIndex(i);
 
-            if (warpSourceData.WarpSourceType == WarpSourceType.StandardWarp)
-                SetDestIndex(warpSourceData.DestGroup, warpSourceData.DestIndex);
+            if (warpSourceData.WarpSourceType == WarpSourceType.PointedWarp)
+                warpSourceTypeLabel.Text = "<b>Type</b>: Position Warp";
+            else
+                warpSourceTypeLabel.Text = "<b>Type</b>: Screen Warp";
 
-            sourceEditor = new ValueReferenceEditor(Project,
-                    warpSourceData);
+            warpSourceTypeLabel.UseMarkup = true;
+
+            SetDestIndex(warpSourceData.DestGroup, warpSourceData.DestIndex);
+            sourceEditor = new ValueReferenceEditor(Project, warpSourceData);
 
             Alignment a = new Alignment(0,0,0,0);
             a.Add(sourceEditor);
             hbox.Add(a);
 
-            if (warpSourceData.WarpSourceType == WarpSourceType.PointerWarp) {
-                Table table = new Table(1, 1, false);
-                table.ColumnSpacing = 6;
-                table.RowSpacing = 6;
-
-                SpinButton pointerSpinButton = new SpinButton(0,10,1);
-
-                EventHandler valueChangedHandler = delegate(object sender, EventArgs e) {
-                    WarpSourceData pointedData = warpSourceData.GetPointedWarp();
-
-                    pointerSpinButton.Adjustment.Lower = 0;
-                    pointerSpinButton.Adjustment.Upper = warpSourceData.GetPointedChainLength()-1;
-
-                    if (pointerSpinButton.ValueAsInt > pointerSpinButton.Adjustment.Upper) {
-                        pointerSpinButton.Value = pointerSpinButton.Adjustment.Upper;
-                    }
-                    int index = pointerSpinButton.ValueAsInt;
-
-                    while (index > 0) {
-                        pointedData = pointedData.GetNextWarp();
-                        index--;
-                    }
-
-                    table.Remove(destEditor);
-
-                    destEditor = new ValueReferenceEditor(Project, pointedData);
-
-                    destEditor.AddDataModifiedHandler(delegate() {
-                            SetDestIndex(pointedData.DestGroup, pointedData.DestIndex);
-                        });
-
-                    table.Attach(destEditor, 0, 2, 1, 2);
-
-                    SetDestIndex(pointedData.DestGroup, pointedData.DestIndex);
-                };
-
-                pointerSpinButton.ValueChanged += valueChangedHandler;
-
-                // Button which, when clicked, adds a new PointedData to the
-                // "chain".
-                Gtk.Button addPointedWarpButton =
-                    new Gtk.Button(new Gtk.Image(Gtk.Stock.Add, Gtk.IconSize.Button));
-
-                addPointedWarpButton.Clicked += delegate(object sender, EventArgs e) {
-                    WarpSourceData pointedData = warpSourceData.GetPointedWarp();
-
-                    while (pointedData.GetNextWarp() != null) {
-                        pointedData = pointedData.GetNextWarp();
-                    }
-
-                    WarpSourceData nextData = new WarpSourceData(Project,
-                            WarpSourceData.WarpCommands[(int)WarpSourceType.PointedWarp],
-                            WarpSourceData.DefaultValues[(int)WarpSourceType.PointedWarp],
-                            pointedData.FileParser,
-                            new List<string>{"\t"});
-                    pointedData.SetNextWarp(nextData);
-
-                    pointerSpinButton.Adjustment.Upper++;
-                    pointerSpinButton.Value = warpSourceData.GetPointedChainLength()-1;
-                    valueChangedHandler(null, null);
-                };
-
-                // Button which removes a PointedData from the "chain", unless
-                // there is only one remaining.
-                Gtk.Button removePointedWarpButton =
-                    new Gtk.Button(new Gtk.Image(Gtk.Stock.Remove, Gtk.IconSize.Button));
-
-                removePointedWarpButton.Clicked += delegate(object sender, EventArgs e) {
-                    int index = pointerSpinButton.ValueAsInt;
-                    WarpSourceData pointedData = warpSourceData.GetPointedWarp();
-
-                    if (pointedData.GetPointedChainLength() <= 1) // Don't delete the last one
-                        return;
-
-                    while (index > 0) {
-                        pointedData = pointedData.GetNextWarp();
-                        index--;
-                    }
-
-                    pointedData.FileParser.RemoveFileComponent(pointedData);
-
-                    valueChangedHandler(null, null);
-                };
-
-                table.Attach(new Gtk.Label("Pointer index"), 0, 1, 0, 1);
-                table.Attach(pointerSpinButton, 1, 2, 0, 1);
-                table.Attach(addPointedWarpButton, 2, 3, 0, 1);
-                table.Attach(removePointedWarpButton, 3, 4, 0, 1);
-
-                // Invoke handler
-                valueChangedHandler(pointerSpinButton, null);
-
-                Frame frame = new Frame(warpSourceData.PointerString);
-                frame.Add(table);
-
-                hbox.Add(frame);
-            }
-            else { // Not pointerWarp
-                sourceEditor.AddDataModifiedHandler(delegate() {
-                        SetDestIndex(warpSourceData.DestGroup, warpSourceData.DestIndex);
-                        });
-            }
+            sourceEditor.AddDataModifiedHandler(delegate() {
+                SetDestIndex(warpSourceData.DestGroup, warpSourceData.DestIndex);
+            });
 
             valueEditorContainer.Add(hbox);
-            valueEditorContainer.ShowAll();
+            warpSourceFrame.ShowAll();
+        }
+
+        // Gets the index corresponding to a spin button value.
+        // This class needs to transparently traverse PointerWarps, so that's done here.
+        WarpSourceData GetWarpSourceDataIndex(int i) {
+            var sourceDataList = sourceGroup.GetMapWarpSourceData(map);
+            WarpSourceData warpSourceData = sourceDataList[Math.Min(sourceDataList.Count-1, i)];
+
+            if (i != -1 && i >= sourceDataList.Count-1 && warpSourceData.WarpSourceType == WarpSourceType.PointerWarp) {
+                int offset = i - (sourceDataList.Count - 1);
+                warpSourceData = warpSourceData.GetPointedWarp();
+                for (int j=0; j<offset; j++) {
+                    warpSourceData = warpSourceData.GetNextWarp();
+                }
+            }
+
+            return warpSourceData;
         }
 
         void SetDestIndex(int group, int index) {
-            destGroupSpinButton.Value = group;
-            destIndexSpinButton.Value = index;
-
             destEditorContainer.Remove(destEditorContainer.Child);
 
             if (group != -1 && group < Project.GetNumGroups())
@@ -233,79 +152,87 @@ namespace LynnaLab
             if (group == -1 || group >= Project.GetNumGroups() ||
                     index == -1 || index >= destGroup.GetNumWarpDests())
             {
-                frame2.Hide();
+                warpDestFrame.Hide();
                 return;
             }
 
             WarpDestData destData = destGroup.GetWarpDest(index);
             ValueReferenceEditor editor = new ValueReferenceEditor(Project,destData);
 
-            int numReferences = destData.GetNumReferences();
-            if (numReferences == 2)
-                destInfoLabel.Text = "Used by " + (numReferences-1) + " other source";
+            destInfoLabel.Text = "Group " + group + " Index " + Wla.ToHex(index, 2) + ": ";
+            int numReferences = destData.GetNumReferences()-1;
+            if (numReferences == 1)
+                destInfoLabel.Text += "Used by " + numReferences + " other source";
             else
-                destInfoLabel.Text = "Used by " + (numReferences-1) + " other sources";
+                destInfoLabel.Text += "Used by " + numReferences + " other sources";
 
             destEditorContainer.Add(editor);
             destEditorContainer.ShowAll();
-            frame2.ShowAll();
+            warpDestFrame.ShowAll();
         }
 
-        protected void OnAddWarpButtonClicked(object sender, EventArgs e)
-        {
-            WarpSourceData data = new WarpSourceData(Project,
-                    WarpSourceData.WarpCommands[(int)WarpSourceType.StandardWarp],
-                    WarpSourceData.DefaultValues[(int)WarpSourceType.StandardWarp],
-                    sourceGroup.FileParser,
-                    new List<string>{"\t"});
-            data.Map = map;
-            data.Transition = 4;
+        // Updates spinbutton range, also updates warnings
+        void UpdateIndexSpinButtonRange() {
+            infoBar.RemoveAll();
 
-            sourceGroup.AddWarpSourceData(data);
+            List<WarpSourceData> sourceDataList = sourceGroup.GetMapWarpSourceData(map);
 
-            SetWarpIndex((int)indexSpinButton.Adjustment.Upper+1);
-        }
-
-        protected void OnAddSpecificWarpButtonClicked(object sender, EventArgs e)
-        {
-            // Check if a pointer warp already exists
-            List<WarpSourceData> warps = sourceGroup.GetMapWarpSourceData(map);
-
-            foreach (WarpSourceData sourceData in warps) {
-                if (sourceData.WarpSourceType == WarpSourceType.PointerWarp) {
-                    // Warning dialog
-                    Gtk.MessageDialog d = new Gtk.MessageDialog(null,
-                            DialogFlags.DestroyWithParent,
-                            MessageType.Warning,
-                            ButtonsType.YesNo,
-                            "This map already has specific-position warp data; adding another would be redundant. Continue anyway?");
-                    Gtk.ResponseType response = (ResponseType)d.Run();
-                    d.Destroy();
-
-                    if (response == ResponseType.Yes)
-                        break;
-                    else
-                        return;
+            // Sanity check: make sure there's only one PointerWarp and it's at the end.
+            for (int i=0; i<sourceDataList.Count-1; i++) {
+                if (sourceDataList[i].WarpSourceType == WarpSourceType.PointerWarp) {
+                    infoBar.Push(InfoLevel.Error, "Warp data formatting error: Warp #" + i + " is a PointerWarp, but there are StandardWarps after it which won't be read. You may need to fix this manually.");
+                    break;
                 }
             }
 
+            indexSpinButton.Adjustment.Lower = -1;
+
+            int count = sourceDataList.Count;
+            if (count != 0 && sourceDataList[count-1].WarpSourceType == WarpSourceType.PointerWarp) {
+                count += sourceDataList[count-1].GetPointedChainLength();
+                count--; // Don't count the "PointerWarp"
+            }
+            indexSpinButton.Adjustment.Upper = count-1;
+        }
+
+        protected void OnAddScreenWarpButtonClicked(object sender, EventArgs e)
+        {
             WarpSourceData data = new WarpSourceData(Project,
-                    WarpSourceData.WarpCommands[(int)WarpSourceType.PointerWarp],
-                    WarpSourceData.DefaultValues[(int)WarpSourceType.PointerWarp],
-                    sourceGroup.FileParser,
-                    new List<string>{"\t","  "});
+                    command: WarpSourceData.WarpCommands[(int)WarpSourceType.StandardWarp],
+                    values: WarpSourceData.DefaultValues[(int)WarpSourceType.StandardWarp],
+                    parser: sourceGroup.FileParser,
+                    spacing: new List<string>{"\t"});
             data.Map = map;
 
-            sourceGroup.AddWarpSourceData(data);
+            sourceGroup.AddWarpSourceData(data, map);
+            UpdateIndexSpinButtonRange();
 
-            SetWarpIndex((int)indexSpinButton.Adjustment.Upper+1);
+            // Determine what index corresponds to this newly created warp
+            var warpSourceList = sourceGroup.GetMapWarpSourceData(map);
+            if (warpSourceList[warpSourceList.Count-1].WarpSourceType == WarpSourceType.PointerWarp)
+                SetWarpIndex(sourceGroup.GetMapWarpSourceData(map).Count-2);
+            else
+                SetWarpIndex(sourceGroup.GetMapWarpSourceData(map).Count-1);
+        }
+
+        protected void OnAddPositionWarpButtonClicked(object sender, EventArgs e)
+        {
+            WarpSourceData data = new WarpSourceData(Project,
+                    command: WarpSourceData.WarpCommands[(int)WarpSourceType.PointedWarp],
+                    values: WarpSourceData.DefaultValues[(int)WarpSourceType.PointedWarp],
+                    parser: sourceGroup.FileParser,
+                    spacing: new List<string>{"\t"});
+
+            sourceGroup.AddWarpSourceData(data, map);
+            UpdateIndexSpinButtonRange();
+            SetWarpIndex((int)indexSpinButton.Adjustment.Upper);
         }
 
         protected void OnRemoveWarpButtonClicked(object sender, EventArgs e)
         {
             if (indexSpinButton.ValueAsInt != -1) {
-                List<WarpSourceData> dataList = sourceGroup.GetMapWarpSourceData(map);
-                sourceGroup.RemoveWarpSourceData(dataList[indexSpinButton.ValueAsInt]);
+                sourceGroup.RemoveWarpSourceData(GetWarpSourceDataIndex(indexSpinButton.ValueAsInt), map);
+                UpdateIndexSpinButtonRange();
                 SetWarpIndex(indexSpinButton.ValueAsInt);
             }
         }

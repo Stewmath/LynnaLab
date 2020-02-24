@@ -312,6 +312,13 @@ namespace LynnaLab
                 throw new InvalidLookupException("Label \"" + label + "\" was needed but could not be located!");
             }
         }
+        public Label GetLabel(string label) {
+            try {
+                return labelDictionary[label].GetLabel(label);
+            } catch(KeyNotFoundException) {
+                throw new InvalidLookupException("Label \"" + label + "\" was needed but could not be located!");
+            }
+        }
         public bool HasLabel(string label) {
             try {
                 FileParser p = labelDictionary[label];
@@ -320,6 +327,27 @@ namespace LynnaLab
             catch(KeyNotFoundException) {
                 return false;
             }
+        }
+
+        // Returns "name" if the label is already unique, otherwise this calls
+        // "GetUniqueLabelNameWithDigits".
+        public string GetUniqueLabelName(string name) {
+            if (!HasLabel(name))
+                return name;
+            return GetUniqueLabelNameWithDigits(name);
+        }
+
+        // Returns a unique label name starting with the string "name" and with 2 digits after that.
+        public string GetUniqueLabelNameWithDigits(string name) {
+            int nameIndex = 0;
+            string attempt;
+            do {
+                attempt = name + "_" + nameIndex.ToString("d2");
+                nameIndex++;
+            }
+            while (HasLabel(attempt));
+
+            return attempt;
         }
 
         // Throws a NotFoundException when the data doesn't exist.

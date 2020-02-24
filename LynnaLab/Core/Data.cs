@@ -134,10 +134,13 @@ namespace LynnaLab
             }
         }
         public void SetByteValue(int i, byte value) {
-            SetValue(i, Wla.ToByte(value));
+            SetHexValue(i, value, 2);
         }
         public void SetWordValue(int i, int value) {
-            SetValue(i, Wla.ToWord(value));
+            SetHexValue(i, value, 4);
+        }
+        public void SetHexValue(int i, int value, int minDigits) {
+            SetValue(i, Wla.ToHex(value, minDigits));
         }
         public void SetValue(string s, string value) {
             GetValueReference(s).SetValue(value);
