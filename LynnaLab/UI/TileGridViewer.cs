@@ -78,6 +78,11 @@ namespace LynnaLab
                     y < Height * TileHeight * Scale + YOffset);
         }
 
+        // Convert a "real" position (in pixels) into a grid position (in tiles).
+        public Cairo.Point GetGridPosition(int x, int y) {
+            return new Cairo.Point((x - XOffset) / (TileWidth * Scale), (y - YOffset) / (TileHeight * Scale));
+        }
+
         protected void OnMoveMouse(object o, MotionNotifyEventArgs args) {
             int x,y;
             Gdk.ModifierType state;
@@ -148,7 +153,7 @@ namespace LynnaLab
             return true;
         }
 
-        /*
+        /* Deprecated GTK2 code
         protected override bool OnExposeEvent(Gdk.EventExpose ev)
         {
             base.OnExposeEvent(ev);

@@ -61,8 +61,9 @@ namespace LynnaLab
                 if (gdkState.HasFlag(Gdk.ModifierType.Button1Mask))
                     OnClicked(x, y);
                 if (IsInBounds(x, y)) {
+                    Cairo.Point p = GetGridPosition(x, y);
                     if (gdkState.HasFlag(Gdk.ModifierType.Button3Mask))
-                        client.SelectedIndex = room.GetTile(HoveringX, HoveringY);
+                        client.SelectedIndex = room.GetTile(p.X, p.Y);
                 }
             };
             this.ButtonReleaseEvent += delegate(object o, ButtonReleaseEventArgs args) {
