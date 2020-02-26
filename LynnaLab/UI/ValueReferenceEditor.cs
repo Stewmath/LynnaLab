@@ -378,7 +378,7 @@ loopEnd:
                 // Remove previous help button
                 foreach (Gtk.Widget widget in container.Children) {
                     container.Remove(widget);
-                    widget.Destroy();
+                    widget.Dispose();
                 }
 
                 ValueReference r = refs[i];

@@ -96,9 +96,7 @@ namespace LynnaLab
         }
 
         protected override void OnResponse(Gtk.ResponseType response_id) {
-            base.OnResponse(response_id);
-
-            Destroy();
+            this.Dispose();
         }
 
         void AddGenericField(string field) {

@@ -136,7 +136,7 @@ namespace LynnaLab
         protected void OnOkButtonClicked(object sender, EventArgs e)
         {
             Parent.Hide();
-            Parent.Destroy();
+            Parent.Dispose();
         }
 
         protected void OnFlags1SpinButtonValueChanged(object sender, EventArgs e)

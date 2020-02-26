@@ -127,7 +127,7 @@ namespace LynnaLab
 
             foreach (Gtk.Widget widget in objectDataContainer.Children) {
                 objectDataContainer.Remove(widget);
-                widget.Destroy();
+                widget.Dispose();
             }
             if (ObjectDataEditor != null) {
                 ObjectDataEditor.RemoveDataModifiedHandler(handler);

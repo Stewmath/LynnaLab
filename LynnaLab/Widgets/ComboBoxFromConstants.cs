@@ -102,7 +102,7 @@ namespace LynnaLab
 
                     DocumentationDialog d = new DocumentationDialog(DefaultDocumentation);
                     d.Run();
-                    d.Destroy();
+                    d.Dispose();
                 };
 
                 hbox1.PackStart(helpButton, false, false, 0);

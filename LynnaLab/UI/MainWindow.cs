@@ -200,7 +200,7 @@ public class MainWindow: Gtk.Window
                                     ButtonsType.Ok,
                                     msg);
                             d.Run();
-                            d.Destroy();
+                            d.Dispose();
                         }
                     #endif
                     });
@@ -239,7 +239,7 @@ public class MainWindow: Gtk.Window
                     ButtonsType.YesNo,
                     "The folder you selected does not have a " + mainFile + " file. This probably indicates the folder does not contain the ages disassembly. Attempt to continue anyway?");
             response = (ResponseType)d.Run();
-            d.Destroy();
+            d.Dispose();
         }
 
         if (response == ResponseType.Yes) {
@@ -263,7 +263,7 @@ public class MainWindow: Gtk.Window
                                          ButtonsType.Ok,
                                          outputString);
                 d.Run();
-                d.Destroy();
+                d.Dispose();
             }
     */
 
@@ -346,7 +346,7 @@ public class MainWindow: Gtk.Window
         d.Add(a);
         d.ShowAll();
         response = (ResponseType)d.Run();
-        d.Destroy();
+        d.Dispose();
         if (response == ResponseType.Yes) {
             Project.Save();
         }
@@ -388,7 +388,7 @@ public class MainWindow: Gtk.Window
                 OpenProject(basedir);
             }
         }
-        dialog.Destroy();
+        dialog.Dispose();
     }
     
     protected void OnSaveActionActivated(object sender, EventArgs e)
@@ -506,7 +506,7 @@ public class MainWindow: Gtk.Window
         win.Add(warpEditor);
 
         warpEditor.Destroyed += delegate(object sender2, EventArgs e2) {
-            win.Destroy();
+            win.Dispose();
             warpEditor = null;
         };
         win.Destroyed += delegate(object sender2, EventArgs e2) {

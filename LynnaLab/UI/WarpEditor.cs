@@ -269,7 +269,7 @@ namespace LynnaLab
 
         protected void OnOkButtonClicked(object sender, EventArgs e)
         {
-            this.Destroy();
+            this.Dispose();
         }
     }
 }

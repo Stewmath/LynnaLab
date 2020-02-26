@@ -31,12 +31,12 @@ namespace LynnaLab
         protected void OnButtonCancelClicked(object sender, EventArgs e)
         {
             objectType = ObjectType.End;
-            this.Destroy();
+            this.Dispose();
         }
 
         protected void OnButtonOkClicked(object sender, EventArgs e)
         {
-            this.Destroy();
+            this.Dispose();
         }
     }
 }
