@@ -7,10 +7,31 @@ using System.Linq;
 using Gtk;
 using LynnaLab;
 
-public partial class MainWindow: Gtk.Window
+public class MainWindow: Gtk.Window
 {
     private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
+    // GUI stuff
+	private Gtk.MenuBar menubar1;
+	private Gtk.CheckButton viewObjectsCheckBox;
+
+	private Gtk.Notebook notebook2;
+	private Gtk.SpinButton worldSpinButton;
+	private Gtk.CheckButton darkenDungeonRoomsCheckbox;
+	private LynnaLab.HighlightingMinimap worldMinimap;
+	private Gtk.SpinButton dungeonSpinButton;
+	private Gtk.SpinButton floorSpinButton;
+	private LynnaLab.Minimap dungeonMinimap;
+
+	private Gtk.Statusbar statusbar1;
+
+	private LynnaLab.SpinButtonHexadecimal roomSpinButton, areaSpinButton;
+    private ComboBoxFromConstants musicComboBox;
+	private LynnaLab.ObjectGroupEditor objectgroupeditor1;
+	private LynnaLab.AreaViewer areaviewer1;
+	private LynnaLab.RoomEditor roomeditor1;
+
+    // Variables
     uint animationTimerID = 0;
     PluginCore pluginCore;
 
@@ -48,7 +69,46 @@ public partial class MainWindow: Gtk.Window
     {
         log.Debug("Beginning Program");
 
-        Build();
+        Gtk.Builder builder = new Builder();
+        builder.AddFromString(Helper.ReadResourceFile("LynnaLab.Glade.MainWindow.ui"));
+        builder.Autoconnect(this);
+
+        this.Child = (Gtk.Widget)builder.GetObject("MainWindow");
+
+        menubar1 = (Gtk.MenuBar)builder.GetObject("menubar1");
+        viewObjectsCheckBox = (Gtk.CheckButton)builder.GetObject("viewObjectsCheckBox");
+
+        notebook2 = (Gtk.Notebook)builder.GetObject("notebook2");
+        worldSpinButton = (Gtk.SpinButton)builder.GetObject("worldSpinButton");
+        darkenDungeonRoomsCheckbox = (Gtk.CheckButton)builder.GetObject("darkenDungeonRoomsCheckbox");
+        dungeonSpinButton = (Gtk.SpinButton)builder.GetObject("dungeonSpinButton");
+        floorSpinButton = (Gtk.SpinButton)builder.GetObject("floorSpinButton");
+        statusbar1 = (Gtk.Statusbar)builder.GetObject("statusbar1");
+
+        roomSpinButton = new SpinButtonHexadecimal(0, 0x5ff);
+        roomSpinButton.Digits = 3;
+        roomSpinButton.ValueChanged += OnRoomSpinButtonValueChanged;
+        areaSpinButton = new SpinButtonHexadecimal();
+        areaSpinButton.Digits = 2;
+        areaSpinButton.ValueChanged += OnAreaSpinButtonValueChanged;
+
+        musicComboBox = new ComboBoxFromConstants();
+        musicComboBox.Changed += OnMusicComboBoxChanged;
+
+        objectgroupeditor1 = new ObjectGroupEditor();
+        areaviewer1 = new AreaViewer();
+        roomeditor1 = new RoomEditor();
+        worldMinimap = new HighlightingMinimap();
+        dungeonMinimap = new Minimap();
+
+        ((Gtk.Box)builder.GetObject("roomSpinButtonHolder")).Add(roomSpinButton);
+        ((Gtk.Box)builder.GetObject("areaSpinButtonHolder")).Add(areaSpinButton);
+        ((Gtk.Box)builder.GetObject("musicComboBoxHolder")).Add(musicComboBox);
+        ((Gtk.Box)builder.GetObject("objectGroupEditorHolder")).Add(objectgroupeditor1);
+        ((Gtk.Box)builder.GetObject("areaViewerHolder")).Add(areaviewer1);
+        ((Gtk.Box)builder.GetObject("roomEditorHolder")).Add(roomeditor1);
+        ((Gtk.Box)builder.GetObject("worldMinimapHolder")).Add(worldMinimap);
+        ((Gtk.Box)builder.GetObject("dungeonMinimapHolder")).Add(dungeonMinimap);
 
         roomeditor1.SetClient(areaviewer1);
         roomeditor1.SetObjectGroupEditor(objectgroupeditor1);
@@ -93,6 +153,8 @@ public partial class MainWindow: Gtk.Window
 
         if (directory != "")
             OpenProject(directory);
+
+        this.ShowAll();
     }
 
     void LoadPlugins() {
@@ -109,6 +171,10 @@ public partial class MainWindow: Gtk.Window
 
         var reloadItem = new MenuItem("Reload plugins");
         reloadItem.Activated += (a,b) => LoadPlugins();
+
+        return;
+
+        // TODO: fix this
 
         pluginSubMenu = new Menu();
         pluginMenuItem.Submenu = pluginSubMenu;
