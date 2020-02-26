@@ -7,7 +7,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>LynnaLab</RootNamespace>
     <AssemblyName>LynnaLab</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,6 +21,10 @@
     <PlatformTarget>x86</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>6</LangVersion>
+    <IntermediateOutputPath></IntermediateOutputPath>
+    <NoWarn></NoWarn>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <WarningsNotAsErrors></WarningsNotAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>full</DebugType>
@@ -39,15 +43,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Xml" />
     <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="GtkSharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="GdkSharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="GlibSharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="GladeSharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="PangoSharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="AtkSharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="GtkDotnet, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <Reference Include="CairoSharp, Version=1.10.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
-    <Reference Include="GioSharp, Version=3.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <Reference Include="log4net">
       <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
     </Reference>
@@ -56,6 +51,27 @@
     </Reference>
     <Reference Include="YamlDotNet">
       <HintPath>..\packages\YamlDotNet.8.1.0\lib\net45\YamlDotNet.dll</HintPath>
+    </Reference>
+    <Reference Include="CairoSharp">
+      <HintPath>..\packages\CairoSharp.3.22.25.56\lib\netstandard2.0\CairoSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="GLibSharp">
+      <HintPath>..\packages\GLibSharp.3.22.25.56\lib\netstandard2.0\GLibSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="AtkSharp">
+      <HintPath>..\packages\AtkSharp.3.22.25.56\lib\netstandard2.0\AtkSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="GioSharp">
+      <HintPath>..\packages\GioSharp.3.22.25.56\lib\netstandard2.0\GioSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="PangoSharp">
+      <HintPath>..\packages\PangoSharp.3.22.25.56\lib\netstandard2.0\PangoSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="GdkSharp">
+      <HintPath>..\packages\GdkSharp.3.22.25.56\lib\netstandard2.0\GdkSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="GtkSharp">
+      <HintPath>..\packages\GtkSharp.3.22.25.56\lib\netstandard2.0\GtkSharp.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -157,4 +173,5 @@
     <EmbeddedResource Include="Glade/MainWindow.ui">
     </EmbeddedResource>
   </ItemGroup>
+  <Import Project="..\packages\GtkSharp.3.22.25.56\build\GtkSharp.targets" Condition="Exists('..\packages\GtkSharp.3.22.25.56\build\GtkSharp.targets')" />
 </Project>

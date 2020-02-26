@@ -78,20 +78,14 @@ namespace LynnaLab
             this.spinButton.ClimbRate = 1D;
             this.spinButton.Digits = 2;
             this.spinButton.Numeric = true;
-            this.hbox1.Add(this.spinButton);
-            Gtk.Box.BoxChild w1 = (Gtk.Box.BoxChild)(this.hbox1[this.spinButton]);
-            w1.Position = 0;
-            w1.Expand = true;
-            w1.Fill = true;
+            this.hbox1.Add(spinButton);
+            hbox1.SetChildPacking(spinButton, true, true, 0, Gtk.PackType.Start);
 
             // Container child hbox1.Gtk.Box+BoxChild
             this.combobox1 = new Gtk.ComboBoxText();
             this.combobox1.Name = "combobox1";
             this.hbox1.Add(this.combobox1);
-            Gtk.Box.BoxChild w2 = (Gtk.Box.BoxChild)(this.hbox1[this.combobox1]);
-            w2.Position = 1;
-            w2.Expand = false;
-            w2.Fill = false;
+            hbox1.SetChildPacking(this.combobox1, false, false, 0, Gtk.PackType.Start);
             this.Add(this.hbox1);
 
             this.spinButton.ValueChanged += new System.EventHandler(this.OnSpinButtonValueChanged);

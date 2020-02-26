@@ -123,7 +123,10 @@ namespace LynnaLab
         }
 
         protected override bool OnDrawn(Cairo.Context cr) {
-            base.OnDrawn(cr);
+            /*
+            if (!base.OnDrawn(cr))
+                return false;
+                */
 
             if (Surface != null) {
                 cr.SetSourceSurface(Surface, XOffset, YOffset);

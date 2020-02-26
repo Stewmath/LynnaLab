@@ -219,8 +219,10 @@ namespace LynnaLab
                     CairoHelper.UnlockBitmap(Image);
                 }
             }
+            /*
             else
                 base.OnDrawn(cr);
+                */
 
             if (ViewObjects && objectEditor != null) {
                 // Draw objects

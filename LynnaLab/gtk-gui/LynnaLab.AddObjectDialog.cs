@@ -45,25 +45,16 @@ namespace LynnaLab
 			this.typeSpinButton.Numeric = true;
 			this.alignment2.Add(this.typeSpinButton);
 			this.hbox1.Add(this.alignment2);
-			global::Gtk.Box.BoxChild w3 = ((global::Gtk.Box.BoxChild)(this.hbox1[this.alignment2]));
-			w3.Position = 0;
-			w3.Expand = false;
-			w3.Fill = false;
+            hbox1.SetChildPacking(alignment2, false, false, 0, Gtk.PackType.Start);
 			// Container child hbox1.Gtk.Box+BoxChild
 			this.infoLabel = new global::Gtk.Label();
 			this.infoLabel.Name = "infoLabel";
 			this.infoLabel.Xalign = 0F;
 			this.infoLabel.LabelProp = global::Mono.Unix.Catalog.GetString("Info Label");
 			this.hbox1.Add(this.infoLabel);
-			global::Gtk.Box.BoxChild w4 = ((global::Gtk.Box.BoxChild)(this.hbox1[this.infoLabel]));
-			w4.Position = 1;
-			w4.Expand = false;
-			w4.Fill = false;
+            hbox1.SetChildPacking(infoLabel, false, false, 0, Gtk.PackType.Start);
 			w1.Add(this.hbox1);
-			global::Gtk.Box.BoxChild w5 = ((global::Gtk.Box.BoxChild)(w1[this.hbox1]));
-			w5.Position = 0;
-			w5.Expand = false;
-			w5.Fill = false;
+            w1.SetChildPacking(hbox1, false, false, 0, Gtk.PackType.Start);
 			// Container child dialog1_VBox.Gtk.Box+BoxChild
 			this.descriptionLabel = new global::Gtk.Label();
 			this.descriptionLabel.Name = "descriptionLabel";
@@ -72,8 +63,6 @@ namespace LynnaLab
 			this.descriptionLabel.LabelProp = global::Mono.Unix.Catalog.GetString("Description Label");
 			this.descriptionLabel.Wrap = true;
 			w1.Add(this.descriptionLabel);
-			global::Gtk.Box.BoxChild w6 = ((global::Gtk.Box.BoxChild)(w1[this.descriptionLabel]));
-			w6.Position = 1;
 			// Internal child LynnaLab.AddObjectDialog.ActionArea
             global::Gtk.HButtonBox w7 = (Gtk.HButtonBox)this.ActionArea;
 			w7.Name = "dialog1_ActionArea";
@@ -89,9 +78,7 @@ namespace LynnaLab
 			this.buttonCancel.UseUnderline = true;
 			this.buttonCancel.Label = "gtk-cancel";
 			this.AddActionWidget(this.buttonCancel, -6);
-			global::Gtk.ButtonBox.ButtonBoxChild w8 = ((global::Gtk.ButtonBox.ButtonBoxChild)(w7[this.buttonCancel]));
-			w8.Expand = false;
-			w8.Fill = false;
+            w7.SetChildPacking(buttonCancel, false, false, 0, Gtk.PackType.Start);
 			// Container child dialog1_ActionArea.Gtk.ButtonBox+ButtonBoxChild
 			this.buttonOk = new global::Gtk.Button();
 			this.buttonOk.CanDefault = true;
@@ -102,9 +89,7 @@ namespace LynnaLab
 			this.buttonOk.Label = "gtk-ok";
 			this.AddActionWidget(this.buttonOk, -5);
 			global::Gtk.ButtonBox.ButtonBoxChild w9 = ((global::Gtk.ButtonBox.ButtonBoxChild)(w7[this.buttonOk]));
-			w9.Position = 1;
-			w9.Expand = false;
-			w9.Fill = false;
+            w7.SetChildPacking(buttonOk, false, false, 0, Gtk.PackType.Start);
 			if ((this.Child != null))
 			{
 				this.Child.ShowAll();
