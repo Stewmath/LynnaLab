@@ -8,13 +8,13 @@ namespace LynnaLab
     {
         public static string WarpCommand = "m_WarpDest";
 
-        public static List<ValueReference> warpValueReferences = 
-            new List<ValueReference> {
-                new ValueReference("Map",0,DataValueType.Byte),
-                new ValueReference("Y",1,4,7,DataValueType.ByteBits),
-                new ValueReference("X",1,0,3,DataValueType.ByteBits),
-                new ValueReference("Parameter",2,DataValueType.HalfByte),
-                new ValueReference("Transition",3,DataValueType.HalfByte,true,"DestTransitionMapping"),
+        public static List<DataValueReference> warpValueReferences = 
+            new List<DataValueReference> {
+                new DataValueReference("Map",0,DataValueType.Byte),
+                new DataValueReference("Y",1,4,7,DataValueType.ByteBits),
+                new DataValueReference("X",1,0,3,DataValueType.ByteBits),
+                new DataValueReference("Parameter",2,DataValueType.HalfByte),
+                new DataValueReference("Transition",3,DataValueType.HalfByte,true,"DestTransitionMapping"),
             };
 
         // Properties

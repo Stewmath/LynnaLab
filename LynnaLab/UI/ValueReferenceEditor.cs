@@ -287,7 +287,7 @@ loopEnd:
 
             Data lastData = null;
             foreach (ValueReference r in valueReferenceGroup.GetValueReferences()) {
-                if (lastData != r.Data) {
+                if (lastData != r.Data && r.Data != null) {
                     lastData = r.Data;
                     r.Data.AddDataModifiedHandler(OnDataModifiedExternal);
                     // Destroy handler

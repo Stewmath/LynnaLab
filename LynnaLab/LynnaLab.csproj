@@ -103,7 +103,7 @@
     <Compile Include="Widgets\ComboBoxFromConstants.cs" />
     <Compile Include="UI\GfxViewer.cs" />
     <Compile Include="Core\Exceptions.cs" />
-    <Compile Include="Core\ValueReference.cs" />
+    <Compile Include="Core\DataValueReference.cs" />
     <Compile Include="UI\ValueReferenceEditor.cs" />
     <Compile Include="Core\WarpSourceData.cs" />
     <Compile Include="Core\WarpSourceGroup.cs" />
@@ -121,7 +121,6 @@
     <Compile Include="Core\ValueReferenceGroup.cs" />
     <Compile Include="UI\TileGridSelector.cs" />
     <Compile Include="UI\HighlightingMinimap.cs" />
-    <Compile Include="Core\StreamValueReference.cs" />
     <Compile Include="UI\ObjectGroupEditor.cs" />
     <Compile Include="gtk-gui\LynnaLab.ObjectGroupEditor.cs" />
     <Compile Include="Core\ObjectGroup.cs" />
@@ -150,6 +149,8 @@
     <Compile Include="Core\ProjectConfig.cs" />
     <Compile Include="UI\CairoHelper.cs" />
     <Compile Include="Widgets\InfoBar.cs" />
+    <Compile Include="Core\AbstractValueReference.cs" />
+    <Compile Include="Core\ValueReference.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

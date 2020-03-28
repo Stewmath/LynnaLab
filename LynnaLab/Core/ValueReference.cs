@@ -18,51 +18,24 @@ namespace LynnaLab
 
     // This class provides a way of accessing Data values of various different
     // formats.
-    public class ValueReference {
+    public abstract class ValueReference {
 
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        // Static default value stuff
+        protected string constantsMappingString;
+        protected ConstantsMapping constantsMapping;
+        protected Documentation _documentation;
 
-        public static string[] defaultDataValues = {
-            ".",
-            "$0",
-            "$00",
-            "$0000",
-            "0",
-            "$00",
-            "objectData4000",
-            "$00",
-        };
-
-        public static void InitializeDataValues(Data data, IList<ValueReference> refs) {
-            int numValues = 0;
-            foreach (ValueReference r in refs) {
-                if (r.valueIndex+1 > numValues)
-                    numValues = r.valueIndex+1;
-            }
-
-            data.SetNumValues(numValues);
-
-            foreach (ValueReference r in refs) {
-                data.SetValue(r.valueIndex, defaultDataValues[(int)r.ValueType]);
-            }
-        }
-
-
-
-        Data data;
-        string constantsMappingString;
-        ConstantsMapping constantsMapping;
-        Documentation _documentation;
-
-        protected int valueIndex;
         protected int startBit,endBit;
+
+
+        protected Project Project { get; set; }
+
+        public virtual Data Data { get { return null; } } // Only defined in some subclasses
 
         public DataValueType ValueType {get; set;}
         public string Name {get; set;}
         public bool Editable {get; set;}
-        public Data Data { get { return data; } }
 
         public int MaxValue { // For integer-based ones
             get {
@@ -84,9 +57,6 @@ namespace LynnaLab
         public ConstantsMapping ConstantsMapping {
             get { return constantsMapping; }
         }
-        public Project Project {
-            get {return Data.Project; }
-        }
 
         // This documentation tends to change based on what the current value is...
         public Documentation Documentation {
@@ -99,8 +69,7 @@ namespace LynnaLab
         }
 
         // Standard constructor for most DataValueTypes
-        public ValueReference(string n, int index, DataValueType t, bool editable=true) {
-            valueIndex = index;
+        public ValueReference(string n, DataValueType t, bool editable=true) {
             ValueType = t;
             Name = n;
             Editable = editable;
@@ -108,8 +77,7 @@ namespace LynnaLab
                 throw new Exception("Wrong constructor");
         }
         // Constructor for DataValueType.ByteBits
-        public ValueReference(string n, int index, int startBit, int endBit, DataValueType t, bool editable=true) {
-            valueIndex = index;
+        public ValueReference(string n, int startBit, int endBit, DataValueType t, bool editable=true) {
             ValueType = t;
             Name = n;
             this.startBit = startBit;
@@ -118,8 +86,7 @@ namespace LynnaLab
         }
         // Constructor which takes a ConstantsMapping, affecting the interface
         // that will be used
-        public ValueReference(string n, int index, int startBit, int endBit, DataValueType t, bool editable, string constantsMappingString) {
-            valueIndex = index;
+        public ValueReference(string n, int startBit, int endBit, DataValueType t, bool editable, string constantsMappingString) {
             ValueType = t;
             Name = n;
             this.startBit = startBit;
@@ -128,8 +95,7 @@ namespace LynnaLab
             this.constantsMappingString = constantsMappingString;
         }
         // Same as above but without start/endBit
-        public ValueReference(string n, int index, DataValueType t, bool editable, string constantsMappingString) {
-            valueIndex = index;
+        public ValueReference(string n, DataValueType t, bool editable, string constantsMappingString) {
             ValueType = t;
             Name = n;
             Editable = editable;
@@ -140,8 +106,6 @@ namespace LynnaLab
         }
 
         public ValueReference(ValueReference r) {
-            data = r.data;
-            valueIndex = r.valueIndex;
             ValueType = r.ValueType;
             Name = r.Name;
             startBit = r.startBit;
@@ -152,72 +116,61 @@ namespace LynnaLab
             _documentation = r._documentation;
         }
 
-        public void SetData(Data d) {
-            data = d;
-            if (data != null && constantsMappingString != null) {
-                constantsMapping = (ConstantsMapping)typeof(Project).GetField(constantsMappingString).GetValue(data.Project);
-                if (_documentation == null) {
-                    _documentation = constantsMapping.OverallDocumentation;
-                    _documentation.Name = "Field: " + Name;
-                }
-            }
-        }
 
-        public virtual string GetStringValue() {
-            return data.GetValue(valueIndex);
-        }
+        // NOTE: For the "Bit" DataTypes, this gets the value of the whole string, not just the bits
+        // in question!
+        public abstract string GetStringValue();
+
+        // This correctly handles the "Bit" DataType.
         public virtual int GetIntValue() {
+            int intValue = Project.EvalToInt(GetStringValue());
             switch(ValueType) {
                 case DataValueType.ByteBits:
                 case DataValueType.WordBits:
                     {
                         int andValue = (1<<(endBit-startBit+1))-1;
-                        return (data.GetIntValue(valueIndex)>>startBit)&andValue;
+                        return (intValue>>startBit)&andValue;
                     }
                 case DataValueType.ByteBit:
-                    return (data.GetIntValue(valueIndex)>>startBit)&1;
+                    return (intValue>>startBit)&1;
                 default:
-                    return data.GetIntValue(valueIndex);
+                    return intValue;
             }
         }
-        public virtual void SetValue(string s) {
-            switch(ValueType) {
-                case DataValueType.String:
-                default:
-                    data.SetValue(valueIndex,s);
-                    break;
-            }
-        }
+
+        // This has the same caveat as "GetStringValue".
+        public abstract void SetValue(string s);
+
         public virtual void SetValue(int i) {
             switch(ValueType) {
                 case DataValueType.HalfByte:
-                    data.SetValue(valueIndex, Wla.ToHalfByte((byte)i));
+                    SetValue(Wla.ToHalfByte((byte)i));
                     break;
                 case DataValueType.Byte:
                 case DataValueType.WarpDestIndex:
                 default:
-                    data.SetByteValue(valueIndex,(byte)i);
+                    SetValue(Wla.ToByte((byte)i));
                     break;
                 case DataValueType.Word:
-                    data.SetWordValue(valueIndex,i);
+                    SetValue(Wla.ToWord(i));
                     break;
                 case DataValueType.ByteBits:
                 case DataValueType.WordBits:
                     {
                         int andValue = ((1<<(endBit-startBit+1))-1);
-                        int value = data.GetIntValue(valueIndex) & (~(andValue<<startBit));
+                        int value = Project.EvalToInt(GetStringValue()) & (~(andValue<<startBit));
                         value |= ((i&andValue)<<startBit);
                         if (ValueType == DataValueType.ByteBits)
-                            data.SetByteValue(valueIndex,(byte)value);
+                            SetValue(Wla.ToByte((byte)value));
                         else
-                            data.SetWordValue(valueIndex,value);
+                            SetValue(Wla.ToWord(value));
                     }
                     break;
                 case DataValueType.ByteBit:
                     {
-                        int value = data.GetIntValue(valueIndex) & ~(1<<startBit);
+                        int value = Project.EvalToInt(GetStringValue()) & ~(1<<startBit);
                         value |= ((i&1)<<startBit);
-                        data.SetByteValue(valueIndex, (byte)value);
+                        SetValue(Wla.ToByte((byte)value));
                     }
                     break;
             }

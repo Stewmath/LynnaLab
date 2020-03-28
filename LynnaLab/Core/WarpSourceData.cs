@@ -44,39 +44,39 @@ namespace LynnaLab
             }
         };
 
-        public static List<List<ValueReference>> warpValueReferences =
-            new List<List<ValueReference>> {
-                new List<ValueReference> { // StandardWarp
-                    new ValueReference("Opcode",0,DataValueType.Byte, false),
-                    new ValueReference("Top-Left",0,0,0,DataValueType.ByteBit),
-                    new ValueReference("Top-Right",0,1,1,DataValueType.ByteBit),
-                    new ValueReference("Bottom-Left",0,2,2,DataValueType.ByteBit),
-                    new ValueReference("Bottom-Right",0,3,3,DataValueType.ByteBit),
-                    new ValueReference("Map",1,DataValueType.Byte, false),
-                    new ValueReference("Dest Index",2,DataValueType.WarpDestIndex),
-                    new ValueReference("Dest Group",3,DataValueType.HalfByte),
-                    new ValueReference("Transition",4,DataValueType.HalfByte,true,"SourceTransitionMapping"),
+        public static List<List<DataValueReference>> warpValueReferences =
+            new List<List<DataValueReference>> {
+                new List<DataValueReference> { // StandardWarp
+                    new DataValueReference("Opcode",0,DataValueType.Byte, false),
+                    new DataValueReference("Top-Left",0,0,0,DataValueType.ByteBit),
+                    new DataValueReference("Top-Right",0,1,1,DataValueType.ByteBit),
+                    new DataValueReference("Bottom-Left",0,2,2,DataValueType.ByteBit),
+                    new DataValueReference("Bottom-Right",0,3,3,DataValueType.ByteBit),
+                    new DataValueReference("Map",1,DataValueType.Byte, false),
+                    new DataValueReference("Dest Index",2,DataValueType.WarpDestIndex),
+                    new DataValueReference("Dest Group",3,DataValueType.HalfByte),
+                    new DataValueReference("Transition",4,DataValueType.HalfByte,true,"SourceTransitionMapping"),
                 },
-                new List<ValueReference> { // PointedWarp
-                    new ValueReference("Opcode",0,DataValueType.Byte, false),
+                new List<DataValueReference> { // PointedWarp
+                    new DataValueReference("Opcode",0,DataValueType.Byte, false),
 
                     // For "pointed" warp sources, "map" is instead a position
-                    new ValueReference("Y",1,4,7,DataValueType.ByteBits),
-                    new ValueReference("X",1,0,3,DataValueType.ByteBits),
+                    new DataValueReference("Y",1,4,7,DataValueType.ByteBits),
+                    new DataValueReference("X",1,0,3,DataValueType.ByteBits),
 
-                    new ValueReference("Dest Index",2,DataValueType.WarpDestIndex),
-                    new ValueReference("Dest Group",3,DataValueType.HalfByte),
-                    new ValueReference("Transition",4,DataValueType.HalfByte,true,"SourceTransitionMapping"),
+                    new DataValueReference("Dest Index",2,DataValueType.WarpDestIndex),
+                    new DataValueReference("Dest Group",3,DataValueType.HalfByte),
+                    new DataValueReference("Transition",4,DataValueType.HalfByte,true,"SourceTransitionMapping"),
                 },
-                new List<ValueReference> { // PointerWarp
-                    new ValueReference("Opcode",0,DataValueType.Byte, false),
-                    new ValueReference("Map",1,DataValueType.Byte, false),
+                new List<DataValueReference> { // PointerWarp
+                    new DataValueReference("Opcode",0,DataValueType.Byte, false),
+                    new DataValueReference("Map",1,DataValueType.Byte, false),
 
                     // For warp sources which point to others, the pointer replaces
                     // Group/Entrance/Dest Index.
-                    new ValueReference("Pointer", 2, DataValueType.String, false),
+                    new DataValueReference("Pointer", 2, DataValueType.String, false),
                 },
-                new List<ValueReference> { // WarpSourcesEnd
+                new List<DataValueReference> { // WarpSourcesEnd
                 }
             };
 

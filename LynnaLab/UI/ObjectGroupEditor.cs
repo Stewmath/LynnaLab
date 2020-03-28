@@ -8,29 +8,25 @@ namespace LynnaLab
     {
         public static readonly String[] ObjectNames = {
             "Set Condition",
-            "No Value Interaction",
-            "2-Value Interaction",
+            "Interaction",
             "Object Pointer",
             "Boss Object Pointer",
             "Anti-Boss Object Pointer",
             "Random Position Enemy",
             "Specific Position Enemy",
             "Part",
-            "Object With Parameter",
             "Item Drop",
         };
 
         public static readonly String[] ObjectDescriptions = {
             "Set a condition to enable or disable the following objects.",
-            "A class of objects which can use scripts. Does not take an explicit X/Y value.",
-            "A class of objects which can use scripts. Does take an explicit X/Y value.",
+            "A class of objects which can use scripts.",
             "A pointer to another set of object data.",
             "A pointer which only activates when bit 7 of the room flags is NOT set.",
             "A pointer which only activates when bit 7 of the room flags IS set.",
             "An enemy (or multiple enemies) in random positions in the room.",
             "An enemy at a specific position in the room.",
             "A class of objects with a variety of purposes (switches, animal statues, particles...)",
-            "An object of type 'Interaction' (0), 'Enemy' (1), or 'Part' (2) which also takes a parameter.",
             "An item drops when a tile is destroyed at a given location."
         };
 
@@ -186,7 +182,7 @@ namespace LynnaLab
                 return;
 
             while (true) {
-                ValueReference r;
+                DataValueReference r;
                 try {
                     r = activeData.GetValueReference("ID");
                 }

@@ -62,7 +62,7 @@ namespace LynnaLab
                     fileParser,
                     new List<string>{"\t"});
 
-            ValueReference.InitializeDataValues(newData, newData.GetValueReferences());
+            DataValueReference.InitializeDataValues(newData, newData.GetValueReferences());
 
             newData.Transition = 1;
 

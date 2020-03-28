@@ -90,7 +90,7 @@ namespace LynnaLab
                     new string[]{"\t"}, // Tab at start of line
                     (int)type);
 
-            ValueReference.InitializeDataValues(data, data.GetValueReferences());
+            DataValueReference.InitializeDataValues(data, data.GetValueReferences());
 
             if (type >= ObjectType.Pointer && type <= ObjectType.AntiBossPointer)
                 data.SetValue(0, "objectData4000"); // Compileable default pointer

@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LynnaLab
 {
@@ -105,13 +106,13 @@ namespace LynnaLab
             }
         }
         public string GetValue(string s) { // Get a value based on a value reference name
-            ValueReference r = GetValueReference(s);
+            DataValueReference r = GetValueReference(s);
             if (r == null)
                 ThrowException(new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
             return r.GetStringValue();
         }
         public int GetIntValue(string s) {
-            ValueReference r = GetValueReference(s);
+            DataValueReference r = GetValueReference(s);
             if (r == null) {
                 throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + s + "\".");
             }
@@ -172,19 +173,19 @@ namespace LynnaLab
         public ValueReferenceGroup GetValueReferenceGroup() {
             return valueReferenceGroup;
         }
-        public IList<ValueReference> GetValueReferences() {
+        public IList<DataValueReference> GetValueReferences() {
             if (valueReferenceGroup == null)
                 return null;
-            return valueReferenceGroup.GetValueReferences();
+            return valueReferenceGroup.GetValueReferences().Cast<DataValueReference>().ToList();
         }
-        public ValueReference GetValueReference(string name) {
+        public DataValueReference GetValueReference(string name) {
             if (valueReferenceGroup == null)
                 return null;
-            return valueReferenceGroup.GetValueReference(name);
+            return valueReferenceGroup.GetValueReference(name) as DataValueReference;
         }
-        public void SetValueReferences(IList<ValueReference> references) {
-            valueReferenceGroup = new ValueReferenceGroup(references);
-            foreach (ValueReference r in valueReferenceGroup.GetValueReferences())
+        public void SetValueReferences(IList<DataValueReference> references) {
+            valueReferenceGroup = new ValueReferenceGroup(references.Cast<ValueReference>().ToList());
+            foreach (DataValueReference r in valueReferenceGroup.GetValueReferences())
                 r.SetData(this);
         }
 

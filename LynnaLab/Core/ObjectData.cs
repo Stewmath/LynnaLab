@@ -40,65 +40,65 @@ namespace LynnaLab {
 
     public class ObjectData : Data {
 
-        private static List<List<ValueReference>> objectValueReferences =
-            new List<List<ValueReference>> {
-                new List<ValueReference> { // Conditional
-                    new ValueReference("Condition",0,DataValueType.Byte),
+        private static List<List<DataValueReference>> objectValueReferences =
+            new List<List<DataValueReference>> {
+                new List<DataValueReference> { // Conditional
+                    new DataValueReference("Condition",0,DataValueType.Byte),
                 },
-                new List<ValueReference> { // NoValue
-                    new ValueReference("ID",0,8,15,DataValueType.WordBits,true,"InteractionMapping"),
-                    new ValueReference("SubID",0,0,7,DataValueType.WordBits),
+                new List<DataValueReference> { // NoValue
+                    new DataValueReference("ID",0,8,15,DataValueType.WordBits,true,"InteractionMapping"),
+                    new DataValueReference("SubID",0,0,7,DataValueType.WordBits),
                 },
-                new List<ValueReference> { // DoubleValue
-                    new ValueReference("ID",0,8,15,DataValueType.WordBits,true,"InteractionMapping"),
-                    new ValueReference("SubID",0,0,7,DataValueType.WordBits),
-                    new ValueReference("Y",1,DataValueType.Byte),
-                    new ValueReference("X",2,DataValueType.Byte),
+                new List<DataValueReference> { // DoubleValue
+                    new DataValueReference("ID",0,8,15,DataValueType.WordBits,true,"InteractionMapping"),
+                    new DataValueReference("SubID",0,0,7,DataValueType.WordBits),
+                    new DataValueReference("Y",1,DataValueType.Byte),
+                    new DataValueReference("X",2,DataValueType.Byte),
                 },
-                new List<ValueReference> { // Pointer
-                    new ValueReference("Pointer",0,DataValueType.ObjectPointer),
+                new List<DataValueReference> { // Pointer
+                    new DataValueReference("Pointer",0,DataValueType.ObjectPointer),
                 },
-                new List<ValueReference> { // BossPointer
-                    new ValueReference("Pointer",0,DataValueType.ObjectPointer),
+                new List<DataValueReference> { // BossPointer
+                    new DataValueReference("Pointer",0,DataValueType.ObjectPointer),
                 },
-                new List<ValueReference> { // AntiBossPointer
-                    new ValueReference("Pointer",0,DataValueType.ObjectPointer),
+                new List<DataValueReference> { // AntiBossPointer
+                    new DataValueReference("Pointer",0,DataValueType.ObjectPointer),
                 },
-                new List<ValueReference> { // Random Enemy
-                    new ValueReference("Flags",0,DataValueType.Byte),
-                    new ValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
-                    new ValueReference("SubID",1,0,7,DataValueType.WordBits),
+                new List<DataValueReference> { // Random Enemy
+                    new DataValueReference("Flags",0,DataValueType.Byte),
+                    new DataValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
+                    new DataValueReference("SubID",1,0,7,DataValueType.WordBits),
                 },
-                new List<ValueReference> { // Specific Enemy
-                    new ValueReference("Flags",0,DataValueType.Byte),
-                    new ValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
-                    new ValueReference("SubID",1,0,7,DataValueType.WordBits),
-                    new ValueReference("Y",2,DataValueType.Byte),
-                    new ValueReference("X",3,DataValueType.Byte),
+                new List<DataValueReference> { // Specific Enemy
+                    new DataValueReference("Flags",0,DataValueType.Byte),
+                    new DataValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
+                    new DataValueReference("SubID",1,0,7,DataValueType.WordBits),
+                    new DataValueReference("Y",2,DataValueType.Byte),
+                    new DataValueReference("X",3,DataValueType.Byte),
                 },
-                new List<ValueReference> { // Part
-                    new ValueReference("ID",0,8,15,DataValueType.WordBits,true,"PartMapping"),
-                    new ValueReference("SubID",0,0,7,DataValueType.WordBits),
-                    new ValueReference("Y",1,4,7,DataValueType.ByteBits),
-                    new ValueReference("X",1,0,3,DataValueType.ByteBits),
+                new List<DataValueReference> { // Part
+                    new DataValueReference("ID",0,8,15,DataValueType.WordBits,true,"PartMapping"),
+                    new DataValueReference("SubID",0,0,7,DataValueType.WordBits),
+                    new DataValueReference("Y",1,4,7,DataValueType.ByteBits),
+                    new DataValueReference("X",1,0,3,DataValueType.ByteBits),
                 },
-                new List<ValueReference> { // QuadrupleValue
-                    new ValueReference("Object Type",0,DataValueType.Byte,editable:false),
-                    new ValueReference("ID",1,8,15,DataValueType.WordBits),
-                    new ValueReference("SubID",1,0,7,DataValueType.WordBits),
-                    new ValueReference("Var03",2,DataValueType.Byte),
-                    new ValueReference("Y",3,DataValueType.Byte),
-                    new ValueReference("X",4,DataValueType.Byte),
+                new List<DataValueReference> { // QuadrupleValue
+                    new DataValueReference("Object Type",0,DataValueType.Byte,editable:false),
+                    new DataValueReference("ID",1,8,15,DataValueType.WordBits),
+                    new DataValueReference("SubID",1,0,7,DataValueType.WordBits),
+                    new DataValueReference("Var03",2,DataValueType.Byte),
+                    new DataValueReference("Y",3,DataValueType.Byte),
+                    new DataValueReference("X",4,DataValueType.Byte),
                 },
-                new List<ValueReference> { // Item Drop
-                    new ValueReference("Flags",0,DataValueType.Byte),
-                    new ValueReference("Item",1,DataValueType.Byte),
-                    new ValueReference("Y",2,4,7,DataValueType.ByteBits),
-                    new ValueReference("X",2,0,3,DataValueType.ByteBits),
+                new List<DataValueReference> { // Item Drop
+                    new DataValueReference("Flags",0,DataValueType.Byte),
+                    new DataValueReference("Item",1,DataValueType.Byte),
+                    new DataValueReference("Y",2,4,7,DataValueType.ByteBits),
+                    new DataValueReference("X",2,0,3,DataValueType.ByteBits),
                 },
-                new List<ValueReference> { // InteracEnd
+                new List<DataValueReference> { // InteracEnd
                 },
-                new List<ValueReference> { // InteracEndPointer
+                new List<DataValueReference> { // InteracEndPointer
                 },
             };
 
