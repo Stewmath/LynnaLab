@@ -209,20 +209,17 @@ namespace LynnaLab
         }
 
         protected override bool OnDrawn(Cairo.Context cr) {
-            if (!base.OnDrawn(cr))
-                return false;
-
             if (ViewObjects) {
+                // Draw image manually, instead of relying on subclass, so rectangles don't get
+                // drawn on the grid.
                 using (Cairo.Surface source = CairoHelper.LockBitmap(Image)) {
                     cr.SetSourceSurface(source, XOffset, YOffset);
                     cr.Paint();
                     CairoHelper.UnlockBitmap(Image);
                 }
             }
-            /*
             else
                 base.OnDrawn(cr);
-                */
 
             if (ViewObjects && objectEditor != null) {
                 // Draw objects
@@ -323,7 +320,7 @@ namespace LynnaLab
                         width = 16;
                         // Objects with specific positions get
                         // transparency
-                        color = Color.FromArgb(0xd0,color.R,color.G,color.B);
+                        color = Color.FromArgb(0xc0,color.R,color.G,color.B);
                     }
                     else {
                         // No X/Y values exist
