@@ -2,14 +2,23 @@ using System;
 
 namespace LynnaLab {
 
-
 // Used with Project, FileParser, etc. when trying to look up labels and such
 public class InvalidLookupException : Exception {
     public InvalidLookupException() {}
     public InvalidLookupException(string s) : base(s) {}
 }
 
-public class DuplicateLabelException : Exception {
+// Generic error resulting from unexpected things in the disassembly files.
+public class AssemblyErrorException : Exception {
+    public AssemblyErrorException()
+        : base() {}
+    public AssemblyErrorException(string message)
+        : base(message) {}
+    public AssemblyErrorException(string message, Exception inner)
+        : base(message, inner) {}
+}
+
+public class DuplicateLabelException : AssemblyErrorException {
     public DuplicateLabelException()
         : base() {}
     public DuplicateLabelException(string message)

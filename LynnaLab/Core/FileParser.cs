@@ -361,10 +361,10 @@ arbitraryLengthData:
                                     break;
                                 }
 
-                                var objectType = (ObjectType)j;
+                                int objectDefinitionType = j;
 
                                 d = new ObjectData(Project, fTokens[0], standardValues,
-                                        this, fSpacing, objectType);
+                                        this, fSpacing, objectDefinitionType);
                                 break;
                             }
                         }

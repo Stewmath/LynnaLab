@@ -78,7 +78,7 @@ namespace LynnaLab
                         null,
                         parser,
                         new string[]{"\t"}, // Tab at start of line
-                        ObjectType.End);
+                        (int)ObjectType.End);
                 parser.InsertComponentAfter(null, endData);
                 objectDataList[0] = endData;
             }
@@ -88,7 +88,7 @@ namespace LynnaLab
                     null,
                     parser,
                     new string[]{"\t"}, // Tab at start of line
-                    type);
+                    (int)type);
 
             ValueReference.InitializeDataValues(data, data.GetValueReferences());
 

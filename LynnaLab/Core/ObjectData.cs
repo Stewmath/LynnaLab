@@ -3,7 +3,25 @@ using System.Collections.Generic;
 using System.Drawing;
 
 namespace LynnaLab {
+    // Similar to "ObjectDefinitionType" below, but this abstracts the "NoValue", "DoubleValue",
+    // and "SpecificEnemy" types into just the "Interaction", "SpecificEnemy", or "Part"
+    // types.
     public enum ObjectType {
+        Conditional=0,
+        Interaction,
+        Pointer,
+        BossPointer,
+        AntiBossPointer,
+        RandomEnemy,
+        SpecificEnemy,
+        Part,
+        ItemDrop,
+        End,
+        EndPointer
+    }
+
+    // This corresponds to "opcodes" for defining objects.
+    enum ObjectDefinitionType {
         Conditional=0,
         NoValue,
         DoubleValue,
@@ -19,9 +37,10 @@ namespace LynnaLab {
         EndPointer
     }
 
+
     public class ObjectData : Data {
 
-        public static List<List<ValueReference>> objectValueReferences =
+        private static List<List<ValueReference>> objectValueReferences =
             new List<List<ValueReference>> {
                 new List<ValueReference> { // Conditional
                     new ValueReference("Condition",0,DataValueType.Byte),
@@ -64,7 +83,7 @@ namespace LynnaLab {
                     new ValueReference("X",1,0,3,DataValueType.ByteBits),
                 },
                 new List<ValueReference> { // QuadrupleValue
-                    new ValueReference("Object Type",0,DataValueType.Byte),
+                    new ValueReference("Object Type",0,DataValueType.Byte,editable:false),
                     new ValueReference("ID",1,8,15,DataValueType.WordBits),
                     new ValueReference("SubID",1,0,7,DataValueType.WordBits),
                     new ValueReference("Var03",2,DataValueType.Byte),
@@ -84,18 +103,66 @@ namespace LynnaLab {
             };
 
 
-        ObjectType type;
+        private ObjectDefinitionType definitionType;
 
-        public ObjectData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, ObjectType type)
+        public ObjectData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int definitionType)
             : base(p, command, values, -1, parser, spacing) {
 
-            this.type = type;
-
-            SetValueReferences(objectValueReferences[(int)type]);
+            this.definitionType = (ObjectDefinitionType)definitionType;
+            SetValueReferences(objectValueReferences[(int)definitionType]);
         }
 
         public ObjectType GetObjectType() {
-            return type;
+            switch (definitionType) {
+            case ObjectDefinitionType.Conditional:
+                return ObjectType.Conditional;
+
+            case ObjectDefinitionType.NoValue:
+            case ObjectDefinitionType.DoubleValue:
+                return ObjectType.Interaction;
+
+            case ObjectDefinitionType.Pointer:
+                return ObjectType.Pointer;
+
+            case ObjectDefinitionType.BossPointer:
+                return ObjectType.BossPointer;
+
+            case ObjectDefinitionType.AntiBossPointer:
+                return ObjectType.AntiBossPointer;
+
+            case ObjectDefinitionType.RandomEnemy:
+                return ObjectType.RandomEnemy;
+
+            case ObjectDefinitionType.SpecificEnemy:
+                return ObjectType.SpecificEnemy;
+
+            case ObjectDefinitionType.Part:
+                return ObjectType.Part;
+
+            case ObjectDefinitionType.QuadrupleValue: {
+                int t = GetIntValue("Object Type");
+                if (t == 0)
+                    return ObjectType.Interaction;
+                else if (t == 1)
+                    return ObjectType.SpecificEnemy;
+                else if (t == 2)
+                    return ObjectType.Part;
+                else
+                    throw new AssemblyErrorException(string.Format("Invalid 'obj_withParam' object (type {0}).", t.ToString()));
+            }
+
+            case ObjectDefinitionType.ItemDrop:
+                return ObjectType.ItemDrop;
+
+            case ObjectDefinitionType.End:
+                return ObjectType.End;
+
+            case ObjectDefinitionType.EndPointer:
+                return ObjectType.EndPointer;
+
+            default:
+                throw new Exception("Unknown ObjectType?");
+            }
         }
 
         // Same as base.GetValue except this keeps track of values "carried
@@ -105,8 +172,8 @@ namespace LynnaLab {
             if (IsShortened()) {
                 ObjectData last = LastData as ObjectData;
 
-                if (last == null || (last.GetObjectType() != GetObjectType()))
-                    this.ThrowException(new Exception("Malformatted object"));
+                if (last == null || (last.GetObjectDefinitionType() != GetObjectDefinitionType()))
+                    this.ThrowException(new AssemblyErrorException("Malformatted object"));
 
                 if (i == 0)
                     return (LastData as ObjectData).GetValue(0);
@@ -132,7 +199,7 @@ namespace LynnaLab {
             if (IsShortenable()) {
                 // Check if the next object depends on this
                 ObjectData next = NextData as ObjectData;
-                if (next != null && next.GetObjectType() == GetObjectType())
+                if (next != null && next.GetObjectDefinitionType() == GetObjectDefinitionType())
                     next.Elongate();
             }
             base.SetValue(i, value);
@@ -153,19 +220,17 @@ namespace LynnaLab {
         // Object colors match ZOLE mostly
 		public Color GetColor()
 		{
-			switch (type)
+			switch (GetObjectType())
 			{
-				case (ObjectType)0: return Color.Black;
-				case (ObjectType)1: return Color.Red;
-				case (ObjectType)2: return Color.DarkOrange;
-				case (ObjectType)3: return Color.Yellow;
-				case (ObjectType)4: return Color.Green;
-				case (ObjectType)5: return Color.Blue;
-				case (ObjectType)6: return Color.Purple;
-				case (ObjectType)7: return Color.FromArgb(128, 64, 0);
-				case (ObjectType)8: return Color.Gray;
-				case (ObjectType)9: return Color.Magenta;
-				case (ObjectType)0xA: return Color.Lime;
+				case ObjectType.Conditional:        return Color.Black;
+				case ObjectType.Interaction:        return Color.DarkOrange;
+				case ObjectType.Pointer:            return Color.Yellow;
+				case ObjectType.BossPointer:        return Color.Green;
+				case ObjectType.AntiBossPointer:    return Color.Blue;
+				case ObjectType.RandomEnemy:        return Color.FromArgb(128, 64, 0);
+				case ObjectType.SpecificEnemy:      return Color.FromArgb(128, 64, 0);
+				case ObjectType.Part:               return Color.Gray;
+				case ObjectType.ItemDrop:           return Color.Lime;
 			}
             return Color.White;
 		}
@@ -182,8 +247,8 @@ namespace LynnaLab {
         // (DOES NOT account for "@postype" parameter which can set interactions to have both Y/X
         // positions stored in the Y variable.)
         bool IsTypeWithShortenedXY() {
-            return GetObjectType() == ObjectType.Part ||
-                GetObjectType() == ObjectType.ItemDrop;
+            return GetObjectDefinitionType() == ObjectDefinitionType.Part ||
+                GetObjectDefinitionType() == ObjectDefinitionType.ItemDrop;
         }
 
         public bool HasXY() {
@@ -253,7 +318,9 @@ namespace LynnaLab {
         // Get the object group pointed to, or null if no such group
         // exists.
         public ObjectGroup GetPointedObjectGroup() {
-            if (!(type >= ObjectType.Pointer && type <= ObjectType.AntiBossPointer)) return null;
+            if (!(definitionType >= ObjectDefinitionType.Pointer
+                        && definitionType <= ObjectDefinitionType.AntiBossPointer))
+                return null;
 
             try {
                 Project.GetFileWithLabel(GetValue(0));
@@ -265,13 +332,13 @@ namespace LynnaLab {
         }
 
         public GameObject GetGameObject() {
-            if (type == ObjectType.NoValue || type == ObjectType.DoubleValue || (type == ObjectType.QuadrupleValue && GetIntValue("Object Type") == 0)) {
+            if (GetObjectType() == ObjectType.Interaction) {
                 return Project.GetIndexedDataType<InteractionObject>((GetIntValue("ID")<<8) | GetIntValue("SubID"));
             }
-            else if (type == ObjectType.RandomEnemy || type == ObjectType.SpecificEnemy || (type == ObjectType.QuadrupleValue && GetIntValue("Object Type") == 1)) {
+            else if (GetObjectType() == ObjectType.RandomEnemy || GetObjectType() == ObjectType.SpecificEnemy) {
                 return Project.GetIndexedDataType<EnemyObject>((GetIntValue("ID")<<8) | GetIntValue("SubID"));
             }
-            else if (type == ObjectType.Part || (type == ObjectType.QuadrupleValue && GetIntValue("Object Type") == 2)) {
+            else if (GetObjectType() == ObjectType.Part) {
                 return Project.GetIndexedDataType<PartObject>((GetIntValue("ID")<<8) | GetIntValue("SubID"));
             }
             // TODO: other types
@@ -286,14 +353,20 @@ namespace LynnaLab {
             return GetGameObject()?.GetSubIDDocumentation();
         }
 
+        // Private methods
+
+        ObjectDefinitionType GetObjectDefinitionType() {
+            return definitionType;
+        }
+
         bool IsShortenable() {
-            return GetObjectType() == ObjectType.SpecificEnemy ||
-                GetObjectType() == ObjectType.ItemDrop;
+            return GetObjectDefinitionType() == ObjectDefinitionType.SpecificEnemy ||
+                GetObjectDefinitionType() == ObjectDefinitionType.ItemDrop;
         }
         // Returns true if this object reuses a byte from the last one
         bool IsShortened() {
-            return ((GetObjectType() == ObjectType.SpecificEnemy && base.GetNumValues() < 4) ||
-                    (GetObjectType() == ObjectType.ItemDrop && base.GetNumValues() < 3));
+            return ((GetObjectDefinitionType() == ObjectDefinitionType.SpecificEnemy && base.GetNumValues() < 4) ||
+                    (GetObjectDefinitionType() == ObjectDefinitionType.ItemDrop && base.GetNumValues() < 3));
         }
         void Elongate() {
             if (IsShortenable() && IsShortened()) {
@@ -306,7 +379,7 @@ namespace LynnaLab {
             if (IsShortened() || !IsShortenable()) return;
 
             ObjectData last = LastData as ObjectData;
-            if (last == null || last.GetObjectType() != GetObjectType()) return;
+            if (last == null || last.GetObjectDefinitionType() != GetObjectDefinitionType()) return;
             if (last.GetValue(0) != GetValue(0)) return;
 
             RemoveValue(0);
