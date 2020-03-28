@@ -61,7 +61,7 @@ namespace LynnaLab
 
 
         public static Cairo.Color ConvertColor(System.Drawing.Color color) {
-            return new Cairo.Color(color.R,color.G,color.B,color.A / 256.0);
+            return new Cairo.Color(color.R / 256.0, color.G / 256.0, color.B / 256.0, color.A / 256.0);
         }
     }
 
