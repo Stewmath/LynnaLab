@@ -250,41 +250,6 @@ namespace LynnaLab
             return true;
         }
 
-        /*
-        protected override bool OnExposeEvent(Gdk.EventExpose ev)
-        {
-            Graphics g = Gtk.DotNet.Graphics.FromDrawable(ev.Window);
-
-            if (ViewObjects)
-                g.DrawImage(Image, XOffset, YOffset, Image.Width*Scale, Image.Height*Scale);
-            else
-                base.OnExposeEvent(ev);
-
-            if (ViewObjects && objectEditor != null) {
-                // Draw objects
-
-                int cursorX=-1,cursorY=-1;
-                int selectedX=-1,selectedY=-1;
-                hoveringObjectIndices = new List<int>();
-
-                ObjectGroup group = objectEditor.ObjectGroup;
-                DrawObjectGroup(g, 0, ref cursorX, ref cursorY, ref selectedX, ref selectedY, group, objectEditor, ref hoveringObjectIndices);
-
-                // Object hovering over
-                if (cursorX != -1)
-                    g.DrawRectangle(new Pen(Color.Red), cursorX, cursorY, 15, 15);
-                // Object selected
-                if (selectedX != -1)
-                    g.DrawRectangle(new Pen(Color.White), selectedX, selectedY, 15, 15);
-            }
-
-
-            g.Dispose();
-
-            return true;
-        }
-*/
-
         int DrawObjectGroup(Cairo.Context cr, int index, ref int cursorX, ref int cursorY, ref int selectedX, ref int selectedY, ObjectGroup group, ObjectGroupEditor editor, ref List<int> objectIndices) {
             if (group == null) return index;
 
@@ -373,13 +338,15 @@ namespace LynnaLab
                         }
                         catch(InvalidAnimationException) {
                             // Error parsing an animation; draw a blue X to indicate the error
-                            // TODO: cairo
-                            int xPos = x-width/2 + XOffset;
-                            int yPos = y-width/2 + YOffset;
-                            /*
-                            g.DrawLine(new Pen(Color.Blue), xPos, yPos, xPos+width-1, yPos+width-1);
-                            g.DrawLine(new Pen(Color.Blue), xPos+width-1, yPos, xPos, yPos+width-1);
-*/
+                            double xPos = x-width/2 + XOffset + 0.5;
+                            double yPos = y-width/2 + YOffset + 0.5;
+
+                            cr.SetSourceColor(CairoHelper.ConvertColor(Color.Blue));
+                            cr.MoveTo(xPos, yPos);
+                            cr.LineTo(xPos+width-1, yPos+width-1);
+                            cr.MoveTo(xPos+width-1, yPos);
+                            cr.LineTo(xPos, yPos+width-1);
+                            cr.Stroke();
                         }
                     }
                 }
