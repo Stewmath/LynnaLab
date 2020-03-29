@@ -8,8 +8,8 @@ namespace LynnaLab
     {
         public static string WarpCommand = "m_WarpDest";
 
-        public static List<DataValueReference> warpValueReferences = 
-            new List<DataValueReference> {
+        public static List<ValueReference> warpValueReferences = 
+            new List<ValueReference> {
                 new DataValueReference("Map",0,DataValueType.Byte),
                 new DataValueReference("Y",1,4,7,DataValueType.ByteBits),
                 new DataValueReference("X",1,0,3,DataValueType.ByteBits),

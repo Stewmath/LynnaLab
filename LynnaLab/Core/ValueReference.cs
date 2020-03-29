@@ -16,11 +16,32 @@ namespace LynnaLab
         WarpDestIndex,
     }
 
+
+    // This is primarily used by the Data class to handle modifications based on string names.
+    public interface ValueReferenceHandler {
+        Project Project { get; }
+
+        string GetValue(string name);
+        int GetIntValue(string name);
+
+        void SetValue(string name, string value);
+        void SetValue(string name, int value);
+
+        void AddValueModifiedHandler(EventHandler handler);
+        void RemoveValueModifiedHandler(EventHandler handler);
+    }
+
+
     // This class provides a way of accessing Data values of various different
     // formats.
     public abstract class ValueReference {
 
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+
+        private Project project;
+        private ValueReferenceHandler handler;
+
 
         protected string constantsMappingString;
         protected ConstantsMapping constantsMapping;
@@ -29,9 +50,15 @@ namespace LynnaLab
         protected int startBit,endBit;
 
 
-        protected Project Project { get; set; }
+        protected Project Project {
+            get {
+                return handler?.Project;
+            }
+        }
 
-        public virtual Data Data { get { return null; } } // Only defined in some subclasses
+        public ValueReferenceHandler Handler {
+            get { return handler; }
+        }
 
         public DataValueType ValueType {get; set;}
         public string Name {get; set;}
@@ -69,43 +96,25 @@ namespace LynnaLab
         }
 
         // Standard constructor for most DataValueTypes
-        public ValueReference(string n, DataValueType t, bool editable=true) {
+        public ValueReference(string n, DataValueType t, bool editable=true, string constantsMappingString=null) {
             ValueType = t;
             Name = n;
             Editable = editable;
-            if (t == DataValueType.ByteBits || t == DataValueType.ByteBit || t == DataValueType.WordBits)
-                throw new Exception("Wrong constructor");
+            this.constantsMappingString = constantsMappingString;
         }
-        // Constructor for DataValueType.ByteBits
-        public ValueReference(string n, int startBit, int endBit, DataValueType t, bool editable=true) {
-            ValueType = t;
-            Name = n;
-            this.startBit = startBit;
-            this.endBit = endBit;
-            Editable = editable;
-        }
-        // Constructor which takes a ConstantsMapping, affecting the interface
-        // that will be used
-        public ValueReference(string n, int startBit, int endBit, DataValueType t, bool editable, string constantsMappingString) {
+        // Constructor for DataValueType.ByteBits (TODO: make startBit and endBit optional
+        // parameters in above constructor)
+        public ValueReference(string n, int startBit, int endBit, DataValueType t, bool editable=true, string constantsMappingString=null) {
             ValueType = t;
             Name = n;
             this.startBit = startBit;
             this.endBit = endBit;
             Editable = editable;
             this.constantsMappingString = constantsMappingString;
-        }
-        // Same as above but without start/endBit
-        public ValueReference(string n, DataValueType t, bool editable, string constantsMappingString) {
-            ValueType = t;
-            Name = n;
-            Editable = editable;
-            this.constantsMappingString = constantsMappingString;
-            Console.WriteLine("Mapping string " + this.constantsMappingString);
-            if (t == DataValueType.ByteBits || t == DataValueType.ByteBit || t == DataValueType.WordBits)
-                throw new Exception("Wrong constructor");
         }
 
         public ValueReference(ValueReference r) {
+            handler = r.handler;
             ValueType = r.ValueType;
             Name = r.Name;
             startBit = r.startBit;
@@ -114,6 +123,10 @@ namespace LynnaLab
             constantsMappingString = r.constantsMappingString;
             constantsMapping = r.constantsMapping;
             _documentation = r._documentation;
+        }
+
+        public void SetHandler(ValueReferenceHandler handler) {
+            this.handler = handler;
         }
 
 
@@ -175,6 +188,9 @@ namespace LynnaLab
                     break;
             }
         }
+
+        // Sets the value to its default.
+        public abstract void Initialize();
 
         /// <summary>
         ///  Returns a field from documentation (ie. "@desc{An interaction}").

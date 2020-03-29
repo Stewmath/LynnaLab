@@ -154,7 +154,7 @@ byteCase:
                             Gtk.Button newDestButton = new Gtk.Button("New/Unused\nDestination");
                             newDestButton.FocusOnClick = false;
                             newDestButton.Clicked += delegate(object sender, EventArgs e) {
-                                WarpSourceData warpData = (WarpSourceData)r.Data;
+                                WarpSourceData warpData = r.Handler as WarpSourceData;
                                 WarpDestGroup destGroup = warpData.GetReferencedDestGroup();
                                 warpData.SetDestData(destGroup.GetNewOrUnusedDestData());
                             };
@@ -285,14 +285,14 @@ loopEnd:
 
             this.ShowAll();
 
-            Data lastData = null;
+            ValueReferenceHandler lastHandler = null;
             foreach (ValueReference r in valueReferenceGroup.GetValueReferences()) {
-                if (lastData != r.Data && r.Data != null) {
-                    lastData = r.Data;
-                    r.Data.AddDataModifiedHandler(OnDataModifiedExternal);
+                if (lastHandler != r.Handler && r.Handler != null) {
+                    lastHandler = r.Handler;
+                    r.Handler.AddValueModifiedHandler(OnDataModifiedExternal);
                     // Destroy handler
                     this.Destroyed += delegate(object sender, EventArgs e) {
-                        r.Data.RemoveDataModifiedHandler(OnDataModifiedExternal);
+                        r.Handler.RemoveValueModifiedHandler(OnDataModifiedExternal);
                     };
                 }
             }

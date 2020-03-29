@@ -34,10 +34,21 @@ namespace LynnaLab
             return valueReferences.Count;
         }
 
-        // This function might not work because it's making copies of the
-        // ValueReferences passed to it in the constructor?
         public int GetIndexOf(ValueReference r) {
-            return valueReferences.IndexOf(r);
+            int i=0;
+            foreach (ValueReference s in valueReferences) {
+                if (s.Name == r.Name)
+                    return i;
+                i++;
+            }
+            return -1;
+        }
+
+        public bool HasValue(string name) {
+            foreach (var r in valueReferences)
+                if (r.Name == name)
+                    return true;
+            return false;
         }
 
         public string GetStringValue(string name) {
@@ -72,6 +83,11 @@ namespace LynnaLab
                 }
             }
             throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
+        }
+
+        public void SetHandler(ValueReferenceHandler handler) {
+            foreach (var r in valueReferences)
+                r.SetHandler(handler);
         }
     }
 }

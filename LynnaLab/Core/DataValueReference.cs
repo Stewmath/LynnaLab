@@ -22,76 +22,53 @@ namespace LynnaLab
             "$00",
         };
 
-        public static void InitializeDataValues(Data data, IList<DataValueReference> refs) {
-            int numValues = 0;
+        // TODO: remove this
+        public static void InitializeDataValues(Data data, IList<ValueReference> refs) {
             foreach (DataValueReference r in refs) {
-                if (r.valueIndex+1 > numValues)
-                    numValues = r.valueIndex+1;
-            }
-
-            data.SetNumValues(numValues);
-
-            foreach (DataValueReference r in refs) {
-                data.SetValue(r.valueIndex, defaultDataValues[(int)r.ValueType]);
+                r.SetHandler(data);
+                r.Initialize();
             }
         }
 
 
-        Data data;
+        // TODO: Get rid of this?
+        public Data Data { get { return Handler as Data; } } // Only defined in some subclasses
+
+
         protected int valueIndex;
 
-        public override Data Data { get { return data; } }
-
         // Standard constructor for most DataValueTypes
-        public DataValueReference(string n, int index, DataValueType t, bool editable=true)
-        : base(n, t, editable) {
+        public DataValueReference(string n, int index, DataValueType t, bool editable=true, string constantsMappingString=null)
+        : base(n, t, editable, constantsMappingString) {
             valueIndex = index;
         }
         // Constructor for DataValueType.ByteBits
-        public DataValueReference(string n, int index, int startBit, int endBit, DataValueType t, bool editable=true)
-        : base(n, startBit, endBit, t, editable) {
-            valueIndex = index;
-        }
-        // Constructor which takes a ConstantsMapping, affecting the interface
-        // that will be used
-        public DataValueReference(string n, int index, int startBit, int endBit, DataValueType t, bool editable, string constantsMappingString)
+        public DataValueReference(string n, int index, int startBit, int endBit, DataValueType t, bool editable=true, string constantsMappingString=null)
         : base(n, startBit, endBit, t, editable, constantsMappingString) {
-            valueIndex = index;
-        }
-        // Same as above but without start/endBit
-        public DataValueReference(string n, int index, DataValueType t, bool editable, string constantsMappingString)
-        : base(n, t, editable, constantsMappingString) {
             valueIndex = index;
         }
 
         public DataValueReference(DataValueReference r)
         : base(r) {
-            data = r.data;
             valueIndex = r.valueIndex;
         }
 
-        public void SetData(Data d) {
-            data = d;
-            Project = d?.Project;
-            if (data != null && constantsMappingString != null) {
-                constantsMapping = (ConstantsMapping)typeof(Project).GetField(constantsMappingString).GetValue(data.Project);
-                if (_documentation == null) {
-                    _documentation = constantsMapping.OverallDocumentation;
-                    _documentation.Name = "Field: " + Name;
-                }
-            }
-        }
-
         public override string GetStringValue() {
-            return data.GetValue(valueIndex);
+            return Data.GetValue(valueIndex);
         }
         public override void SetValue(string s) {
             switch(ValueType) {
                 case DataValueType.String:
                 default:
-                    data.SetValue(valueIndex,s);
+                    Data.SetValue(valueIndex,s);
                     break;
             }
+        }
+
+        public override void Initialize() {
+            if (valueIndex <= Data.GetNumValues())
+                Data.SetNumValues(valueIndex+1);
+            Data.SetValue(valueIndex, defaultDataValues[(int)ValueType]);
         }
     }
 }

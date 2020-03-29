@@ -38,51 +38,57 @@ namespace LynnaLab {
     }
 
 
+    // This class has two "ValueReferenceGroups".
+    // One is private and consists of "DataValueReferences" which map 1:1 to data values.
+    // The other is public (used for "GetValue" function, etc) and handles a layer of abstraction to
+    // transparently convert between externally facing object types (ObjectType enum) and internal
+    // object types (ObjectDefinitionType enum).
+    // These sometimes are the same object, but not always.
     public class ObjectData : Data {
 
-        private static List<List<DataValueReference>> objectValueReferences =
-            new List<List<DataValueReference>> {
-                new List<DataValueReference> { // Conditional
+        private static List<List<ValueReference>> objectValueReferences =
+            new List<List<ValueReference>> {
+                new List<ValueReference> { // Conditional
                     new DataValueReference("Condition",0,DataValueType.Byte),
                 },
-                new List<DataValueReference> { // NoValue
+                new List<ValueReference> { // Interaction
                     new DataValueReference("ID",0,8,15,DataValueType.WordBits,true,"InteractionMapping"),
                     new DataValueReference("SubID",0,0,7,DataValueType.WordBits),
                 },
-                new List<DataValueReference> { // DoubleValue
+                new List<ValueReference> { // DoubleValue
                     new DataValueReference("ID",0,8,15,DataValueType.WordBits,true,"InteractionMapping"),
                     new DataValueReference("SubID",0,0,7,DataValueType.WordBits),
                     new DataValueReference("Y",1,DataValueType.Byte),
                     new DataValueReference("X",2,DataValueType.Byte),
                 },
-                new List<DataValueReference> { // Pointer
+                new List<ValueReference> { // Pointer
                     new DataValueReference("Pointer",0,DataValueType.ObjectPointer),
                 },
-                new List<DataValueReference> { // BossPointer
+                new List<ValueReference> { // BossPointer
                     new DataValueReference("Pointer",0,DataValueType.ObjectPointer),
                 },
-                new List<DataValueReference> { // AntiBossPointer
+                new List<ValueReference> { // AntiBossPointer
                     new DataValueReference("Pointer",0,DataValueType.ObjectPointer),
                 },
-                new List<DataValueReference> { // Random Enemy
+                new List<ValueReference> { // Random Enemy
                     new DataValueReference("Flags",0,DataValueType.Byte),
                     new DataValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
                     new DataValueReference("SubID",1,0,7,DataValueType.WordBits),
                 },
-                new List<DataValueReference> { // Specific Enemy
+                new List<ValueReference> { // Specific Enemy
                     new DataValueReference("Flags",0,DataValueType.Byte),
                     new DataValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
                     new DataValueReference("SubID",1,0,7,DataValueType.WordBits),
                     new DataValueReference("Y",2,DataValueType.Byte),
                     new DataValueReference("X",3,DataValueType.Byte),
                 },
-                new List<DataValueReference> { // Part
+                new List<ValueReference> { // Part
                     new DataValueReference("ID",0,8,15,DataValueType.WordBits,true,"PartMapping"),
                     new DataValueReference("SubID",0,0,7,DataValueType.WordBits),
                     new DataValueReference("Y",1,4,7,DataValueType.ByteBits),
                     new DataValueReference("X",1,0,3,DataValueType.ByteBits),
                 },
-                new List<DataValueReference> { // QuadrupleValue
+                new List<ValueReference> { // QuadrupleValue
                     new DataValueReference("Object Type",0,DataValueType.Byte,editable:false),
                     new DataValueReference("ID",1,8,15,DataValueType.WordBits),
                     new DataValueReference("SubID",1,0,7,DataValueType.WordBits),
@@ -90,26 +96,197 @@ namespace LynnaLab {
                     new DataValueReference("Y",3,DataValueType.Byte),
                     new DataValueReference("X",4,DataValueType.Byte),
                 },
-                new List<DataValueReference> { // Item Drop
+                new List<ValueReference> { // Item Drop
                     new DataValueReference("Flags",0,DataValueType.Byte),
                     new DataValueReference("Item",1,DataValueType.Byte),
                     new DataValueReference("Y",2,4,7,DataValueType.ByteBits),
                     new DataValueReference("X",2,0,3,DataValueType.ByteBits),
                 },
-                new List<DataValueReference> { // InteracEnd
+                new List<ValueReference> { // InteracEnd
                 },
-                new List<DataValueReference> { // InteracEndPointer
+                new List<ValueReference> { // InteracEndPointer
                 },
             };
 
 
         private ObjectDefinitionType definitionType;
+        private ValueReferenceGroup dataValueReferenceGroup;
+
 
         public ObjectData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int definitionType)
             : base(p, command, values, -1, parser, spacing) {
 
             this.definitionType = (ObjectDefinitionType)definitionType;
-            SetValueReferences(objectValueReferences[(int)definitionType]);
+
+            dataValueReferenceGroup = new ValueReferenceGroup(objectValueReferences[(int)definitionType]);
+            base.SetValueReferences(dataValueReferenceGroup);
+
+            // Create the AbstractValueReference
+            if (GetObjectType() == ObjectType.Interaction || GetObjectType() == ObjectType.SpecificEnemy
+                    || GetObjectType() == ObjectType.Part) {
+                List<ValueReference> refList = new List<ValueReference>();
+
+                if (GetObjectType() == ObjectType.SpecificEnemy) {
+                    refList.Add(new AbstractIntValueReference(this, "Has Flags", DataValueType.ByteBit));
+                }
+
+                refList.AddRange(new ValueReference[] {
+                    new AbstractIntValueReference(this, "ID", DataValueType.Byte),
+                    new AbstractIntValueReference(this, "SubID", DataValueType.Byte),
+                    new AbstractIntValueReference(this, "Y", DataValueType.Byte),
+                    new AbstractIntValueReference(this, "X", DataValueType.Byte),
+                    new AbstractIntValueReference(this, "Var03", DataValueType.Byte)
+                });
+                base.SetValueReferences(refList);
+            }
+        }
+
+        // Transform the "ObjectDefinitonType" from one thing to another. This involves changing the
+        // format of the data.
+        void TranslateDefinitionType(ObjectDefinitionType definitionType, int subType=-1) {
+            if (definitionType == this.definitionType)
+                return;
+
+            // Having the Data class make callbacks in the middle of this method is a Bad Thing.
+            base.disableCallbacks += 1;
+
+            Dictionary<string, int> oldValues = new Dictionary<string,int>();
+
+            foreach (var r in dataValueReferenceGroup.GetValueReferences()) {
+                if (r.Name == "X" || r.Name == "Y") {
+                    if (this.definitionType == ObjectDefinitionType.Part
+                            && definitionType == ObjectDefinitionType.QuadrupleValue) {
+                        oldValues[r.Name] = r.GetIntValue() * 16 + 8;
+                    }
+                    else if (this.definitionType == ObjectDefinitionType.QuadrupleValue
+                            && definitionType == ObjectDefinitionType.Part) {
+                        oldValues[r.Name] = (r.GetIntValue() - 8) / 16;
+                    }
+                    else
+                        throw new Exception("Unexpected thing happened");
+                }
+                else
+                    oldValues[r.Name] = r.GetIntValue();
+            }
+
+            this.definitionType = definitionType;
+            base.Command = ObjectGroup.ObjectCommands[(int)definitionType];
+            base.SetNumValues(ObjectGroup.ObjectCommandMinParams[(int)definitionType]);
+            dataValueReferenceGroup = new ValueReferenceGroup(objectValueReferences[(int)definitionType]);
+            dataValueReferenceGroup.SetHandler(this);
+
+            // Re-write old values (they may have changed position with the new data format)
+            foreach (var r in dataValueReferenceGroup.GetValueReferences()) {
+                if (!oldValues.ContainsKey(r.Name))
+                    dataValueReferenceGroup.SetValue(r.Name, DataValueReference.defaultDataValues[(int)r.ValueType]);
+                else
+                    dataValueReferenceGroup.SetValue(r.Name, oldValues[r.Name]);
+            }
+
+            if (subType != -1) // Must come after the above
+                dataValueReferenceGroup.SetValue("Object Type", subType);
+
+            base.disableCallbacks -= 1;
+            // TODO: force the callbacks to be called now?
+        }
+
+        // ValueReferenceHandler override
+        public override string GetValue(string name) {
+            return Wla.ToHex(GetIntValue(name), 2);
+        }
+
+        // ValueReferenceHandler override
+        public override int GetIntValue(string name) {
+            if (name == "Has Flags") // ObjectType.SpecificEnemy only
+                return GetObjectDefinitionType() == ObjectDefinitionType.QuadrupleValue ? 0 : 1;
+
+            if (!dataValueReferenceGroup.HasValue(name) && (name == "Y" || name == "X" || name == "Var03")) // "Optional" values
+                return 0;
+            if ((name == "Y" || name == "X") && definitionType == ObjectDefinitionType.Part) {
+                return dataValueReferenceGroup.GetIntValue(name)*16 + 8;
+            }
+            return dataValueReferenceGroup.GetIntValue(name);
+        }
+
+        // ValueReferenceHandler override
+        public override void SetValue(string name, string value) {
+            SetValue(name, Project.EvalToInt(value));
+        }
+
+        // ValueReferenceHandler override
+        // This transparently transforms the underlying ObjectDefinitionType if the need arises so
+        // that we can seamlessly edit stuff like "Var03" without having to change types manually.
+        // TODO: Check that the SpecificEnemy, ItemDrop "Flags" value still works properly.
+        public override void SetValue(string name, int value) {
+            Func<int> GetQuadSubtype = () => {
+                ObjectType type = GetObjectType();
+                if (type == ObjectType.Interaction)
+                    return 0;
+                else if (type == ObjectType.SpecificEnemy)
+                    return 1;
+                else if (type == ObjectType.Part)
+                    return 2;
+                else
+                    throw new Exception("Object type can't be converted to quad-value");
+            };
+
+            if (name == "Has Flags") { // ObjectType.SpecificEnemy only
+                if (value != GetIntValue(name)) {
+                    // TODO: change type
+                }
+            }
+            else if (name == "X" || name == "Y") {
+                if (GetObjectDefinitionType() == ObjectDefinitionType.NoValue) {
+                    if (value != 0) {
+                        TranslateDefinitionType(ObjectDefinitionType.DoubleValue);
+                        dataValueReferenceGroup.SetValue(name, value);
+                    }
+                }
+                else if (GetObjectDefinitionType() == ObjectDefinitionType.DoubleValue) {
+                    dataValueReferenceGroup.SetValue(name, value);
+                    if (GetIntValue("X") == 0 && GetIntValue("Y") == 0) {
+                        TranslateDefinitionType(ObjectDefinitionType.NoValue);
+                    }
+                }
+                // Part objects have shortened Y/X positions, unless placed as a "Quadruple Value"
+                // type object.
+                else if (GetObjectType() == ObjectType.Part) {
+                    int x = (name == "X" ? value : GetIntValue("X"));
+                    int y = (name == "Y" ? value : GetIntValue("Y"));
+                    if (GetIntValue("Var03") == 0 && (x-8)%16 == 0 && (y-8)%16 == 0) {
+                        TranslateDefinitionType(ObjectDefinitionType.Part);
+                        dataValueReferenceGroup.SetValue(name, (value-8)/16);
+                    }
+                    else {
+                        TranslateDefinitionType(ObjectDefinitionType.QuadrupleValue, 2);
+                        dataValueReferenceGroup.SetValue(name, value);
+                    }
+                }
+                else
+                    dataValueReferenceGroup.SetValue(name, value);
+            }
+            else if (name == "Var03") {
+                if (value == 0) {
+                    if (GetObjectType() == ObjectType.Interaction) {
+                        if (GetIntValue("X") == 0 && GetIntValue("Y") == 0)
+                            TranslateDefinitionType(ObjectDefinitionType.NoValue);
+                        else
+                            TranslateDefinitionType(ObjectDefinitionType.DoubleValue);
+                    }
+                    else if (GetObjectType() == ObjectType.SpecificEnemy)
+                        TranslateDefinitionType(ObjectDefinitionType.SpecificEnemy);
+                    else if (GetObjectType() == ObjectType.Part)
+                        TranslateDefinitionType(ObjectDefinitionType.Part);
+                }
+                else {
+                    // TODO: SpecificEnemy check
+                    TranslateDefinitionType(ObjectDefinitionType.QuadrupleValue, GetQuadSubtype());
+                    dataValueReferenceGroup.SetValue(name, value);
+                }
+            }
+            else {
+                dataValueReferenceGroup.SetValue(name, value);
+            }
         }
 
         public ObjectType GetObjectType() {
@@ -140,7 +317,7 @@ namespace LynnaLab {
                 return ObjectType.Part;
 
             case ObjectDefinitionType.QuadrupleValue: {
-                int t = GetIntValue("Object Type");
+                int t = dataValueReferenceGroup.GetIntValue("Object Type");
                 if (t == 0)
                     return ObjectType.Interaction;
                 else if (t == 1)
@@ -243,23 +420,8 @@ namespace LynnaLab {
             return IsTypeWithShortenedXY() || GetSubIDDocumentation()?.GetField("postype") == "short";
         }
 
-        // Returns true if the object's type causes the XY values to have 4 bits rather than 8.
-        // (DOES NOT account for "@postype" parameter which can set interactions to have both Y/X
-        // positions stored in the Y variable.)
-        bool IsTypeWithShortenedXY() {
-            return GetObjectDefinitionType() == ObjectDefinitionType.Part ||
-                GetObjectDefinitionType() == ObjectDefinitionType.ItemDrop;
-        }
-
         public bool HasXY() {
-            try {
-                GetValue("X");
-                GetValue("Y");
-                return true;
-            }
-            catch (InvalidLookupException) {
-                return false;
-            }
+            return HasValue("X") && HasValue("Y");
         }
 
         // Return the center x-coordinate of the object.
@@ -359,6 +521,14 @@ namespace LynnaLab {
             return definitionType;
         }
 
+        // Returns true if the object's type causes the XY values to have 4 bits rather than 8.
+        // (DOES NOT account for "@postype" parameter which can set interactions to have both Y/X
+        // positions stored in the Y variable.)
+        bool IsTypeWithShortenedXY() {
+            // Don't include "Part" objects because, when converted to the "QuadrupleValue" type,
+            // they can have fine-grained position values.
+            return GetObjectDefinitionType() == ObjectDefinitionType.ItemDrop;
+        }
         bool IsShortenable() {
             return GetObjectDefinitionType() == ObjectDefinitionType.SpecificEnemy ||
                 GetObjectDefinitionType() == ObjectDefinitionType.ItemDrop;

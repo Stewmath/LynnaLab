@@ -104,7 +104,7 @@ namespace Plugins
 
                 Data data = dungeon.DataStart;
                 foreach (DataValueReference r in vrs) {
-                    r.SetData(data);
+                    r.SetHandler(data);
                     data = data.NextData;
                 }
 

@@ -6,8 +6,10 @@ using System.Linq;
 namespace LynnaLab
 {
 
-    public class Data : FileComponent
+    public class Data : FileComponent, ValueReferenceHandler
     {
+        protected int disableCallbacks = 0;
+
         // Size in bytes
         // -1 if indeterminate? (consider getting rid of this, it's unreliable)
         protected int size;
@@ -38,6 +40,7 @@ namespace LynnaLab
 
         public string Command {
             get { return command; }
+            set { command = value; }
         }
         public string CommandLowerCase {
             get { return command.ToLower(); }
@@ -91,6 +94,12 @@ namespace LynnaLab
         }
 
 
+        public bool HasValue(string name) {
+            if (valueReferenceGroup == null)
+                return false;
+            return valueReferenceGroup.HasValue(name);
+        }
+
         public virtual string GetValue(int i) {
             if (i >= GetNumValues())
                 throw new InvalidLookupException("Value " + i + " is out of range in Data object.");
@@ -105,21 +114,6 @@ namespace LynnaLab
                 throw e;
             }
         }
-        public string GetValue(string s) { // Get a value based on a value reference name
-            DataValueReference r = GetValueReference(s);
-            if (r == null)
-                ThrowException(new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
-            return r.GetStringValue();
-        }
-        public int GetIntValue(string s) {
-            DataValueReference r = GetValueReference(s);
-            if (r == null) {
-                throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + s + "\".");
-            }
-            else {
-                return r.GetIntValue();
-            }
-        }
 
         public virtual int GetNumValues() {
             return values.Count;
@@ -130,7 +124,7 @@ namespace LynnaLab
             if (values[i] != value) {
                 values[i] = value;
                 Modified = true;
-                if (dataModifiedEvent != null)
+                if (dataModifiedEvent != null && disableCallbacks == 0)
                     dataModifiedEvent(this, null);
             }
         }
@@ -143,12 +137,38 @@ namespace LynnaLab
         public void SetHexValue(int i, int value, int minDigits) {
             SetValue(i, Wla.ToHex(value, minDigits));
         }
-        public void SetValue(string s, string value) {
+
+
+        // Implementation of ValueReferenceHandler
+        public virtual string GetValue(string s) { // Get a value based on a value reference name
+            ValueReference r = GetValueReference(s);
+            if (r == null)
+                ThrowException(new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
+            return r.GetStringValue();
+        }
+        public virtual int GetIntValue(string s) {
+            ValueReference r = GetValueReference(s);
+            if (r == null) {
+                throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + s + "\".");
+            }
+            else {
+                return r.GetIntValue();
+            }
+        }
+        public virtual void SetValue(string s, string value) {
             GetValueReference(s).SetValue(value);
         }
-        public void SetValue(string s, int i) {
+        public virtual void SetValue(string s, int i) {
             GetValueReference(s).SetValue(i);
         }
+        public virtual void AddValueModifiedHandler(EventHandler handler) {
+            dataModifiedEvent += handler;
+        }
+        public virtual void RemoveValueModifiedHandler(EventHandler handler) {
+            dataModifiedEvent -= handler;
+        }
+        // End of ValueReferenceHandler implementation
+
 
         public void SetNumValues(int n) {
             while (values.Count < n) {
@@ -173,20 +193,23 @@ namespace LynnaLab
         public ValueReferenceGroup GetValueReferenceGroup() {
             return valueReferenceGroup;
         }
-        public IList<DataValueReference> GetValueReferences() {
+        public IList<ValueReference> GetValueReferences() {
             if (valueReferenceGroup == null)
                 return null;
-            return valueReferenceGroup.GetValueReferences().Cast<DataValueReference>().ToList();
+            return valueReferenceGroup.GetValueReferences();
         }
-        public DataValueReference GetValueReference(string name) {
+        public ValueReference GetValueReference(string name) {
             if (valueReferenceGroup == null)
                 return null;
-            return valueReferenceGroup.GetValueReference(name) as DataValueReference;
+            return valueReferenceGroup.GetValueReference(name);
         }
-        public void SetValueReferences(IList<DataValueReference> references) {
-            valueReferenceGroup = new ValueReferenceGroup(references.Cast<ValueReference>().ToList());
-            foreach (DataValueReference r in valueReferenceGroup.GetValueReferences())
-                r.SetData(this);
+        public void SetValueReferences(IList<ValueReference> references) {
+            SetValueReferences(new ValueReferenceGroup(references));
+        }
+        public void SetValueReferences(ValueReferenceGroup group) {
+            valueReferenceGroup = group;
+            foreach (ValueReference r in valueReferenceGroup.GetValueReferences())
+                r.SetHandler(this);
         }
 
         public override string GetString() {
@@ -213,14 +236,6 @@ namespace LynnaLab
         }
         public void InsertIntoParserBefore(Data reference) {
             parser.InsertComponentBefore(reference, this);
-        }
-
-        // Data events
-        public void AddDataModifiedHandler(EventHandler handler) {
-            dataModifiedEvent += handler;
-        }
-        public void RemoveDataModifiedHandler(EventHandler handler) {
-            dataModifiedEvent -= handler;
         }
 
         // Helper function for GetString

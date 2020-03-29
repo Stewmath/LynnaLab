@@ -44,9 +44,9 @@ namespace LynnaLab
             }
         };
 
-        public static List<List<DataValueReference>> warpValueReferences =
-            new List<List<DataValueReference>> {
-                new List<DataValueReference> { // StandardWarp
+        public static List<List<ValueReference>> warpValueReferences =
+            new List<List<ValueReference>> {
+                new List<ValueReference> { // StandardWarp
                     new DataValueReference("Opcode",0,DataValueType.Byte, false),
                     new DataValueReference("Top-Left",0,0,0,DataValueType.ByteBit),
                     new DataValueReference("Top-Right",0,1,1,DataValueType.ByteBit),
@@ -57,7 +57,7 @@ namespace LynnaLab
                     new DataValueReference("Dest Group",3,DataValueType.HalfByte),
                     new DataValueReference("Transition",4,DataValueType.HalfByte,true,"SourceTransitionMapping"),
                 },
-                new List<DataValueReference> { // PointedWarp
+                new List<ValueReference> { // PointedWarp
                     new DataValueReference("Opcode",0,DataValueType.Byte, false),
 
                     // For "pointed" warp sources, "map" is instead a position
@@ -68,7 +68,7 @@ namespace LynnaLab
                     new DataValueReference("Dest Group",3,DataValueType.HalfByte),
                     new DataValueReference("Transition",4,DataValueType.HalfByte,true,"SourceTransitionMapping"),
                 },
-                new List<DataValueReference> { // PointerWarp
+                new List<ValueReference> { // PointerWarp
                     new DataValueReference("Opcode",0,DataValueType.Byte, false),
                     new DataValueReference("Map",1,DataValueType.Byte, false),
 
@@ -76,7 +76,7 @@ namespace LynnaLab
                     // Group/Entrance/Dest Index.
                     new DataValueReference("Pointer", 2, DataValueType.String, false),
                 },
-                new List<DataValueReference> { // WarpSourcesEnd
+                new List<ValueReference> { // WarpSourcesEnd
                 }
             };
 
@@ -205,7 +205,7 @@ namespace LynnaLab
             if (referencedDestData != null)
                 referencedDestData.AddReference(this);
 
-            this.AddDataModifiedHandler(delegate(object sender, EventArgs e) {
+            this.AddValueModifiedHandler(delegate(object sender, EventArgs e) {
                 WarpDestData newDestData = GetReferencedDestData();
                 if (newDestData != referencedDestData) {
                     // Update DestData reference

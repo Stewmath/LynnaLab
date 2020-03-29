@@ -182,7 +182,7 @@ namespace LynnaLab
                 return;
 
             while (true) {
-                DataValueReference r;
+                ValueReference r;
                 try {
                     r = activeData.GetValueReference("ID");
                 }
