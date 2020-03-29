@@ -18,6 +18,7 @@ namespace LynnaLab
             "$0000",
             "0",
             "$00",
+            "$0000",
             "objectData4000",
             "$00",
         };
@@ -66,7 +67,7 @@ namespace LynnaLab
         }
 
         public override void Initialize() {
-            if (valueIndex <= Data.GetNumValues())
+            if (valueIndex >= Data.GetNumValues())
                 Data.SetNumValues(valueIndex+1);
             Data.SetValue(valueIndex, defaultDataValues[(int)ValueType]);
         }

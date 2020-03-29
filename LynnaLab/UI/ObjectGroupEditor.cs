@@ -229,14 +229,16 @@ next:
             if (ObjectGroup == null) return;
 
             AddObjectDialog d = new AddObjectDialog();
-            d.Run();
-            if (d.ObjectTypeToAdd != ObjectType.End) {
-                if (ObjectGroup == null) return;
+            d.Response += delegate(object o, Gtk.ResponseArgs resp) {
+                if (resp.ResponseId == Gtk.ResponseType.Ok) {
+                    if (ObjectGroup == null) return;
 
-                ObjectGroup.InsertObject(indexSpinButton.ValueAsInt+1, d.ObjectTypeToAdd);
-                UpdateBoundaries();
-                indexSpinButton.Value = indexSpinButton.ValueAsInt+1;
-            }
+                    ObjectGroup.InsertObject(indexSpinButton.ValueAsInt+1, d.ObjectTypeToAdd);
+                    UpdateBoundaries();
+                    indexSpinButton.Value = indexSpinButton.ValueAsInt+1;
+                }
+            };
+            d.Run();
         }
     }
 }

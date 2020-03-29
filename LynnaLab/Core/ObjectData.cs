@@ -20,7 +20,7 @@ namespace LynnaLab {
         EndPointer
     }
 
-    // This corresponds to "opcodes" for defining objects.
+    // This corresponds to "opcodes" for defining objects in the disassembly.
     enum ObjectDefinitionType {
         Conditional=0,
         NoValue,
@@ -117,7 +117,68 @@ namespace LynnaLab {
             : base(p, command, values, -1, parser, spacing) {
 
             this.definitionType = (ObjectDefinitionType)definitionType;
+            InitializeDefinitionType();
+        }
 
+        // Creates a new ObjectData instance, not based on existing data.
+        // Unlike above, this initialized based on the "ObjectType" enum instead of
+        // "ObjectDefinitionType".
+        public ObjectData(Project p, FileParser parser, ObjectType type)
+            : base(p, "", null, -1, parser, new string[]{"\t"}) {
+            switch (type) {
+                case ObjectType.Conditional:
+                    definitionType = ObjectDefinitionType.Conditional;
+                    break;
+                case ObjectType.Interaction:
+                    definitionType = ObjectDefinitionType.NoValue;
+                    break;
+                case ObjectType.Pointer:
+                    definitionType = ObjectDefinitionType.Pointer;
+                    break;
+                case ObjectType.BossPointer:
+                    definitionType = ObjectDefinitionType.BossPointer;
+                    break;
+                case ObjectType.AntiBossPointer:
+                    definitionType = ObjectDefinitionType.AntiBossPointer;
+                    break;
+                case ObjectType.RandomEnemy:
+                    definitionType = ObjectDefinitionType.RandomEnemy;
+                    break;
+                case ObjectType.SpecificEnemy:
+                    definitionType = ObjectDefinitionType.SpecificEnemy;
+                    break;
+                case ObjectType.Part:
+                    definitionType = ObjectDefinitionType.Part;
+                    break;
+                case ObjectType.ItemDrop:
+                    definitionType = ObjectDefinitionType.ItemDrop;
+                    break;
+                case ObjectType.End:
+                    definitionType = ObjectDefinitionType.End;
+                    break;
+                case ObjectType.EndPointer:
+                    definitionType = ObjectDefinitionType.EndPointer;
+                    break;
+                default:
+                    throw new Exception("Unexpected thing happened");
+            }
+
+            Command = ObjectGroup.ObjectCommands[(int)definitionType];
+            InitializeDefinitionType();
+
+            base.disableCallbacks += 1;
+
+            base.SetNumValues(ObjectGroup.ObjectCommandDefaultParams[(int)definitionType]);
+            DataValueReference.InitializeDataValues(this, dataValueReferenceGroup.GetValueReferences());
+
+            if (definitionType >= ObjectDefinitionType.Pointer && definitionType <= ObjectDefinitionType.AntiBossPointer)
+                base.SetValue(0, "objectData4000"); // Compileable default pointer
+
+            base.disableCallbacks -= 1;
+        }
+
+        // Common code for constructors
+        void InitializeDefinitionType() {
             dataValueReferenceGroup = new ValueReferenceGroup(objectValueReferences[(int)definitionType]);
             base.SetValueReferences(dataValueReferenceGroup);
 
@@ -153,7 +214,8 @@ namespace LynnaLab {
             Dictionary<string, int> oldValues = new Dictionary<string,int>();
 
             foreach (var r in dataValueReferenceGroup.GetValueReferences()) {
-                if (r.Name == "X" || r.Name == "Y") {
+                // Check if X/Y format must be updated for parts
+                if (GetObjectType() == ObjectType.Part && (r.Name == "X" || r.Name == "Y")) {
                     if (this.definitionType == ObjectDefinitionType.Part
                             && definitionType == ObjectDefinitionType.QuadrupleValue) {
                         oldValues[r.Name] = r.GetIntValue() * 16 + 8;

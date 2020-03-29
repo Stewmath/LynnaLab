@@ -2,9 +2,12 @@
 
 namespace LynnaLab
 {
-    public partial class AddObjectDialog : Gtk.Dialog
+    public class AddObjectDialog : Gtk.Dialog
     {
-        ObjectType objectType;
+        Gtk.ComboBoxText comboBox;
+        Gtk.Label descriptionLabel;
+
+        ObjectType objectType = ObjectType.End;
 
         public ObjectType ObjectTypeToAdd {
             get { return objectType; }
@@ -12,18 +15,31 @@ namespace LynnaLab
 
         public AddObjectDialog()
         {
-            this.Build();
-            //this.Add(w1);
+            comboBox = new Gtk.ComboBoxText();
+            descriptionLabel = new Gtk.Label();
+
+            ContentArea.Add(comboBox);
+            ContentArea.Add(descriptionLabel);
+            AddButton("Add", Gtk.ResponseType.Ok);
+
+            foreach (string s in ObjectGroupEditor.ObjectNames) {
+                comboBox.AppendText(s);
+            }
+            comboBox.Active = 0;
+            comboBox.Changed += OnComboBoxChanged;
+
             UpdateLabel();
+
+            this.ShowAll();
         }
 
         public void UpdateLabel() {
-            objectType = (ObjectType)typeSpinButton.ValueAsInt;
-            infoLabel.Text = ObjectGroupEditor.ObjectNames[(int)objectType];
+            objectType = (ObjectType)comboBox.Active;
+            //infoLabel.Text = ObjectGroupEditor.ObjectNames[(int)objectType];
             descriptionLabel.Text = ObjectGroupEditor.ObjectDescriptions[(int)objectType];
         }
 
-        protected void OnTypeSpinButtonValueChanged(object sender, EventArgs e)
+        protected void OnComboBoxChanged(object sender, EventArgs e)
         {
             UpdateLabel();
         }

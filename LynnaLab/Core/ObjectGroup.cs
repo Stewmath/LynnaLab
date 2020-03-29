@@ -30,6 +30,10 @@ namespace LynnaLab
             -1, -1, -1, -1, -1, -1, -1,  4, -1, -1,  3, -1, -1
         };
 
+        public static int[] ObjectCommandDefaultParams = {
+             1,  1,  3,  1,  1,  1,  2,  4,  2,  5,  3,  0,  0
+        };
+
 
         List<ObjectData> objectDataList = new List<ObjectData>();
         FileParser parser;
@@ -73,27 +77,12 @@ namespace LynnaLab
                 parser.InsertParseableTextAfter(null, new String[]{""}); // Newline
                 parser.InsertComponentAfter(null, new Label(parser, Identifier));
 
-                ObjectData endData = new ObjectData(Project,
-                        ObjectCommands[(int)ObjectType.End],
-                        null,
-                        parser,
-                        new string[]{"\t"}, // Tab at start of line
-                        (int)ObjectType.End);
+                ObjectData endData = new ObjectData(Project, parser, ObjectType.End);
                 parser.InsertComponentAfter(null, endData);
                 objectDataList[0] = endData;
             }
 
-            ObjectData data = new ObjectData(Project,
-                    ObjectCommands[(int)type],
-                    null,
-                    parser,
-                    new string[]{"\t"}, // Tab at start of line
-                    (int)type);
-
-            DataValueReference.InitializeDataValues(data, data.GetValueReferences());
-
-            if (type >= ObjectType.Pointer && type <= ObjectType.AntiBossPointer)
-                data.SetValue(0, "objectData4000"); // Compileable default pointer
+            ObjectData data = new ObjectData(Project, parser, type);
 
             data.InsertIntoParserBefore(objectDataList[index]);
             objectDataList.Insert(index, data);

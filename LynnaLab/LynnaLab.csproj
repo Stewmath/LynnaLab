@@ -126,7 +126,6 @@
     <Compile Include="Core\ObjectGroup.cs" />
     <Compile Include="Core\ObjectData.cs" />
     <Compile Include="UI\AddObjectDialog.cs" />
-    <Compile Include="gtk-gui\LynnaLab.AddObjectDialog.cs" />
     <Compile Include="Core\Documentation.cs" />
     <Compile Include="UI\DocumentationDialog.cs" />
     <Compile Include="Core/IGfxHeader.cs" />
