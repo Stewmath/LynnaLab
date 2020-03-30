@@ -72,8 +72,8 @@ namespace LynnaLab {
                 },
                 new List<ValueReference> { // Random Enemy
                     new DataValueReference("Flags",0,DataValueType.Byte,editable:false),
-                    new DataValueReference("Always Respawn",0,0,0,DataValueType.ByteBit),
-                    new DataValueReference("Ignore for wNumEnemies",0,1,1,DataValueType.ByteBit),
+                    new DataValueReference("Respawn",0,0,0,DataValueType.ByteBit),
+                    new DataValueReference("Uncounted",0,1,1,DataValueType.ByteBit),
                     new DataValueReference("Spawn anywhere",0,2,2,DataValueType.ByteBit),
                     new DataValueReference("Quantity",0,5,7,DataValueType.ByteBits),
                     new DataValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
@@ -81,8 +81,8 @@ namespace LynnaLab {
                 },
                 new List<ValueReference> { // Specific Enemy
                     new DataValueReference("Flags",0,DataValueType.Byte,editable:false),
-                    new DataValueReference("Always Respawn",0,0,0,DataValueType.ByteBit),
-                    new DataValueReference("Ignore for wNumEnemies",0,1,1,DataValueType.ByteBit),
+                    new DataValueReference("Respawn",0,0,0,DataValueType.ByteBit),
+                    new DataValueReference("Uncounted",0,1,1,DataValueType.ByteBit),
                     new DataValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
                     new DataValueReference("SubID",1,0,7,DataValueType.WordBits),
                     new DataValueReference("Y",2,DataValueType.Byte),
@@ -104,7 +104,7 @@ namespace LynnaLab {
                 },
                 new List<ValueReference> { // Item Drop
                     new DataValueReference("Flags",0,DataValueType.Byte,editable:false),
-                    new DataValueReference("Always Respawn",0,0,0,DataValueType.ByteBit),
+                    new DataValueReference("Respawn",0,0,0,DataValueType.ByteBit),
                     new DataValueReference("Item",1,DataValueType.Byte),
                     new DataValueReference("Y",2,4,7,DataValueType.ByteBits),
                     new DataValueReference("X",2,0,3,DataValueType.ByteBits),
