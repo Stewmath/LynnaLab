@@ -122,7 +122,6 @@
     <Compile Include="UI\TileGridSelector.cs" />
     <Compile Include="UI\HighlightingMinimap.cs" />
     <Compile Include="UI\ObjectGroupEditor.cs" />
-    <Compile Include="gtk-gui\LynnaLab.ObjectGroupEditor.cs" />
     <Compile Include="Core\ObjectGroup.cs" />
     <Compile Include="Core\ObjectData.cs" />
     <Compile Include="UI\AddObjectDialog.cs" />
