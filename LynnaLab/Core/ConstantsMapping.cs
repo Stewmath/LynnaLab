@@ -35,6 +35,8 @@ public class ConstantsMapping
 
     FileParser parser;
 
+    private Documentation _documentation;
+
 
     public Project Project {
         get { return parser.Project; }
@@ -49,7 +51,9 @@ public class ConstantsMapping
     /// </summary>
     public Documentation OverallDocumentation {
         get {
-            return new Documentation("", "", GetAllValuesWithDescriptions());
+            if (_documentation == null)
+                _documentation = new Documentation("", "", GetAllValuesWithDescriptions());
+            return _documentation;
         }
     }
 
