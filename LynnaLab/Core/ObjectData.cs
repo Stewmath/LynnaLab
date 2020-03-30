@@ -190,7 +190,8 @@ namespace LynnaLab {
             if (definitionType == ObjectDefinitionType.QuadrupleValue)
                 base.SetValue(0, Wla.ToByte((byte)subtype));
 
-            if (definitionType >= ObjectDefinitionType.Pointer && definitionType <= ObjectDefinitionType.AntiBossPointer)
+            if (definitionType >= ObjectDefinitionType.Pointer
+                    && definitionType <= ObjectDefinitionType.AntiBossPointer)
                 base.SetValue(0, "objectData4000"); // Compileable default pointer
 
             base.disableCallbacks -= 1;
@@ -202,11 +203,19 @@ namespace LynnaLab {
             base.SetValueReferences(dataValueReferenceGroup);
 
             // Create the AbstractValueReference
-            if (GetObjectType() == ObjectType.Interaction || GetObjectType() == ObjectType.Part) {
+            if (GetObjectType() == ObjectType.Interaction || GetObjectType() == ObjectType.Part || GetObjectType() == ObjectType.SpecificEnemyB) {
                 List<ValueReference> refList = new List<ValueReference>();
 
+                string docString = null;
+                if (GetObjectType() == ObjectType.Interaction)
+                    docString = "InteractionMapping";
+                else if (GetObjectType() == ObjectType.SpecificEnemyB)
+                    docString = "EnemyMapping";
+                else
+                    docString = "PartMapping";
+
                 refList.AddRange(new ValueReference[] {
-                    new AbstractIntValueReference(this, "ID", DataValueType.Byte),
+                    new AbstractIntValueReference(this, "ID", DataValueType.Byte, constantsMappingString:docString),
                     new AbstractIntValueReference(this, "SubID", DataValueType.Byte),
                     new AbstractIntValueReference(this, "Y", DataValueType.Byte),
                     new AbstractIntValueReference(this, "X", DataValueType.Byte),

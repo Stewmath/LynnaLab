@@ -127,6 +127,11 @@ namespace LynnaLab
 
         public void SetHandler(ValueReferenceHandler handler) {
             this.handler = handler;
+            if (Project != null && constantsMappingString != null) {
+                constantsMapping = (ConstantsMapping)typeof(Project).GetField(constantsMappingString).GetValue(Project);
+                _documentation = constantsMapping.OverallDocumentation;
+                _documentation.Name = "Field: " + Name;
+            }
         }
 
 
