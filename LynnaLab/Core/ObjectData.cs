@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;
 
 namespace LynnaLab {
-    // Similar to "ObjectDefinitionType" below, but this abstracts the "NoValue", "DoubleValue",
-    // and "SpecificEnemy" types into just the "Interaction", "SpecificEnemy", or "Part"
-    // types.
+    // Similar to "ObjectDefinitionType" below, but this abstracts the "QuadrupleValue" type into
+    // their respective types (because it can be an interaction, enemy, or part).
     public enum ObjectType {
         Conditional=0,
         Interaction,
@@ -13,7 +12,8 @@ namespace LynnaLab {
         BossPointer,
         AntiBossPointer,
         RandomEnemy,
-        SpecificEnemy,
+        SpecificEnemyA, // Normal (has flags, not var03)
+        SpecificEnemyB, // QuadrupleValue (has var03, not flags)
         Part,
         ItemDrop,
         End,
@@ -71,12 +71,18 @@ namespace LynnaLab {
                     new DataValueReference("Pointer",0,DataValueType.ObjectPointer),
                 },
                 new List<ValueReference> { // Random Enemy
-                    new DataValueReference("Flags",0,DataValueType.Byte),
+                    new DataValueReference("Flags",0,DataValueType.Byte,editable:false),
+                    new DataValueReference("Always Respawn",0,0,0,DataValueType.ByteBit),
+                    new DataValueReference("Ignore for wNumEnemies",0,1,1,DataValueType.ByteBit),
+                    new DataValueReference("Spawn anywhere",0,2,2,DataValueType.ByteBit),
+                    new DataValueReference("Quantity",0,5,7,DataValueType.ByteBits),
                     new DataValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
                     new DataValueReference("SubID",1,0,7,DataValueType.WordBits),
                 },
                 new List<ValueReference> { // Specific Enemy
-                    new DataValueReference("Flags",0,DataValueType.Byte),
+                    new DataValueReference("Flags",0,DataValueType.Byte,editable:false),
+                    new DataValueReference("Always Respawn",0,0,0,DataValueType.ByteBit),
+                    new DataValueReference("Ignore for wNumEnemies",0,1,1,DataValueType.ByteBit),
                     new DataValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
                     new DataValueReference("SubID",1,0,7,DataValueType.WordBits),
                     new DataValueReference("Y",2,DataValueType.Byte),
@@ -97,7 +103,8 @@ namespace LynnaLab {
                     new DataValueReference("X",4,DataValueType.Byte),
                 },
                 new List<ValueReference> { // Item Drop
-                    new DataValueReference("Flags",0,DataValueType.Byte),
+                    new DataValueReference("Flags",0,DataValueType.Byte,editable:false),
+                    new DataValueReference("Always Respawn",0,0,0,DataValueType.ByteBit),
                     new DataValueReference("Item",1,DataValueType.Byte),
                     new DataValueReference("Y",2,4,7,DataValueType.ByteBits),
                     new DataValueReference("X",2,0,3,DataValueType.ByteBits),
@@ -125,6 +132,7 @@ namespace LynnaLab {
         // "ObjectDefinitionType".
         public ObjectData(Project p, FileParser parser, ObjectType type)
             : base(p, "", null, -1, parser, new string[]{"\t"}) {
+            int subtype = -1;
             switch (type) {
                 case ObjectType.Conditional:
                     definitionType = ObjectDefinitionType.Conditional;
@@ -144,8 +152,12 @@ namespace LynnaLab {
                 case ObjectType.RandomEnemy:
                     definitionType = ObjectDefinitionType.RandomEnemy;
                     break;
-                case ObjectType.SpecificEnemy:
+                case ObjectType.SpecificEnemyA:
                     definitionType = ObjectDefinitionType.SpecificEnemy;
+                    break;
+                case ObjectType.SpecificEnemyB:
+                    definitionType = ObjectDefinitionType.QuadrupleValue;
+                    subtype = 1;
                     break;
                 case ObjectType.Part:
                     definitionType = ObjectDefinitionType.Part;
@@ -164,12 +176,19 @@ namespace LynnaLab {
             }
 
             Command = ObjectGroup.ObjectCommands[(int)definitionType];
+            base.SetNumValues(ObjectGroup.ObjectCommandDefaultParams[(int)definitionType]);
+            if (definitionType == ObjectDefinitionType.QuadrupleValue)
+                base.SetValue(0, Wla.ToByte((byte)subtype));
+
             InitializeDefinitionType();
 
             base.disableCallbacks += 1;
 
-            base.SetNumValues(ObjectGroup.ObjectCommandDefaultParams[(int)definitionType]);
             DataValueReference.InitializeDataValues(this, dataValueReferenceGroup.GetValueReferences());
+
+            // Set this a second time since it's overwritten by the "InitializeDataValues" call
+            if (definitionType == ObjectDefinitionType.QuadrupleValue)
+                base.SetValue(0, Wla.ToByte((byte)subtype));
 
             if (definitionType >= ObjectDefinitionType.Pointer && definitionType <= ObjectDefinitionType.AntiBossPointer)
                 base.SetValue(0, "objectData4000"); // Compileable default pointer
@@ -183,13 +202,8 @@ namespace LynnaLab {
             base.SetValueReferences(dataValueReferenceGroup);
 
             // Create the AbstractValueReference
-            if (GetObjectType() == ObjectType.Interaction || GetObjectType() == ObjectType.SpecificEnemy
-                    || GetObjectType() == ObjectType.Part) {
+            if (GetObjectType() == ObjectType.Interaction || GetObjectType() == ObjectType.Part) {
                 List<ValueReference> refList = new List<ValueReference>();
-
-                if (GetObjectType() == ObjectType.SpecificEnemy) {
-                    refList.Add(new AbstractIntValueReference(this, "Has Flags", DataValueType.ByteBit));
-                }
 
                 refList.AddRange(new ValueReference[] {
                     new AbstractIntValueReference(this, "ID", DataValueType.Byte),
@@ -259,9 +273,6 @@ namespace LynnaLab {
 
         // ValueReferenceHandler override
         public override int GetIntValue(string name) {
-            if (name == "Has Flags") // ObjectType.SpecificEnemy only
-                return GetObjectDefinitionType() == ObjectDefinitionType.QuadrupleValue ? 0 : 1;
-
             if (!dataValueReferenceGroup.HasValue(name) && (name == "Y" || name == "X" || name == "Var03")) // "Optional" values
                 return 0;
             if ((name == "Y" || name == "X") && definitionType == ObjectDefinitionType.Part) {
@@ -284,7 +295,7 @@ namespace LynnaLab {
                 ObjectType type = GetObjectType();
                 if (type == ObjectType.Interaction)
                     return 0;
-                else if (type == ObjectType.SpecificEnemy)
+                else if (type == ObjectType.SpecificEnemyB)
                     return 1;
                 else if (type == ObjectType.Part)
                     return 2;
@@ -292,12 +303,7 @@ namespace LynnaLab {
                     throw new Exception("Object type can't be converted to quad-value");
             };
 
-            if (name == "Has Flags") { // ObjectType.SpecificEnemy only
-                if (value != GetIntValue(name)) {
-                    // TODO: change type
-                }
-            }
-            else if (name == "X" || name == "Y") {
+            if (name == "X" || name == "Y") {
                 if (GetObjectDefinitionType() == ObjectDefinitionType.NoValue) {
                     if (value != 0) {
                         TranslateDefinitionType(ObjectDefinitionType.DoubleValue);
@@ -335,8 +341,6 @@ namespace LynnaLab {
                         else
                             TranslateDefinitionType(ObjectDefinitionType.DoubleValue);
                     }
-                    else if (GetObjectType() == ObjectType.SpecificEnemy)
-                        TranslateDefinitionType(ObjectDefinitionType.SpecificEnemy);
                     else if (GetObjectType() == ObjectType.Part)
                         TranslateDefinitionType(ObjectDefinitionType.Part);
                 }
@@ -373,7 +377,7 @@ namespace LynnaLab {
                 return ObjectType.RandomEnemy;
 
             case ObjectDefinitionType.SpecificEnemy:
-                return ObjectType.SpecificEnemy;
+                return ObjectType.SpecificEnemyA;
 
             case ObjectDefinitionType.Part:
                 return ObjectType.Part;
@@ -383,7 +387,7 @@ namespace LynnaLab {
                 if (t == 0)
                     return ObjectType.Interaction;
                 else if (t == 1)
-                    return ObjectType.SpecificEnemy;
+                    return ObjectType.SpecificEnemyB;
                 else if (t == 2)
                     return ObjectType.Part;
                 else
@@ -467,7 +471,8 @@ namespace LynnaLab {
 				case ObjectType.BossPointer:        return Color.Green;
 				case ObjectType.AntiBossPointer:    return Color.Blue;
 				case ObjectType.RandomEnemy:        return Color.FromArgb(128, 64, 0);
-				case ObjectType.SpecificEnemy:      return Color.FromArgb(128, 64, 0);
+				case ObjectType.SpecificEnemyA:     return Color.FromArgb(128, 64, 0);
+				case ObjectType.SpecificEnemyB:     return Color.FromArgb(128, 64, 0);
 				case ObjectType.Part:               return Color.Gray;
 				case ObjectType.ItemDrop:           return Color.Lime;
 			}
@@ -559,7 +564,8 @@ namespace LynnaLab {
             if (GetObjectType() == ObjectType.Interaction) {
                 return Project.GetIndexedDataType<InteractionObject>((GetIntValue("ID")<<8) | GetIntValue("SubID"));
             }
-            else if (GetObjectType() == ObjectType.RandomEnemy || GetObjectType() == ObjectType.SpecificEnemy) {
+            else if (GetObjectType() == ObjectType.RandomEnemy || GetObjectType() == ObjectType.SpecificEnemyA
+                    || GetObjectType() == ObjectType.SpecificEnemyB) {
                 return Project.GetIndexedDataType<EnemyObject>((GetIntValue("ID")<<8) | GetIntValue("SubID"));
             }
             else if (GetObjectType() == ObjectType.Part) {

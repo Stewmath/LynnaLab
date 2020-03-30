@@ -13,7 +13,8 @@ namespace LynnaLab
             "Boss Object Pointer",
             "Anti-Boss Object Pointer",
             "Random Position Enemy",
-            "Specific Position Enemy",
+            "Specific Position Enemy (A)",
+            "Specific Position Enemy (B)",
             "Part",
             "Item Drop",
         };
@@ -25,7 +26,8 @@ namespace LynnaLab
             "A pointer which only activates when bit 7 of the room flags is NOT set.",
             "A pointer which only activates when bit 7 of the room flags IS set.",
             "An enemy (or multiple enemies) in random positions in the room.",
-            "An enemy at a specific position in the room.",
+            "An enemy at a specific position in the room. (Can set flags, can't set Var03.)",
+            "An enemy at a specific position in the room. (Can't set flags, can set Var03.)",
             "A class of objects with a variety of purposes (switches, animal statues, particles...)",
             "An item drops when a tile is destroyed at a given location."
         };
