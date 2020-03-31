@@ -13,7 +13,7 @@ public class MainWindow: Gtk.Window
 
     // GUI stuff
 	private Gtk.MenuBar menubar1;
-    private Gtk.MenuItem pluginMenuItem;
+    private Gtk.MenuItem editMenuItem, actionMenuItem;
 	private Gtk.CheckButton viewObjectsCheckBox;
 
 	private Gtk.Notebook notebook2;
@@ -35,8 +35,6 @@ public class MainWindow: Gtk.Window
     // Variables
     uint animationTimerID = 0;
     PluginCore pluginCore;
-
-    Gtk.Menu pluginSubMenu;
 
     internal Project Project { get; set; }
     internal Room ActiveRoom {
@@ -77,7 +75,8 @@ public class MainWindow: Gtk.Window
         this.Child = (Gtk.Widget)builder.GetObject("MainWindow");
 
         menubar1 = (Gtk.MenuBar)builder.GetObject("menubar1");
-        pluginMenuItem = (Gtk.MenuItem)builder.GetObject("pluginMenuItem");
+        editMenuItem = (Gtk.MenuItem)builder.GetObject("editMenuItem");
+        actionMenuItem = (Gtk.MenuItem)builder.GetObject("actionMenuItem");
         viewObjectsCheckBox = (Gtk.CheckButton)builder.GetObject("viewObjectsCheckBox");
 
         notebook2 = (Gtk.Notebook)builder.GetObject("notebook2");
@@ -162,16 +161,19 @@ public class MainWindow: Gtk.Window
     void LoadPlugins() {
         pluginCore.ReloadPlugins();
 
-        pluginSubMenu = new Gtk.Menu();
-        pluginMenuItem.Submenu = pluginSubMenu;
-
         foreach (Plugin plugin in pluginCore.GetPlugins()) {
-             var item = new MenuItem(plugin.Name);
-             item.Activated += ((a, b) =>
-                     {
-                        plugin.Clicked();
+            Gtk.Menu pluginSubMenu;
+            if (plugin.Category == "Window")
+                pluginSubMenu = editMenuItem.Submenu as Gtk.Menu;
+            else
+                pluginSubMenu = actionMenuItem.Submenu as Gtk.Menu;
+
+            var item = new MenuItem(plugin.Name);
+            item.Activated += ((a, b) =>
+                    {
+                    plugin.Clicked();
                     });
-             pluginSubMenu.Append(item);
+            pluginSubMenu.Append(item);
         }
         menubar1.ShowAll();
     }

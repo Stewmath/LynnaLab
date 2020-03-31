@@ -16,21 +16,10 @@ namespace Plugins
             }
         }
 
-        public override String Name {
-            get {
-                return "Dungeon Editor";
-            }
-        }
-        public override String Tooltip {
-            get {
-                return "Edit dungeon layout and minimap";
-            }
-        }
-        public override bool IsDockable {
-            get {
-                return false;
-            }
-        }
+        public override String Name { get { return "Dungeon Editor"; } }
+        public override String Tooltip { get { return "Edit dungeon layout and minimap"; } }
+        public override bool IsDockable { get { return false; } }
+        public override string Category { get { return "Window"; } }
 
         public override void Init(PluginManager manager) {
             this.manager = manager;

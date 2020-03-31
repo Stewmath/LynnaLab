@@ -12,21 +12,10 @@ namespace Plugins
     {
         PluginManager manager;
 
-        public override String Name {
-            get {
-                return "Chest Editor";
-            }
-        }
-        public override String Tooltip {
-            get {
-                return "Edit Chests";
-            }
-        }
-        public override bool IsDockable {
-            get {
-                return false;
-            }
-        }
+        public override String Name { get { return "Chest Editor"; } }
+        public override String Tooltip { get { return "Edit Chests"; } }
+        public override bool IsDockable { get { return false; } }
+        public override string Category { get { return "Window"; } }
 
         Project Project {
             get {

@@ -13,6 +13,9 @@ namespace LynnaLab
         public abstract bool IsDockable {
             get;
         }
+        public abstract string Category {
+            get;
+        }
 
         public abstract void Init(PluginManager manager);
         public abstract void Exit();

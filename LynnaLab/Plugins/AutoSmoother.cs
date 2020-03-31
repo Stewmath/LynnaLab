@@ -14,21 +14,10 @@ namespace Plugins
     {
         PluginManager manager;
 
-        public override String Name {
-            get {
-                return "AutoSmoother";
-            }
-        }
-        public override String Tooltip {
-            get {
-                return "Smoothen Automatically";
-            }
-        }
-        public override bool IsDockable {
-            get {
-                return false;
-            }
-        }
+        public override String Name { get { return "AutoSmoother"; } }
+        public override String Tooltip { get { return "Smoothen Automatically"; } }
+        public override bool IsDockable { get { return false; } }
+        public override string Category { get { return "Action"; } }
 
         Project Project {
             get {
