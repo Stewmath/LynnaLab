@@ -121,12 +121,10 @@ namespace LynnaLab
         ///  Draw the Cairo.Surface (currently just a copy of the room's bitmap)
         /// </summary>
         void RedrawSurface() {
-            /*
             if (_surface != null)
                 _surface.Dispose();
             _surface = CairoHelper.CopyBitmap(room.GetImage());
             QueueDraw();
-*/
         }
 
         void UpdateMouse(int x, int y) {
@@ -146,7 +144,6 @@ namespace LynnaLab
                 if (!IsInBounds(posX,posY))
                     return;
                 room.SetTile(x, y, client.SelectedIndex);
-                this.QueueDrawArea(x * TileWidth + XOffset, y * TileWidth + YOffset, TileWidth - 1, TileHeight - 1);
             }
             else {
                 if (objectEditor != null) {

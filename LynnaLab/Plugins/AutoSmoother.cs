@@ -46,7 +46,7 @@ namespace Plugins
             Room room = manager.GetActiveRoom();
             int area = room.Area.Index;
 
-            var reader = new XmlTextReader("Plugins/AutoSmoother.xml");
+            var reader = new XmlTextReader(Helper.GetResourceStream("LynnaLab.Resources.AutoSmoother.xml"));
 
             Smoother smoother = new Smoother();
             bool validArea = false;

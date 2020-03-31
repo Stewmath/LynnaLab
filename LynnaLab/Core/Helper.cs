@@ -47,9 +47,14 @@ namespace LynnaLab {
             return files;
         }
 
+        // Get a sttream of a resource file
+        public static StreamReader GetResourceStream(string name) {
+            return new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream(name));
+        }
+
         // Read a resource file
         public static string ReadResourceFile(string name) {
-            return new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream(name)).ReadToEnd();
+            return GetResourceStream(name).ReadToEnd();
         }
     }
 

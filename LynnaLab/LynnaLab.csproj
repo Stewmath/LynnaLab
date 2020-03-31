@@ -171,6 +171,8 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Resources/AutoSmoother.xml">
+    </EmbeddedResource>
     <EmbeddedResource Include="Glade/WarpEditor.ui">
     </EmbeddedResource>
     <EmbeddedResource Include="Glade/MainWindow.ui">
