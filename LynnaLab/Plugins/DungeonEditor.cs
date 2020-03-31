@@ -64,7 +64,7 @@ namespace Plugins
 
                 roomSpinButton.Value = room.Index&0xff;
 
-                var vrs = new List<DataValueReference>();
+                var vrs = new List<ValueReference>();
                 vrs.Add(new StreamValueReference("Up", room.Index&0xff, 0,0, DataValueType.ByteBit));
                 vrs.Add(new StreamValueReference("Right", room.Index&0xff, 1,1, DataValueType.ByteBit));
                 vrs.Add(new StreamValueReference("Down", room.Index&0xff, 2,2, DataValueType.ByteBit));
@@ -94,7 +94,7 @@ namespace Plugins
                 if (floorSpinButton.ValueAsInt >= dungeon.NumFloors)
                     floorSpinButton.Value = dungeon.NumFloors-1;
 
-                var vrs = new List<DataValueReference>();
+                var vrs = new List<ValueReference>();
                 vrs.Add(new DataValueReference("Group", 0, DataValueType.String, false));
                 vrs.Add(new DataValueReference("Wallmaster dest room", 0, DataValueType.Byte));
                 vrs.Add(new DataValueReference("Bottom floor layout", 0, DataValueType.Byte, false));

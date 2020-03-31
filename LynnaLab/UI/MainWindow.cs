@@ -13,6 +13,7 @@ public class MainWindow: Gtk.Window
 
     // GUI stuff
 	private Gtk.MenuBar menubar1;
+    private Gtk.MenuItem pluginMenuItem;
 	private Gtk.CheckButton viewObjectsCheckBox;
 
 	private Gtk.Notebook notebook2;
@@ -76,6 +77,7 @@ public class MainWindow: Gtk.Window
         this.Child = (Gtk.Widget)builder.GetObject("MainWindow");
 
         menubar1 = (Gtk.MenuBar)builder.GetObject("menubar1");
+        pluginMenuItem = (Gtk.MenuItem)builder.GetObject("pluginMenuItem");
         viewObjectsCheckBox = (Gtk.CheckButton)builder.GetObject("viewObjectsCheckBox");
 
         notebook2 = (Gtk.Notebook)builder.GetObject("notebook2");
@@ -160,49 +162,14 @@ public class MainWindow: Gtk.Window
     void LoadPlugins() {
         pluginCore.ReloadPlugins();
 
-        MenuItem pluginMenuItem = null;
-
-        foreach (Widget w in menubar1.AllChildren) {
-            if ((w as MenuItem)?.Name == "PluginsAction") {
-                pluginMenuItem = w as MenuItem;
-                break;
-            }
-        }
-
-        var reloadItem = new MenuItem("Reload plugins");
-        reloadItem.Activated += (a,b) => LoadPlugins();
-
-        return;
-
-        // TODO: fix this
-
-        pluginSubMenu = new Menu();
+        pluginSubMenu = new Gtk.Menu();
         pluginMenuItem.Submenu = pluginSubMenu;
-
-        pluginSubMenu.Append(reloadItem);
 
         foreach (Plugin plugin in pluginCore.GetPlugins()) {
              var item = new MenuItem(plugin.Name);
              item.Activated += ((a, b) =>
                      {
-                    #if DEBUG
                         plugin.Clicked();
-                    #else
-                        try {
-                            plugin.Clicked();
-                        }
-                        catch(Exception e) {
-                            string msg = "The plugin \"" + plugin.Name + "\" threw an exception:\n\n"
-                                    + e.Message;
-                            Gtk.MessageDialog d = new MessageDialog(null,
-                                    DialogFlags.DestroyWithParent,
-                                    MessageType.Error,
-                                    ButtonsType.Ok,
-                                    msg);
-                            d.Run();
-                            d.Dispose();
-                        }
-                    #endif
                     });
              pluginSubMenu.Append(item);
         }

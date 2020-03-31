@@ -113,7 +113,6 @@
     <Compile Include="PluginCore\PluginCore.cs" />
     <Compile Include="PluginCore\PluginManager.cs" />
     <Compile Include="PluginInterfaces\Plugin.cs" />
-    <Compile Include="PluginInterfaces\SimplePlugin.cs" />
     <Compile Include="Core\WorldMap.cs" />
     <Compile Include="Core\Map.cs" />
     <Compile Include="Core\PaletteHeaderGroup.cs" />
@@ -149,6 +148,11 @@
     <Compile Include="Widgets\InfoBar.cs" />
     <Compile Include="Core\AbstractIntValueReference.cs" />
     <Compile Include="Core\ValueReference.cs" />
+    <Compile Include="Plugins\AutoSmoother.cs" />
+    <Compile Include="Plugins\ChestEditor.cs" />
+    <Compile Include="Plugins\DungeonEditor.cs" />
+    <Compile Include="Plugins\MapleEditor.cs" />
+    <Compile Include="Core\StreamValueReference.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
