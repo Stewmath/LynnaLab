@@ -7,12 +7,12 @@ namespace LynnaLab
     public class ObjectGroup : ProjectDataType
     {
         public static string[] ObjectCommands = {
-            "obj_Conditional",
+            "obj_Condition",
             "obj_NoValue",
             "obj_DoubleValue",
             "obj_Pointer",
-            "obj_BossPointer",
-            "obj_AntiBossPointer",
+            "obj_BeforeEvent",
+            "obj_AfterEvent",
             "obj_RandomEnemy",
             "obj_SpecificEnemy",
             "obj_Part",
