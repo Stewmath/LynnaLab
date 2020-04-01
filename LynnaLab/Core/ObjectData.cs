@@ -17,7 +17,8 @@ namespace LynnaLab {
         Part,
         ItemDrop,
         End,
-        EndPointer
+        EndPointer,
+        Garbage
     }
 
     // This corresponds to "opcodes" for defining objects in the disassembly.
@@ -34,7 +35,8 @@ namespace LynnaLab {
         QuadrupleValue,
         ItemDrop,
         End,
-        EndPointer
+        EndPointer,
+        Garbage // This "type" will be deleted by LynnaLab (it does nothing)
     }
 
 
@@ -113,6 +115,8 @@ namespace LynnaLab {
                 },
                 new List<ValueReference> { // InteracEndPointer
                 },
+                new List<ValueReference> { // Garbage
+                }
             };
 
 
@@ -195,6 +199,20 @@ namespace LynnaLab {
                 base.SetValue(0, "objectData4000"); // Compileable default pointer
 
             base.disableCallbacks -= 1;
+        }
+
+        // Copy constructor
+        public ObjectData(ObjectData o)
+            : base(o.Project, "", null, -1, null, new string[]{"\t"})
+        {
+            this.Command = o.Command;
+            this.definitionType = o.definitionType;
+
+            base.SetNumValues(o.GetNumValues());
+            for (int i=0; i<o.GetNumValues(); i++)
+                SetValue(i, o.GetValue(i));
+
+            InitializeDefinitionType();
         }
 
         // Common code for constructors
@@ -411,6 +429,9 @@ namespace LynnaLab {
 
             case ObjectDefinitionType.EndPointer:
                 return ObjectType.EndPointer;
+
+            case ObjectDefinitionType.Garbage:
+                return ObjectType.Garbage;
 
             default:
                 throw new Exception("Unknown ObjectType?");

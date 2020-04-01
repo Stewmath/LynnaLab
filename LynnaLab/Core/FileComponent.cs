@@ -12,7 +12,13 @@ namespace LynnaLab
         protected List<string> spacing;
         protected FileParser parser;
 
+
+        // Private variables
+        bool _modified;
         Project _project;
+
+
+        // Properties
 
         public bool EndsLine {get; set;} // True if a newline comes after this data
 
@@ -20,14 +26,24 @@ namespace LynnaLab
         // the file
         public bool Fake {get; set;}
 
+        public bool Modified {
+            get { return _modified; }
+            set {
+                _modified = value;
+                if (value == true && parser != null)
+                    parser.Modified = true;
+            }
+        }
+
+
         public FileComponent Next {
             get {
-                return parser.GetNextFileComponent(this);
+                return parser?.GetNextFileComponent(this);
             }
         }
         public FileComponent Prev {
             get {
-                return parser.GetPrevFileComponent(this);
+                return parser?.GetPrevFileComponent(this);
             }
         }
         public FileParser FileParser {
@@ -45,6 +61,7 @@ namespace LynnaLab
             if (spacing != null)
                 this.spacing = new List<string>(spacing);
             this.parser = parser;
+            _modified = false;
         }
 
         public string GetSpacing(int index) {
@@ -60,6 +77,26 @@ namespace LynnaLab
         }
 
         public abstract string GetString();
+
+        // Attaching/detaching from a parser object
+        public void Attach(FileParser p) {
+            if (p == parser)
+                return;
+            if (parser != null)
+                throw new Exception("Must call 'Detach()' before calling 'Attach(parser)'.");
+            parser = p;
+        }
+        public void Detach() {
+            parser.RemoveFileComponent(this);
+            parser = null;
+        }
+        public void InsertIntoParserAfter(Data reference) {
+            parser.InsertComponentAfter(reference, this);
+        }
+        public void InsertIntoParserBefore(Data reference) {
+            parser.InsertComponentBefore(reference, this);
+        }
+
 
         protected void SetProject(Project p) {
             _project = p;

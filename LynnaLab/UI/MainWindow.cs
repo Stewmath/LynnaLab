@@ -13,7 +13,7 @@ public class MainWindow: Gtk.Window
 
     // GUI stuff
 	private Gtk.MenuBar menubar1;
-    private Gtk.MenuItem editMenuItem, actionMenuItem;
+    private Gtk.MenuItem editMenuItem, actionMenuItem, debugMenuItem;
 	private Gtk.CheckButton viewObjectsCheckBox;
 
 	private Gtk.Notebook notebook2;
@@ -77,6 +77,7 @@ public class MainWindow: Gtk.Window
         menubar1 = (Gtk.MenuBar)builder.GetObject("menubar1");
         editMenuItem = (Gtk.MenuItem)builder.GetObject("editMenuItem");
         actionMenuItem = (Gtk.MenuItem)builder.GetObject("actionMenuItem");
+        debugMenuItem = (Gtk.MenuItem)builder.GetObject("debugMenuItem");
         viewObjectsCheckBox = (Gtk.CheckButton)builder.GetObject("viewObjectsCheckBox");
 
         notebook2 = (Gtk.Notebook)builder.GetObject("notebook2");
@@ -165,8 +166,14 @@ public class MainWindow: Gtk.Window
             Gtk.Menu pluginSubMenu;
             if (plugin.Category == "Window")
                 pluginSubMenu = editMenuItem.Submenu as Gtk.Menu;
-            else
+            else if (plugin.Category == "Action")
                 pluginSubMenu = actionMenuItem.Submenu as Gtk.Menu;
+            else if (plugin.Category == "Debug")
+                pluginSubMenu = debugMenuItem.Submenu as Gtk.Menu;
+            else {
+                log.Error("Unknown category '" + plugin.Category + "'.");
+                continue;
+            }
 
             var item = new MenuItem(plugin.Name);
             item.Activated += ((a, b) =>

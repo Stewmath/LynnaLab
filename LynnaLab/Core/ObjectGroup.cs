@@ -19,19 +19,20 @@ namespace LynnaLab
             "obj_WithParam",
             "obj_ItemDrop",
             "obj_End",
-            "obj_EndPointer"
+            "obj_EndPointer",
+            "obj_Garbage"
         };
 
         public static int[] ObjectCommandMinParams = {
-             1,  1,  3,  1,  1,  1,  2,  3,  2,  5,  2,  0,  0
+             1,  1,  3,  1,  1,  1,  2,  3,  2,  5,  2,  0,  0, 2
         };
 
         public static int[] ObjectCommandMaxParams = {
-            -1, -1, -1, -1, -1, -1, -1,  4, -1, -1,  3, -1, -1
+            -1, -1, -1, -1, -1, -1, -1,  4, -1, -1,  3, -1, -1, 2
         };
 
         public static int[] ObjectCommandDefaultParams = {
-             1,  1,  3,  1,  1,  1,  2,  4,  2,  5,  3,  0,  0
+             1,  1,  3,  1,  1,  1,  2,  4,  2,  5,  3,  0,  0, 2
         };
 
 
@@ -45,8 +46,14 @@ namespace LynnaLab
             ObjectData data = parser.GetData(Identifier) as ObjectData;
 
             while (data.GetObjectType() != ObjectType.End && data.GetObjectType() != ObjectType.EndPointer) {
-                objectDataList.Add(data);
-                data = data.NextData as ObjectData;
+                ObjectData next = data.NextData as ObjectData;
+
+                if (data.GetObjectType() == ObjectType.Garbage) // Delete these (they do nothing anyway)
+                    data.Detach();
+                else
+                    objectDataList.Add(data);
+
+                data = next;
             }
             objectDataList.Add(data);
         }
@@ -67,7 +74,7 @@ namespace LynnaLab
             objectDataList.RemoveAt(index);
         }
 
-        public void InsertObject(int index, ObjectType type) {
+        public void InsertObject(int index, ObjectData data) {
             if (GetNumObjects() == 0 && !IsIsolated()) {
                 // If this map is sharing data with other maps (as when "blank"), need to make
                 // a unique section for this map.
@@ -82,10 +89,21 @@ namespace LynnaLab
                 objectDataList[0] = endData;
             }
 
-            ObjectData data = new ObjectData(Project, parser, type);
-
+            data.Attach(parser);
             data.InsertIntoParserBefore(objectDataList[index]);
             objectDataList.Insert(index, data);
+        }
+
+        public void InsertObject(int index, ObjectType type) {
+            ObjectData data = new ObjectData(Project, parser, type);
+            InsertObject(index, data);
+        }
+
+        public void ReplaceObjects(IList<ObjectData> objectList) {
+            while (GetNumObjects() > 0)
+                RemoveObject(0);
+            foreach (ObjectData o in objectList)
+                InsertObject(GetNumObjects(), o);
         }
 
         // Returns true if no data is shared with another label

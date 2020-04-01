@@ -13,7 +13,6 @@ namespace LynnaLab
         // Size in bytes
         // -1 if indeterminate? (consider getting rid of this, it's unreliable)
         protected int size;
-        bool _modified;
 
         // Command is like .db, .dw, or a macro.
         string command;
@@ -28,15 +27,6 @@ namespace LynnaLab
 
 
         // Properties
-
-        public bool Modified {
-            get { return _modified; }
-            set {
-                _modified = value;
-                if (value == true)
-                    parser.Modified = true;
-            }
-        }
 
         public string Command {
             get { return command; }
@@ -53,6 +43,8 @@ namespace LynnaLab
 
         public Data NextData {
             get {
+                if (parser == null)
+                    return null;
                 FileComponent c = this;
                 do {
                     c = parser.GetNextFileComponent(c);
@@ -63,6 +55,8 @@ namespace LynnaLab
         }
         public Data LastData {
             get {
+                if (parser == null)
+                    return null;
                 FileComponent c = this;
                 do {
                     c = parser.GetPrevFileComponent(c);
@@ -90,7 +84,6 @@ namespace LynnaLab
                 this.spacing.Add("");
 
             PrintCommand = true;
-            _modified = false;
         }
 
 
@@ -225,17 +218,6 @@ namespace LynnaLab
             s += GetSpacingIndex(spacingIndex++);
 
             return s;
-        }
-
-        // Detach from the parser
-        public void Detach() {
-            parser.RemoveFileComponent(this);
-        }
-        public void InsertIntoParserAfter(Data reference) {
-            parser.InsertComponentAfter(reference, this);
-        }
-        public void InsertIntoParserBefore(Data reference) {
-            parser.InsertComponentBefore(reference, this);
         }
 
         // Helper function for GetString

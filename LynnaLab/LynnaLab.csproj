@@ -153,6 +153,7 @@
     <Compile Include="Plugins\DungeonEditor.cs" />
     <Compile Include="Plugins\MapleEditor.cs" />
     <Compile Include="Core\StreamValueReference.cs" />
+    <Compile Include="Plugins\ObjectFlattener.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
