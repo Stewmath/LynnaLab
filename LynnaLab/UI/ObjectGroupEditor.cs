@@ -226,8 +226,8 @@ namespace LynnaLab
 				case ObjectType.Conditional:        return CairoHelper.ConvertColor(System.Drawing.Color.Black);
 				case ObjectType.Interaction:        return CairoHelper.ConvertColor(System.Drawing.Color.DarkOrange);
 				case ObjectType.Pointer:            return CairoHelper.ConvertColor(System.Drawing.Color.Yellow);
-				case ObjectType.BossPointer:        return CairoHelper.ConvertColor(System.Drawing.Color.Green);
-				case ObjectType.AntiBossPointer:    return CairoHelper.ConvertColor(System.Drawing.Color.Blue);
+				case ObjectType.BeforeEvent:        return CairoHelper.ConvertColor(System.Drawing.Color.Green);
+				case ObjectType.AfterEvent:         return CairoHelper.ConvertColor(System.Drawing.Color.Blue);
 				case ObjectType.RandomEnemy:        return new Cairo.Color(128/256.0, 64/256.0, 0/256.0);
 				case ObjectType.SpecificEnemyA:     return new Cairo.Color(128/256.0, 64/256.0, 0/256.0);
 				case ObjectType.SpecificEnemyB:     return new Cairo.Color(128/256.0, 64/256.0, 0/256.0);

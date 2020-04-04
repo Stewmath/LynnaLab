@@ -4,11 +4,11 @@ using System.Collections.Generic;
 namespace LynnaLab
 {
     public enum ObjectGroupType {
-        Main,        // Top-level
+        Main,        // Top-level (has its own objects and also holds other ObjectGroups as children)
         Enemy,       // "obj_Pointer" referring to data named "enemyObjectData[...]".
         BeforeEvent, // "obj_BeforeEvent" pointer
         AfterEvent,  // "obj_AfterEvent" pointer
-        Other        // "obj_Pointers" referring to something other than "enemyObjectData[...]".
+        Other        // "obj_Pointer" referring to something other than "enemyObjectData[...]".
     };
 
     // This is similar to "RawObjectGroup", but it provides a different interface for handling
@@ -53,9 +53,9 @@ namespace LynnaLab
                     string label = obj.GetValue(0);
                     ObjectGroup child = Project.GetDataType<ObjectGroup>(label);
 
-                    if (objectType == ObjectType.BossPointer)
+                    if (objectType == ObjectType.BeforeEvent)
                         child.type = ObjectGroupType.BeforeEvent;
-                    else if (objectType == ObjectType.AntiBossPointer)
+                    else if (objectType == ObjectType.AfterEvent)
                         child.type = ObjectGroupType.AfterEvent;
                     else if (objectType == ObjectType.Pointer && label.Contains("EnemyObjectData")) {
                         // TODO: Check the full name

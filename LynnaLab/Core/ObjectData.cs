@@ -8,8 +8,8 @@ namespace LynnaLab {
         Conditional=0,
         Interaction,
         Pointer,
-        BossPointer,
-        AntiBossPointer,
+        BeforeEvent,
+        AfterEvent,
         RandomEnemy,
         SpecificEnemyA, // Normal (has flags, not var03)
         SpecificEnemyB, // QuadrupleValue (has var03, not flags)
@@ -26,8 +26,8 @@ namespace LynnaLab {
         NoValue,
         DoubleValue,
         Pointer,
-        BossPointer,
-        AntiBossPointer,
+        BeforeEvent,
+        AfterEvent,
         RandomEnemy,
         SpecificEnemy,
         Part,
@@ -146,11 +146,11 @@ namespace LynnaLab {
                 case ObjectType.Pointer:
                     definitionType = ObjectDefinitionType.Pointer;
                     break;
-                case ObjectType.BossPointer:
-                    definitionType = ObjectDefinitionType.BossPointer;
+                case ObjectType.BeforeEvent:
+                    definitionType = ObjectDefinitionType.BeforeEvent;
                     break;
-                case ObjectType.AntiBossPointer:
-                    definitionType = ObjectDefinitionType.AntiBossPointer;
+                case ObjectType.AfterEvent:
+                    definitionType = ObjectDefinitionType.AfterEvent;
                     break;
                 case ObjectType.RandomEnemy:
                     definitionType = ObjectDefinitionType.RandomEnemy;
@@ -194,7 +194,7 @@ namespace LynnaLab {
                 base.SetValue(0, Wla.ToByte((byte)subtype));
 
             if (definitionType >= ObjectDefinitionType.Pointer
-                    && definitionType <= ObjectDefinitionType.AntiBossPointer)
+                    && definitionType <= ObjectDefinitionType.AfterEvent)
                 base.SetValue(0, "objectData4000"); // Compileable default pointer
 
             base.disableCallbacks -= 1;
@@ -393,11 +393,11 @@ namespace LynnaLab {
             case ObjectDefinitionType.Pointer:
                 return ObjectType.Pointer;
 
-            case ObjectDefinitionType.BossPointer:
-                return ObjectType.BossPointer;
+            case ObjectDefinitionType.BeforeEvent:
+                return ObjectType.BeforeEvent;
 
-            case ObjectDefinitionType.AntiBossPointer:
-                return ObjectType.AntiBossPointer;
+            case ObjectDefinitionType.AfterEvent:
+                return ObjectType.AfterEvent;
 
             case ObjectDefinitionType.RandomEnemy:
                 return ObjectType.RandomEnemy;
@@ -493,7 +493,7 @@ namespace LynnaLab {
         // exists.
         public ObjectGroup GetPointedObjectGroup() {
             if (!(definitionType >= ObjectDefinitionType.Pointer
-                        && definitionType <= ObjectDefinitionType.AntiBossPointer))
+                        && definitionType <= ObjectDefinitionType.AfterEvent))
                 return null;
 
             try {
@@ -507,7 +507,7 @@ namespace LynnaLab {
 
         public bool IsPointerType() {
             ObjectType type = GetObjectType();
-            return type == ObjectType.Pointer || type == ObjectType.BossPointer || type == ObjectType.AntiBossPointer;
+            return type == ObjectType.Pointer || type == ObjectType.BeforeEvent || type == ObjectType.AfterEvent;
         }
 
         // Private methods
