@@ -27,7 +27,21 @@ namespace LynnaLab {
             base.Selectable = true;
             base.MaxIndex = objectGroup.GetNumObjects() - 1;
 
-            base.DrawImageWithTiles(this.TileDrawer);
+            objectGroup.ModifiedEvent += delegate(object sender, EventArgs args) {
+                RedrawAll();
+            };
+
+            TileGridEventHandler dragCallback = delegate(object sender, int index) {
+                if (index != SelectedIndex) {
+                    objectGroup.MoveObject(SelectedIndex, index);
+                    SelectedIndex = index;
+                }
+            };
+
+            base.AddMouseAction(MouseButton.Any, MouseModifier.Any | MouseModifier.Drag,
+                    GridAction.Callback, dragCallback);
+
+            RedrawAll();
         }
 
 
@@ -83,6 +97,10 @@ namespace LynnaLab {
                     cr.Stroke();
                 }
             }
+        }
+
+        void RedrawAll() {
+            base.DrawImageWithTiles(this.TileDrawer);
         }
     }
 }

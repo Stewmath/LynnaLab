@@ -23,6 +23,10 @@ namespace LynnaLab
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 
+        // Invoked when the group is modified in any way (including modifying objects themselves).
+        public EventHandler ModifiedEvent;
+
+
         private RawObjectGroup rawObjectGroup;
         ObjectGroupType type;
         List<ObjectGroup> children;
@@ -43,6 +47,7 @@ namespace LynnaLab
             children.Add(this);
             for (int i=0; i<rawObjectGroup.GetNumObjects(); i++) {
                 ObjectData obj = rawObjectGroup.GetObjectData(i);
+                obj.AddValueModifiedHandler(ModifiedHandler);
                 ObjectType objectType = obj.GetObjectType();
                 if (obj.IsPointerType()) {
                     string label = obj.GetValue(0);
@@ -105,6 +110,7 @@ namespace LynnaLab
 
         public void AddObject(ObjectType type) {
             rawObjectGroup.InsertObject(rawObjectGroup.GetNumObjects(), type);
+            ModifiedHandler(this, null);
         }
 
         public void RemoveObject(int index) {
@@ -115,6 +121,7 @@ namespace LynnaLab
                     continue;
                 if (count == index) {
                     rawObjectGroup.RemoveObject(i);
+                    ModifiedHandler(this, null);
                     return;
                 }
                 count++;
@@ -122,8 +129,17 @@ namespace LynnaLab
             throw new ArgumentException("Argument index=" + index + " is too high.");
         }
 
-        public void MoveObject(int index, int newIndex) {
-            // TODO
+        public void MoveObject(int oldIndex, int newIndex) {
+            if (oldIndex == newIndex)
+                return;
+
+            int oldRaw = ToRawIndex(oldIndex);
+            int newRaw = ToRawIndex(newIndex);
+
+            ObjectData data = rawObjectGroup.GetObjectData(oldRaw);
+            rawObjectGroup.RemoveObject(oldRaw);
+            rawObjectGroup.InsertObject(newRaw, data);
+            ModifiedHandler(this, null);
         }
 
 
@@ -134,6 +150,25 @@ namespace LynnaLab
         // should not be directly edited (and it is / will be disabled in the UI).
         internal void Separate() {
             // TODO
+        }
+
+
+        // Private methods
+
+        int ToRawIndex(int index) {
+            for (int i=0; i<rawObjectGroup.GetNumObjects(); i++) {
+                ObjectData data = rawObjectGroup.GetObjectData(i);
+                if (data.IsPointerType())
+                    continue;
+                if (index-- == 0)
+                    return i;
+            }
+            throw new Exception();
+        }
+
+        void ModifiedHandler(object sender, EventArgs args) {
+            if (ModifiedEvent != null)
+                ModifiedEvent(this, args);
         }
     }
 }
