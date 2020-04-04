@@ -66,10 +66,8 @@ namespace LynnaLab
             switch(bitmap.PixelFormat) {
             case PixelFormat.Format24bppRgb:
                 return Cairo.Format.Rgb24;
-                break;
             case PixelFormat.Format32bppArgb:
                 return Cairo.Format.Argb32;
-                break;
             default:
                 Console.WriteLine(bitmap.PixelFormat);
                 throw new InvalidBitmapFormatException("Couldn't convert System.Drawing format \"" + bitmap.PixelFormat + "\" to a Cairo format.");

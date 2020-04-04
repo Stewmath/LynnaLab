@@ -148,6 +148,8 @@ namespace LynnaLab
         // Calling this ensures that all of the data pointed to by this ObjectGroup is not shared
         // with anything else. The only exception is pointers to ObjectGroupType "Other". These
         // should not be directly edited (and it is / will be disabled in the UI).
+        // Since "ObjectDefinition" objects call this, they need to be in a valid state after this
+        // is called.
         internal void Separate() {
             // TODO
         }
