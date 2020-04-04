@@ -25,7 +25,7 @@ namespace LynnaLab
         }
 
         public override string GetStringValue() {
-            return Wla.ToByte((byte)GetIntValue());
+            return Wla.ToHex(GetIntValue(), 2);
         }
         public override int GetIntValue() {
             return Handler.GetIntValue(Name);

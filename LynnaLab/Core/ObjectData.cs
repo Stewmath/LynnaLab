@@ -190,7 +190,7 @@ namespace LynnaLab {
             }
 
             Command = RawObjectGroup.ObjectCommands[(int)definitionType];
-            base.SetNumValues(RawObjectGroup.ObjectCommandDefaultParams[(int)definitionType]);
+            base.SetNumValues(RawObjectGroup.ObjectCommandDefaultParams[(int)definitionType], "$00");
             if (definitionType == ObjectDefinitionType.QuadrupleValue)
                 base.SetValue(0, Wla.ToByte((byte)subtype));
 
@@ -218,7 +218,7 @@ namespace LynnaLab {
             this.Command = o.Command;
             this.definitionType = o.definitionType;
 
-            base.SetNumValues(o.GetNumValues());
+            base.SetNumValues(o.GetNumValues(), "$00");
             for (int i=0; i<o.GetNumValues(); i++)
                 SetValue(i, o.GetValue(i));
 
@@ -284,7 +284,7 @@ namespace LynnaLab {
 
             this.definitionType = definitionType;
             base.Command = RawObjectGroup.ObjectCommands[(int)definitionType];
-            base.SetNumValues(RawObjectGroup.ObjectCommandMinParams[(int)definitionType]);
+            base.SetNumValues(RawObjectGroup.ObjectCommandMinParams[(int)definitionType], "$00");
             dataValueReferenceGroup = new ValueReferenceGroup(objectValueReferences[(int)definitionType]);
             dataValueReferenceGroup.SetHandler(this);
 
@@ -382,7 +382,6 @@ namespace LynnaLab {
                         TranslateDefinitionType(ObjectDefinitionType.Part);
                 }
                 else {
-                    // TODO: SpecificEnemy check
                     TranslateDefinitionType(ObjectDefinitionType.QuadrupleValue, GetQuadSubtype());
                     dataValueReferenceGroup.SetValue(name, value);
                 }

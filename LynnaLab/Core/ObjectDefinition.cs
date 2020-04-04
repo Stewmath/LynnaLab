@@ -18,9 +18,8 @@ namespace LynnaLab {
             this.objectGroup = group;
             this.objectData = objectData;
 
-            var baseGroup = objectData.GetValueReferenceGroup();
             var valueReferences = new List<ValueReference>();
-            var handler = new ObjectValueReferenceHandler(this, baseGroup);
+            var handler = new ObjectValueReferenceHandler(this);
 
             foreach (var vref in objectData.GetValueReferences()) {
                 var newVref = new AbstractIntValueReference(vref, handler);
@@ -126,6 +125,11 @@ namespace LynnaLab {
         }
 
 
+        internal void SetObjectData(ObjectData data) {
+            objectData = data;
+        }
+
+
         // Private methods
 
         // Returns true if the object's type causes the XY values to have 4 bits rather than 8.
@@ -140,26 +144,26 @@ namespace LynnaLab {
 
         class ObjectValueReferenceHandler : BasicIntValueReferenceHandler {
             ObjectDefinition parent;
-            ValueReferenceGroup baseGroup;
             EventHandler modifiedHandler;
 
 
-            public override Project Project { get { return baseGroup.Project; } }
+            public override Project Project { get { return parent.objectData.Project; } }
 
 
-            public ObjectValueReferenceHandler(ObjectDefinition parent, ValueReferenceGroup baseGroup) {
+            public ObjectValueReferenceHandler(ObjectDefinition parent) {
                 this.parent = parent;
-                this.baseGroup = baseGroup;
             }
 
 
             public override int GetIntValue(string name) {
-                return baseGroup.GetIntValue(name);
+                return parent.objectData.GetIntValue(name);
             }
 
             public override void SetValue(string name, int value) {
-                parent.objectGroup.Separate();
-                baseGroup.SetValue(name, value);
+                if (value == GetIntValue(name))
+                    return;
+                parent.objectGroup.Isolate();
+                parent.objectData.SetValue(name, value);
                 if (modifiedHandler != null)
                     modifiedHandler(this, null);
             }

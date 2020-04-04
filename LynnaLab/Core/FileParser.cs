@@ -97,11 +97,6 @@ namespace LynnaLab
 
             log.Info("Began parsing \"" + Filename + "\".");
 
-            // Made-up label for the start of the file
-            Label l = new Label(this, Basename + "_start");
-            l.Fake = true;
-            InsertComponentAfter(null, l);
-
 
             string[] lines = File.ReadAllLines(FullFilename);
 

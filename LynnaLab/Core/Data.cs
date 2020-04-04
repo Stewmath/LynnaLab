@@ -163,9 +163,9 @@ namespace LynnaLab
         // End of ValueReferenceHandler implementation
 
 
-        public void SetNumValues(int n) {
+        public void SetNumValues(int n, string defaultValue) {
             while (values.Count < n) {
-                InsertValue(values.Count, ".");
+                InsertValue(values.Count, "$00");
             }
             while (values.Count > n)
                 RemoveValue(values.Count-1);

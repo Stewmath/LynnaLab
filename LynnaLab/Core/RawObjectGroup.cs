@@ -63,6 +63,9 @@ namespace LynnaLab
         public ObjectData GetObjectData(int index) {
             return objectDataList[index];
         }
+        public IList<ObjectData> GetObjectDataList() {
+            return new List<ObjectData>(objectDataList);
+        }
         public int GetNumObjects() {
             return objectDataList.Count-1; // Not counting InteracEnd
         }
@@ -77,20 +80,6 @@ namespace LynnaLab
         }
 
         public void InsertObject(int index, ObjectData data) {
-            if (GetNumObjects() == 0 && !IsIsolated()) {
-                // If this map is sharing data with other maps (as when "blank"), need to make
-                // a unique section for this map.
-
-                parser.RemoveLabel(Identifier);
-
-                parser.InsertParseableTextAfter(null, new String[]{""}); // Newline
-                parser.InsertComponentAfter(null, new Label(parser, Identifier));
-
-                ObjectData endData = new ObjectData(Project, parser, ObjectType.End);
-                parser.InsertComponentAfter(null, endData);
-                objectDataList[0] = endData;
-            }
-
             data.Attach(parser);
             data.InsertIntoParserBefore(objectDataList[index]);
             objectDataList.Insert(index, data);
@@ -101,27 +90,33 @@ namespace LynnaLab
             InsertObject(index, data);
         }
 
+        internal void Repoint() {
+            parser.RemoveLabel(Identifier);
+
+            FileComponent lastComponent;
+
+            parser.InsertParseableTextAfter(null, new String[]{""}); // Newline
+            lastComponent = new Label(parser, Identifier);
+            parser.InsertComponentAfter(null, lastComponent);
+
+            List<ObjectData> newList = new List<ObjectData>();
+            foreach (ObjectData old in objectDataList) {
+                ObjectData newData = new ObjectData(old);
+                newList.Add(newData);
+                parser.InsertComponentAfter(lastComponent, newData);
+                lastComponent = newData;
+            }
+
+            objectDataList = newList;
+        }
+
+
         // Used to be public, now considering deleting this
         void ReplaceObjects(IList<ObjectData> objectList) {
             while (GetNumObjects() > 0)
                 RemoveObject(0);
             foreach (ObjectData o in objectList)
                 InsertObject(GetNumObjects(), o);
-        }
-
-        // Returns true if no data is shared with another label
-        // TODO: Handle the case where the pointer is in the middle of another pointer's data (this
-        // happens, ie. "group1Map13ObjectData" in ages).
-        bool IsIsolated() {
-            FileComponent d = objectDataList[0];
-
-            d = d.Prev;
-            if (!(d is Label))
-                return true; // This would be an odd case, there should be at least one label...
-
-            if (d.Prev is Label)
-                return false;
-            return true;
         }
     }
 }
