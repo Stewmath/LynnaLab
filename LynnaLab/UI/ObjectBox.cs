@@ -29,6 +29,7 @@ namespace LynnaLab {
 
             objectGroup.ModifiedEvent += delegate(object sender, EventArgs args) {
                 RedrawAll();
+                base.MaxIndex = objectGroup.GetNumObjects() - 1;
             };
 
             TileGridEventHandler dragCallback = delegate(object sender, int index) {

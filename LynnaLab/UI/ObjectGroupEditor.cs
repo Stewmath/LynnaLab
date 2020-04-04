@@ -103,7 +103,6 @@ namespace LynnaLab
 
             foreach (ObjectGroup group in topObjectGroup.GetAllGroups()) {
                 var objectBox = new ObjectBox(group);
-                objectBoxContainer.Add(objectBox);
 
                 objectBox.TileSelectedEvent += delegate(object sender, int index) {
                     if (!disableBoxCallback)
@@ -111,6 +110,11 @@ namespace LynnaLab
                 };
 
                 objectBoxDict.Add(group, objectBox);
+
+                Gtk.Frame frame = new Gtk.Frame();
+                frame.Label = GetGroupName(group);
+                frame.Add(objectBox);
+                objectBoxContainer.Add(frame);
             }
 
             SelectObject(TopObjectGroup, 0);
@@ -142,6 +146,8 @@ namespace LynnaLab
 
 
         void SetObject(ObjectDefinition obj) {
+            if (activeObject == obj)
+                return;
             activeObject = obj;
 
             System.Action handler = delegate() {
@@ -236,5 +242,24 @@ namespace LynnaLab
 			}
             return new Cairo.Color(1.0, 1.0, 1.0); // End, EndPointer, Garbage types should never be drawn
 		}
+
+        static String GetGroupName(ObjectGroup group) {
+            ObjectGroupType type = group.GetGroupType();
+
+            switch (type) {
+            case ObjectGroupType.Main:
+                return "Main objects";
+            case ObjectGroupType.Enemy:
+                return "Enemy objects";
+            case ObjectGroupType.BeforeEvent:
+                return "(Enemy) objects before event";
+            case ObjectGroupType.AfterEvent:
+                return "(Enemy) objects after event";
+            case ObjectGroupType.Other:
+                return group.Identifier;
+            }
+
+            throw new Exception("Unexpected thing happened");
+        }
     }
 }

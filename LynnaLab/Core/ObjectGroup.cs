@@ -77,6 +77,10 @@ namespace LynnaLab
 
         // Public methods
 
+        public ObjectGroupType GetGroupType() {
+            return type;
+        }
+
         // Gets all non-pointer objects in this group. This is a shallow operation (does not check
         // pointers).
         public IList<ObjectDefinition> GetObjects() {

@@ -423,6 +423,8 @@ namespace LynnaLab
                     }
                 }
             }
+
+            QueueDraw();
         }
 
 
