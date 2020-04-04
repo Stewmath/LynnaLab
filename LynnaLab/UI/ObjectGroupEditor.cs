@@ -33,6 +33,7 @@ namespace LynnaLab
             "An item drops when a tile is destroyed at a given location."
         };
 
+
         ObjectGroup topObjectGroup, selectedObjectGroup;
         ObjectDefinition activeObject;
         int selectedIndex = -1;
@@ -123,7 +124,14 @@ namespace LynnaLab
             selectedIndex = Math.Min(index, selectedObjectGroup.GetNumObjects()-1);
 
             disableBoxCallback = true;
-            objectBoxDict[group].SetSelectedIndex(index);
+
+            foreach (ObjectGroup g2 in topObjectGroup.GetAllGroups()) {
+                if (g2 == selectedObjectGroup)
+                    objectBoxDict[g2].SetSelectedIndex(index);
+                else
+                    objectBoxDict[g2].SetSelectedIndex(-1);
+            }
+
             disableBoxCallback = false;
 
             if (selectedIndex == -1)
@@ -206,5 +214,27 @@ namespace LynnaLab
             }
             editor.UpdateHelpButtons();
         }
+
+
+        // Static methods
+
+        // Objects colors match ZOLE mostly
+		public static Cairo.Color GetObjectColor(ObjectType type)
+		{
+			switch (type)
+			{
+				case ObjectType.Conditional:        return CairoHelper.ConvertColor(System.Drawing.Color.Black);
+				case ObjectType.Interaction:        return CairoHelper.ConvertColor(System.Drawing.Color.DarkOrange);
+				case ObjectType.Pointer:            return CairoHelper.ConvertColor(System.Drawing.Color.Yellow);
+				case ObjectType.BossPointer:        return CairoHelper.ConvertColor(System.Drawing.Color.Green);
+				case ObjectType.AntiBossPointer:    return CairoHelper.ConvertColor(System.Drawing.Color.Blue);
+				case ObjectType.RandomEnemy:        return new Cairo.Color(128/256.0, 64/256.0, 0/256.0);
+				case ObjectType.SpecificEnemyA:     return new Cairo.Color(128/256.0, 64/256.0, 0/256.0);
+				case ObjectType.SpecificEnemyB:     return new Cairo.Color(128/256.0, 64/256.0, 0/256.0);
+				case ObjectType.Part:               return CairoHelper.ConvertColor(System.Drawing.Color.Gray);
+				case ObjectType.ItemDrop:           return CairoHelper.ConvertColor(System.Drawing.Color.Lime);
+			}
+            return new Cairo.Color(1.0, 1.0, 1.0); // End, EndPointer, Garbage types should never be drawn
+		}
     }
 }

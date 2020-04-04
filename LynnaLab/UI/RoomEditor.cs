@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+using Bitmap = System.Drawing.Bitmap;
 using System.Collections.Generic;
 using Gtk;
 
@@ -242,40 +242,25 @@ namespace LynnaLab
             if (topGroup == null)
                 return;
 
-            int index = 0;
             hoveringObjectGroup = null;
 
             foreach (ObjectGroup group in topGroup.GetAllGroups()) {
                 for (int i=0; i<group.GetNumObjects(); i++) {
                     ObjectDefinition obj = group.GetObject(i);
-                    Color color = obj.GetColor();
+                    Cairo.Color color = ObjectGroupEditor.GetObjectColor(obj.GetObjectType());
                     int x,y;
                     int width;
-                    if (obj.HasXY()) {
-                        x = obj.GetX();
-                        y = obj.GetY();
-                        width = 16;
-                        // Objects with specific positions get
-                        // transparency
-                        color = Color.FromArgb(0xc0,color.R,color.G,color.B);
-                    }
-                    else {
-                        // No X/Y values exist
-                        x = index;
-                        y = 0;
-                        while (x >= 0xf) {
-                            x -= 0xf;
-                            y++;
-                        }
-                        x *= 16;
-                        y *= 16;
-                        x += 8;
-                        y += 8;
-                        width = 8;
-                        index++;
-                    }
+                    if (!obj.HasXY())
+                        continue;
 
-                    if (editor != null && i == editor.SelectedIndex) {
+                    x = obj.GetX();
+                    y = obj.GetY();
+                    width = 16;
+                    // Objects with specific positions get
+                    // transparency
+                    color = new Cairo.Color(color.R,color.G,color.B,0.75);
+
+                    if (editor != null && group == editor.SelectedObjectGroup && i == editor.SelectedIndex) {
                         selectedX = x-8 + XOffset;
                         selectedY = y-8 + YOffset;
                     }
@@ -289,7 +274,7 @@ namespace LynnaLab
 
                     // x and y are the center coordinates for the object
 
-                    cr.SetSourceColor(CairoHelper.ConvertColor(color));
+                    cr.SetSourceColor(color);
                     cr.Rectangle(x-width/2+XOffset, y-width/2+YOffset, width, width);
                     cr.Fill();
 
@@ -306,7 +291,7 @@ namespace LynnaLab
                             double xPos = x-width/2 + XOffset + 0.5;
                             double yPos = y-width/2 + YOffset + 0.5;
 
-                            cr.SetSourceColor(CairoHelper.ConvertColor(Color.Blue));
+                            cr.SetSourceColor(new Cairo.Color(1.0, 0, 0));
                             cr.MoveTo(xPos, yPos);
                             cr.LineTo(xPos+width-1, yPos+width-1);
                             cr.MoveTo(xPos+width-1, yPos);

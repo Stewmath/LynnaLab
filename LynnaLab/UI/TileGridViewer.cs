@@ -62,7 +62,13 @@ namespace LynnaLab
         public int PaddingX { get; set; }
         public int PaddingY { get; set; }
 
-        public event System.Action HoverChangedEvent;
+        public int MaxIndex {
+            get { return Math.Min(_maxIndex, Width * Height); }
+            set {
+                _maxIndex = value;
+                hoveringIndex = Math.Min(hoveringIndex, MaxIndex);
+            }
+        }
 
 
         // Subclasses can either override "Image" to set the image, or call the "DrawImageWithTiles"
@@ -72,8 +78,17 @@ namespace LynnaLab
         protected virtual Surface Surface { get; }
 
 
+        public event System.Action HoverChangedEvent;
+
+
+        // Private variables
+
         int hoveringIndex = -1;
+        int _maxIndex = int.MaxValue;
         Bitmap _image;
+
+
+        // Constructors
 
         public TileGridViewer() : base() {
             this.MotionNotifyEvent += new MotionNotifyEventHandler(OnMoveMouse);
@@ -84,9 +99,16 @@ namespace LynnaLab
             Scale = 1;
         }
 
+
+        // Methods
+
+        // Check if the given "real" position (in pixels) is in bounds. This ALSO check that the
+        // index that it's hovering over does not exceet MaxIndex.
         public bool IsInBounds(int x, int y) {
             Cairo.Rectangle p = GetTotalBounds();
-            return (x >= p.X && y >= p.Y && x < p.X + p.Width && y < p.Y + p.Height);
+            if (!(x >= p.X && y >= p.Y && x < p.X + p.Width && y < p.Y + p.Height))
+                return false;
+            return GetGridIndex(x, y) <= MaxIndex;
         }
 
         // Convert a "real" position (in pixels) into a grid position (in tiles).
@@ -94,6 +116,12 @@ namespace LynnaLab
             int x2 = (x - XOffset) / ((TileWidth  * Scale) + (PaddingX * 2));
             int y2 = (y - YOffset) / ((TileHeight * Scale) + (PaddingY * 2));
             return new Cairo.Point(x2, y2);
+        }
+
+        // Convert a "real" position (in pixels) to an index.
+        public int GetGridIndex(int x, int y) {
+            Cairo.Point p = GetGridPosition(x, y);
+            return p.X + p.Y * Width;
         }
 
         protected void OnMoveMouse(object o, MotionNotifyEventArgs args) {
@@ -218,6 +246,10 @@ namespace LynnaLab
             _image = new Bitmap((int)totalRect.Width, (int)totalRect.Height);
 
             using (Cairo.Context cr = new BitmapContext(_image)) {
+                cr.SetSourceColor(new Cairo.Color(0.8, 0.8, 0.8));
+                cr.Rectangle(totalRect.X, totalRect.Y, totalRect.Width, totalRect.Height);
+                cr.Fill();
+
                 for (int i=0; i<Width*Height; i++) {
                     int tileX = i%Width;
                     int tileY = i/Width;

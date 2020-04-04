@@ -40,7 +40,7 @@ namespace LynnaLab
         protected override void Dispose(bool disposeAll) {
             base.Dispose(disposeAll);
             if (bitmap != null) {
-                bitmap.UnlockBits(LockBitmap(bitmap));
+                bitmap.UnlockBits(bitmapDataDict[bitmap]);
                 bitmapDataDict.Remove(bitmap);
                 bitmap = null;
             }
@@ -54,7 +54,7 @@ namespace LynnaLab
 
         static BitmapData LockBitmap(Bitmap bitmap) {
             if (bitmapDataDict.ContainsKey(bitmap))
-                return bitmapDataDict[bitmap];
+                throw new Exception("Tried to lock an already locked bitmap!");
             bitmapDataDict[bitmap] = bitmap.LockBits(
                     new System.Drawing.Rectangle(0,0,bitmap.Width,bitmap.Height),
                     ImageLockMode.ReadWrite,
@@ -77,7 +77,7 @@ namespace LynnaLab
         }
 
         static int GetStride(Bitmap bitmap) {
-            return Math.Abs(LockBitmap(bitmap).Stride);
+            return Math.Abs(bitmapDataDict[bitmap].Stride);
         }
     }
 
@@ -103,7 +103,7 @@ namespace LynnaLab
 
         static BitmapSurface GetBitmapSurface(Bitmap bitmap) {
             if (surfaceDict.ContainsKey(bitmap))
-                return surfaceDict[bitmap];
+                throw new Exception("Tried to lock an already locked bitmap!");
             surfaceDict[bitmap] = new BitmapSurface(bitmap);
             return surfaceDict[bitmap];
         }

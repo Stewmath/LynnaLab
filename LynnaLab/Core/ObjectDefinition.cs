@@ -37,25 +37,6 @@ namespace LynnaLab {
             return objectData.GetObjectType();
         }
 
-        // Object colors match ZOLE mostly
-		public Color GetColor()
-		{
-			switch (GetObjectType())
-			{
-				case ObjectType.Conditional:        return Color.Black;
-				case ObjectType.Interaction:        return Color.DarkOrange;
-				case ObjectType.Pointer:            return Color.Yellow;
-				case ObjectType.BossPointer:        return Color.Green;
-				case ObjectType.AntiBossPointer:    return Color.Blue;
-				case ObjectType.RandomEnemy:        return Color.FromArgb(128, 64, 0);
-				case ObjectType.SpecificEnemyA:     return Color.FromArgb(128, 64, 0);
-				case ObjectType.SpecificEnemyB:     return Color.FromArgb(128, 64, 0);
-				case ObjectType.Part:               return Color.Gray;
-				case ObjectType.ItemDrop:           return Color.Lime;
-			}
-            return Color.White;
-		}
-
         /// <summary>
         ///  Returns true if the X/Y variables are 4-bits instead of 8 (assuming it has X/Y in the
         ///  first place).

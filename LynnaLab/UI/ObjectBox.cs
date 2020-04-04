@@ -25,6 +25,7 @@ namespace LynnaLab {
             base.PaddingY = 2;
 
             base.SelectedIndex = -1;
+            base.MaxIndex = objectGroup.GetNumObjects() - 1;
 
             base.DrawImageWithTiles(this.TileDrawer);
         }
@@ -47,7 +48,7 @@ namespace LynnaLab {
                 Cairo.Context cr = new Cairo.Context(surface);
 
                 ObjectDefinition obj = objectGroup.GetObject(index);
-                cr.SetSourceColor(CairoHelper.ConvertColor(obj.GetColor()));
+                cr.SetSourceColor(ObjectGroupEditor.GetObjectColor(obj.GetObjectType()));
                 cr.Rectangle(0, 0, 18, 18);
                 cr.Fill();
                 cr.Rectangle(1, 1, 16, 16); // Cut off object drawing outside 16x16 area
