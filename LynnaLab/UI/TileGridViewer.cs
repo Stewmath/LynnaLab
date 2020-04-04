@@ -331,8 +331,14 @@ namespace LynnaLab
                 using (Surface source = new BitmapSurface(orig)) {
                     cr.Scale(Scale, Scale);
                     cr.SetSource(source, XOffset, YOffset);
-                    ((SurfacePattern)cr.Source).Filter = Filter.Nearest;
-                    cr.Scale(1.0/Scale, 1.0/Scale);
+
+                    if (Scale != 1) {
+                        // NOTE: Don't know how or why, but this line causes memory leaks to be
+                        // reported...
+                        ((SurfacePattern)cr.Source).Filter = Filter.Nearest;
+
+                        cr.Scale(1.0/Scale, 1.0/Scale);
+                    }
                     cr.Paint();
                 }
             }

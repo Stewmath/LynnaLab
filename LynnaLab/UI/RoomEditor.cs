@@ -124,7 +124,7 @@ namespace LynnaLab
         void RedrawSurface() {
             if (_surface != null)
                 _surface.Dispose();
-            _surface = CairoHelper.CopyBitmap(room.GetImage());
+            _surface = new BitmapSurface(new Bitmap(room.GetImage()));
             QueueDraw();
         }
 

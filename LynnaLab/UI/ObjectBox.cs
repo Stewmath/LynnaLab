@@ -59,9 +59,7 @@ namespace LynnaLab {
 
             Bitmap bitmap = new Bitmap(18, 18);
 
-            using (Cairo.Surface surface = new BitmapSurface(bitmap)) {
-                Cairo.Context cr = new Cairo.Context(surface);
-
+            using (Cairo.Context cr = new BitmapContext(bitmap)) {
                 ObjectDefinition obj = objectGroup.GetObject(index);
                 cr.SetSourceColor(ObjectGroupEditor.GetObjectColor(obj.GetObjectType()));
                 cr.Rectangle(0, 0, 18, 18);
@@ -69,8 +67,6 @@ namespace LynnaLab {
                 cr.Rectangle(1, 1, 16, 16); // Cut off object drawing outside 16x16 area
                 cr.Clip();
                 DrawObject(obj, cr, 9, 9);
-
-                cr.Dispose();
             }
             return bitmap;
         }
