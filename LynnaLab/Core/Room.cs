@@ -41,10 +41,9 @@ namespace LynnaLab
         }
 
         internal Room(Project p, int i) : base(p,i) {
-            int areaID;
             Stream groupAreasFile = GetAreaMappingFile();
             groupAreasFile.Position = Index&0xff;
-            areaID = groupAreasFile.ReadByte() & 0x7f;
+            int areaID = groupAreasFile.ReadByte() & 0x7f;
 
             Area a = Project.GetIndexedDataType<Area>(areaID);
             SetArea(a);

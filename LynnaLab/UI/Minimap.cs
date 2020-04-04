@@ -4,7 +4,7 @@ using System.Drawing;
 namespace LynnaLab
 {
     [System.ComponentModel.ToolboxItem(true)]
-    public class Minimap : TileGridSelector
+    public class Minimap : TileGridViewer
     {
         Bitmap _image;
         Map _map;
@@ -47,9 +47,11 @@ namespace LynnaLab
         public Minimap()
         {
             scale = 1.0/8;
+            Selectable = true;
+            SelectedIndex = 0;
         }
 
-        public Minimap(double scale) {
+        public Minimap(double scale) : this() {
             this.scale = scale;
         }
 

@@ -16,6 +16,7 @@ namespace LynnaLab
         }
 
         public bool ViewObjects {get; set;}
+        public bool ViewObjectBoxes {get; set;}
 
         protected override Bitmap Image {
             get {
@@ -31,7 +32,7 @@ namespace LynnaLab
         }
 
         Room room;
-        TileGridSelector client;
+        TileGridViewer client;
         ObjectGroupEditor objectEditor;
         int mouseX=-1,mouseY=-1;
 
@@ -48,6 +49,8 @@ namespace LynnaLab
             TileHeight = 16;
             XOffset = 8;
             YOffset = 8;
+
+            ViewObjectBoxes = true;
 
             this.ButtonPressEvent += delegate(object o, ButtonPressEventArgs args)
             {
@@ -82,7 +85,7 @@ namespace LynnaLab
             };
         }
 
-        public void SetClient(TileGridSelector client) {
+        public void SetClient(TileGridViewer client) {
             this.client = client;
         }
 
@@ -229,7 +232,7 @@ namespace LynnaLab
                 // Object selected
                 if (selectedX != -1) {
                     cr.Rectangle(selectedX+0.5, selectedY+0.5, 15, 15);
-                    cr.SetSourceColor(TileGridSelector.SelectionColor);
+                    cr.SetSourceColor(TileGridViewer.SelectionColor);
                     cr.LineWidth = 1;
                     cr.Stroke();
                 }
@@ -274,9 +277,11 @@ namespace LynnaLab
 
                     // x and y are the center coordinates for the object
 
-                    cr.SetSourceColor(color);
-                    cr.Rectangle(x-width/2+XOffset, y-width/2+YOffset, width, width);
-                    cr.Fill();
+                    if (ViewObjectBoxes) {
+                        cr.SetSourceColor(color);
+                        cr.Rectangle(x-width/2+XOffset, y-width/2+YOffset, width, width);
+                        cr.Fill();
+                    }
 
                     if (obj.GetGameObject() != null) {
                         try {

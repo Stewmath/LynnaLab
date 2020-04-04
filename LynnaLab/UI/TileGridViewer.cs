@@ -6,30 +6,50 @@ using Gtk;
 
 namespace LynnaLab
 {
+    enum MouseButton {
+        LEFT_CLICK,
+        RIGHT_CLICK // [PLANNED]
+    }
+
+    [Flags]
+    enum MouseModifier {
+        ANY = 0,
+        NONE = 1,
+        CTRL = 2,  // [PLANNED]
+        SHIFT = 4, // [PLANNED]
+        DRAG = 8   // [PLANNED]
+    }
+
+    enum GridAction {
+        SELECT,       // Set the selected tile (bound to LEFT_CLICK with ANY modifier by default)
+        SELECTRANGE,  // [PLANNED] Select a range of tiles
+        CALLBACK      // [PLANNED] Invoke a callback whenever the tile is clicked, or the drag changes
+    }
+
     public abstract class TileGridViewer : Gtk.DrawingArea {
-        public static readonly Cairo.Color HoverColor = new Cairo.Color(255,0,0);
+        public static readonly Cairo.Color HoverColor = new Cairo.Color(1.0,0,0);
+        public static readonly Cairo.Color SelectionColor = new Cairo.Color(1.0, 1.0, 1.0);
 
-        [BrowsableAttribute(false)]
+
         public int Width { get; set; }
-
-        [BrowsableAttribute(false)]
         public int Height { get; set; }
 
-        [BrowsableAttribute(false)]
         public int TileWidth { get; set; }
-
-        [BrowsableAttribute(false)]
         public int TileHeight { get; set; }
 
-        [BrowsableAttribute(false)]
         public int Scale { get; set; }
 
-        [BrowsableAttribute(false)]
-        // Pixel offset where grid starts
+        // Pixel offset where grid starts (TODO: replace with padding)
         public int XOffset { get; set; }
-
-        [BrowsableAttribute(false)]
         public int YOffset { get; set; }
+
+        // Padding on each side of each tile on the grid, before scaling (default = 0)
+        public int PaddingX { get; set; }
+        public int PaddingY { get; set; }
+
+        public bool Selectable { get; set; }
+        public bool Draggable { get; set; }
+
 
         public int HoveringIndex
         {
@@ -37,7 +57,7 @@ namespace LynnaLab
         }
         public int HoveringX
         {
-            get { 
+            get {
                 if (Width == 0) return 0;
                 return hoveringIndex%Width;
             }
@@ -50,6 +70,38 @@ namespace LynnaLab
             }
         }
 
+        // This can be set to -1 for "nothing selected".
+        public int SelectedIndex
+        {
+            get { return selectedIndex; }
+            set {
+                if (selectedIndex != value) {
+                    var rect = GetTileRectSansPadding(SelectedX, SelectedY);
+                    QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
+                    selectedIndex = value;
+                    rect = GetTileRectSansPadding(SelectedX, SelectedY);
+                    QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
+                }
+                if (TileSelectedEvent != null)
+                    TileSelectedEvent(this);
+            }
+        }
+        public int SelectedX
+        {
+            get {
+                if (Width == 0) return 0;
+                return selectedIndex%Width;
+            }
+        }
+        public int SelectedY
+        {
+            get {
+                if (Height == 0) return 0;
+                return selectedIndex/Width;
+            }
+        }
+
+
         // Size of tile (not including spacing)
         public int ScaledTileWidth {
             get { return TileWidth*Scale; }
@@ -57,10 +109,6 @@ namespace LynnaLab
         public int ScaledTileHeight {
             get { return TileHeight*Scale; }
         }
-
-        // Padding on each side of a grid, before scaling (default = 0)
-        public int PaddingX { get; set; }
-        public int PaddingY { get; set; }
 
         public int MaxIndex {
             get { return Math.Min(_maxIndex, Width * Height); }
@@ -78,12 +126,17 @@ namespace LynnaLab
         protected virtual Surface Surface { get; }
 
 
+        // Event triggered when the hovering tile changes
         public event System.Action HoverChangedEvent;
+
+        // Event trigger when a tile is selected
+        public delegate void TileSelectedEventHandler(object sender);
+        public event TileSelectedEventHandler TileSelectedEvent;
 
 
         // Private variables
 
-        int hoveringIndex = -1;
+        int hoveringIndex = -1, selectedIndex = -1;
         int _maxIndex = int.MaxValue;
         Bitmap _image;
 
@@ -91,6 +144,7 @@ namespace LynnaLab
         // Constructors
 
         public TileGridViewer() : base() {
+            this.ButtonPressEvent += new ButtonPressEventHandler(OnButtonPressEvent);
             this.MotionNotifyEvent += new MotionNotifyEventHandler(OnMoveMouse);
             this.LeaveNotifyEvent += new LeaveNotifyEventHandler(OnMouseLeave);
             this.Events = Gdk.EventMask.PointerMotionMask | Gdk.EventMask.LeaveNotifyMask |
@@ -123,6 +177,43 @@ namespace LynnaLab
             Cairo.Point p = GetGridPosition(x, y);
             return p.X + p.Y * Width;
         }
+
+
+        // Protected methods
+
+        protected void OnButtonPressEvent(object o, ButtonPressEventArgs args) {
+            int x,y;
+            Gdk.ModifierType state;
+            args.Event.Window.GetPointer(out x, out y, out state);
+
+            if (IsInBounds(x, y)) {
+                Cairo.Point pos = GetGridPosition(x, y);
+                SelectedIndex = pos.X + pos.Y * Width;
+            }
+        }
+
+        protected void OnMotionNotifyEvent(object o, MotionNotifyEventArgs args) {
+            if (!Draggable)
+                return;
+
+            int x,y;
+            Gdk.ModifierType state;
+            args.Event.Window.GetPointer(out x, out y, out state);
+
+            if (!state.HasFlag(Gdk.ModifierType.Button1Mask)
+                    || state.HasFlag(Gdk.ModifierType.Button3Mask))
+                return;
+
+            if (IsInBounds(x, y)) {
+                Cairo.Point pos = GetGridPosition(x, y);
+                int newIndex = pos.X + pos.Y * Width;
+                // When dragging, only fire the event when a different square
+                // is reached
+                if (SelectedIndex != newIndex)
+                    SelectedIndex = newIndex;
+            }
+        }
+
 
         protected void OnMoveMouse(object o, MotionNotifyEventArgs args) {
             int x,y;
@@ -197,6 +288,18 @@ namespace LynnaLab
                 cr.LineWidth = 1;
                 cr.LineJoin = LineJoin.Bevel;
                 cr.Stroke();
+            }
+
+            if (Selectable) {
+                var rect = GetTileRectSansPadding(SelectedX, SelectedY);
+
+                if (IsInBounds((int)rect.X, (int)rect.Y)) {
+                    cr.NewPath();
+                    cr.SetSourceColor(SelectionColor);
+                    cr.Rectangle(rect.X + 0.5, rect.Y + 0.5, rect.Width-1, rect.Height-1);
+                    cr.LineWidth = 1;
+                    cr.Stroke();
+                }
             }
 
             return true;

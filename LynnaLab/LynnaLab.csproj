@@ -118,7 +118,6 @@
     <Compile Include="Core\PaletteHeaderGroup.cs" />
     <Compile Include="LogHelper.cs" />
     <Compile Include="Core\ValueReferenceGroup.cs" />
-    <Compile Include="UI\TileGridSelector.cs" />
     <Compile Include="UI\HighlightingMinimap.cs" />
     <Compile Include="UI\ObjectGroupEditor.cs" />
     <Compile Include="Core\RawObjectGroup.cs" />

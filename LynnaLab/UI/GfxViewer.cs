@@ -4,7 +4,7 @@ using Gtk;
 
 namespace LynnaLab
 {
-    public partial class GfxViewer : TileGridSelector {
+    public partial class GfxViewer : TileGridViewer {
 
         override protected Bitmap Image {
             get { return image; }
@@ -21,6 +21,8 @@ namespace LynnaLab
             Width = 0;
             Height = 0;
             Scale = 2;
+            Selectable = true;
+            SelectedIndex = 0;
         }
 
         public void SetGraphicsState(GraphicsState state, int offsetStart, int offsetEnd, int width=-1, int scale=2)

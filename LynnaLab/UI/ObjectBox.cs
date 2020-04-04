@@ -5,7 +5,7 @@ using Cairo;
 
 namespace LynnaLab {
 
-    public class ObjectBox : TileGridSelector {
+    public class ObjectBox : TileGridViewer {
         ObjectGroup objectGroup;
 
 
@@ -24,7 +24,7 @@ namespace LynnaLab {
             base.PaddingX = 2;
             base.PaddingY = 2;
 
-            base.SelectedIndex = -1;
+            base.Selectable = true;
             base.MaxIndex = objectGroup.GetNumObjects() - 1;
 
             base.DrawImageWithTiles(this.TileDrawer);

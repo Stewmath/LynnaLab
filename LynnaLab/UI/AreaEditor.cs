@@ -195,7 +195,7 @@ namespace LynnaLab
 
     // Draws the tile with the ability to select a quadrant to change the
     // properties.
-    class SubTileViewer : TileGridSelector {
+    class SubTileViewer : TileGridViewer {
 
         int _tileIndex;
         Area area;
@@ -251,6 +251,8 @@ namespace LynnaLab
             TileWidth = 8;
             TileHeight = 8;
             Scale = 2;
+            Selectable = true;
+            SelectedIndex = 0;
 
             TileSelectedEvent += delegate(object sender) {
                 SubTileChangedEvent();
@@ -263,7 +265,7 @@ namespace LynnaLab
     }
 
     // Draws the tile with red rectangle representing solidity.
-    class SubTileCollisionEditor : TileGridSelector {
+    class SubTileCollisionEditor : TileGridViewer {
 
         int _tileIndex;
         Area area;

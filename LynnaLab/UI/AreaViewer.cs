@@ -6,7 +6,7 @@ using Gtk;
 namespace LynnaLab
 {
     [System.ComponentModel.ToolboxItem(true)]
-    public class AreaViewer : TileGridSelector
+    public class AreaViewer : TileGridViewer
     {
         public Project Project {
             get {
@@ -37,6 +37,8 @@ namespace LynnaLab
             TileHeight = 16;
             Width = 16;
             Height = 16;
+            Selectable = true;
+            SelectedIndex = 0;
         }
 
         public void SetArea(Area a) {
