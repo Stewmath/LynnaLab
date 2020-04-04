@@ -27,9 +27,9 @@ namespace LynnaLab
             this.Build();
 
             subTileGfxViewer = new GfxViewer();
-            subTileGfxViewer.TileSelectedEvent += delegate(object sender) {
+            subTileGfxViewer.TileSelectedEvent += delegate(object sender, int index) {
                 if (subTileEditor != null)
-                    subTileEditor.SubTileIndex = (byte)(subTileGfxViewer.SelectedIndex^0x80);
+                    subTileEditor.SubTileIndex = (byte)(index^0x80);
             };
             subTileGfxContainer.Add(subTileGfxViewer);
 
@@ -71,8 +71,8 @@ namespace LynnaLab
 
             areaviewer1.SetArea(area);
 
-            areaviewer1.TileSelectedEvent += delegate(object sender) {
-                subTileEditor.SetTileIndex(areaviewer1.SelectedIndex);
+            areaviewer1.TileSelectedEvent += delegate(object sender, int index) {
+                subTileEditor.SetTileIndex(index);
             };
 
             areaSpinButton.Value = area.Index;
@@ -254,7 +254,7 @@ namespace LynnaLab
             Selectable = true;
             SelectedIndex = 0;
 
-            TileSelectedEvent += delegate(object sender) {
+            TileSelectedEvent += delegate(object sender, int index) {
                 SubTileChangedEvent();
             };
         }
@@ -313,11 +313,9 @@ namespace LynnaLab
             TileWidth = 8;
             TileHeight = 8;
             Scale = 2;
-            Selectable = false;
-            Draggable = true;
 
             // On clicked...
-            TileSelectedEvent += delegate(object sender) {
+            TileGridEventHandler callback = delegate(object sender, int index) {
                 // Toggle the collision of the subtile if it uses the
                 // "basic" collision mode (upper nibble is zero).
                 if ((area.GetTileCollision(TileIndex)&0xf0) == 0) {
@@ -325,6 +323,8 @@ namespace LynnaLab
                             !GetBasicCollision(TileIndex, HoveringX, HoveringY));
                 }
             };
+
+            base.AddMouseAction(MouseButton.Any, MouseModifier.Any | MouseModifier.Drag, GridAction.Callback, callback);
         }
 
         bool GetBasicCollision(int subTile, int x, int y) {

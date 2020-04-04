@@ -244,7 +244,7 @@ namespace Plugins
             // Middle column (minimap)
 
             minimap = new Minimap();
-            minimap.TileSelectedEvent += (sender) => {
+            minimap.TileSelectedEvent += (sender, index) => {
                 RoomChanged();
             };
 

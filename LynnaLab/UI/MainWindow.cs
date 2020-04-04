@@ -114,11 +114,11 @@ public class MainWindow: Gtk.Window
 
         roomeditor1.SetClient(areaviewer1);
         roomeditor1.SetObjectGroupEditor(objectgroupeditor1);
-        dungeonMinimap.TileSelectedEvent += delegate(object sender) {
+        dungeonMinimap.TileSelectedEvent += delegate(object sender, int index) {
             Room room = dungeonMinimap.GetRoom();
             SetRoom(room);
         };
-        worldMinimap.TileSelectedEvent += delegate(object sender) {
+        worldMinimap.TileSelectedEvent += delegate(object sender, int index) {
             Room room = worldMinimap.GetRoom();
             SetRoom(room);
         };
@@ -126,20 +126,20 @@ public class MainWindow: Gtk.Window
         areaviewer1.HoverChangedEvent += delegate() {
             if (areaviewer1.HoveringIndex == -1)
                 statusbar1.Push(1,
-                        "Selected Tile: 0x" + areaviewer1.SelectedIndex.ToString("X2")); 
+                        "Selected Tile: 0x" + areaviewer1.SelectedIndex.ToString("X2"));
             else
                 statusbar1.Push(1,
-                        "Hovering Tile: 0x" + areaviewer1.HoveringIndex.ToString("X2")); 
+                        "Hovering Tile: 0x" + areaviewer1.HoveringIndex.ToString("X2"));
         };
-        areaviewer1.TileSelectedEvent += delegate(object sender) {
+        areaviewer1.TileSelectedEvent += delegate(object sender, int index) {
             statusbar1.Push(1,
-                    "Selected Tile: 0x" + areaviewer1.SelectedIndex.ToString("X2")); 
+                    "Selected Tile: 0x" + index.ToString("X2"));
         };
 
         roomeditor1.HoverChangedEvent += delegate() {
             if (roomeditor1.HoveringIndex == -1)
                 statusbar1.Push(1,
-                        "Selected Tile: 0x" + areaviewer1.SelectedIndex.ToString("X2")); 
+                        "Selected Tile: 0x" + areaviewer1.SelectedIndex.ToString("X2"));
             else
                 statusbar1.Push(2,
                         "Hovering Tile: (" + roomeditor1.HoveringX +
@@ -366,7 +366,7 @@ public class MainWindow: Gtk.Window
         }
         dialog.Dispose();
     }
-    
+
     protected void OnSaveActionActivated(object sender, EventArgs e)
     {
         if (Project != null)

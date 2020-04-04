@@ -105,9 +105,9 @@ namespace LynnaLab
                 var objectBox = new ObjectBox(group);
                 objectBoxContainer.Add(objectBox);
 
-                objectBox.TileSelectedEvent += delegate(object sender) {
+                objectBox.TileSelectedEvent += delegate(object sender, int index) {
                     if (!disableBoxCallback)
-                        SelectObject(objectBox.ObjectGroup, objectBox.SelectedIndex);
+                        SelectObject(objectBox.ObjectGroup, index);
                 };
 
                 objectBoxDict.Add(group, objectBox);

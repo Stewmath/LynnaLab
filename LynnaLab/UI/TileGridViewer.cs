@@ -1,33 +1,37 @@
 using System;
 using Bitmap = System.Drawing.Bitmap;
 using System.ComponentModel;
+using System.Collections.Generic;
 using Cairo;
 using Gtk;
 
 namespace LynnaLab
 {
-    enum MouseButton {
-        LEFT_CLICK,
-        RIGHT_CLICK // [PLANNED]
+    public enum MouseButton {
+        Any,
+        LeftClick,
+        RightClick
     }
 
     [Flags]
-    enum MouseModifier {
-        ANY = 0,
-        NONE = 1,
-        CTRL = 2,  // [PLANNED]
-        SHIFT = 4, // [PLANNED]
-        DRAG = 8   // [PLANNED]
+    public enum MouseModifier {
+        // Exact combination of keys must be pressed, but "Any" allows any combination.
+        Any = 1,
+        None = 2,
+        Ctrl = 4 | None,
+        Shift = 8 | None,
+        // Mouse can be dragged during the operation.
+        Drag = 16,
     }
 
-    enum GridAction {
-        SELECT,       // Set the selected tile (bound to LEFT_CLICK with ANY modifier by default)
-        SELECTRANGE,  // [PLANNED] Select a range of tiles
-        CALLBACK      // [PLANNED] Invoke a callback whenever the tile is clicked, or the drag changes
+    public enum GridAction {
+        Select,       // Set the selected tile (bound to button "Any" with modifier "None" by default)
+        SelectRange,  // [PLANNED] Select a range of tiles
+        Callback      // Invoke a callback whenever the tile is clicked, or the drag changes
     }
 
     public abstract class TileGridViewer : Gtk.DrawingArea {
-        public static readonly Cairo.Color HoverColor = new Cairo.Color(1.0,0,0);
+        public static readonly Cairo.Color HoverColor = new Cairo.Color(1.0, 0, 0);
         public static readonly Cairo.Color SelectionColor = new Cairo.Color(1.0, 1.0, 1.0);
 
 
@@ -47,8 +51,18 @@ namespace LynnaLab
         public int PaddingX { get; set; }
         public int PaddingY { get; set; }
 
-        public bool Selectable { get; set; }
-        public bool Draggable { get; set; }
+        public bool Selectable {
+            get { return _selectable; }
+            set {
+                if (_selectable == value)
+                    return;
+                _selectable = value;
+                if (value)
+                    AddMouseAction(MouseButton.Any, MouseModifier.Any, GridAction.Select);
+                else
+                    RemoveMouseAction(MouseButton.Any, MouseModifier.Any);
+            }
+        }
 
 
         public int HoveringIndex
@@ -83,7 +97,7 @@ namespace LynnaLab
                     QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
                 }
                 if (TileSelectedEvent != null)
-                    TileSelectedEvent(this);
+                    TileSelectedEvent(this, SelectedIndex);
             }
         }
         public int SelectedX
@@ -129,22 +143,28 @@ namespace LynnaLab
         // Event triggered when the hovering tile changes
         public event System.Action HoverChangedEvent;
 
+
+        public delegate void TileGridEventHandler(object sender, int tileIndex);
         // Event trigger when a tile is selected
-        public delegate void TileSelectedEventHandler(object sender);
-        public event TileSelectedEventHandler TileSelectedEvent;
+        public event TileGridEventHandler TileSelectedEvent;
 
 
         // Private variables
 
         int hoveringIndex = -1, selectedIndex = -1;
         int _maxIndex = int.MaxValue;
+        bool _selectable = false;
         Bitmap _image;
+
+        IList<TileGridAction> actionList = new List<TileGridAction>();
+        TileGridAction activeAction = null;
 
 
         // Constructors
 
         public TileGridViewer() : base() {
             this.ButtonPressEvent += new ButtonPressEventHandler(OnButtonPressEvent);
+            this.ButtonReleaseEvent += new ButtonReleaseEventHandler(OnButtonReleaseEvent);
             this.MotionNotifyEvent += new MotionNotifyEventHandler(OnMoveMouse);
             this.LeaveNotifyEvent += new LeaveNotifyEventHandler(OnMouseLeave);
             this.Events = Gdk.EventMask.PointerMotionMask | Gdk.EventMask.LeaveNotifyMask |
@@ -178,6 +198,29 @@ namespace LynnaLab
             return p.X + p.Y * Width;
         }
 
+        public void AddMouseAction(MouseButton button, MouseModifier mod, GridAction action, TileGridEventHandler callback = null) {
+            TileGridAction act;
+            if (action == GridAction.Callback) {
+                if (callback == null)
+                    throw new Exception("Need to specify a callback.");
+                act = new TileGridAction(button, mod, action, callback);
+            }
+            else {
+                if (callback != null)
+                    throw new Exception("This action doesn't take a callback.");
+                act = new TileGridAction(button, mod, action);
+            }
+
+            actionList.Add(act);
+        }
+
+        public void RemoveMouseAction(MouseButton button, MouseModifier mod) {
+            foreach (var act in actionList) {
+                if (act.button == button && act.mod == mod)
+                    actionList.Remove(act);
+            }
+        }
+
 
         // Protected methods
 
@@ -186,34 +229,30 @@ namespace LynnaLab
             Gdk.ModifierType state;
             args.Event.Window.GetPointer(out x, out y, out state);
 
-            if (IsInBounds(x, y)) {
-                Cairo.Point pos = GetGridPosition(x, y);
-                SelectedIndex = pos.X + pos.Y * Width;
+            if (activeAction == null && IsInBounds(x, y)) {
+                foreach (TileGridAction act in actionList) {
+                    if (act.MatchesState(state)) {
+                        HandleTileGridAction(act, GetGridIndex(x, y));
+
+                        if (act.mod.HasFlag(MouseModifier.Drag))
+                            activeAction = act;
+                    }
+                }
             }
         }
 
-        protected void OnMotionNotifyEvent(object o, MotionNotifyEventArgs args) {
-            if (!Draggable)
-                return;
-
+        protected void OnButtonReleaseEvent(object o, ButtonReleaseEventArgs args) {
             int x,y;
             Gdk.ModifierType state;
             args.Event.Window.GetPointer(out x, out y, out state);
 
-            if (!state.HasFlag(Gdk.ModifierType.Button1Mask)
-                    || state.HasFlag(Gdk.ModifierType.Button3Mask))
-                return;
-
-            if (IsInBounds(x, y)) {
-                Cairo.Point pos = GetGridPosition(x, y);
-                int newIndex = pos.X + pos.Y * Width;
-                // When dragging, only fire the event when a different square
-                // is reached
-                if (SelectedIndex != newIndex)
-                    SelectedIndex = newIndex;
+            if (activeAction != null && !activeAction.ButtonMatchesState(state)) {
+                if (activeAction.mod.HasFlag(MouseModifier.Drag)) {
+                    // Probably will add a "button release" callback here later
+                    activeAction = null;
+                }
             }
         }
-
 
         protected void OnMoveMouse(object o, MotionNotifyEventArgs args) {
             int x,y;
@@ -230,6 +269,7 @@ namespace LynnaLab
             }
 
             if (nextHoveringIndex != hoveringIndex) {
+                // Update hovering cursor
                 Cairo.Rectangle rect = GetTileRectWithPadding(HoveringX, HoveringY);
                 this.QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
                 hoveringIndex = nextHoveringIndex;
@@ -238,6 +278,11 @@ namespace LynnaLab
 
                 if (HoverChangedEvent != null)
                     HoverChangedEvent();
+
+                // Drag actions
+                if (activeAction != null && activeAction.mod.HasFlag(MouseModifier.Drag) && IsInBounds(x, y)) {
+                    HandleTileGridAction(activeAction, nextHoveringIndex);
+                }
             }
         }
 
@@ -253,7 +298,19 @@ namespace LynnaLab
 
             if (changed && HoverChangedEvent != null)
                 HoverChangedEvent();
+
+            // Don't check for drag actions because we'll ignore out-of-bounds events?
         }
+
+        void HandleTileGridAction(TileGridAction act, int index) {
+            if (act.action == GridAction.Select) {
+                SelectedIndex = index;
+            }
+            else if (act.action == GridAction.Callback) {
+                act.callback(this, index);
+            }
+        }
+
 
         protected override bool OnDrawn(Cairo.Context cr) {
             /*
@@ -365,6 +422,53 @@ namespace LynnaLab
                         cr.Paint();
                     }
                 }
+            }
+        }
+
+
+        // Nested class
+
+        class TileGridAction {
+            public readonly MouseButton button;
+            public readonly MouseModifier mod;
+            public readonly GridAction action;
+            public readonly TileGridEventHandler callback;
+
+            public int lastIndex = -1;
+
+            public TileGridAction(MouseButton button, MouseModifier mod, GridAction action, TileGridEventHandler callback=null) {
+                this.button = button;
+                this.mod = mod;
+                this.action = action;
+                this.callback = callback;
+            }
+
+            public bool MatchesState(Gdk.ModifierType state) {
+                return ButtonMatchesState(state) && ModifierMatchesState(state);
+            }
+
+            public bool ButtonMatchesState(Gdk.ModifierType state) {
+                bool left = state.HasFlag(Gdk.ModifierType.Button1Mask);
+                bool right = state.HasFlag(Gdk.ModifierType.Button3Mask);
+                if (button == MouseButton.Any && (left || right))
+                    return true;
+                if (button == MouseButton.LeftClick && left)
+                    return true;
+                if (button == MouseButton.Any && right)
+                    return true;
+                return false;
+            }
+
+            public bool ModifierMatchesState(Gdk.ModifierType state) {
+                if (mod.HasFlag(MouseModifier.Any))
+                    return true;
+                MouseModifier flags = MouseModifier.None;
+                if (state.HasFlag(Gdk.ModifierType.ControlMask))
+                    flags |= MouseModifier.Ctrl;
+                if (state.HasFlag(Gdk.ModifierType.ShiftMask))
+                    flags |= MouseModifier.Shift;
+
+                return mod == flags;
             }
         }
     }
