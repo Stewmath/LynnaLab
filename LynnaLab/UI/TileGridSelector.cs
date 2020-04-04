@@ -7,7 +7,7 @@ namespace LynnaLab {
 
     public abstract class TileGridSelector : TileGridViewer {
 
-        public static readonly Cairo.Color SelectionColor = new Cairo.Color(255,255,255);
+        public static readonly Cairo.Color SelectionColor = new Cairo.Color(1.0, 1.0, 1.0);
 
         [BrowsableAttribute(false)]
         public bool Selectable { get; set; }
@@ -15,15 +15,18 @@ namespace LynnaLab {
         [BrowsableAttribute(false)]
         public bool Draggable { get; set; }
 
+        // This can be set to -1 for "nothing selected".
         [BrowsableAttribute(false)]
         public int SelectedIndex
         {
             get { return selectedIndex; }
             set {
                 if (selectedIndex != value) {
-                    QueueDrawArea(SelectedX*TileWidth*Scale, SelectedY*TileHeight*Scale, TileWidth*Scale, TileHeight*Scale);
+                    var rect = GetTileRectSansPadding(SelectedX, SelectedY);
+                    QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
                     selectedIndex = value;
-                    QueueDrawArea(SelectedX*TileWidth*Scale, SelectedY*TileHeight*Scale, TileWidth*Scale, TileHeight*Scale);
+                    rect = GetTileRectSansPadding(SelectedX, SelectedY);
+                    QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
                 }
                 if (TileSelectedEvent != null)
                     TileSelectedEvent(this);
@@ -43,6 +46,7 @@ namespace LynnaLab {
                 return selectedIndex/Width;
             }
         }
+
 
         // Event for selecting a tile
         public delegate void TileSelectedEventHandler(object sender);
@@ -64,8 +68,9 @@ namespace LynnaLab {
             Gdk.ModifierType state;
             args.Event.Window.GetPointer(out x, out y, out state);
 
-            if (x >= 0 && y >= 0 && x<Width*TileWidth*Scale && y<Height*TileHeight*Scale) {
-                SelectedIndex = (x/TileWidth/Scale) + (y/TileHeight/Scale)*Width;
+            if (IsInBounds(x, y)) {
+                Cairo.Point pos = GetGridPosition(x, y);
+                SelectedIndex = pos.X + pos.Y * Width;
             }
         }
 
@@ -81,8 +86,9 @@ namespace LynnaLab {
                     || state.HasFlag(Gdk.ModifierType.Button3Mask))
                 return;
 
-            if (x >= 0 && y >= 0 && x<Width*TileWidth*Scale && y<Height*TileHeight*Scale) {
-                int newIndex = (x/TileWidth/Scale) + (y/TileHeight/Scale)*Width;
+            if (IsInBounds(x, y)) {
+                Cairo.Point pos = GetGridPosition(x, y);
+                int newIndex = pos.X + pos.Y * Width;
                 // When dragging, only fire the event when a different square
                 // is reached
                 if (SelectedIndex != newIndex)
@@ -97,35 +103,17 @@ namespace LynnaLab {
             if (!Selectable)
                 return true;
 
-            cr.NewPath();
-            cr.SetSourceColor(SelectionColor);
-            cr.Rectangle(XOffset+SelectedX*TileWidth*Scale+0.5, SelectedY*TileHeight*Scale+0.5, TileWidth*Scale-1, TileHeight*Scale-1);
-            cr.LineWidth = 1;
-            cr.Stroke();
+            var rect = GetTileRectSansPadding(SelectedX, SelectedY);
 
-            return true;
-        }
-        /*
-        protected override bool OnExposeEvent(Gdk.EventExpose ev)
-        {
-            base.OnExposeEvent(ev);
-
-            if (!Selectable)
-                return true;
-
-            Gdk.Window win = ev.Window;
-            System.Drawing.Graphics g = Gtk.DotNet.Graphics.FromDrawable(win);
-
-            if (SelectedIndex != -1) {
-                g.DrawRectangle(new Pen(Color.White),
-                        SelectedX*TileWidth*Scale, SelectedY*TileHeight*Scale,
-                        TileWidth*Scale-1, TileHeight*Scale-1);
+            if (IsInBounds((int)rect.X, (int)rect.Y)) {
+                cr.NewPath();
+                cr.SetSourceColor(SelectionColor);
+                cr.Rectangle(rect.X + 0.5, rect.Y + 0.5, rect.Width-1, rect.Height-1);
+                cr.LineWidth = 1;
+                cr.Stroke();
             }
 
-            g.Dispose();
-
             return true;
         }
-        */
     }
 }

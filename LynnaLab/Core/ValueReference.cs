@@ -31,6 +31,25 @@ namespace LynnaLab
         void RemoveValueModifiedHandler(EventHandler handler);
     }
 
+    public abstract class BasicIntValueReferenceHandler : ValueReferenceHandler {
+        public abstract Project Project {get;}
+
+        public virtual string GetValue(string name) {
+            return Wla.ToHex(GetIntValue(name), 2);
+        }
+
+        public abstract int GetIntValue(string name);
+
+        public virtual void SetValue(string name, string value) {
+            SetValue(name, Project.EvalToInt(value));
+        }
+
+        public abstract void SetValue(string name, int value);
+
+        public abstract void AddValueModifiedHandler(EventHandler handler);
+        public abstract void RemoveValueModifiedHandler(EventHandler handler);
+    }
+
 
     // This class provides a way of accessing Data values of various different
     // formats.
@@ -39,7 +58,6 @@ namespace LynnaLab
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 
-        private Project project;
         private ValueReferenceHandler handler;
 
 
@@ -50,7 +68,7 @@ namespace LynnaLab
         protected int startBit,endBit;
 
 
-        protected Project Project {
+        public Project Project {
             get {
                 return handler?.Project;
             }

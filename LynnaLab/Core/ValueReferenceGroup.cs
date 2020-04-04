@@ -9,6 +9,16 @@ namespace LynnaLab
     public class ValueReferenceGroup {
         IList<ValueReference> valueReferences;
 
+
+        public Project Project {
+            get {
+                if (valueReferences.Count == 0)
+                    return null;
+                return valueReferences[0].Project;
+            }
+        }
+
+
         public ValueReferenceGroup(IList<ValueReference> refs) {
             valueReferences = new List<ValueReference>();
             foreach (var vref in refs) {
@@ -17,6 +27,12 @@ namespace LynnaLab
                 valueReferences.Add(copy);
             }
         }
+
+        // Let subclasses set valueReferences manually
+        protected ValueReferenceGroup() {}
+
+
+        // Public
 
         public IList<ValueReference> GetValueReferences() {
             return valueReferences;
@@ -51,7 +67,8 @@ namespace LynnaLab
             return false;
         }
 
-        public string GetStringValue(string name) {
+
+        public string GetValue(string name) {
             foreach (var r in valueReferences) {
                 if (r.Name == name)
                     return r.GetStringValue();
@@ -88,6 +105,13 @@ namespace LynnaLab
         public void SetHandler(ValueReferenceHandler handler) {
             foreach (var r in valueReferences)
                 r.SetHandler(handler);
+        }
+
+
+        // Protected
+
+        protected void SetValueReferences(IList<ValueReference> refs) {
+            valueReferences = refs;
         }
     }
 }

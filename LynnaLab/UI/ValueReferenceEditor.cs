@@ -21,8 +21,8 @@ namespace LynnaLab {
         Gtk.Frame pointerFrame;
         ObjectGroupEditor subEditor;
 
-        event Action dataModifiedExternalEvent;
-        event Action dataModifiedInternalEvent;
+        event System.Action dataModifiedExternalEvent;
+        event System.Action dataModifiedInternalEvent;
 
 
         Project Project {get; set;}
@@ -324,10 +324,10 @@ loopEnd:
             SetTooltip(valueReferenceGroup.GetIndexOf(r), tooltip);
         }
 
-        public void AddDataModifiedHandler(Action handler) {
+        public void AddDataModifiedHandler(System.Action handler) {
             dataModifiedInternalEvent += handler;
         }
-        public void RemoveDataModifiedHandler(Action handler) {
+        public void RemoveDataModifiedHandler(System.Action handler) {
             dataModifiedInternalEvent -= handler;
         }
 

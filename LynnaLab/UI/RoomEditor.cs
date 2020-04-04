@@ -16,7 +16,6 @@ namespace LynnaLab
         }
 
         public bool ViewObjects {get; set;}
-        public bool ViewObjectBoxes {get; set;}
 
         protected override Bitmap Image {
             get {
@@ -37,9 +36,10 @@ namespace LynnaLab
         int mouseX=-1,mouseY=-1;
 
         bool draggingObject;
-        // List of indices of objects, each entry is one "depth" into the
-        // object pointers
-        List<int> hoveringObjectIndices = new List<int>();
+
+        // Object Group that the object under the cursor belongs to
+        ObjectGroup hoveringObjectGroup;
+        int hoveringObjectIndex;
 
         Gdk.ModifierType gdkState;
 
@@ -48,8 +48,6 @@ namespace LynnaLab
             TileHeight = 16;
             XOffset = 8;
             YOffset = 8;
-
-            ViewObjectBoxes = true;
 
             this.ButtonPressEvent += delegate(object o, ButtonPressEventArgs args)
             {
@@ -148,13 +146,8 @@ namespace LynnaLab
             else {
                 if (objectEditor != null) {
                     ObjectGroupEditor editor = objectEditor;
-                    while (hoveringObjectIndices.Count > 1) {
-                        editor.SelectedIndex = hoveringObjectIndices[0];
-                        hoveringObjectIndices.RemoveAt(0);
-                        editor = editor.SubEditor;
-                    }
-                    if (hoveringObjectIndices.Count == 1) {
-                        editor.SelectedIndex = hoveringObjectIndices[0];
+                    if (hoveringObjectGroup != null) {
+                        editor.SelectObject(hoveringObjectGroup, hoveringObjectIndex);
                         draggingObject = true;
                     }
                 }
@@ -167,10 +160,10 @@ namespace LynnaLab
             else {
                 if (!draggingObject) return;
 
-                ObjectData data = objectEditor.SelectedObjectData;
-                if (data != null && data.HasXY()) {
+                ObjectDefinition obj = objectEditor.SelectedObject;
+                if (obj != null && obj.HasXY()) {
                     int newX,newY;
-                    if (gdkState.HasFlag(Gdk.ModifierType.ControlMask) || data.HasShortenedXY()) {
+                    if (gdkState.HasFlag(Gdk.ModifierType.ControlMask) || obj.HasShortenedXY()) {
                         newX = x-XOffset;
                         newY = y-XOffset;
                     }
@@ -179,8 +172,8 @@ namespace LynnaLab
                         int unit = 8;
                         int unitLog = (int)Math.Log(unit, 2);
 
-                        int dataX = data.GetX()+unit/2;
-                        int dataY = data.GetY()+unit/2;
+                        int dataX = obj.GetX()+unit/2;
+                        int dataY = obj.GetY()+unit/2;
                         int alignX = (dataX)%unit;
                         int alignY = (dataY)%unit;
                         newX = (x-XOffset-alignX)>>unitLog;
@@ -190,8 +183,8 @@ namespace LynnaLab
                     }
 
                     if (newX >= 0 && newX < 256 && newY >= 0 && newY < 256) {
-                        data.SetX((byte)newX);
-                        data.SetY((byte)newY);
+                        obj.SetX((byte)newX);
+                        obj.SetY((byte)newY);
                     }
 
                     QueueDraw();
@@ -209,10 +202,9 @@ namespace LynnaLab
             if (ViewObjects) {
                 // Draw image manually, instead of relying on subclass, so rectangles don't get
                 // drawn on the grid.
-                using (Cairo.Surface source = CairoHelper.LockBitmap(Image)) {
+                using (Cairo.Surface source = new BitmapSurface(Image)) {
                     cr.SetSourceSurface(source, XOffset, YOffset);
                     cr.Paint();
-                    CairoHelper.UnlockBitmap(Image);
                 }
             }
             else
@@ -223,10 +215,9 @@ namespace LynnaLab
 
                 int cursorX=-1,cursorY=-1;
                 int selectedX=-1,selectedY=-1;
-                hoveringObjectIndices = new List<int>();
 
-                ObjectGroup group = objectEditor.ObjectGroup;
-                DrawObjectGroup(cr, 0, ref cursorX, ref cursorY, ref selectedX, ref selectedY, group, objectEditor, ref hoveringObjectIndices);
+                ObjectGroup group = objectEditor.TopObjectGroup;
+                DrawObjectGroup(cr, ref cursorX, ref cursorY, ref selectedX, ref selectedY, group, objectEditor);
 
                 // Object hovering over
                 if (cursorX != -1) {
@@ -247,38 +238,22 @@ namespace LynnaLab
             return true;
         }
 
-        int DrawObjectGroup(Cairo.Context cr, int index, ref int cursorX, ref int cursorY, ref int selectedX, ref int selectedY, ObjectGroup group, ObjectGroupEditor editor, ref List<int> objectIndices) {
-            if (group == null) return index;
+        void DrawObjectGroup(Cairo.Context cr, ref int cursorX, ref int cursorY, ref int selectedX, ref int selectedY, ObjectGroup topGroup, ObjectGroupEditor editor) {
+            if (topGroup == null)
+                return;
 
-            List<int> localObjectIndices = new List<int>(objectIndices);
+            int index = 0;
+            hoveringObjectGroup = null;
 
-            bool foundHoveringMatch = false;
-
-            for (int i=0; i<group.GetNumObjects(); i++) {
-                ObjectData data = group.GetObjectData(i);
-                if (data.GetObjectType() >= ObjectType.Pointer &&
-                        data.GetObjectType() <= ObjectType.AntiBossPointer) {
-                    ObjectGroup nextGroup = data.GetPointedObjectGroup();
-                    if (nextGroup != null) {
-                        List<int> pointerObjectIndices = new List<int>(objectIndices);
-                        pointerObjectIndices.Add(i);
-                        if (editor != null && i == editor.SelectedIndex)
-                            index = DrawObjectGroup(cr, index, ref cursorX, ref cursorY,
-                                    ref selectedX, ref selectedY, nextGroup, editor.SubEditor, ref pointerObjectIndices);
-                        else
-                            index = DrawObjectGroup(cr, index, ref cursorX, ref cursorY,
-                                    ref selectedX, ref selectedY, nextGroup, null, ref pointerObjectIndices);
-                        if (pointerObjectIndices.Count > objectIndices.Count+1)
-                            localObjectIndices = pointerObjectIndices;
-                    }
-                }
-                else {
-                    Color color = data.GetColor();
+            foreach (ObjectGroup group in topGroup.GetAllGroups()) {
+                for (int i=0; i<group.GetNumObjects(); i++) {
+                    ObjectDefinition obj = group.GetObject(i);
+                    Color color = obj.GetColor();
                     int x,y;
                     int width;
-                    if (data.HasXY()) {
-                        x = data.GetX();
-                        y = data.GetY();
+                    if (obj.HasXY()) {
+                        x = obj.GetX();
+                        y = obj.GetY();
                         width = 16;
                         // Objects with specific positions get
                         // transparency
@@ -306,28 +281,21 @@ namespace LynnaLab
                     }
                     if (mouseX-XOffset >= x-8 && mouseX-XOffset < x+8 &&
                             mouseY-YOffset >= y-8 && mouseY-YOffset < y+8) {
-                        if (localObjectIndices.Count == objectIndices.Count) {
-                            if (foundHoveringMatch)
-                                localObjectIndices[localObjectIndices.Count-1] = i;
-                            else
-                                localObjectIndices.Add(i);
-                            cursorX = x-8 + XOffset;
-                            cursorY = y-8 + YOffset;
-                            foundHoveringMatch = true;
-                        }
+                        cursorX = x-8 + XOffset;
+                        cursorY = y-8 + YOffset;
+                        hoveringObjectGroup = group;
+                        hoveringObjectIndex = i;
                     }
 
                     // x and y are the center coordinates for the object
 
-                    if (ViewObjectBoxes) {
-                        cr.SetSourceColor(CairoHelper.ConvertColor(color));
-                        cr.Rectangle(x-width/2+XOffset, y-width/2+YOffset, width, width);
-                        cr.Fill();
-                    }
+                    cr.SetSourceColor(CairoHelper.ConvertColor(color));
+                    cr.Rectangle(x-width/2+XOffset, y-width/2+YOffset, width, width);
+                    cr.Fill();
 
-                    if (data.GetGameObject() != null) {
+                    if (obj.GetGameObject() != null) {
                         try {
-                            ObjectAnimationFrame o = data.GetGameObject().DefaultAnimation.GetFrame(0);
+                            ObjectAnimationFrame o = obj.GetGameObject().DefaultAnimation.GetFrame(0);
                             o.Draw(cr, x+XOffset, y+YOffset);
                         }
                         catch(NoAnimationException) {
@@ -348,9 +316,6 @@ namespace LynnaLab
                     }
                 }
             }
-
-            objectIndices = localObjectIndices;
-            return index;
         }
 
         protected override void OnSizeAllocated(Gdk.Rectangle allocation)

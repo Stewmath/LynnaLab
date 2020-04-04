@@ -254,6 +254,11 @@ namespace LynnaLab
 
             return o as T;
         }
+
+        /// <summary>
+        ///   Get a datatype for which only one instance exists with a given identifier. This will
+        ///   return that instance if it exists, or create it of it doesn't exist.
+        /// </summary>
         public T GetDataType<T>(string identifier) where T:ProjectDataType {
             string s = typeof(T).Name + "_" + identifier;
             ProjectDataType o;

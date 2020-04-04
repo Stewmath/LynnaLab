@@ -108,19 +108,18 @@ public class ObjectAnimationFrame {
             int x = tup.Item2 + xPos;
             int y = tup.Item3 + yPos;
 
-            using (Cairo.Surface s = CairoHelper.LockBitmap(bitmap)) {
+            using (Cairo.Surface s = new BitmapSurface(bitmap)) {
                 cr.SetSourceSurface(s,x,y);
                 cr.Paint();
-                CairoHelper.UnlockBitmap(bitmap);
             }
         }
     }
 
 
-    // (TODO: make this return null sometimes? Not all animations loop, but there's not an easy way
-    // to determine when one ends...)
+    // (TODO: when implemented, make this return null sometimes? Not all animations loop, but
+    // there's not an easy way to determine when one ends...)
     public ObjectAnimationFrame GetNextFrame() {
-        return null;
+        throw new NotImplementedException();
     }
 }
 

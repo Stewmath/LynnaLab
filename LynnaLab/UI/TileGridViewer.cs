@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+using Bitmap = System.Drawing.Bitmap;
 using System.ComponentModel;
 using Cairo;
 using Gtk;
@@ -50,6 +50,7 @@ namespace LynnaLab
             }
         }
 
+        // Size of tile (not including spacing)
         public int ScaledTileWidth {
             get { return TileWidth*Scale; }
         }
@@ -57,12 +58,22 @@ namespace LynnaLab
             get { return TileHeight*Scale; }
         }
 
-        protected abstract Bitmap Image { get; }
-        protected virtual Surface Surface { get; }
+        // Padding on each side of a grid, before scaling (default = 0)
+        public int PaddingX { get; set; }
+        public int PaddingY { get; set; }
 
         public event System.Action HoverChangedEvent;
 
+
+        // Subclasses can either override "Image" to set the image, or call the "DrawImageWithTiles"
+        // function to set the image using a per-tile draw function.
+        protected virtual Bitmap Image { get { return null; } }
+
+        protected virtual Surface Surface { get; }
+
+
         int hoveringIndex = -1;
+        Bitmap _image;
 
         public TileGridViewer() : base() {
             this.MotionNotifyEvent += new MotionNotifyEventHandler(OnMoveMouse);
@@ -74,13 +85,15 @@ namespace LynnaLab
         }
 
         public bool IsInBounds(int x, int y) {
-            return (x >= XOffset && y >= YOffset && x < Width * TileWidth * Scale + XOffset &&
-                    y < Height * TileHeight * Scale + YOffset);
+            Cairo.Rectangle p = GetTotalBounds();
+            return (x >= p.X && y >= p.Y && x < p.X + p.Width && y < p.Y + p.Height);
         }
 
         // Convert a "real" position (in pixels) into a grid position (in tiles).
         public Cairo.Point GetGridPosition(int x, int y) {
-            return new Cairo.Point((x - XOffset) / (TileWidth * Scale), (y - YOffset) / (TileHeight * Scale));
+            int x2 = (x - XOffset) / ((TileWidth  * Scale) + (PaddingX * 2));
+            int y2 = (y - YOffset) / ((TileHeight * Scale) + (PaddingY * 2));
+            return new Cairo.Point(x2, y2);
         }
 
         protected void OnMoveMouse(object o, MotionNotifyEventArgs args) {
@@ -90,18 +103,19 @@ namespace LynnaLab
 
             int nextHoveringIndex;
             if (IsInBounds(x,y)) {
-                nextHoveringIndex = ((x-XOffset)/TileWidth/Scale) + ((y-YOffset)/TileHeight/Scale)*Width;
+                Cairo.Point p = GetGridPosition(x, y);
+                nextHoveringIndex = p.X + p.Y * Width;
             }
             else {
                 nextHoveringIndex = -1;
             }
 
             if (nextHoveringIndex != hoveringIndex) {
-                this.QueueDrawArea(XOffset+HoveringX*TileWidth*Scale, YOffset+HoveringY*TileHeight*Scale,
-                        TileWidth*Scale, TileHeight*Scale);
+                Cairo.Rectangle rect = GetTileRectWithPadding(HoveringX, HoveringY);
+                this.QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
                 hoveringIndex = nextHoveringIndex;
-                this.QueueDrawArea(XOffset+HoveringX*TileWidth*Scale, YOffset+HoveringY*TileHeight*Scale,
-                        TileWidth*Scale, TileHeight*Scale);
+                rect = GetTileRectWithPadding(HoveringX, HoveringY);
+                this.QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
 
                 if (HoverChangedEvent != null)
                     HoverChangedEvent();
@@ -111,8 +125,8 @@ namespace LynnaLab
         protected void OnMouseLeave(object o, LeaveNotifyEventArgs args) {
             bool changed = false;
             if (hoveringIndex != -1) {
-                this.QueueDrawArea(XOffset + HoveringX * TileWidth * Scale, YOffset + HoveringY * TileHeight * Scale,
-                    TileWidth * Scale, TileHeight * Scale);
+                Cairo.Rectangle rect = GetTileRectWithPadding(HoveringX, HoveringY);
+                this.QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
 
                 changed = true;
             }
@@ -128,26 +142,30 @@ namespace LynnaLab
                 return false;
                 */
 
+            Bitmap image = _image;
+            if (_image == null)
+                image = Image;
+
             if (Surface != null) {
                 cr.SetSourceSurface(Surface, XOffset, YOffset);
                 cr.Paint();
             }
-            else if (Image != null) {
-		Bitmap orig = Image;
-                using (Surface source = CairoHelper.LockBitmap(orig)) {
-		    cr.Scale(Scale, Scale);
+            else if (image != null) {
+                Bitmap orig = image;
+                using (Surface source = new BitmapSurface(orig)) {
+                    cr.Scale(Scale, Scale);
                     cr.SetSource(source, XOffset, YOffset);
-		    ((SurfacePattern)cr.Source).Filter = Filter.Nearest;
-		    cr.Scale(1.0/Scale, 1.0/Scale);
+                    ((SurfacePattern)cr.Source).Filter = Filter.Nearest;
+                    cr.Scale(1.0/Scale, 1.0/Scale);
                     cr.Paint();
-                    CairoHelper.UnlockBitmap(orig);
                 }
             }
 
             if (hoveringIndex != -1) {
+                Cairo.Rectangle rect = GetTileRectSansPadding(HoveringX, HoveringY);
                 cr.NewPath();
                 cr.SetSourceColor(HoverColor);
-                cr.Rectangle(new Cairo.Rectangle(XOffset+HoveringX*TileWidth*Scale+0.5, YOffset+HoveringY*TileHeight*Scale+0.5, ScaledTileWidth-1, ScaledTileHeight-1));
+                cr.Rectangle(new Cairo.Rectangle(rect.X + 0.5, rect.Y + 0.5, rect.Width-1, rect.Height-1));
                 cr.LineWidth = 1;
                 cr.LineJoin = LineJoin.Bevel;
                 cr.Stroke();
@@ -156,35 +174,63 @@ namespace LynnaLab
             return true;
         }
 
-        /* Deprecated GTK2 code
-        protected override bool OnExposeEvent(Gdk.EventExpose ev)
-        {
-            base.OnExposeEvent(ev);
-
-            Gdk.Window win = ev.Window;
-            Graphics g = Gtk.DotNet.Graphics.FromDrawable(win);
-            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-
-            if (Image != null)
-                g.DrawImage(Image, XOffset, YOffset, Image.Width*Scale, Image.Height*Scale);
-            if (hoveringIndex != -1) {
-                g.DrawRectangle(new Pen(Color.Red), XOffset+HoveringX*TileWidth*Scale, YOffset+HoveringY*TileHeight*Scale,
-                        TileWidth*Scale-1, TileHeight*Scale-1);
-            }
-
-            g.Dispose();
-
-            return true;
-        }
-        */
-
         protected override void OnGetPreferredWidth(out int minimum_width, out int natural_width) {
-            minimum_width = XOffset + Width * TileWidth * Scale;
-            natural_width = minimum_width;
+            var rect = GetTotalBounds();
+            minimum_width = (int)rect.Width;
+            natural_width = (int)rect.Width;
         }
         protected override void OnGetPreferredHeight(out int minimum_height, out int natural_height) {
-            minimum_height = YOffset + Height * TileHeight * Scale;
-            natural_height = minimum_height;
+            var rect = GetTotalBounds();
+            minimum_height = (int)rect.Height;
+            natural_height = (int)rect.Height;
+        }
+
+        protected Cairo.Rectangle GetTileRectWithPadding(int x, int y) {
+            return new Cairo.Rectangle(
+                    XOffset + x * (PaddingX * 2 + TileWidth)  * Scale,
+                    YOffset + y * (PaddingY * 2 + TileHeight) * Scale,
+                    TileWidth  * Scale + PaddingX * Scale * 2,
+                    TileHeight * Scale + PaddingY * Scale * 2);
+        }
+
+        protected Cairo.Rectangle GetTileRectSansPadding(int x, int y) {
+            return new Cairo.Rectangle(
+                    XOffset + x * (PaddingX * 2 + TileWidth)  * Scale + PaddingX * Scale,
+                    YOffset + y * (PaddingY * 2 + TileHeight) * Scale + PaddingY * Scale,
+                    TileWidth  * Scale,
+                    TileHeight * Scale);
+        }
+
+        protected Cairo.Rectangle GetTotalBounds() {
+            return new Cairo.Rectangle(
+                    XOffset,
+                    YOffset,
+                    Width  * (PaddingX * 2 + TileWidth)  * Scale,
+                    Height * (PaddingY * 2 + TileHeight) * Scale);
+        }
+
+
+        // Subclasses can either override "Image" to set the image, or call the "DrawImageWithTiles"
+        // function to set the image using a per-tile draw function.
+        protected void DrawImageWithTiles(Func<int,Bitmap> tileDrawer) {
+            var totalRect = GetTotalBounds();
+
+            _image = new Bitmap((int)totalRect.Width, (int)totalRect.Height);
+
+            using (Cairo.Context cr = new BitmapContext(_image)) {
+                for (int i=0; i<Width*Height; i++) {
+                    int tileX = i%Width;
+                    int tileY = i/Width;
+                    Cairo.Rectangle rect = GetTileRectSansPadding(tileX, tileY);
+                    Bitmap tileImage = tileDrawer(i);
+                    if (tileImage == null)
+                        continue;
+                    using (Surface src = new BitmapSurface(tileImage)) {
+                        cr.SetSource(src, rect.X, rect.Y);
+                        cr.Paint();
+                    }
+                }
+            }
         }
     }
 

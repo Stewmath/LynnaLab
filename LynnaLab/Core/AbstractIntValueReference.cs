@@ -19,6 +19,11 @@ namespace LynnaLab
         : base(r) {
         }
 
+        public AbstractIntValueReference(ValueReference r, ValueReferenceHandler handler)
+        : base(r) {
+            SetHandler(handler);
+        }
+
         public override string GetStringValue() {
             return Wla.ToByte((byte)GetIntValue());
         }

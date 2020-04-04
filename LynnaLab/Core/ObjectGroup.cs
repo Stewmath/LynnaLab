@@ -1,122 +1,139 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace LynnaLab
 {
+    public enum ObjectGroupType {
+        Main,        // Top-level
+        Enemy,       // "obj_Pointer" referring to data named "enemyObjectData[...]".
+        BeforeEvent, // "obj_BeforeEvent" pointer
+        AfterEvent,  // "obj_AfterEvent" pointer
+        Other        // "obj_Pointers" referring to something other than "enemyObjectData[...]".
+    };
 
+    // This is similar to "RawObjectGroup", but it provides a different interface for handling
+    // "Pointers" to other object data. In particular, this never returns an ObjectDefinition that
+    // is a pointer type. Instead, you need to call "GetAllGroups()" to get other ObjectGroup's that
+    // correspond to what those pointers point to.
+    // TODO: Handle callbacks when the RawObjectGroup modifies its pointers (update the "children"
+    // variable).
+    // TODO: Handle "Enemy" types being referenced by more than one "Main" type.
     public class ObjectGroup : ProjectDataType
     {
-        public static string[] ObjectCommands = {
-            "obj_Condition",
-            "obj_NoValue",
-            "obj_DoubleValue",
-            "obj_Pointer",
-            "obj_BeforeEvent",
-            "obj_AfterEvent",
-            "obj_RandomEnemy",
-            "obj_SpecificEnemy",
-            "obj_Part",
-            "obj_WithParam",
-            "obj_ItemDrop",
-            "obj_End",
-            "obj_EndPointer",
-            "obj_Garbage"
-        };
-
-        public static int[] ObjectCommandMinParams = {
-             1,  1,  3,  1,  1,  1,  2,  3,  2,  5,  2,  0,  0, 2
-        };
-
-        public static int[] ObjectCommandMaxParams = {
-            -1, -1, -1, -1, -1, -1, -1,  4, -1, -1,  3, -1, -1, 2
-        };
-
-        public static int[] ObjectCommandDefaultParams = {
-             1,  1,  3,  1,  1,  1,  2,  4,  2,  5,  3,  0,  0, 2
-        };
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 
-        List<ObjectData> objectDataList = new List<ObjectData>();
-        FileParser parser;
+        private RawObjectGroup rawObjectGroup;
+        ObjectGroupType type;
+        List<ObjectGroup> children;
 
+
+        // Constructors
 
         internal ObjectGroup(Project p, String id) : base(p, id)
         {
-            parser = Project.GetFileWithLabel(Identifier);
-            ObjectData data = parser.GetData(Identifier) as ObjectData;
+            rawObjectGroup = Project.GetDataType<RawObjectGroup>(Identifier);
 
-            while (data.GetObjectType() != ObjectType.End && data.GetObjectType() != ObjectType.EndPointer) {
-                ObjectData next = data.NextData as ObjectData;
+            type = ObjectGroupType.Main;
+            // Other types will be set manually by its parent ObjectGroup when referenced.
 
-                if (data.GetObjectType() == ObjectType.Garbage) // Delete these (they do nothing anyway)
-                    data.Detach();
-                else
-                    objectDataList.Add(data);
+            bool addedEnemyType = false;
 
-                data = next;
+            children = new List<ObjectGroup>();
+            children.Add(this);
+            for (int i=0; i<rawObjectGroup.GetNumObjects(); i++) {
+                ObjectData obj = rawObjectGroup.GetObjectData(i);
+                ObjectType objectType = obj.GetObjectType();
+                if (obj.IsPointerType()) {
+                    string label = obj.GetValue(0);
+                    ObjectGroup child = Project.GetDataType<ObjectGroup>(label);
+
+                    if (objectType == ObjectType.BossPointer)
+                        child.type = ObjectGroupType.BeforeEvent;
+                    else if (objectType == ObjectType.AntiBossPointer)
+                        child.type = ObjectGroupType.AfterEvent;
+                    else if (objectType == ObjectType.Pointer && label.Contains("EnemyObjectData")) {
+                        // TODO: Check the full name
+                        child.type = ObjectGroupType.Enemy;
+                        if (addedEnemyType)
+                            log.Warn("Found multiple Enemy pointers on " + Identifier + "!");
+                        addedEnemyType = true;
+                    }
+                    else if (objectType == ObjectType.Pointer)
+                        child.type = ObjectGroupType.Other;
+                    else
+                        throw new Exception("Unexpected thing happened");
+
+                    children.Add(child);
+                }
             }
-            objectDataList.Add(data);
         }
 
-        public ObjectData GetObjectData(int index) {
-            return objectDataList[index];
+
+        // Public methods
+
+        // Gets all non-pointer objects in this group. This is a shallow operation (does not check
+        // pointers).
+        public IList<ObjectDefinition> GetObjects() {
+            var list = new List<ObjectDefinition>();
+            for (int i=0; i<rawObjectGroup.GetNumObjects(); i++) {
+                ObjectData data = rawObjectGroup.GetObjectData(i);
+                if (data.IsPointerType())
+                    continue;
+                ObjectDefinition obj = new ObjectDefinition(this, data);
+                list.Add(obj);
+            }
+            return list;
         }
+
         public int GetNumObjects() {
-            return objectDataList.Count-1; // Not counting InteracEnd
+            return GetObjects().Count;
+        }
+
+        public ObjectDefinition GetObject(int index) {
+            return GetObjects()[index];
+        }
+
+        // Returns a list of ObjectGroups representing each main group (Main, Enemy, BeforeEvent,
+        // AfterEvent) plus "Other" groups if they exist. This should only be called on the "Main"
+        // type.
+        // TODO: This should always contain all 4 main groups even if they don't exist yet.
+        // Preferably, they should also have a consistent order.
+        public IList<ObjectGroup> GetAllGroups() {
+            return children;
+        }
+
+        public void AddObject(ObjectType type) {
+            rawObjectGroup.InsertObject(rawObjectGroup.GetNumObjects(), type);
         }
 
         public void RemoveObject(int index) {
-            if (index >= objectDataList.Count-1)
-                throw new Exception("Array index out of bounds.");
-
-            ObjectData data = objectDataList[index];
-            data.Detach();
-            objectDataList.RemoveAt(index);
-        }
-
-        public void InsertObject(int index, ObjectData data) {
-            if (GetNumObjects() == 0 && !IsIsolated()) {
-                // If this map is sharing data with other maps (as when "blank"), need to make
-                // a unique section for this map.
-
-                parser.RemoveLabel(Identifier);
-
-                parser.InsertParseableTextAfter(null, new String[]{""}); // Newline
-                parser.InsertComponentAfter(null, new Label(parser, Identifier));
-
-                ObjectData endData = new ObjectData(Project, parser, ObjectType.End);
-                parser.InsertComponentAfter(null, endData);
-                objectDataList[0] = endData;
+            int count = 0;
+            for (int i=0; i<rawObjectGroup.GetNumObjects(); i++) {
+                ObjectData obj = rawObjectGroup.GetObjectData(i);
+                if (obj.IsPointerType())
+                    continue;
+                if (count == index) {
+                    rawObjectGroup.RemoveObject(i);
+                    return;
+                }
+                count++;
             }
-
-            data.Attach(parser);
-            data.InsertIntoParserBefore(objectDataList[index]);
-            objectDataList.Insert(index, data);
+            throw new ArgumentException("Argument index=" + index + " is too high.");
         }
 
-        public void InsertObject(int index, ObjectType type) {
-            ObjectData data = new ObjectData(Project, parser, type);
-            InsertObject(index, data);
+        public void MoveObject(int index, int newIndex) {
+            // TODO
         }
 
-        public void ReplaceObjects(IList<ObjectData> objectList) {
-            while (GetNumObjects() > 0)
-                RemoveObject(0);
-            foreach (ObjectData o in objectList)
-                InsertObject(GetNumObjects(), o);
-        }
 
-        // Returns true if no data is shared with another label
-        bool IsIsolated() {
-            FileComponent d = objectDataList[0];
+        // Internal methods
 
-            d = d.Prev;
-            if (!(d is Label))
-                return true; // This would be an odd case, there should be at least one label...
-
-            if (d.Prev is Label)
-                return false;
-            return true;
+        // Calling this ensures that all of the data pointed to by this ObjectGroup is not shared
+        // with anything else. The only exception is pointers to ObjectGroupType "Other". These
+        // should not be directly edited (and it is / will be disabled in the UI).
+        internal void Separate() {
+            // TODO
         }
     }
 }
