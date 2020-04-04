@@ -363,8 +363,15 @@ arbitraryLengthData:
 
                                 int objectDefinitionType = j;
 
+                                ObjectData lastObjectData = null;
+                                for (int k=fileStructure.Count-1; k>=0; k--) {
+                                    if (fileStructure[k] is Data) {
+                                        lastObjectData = fileStructure[k] as ObjectData;
+                                        break;
+                                    }
+                                }
                                 d = new ObjectData(Project, fTokens[0], standardValues,
-                                        this, fSpacing, objectDefinitionType);
+                                        this, fSpacing, objectDefinitionType, lastObjectData);
                                 break;
                             }
                         }

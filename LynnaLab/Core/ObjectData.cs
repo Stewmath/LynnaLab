@@ -122,12 +122,23 @@ namespace LynnaLab {
         private ObjectDefinitionType definitionType;
         private ValueReferenceGroup dataValueReferenceGroup;
 
+        // Value copied from a previous Data object, for types which can reuse the first byte.
+        string cachedExtraValue;
 
-        public ObjectData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int definitionType)
+
+        public ObjectData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int definitionType, ObjectData last)
             : base(p, command, values, -1, parser, spacing) {
 
             this.definitionType = (ObjectDefinitionType)definitionType;
             InitializeDefinitionType();
+
+            // For types which can reuse the first type, get and remember that value.
+            if (IsShortened()) {
+                if (last == null || (last.GetObjectDefinitionType() != GetObjectDefinitionType()))
+                    this.ThrowException(new AssemblyErrorException("Malformatted object"));
+
+                cachedExtraValue = last.GetValue(0);
+            }
         }
 
         // Creates a new ObjectData instance, not based on existing data.
@@ -442,13 +453,8 @@ namespace LynnaLab {
         // objects.
         public override string GetValue(int i) {
             if (IsShortened()) {
-                ObjectData last = LastData as ObjectData;
-
-                if (last == null || (last.GetObjectDefinitionType() != GetObjectDefinitionType()))
-                    this.ThrowException(new AssemblyErrorException("Malformatted object"));
-
                 if (i == 0)
-                    return (LastData as ObjectData).GetValue(0);
+                    return cachedExtraValue;
                 else
                     return base.GetValue(i-1);
             }
@@ -462,31 +468,12 @@ namespace LynnaLab {
         }
         public override void SetValue(int i, string value) {
             if (IsShortened()) {
-                if (i == 0) {
+                if (i == 0)
                     Elongate();
-                }
                 else
                     i--;
             }
-            if (IsShortenable()) {
-                // Check if the next object depends on this
-                ObjectData next = NextData as ObjectData;
-                if (next != null && next.GetObjectDefinitionType() == GetObjectDefinitionType())
-                    next.Elongate();
-            }
             base.SetValue(i, value);
-        }
-
-        public override string GetString() {
-            if (FileParser.GetDataLabel(this) != null) {
-                // If a label points directly to this data, it can't be
-                // shortened
-                Elongate();
-            }
-            else
-                Shorten(); // Try to, anyway
-
-            return base.GetString();
         }
 
         // Get the object group pointed to, or null if no such group
@@ -510,11 +497,25 @@ namespace LynnaLab {
             return type == ObjectType.Pointer || type == ObjectType.BeforeEvent || type == ObjectType.AfterEvent;
         }
 
-        // Private methods
+        public override string GetString() {
+            if (IsShortenable()) {
+                ObjectData last = LastData as ObjectData;
+                // If a label points directly to this data, it can't be shortened
+                if (FileParser.GetDataLabel(this) != null
+                        || last == null
+                        || last.GetObjectDefinitionType() != GetObjectDefinitionType()
+                        || last.GetValue(0) != GetValue(0)) {
+                    Elongate();
+                }
+                else
+                    Shorten(); // Try to, anyway
+            }
 
-        ObjectDefinitionType GetObjectDefinitionType() {
-            return definitionType;
+            return base.GetString();
         }
+
+
+        // Private methods
 
         bool IsShortenable() {
             return GetObjectDefinitionType() == ObjectDefinitionType.SpecificEnemy ||
@@ -529,6 +530,7 @@ namespace LynnaLab {
             if (IsShortenable() && IsShortened()) {
                 SetSpacing(1, " ");
                 base.InsertValue(0, GetValue(0));
+                cachedExtraValue = null;
             }
         }
         void Shorten() {
@@ -539,8 +541,13 @@ namespace LynnaLab {
             if (last == null || last.GetObjectDefinitionType() != GetObjectDefinitionType()) return;
             if (last.GetValue(0) != GetValue(0)) return;
 
+            cachedExtraValue = GetValue(0);
             RemoveValue(0);
             SetSpacing(1, "     ");
+        }
+
+        ObjectDefinitionType GetObjectDefinitionType() {
+            return definitionType;
         }
     }
 }

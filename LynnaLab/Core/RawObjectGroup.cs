@@ -101,7 +101,8 @@ namespace LynnaLab
             InsertObject(index, data);
         }
 
-        public void ReplaceObjects(IList<ObjectData> objectList) {
+        // Used to be public, now considering deleting this
+        void ReplaceObjects(IList<ObjectData> objectList) {
             while (GetNumObjects() > 0)
                 RemoveObject(0);
             foreach (ObjectData o in objectList)

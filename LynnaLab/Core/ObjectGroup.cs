@@ -161,6 +161,10 @@ namespace LynnaLab
 
         // Private methods
 
+        bool IsIsolated() {
+            return false; // TODO
+        }
+
         int ToRawIndex(int index) {
             for (int i=0; i<rawObjectGroup.GetNumObjects(); i++) {
                 ObjectData data = rawObjectGroup.GetObjectData(i);
