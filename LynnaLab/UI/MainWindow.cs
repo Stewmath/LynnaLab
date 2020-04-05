@@ -114,14 +114,14 @@ public class MainWindow: Gtk.Window
 
         roomeditor1.SetClient(areaviewer1);
         roomeditor1.SetObjectGroupEditor(objectgroupeditor1);
-        dungeonMinimap.TileSelectedEvent += delegate(object sender, int index) {
+        dungeonMinimap.AddTileSelectedHandler(delegate(object sender, int index) {
             Room room = dungeonMinimap.GetRoom();
             SetRoom(room);
-        };
-        worldMinimap.TileSelectedEvent += delegate(object sender, int index) {
+        });
+        worldMinimap.AddTileSelectedHandler(delegate(object sender, int index) {
             Room room = worldMinimap.GetRoom();
             SetRoom(room);
-        };
+        });
 
         areaviewer1.HoverChangedEvent += delegate() {
             if (areaviewer1.HoveringIndex == -1)
@@ -131,10 +131,10 @@ public class MainWindow: Gtk.Window
                 statusbar1.Push(1,
                         "Hovering Tile: 0x" + areaviewer1.HoveringIndex.ToString("X2"));
         };
-        areaviewer1.TileSelectedEvent += delegate(object sender, int index) {
+        areaviewer1.AddTileSelectedHandler(delegate(object sender, int index) {
             statusbar1.Push(1,
                     "Selected Tile: 0x" + index.ToString("X2"));
-        };
+        });
 
         roomeditor1.HoverChangedEvent += delegate() {
             if (roomeditor1.HoveringIndex == -1)

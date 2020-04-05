@@ -153,8 +153,9 @@
     <Compile Include="Plugins\MapleEditor.cs" />
     <Compile Include="Core\StreamValueReference.cs" />
     <Compile Include="UI\ObjectBox.cs" />
-    <Compile Include="Core/ObjectGroup.cs" />
-    <Compile Include="Core/ObjectDefinition.cs" />
+    <Compile Include="Core\ObjectGroup.cs" />
+    <Compile Include="Core\ObjectDefinition.cs" />
+    <Compile Include="Core\LockableEvent.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

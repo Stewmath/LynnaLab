@@ -107,10 +107,10 @@ namespace LynnaLab
             foreach (ObjectGroup group in topObjectGroup.GetAllGroups()) {
                 var objectBox = new ObjectBox(group);
 
-                objectBox.TileSelectedEvent += delegate(object sender, int index) {
+                objectBox.AddTileSelectedHandler(delegate(object sender, int index) {
                     if (!disableBoxCallback)
                         SelectObject(objectBox.ObjectGroup, index);
-                };
+                });
 
                 objectBoxDict.Add(group, objectBox);
 
@@ -150,6 +150,11 @@ namespace LynnaLab
                 SetObject(selectedObjectGroup.GetObject(selectedIndex));
         }
 
+
+        void SelectObject(ObjectGroup group, ObjectDefinition obj) {
+            int index = group.GetObjects().IndexOf(obj);
+            SelectObject(group, index);
+        }
 
         void SetObject(ObjectDefinition obj) {
             if (activeObject == obj)
@@ -191,7 +196,7 @@ namespace LynnaLab
         }
 
         void ObjectGroupModifiedHandler(object sender, EventArgs args) {
-            SelectObject(selectedObjectGroup, selectedIndex);
+            SelectObject(selectedObjectGroup, activeObject);
         }
 
         void UpdateDocumentation() {

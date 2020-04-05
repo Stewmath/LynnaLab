@@ -96,8 +96,7 @@ namespace LynnaLab
                     rect = GetTileRectSansPadding(SelectedX, SelectedY);
                     QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
                 }
-                if (TileSelectedEvent != null)
-                    TileSelectedEvent(this, SelectedIndex);
+                tileSelectedEvent.Invoke(SelectedIndex);
             }
         }
         public int SelectedX
@@ -145,8 +144,11 @@ namespace LynnaLab
 
 
         public delegate void TileGridEventHandler(object sender, int tileIndex);
-        // Event trigger when a tile is selected
-        public event TileGridEventHandler TileSelectedEvent;
+
+
+        // Protected variables
+
+        protected LockableEvent<int> tileSelectedEvent = new LockableEvent<int>();
 
 
         // Private variables
@@ -219,6 +221,14 @@ namespace LynnaLab
                 if (act.button == button && act.mod == mod)
                     actionList.Remove(act);
             }
+        }
+
+        public void AddTileSelectedHandler(LockableEvent<int>.Handler handler) {
+            tileSelectedEvent += handler;
+        }
+
+        public void RemoveTileSelectedHandler(LockableEvent<int>.Handler handler) {
+            tileSelectedEvent -= handler;
         }
 
 

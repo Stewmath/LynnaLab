@@ -27,10 +27,10 @@ namespace LynnaLab
             this.Build();
 
             subTileGfxViewer = new GfxViewer();
-            subTileGfxViewer.TileSelectedEvent += delegate(object sender, int index) {
+            subTileGfxViewer.AddTileSelectedHandler(delegate(object sender, int index) {
                 if (subTileEditor != null)
                     subTileEditor.SubTileIndex = (byte)(index^0x80);
-            };
+            });
             subTileGfxContainer.Add(subTileGfxViewer);
 
             subTileEditor = new SubTileEditor(this);
@@ -71,9 +71,9 @@ namespace LynnaLab
 
             areaviewer1.SetArea(area);
 
-            areaviewer1.TileSelectedEvent += delegate(object sender, int index) {
+            areaviewer1.AddTileSelectedHandler(delegate(object sender, int index) {
                 subTileEditor.SetTileIndex(index);
-            };
+            });
 
             areaSpinButton.Value = area.Index;
             SetFlags1(a.Flags1);
@@ -254,9 +254,9 @@ namespace LynnaLab
             Selectable = true;
             SelectedIndex = 0;
 
-            TileSelectedEvent += delegate(object sender, int index) {
+            base.AddTileSelectedHandler(delegate(object sender, int index) {
                 SubTileChangedEvent();
-            };
+            });
         }
 
         public void SetArea(Area a) {

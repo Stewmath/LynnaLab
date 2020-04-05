@@ -71,7 +71,7 @@ namespace LynnaLab {
             Gtk.Menu menu = new Gtk.Menu();
 
             for (int i=0; i<ObjectGroupEditor.ObjectNames.Length; i++) {
-                if (i >= 3 && i <= 5) // Skip "Pointer" objects
+                if (i >= 2 && i <= 4) // Skip "Pointer" objects
                     continue;
                 Gtk.MenuItem item = new Gtk.MenuItem("Add " + ObjectGroupEditor.ObjectNames[i]);
                 menu.Append(item);
