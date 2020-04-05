@@ -59,7 +59,6 @@ namespace LynnaLab
 
             for (int i=0; i<rawObjectGroup.GetNumObjects(); i++) {
                 ObjectData obj = rawObjectGroup.GetObjectData(i);
-                obj.AddValueModifiedHandler(ModifiedHandler);
                 ObjectType objectType = obj.GetObjectType();
                 if (obj.IsPointerType()) {
                     string label = obj.GetValue(0);
@@ -90,6 +89,8 @@ namespace LynnaLab
                     st.def = new ObjectDefinition(this, obj);
                     st.data = obj;
                     objectList.Add(st);
+
+                    st.def.AddValueModifiedHandler(ModifiedHandler);
                 }
             }
         }
@@ -108,11 +109,11 @@ namespace LynnaLab
         }
 
         public int GetNumObjects() {
-            return GetObjects().Count;
+            return objectList.Count;
         }
 
         public ObjectDefinition GetObject(int index) {
-            return GetObjects()[index];
+            return objectList[index].def;
         }
 
         // Returns a list of ObjectGroups representing each main group (Main, Enemy, BeforeEvent,
@@ -131,6 +132,7 @@ namespace LynnaLab
             st.rawIndex = rawObjectGroup.GetNumObjects()-1;
             st.data = rawObjectGroup.GetObjectData(st.rawIndex);
             st.def = new ObjectDefinition(this, st.data);
+            st.def.AddValueModifiedHandler(ModifiedHandler);
             objectList.Add(st);
 
             UpdateRawIndices();
@@ -144,6 +146,8 @@ namespace LynnaLab
                 throw new ArgumentException("Argument index=" + index + " is too high.");
 
             rawObjectGroup.RemoveObject(objectList[index].rawIndex);
+
+            objectList[index].def.RemoveValueModifiedHandler(ModifiedHandler);
             objectList.RemoveAt(index);
 
             UpdateRawIndices();
@@ -211,16 +215,15 @@ namespace LynnaLab
 
                     d = next;
                 }
+
+                ModifiedHandler(this, null);
             }
 
             foreach (ObjectGroup child in GetAllGroups()) {
                 if (child == this)
                     continue;
                 child.Isolate();
-                // data[childObjectIndex].Label = child.Identifier;
             }
-
-            ModifiedHandler(this, null);
 
             beganIsolate = false;
         }

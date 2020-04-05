@@ -176,11 +176,15 @@ namespace LynnaLab
             values.RemoveAt(i);
             spacing.RemoveAt(i+1);
             Modified = true;
+            if (dataModifiedEvent != null && disableCallbacks == 0)
+                dataModifiedEvent(this, null);
         }
         public void InsertValue(int i, string value, string priorSpaces=" ") {
             values.Insert(i, value);
             spacing.Insert(i+1, priorSpaces);
             Modified = true;
+            if (dataModifiedEvent != null && disableCallbacks == 0)
+                dataModifiedEvent(this, null);
         }
 
         public ValueReferenceGroup GetValueReferenceGroup() {

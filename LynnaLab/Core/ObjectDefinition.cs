@@ -10,6 +10,7 @@ namespace LynnaLab {
     {
         ObjectGroup objectGroup;
         ObjectData objectData;
+        ObjectValueReferenceHandler valueReferenceHandler;
 
 
         // Constructors
@@ -19,10 +20,10 @@ namespace LynnaLab {
             this.objectData = objectData;
 
             var valueReferences = new List<ValueReference>();
-            var handler = new ObjectValueReferenceHandler(this);
+            valueReferenceHandler = new ObjectValueReferenceHandler(this);
 
             foreach (var vref in objectData.GetValueReferences()) {
-                var newVref = new AbstractIntValueReference(vref, handler);
+                var newVref = new AbstractIntValueReference(vref, valueReferenceHandler);
                 valueReferences.Add(newVref);
             }
 
@@ -124,9 +125,19 @@ namespace LynnaLab {
             return GetGameObject()?.GetSubIDDocumentation();
         }
 
+        public void AddValueModifiedHandler(EventHandler handler) {
+            valueReferenceHandler.AddValueModifiedHandler(handler);
+        }
+
+        public void RemoveValueModifiedHandler(EventHandler handler) {
+            valueReferenceHandler.RemoveValueModifiedHandler(handler);
+        }
+
 
         internal void SetObjectData(ObjectData data) {
+            valueReferenceHandler.RemoveValueModifiedHandler();
             objectData = data;
+            valueReferenceHandler.InstallValueModifiedHandler();
         }
 
 
@@ -144,6 +155,7 @@ namespace LynnaLab {
 
         class ObjectValueReferenceHandler : BasicIntValueReferenceHandler {
             ObjectDefinition parent;
+            HashSet<EventHandler> handlers = new HashSet<EventHandler>();
 
 
             public override Project Project { get { return parent.objectData.Project; } }
@@ -151,6 +163,7 @@ namespace LynnaLab {
 
             public ObjectValueReferenceHandler(ObjectDefinition parent) {
                 this.parent = parent;
+                InstallValueModifiedHandler();
             }
 
 
@@ -166,10 +179,24 @@ namespace LynnaLab {
             }
 
             public override void AddValueModifiedHandler(EventHandler handler) {
-                parent.objectData.AddValueModifiedHandler(handler);
+                handlers.Add(handler);
             }
             public override void RemoveValueModifiedHandler(EventHandler handler) {
-                parent.objectData.RemoveValueModifiedHandler(handler);
+                handlers.Remove(handler);
+            }
+
+
+            public void RemoveValueModifiedHandler() {
+                parent.objectData.RemoveValueModifiedHandler(OnModified);
+            }
+
+            public void InstallValueModifiedHandler() {
+                parent.objectData.AddValueModifiedHandler(OnModified);
+            }
+
+            void OnModified(object sender, EventArgs args) {
+                foreach (EventHandler handler in handlers)
+                    handler(sender, args);
             }
         }
     }

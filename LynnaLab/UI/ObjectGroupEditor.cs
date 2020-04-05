@@ -125,10 +125,13 @@ namespace LynnaLab
         }
 
         public void SelectObject(ObjectGroup group, int index) {
-            selectedObjectGroup = group;
             if (!topObjectGroup.GetAllGroups().Contains(group))
                 throw new Exception("Tried to select from an invalid object group.");
-            selectedIndex = Math.Min(index, selectedObjectGroup.GetNumObjects()-1);
+
+            index = Math.Min(index, group.GetNumObjects()-1);
+
+            selectedObjectGroup = group;
+            selectedIndex = index;
 
             disableBoxCallback = true;
 
