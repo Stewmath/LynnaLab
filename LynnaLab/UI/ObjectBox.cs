@@ -39,8 +39,23 @@ namespace LynnaLab {
                 }
             };
 
-            base.AddMouseAction(MouseButton.Any, MouseModifier.Any | MouseModifier.Drag,
+
+            base.AddMouseAction(MouseButton.LeftClick, MouseModifier.Any | MouseModifier.Drag,
                     GridAction.Callback, dragCallback);
+
+            ButtonPressEventHandler OnButtonPressEvent = delegate(object sender, ButtonPressEventArgs args) {
+                int x,y;
+                Gdk.ModifierType state;
+                args.Event.Window.GetPointer(out x, out y, out state);
+
+                if (state.HasFlag(Gdk.ModifierType.Button3Mask)) {
+                    if (HoveringIndex != -1)
+                        SelectedIndex = HoveringIndex;
+                    ShowPopupMenu(args.Event);
+                }
+            };
+
+            this.ButtonPressEvent += new ButtonPressEventHandler(OnButtonPressEvent);
 
             RedrawAll();
         }
@@ -50,6 +65,38 @@ namespace LynnaLab {
 
         public void SetSelectedIndex(int index) {
             SelectedIndex = index;
+        }
+
+        void ShowPopupMenu(Gdk.EventButton ev) {
+            Gtk.Menu menu = new Gtk.Menu();
+
+            for (int i=0; i<ObjectGroupEditor.ObjectNames.Length; i++) {
+                if (i >= 3 && i <= 5) // Skip "Pointer" objects
+                    continue;
+                Gtk.MenuItem item = new Gtk.MenuItem("Add " + ObjectGroupEditor.ObjectNames[i]);
+                menu.Append(item);
+
+                int index = i;
+
+                item.Activated += (sender, args) => {
+                    SetSelectedIndex(objectGroup.AddObject((ObjectType)index));
+                };
+            }
+
+            if (HoveringIndex != -1) {
+                menu.Append(new Gtk.SeparatorMenuItem());
+
+                Gtk.MenuItem deleteItem = new Gtk.MenuItem("Delete");
+                deleteItem.Activated += (sender, args) => {
+                    if (SelectedIndex != -1)
+                        objectGroup.RemoveObject(SelectedIndex);
+                };
+                menu.Append(deleteItem);
+            }
+
+            menu.AttachToWidget(this, null);
+            menu.ShowAll();
+            menu.Popup(null, null, null, IntPtr.Zero, ev.Button, ev.Time);
         }
 
 

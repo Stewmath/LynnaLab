@@ -144,7 +144,6 @@ namespace LynnaLab {
 
         class ObjectValueReferenceHandler : BasicIntValueReferenceHandler {
             ObjectDefinition parent;
-            EventHandler modifiedHandler;
 
 
             public override Project Project { get { return parent.objectData.Project; } }
@@ -164,8 +163,6 @@ namespace LynnaLab {
                     return;
                 parent.objectGroup.Isolate();
                 parent.objectData.SetValue(name, value);
-                if (modifiedHandler != null)
-                    modifiedHandler(this, null);
             }
 
             public override void AddValueModifiedHandler(EventHandler handler) {

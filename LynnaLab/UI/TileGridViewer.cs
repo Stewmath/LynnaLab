@@ -462,7 +462,7 @@ namespace LynnaLab
                     return true;
                 if (button == MouseButton.LeftClick && left)
                     return true;
-                if (button == MouseButton.Any && right)
+                if (button == MouseButton.RightClick && right)
                     return true;
                 return false;
             }

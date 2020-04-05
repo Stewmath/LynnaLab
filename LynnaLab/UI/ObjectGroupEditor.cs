@@ -8,11 +8,11 @@ namespace LynnaLab
     public class ObjectGroupEditor : Gtk.Bin
     {
         public static readonly String[] ObjectNames = {
-            "Set Condition",
+            "Condition",
             "Interaction",
             "Object Pointer",
-            "Boss Object Pointer",
-            "Anti-Boss Object Pointer",
+            "Before Event Pointer",
+            "After Event Pointer",
             "Random Position Enemy",
             "Specific Position Enemy (A)",
             "Specific Position Enemy (B)",
@@ -96,7 +96,10 @@ namespace LynnaLab
         }
 
         public void SetObjectGroup(ObjectGroup topObjectGroup) {
+            if (this.topObjectGroup != null)
+                this.topObjectGroup.ModifiedEvent -= ObjectGroupModifiedHandler;
             this.topObjectGroup = topObjectGroup;
+            this.topObjectGroup.ModifiedEvent += ObjectGroupModifiedHandler;
 
             objectBoxDict.Clear();
             objectBoxContainer.Foreach(objectBoxContainer.Remove);
@@ -182,6 +185,10 @@ namespace LynnaLab
             objectDataContainer.ShowAll();
 
             UpdateDocumentation();
+        }
+
+        void ObjectGroupModifiedHandler(object sender, EventArgs args) {
+            SelectObject(selectedObjectGroup, selectedIndex);
         }
 
         void UpdateDocumentation() {

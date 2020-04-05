@@ -124,7 +124,7 @@ namespace LynnaLab
             return children;
         }
 
-        public void AddObject(ObjectType type) {
+        public int AddObject(ObjectType type) {
             rawObjectGroup.InsertObject(rawObjectGroup.GetNumObjects(), type);
 
             ObjectStruct st = new ObjectStruct();
@@ -135,6 +135,8 @@ namespace LynnaLab
 
             UpdateRawIndices();
             ModifiedHandler(this, null);
+
+            return GetNumObjects()-1;
         }
 
         public void RemoveObject(int index) {
@@ -305,6 +307,8 @@ namespace LynnaLab
         void ModifiedHandler(object sender, EventArgs args) {
             if (ModifiedEvent != null)
                 ModifiedEvent(this, args);
+            if (parent != null)
+                parent.ModifiedHandler(sender, args);
         }
 
 
