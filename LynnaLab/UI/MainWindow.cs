@@ -374,7 +374,7 @@ public class MainWindow: Gtk.Window
     }
 
     protected void OnAnimationsActionActivated(object sender, EventArgs e) {
-        if ((sender as ToggleAction).Active)
+        if ((sender as Gtk.CheckMenuItem).Active)
             StartAnimations();
         else
             EndAnimations();
