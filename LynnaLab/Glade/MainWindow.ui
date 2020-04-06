@@ -31,6 +31,7 @@
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="OnOpenActionActivated" swapped="no"/>
+                        <accelerator key="o" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
                     <child>
@@ -41,6 +42,7 @@
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="OnSaveActionActivated" swapped="no"/>
+                        <accelerator key="s" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
                     <child>
@@ -57,6 +59,7 @@
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="OnQuitActionActivated" swapped="no"/>
+                        <accelerator key="q" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
                   </object>
@@ -628,6 +631,7 @@
         <child>
           <object class="GtkStatusbar" id="statusbar1">
             <property name="can_focus">False</property>
+            <property name="valign">end</property>
             <property name="spacing">6</property>
             <child>
               <placeholder/>
@@ -639,6 +643,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
+            <property name="pack_type">end</property>
             <property name="position">3</property>
           </packing>
         </child>
