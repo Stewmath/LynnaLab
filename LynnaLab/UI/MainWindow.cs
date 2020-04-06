@@ -7,11 +7,15 @@ using System.Linq;
 using Gtk;
 using LynnaLab;
 
-public class MainWindow: Gtk.Window
+// Doesn't extend the Gtk.Window class because the actual window is defined in Glade
+// (Glade/MainWindow.ui).
+public class MainWindow
 {
     private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
     // GUI stuff
+    private Gtk.Window mainWindow;
+
 	private Gtk.MenuBar menubar1;
     private Gtk.MenuItem editMenuItem, actionMenuItem, debugMenuItem;
 	private Gtk.CheckButton viewObjectsCheckBox;
@@ -64,7 +68,7 @@ public class MainWindow: Gtk.Window
     }
 
     internal MainWindow() : this("") {}
-    internal MainWindow (string directory) : base (Gtk.WindowType.Toplevel)
+    internal MainWindow (string directory)
     {
         log.Debug("Beginning Program");
 
@@ -72,7 +76,7 @@ public class MainWindow: Gtk.Window
         builder.AddFromString(Helper.ReadResourceFile("LynnaLab.Glade.MainWindow.ui"));
         builder.Autoconnect(this);
 
-        this.Child = (Gtk.Widget)builder.GetObject("MainWindow");
+        mainWindow = (builder.GetObject("mainWindow") as Gtk.Window);
 
         menubar1 = (Gtk.MenuBar)builder.GetObject("menubar1");
         editMenuItem = (Gtk.MenuItem)builder.GetObject("editMenuItem");
@@ -156,7 +160,7 @@ public class MainWindow: Gtk.Window
         if (directory != "")
             OpenProject(directory);
 
-        this.ShowAll();
+        mainWindow.ShowAll();
     }
 
     void LoadPlugins() {
@@ -209,7 +213,7 @@ public class MainWindow: Gtk.Window
         ResponseType response = ResponseType.Yes;
         string mainFile = "ages.s";
         if (!File.Exists(dir + "/" + mainFile)) {
-            Gtk.MessageDialog d = new MessageDialog(this,
+            Gtk.MessageDialog d = new MessageDialog(mainWindow,
                     DialogFlags.DestroyWithParent,
                     MessageType.Warning,
                     ButtonsType.YesNo,
@@ -311,7 +315,7 @@ public class MainWindow: Gtk.Window
             return ResponseType.No;
 
         ResponseType response;
-        Gtk.Dialog d = new Dialog("Save Project?", this,
+        Gtk.Dialog d = new Dialog("Save Project?", mainWindow,
                 DialogFlags.DestroyWithParent,
                 Gtk.Stock.Yes, ResponseType.Yes,
                 Gtk.Stock.No, ResponseType.No,
@@ -351,7 +355,7 @@ public class MainWindow: Gtk.Window
     protected void OnOpenActionActivated(object sender, EventArgs e)
     {
         Gtk.FileChooserDialog dialog = new FileChooserDialog("Select the ages disassembly base directory",
-                this,
+                mainWindow,
                 FileChooserAction.SelectFolder,
                 "Cancel", ResponseType.Cancel,
                 "Select Folder", ResponseType.Accept);
@@ -495,5 +499,10 @@ public class MainWindow: Gtk.Window
     protected void OnDarkenDungeonRoomsCheckboxToggled(object sender, EventArgs e)
     {
         worldMinimap.DarkenUsedDungeonRooms = darkenDungeonRoomsCheckbox.Active;
+    }
+
+    void OnWindowClosed(object sender, DeleteEventArgs e) {
+        AskQuit();
+        e.RetVal = true; // Event is "handled". This prevents the window closure.
     }
 }

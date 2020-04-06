@@ -20,7 +20,6 @@ namespace LynnaLab
                 win = new MainWindow(args[0]);
             else
                 win = new MainWindow ();
-            win.Show ();
             Application.Run ();
         }
     }

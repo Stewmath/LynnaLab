@@ -2,9 +2,9 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
-  <object class="GtkBox" id="MainWindow">
+  <object class="GtkWindow" id="mainWindow">
     <property name="can_focus">False</property>
-    <signal name="delete-event" handler="OnDeleteEvent" swapped="no"/>
+    <signal name="delete-event" handler="OnWindowClosed" swapped="no"/>
     <child>
       <object class="GtkVBox" id="vbox1">
         <property name="can_focus">False</property>
@@ -124,11 +124,12 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkCheckMenuItem">
+                      <object class="GtkCheckMenuItem" id="animationMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Animations</property>
                         <property name="use_underline">True</property>
+                        <signal name="activate" handler="OnAnimationsActionActivated" swapped="no"/>
                         <signal name="toggled" handler="OnAnimationsActionActivated" swapped="no"/>
                         <accelerator key="a" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
@@ -642,11 +643,6 @@
           </packing>
         </child>
       </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">True</property>
-        <property name="position">1</property>
-      </packing>
     </child>
   </object>
 </interface>
