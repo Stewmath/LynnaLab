@@ -101,27 +101,7 @@ namespace LynnaLab
             this.topObjectGroup = topObjectGroup;
             this.topObjectGroup.ModifiedEvent += ObjectGroupModifiedHandler;
 
-            objectBoxDict.Clear();
-            objectBoxContainer.Foreach(objectBoxContainer.Remove);
-
-            foreach (ObjectGroup group in topObjectGroup.GetAllGroups()) {
-                var objectBox = new ObjectBox(group);
-
-                objectBox.AddTileSelectedHandler(delegate(object sender, int index) {
-                    if (!disableBoxCallback)
-                        SelectObject(objectBox.ObjectGroup, index);
-                });
-
-                objectBoxDict.Add(group, objectBox);
-
-                Gtk.Frame frame = new Gtk.Frame();
-                frame.Label = GetGroupName(group);
-                frame.Add(objectBox);
-                objectBoxContainer.Add(frame);
-            }
-
-            SelectObject(TopObjectGroup, 0);
-            this.ShowAll();
+            ReloadObjectBoxes();
         }
 
         public void SelectObject(ObjectGroup group, int index) {
@@ -193,6 +173,51 @@ namespace LynnaLab
             objectDataContainer.ShowAll();
 
             UpdateDocumentation();
+        }
+
+        void ReloadObjectBoxes() {
+            objectBoxDict.Clear();
+            objectBoxContainer.Foreach(objectBoxContainer.Remove);
+
+            foreach (ObjectGroup group in topObjectGroup.GetAllGroups()) {
+                var objectBox = new ObjectBox(group);
+
+                Gtk.Box box = new Gtk.HBox();
+
+                objectBox.AddTileSelectedHandler(delegate(object sender, int index) {
+                    if (!disableBoxCallback)
+                        SelectObject(objectBox.ObjectGroup, index);
+                });
+
+                objectBox.Halign = Gtk.Align.Center;
+                objectBoxDict.Add(group, objectBox);
+
+                Gtk.Frame frame = new Gtk.Frame();
+                frame.Label = GetGroupName(group);
+                frame.Halign = Gtk.Align.Center;
+                frame.Add(objectBox);
+
+                if (group.GetGroupType() == ObjectGroupType.Other) {
+                    box.Add(frame);
+                    Gtk.Button button = new Button(new Gtk.Image(Stock.Remove, IconSize.Button));
+                    button.Halign = Gtk.Align.Center;
+                    button.Valign = Gtk.Align.Center;
+
+                    button.Clicked += (sender, args) => {
+                        topObjectGroup.RemoveGroup(group);
+                        ReloadObjectBoxes();
+                    };
+
+                    box.Add(button);
+                }
+                else {
+                    box.Add(frame);
+                }
+                objectBoxContainer.Add(box);
+            }
+
+            SelectObject(TopObjectGroup, 0);
+            this.ShowAll();
         }
 
         void ObjectGroupModifiedHandler(object sender, EventArgs args) {
@@ -271,7 +296,7 @@ namespace LynnaLab
             case ObjectGroupType.AfterEvent:
                 return "(Enemy) objects after event";
             case ObjectGroupType.Other:
-                return group.Identifier;
+                return "[SHARED] " + group.Identifier;
             }
 
             throw new Exception("Unexpected thing happened");
