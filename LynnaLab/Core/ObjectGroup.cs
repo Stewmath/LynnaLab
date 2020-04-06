@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace LynnaLab
 {
@@ -25,6 +27,10 @@ namespace LynnaLab
     //     rooms use the same "obj_Pointer" opcode. As a result, LynnaLab cannot separate the data
     //     properly between rooms. I am planning to fix this by changing the disassembly rather than
     //     LynnaLab to accomodate this.
+    //
+    // Other notes:
+    //   - This class makes no guarantees about the ordering of pointers. This probably isn't very
+    //     important, but there could be edge-cases where the order of object loading matters.
     public class ObjectGroup : ProjectDataType
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -35,52 +41,59 @@ namespace LynnaLab
 
 
         ObjectGroup parent;
-        List<ObjectGroup.ObjectStruct> objectList;
-
-        RawObjectGroup rawObjectGroup;
         ObjectGroupType type;
+
+        List<ObjectGroup.ObjectStruct> objectList;
+        RawObjectGroup rawObjectGroup;
         List<ObjectGroup> children;
 
 
         // Constructors
 
-        internal ObjectGroup(Project p, String id) : base(p, id)
-        {
-            rawObjectGroup = Project.GetDataType<RawObjectGroup>(Identifier);
+        internal ObjectGroup(Project p, String id) : this(p, id, null, ObjectGroupType.Main) {
+        }
 
-            type = ObjectGroupType.Main;
-            // Other types will be set manually by its parent ObjectGroup when referenced.
+        private ObjectGroup(Project p, String id, ObjectGroup parent, ObjectGroupType type) : base(p, id) {
+            children = new List<ObjectGroup>();
+            children.Add(this);
+
+            if (!Project.HasLabel(id))
+                return; // This will be considered a "stub" type until data is given to it
+
+            this.parent = parent;
+            this.type = type;
+
+            rawObjectGroup = Project.GetDataType<RawObjectGroup>(Identifier);
 
             bool addedEnemyType = false;
 
             objectList = new List<ObjectStruct>();
-            children = new List<ObjectGroup>();
-            children.Add(this);
 
             for (int i=0; i<rawObjectGroup.GetNumObjects(); i++) {
                 ObjectData obj = rawObjectGroup.GetObjectData(i);
                 ObjectType objectType = obj.GetObjectType();
                 if (obj.IsPointerType()) {
                     string label = obj.GetValue(0);
-                    ObjectGroup child = Project.GetDataType<ObjectGroup>(label);
+
+                    ObjectGroupType t;
 
                     if (objectType == ObjectType.BeforeEvent)
-                        child.type = ObjectGroupType.BeforeEvent;
+                        t = ObjectGroupType.BeforeEvent;
                     else if (objectType == ObjectType.AfterEvent)
-                        child.type = ObjectGroupType.AfterEvent;
+                        t = ObjectGroupType.AfterEvent;
                     else if (objectType == ObjectType.Pointer && label.Contains("EnemyObjectData")) {
                         // TODO: Check the full name
-                        child.type = ObjectGroupType.Enemy;
+                        t = ObjectGroupType.Enemy;
                         if (addedEnemyType)
                             log.Warn("Found multiple Enemy pointers on " + Identifier + "!");
                         addedEnemyType = true;
                     }
                     else if (objectType == ObjectType.Pointer)
-                        child.type = ObjectGroupType.Other;
+                        t = ObjectGroupType.Other;
                     else
                         throw new Exception("Unexpected thing happened");
 
-                    child.parent = this;
+                    ObjectGroup child = new ObjectGroup(p, label, this, t);
                     children.Add(child);
                 }
                 else {
@@ -93,6 +106,48 @@ namespace LynnaLab
                     st.def.AddValueModifiedHandler(ModifiedHandler);
                 }
             }
+
+            if (type == ObjectGroupType.Main) {
+                // Get the room number based on the identifier name.
+                Regex rx = new Regex(@"group([0-9])Map([0-9a-f]{2})ObjectData",
+                        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                MatchCollection matches = rx.Matches(Identifier);
+
+                if (matches.Count != 1) {
+                    log.Error("ObjectGroup '" + Identifier + "' has an unexpected name. Can't get room number.");
+                    this.type = ObjectGroupType.Other;
+                }
+                else {
+                    string groupString = matches[0].Groups[1].Value;
+                    string roomString = matches[0].Groups[2].Value;
+
+                    System.Action<ObjectGroupType, string> AddGroupIfMissing = (t, basename) => {
+                        foreach (ObjectGroup group in children) {
+                            if (group.type == t)
+                                return;
+                        }
+
+                        string childId = string.Format(basename, groupString, roomString);
+
+                        if (Project.HasLabel(childId)) {
+                            log.Error("Can't create object group '" + childId + "' because it exists already.");
+                        }
+                        else {
+                            ObjectGroup child = new ObjectGroup(Project, childId);
+                            child.parent = this;
+                            child.type = t;
+                            children.Add(child);
+                        }
+                    };
+
+                    AddGroupIfMissing(ObjectGroupType.Enemy, "group{0}Map{1}EnemyObjectData");
+                    AddGroupIfMissing(ObjectGroupType.BeforeEvent, "group{0}Map{1}BeforeEventObjectData");
+                    AddGroupIfMissing(ObjectGroupType.AfterEvent, "group{0}Map{1}AfterEventObjectData");
+                }
+            }
+
+            children.Sort((a, b) => a.type.CompareTo(b.type));
         }
 
 
@@ -105,14 +160,20 @@ namespace LynnaLab
         // Gets all non-pointer objects in this group. This is a shallow operation (does not check
         // pointers).
         public IList<ObjectDefinition> GetObjects() {
+            if (IsStub())
+                return new List<ObjectDefinition>();
             return new List<ObjectDefinition>(objectList.Select((ObjectStruct o) => o.def));
         }
 
         public int GetNumObjects() {
+            if (IsStub())
+                return 0;
             return objectList.Count;
         }
 
         public ObjectDefinition GetObject(int index) {
+            if (IsStub())
+                throw new IndexOutOfRangeException();
             return objectList[index].def;
         }
 
@@ -126,6 +187,9 @@ namespace LynnaLab
         }
 
         public int AddObject(ObjectType type) {
+            if (IsStub()) {
+                parent.UnstubChild(this);
+            }
             rawObjectGroup.InsertObject(rawObjectGroup.GetNumObjects(), type);
 
             ObjectStruct st = new ObjectStruct();
@@ -142,7 +206,7 @@ namespace LynnaLab
         }
 
         public void RemoveObject(int index) {
-            if (index >= objectList.Count)
+            if (IsStub() || index >= objectList.Count)
                 throw new ArgumentException("Argument index=" + index + " is too high.");
 
             rawObjectGroup.RemoveObject(objectList[index].rawIndex);
@@ -186,6 +250,9 @@ namespace LynnaLab
         private bool beganIsolate;
 
         internal void Isolate() {
+            if (IsStub())
+                return;
+
             if (type != ObjectGroupType.Main && !parent.beganIsolate) {
                 parent.Isolate();
                 return;
@@ -312,6 +379,54 @@ namespace LynnaLab
                 ModifiedEvent(this, args);
             if (parent != null)
                 parent.ModifiedHandler(sender, args);
+        }
+
+        bool IsStub() {
+            return rawObjectGroup == null;
+        }
+
+        // Create a new pointer to a child ObjectGroup and give it blank data.
+        void UnstubChild(ObjectGroup child) {
+            Debug.Assert(children.Contains(child));
+
+            Isolate();
+
+            FileParser parentParser = rawObjectGroup.GetObjectData(0).FileParser;
+            FileParser childParser = Project.GetDefaultEnemyObjectFile();
+            if (childParser == null) {
+                log.Warn("Couldn't open the default enemy object file.");
+                childParser = parentParser;
+            }
+
+
+            // Create the new data
+
+            childParser.InsertParseableTextAfter(null, new string[] {
+                    "", // Newline
+                    child.Identifier + ":",
+                    "\tobj_EndPointer"
+                    });
+
+            child.rawObjectGroup = new RawObjectGroup(Project, child.Identifier);
+            child.objectList = new List<ObjectStruct>();
+
+
+            // Create the pointer to the new data
+
+            ObjectType objType;
+
+            if (child.type == ObjectGroupType.Enemy)
+                objType = ObjectType.Pointer;
+            else if (child.type == ObjectGroupType.BeforeEvent)
+                objType = ObjectType.BeforeEvent;
+            else if (child.type == ObjectGroupType.AfterEvent)
+                objType = ObjectType.AfterEvent;
+            else
+                throw new Exception("Invalid ObjectGroup child type");
+
+            ObjectData pointerData = new ObjectData(Project, parentParser, objType);
+            pointerData.SetValue(0, child.Identifier);
+            rawObjectGroup.InsertObject(rawObjectGroup.GetNumObjects(), pointerData);
         }
 
 

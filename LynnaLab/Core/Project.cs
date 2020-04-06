@@ -179,7 +179,9 @@ namespace LynnaLab
             }
         }
 
-        public FileParser GetFileParser(string filename) {
+        internal FileParser GetFileParser(string filename) {
+            if (!FileExists(filename))
+                return null;
             FileParser p;
             if (!fileParserDictionary.TryGetValue(filename, out p)) {
                 p = new FileParser(this, filename);
@@ -250,7 +252,6 @@ namespace LynnaLab
                     new object[] { this, identifier },
                     null
                     );
-            dataStructDictionary[s] = o;
 
             return o as T;
         }
@@ -271,7 +272,6 @@ namespace LynnaLab
                     new object[] { this, identifier },
                     null
                     );
-            dataStructDictionary[s] = o;
 
             return o as T;
         }
@@ -538,6 +538,18 @@ namespace LynnaLab
 
         public int GetFirstDungeonGroup() {
             return 4;
+        }
+
+        public FileParser GetDefaultEnemyObjectFile() {
+            string filename = "objects/" + GameString + "/enemyData.s";
+            return GetFileParser(filename);
+        }
+
+
+        // Private methods
+
+        bool FileExists(string filename) {
+            return File.Exists(BaseDirectory + filename);
         }
     }
 }
