@@ -91,7 +91,7 @@ namespace LynnaLab
 			// Container child hbox2.Gtk.Box+BoxChild
 			this.label7 = new global::Gtk.Label();
 			this.label7.Name = "label7";
-			this.label7.LabelProp = global::Mono.Unix.Catalog.GetString("Area");
+			this.label7.LabelProp = global::Mono.Unix.Catalog.GetString("Tileset");
 			this.hbox2.Add(this.label7);
             hbox2.SetChildPacking(label7, false, false, 0, Gtk.PackType.Start);
 			// Container child hbox2.Gtk.Box+BoxChild

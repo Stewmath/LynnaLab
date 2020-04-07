@@ -3,7 +3,6 @@ using System.Drawing;
 
 namespace LynnaLab
 {
-    [System.ComponentModel.ToolboxItem(true)]
     public class Minimap : TileGridViewer
     {
         Bitmap _image;
@@ -46,7 +45,6 @@ namespace LynnaLab
 
         public Minimap()
         {
-            scale = 1.0/8;
             Selectable = true;
             SelectedIndex = 0;
         }
@@ -59,6 +57,11 @@ namespace LynnaLab
             if (_map != m) {
                 _map = m;
                 _floor = 0;
+
+                if (m.MapWidth >= 16 && m.RoomWidth >= 15)
+                    scale = 1.0/12; // Draw large indoor groups smaller
+                else
+                    scale = 1.0/8;
 
                 Width = Map.MapWidth;
                 Height = Map.MapHeight;
@@ -144,15 +147,6 @@ namespace LynnaLab
             // Insert button press handling code here.
             return base.OnButtonPressEvent(ev);
         }
-
-        /*
-        protected override bool OnExposeEvent(Gdk.EventExpose ev)
-        {
-            base.OnExposeEvent(ev);
-            
-            return true;
-        }
-        */
 
         protected override void OnSizeAllocated(Gdk.Rectangle allocation)
         {

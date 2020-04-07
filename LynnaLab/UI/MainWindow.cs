@@ -20,7 +20,7 @@ public class MainWindow
     private Gtk.MenuItem editMenuItem, actionMenuItem, debugMenuItem;
 	private Gtk.CheckButton viewObjectsCheckBox;
 
-	private Gtk.Notebook notebook2;
+	private Gtk.Notebook minimapNotebook;
 	private Gtk.SpinButton worldSpinButton;
 	private Gtk.CheckButton darkenDungeonRoomsCheckbox;
 	private LynnaLab.HighlightingMinimap worldMinimap;
@@ -48,22 +48,22 @@ public class MainWindow
     }
     internal Map ActiveMap {
         get {
-            return notebook2.Page == 0 ? worldMinimap.Map : dungeonMinimap.Map;
+            return minimapNotebook.Page == 0 ? worldMinimap.Map : dungeonMinimap.Map;
         }
     }
     internal int MapSelectedX {
         get {
-            return notebook2.Page == 0 ? worldMinimap.SelectedX : dungeonMinimap.SelectedX;
+            return minimapNotebook.Page == 0 ? worldMinimap.SelectedX : dungeonMinimap.SelectedX;
         }
     }
     internal int MapSelectedY {
         get {
-            return notebook2.Page == 0 ? worldMinimap.SelectedY : dungeonMinimap.SelectedY;
+            return minimapNotebook.Page == 0 ? worldMinimap.SelectedY : dungeonMinimap.SelectedY;
         }
     }
     internal int MapSelectedFloor {
         get {
-            return notebook2.Page == 0 ? worldMinimap.Floor : dungeonMinimap.Floor;
+            return minimapNotebook.Page == 0 ? worldMinimap.Floor : dungeonMinimap.Floor;
         }
     }
 
@@ -84,7 +84,7 @@ public class MainWindow
         debugMenuItem = (Gtk.MenuItem)builder.GetObject("debugMenuItem");
         viewObjectsCheckBox = (Gtk.CheckButton)builder.GetObject("viewObjectsCheckBox");
 
-        notebook2 = (Gtk.Notebook)builder.GetObject("notebook2");
+        minimapNotebook = (Gtk.Notebook)builder.GetObject("minimapNotebook");
         worldSpinButton = (Gtk.SpinButton)builder.GetObject("worldSpinButton");
         darkenDungeonRoomsCheckbox = (Gtk.CheckButton)builder.GetObject("darkenDungeonRoomsCheckbox");
         dungeonSpinButton = (Gtk.SpinButton)builder.GetObject("dungeonSpinButton");
@@ -420,12 +420,12 @@ public class MainWindow
         }));
     }
 
-    protected void OnNotebook2SwitchPage(object o, SwitchPageArgs args)
+    protected void OnMinimapNotebookSwitchPage(object o, SwitchPageArgs args)
     {
         if (Project == null)
             return;
         GLib.Idle.Add(new GLib.IdleHandler(delegate() {
-                    Notebook nb = notebook2;
+                    Notebook nb = minimapNotebook;
                     if (nb.Page == 0)
                         SetWorld(worldSpinButton.ValueAsInt);
                     else if (nb.Page == 1)

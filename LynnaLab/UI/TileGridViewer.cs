@@ -173,6 +173,10 @@ namespace LynnaLab
                 Gdk.EventMask.ButtonPressMask | Gdk.EventMask.ButtonReleaseMask;
 
             Scale = 1;
+
+            // Doesn't support filling extra space currently
+            this.Halign = Gtk.Align.Center;
+            this.Valign = Gtk.Align.Center;
         }
 
 
