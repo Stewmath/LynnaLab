@@ -216,7 +216,7 @@ namespace LynnaLab
                 objectBoxContainer.Add(box);
             }
 
-            SelectObject(TopObjectGroup, 0);
+            SelectObject(TopObjectGroup, -1);
             this.ShowAll();
         }
 

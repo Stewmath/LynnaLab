@@ -15,15 +15,15 @@ namespace LynnaLab
 
         HashSet<int> roomsUsedInDungeons;
 
-        [BrowsableAttribute(false)]
         public bool DarkenUsedDungeonRooms {
             get {
                 return _darkenUsedDungeonRooms;
             }
             set {
                 if (_darkenUsedDungeonRooms != value) {
-                    GenerateImage();
                     _darkenUsedDungeonRooms = value;
+                    base.ClearImageCache();
+                    GenerateImage();
                 }
             }
         }
@@ -32,14 +32,16 @@ namespace LynnaLab
         {
         }
 
+        public override void GenerateImage() {
+            if (Map == null)
+                return;
+
+            roomsUsedInDungeons = Project.GetRoomsUsedInDungeons();
+
+            base.GenerateImage();
+        }
+
         protected override Image GenerateTileImage(int x, int y) {
-
-            // Regenerate the "usedDungeonRooms" set when redrawing the whole
-            // image (assumed to be starting at 0,0)
-            if (roomsUsedInDungeons == null || (x == 0 && y == 0)) {
-                roomsUsedInDungeons = Project.GetRoomsUsedInDungeons();
-            }
-
             Room room = GetRoom(x, y);
             Bitmap orig = room.GetImage();
 

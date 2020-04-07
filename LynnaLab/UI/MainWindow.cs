@@ -153,6 +153,9 @@ public class MainWindow
         worldSpinButton.Adjustment = new Adjustment(0, 0, 5, 1, 0, 0);
         dungeonSpinButton.Adjustment = new Adjustment(0, 0, 15, 1, 0, 0);
 
+        OnDarkenDungeonRoomsCheckboxToggled(null, null);
+
+
         pluginCore = new PluginCore(this);
 
         LoadPlugins();
