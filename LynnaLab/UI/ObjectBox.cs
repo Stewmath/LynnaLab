@@ -21,8 +21,8 @@ namespace LynnaLab {
             base.Height = 2;
             base.TileWidth = 18;
             base.TileHeight = 18;
-            base.PaddingX = 2;
-            base.PaddingY = 2;
+            base.TilePaddingX = 2;
+            base.TilePaddingY = 2;
 
             base.Selectable = true;
             base.MaxIndex = objectGroup.GetNumObjects() - 1;

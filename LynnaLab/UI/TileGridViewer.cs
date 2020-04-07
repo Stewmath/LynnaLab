@@ -43,13 +43,26 @@ namespace LynnaLab
 
         public int Scale { get; set; }
 
-        // Pixel offset where grid starts (TODO: replace with padding)
-        public int XOffset { get; set; }
-        public int YOffset { get; set; }
+        // Pixel offset where grid starts.
+        // This is updated with the "OnSizeAllocated" function. Don't directly set this otherwise.
+        public int XOffset { get; protected set; }
+        public int YOffset { get; protected set; }
 
         // Padding on each side of each tile on the grid, before scaling (default = 0)
-        public int PaddingX { get; set; }
-        public int PaddingY { get; set; }
+        public int TilePaddingX { get; set; }
+        public int TilePaddingY { get; set; }
+
+
+        public bool Hoverable {
+            get { return _hoverable; }
+            set {
+                if (_hoverable != value && HoveringIndex != -1) {
+                    Cairo.Rectangle rect = GetTileRectWithPadding(HoveringX, HoveringY);
+                    QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
+                }
+                _hoverable = value;
+            }
+        }
 
         public bool Selectable {
             get { return _selectable; }
@@ -136,8 +149,6 @@ namespace LynnaLab
         // function to set the image using a per-tile draw function.
         protected virtual Bitmap Image { get { return null; } }
 
-        protected virtual Surface Surface { get; }
-
 
         // Event triggered when the hovering tile changes
         public event System.Action HoverChangedEvent;
@@ -155,7 +166,7 @@ namespace LynnaLab
 
         int hoveringIndex = -1, selectedIndex = -1;
         int _maxIndex = int.MaxValue;
-        bool _selectable = false;
+        bool _selectable = false, _hoverable = true;
         Bitmap _image;
 
         IList<TileGridAction> actionList = new List<TileGridAction>();
@@ -173,10 +184,6 @@ namespace LynnaLab
                 Gdk.EventMask.ButtonPressMask | Gdk.EventMask.ButtonReleaseMask;
 
             Scale = 1;
-
-            // Doesn't support filling extra space currently
-            this.Halign = Gtk.Align.Center;
-            this.Valign = Gtk.Align.Center;
         }
 
 
@@ -193,8 +200,8 @@ namespace LynnaLab
 
         // Convert a "real" position (in pixels) into a grid position (in tiles).
         public Cairo.Point GetGridPosition(int x, int y) {
-            int x2 = (x - XOffset) / ((TileWidth  * Scale) + (PaddingX * 2));
-            int y2 = (y - YOffset) / ((TileHeight * Scale) + (PaddingY * 2));
+            int x2 = (x - XOffset) / ((TileWidth  * Scale) + (TilePaddingX * 2));
+            int y2 = (y - YOffset) / ((TileHeight * Scale) + (TilePaddingY * 2));
             return new Cairo.Point(x2, y2);
         }
 
@@ -326,6 +333,26 @@ namespace LynnaLab
         }
 
 
+        protected override void OnSizeAllocated(Gdk.Rectangle allocation) {
+            base.OnSizeAllocated(allocation);
+
+            Cairo.Rectangle desiredRect = GetTotalBounds();
+
+            if (Halign == Gtk.Align.Center || Halign == Gtk.Align.Fill)
+                XOffset = (int)(((allocation.Width) - desiredRect.Width) / 2);
+            else if (Halign == Gtk.Align.Start)
+                XOffset = 0;
+            else
+                throw new NotImplementedException();
+
+            if (Valign == Gtk.Align.Center || Valign == Gtk.Align.Fill)
+                YOffset = (int)(((allocation.Height) - desiredRect.Height) / 2);
+            else if (Valign == Gtk.Align.Start)
+                YOffset = 0;
+            else
+                throw new NotImplementedException();
+        }
+
         protected override bool OnDrawn(Cairo.Context cr) {
             /*
             if (!base.OnDrawn(cr))
@@ -336,13 +363,8 @@ namespace LynnaLab
             if (_image == null)
                 image = Image;
 
-            if (Surface != null) {
-                cr.SetSourceSurface(Surface, XOffset, YOffset);
-                cr.Paint();
-            }
-            else if (image != null) {
-                Bitmap orig = image;
-                using (Surface source = new BitmapSurface(orig)) {
+            if (image != null) {
+                using (Surface source = new BitmapSurface(image)) {
                     cr.Scale(Scale, Scale);
                     cr.SetSource(source, XOffset, YOffset);
 
@@ -357,7 +379,7 @@ namespace LynnaLab
                 }
             }
 
-            if (hoveringIndex != -1) {
+            if (Hoverable && hoveringIndex != -1) {
                 Cairo.Rectangle rect = GetTileRectSansPadding(HoveringX, HoveringY);
                 cr.NewPath();
                 cr.SetSourceColor(HoverColor);
@@ -395,16 +417,16 @@ namespace LynnaLab
 
         protected Cairo.Rectangle GetTileRectWithPadding(int x, int y) {
             return new Cairo.Rectangle(
-                    XOffset + x * (PaddingX * 2 + TileWidth)  * Scale,
-                    YOffset + y * (PaddingY * 2 + TileHeight) * Scale,
-                    TileWidth  * Scale + PaddingX * Scale * 2,
-                    TileHeight * Scale + PaddingY * Scale * 2);
+                    XOffset + x * (TilePaddingX * 2 + TileWidth)  * Scale,
+                    YOffset + y * (TilePaddingY * 2 + TileHeight) * Scale,
+                    TileWidth  * Scale + TilePaddingX * Scale * 2,
+                    TileHeight * Scale + TilePaddingY * Scale * 2);
         }
 
         protected Cairo.Rectangle GetTileRectSansPadding(int x, int y) {
             return new Cairo.Rectangle(
-                    XOffset + x * (PaddingX * 2 + TileWidth)  * Scale + PaddingX * Scale,
-                    YOffset + y * (PaddingY * 2 + TileHeight) * Scale + PaddingY * Scale,
+                    XOffset + x * (TilePaddingX * 2 + TileWidth)  * Scale + TilePaddingX * Scale,
+                    YOffset + y * (TilePaddingY * 2 + TileHeight) * Scale + TilePaddingY * Scale,
                     TileWidth  * Scale,
                     TileHeight * Scale);
         }
@@ -413,8 +435,8 @@ namespace LynnaLab
             return new Cairo.Rectangle(
                     XOffset,
                     YOffset,
-                    Width  * (PaddingX * 2 + TileWidth)  * Scale,
-                    Height * (PaddingY * 2 + TileHeight) * Scale);
+                    Width  * (TilePaddingX * 2 + TileWidth)  * Scale,
+                    Height * (TilePaddingY * 2 + TileHeight) * Scale);
         }
 
 

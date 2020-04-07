@@ -8,14 +8,21 @@ namespace LynnaLab
     [System.ComponentModel.ToolboxItem(true)]
     public class RoomEditor : TileGridViewer
     {
-        Cairo.Surface _surface;
-
         public Room Room
         {
             get { return room; }
         }
 
-        public bool ViewObjects {get; set;}
+        public bool ViewObjects {
+            get {
+                return _viewObjects;
+            }
+            set {
+                base.Hoverable = !value;
+                _viewObjects = value;
+            }
+        }
+
         public bool ViewObjectBoxes {get; set;}
 
         protected override Bitmap Image {
@@ -25,17 +32,13 @@ namespace LynnaLab
                 return room.GetImage();
             }
         }
-        protected override Cairo.Surface Surface {
-            get {
-                return _surface;
-            }
-        }
 
         Room room;
         TileGridViewer client;
         ObjectGroupEditor objectEditor;
         int mouseX=-1,mouseY=-1;
 
+        bool _viewObjects;
         bool draggingObject;
 
         // Object Group that the object under the cursor belongs to
@@ -45,10 +48,10 @@ namespace LynnaLab
         Gdk.ModifierType gdkState;
 
         public RoomEditor() {
-            TileWidth = 16;
-            TileHeight = 16;
-            XOffset = 8;
-            YOffset = 8;
+            base.TileWidth = 16;
+            base.TileHeight = 16;
+            base.Halign = Gtk.Align.Start;
+            base.Valign = Gtk.Align.Start;
 
             ViewObjectBoxes = true;
 
@@ -105,11 +108,11 @@ namespace LynnaLab
             room = r;
             Width = room.Width;
             Height = room.Height;
-            RedrawSurface();
+            QueueDraw();
         }
 
         public void OnRoomModified() {
-            RedrawSurface();
+            QueueDraw();
         }
 
         // Called when a new set of objects is loaded or objects are
@@ -118,33 +121,22 @@ namespace LynnaLab
             QueueDraw();
         }
 
-        /// <summary>
-        ///  Draw the Cairo.Surface (currently just a copy of the room's bitmap)
-        /// </summary>
-        void RedrawSurface() {
-            if (_surface != null)
-                _surface.Dispose();
-            _surface = new BitmapSurface(new Bitmap(room.GetImage()));
-            QueueDraw();
-        }
-
         void UpdateMouse(int x, int y) {
             if (mouseX != x || mouseY != y) {
                 mouseX = x;
                 mouseY = y;
 
-                if (ViewObjects) // Laziness
+                if (ViewObjects) // Laziness; not checking where the mouse is
                     QueueDraw();
             }
         }
 
         void OnClicked(int posX, int posY) {
-            int x = (posX - XOffset) / TileWidth;
-            int y = (posY - YOffset) / TileHeight;
+            Cairo.Point p = GetGridPosition(posX, posY);
             if (!ViewObjects) {
                 if (!IsInBounds(posX,posY))
                     return;
-                room.SetTile(x, y, client.SelectedIndex);
+                room.SetTile(p.X, p.Y, client.SelectedIndex);
             }
             else {
                 if (objectEditor != null) {
@@ -168,7 +160,7 @@ namespace LynnaLab
                     int newX,newY;
                     if (gdkState.HasFlag(Gdk.ModifierType.ControlMask) || obj.HasShortenedXY()) {
                         newX = x-XOffset;
-                        newY = y-XOffset;
+                        newY = y-YOffset;
                     }
                     else {
                         // Move objects in increments of 8 pixels
@@ -202,16 +194,7 @@ namespace LynnaLab
         }
 
         protected override bool OnDrawn(Cairo.Context cr) {
-            if (ViewObjects) {
-                // Draw image manually, instead of relying on subclass, so rectangles don't get
-                // drawn on the grid.
-                using (Cairo.Surface source = new BitmapSurface(Image)) {
-                    cr.SetSourceSurface(source, XOffset, YOffset);
-                    cr.Paint();
-                }
-            }
-            else
-                base.OnDrawn(cr);
+            base.OnDrawn(cr);
 
             if (ViewObjects && objectEditor != null) {
                 // Draw objects
@@ -311,15 +294,20 @@ namespace LynnaLab
         protected override void OnSizeAllocated(Gdk.Rectangle allocation)
         {
             base.OnSizeAllocated(allocation);
-            // Insert layout code here.
+
+            // Offset the image so that objects at position (0,0) can be fully drawn
+            base.XOffset = 8;
+            base.YOffset = 8;
         }
 
+        // Override preferred width/height so that objects can be drawn even outside normal room
+        // boundaries.
         protected override void OnGetPreferredHeight(out int minimum_height, out int natural_height) {
-            minimum_height = 0x10*16;
+            minimum_height = 17*16;
             natural_height = minimum_height;
         }        
         protected override void OnGetPreferredWidth(out int minimum_width, out int natural_width) {
-            minimum_width = 0x10*16;
+            minimum_width = 17*16;
             natural_width = minimum_width;
         }        
     }
