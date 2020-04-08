@@ -341,12 +341,12 @@ arbitraryLengthData:
                     {
                         Data d = null;
                         // Try object commands
-                        for (int j=0; j<RawObjectGroup.ObjectCommands.Length; j++) {
-                            string s = RawObjectGroup.ObjectCommands[j];
+                        for (int j=0; j<ObjectData.ObjectCommands.Length; j++) {
+                            string s = ObjectData.ObjectCommands[j];
 
                             if (s.ToLower() == fTokens[0].ToLower()) {
-                                int minParams = RawObjectGroup.ObjectCommandMinParams[j];
-                                int maxParams = RawObjectGroup.ObjectCommandMaxParams[j];
+                                int minParams = ObjectData.ObjectCommandMinParams[j];
+                                int maxParams = ObjectData.ObjectCommandMaxParams[j];
 
                                 if (minParams == -1) minParams = maxParams;
                                 if (maxParams == -1) maxParams = minParams;

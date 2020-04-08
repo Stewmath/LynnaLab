@@ -12,19 +12,21 @@ namespace LynnaLab {
         Handler handler;
         int locked = 0;
         bool missedInvoke = false;
+        object invokeSender;
         T invokeParam;
 
         public LockableEvent() {
         }
 
-        public void Invoke(T args) {
+        public void Invoke(object sender, T args) {
             if (locked != 0) {
                 missedInvoke = true;
+                invokeSender = sender;
                 invokeParam = args;
             }
             else {
                 if (handler != null)
-                    handler(this, args);
+                    handler(sender, args);
             }
         }
 
@@ -37,9 +39,15 @@ namespace LynnaLab {
                 throw new Exception("Called Unlock on an already unlocked LockableEvent.");
             locked--;
             if (locked == 0 && missedInvoke) {
-                Invoke(invokeParam);
+                Invoke(invokeSender, invokeParam);
                 missedInvoke = false;
             }
+        }
+
+        // If an event triggered while locked, this clears the event to prevent it from running when
+        // Unlock() is called.
+        public void Clear() {
+            missedInvoke = false;
         }
 
 
@@ -52,6 +60,18 @@ namespace LynnaLab {
 
         public static LockableEvent<T> operator-(LockableEvent<T> ev, Handler handler) {
             ev.handler -= handler;
+            return ev;
+        }
+
+
+        // Specific operator+ for EventHandler. This is hacky.
+        public static LockableEvent<T> operator+(LockableEvent<T> ev, EventHandler handler) {
+            ev.handler += (o, a) => handler(o, a as EventArgs);
+            return ev;
+        }
+
+        public static LockableEvent<T> operator-(LockableEvent<T> ev, EventHandler handler) {
+            ev.handler -= (o, a) => handler(o, a as EventArgs); // TODO: this probably doesn't work
             return ev;
         }
     }

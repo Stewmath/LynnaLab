@@ -109,7 +109,7 @@ namespace LynnaLab
                     rect = GetTileRectSansPadding(SelectedX, SelectedY);
                     QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
                 }
-                tileSelectedEvent.Invoke(SelectedIndex);
+                tileSelectedEvent.Invoke(this, SelectedIndex);
             }
         }
         public int SelectedX

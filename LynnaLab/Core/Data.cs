@@ -8,8 +8,6 @@ namespace LynnaLab
 
     public class Data : FileComponent, ValueReferenceHandler
     {
-        protected int disableCallbacks = 0;
-
         // Size in bytes
         // -1 if indeterminate? (consider getting rid of this, it's unreliable)
         protected int size;
@@ -19,7 +17,7 @@ namespace LynnaLab
         List<string> values;
 
         // Event called whenever data is modified
-        event EventHandler dataModifiedEvent;
+        LockableEvent<EventArgs> dataModifiedEvent = new LockableEvent<EventArgs>();
 
         // The ValueReferenceGroup provides an alternate method to access the data (via string
         // names)
@@ -117,8 +115,7 @@ namespace LynnaLab
             if (values[i] != value) {
                 values[i] = value;
                 Modified = true;
-                if (dataModifiedEvent != null && disableCallbacks == 0)
-                    dataModifiedEvent(this, null);
+                dataModifiedEvent.Invoke(this, null);
             }
         }
         public void SetByteValue(int i, byte value) {
@@ -165,7 +162,7 @@ namespace LynnaLab
 
         public void SetNumValues(int n, string defaultValue) {
             while (values.Count < n) {
-                InsertValue(values.Count, "$00");
+                InsertValue(values.Count, defaultValue);
             }
             while (values.Count > n)
                 RemoveValue(values.Count-1);
@@ -176,15 +173,13 @@ namespace LynnaLab
             values.RemoveAt(i);
             spacing.RemoveAt(i+1);
             Modified = true;
-            if (dataModifiedEvent != null && disableCallbacks == 0)
-                dataModifiedEvent(this, null);
+            dataModifiedEvent.Invoke(this, null);
         }
         public void InsertValue(int i, string value, string priorSpaces=" ") {
             values.Insert(i, value);
             spacing.Insert(i+1, priorSpaces);
             Modified = true;
-            if (dataModifiedEvent != null && disableCallbacks == 0)
-                dataModifiedEvent(this, null);
+            dataModifiedEvent.Invoke(this, null);
         }
 
         public ValueReferenceGroup GetValueReferenceGroup() {
@@ -223,6 +218,21 @@ namespace LynnaLab
 
             return s;
         }
+
+        public void LockModifiedEvents() {
+            dataModifiedEvent.Lock();
+        }
+
+        public void UnlockModifiedEvents() {
+            dataModifiedEvent.Unlock();
+        }
+
+        public void ClearAndUnlockModifiedEvents() {
+            dataModifiedEvent.Clear();
+            dataModifiedEvent.Unlock();
+        }
+
+
 
         // Helper function for GetString
         string GetSpacingIndex(int i) {

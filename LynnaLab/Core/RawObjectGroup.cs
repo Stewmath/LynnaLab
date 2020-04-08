@@ -8,36 +8,6 @@ namespace LynnaLab
     // class instead.
     internal class RawObjectGroup : ProjectDataType
     {
-        public static string[] ObjectCommands = {
-            "obj_Condition",
-            "obj_NoValue",
-            "obj_DoubleValue",
-            "obj_Pointer",
-            "obj_BeforeEvent",
-            "obj_AfterEvent",
-            "obj_RandomEnemy",
-            "obj_SpecificEnemy",
-            "obj_Part",
-            "obj_WithParam",
-            "obj_ItemDrop",
-            "obj_End",
-            "obj_EndPointer",
-            "obj_Garbage"
-        };
-
-        public static int[] ObjectCommandMinParams = {
-             1,  1,  3,  1,  1,  1,  2,  3,  2,  5,  2,  0,  0, 2
-        };
-
-        public static int[] ObjectCommandMaxParams = {
-            -1, -1, -1, -1, -1, -1, -1,  4, -1, -1,  3, -1, -1, 2
-        };
-
-        public static int[] ObjectCommandDefaultParams = {
-             1,  1,  3,  1,  1,  1,  2,  4,  2,  5,  3,  0,  0, 2
-        };
-
-
         List<ObjectData> objectDataList = new List<ObjectData>();
         FileParser parser;
 

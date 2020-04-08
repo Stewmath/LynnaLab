@@ -269,7 +269,7 @@ namespace LynnaLab
 		{
 			switch (type)
 			{
-				case ObjectType.Conditional:        return CairoHelper.ConvertColor(System.Drawing.Color.Black);
+				case ObjectType.Condition:          return CairoHelper.ConvertColor(System.Drawing.Color.Black);
 				case ObjectType.Interaction:        return CairoHelper.ConvertColor(System.Drawing.Color.DarkOrange);
 				case ObjectType.Pointer:            return CairoHelper.ConvertColor(System.Drawing.Color.Yellow);
 				case ObjectType.BeforeEvent:        return CairoHelper.ConvertColor(System.Drawing.Color.Green);
