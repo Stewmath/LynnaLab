@@ -40,7 +40,7 @@ namespace LynnaLab
 
 
         // Invoked when the group is modified in any way (including modifying objects themselves).
-        public EventHandler ModifiedEvent;
+        public EventHandler<ValueModifiedEventArgs> ModifiedEvent;
 
 
         ObjectGroup parent;
@@ -401,7 +401,7 @@ namespace LynnaLab
             return true;
         }
 
-        void ModifiedHandler(object sender, EventArgs args) {
+        void ModifiedHandler(object sender, ValueModifiedEventArgs args) {
             if (ModifiedEvent != null)
                 ModifiedEvent(this, args);
             if (parent != null)

@@ -205,7 +205,7 @@ namespace LynnaLab
             if (referencedDestData != null)
                 referencedDestData.AddReference(this);
 
-            this.AddValueModifiedHandler(delegate(object sender, EventArgs e) {
+            this.AddValueModifiedHandler(delegate(object sender, ValueModifiedEventArgs e) {
                 WarpDestData newDestData = GetReferencedDestData();
                 if (newDestData != referencedDestData) {
                     // Update DestData reference

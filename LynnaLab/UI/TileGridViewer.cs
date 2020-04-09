@@ -234,11 +234,11 @@ namespace LynnaLab
             }
         }
 
-        public void AddTileSelectedHandler(LockableEvent<int>.Handler handler) {
+        public void AddTileSelectedHandler(EventHandler<int> handler) {
             tileSelectedEvent += handler;
         }
 
-        public void RemoveTileSelectedHandler(LockableEvent<int>.Handler handler) {
+        public void RemoveTileSelectedHandler(EventHandler<int> handler) {
             tileSelectedEvent -= handler;
         }
 

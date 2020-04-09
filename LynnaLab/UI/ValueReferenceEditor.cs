@@ -332,7 +332,7 @@ loopEnd:
         }
 
         // Data modified externally
-        void OnDataModifiedExternal(object sender, EventArgs e) {
+        void OnDataModifiedExternal(object sender, ValueModifiedEventArgs e) {
             if (dataModifiedExternalEvent != null)
                 dataModifiedExternalEvent();
         }

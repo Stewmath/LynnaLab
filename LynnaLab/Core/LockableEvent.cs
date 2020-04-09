@@ -6,10 +6,8 @@ namespace LynnaLab {
     // NOTE: This assumes that only the most recent event matters. If multiple events occur while
     // locked, all but the last one will be skipped.
     public class LockableEvent<T> {
-        public delegate void Handler(object sender, T args);
+        EventHandler<T> handler;
 
-
-        Handler handler;
         int locked = 0;
         bool missedInvoke = false;
         object invokeSender;
@@ -53,25 +51,13 @@ namespace LynnaLab {
 
         // Static methods
 
-        public static LockableEvent<T> operator+(LockableEvent<T> ev, Handler handler) {
+        public static LockableEvent<T> operator+(LockableEvent<T> ev, EventHandler<T> handler) {
             ev.handler += handler;
             return ev;
         }
 
-        public static LockableEvent<T> operator-(LockableEvent<T> ev, Handler handler) {
+        public static LockableEvent<T> operator-(LockableEvent<T> ev, EventHandler<T> handler) {
             ev.handler -= handler;
-            return ev;
-        }
-
-
-        // Specific operator+ for EventHandler. This is hacky.
-        public static LockableEvent<T> operator+(LockableEvent<T> ev, EventHandler handler) {
-            ev.handler += (o, a) => handler(o, a as EventArgs);
-            return ev;
-        }
-
-        public static LockableEvent<T> operator-(LockableEvent<T> ev, EventHandler handler) {
-            ev.handler -= (o, a) => handler(o, a as EventArgs); // TODO: this probably doesn't work
             return ev;
         }
     }

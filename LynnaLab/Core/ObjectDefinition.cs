@@ -125,11 +125,11 @@ namespace LynnaLab {
             return GetGameObject()?.GetSubIDDocumentation();
         }
 
-        public void AddValueModifiedHandler(EventHandler handler) {
+        public void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
             valueReferenceHandler.AddValueModifiedHandler(handler);
         }
 
-        public void RemoveValueModifiedHandler(EventHandler handler) {
+        public void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
             valueReferenceHandler.RemoveValueModifiedHandler(handler);
         }
 
@@ -155,7 +155,7 @@ namespace LynnaLab {
 
         class ObjectValueReferenceHandler : BasicIntValueReferenceHandler {
             ObjectDefinition parent;
-            HashSet<EventHandler> handlers = new HashSet<EventHandler>();
+            HashSet<EventHandler<ValueModifiedEventArgs>> handlers = new HashSet<EventHandler<ValueModifiedEventArgs>>();
 
 
             public override Project Project { get { return parent.objectData.Project; } }
@@ -178,10 +178,10 @@ namespace LynnaLab {
                 parent.objectData.SetValue(name, value);
             }
 
-            public override void AddValueModifiedHandler(EventHandler handler) {
+            public override void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
                 handlers.Add(handler);
             }
-            public override void RemoveValueModifiedHandler(EventHandler handler) {
+            public override void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
                 handlers.Remove(handler);
             }
 
@@ -194,8 +194,8 @@ namespace LynnaLab {
                 parent.objectData.AddValueModifiedHandler(OnModified);
             }
 
-            void OnModified(object sender, EventArgs args) {
-                foreach (EventHandler handler in handlers)
+            void OnModified(object sender, ValueModifiedEventArgs args) {
+                foreach (var handler in handlers)
                     handler(sender, args);
             }
         }

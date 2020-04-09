@@ -220,7 +220,7 @@ namespace LynnaLab
             this.ShowAll();
         }
 
-        void ObjectGroupModifiedHandler(object sender, EventArgs args) {
+        void ObjectGroupModifiedHandler(object sender, ValueModifiedEventArgs args) {
             SelectObject(selectedObjectGroup, activeObject);
         }
 

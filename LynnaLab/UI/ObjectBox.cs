@@ -27,12 +27,12 @@ namespace LynnaLab {
             base.Selectable = true;
             base.MaxIndex = objectGroup.GetNumObjects() - 1;
 
-            objectGroup.ModifiedEvent += delegate(object sender, EventArgs args) {
+            objectGroup.ModifiedEvent += (sender, args) => {
                 RedrawAll();
                 base.MaxIndex = objectGroup.GetNumObjects() - 1;
             };
 
-            TileGridEventHandler dragCallback = delegate(object sender, int index) {
+            TileGridEventHandler dragCallback = (sender, index) => {
                 if (index != SelectedIndex) {
                     objectGroup.MoveObject(SelectedIndex, index);
                     SelectedIndex = index;

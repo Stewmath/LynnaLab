@@ -17,7 +17,7 @@ namespace LynnaLab
         List<string> values;
 
         // Event called whenever data is modified
-        LockableEvent<EventArgs> dataModifiedEvent = new LockableEvent<EventArgs>();
+        LockableEvent<ValueModifiedEventArgs> dataModifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
 
         // The ValueReferenceGroup provides an alternate method to access the data (via string
         // names)
@@ -151,10 +151,10 @@ namespace LynnaLab
         public virtual void SetValue(string s, int i) {
             GetValueReference(s).SetValue(i);
         }
-        public virtual void AddValueModifiedHandler(EventHandler handler) {
+        public virtual void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
             dataModifiedEvent += handler;
         }
-        public virtual void RemoveValueModifiedHandler(EventHandler handler) {
+        public virtual void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
             dataModifiedEvent -= handler;
         }
         // End of ValueReferenceHandler implementation

@@ -27,9 +27,14 @@ namespace LynnaLab
         void SetValue(string name, string value);
         void SetValue(string name, int value);
 
-        void AddValueModifiedHandler(EventHandler handler);
-        void RemoveValueModifiedHandler(EventHandler handler);
+        void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
+        void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
     }
+
+    // This is a stub for now
+    public class ValueModifiedEventArgs {
+    }
+
 
     public abstract class BasicIntValueReferenceHandler : ValueReferenceHandler {
         public abstract Project Project {get;}
@@ -46,8 +51,8 @@ namespace LynnaLab
 
         public abstract void SetValue(string name, int value);
 
-        public abstract void AddValueModifiedHandler(EventHandler handler);
-        public abstract void RemoveValueModifiedHandler(EventHandler handler);
+        public abstract void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
+        public abstract void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
     }
 
 
