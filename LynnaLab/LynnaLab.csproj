@@ -134,14 +134,14 @@
     <Compile Include="Tests\NUnitTestClass.cs" />
     <Compile Include="Core\EnemyObject.cs" />
     <Compile Include="Core\PartObject.cs" />
-    <Compile Include="Core\Helper.cs" />
+    <Compile Include="Core\Util\Helper.cs" />
     <Compile Include="Core\Data.cs" />
     <Compile Include="Core\DocumentationFileComponent.cs" />
     <Compile Include="Core\FileComponent.cs" />
     <Compile Include="Core\FileParser.cs" />
     <Compile Include="Core\GfxHeaderData.cs" />
-    <Compile Include="Core\MemoryFileStream.cs" />
-    <Compile Include="Core\SubStream.cs" />
+    <Compile Include="Core\Util\MemoryFileStream.cs" />
+    <Compile Include="Core\Util\SubStream.cs" />
     <Compile Include="Core\ProjectConfig.cs" />
     <Compile Include="UI\CairoHelper.cs" />
     <Compile Include="Widgets\InfoBar.cs" />
@@ -155,7 +155,8 @@
     <Compile Include="UI\ObjectBox.cs" />
     <Compile Include="Core\ObjectGroup.cs" />
     <Compile Include="Core\ObjectDefinition.cs" />
-    <Compile Include="Core\LockableEvent.cs" />
+    <Compile Include="Core\Util\LockableEvent.cs" />
+    <Compile Include="Core\Util\DictionaryLinkedList.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

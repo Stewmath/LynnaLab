@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace LynnaLab
 {
@@ -21,9 +22,9 @@ namespace LynnaLab
         public Dictionary<string,Tuple<string,DocumentationFileComponent>> definesDictionary =
             new Dictionary<string,Tuple<string,DocumentationFileComponent>>();
 
-        // Objects may be raw strings, or Data structures
-        // (In the future, maybe have better structures for defines, etc?)
-        List<FileComponent> fileStructure = new List<FileComponent>();
+        // Objects may be raw strings, or Data structures.
+        DictionaryLinkedList<FileComponent> fileStructure = new DictionaryLinkedList<FileComponent>();
+
 
         // The following variables only used by ParseLine and related functions; they provide
         // context between lines when parsing.
@@ -112,22 +113,22 @@ namespace LynnaLab
             log.Info("Finished parsing \"" + Filename + "\".");
         }
 
-        void ParseLine(string pureLine, List<FileComponent> fileStructure) {
+        void ParseLine(string pureLine, DictionaryLinkedList<FileComponent> fileStructure) {
             string warningString = WarningString;
 
             // Helper functions
 
             Action<FileComponent> AddComponent = (component) => {
-                fileStructure.Add(component);
+                fileStructure.AddLast(component);
                 if (component is Label)
                     AddLabelToDictionaries(component as Label);
             };
-            Action<FileComponent> AddDataAndPopFileStructure = (data) => {
-                fileStructure.RemoveAt(fileStructure.Count-1);
-                AddComponent(data);
-            };
             Action PopFileStructure = () => {
-                fileStructure.RemoveAt(fileStructure.Count-1);
+                fileStructure.Remove(fileStructure.Last);
+            };
+            Action<FileComponent> AddDataAndPopFileStructure = (data) => {
+                PopFileStructure();
+                AddComponent(data);
             };
 
             // Sub-function: returns true if a meaning for the token was found.
@@ -359,9 +360,9 @@ arbitraryLengthData:
                                 int objectDefinitionType = j;
 
                                 ObjectData lastObjectData = null;
-                                for (int k=fileStructure.Count-1; k>=0; k--) {
-                                    if (fileStructure[k] is Data) {
-                                        lastObjectData = fileStructure[k] as ObjectData;
+                                for (var node = fileStructure.Last; node != null; node = node.Previous) {
+                                    if (node.Value is Data) {
+                                        lastObjectData = node.Value as ObjectData;
                                         break;
                                     }
                                 }
@@ -423,7 +424,7 @@ arbitraryLengthData:
 
             // Add raw string to file structure, it'll be removed if
             // a better representation is found
-            fileStructure.Add(new StringFileComponent(this, line, null));
+            AddComponent(new StringFileComponent(this, line, null));
 
             if (line.Trim().Length == 0)
                 return;
@@ -564,7 +565,7 @@ arbitraryLengthData:
                                         AddDefinition(":"+s, bank.ToString());
                                     PopFileStructure();
                                     StringFileComponent sc = new StringFileComponent(this, tokens[0], spacing);
-                                    fileStructure.Add(sc);
+                                    AddComponent(sc);
                                     addedComponent = sc;
                                 }
                                 else {
@@ -580,7 +581,7 @@ arbitraryLengthData:
 
                                     // Add raw string to file structure, it'll be removed if a better
                                     // representation is found
-                                    fileStructure.Add(new StringFileComponent(
+                                    AddComponent(new StringFileComponent(
                                                 this, line.Substring(spacing[0].Length+tokens[0].Length), spacing2));
 
                                     for (int j=1; j<tokens.Count; j++)
@@ -611,7 +612,7 @@ arbitraryLengthData:
 
             DocumentationFileComponent doc = null;
             if (fileStructure.Count >= 2)
-                doc = fileStructure[fileStructure.Count-2] as DocumentationFileComponent;
+                doc = fileStructure.Last.Previous.Value as DocumentationFileComponent;
             definesDictionary[def] = new Tuple<string,DocumentationFileComponent>(value, doc);
         }
 
@@ -665,123 +666,81 @@ arbitraryLengthData:
         }
 
         // Attempt to insert newComponent after refComponent, or at the end if
-        // refComponent is null
-        // Returns false if failed (refComponent doesn't exist or newComponent already
-        // exists in this file).
-        public bool InsertComponentAfter(FileComponent refComponent, FileComponent newComponent) {
-            int i;
+        // refComponent is null.
+        public void InsertComponentAfter(FileComponent refComponent, FileComponent newComponent) {
             if (refComponent == null)
-                i = fileStructure.Count-1;
+                fileStructure.AddLast(newComponent);
             else {
-                i = fileStructure.IndexOf(refComponent);
-                if (i == -1)
-                    return false;
+                if (!fileStructure.Contains(refComponent))
+                    throw new Exception("Tried to insert after a FileComponent that's not in the FileParser.");
+                fileStructure.AddAfter(refComponent, newComponent);
             }
-
-            if (fileStructure.Contains(newComponent))
-                return false;
-
-            if (newComponent is Label) {
-                AddLabelToDictionaries(newComponent as Label);
-            }
-
-            fileStructure.Insert(i+1, newComponent);
-            newComponent.SetFileParser(this);
-
-            Modified = true;
-
-            return true;
         }
+
         // Insert at the beginning if refComponent is null.
-        public bool InsertComponentBefore(FileComponent refComponent, FileComponent newComponent) {
-            int i;
+        public void InsertComponentBefore(FileComponent refComponent, FileComponent newComponent) {
             if (refComponent == null)
-                i = 0;
+                fileStructure.AddFirst(newComponent);
             else {
-                i = fileStructure.IndexOf(refComponent);
-                if (i == -1)
-                    return false;
+                if (!fileStructure.Contains(refComponent))
+                    throw new Exception("Tried to insert before a FileComponent that's not in the FileParser.");
+                fileStructure.AddBefore(refComponent, newComponent);
             }
-
-            if (newComponent is Label) {
-                AddLabelToDictionaries(newComponent as Label);
-            }
-
-            fileStructure.Insert(i, newComponent);
-            newComponent.SetFileParser(this);
-
-            Modified = true;
-
-            return true;
         }
+
         // Parse an array of text (each element is a line) and insert it after
         // refComponent (or at the end if refComponent is null);
-        public bool InsertParseableTextAfter(FileComponent refComponent, string[] text) {
-            int index;
-            if (refComponent == null)
-                index = fileStructure.Count-1;
-            else {
-                index = fileStructure.IndexOf(refComponent);
-                if (index == -1)
-                    return false;
-            }
-
+        public void InsertParseableTextAfter(FileComponent refComponent, string[] text) {
             context = "";
-            List<FileComponent> structure = new List<FileComponent>();
+            var structure = new DictionaryLinkedList<FileComponent>();
 
             for (int i=0;i<text.Length;i++) {
                 currentLine = -1;
                 ParseLine(text[i], structure);
             }
 
-            fileStructure.InsertRange(index+1, structure);
-
-            return true;
+            var node = fileStructure.Find(refComponent);
+            foreach (FileComponent f in structure) {
+                var nextNode = new LinkedListNode<FileComponent>(f);
+                if (node == null)
+                    fileStructure.AddLast(nextNode);
+                else
+                    fileStructure.AddAfter(node, nextNode);
+                node = nextNode;
+            }
         }
-        public bool InsertParseableTextBefore(FileComponent refComponent, string[] text) {
-            int index;
-            if (refComponent == null)
-                index = 0;
-            else {
-                index = fileStructure.IndexOf(refComponent);
-                if (index == -1)
-                    return false;
-            }
-
+        public void InsertParseableTextBefore(FileComponent refComponent, string[] text) {
             context = "";
-            List<FileComponent> structure = new List<FileComponent>();
+            var structure = new DictionaryLinkedList<FileComponent>();
 
             for (int i=0;i<text.Length;i++) {
                 currentLine = -1;
                 ParseLine(text[i], structure);
             }
 
-            fileStructure.InsertRange(index, structure);
-
-            return true;
+            var node = fileStructure.Find(refComponent);
+            foreach (FileComponent f in structure.Reverse()) {
+                var nextNode = new LinkedListNode<FileComponent>(f);
+                if (node == null)
+                    fileStructure.AddFirst(nextNode);
+                else
+                    fileStructure.AddBefore(node, nextNode);
+                node = nextNode;
+            }
         }
 
         public FileComponent GetNextFileComponent(FileComponent reference) {
-            int i = fileStructure.IndexOf(reference);
-            if (i == -1) return null;
-            if (i+1 < fileStructure.Count)
-                return fileStructure[i+1];
-            return null;
+            var node = fileStructure.Find(reference);
+            return node.Next?.Value;
         }
         public FileComponent GetPrevFileComponent(FileComponent reference) {
-            int i = fileStructure.IndexOf(reference);
-            if (i == -1) return null;
-            if (i-1 >= 0)
-                return fileStructure[i-1];
-            return null;
+            var node = fileStructure.Find(reference);
+            return node.Previous?.Value;
         }
 
         // Remove a FileComponent (Data, Label) from the fileStructure.
         public void RemoveFileComponent(FileComponent component) {
-            int index = fileStructure.IndexOf(component);
-            if (index == -1) return;
-
-            fileStructure.RemoveAt(index);
+            fileStructure.Remove(component);
 
             Label l = component as Label;
             if (l != null) {
@@ -802,13 +761,7 @@ arbitraryLengthData:
         // Returns >0 if c2 comes after c1, <0 if c2 comes before c1, or 0 if c1
         // and c2 are the same.
         public int CompareComponentPositions(FileComponent c1, FileComponent c2) {
-            if (c1 == c2)
-                return 0;
-            int p1 = fileStructure.IndexOf(c1);
-            int p2 = fileStructure.IndexOf(c2);
-            if (p1 == -1 || p2 == -1)
-                throw new InvalidLookupException();
-            return p2.CompareTo(p1);
+            throw new NotImplementedException();
         }
 
         public void Save() {
@@ -816,10 +769,9 @@ arbitraryLengthData:
 
             List<string> output = new List<string>();
             FileComponent lastComponent = null;
-            for (int i=0;i<fileStructure.Count;i++) {
+            foreach (var d in fileStructure) {
                 string s = null;
 
-                FileComponent d = fileStructure[i];
                 if (d.Fake)
                     s = null;
                 else {
