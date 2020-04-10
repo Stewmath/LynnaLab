@@ -9,10 +9,10 @@ namespace LynnaLab
         Bitmap _image;
         Map _map;
         double scale;
-
         int _floor;
 
         Dictionary<Tuple<Map,int>,Bitmap> cachedImageDict = new Dictionary<Tuple<Map,int>,Bitmap>();
+        GLib.IdleHandler idleHandler;
 
         public Project Project {
             get {
@@ -85,7 +85,7 @@ namespace LynnaLab
         }
 
         public virtual void GenerateImage() {
-            GLib.Idle.Remove(new GLib.IdleHandler(OnIdleGenerateImage));
+            GLib.Idle.Remove(idleHandler);
 
             if (_map == null) {
                 _image = null;
@@ -108,7 +108,7 @@ namespace LynnaLab
 
             idleX = 0;
             idleY = 0;
-            GLib.Idle.Add(new GLib.IdleHandler(OnIdleGenerateImage));
+            GLib.Idle.Add(idleHandler = new GLib.IdleHandler(OnIdleGenerateImage));
         }
 
         protected virtual Image GenerateTileImage(int x, int y) {
@@ -162,7 +162,7 @@ namespace LynnaLab
 
             g.Dispose();
 
-            QueueDrawArea(x*roomWidth, y*roomHeight, roomWidth, roomHeight);
+            base.QueueDrawTile(x, y);
 
             idleX++;
             if (idleX >= _map.MapWidth) {

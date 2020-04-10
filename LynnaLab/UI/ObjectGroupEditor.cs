@@ -179,6 +179,12 @@ namespace LynnaLab
             objectBoxDict.Clear();
             objectBoxContainer.Foreach(objectBoxContainer.Remove);
 
+            Gtk.Grid grid = new Gtk.Grid();
+            grid.ColumnSpacing = 6;
+            grid.RowSpacing = 6;
+
+            int left = 0, top = 0;
+
             foreach (ObjectGroup group in topObjectGroup.GetAllGroups()) {
                 var objectBox = new ObjectBox(group);
 
@@ -213,9 +219,15 @@ namespace LynnaLab
                 else {
                     box.Add(frame);
                 }
-                objectBoxContainer.Add(box);
+                grid.Attach(box, left, top, 1, 1);
+                left++;
+                if (left == 2) {
+                    left = 0;
+                    top++;
+                }
             }
 
+            objectBoxContainer.Add(grid);
             SelectObject(TopObjectGroup, -1);
             this.ShowAll();
         }

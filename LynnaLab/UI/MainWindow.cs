@@ -323,10 +323,9 @@ public class MainWindow
                 Gtk.Stock.Yes, ResponseType.Yes,
                 Gtk.Stock.No, ResponseType.No,
                 Gtk.Stock.Cancel, ResponseType.Cancel);
-        Alignment a = new Alignment(1,0.25f,1,0);
-        a.SetSizeRequest(0, 50);
-        a.Add(new Gtk.Label(info));
-        d.Add(a);
+        Gtk.Label infoLabel = new Gtk.Label(info);
+        infoLabel.MarginBottom = 6;
+        d.ContentArea.Add(infoLabel);
         d.ShowAll();
         response = (ResponseType)d.Run();
         d.Dispose();

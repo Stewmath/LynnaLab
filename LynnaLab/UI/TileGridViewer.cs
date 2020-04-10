@@ -368,13 +368,11 @@ namespace LynnaLab
                     cr.Scale(Scale, Scale);
                     cr.SetSource(source, XOffset, YOffset);
 
-                    if (Scale != 1) {
-                        // NOTE: Don't know how or why, but this line causes memory leaks to be
-                        // reported...
-                        ((SurfacePattern)cr.Source).Filter = Filter.Nearest;
-
-                        cr.Scale(1.0/Scale, 1.0/Scale);
+                    using (SurfacePattern pattern = (SurfacePattern)cr.GetSource()) {
+                        pattern.Filter = Filter.Nearest;
                     }
+
+                    cr.Scale(1.0/Scale, 1.0/Scale);
                     cr.Paint();
                 }
             }
@@ -437,6 +435,11 @@ namespace LynnaLab
                     YOffset,
                     Width  * (TilePaddingX * 2 + TileWidth)  * Scale,
                     Height * (TilePaddingY * 2 + TileHeight) * Scale);
+        }
+
+        protected void QueueDrawTile(int x, int y) {
+            Cairo.Rectangle rect = GetTileRectWithPadding(x, y);
+            QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
         }
 
 
