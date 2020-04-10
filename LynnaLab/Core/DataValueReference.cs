@@ -19,11 +19,10 @@ namespace LynnaLab
             "0",
             "$00",
             "$0000",
-            "objectData4000",
+            ".",
             "$00",
         };
 
-        // TODO: remove this
         public static void InitializeDataValues(Data data, IList<ValueReference> refs) {
             foreach (DataValueReference r in refs) {
                 r.SetHandler(data);
@@ -32,8 +31,7 @@ namespace LynnaLab
         }
 
 
-        // TODO: Get rid of this?
-        public Data Data { get { return Handler as Data; } } // Only defined in some subclasses
+        private Data Data { get { return Handler as Data; } }
 
 
         protected int valueIndex;

@@ -158,9 +158,6 @@ namespace LynnaLab {
 
             DataValueReference.InitializeDataValues(this, dataValueReferenceGroup.GetValueReferences());
 
-            if (objectType >= ObjectType.Pointer && objectType <= ObjectType.AfterEvent)
-                throw new NotImplementedException();
-
             base.ClearAndUnlockModifiedEvents();
         }
 
