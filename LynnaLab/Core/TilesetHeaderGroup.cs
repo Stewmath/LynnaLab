@@ -11,12 +11,12 @@ namespace LynnaLab {
 
         internal TilesetHeaderGroup(Project p, int i) : base(p, i)
         {
-            FileParser tableFile = Project.GetFileWithLabel("tilesetHeaderGroupTable");
-            Data pointerData = tableFile.GetData("tilesetHeaderGroupTable", Index*2);
+            FileParser tableFile = Project.GetFileWithLabel("tilesetLayoutTable");
+            Data pointerData = tableFile.GetData("tilesetLayoutTable", Index*2);
             string labelName = pointerData.GetValue(0);
 
             FileParser headerFile = Project.GetFileWithLabel(labelName);
-            TilesetHeaderData headerData = headerFile.GetData(labelName) as TilesetHeaderData;
+            TilesetLayoutHeaderData headerData = headerFile.GetData(labelName) as TilesetLayoutHeaderData;
             bool next = true;
 
             while (next) {
@@ -35,7 +35,7 @@ namespace LynnaLab {
                 }
 
                 if (headerData.ShouldHaveNext()) {
-                    headerData = headerData.NextData as TilesetHeaderData;
+                    headerData = headerData.NextData as TilesetLayoutHeaderData;
                     if (headerData != null)
                         next = true;
                 }

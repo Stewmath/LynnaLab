@@ -84,7 +84,7 @@
     <Compile Include="Core\GraphicsState.cs" />
     <Compile Include="UI\AreaViewer.cs" />
     <Compile Include="Core\PaletteHeaderData.cs" />
-    <Compile Include="Core\TilesetHeaderData.cs" />
+    <Compile Include="Core\TilesetLayoutHeaderData.cs" />
     <Compile Include="Core\TilesetHeaderGroup.cs" />
     <Compile Include="Core\GbGraphics.cs" />
     <Compile Include="UI\MainWindow.cs" />

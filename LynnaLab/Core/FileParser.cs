@@ -270,26 +270,14 @@ arbitraryLengthData:
                         AddDataAndPopFileStructure(d);
                         break;
                     }
-                case "m_tilesetheader":
+                case "m_tilesetlayoutheader":
                     if (fTokens.Count != 6) {
                         log.Warn(warningString + "Expected " + fTokens[0] + " to take 5 parameters");
                         break;
                     }
                     {
-                        Data d = new TilesetHeaderData(Project, fTokens[0], standardValues,
+                        Data d = new TilesetLayoutHeaderData(Project, fTokens[0], standardValues,
                                 this, fSpacing);
-                        AddDataAndPopFileStructure(d);
-                        break;
-                    }
-                case "m_tilesetdata":
-                    if (fTokens.Count != 2) {
-                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
-                        break;
-                    }
-                    {
-                        Stream file = Project.GetBinaryFile("tilesets/" + Project.GameString + "/" + fTokens[1] + ".bin");
-                        Data d = new Data(Project, fTokens[0], standardValues,
-                                (Int32)file.Length, this, fSpacing);
                         AddDataAndPopFileStructure(d);
                         break;
                     }

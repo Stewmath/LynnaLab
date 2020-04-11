@@ -298,7 +298,7 @@ namespace LynnaLab
         public byte GetSubTileIndex(int index, int x, int y) {
             if (Project.Config.ExpandedTilesets) {
                 MemoryFileStream stream = Project.GetBinaryFile(
-                        String.Format("tilesets/{0}/tilesetMappings{1:x2}.bin", Project.GameString, Index));
+                        String.Format("tileset_layouts/{0}/tilesetMappings{1:x2}.bin", Project.GameString, Index));
                 stream.Seek(index * 8 + y * 2 + x, SeekOrigin.Begin);
                 return (byte)stream.ReadByte();
             }
@@ -315,7 +315,7 @@ namespace LynnaLab
         public byte GetSubTileFlags(int index, int x, int y) {
             if (Project.Config.ExpandedTilesets) {
                 MemoryFileStream stream = Project.GetBinaryFile(
-                        String.Format("tilesets/{0}/tilesetMappings{1:x2}.bin", Project.GameString, Index));
+                        String.Format("tileset_layouts/{0}/tilesetMappings{1:x2}.bin", Project.GameString, Index));
                 stream.Seek(index * 8 + 4 + y * 2 + x, SeekOrigin.Begin);
                 return (byte)stream.ReadByte();
             }
