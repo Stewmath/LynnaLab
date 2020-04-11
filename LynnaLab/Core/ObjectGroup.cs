@@ -59,10 +59,10 @@ namespace LynnaLab
             children = new List<ObjectGroup>();
             children.Add(this);
 
+            this.type = type;
+
             if (!Project.HasLabel(id))
                 return; // This will be considered a "stub" type until data is given to it
-
-            this.type = type;
 
             rawObjectGroup = Project.GetDataType<RawObjectGroup>(Identifier);
 
@@ -109,7 +109,7 @@ namespace LynnaLab
                 }
             }
 
-            if (type == ObjectGroupType.Main) {
+            if (this.type == ObjectGroupType.Main) {
                 // Get the room number based on the identifier name.
                 Regex rx = new Regex(@"group([0-9])Map([0-9a-f]{2})ObjectData",
                         RegexOptions.Compiled | RegexOptions.IgnoreCase);
