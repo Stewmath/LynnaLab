@@ -11,7 +11,7 @@ namespace LynnaLab
         Enemy,       // "obj_Pointer" referring to data named "enemyObjectData[...]".
         BeforeEvent, // "obj_BeforeEvent" pointer
         AfterEvent,  // "obj_AfterEvent" pointer
-        Other        // "obj_Pointer" referring to something other than "enemyObjectData[...]".
+        Shared       // "obj_Pointer" referring to something other than "enemyObjectData[...]".
     };
 
     // This is similar to "RawObjectGroup", but it provides a different interface for handling
@@ -43,7 +43,9 @@ namespace LynnaLab
         public EventHandler<ValueModifiedEventArgs> ModifiedEvent;
 
 
-        ObjectGroup parent;
+        // NOTE: this list may not be complete at any given time
+        List<ObjectGroup> parents = new List<ObjectGroup>();
+
         ObjectGroupType type;
 
         List<ObjectGroup.ObjectStruct> objectList;
@@ -53,17 +55,13 @@ namespace LynnaLab
 
         // Constructors
 
-        internal ObjectGroup(Project p, String id) : this(p, id, null, ObjectGroupType.Main) {
-        }
-
-        private ObjectGroup(Project p, String id, ObjectGroup parent, ObjectGroupType type) : base(p, id) {
+        internal ObjectGroup(Project p, String id, ObjectGroupType type) : base(p, id) {
             children = new List<ObjectGroup>();
             children.Add(this);
 
             if (!Project.HasLabel(id))
                 return; // This will be considered a "stub" type until data is given to it
 
-            this.parent = parent;
             this.type = type;
 
             rawObjectGroup = Project.GetDataType<RawObjectGroup>(Identifier);
@@ -92,12 +90,13 @@ namespace LynnaLab
                         addedEnemyType = true;
                     }
                     else if (objectType == ObjectType.Pointer)
-                        t = ObjectGroupType.Other;
+                        t = ObjectGroupType.Shared;
                     else
                         throw new Exception("Unexpected thing happened");
 
-                    ObjectGroup child = new ObjectGroup(p, label, this, t);
+                    ObjectGroup child = Project.GetObjectGroup(label, t);
                     children.Add(child);
+                    child.AddParent(this);
                 }
                 else {
                     ObjectStruct st = new ObjectStruct();
@@ -119,7 +118,7 @@ namespace LynnaLab
 
                 if (matches.Count != 1) {
                     log.Error("ObjectGroup '" + Identifier + "' has an unexpected name. Can't get room number.");
-                    this.type = ObjectGroupType.Other;
+                    this.type = ObjectGroupType.Shared;
                 }
                 else {
                     string groupString = matches[0].Groups[1].Value;
@@ -137,10 +136,9 @@ namespace LynnaLab
                             log.Error("Can't create object group '" + childId + "' because it exists already.");
                         }
                         else {
-                            ObjectGroup child = new ObjectGroup(Project, childId);
-                            child.parent = this;
-                            child.type = t;
+                            ObjectGroup child = Project.GetObjectGroup(childId, t);
                             children.Add(child);
+                            child.AddParent(this);
                         }
                     };
 
@@ -181,17 +179,16 @@ namespace LynnaLab
         }
 
         // Returns a list of ObjectGroups representing each main group (Main, Enemy, BeforeEvent,
-        // AfterEvent) plus "Other" groups if they exist. This should only be called on the "Main"
+        // AfterEvent) plus "Shared" groups if they exist. This should only be called on the "Main"
         // type.
-        // TODO: This should always contain all 4 main groups even if they don't exist yet.
-        // Preferably, they should also have a consistent order.
         public IList<ObjectGroup> GetAllGroups() {
             return children;
         }
 
         public int AddObject(ObjectType type) {
             if (IsStub()) {
-                parent.UnstubChild(this);
+                Debug.Assert(parents.Count == 1);
+                parents[0].UnstubChild(this);
             }
             Isolate();
 
@@ -249,7 +246,7 @@ namespace LynnaLab
         }
 
         public void RemoveGroup(ObjectGroup group) {
-            if (!children.Contains(group) || group.type != ObjectGroupType.Other)
+            if (!children.Contains(group) || group.type != ObjectGroupType.Shared)
                 throw new Exception("Tried to remove an invalid object group.");
 
             bool foundGroup = false;
@@ -278,22 +275,23 @@ namespace LynnaLab
         // Internal methods
 
         // Calling this ensures that all of the data pointed to by this ObjectGroup is not shared
-        // with anything else. The only exception is pointers to ObjectGroupType "Other". These
+        // with anything else. The only exception is pointers to ObjectGroupType "Shared". These
         // should not be directly edited (and it is / will be disabled in the UI).
         // Since "ObjectDefinition" objects call this, they need to be in a valid state after this
         // is called.
         private bool beganIsolate;
 
         internal void Isolate() {
-            if (IsStub())
+            if (IsStub() || beganIsolate)
                 return;
-
-            if (type != ObjectGroupType.Main && !parent.beganIsolate) {
-                parent.Isolate();
+            if (type == ObjectGroupType.Shared) // We don't try to make these unique
                 return;
-            }
 
             beganIsolate = true;
+
+            foreach (var parent in parents) {
+                parent.Isolate();
+            }
 
             FileComponent firstToDelete;
 
@@ -332,6 +330,10 @@ namespace LynnaLab
 
 
         // Private methods
+
+        void AddParent(ObjectGroup group) {
+            parents.Add(group);
+        }
 
         void UpdateRawIndices() {
             Dictionary<ObjectData,int> dict = new Dictionary<ObjectData,int>();
@@ -412,7 +414,7 @@ namespace LynnaLab
         void ModifiedHandler(object sender, ValueModifiedEventArgs args) {
             if (ModifiedEvent != null)
                 ModifiedEvent(this, args);
-            if (parent != null)
+            foreach (var parent in parents)
                 parent.ModifiedHandler(sender, args);
         }
 

@@ -38,6 +38,7 @@ namespace LynnaLab
 
         // Data structures which should be linked to a particular project
         Dictionary<string,ProjectDataType> dataStructDictionary = new Dictionary<string,ProjectDataType>();
+        Dictionary<string,ObjectGroup> objectGroupDictionary = new Dictionary<string,ObjectGroup>();
 
 
         // See "GetStandardSpritePalettes"
@@ -282,6 +283,25 @@ namespace LynnaLab
         /// </summary>
         public ObjectGfxHeaderData GetObjectGfxHeaderData(int index) {
             return GetData("objectGfxHeaderTable", 3*index) as ObjectGfxHeaderData;
+        }
+
+        // This should only be used for getting "top-level" object groups (groupXMapYObjectData).
+        // For "sublevels", use ObjectGroup's functions.
+        internal ObjectGroup GetObjectGroup(string identifier, ObjectGroupType type) {
+            ObjectGroup group;
+            if (objectGroupDictionary.TryGetValue(identifier, out group)) {
+                if (type != group.GetGroupType())
+                    throw new AssemblyErrorException(
+                        String.Format("Object group '{0}' used as both type '{1}' and '{2}'!",
+                            identifier,
+                            type,
+                            group.GetGroupType()));
+                return group;
+            }
+            group = new ObjectGroup(this, identifier, type);
+            objectGroupDictionary[identifier] = group;
+            return group;
+
         }
 
         public void AddDataType(ProjectDataType data) {

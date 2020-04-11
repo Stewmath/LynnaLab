@@ -139,7 +139,7 @@ namespace LynnaLab
 
         public ObjectGroup GetObjectGroup() {
             String label = "group" + (Index/0x100).ToString("x") + "Map" + (Index%0x100).ToString("x2") + "ObjectData";
-            return Project.GetDataType<ObjectGroup>(label);
+            return Project.GetObjectGroup(label, ObjectGroupType.Main);
         }
 
         void UpdateRoomData() {

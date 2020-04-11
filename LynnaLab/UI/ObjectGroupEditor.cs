@@ -203,7 +203,7 @@ namespace LynnaLab
                 frame.Halign = Gtk.Align.Center;
                 frame.Add(objectBox);
 
-                if (group.GetGroupType() == ObjectGroupType.Other) {
+                if (group.GetGroupType() == ObjectGroupType.Shared) {
                     box.Add(frame);
                     Gtk.Button button = new Button(new Gtk.Image(Stock.Remove, IconSize.Button));
                     button.Halign = Gtk.Align.Center;
@@ -307,7 +307,7 @@ namespace LynnaLab
                 return "(Enemy) objects before event";
             case ObjectGroupType.AfterEvent:
                 return "(Enemy) objects after event";
-            case ObjectGroupType.Other:
+            case ObjectGroupType.Shared:
                 return "[SHARED] " + group.Identifier;
             }
 

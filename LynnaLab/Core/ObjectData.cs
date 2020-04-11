@@ -208,21 +208,6 @@ namespace LynnaLab {
             return objectType;
         }
 
-        // Get the object group pointed to, or null if no such group
-        // exists.
-        public ObjectGroup GetPointedObjectGroup() {
-            if (!(objectType >= ObjectType.Pointer && objectType <= ObjectType.AfterEvent))
-                return null;
-
-            try {
-                Project.GetFileWithLabel(GetValue(0));
-                return Project.GetDataType<ObjectGroup>(GetValue(0));
-            }
-            catch(InvalidLookupException) {
-                return null;
-            }
-        }
-
         public bool IsPointerType() {
             ObjectType type = GetObjectType();
             return type == ObjectType.Pointer || type == ObjectType.BeforeEvent || type == ObjectType.AfterEvent;
