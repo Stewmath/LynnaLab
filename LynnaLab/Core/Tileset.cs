@@ -6,11 +6,11 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
-    public class Area : ProjectIndexedDataType
+    public class Tileset : ProjectIndexedDataType
     {
-        FileParser areaFile;
+        FileParser tilesetFile;
 
-        Data areaData;
+        Data tilesetData;
 
         int flags1, flags2;
         int layoutGroup;
@@ -46,7 +46,7 @@ namespace LynnaLab
             get { return graphicsState; }
         }
 
-        // Following properties correspond to the 8 bytes defining the area.
+        // Following properties correspond to the 8 bytes defining the tileset.
 
         public int Flags1 {
             get { return flags1; }
@@ -121,7 +121,7 @@ namespace LynnaLab
                 PaletteHeaderString = Project.PaletteHeaderMapping.ByteToString(value);
             }
         }
-        public int TilesetIndex {
+        public int TilesetLayoutIndex {
             get {
                 Data d = GetDataIndex(5);
                 return Project.EvalToInt(d.GetValue(0));
@@ -154,17 +154,17 @@ namespace LynnaLab
             }
         }
 
-        internal Area(Project p, int i) : base(p, i) {
-            areaFile = Project.GetFileWithLabel("areaData");
+        internal Tileset(Project p, int i) : base(p, i) {
+            tilesetFile = Project.GetFileWithLabel("tilesetData");
 
-            areaData = areaFile.GetData("areaData", Index * 8);
+            tilesetData = tilesetFile.GetData("tilesetData", Index * 8);
 
 
-            // If this is Seasons, it's possible that areaData does not point to 8 bytes as
+            // If this is Seasons, it's possible that tilesetData does not point to 8 bytes as
             // expected, but instead to an "m_SeasonalData" macro.
-            if (areaData.CommandLowerCase == "m_seasonalarea") {
+            if (tilesetData.CommandLowerCase == "m_seasonaltileset") {
                 int season=0;
-                areaData = Project.GetData(areaData.GetValue(0), season*8);
+                tilesetData = Project.GetData(tilesetData.GetValue(0), season*8);
             }
 
             // Initialize graphics state
@@ -174,7 +174,7 @@ namespace LynnaLab
                 Project.GetIndexedDataType<PaletteHeaderGroup>(0xf);
             graphicsState.AddPaletteHeaderGroup(globalPaletteHeaderGroup, PaletteGroupType.Common);
 
-            Data data = areaData;
+            Data data = tilesetData;
             flags1 = p.EvalToInt(data.GetValue(0));
 
             data = data.NextData;
@@ -208,7 +208,7 @@ namespace LynnaLab
         }
 
         Data GetDataIndex(int i) {
-            Data data = areaData;
+            Data data = tilesetData;
             for (int j=0; j<i; j++)
                 data = data.NextData;
             return data;

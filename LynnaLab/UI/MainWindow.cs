@@ -30,10 +30,10 @@ public class MainWindow
 
 	private Gtk.Statusbar statusbar1;
 
-	private LynnaLab.SpinButtonHexadecimal roomSpinButton, areaSpinButton;
+	private LynnaLab.SpinButtonHexadecimal roomSpinButton, tilesetSpinButton;
     private ComboBoxFromConstants musicComboBox;
 	private LynnaLab.ObjectGroupEditor objectgroupeditor1;
-	private LynnaLab.AreaViewer areaviewer1;
+	private LynnaLab.TilesetViewer tilesetViewer1;
 	private LynnaLab.RoomEditor roomeditor1;
 
     // Variables
@@ -94,29 +94,29 @@ public class MainWindow
         roomSpinButton = new SpinButtonHexadecimal(0, 0x5ff);
         roomSpinButton.Digits = 3;
         roomSpinButton.ValueChanged += OnRoomSpinButtonValueChanged;
-        areaSpinButton = new SpinButtonHexadecimal();
-        areaSpinButton.Digits = 2;
-        areaSpinButton.ValueChanged += OnAreaSpinButtonValueChanged;
+        tilesetSpinButton = new SpinButtonHexadecimal();
+        tilesetSpinButton.Digits = 2;
+        tilesetSpinButton.ValueChanged += OnTilesetSpinButtonValueChanged;
 
         musicComboBox = new ComboBoxFromConstants();
         musicComboBox.Changed += OnMusicComboBoxChanged;
 
         objectgroupeditor1 = new ObjectGroupEditor();
-        areaviewer1 = new AreaViewer();
+        tilesetViewer1 = new TilesetViewer();
         roomeditor1 = new RoomEditor();
         worldMinimap = new HighlightingMinimap();
         dungeonMinimap = new Minimap();
 
         ((Gtk.Box)builder.GetObject("roomSpinButtonHolder")).Add(roomSpinButton);
-        ((Gtk.Box)builder.GetObject("areaSpinButtonHolder")).Add(areaSpinButton);
+        ((Gtk.Box)builder.GetObject("tilesetSpinButtonHolder")).Add(tilesetSpinButton);
         ((Gtk.Box)builder.GetObject("musicComboBoxHolder")).Add(musicComboBox);
         ((Gtk.Box)builder.GetObject("objectGroupEditorHolder")).Add(objectgroupeditor1);
-        ((Gtk.Box)builder.GetObject("areaViewerHolder")).Add(areaviewer1);
+        ((Gtk.Box)builder.GetObject("tilesetViewerHolder")).Add(tilesetViewer1);
         ((Gtk.Box)builder.GetObject("roomEditorHolder")).Add(roomeditor1);
         ((Gtk.Box)builder.GetObject("worldMinimapHolder")).Add(worldMinimap);
         ((Gtk.Box)builder.GetObject("dungeonMinimapHolder")).Add(dungeonMinimap);
 
-        roomeditor1.SetClient(areaviewer1);
+        roomeditor1.SetClient(tilesetViewer1);
         roomeditor1.SetObjectGroupEditor(objectgroupeditor1);
         dungeonMinimap.AddTileSelectedHandler(delegate(object sender, int index) {
             Room room = dungeonMinimap.GetRoom();
@@ -127,15 +127,15 @@ public class MainWindow
             SetRoom(room);
         });
 
-        areaviewer1.HoverChangedEvent += delegate() {
-            if (areaviewer1.HoveringIndex == -1)
+        tilesetViewer1.HoverChangedEvent += delegate() {
+            if (tilesetViewer1.HoveringIndex == -1)
                 statusbar1.Push(1,
-                        "Selected Tile: 0x" + areaviewer1.SelectedIndex.ToString("X2"));
+                        "Selected Tile: 0x" + tilesetViewer1.SelectedIndex.ToString("X2"));
             else
                 statusbar1.Push(1,
-                        "Hovering Tile: 0x" + areaviewer1.HoveringIndex.ToString("X2"));
+                        "Hovering Tile: 0x" + tilesetViewer1.HoveringIndex.ToString("X2"));
         };
-        areaviewer1.AddTileSelectedHandler(delegate(object sender, int index) {
+        tilesetViewer1.AddTileSelectedHandler(delegate(object sender, int index) {
             statusbar1.Push(1,
                     "Selected Tile: 0x" + index.ToString("X2"));
         });
@@ -143,7 +143,7 @@ public class MainWindow
         roomeditor1.HoverChangedEvent += delegate() {
             if (roomeditor1.HoveringIndex == -1)
                 statusbar1.Push(1,
-                        "Selected Tile: 0x" + areaviewer1.SelectedIndex.ToString("X2"));
+                        "Selected Tile: 0x" + tilesetViewer1.SelectedIndex.ToString("X2"));
             else
                 statusbar1.Push(2,
                         "Hovering Tile: (" + roomeditor1.HoveringX +
@@ -205,10 +205,10 @@ public class MainWindow
     }
 
     bool AnimationUpdater() {
-        var area = areaviewer1.Area;
-        if (area == null)
+        var tileset = tilesetViewer1.Tileset;
+        if (tileset == null)
             return true;
-        IList<byte> changedTiles = area.UpdateAnimations(1);
+        IList<byte> changedTiles = tileset.UpdateAnimations(1);
         return true;
     }
 
@@ -255,12 +255,12 @@ public class MainWindow
         }
     }
 
-    void SetArea(Area area) {
+    void SetTileset(Tileset tileset) {
         if (Project == null)
             return;
-        areaviewer1.SetArea(area);
-        areaSpinButton.Value = area.Index;
-        roomeditor1.Room.SetArea(area);
+        tilesetViewer1.SetTileset(tileset);
+        tilesetSpinButton.Value = tileset.Index;
+        roomeditor1.Room.SetTileset(tileset);
         roomeditor1.QueueDraw();
     }
 
@@ -274,7 +274,7 @@ public class MainWindow
         if (Project == null)
             return;
         roomeditor1.SetRoom(room);
-        SetArea(room.Area);
+        SetTileset(room.Tileset);
         musicComboBox.Active = Project.MusicMapping.IndexOf((byte)room.GetMusicID());
         roomSpinButton.Value = room.Index;
 
@@ -444,12 +444,12 @@ public class MainWindow
         SetRoom(Project.GetIndexedDataType<Room>(button.ValueAsInt));
     }
 
-    protected void OnAreaSpinButtonValueChanged(object sender, EventArgs e)
+    protected void OnTilesetSpinButtonValueChanged(object sender, EventArgs e)
     {
         if (Project == null)
             return;
         SpinButton button = sender as SpinButton;
-        SetArea(Project.GetIndexedDataType<Area>(button.ValueAsInt));
+        SetTileset(Project.GetIndexedDataType<Tileset>(button.ValueAsInt));
     }
 
 
@@ -459,14 +459,14 @@ public class MainWindow
         roomeditor1.Room.SetMusicID(Project.MusicMapping.StringToByte(musicComboBox.ActiveId));
     }
 
-    protected void OnAreaEditorButtonClicked(object sender, EventArgs e)
+    protected void OnTilesetEditorButtonClicked(object sender, EventArgs e)
     {
         if (Project == null)
             return;
         Window win = new Window(WindowType.Toplevel);
-        AreaEditor a = new AreaEditor(areaviewer1.Area);
+        TilesetEditor a = new TilesetEditor(tilesetViewer1.Tileset);
         win.Add(a);
-        win.Name = "Edit Area";
+        win.Title = "Edit Tileset";
         win.ShowAll();
     }
 

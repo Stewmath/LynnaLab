@@ -268,12 +268,12 @@
                                           <placeholder/>
                                         </child>
                                         <child>
-                                          <object class="GtkButton" id="areaEditorButton">
+                                          <object class="GtkButton" id="tilesetEditorButton">
                                             <property name="label" translatable="yes">Edit</property>
                                             <property name="can_focus">True</property>
                                             <property name="receives_default">False</property>
                                             <property name="use_underline">True</property>
-                                            <signal name="clicked" handler="OnAreaEditorButtonClicked" swapped="no"/>
+                                            <signal name="clicked" handler="OnTilesetEditorButtonClicked" swapped="no"/>
                                           </object>
                                           <packing>
                                             <property name="left_attach">2</property>
@@ -297,7 +297,7 @@
                                           </packing>
                                         </child>
                                         <child>
-                                          <object class="GtkBox" id="areaSpinButtonHolder">
+                                          <object class="GtkBox" id="tilesetSpinButtonHolder">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="orientation">vertical</property>
@@ -353,7 +353,7 @@
                                 <property name="vexpand">True</property>
                                 <property name="label_xalign">0.5</property>
                                 <child>
-                                  <object class="GtkBox" id="areaViewerHolder">
+                                  <object class="GtkBox" id="tilesetViewerHolder">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="margin_left">3</property>

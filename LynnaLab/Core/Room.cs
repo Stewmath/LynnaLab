@@ -24,7 +24,7 @@ namespace LynnaLab
 
         MemoryFileStream tileDataFile;
 
-        Area area;
+        Tileset tileset;
         Bitmap cachedImage;
 
         public int Height
@@ -35,24 +35,24 @@ namespace LynnaLab
         {
             get { return width; }
         }
-        public Area Area
+        public Tileset Tileset
         {
-            get { return area; }
+            get { return tileset; }
         }
 
         internal Room(Project p, int i) : base(p,i) {
-            Stream groupAreasFile = GetAreaMappingFile();
-            groupAreasFile.Position = Index&0xff;
-            int areaID = groupAreasFile.ReadByte() & 0x7f;
+            Stream groupTilesetsFile = GetTilesetMappingFile();
+            groupTilesetsFile.Position = Index&0xff;
+            int areaID = groupTilesetsFile.ReadByte() & 0x7f;
 
-            Area a = Project.GetIndexedDataType<Area>(areaID);
-            SetArea(a);
+            Tileset t = Project.GetIndexedDataType<Tileset>(areaID);
+            SetTileset(t);
 
         }
 
-        // Returns a stream for the area mapping file (256 bytes, one byte per room)
-        private Stream GetAreaMappingFile() {
-            Data data = Project.GetData("roomAreasGroupTable", 2*(Index>>8));
+        // Returns a stream for the tileset mapping file (256 bytes, one byte per room)
+        private Stream GetTilesetMappingFile() {
+            Data data = Project.GetData("roomTilesetsGroupTable", 2*(Index>>8));
             data = Project.GetData(data.GetValue(0)); // Follow .dw pointer
 
             string path = data.GetValue(0);
@@ -71,7 +71,7 @@ namespace LynnaLab
 
             for (int x=0; x<width; x++) {
                 for (int y=0; y<height; y++) {
-                    g.DrawImageUnscaled(area.GetTileImage(GetTile(x,y)), x*16, y*16);
+                    g.DrawImageUnscaled(tileset.GetTileImage(GetTile(x,y)), x*16, y*16);
                 }
             }
 
@@ -90,7 +90,7 @@ namespace LynnaLab
                 tileDataFile.WriteByte((byte)value);
                 if (cachedImage != null) {
                     Graphics g = Graphics.FromImage(cachedImage);
-                    g.DrawImageUnscaled(area.GetTileImage(value), x*16, y*16);
+                    g.DrawImageUnscaled(tileset.GetTileImage(value), x*16, y*16);
                     g.Dispose();
                 }
                 Modified = true;
@@ -112,26 +112,26 @@ namespace LynnaLab
             file.WriteByte((byte)id);
         }
 
-        public void SetArea(Area a) {
-            if (area == null || a.Index != area.Index) {
-                Stream groupAreasFile = GetAreaMappingFile();
-                groupAreasFile.Position = Index&0xff;
-                int lastValue = groupAreasFile.ReadByte() & 0x80;
-                groupAreasFile.Position = Index&0xff;
-                groupAreasFile.WriteByte((byte)((a.Index&0x7f) | lastValue));
+        public void SetTileset(Tileset t) {
+            if (tileset == null || t.Index != tileset.Index) {
+                Stream groupTilesetsFile = GetTilesetMappingFile();
+                groupTilesetsFile.Position = Index&0xff;
+                int lastValue = groupTilesetsFile.ReadByte() & 0x80;
+                groupTilesetsFile.Position = Index&0xff;
+                groupTilesetsFile.WriteByte((byte)((t.Index&0x7f) | lastValue));
 
-                var handler = new Area.TileModifiedHandler(ModifiedTileCallback);
-                var layoutHandler = new Area.LayoutGroupModifiedHandler(ModifiedLayoutGroupCallback);
-                if (area != null) {
-                    area.TileModifiedEvent -= handler;
-                    area.LayoutGroupModifiedEvent -= layoutHandler;
+                var handler = new Tileset.TileModifiedHandler(ModifiedTileCallback);
+                var layoutHandler = new Tileset.LayoutGroupModifiedHandler(ModifiedLayoutGroupCallback);
+                if (tileset != null) {
+                    tileset.TileModifiedEvent -= handler;
+                    tileset.LayoutGroupModifiedEvent -= layoutHandler;
                 }
-                a.TileModifiedEvent += handler;
-                a.LayoutGroupModifiedEvent += layoutHandler;
+                t.TileModifiedEvent += handler;
+                t.LayoutGroupModifiedEvent += layoutHandler;
 
                 cachedImage = null;
 
-                area = a;
+                tileset = t;
 
                 UpdateRoomData();
             }
@@ -144,7 +144,7 @@ namespace LynnaLab
 
         void UpdateRoomData() {
             // Get the tileDataFile
-            int layoutGroup = area.LayoutGroup;
+            int layoutGroup = tileset.LayoutGroup;
             string label = "room" + ((layoutGroup<<8)+(Index&0xff)).ToString("X4").ToLower();
             FileParser parserFile = Project.GetFileWithLabel(label);
             Data data = parserFile.GetData(label);
@@ -187,7 +187,7 @@ namespace LynnaLab
                 for (int y=0; y<Height; y++) {
                     if (GetTile(x, y) == tile) {
                         if (cachedImage != null)
-                            g.DrawImageUnscaled(area.GetTileImage(GetTile(x,y)), x*16, y*16);
+                            g.DrawImageUnscaled(tileset.GetTileImage(GetTile(x,y)), x*16, y*16);
                         if (RoomModifiedEvent != null)
                             RoomModifiedEvent();
                     }

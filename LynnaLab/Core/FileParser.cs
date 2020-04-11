@@ -295,9 +295,9 @@ arbitraryLengthData:
                         AddComponent(d);
                         break;
                     }
-                case "m_seasonalarea": {
-                    // In season's "areas.s", the m_SeasonalArea macro points to a label which
-                    // contains 4 area definitions (one for each season).
+                case "m_seasonaltileset": {
+                    // In season's "tilesets.s", the m_SeasonalTileset macro points to a label which
+                    // contains 4 tileset definitions (one for each season).
                     if (fTokens.Count != 2) {
                         log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
                         break;

@@ -80,9 +80,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\Project.cs" />
     <Compile Include="Core\ConstantsMapping.cs" />
-    <Compile Include="Core\Area.cs" />
+    <Compile Include="Core\Tileset.cs" />
     <Compile Include="Core\GraphicsState.cs" />
-    <Compile Include="UI\AreaViewer.cs" />
+    <Compile Include="UI\TilesetViewer.cs" />
     <Compile Include="Core\PaletteHeaderData.cs" />
     <Compile Include="Core\TilesetLayoutHeaderData.cs" />
     <Compile Include="Core\TilesetHeaderGroup.cs" />
@@ -95,8 +95,8 @@
     <Compile Include="Core\Dungeon.cs" />
     <Compile Include="Core\Animation.cs" />
     <Compile Include="Core\AnimationGroup.cs" />
-    <Compile Include="UI\AreaEditor.cs" />
-    <Compile Include="gtk-gui\LynnaLab.AreaEditor.cs" />
+    <Compile Include="UI\TilesetEditor.cs" />
+    <Compile Include="gtk-gui\LynnaLab.TilesetEditor.cs" />
     <Compile Include="Wla.cs" />
     <Compile Include="UI\TileGridViewer.cs" />
     <Compile Include="Widgets\SpinButtonHexadecimal.cs" />

@@ -33,12 +33,12 @@ namespace Plugins
 
         public override void Clicked() {
             Room room = manager.GetActiveRoom();
-            int area = room.Area.Index;
+            int tileset = room.Tileset.Index;
 
             var reader = new XmlTextReader(Helper.GetResourceStream("LynnaLab.Resources.AutoSmoother.xml"));
 
             Smoother smoother = new Smoother();
-            bool validArea = false;
+            bool validTileset = false;
 
             string name = "";
             while (reader.Read()) 
@@ -50,15 +50,15 @@ namespace Plugins
                     case XmlNodeType.Element:
                         name = reader.Name;
                         switch(name) {
-                            case "area":
+                            case "tileset":
                                 s = reader.GetAttribute("index");
                                 List<int> ints = GetIntList(s);
-                                validArea = ints.Contains(area);
+                                validTileset = ints.Contains(tileset);
                                 break;
                         }
                         break;
                     case XmlNodeType.Text:
-                        if (!validArea)
+                        if (!validTileset)
                             continue;
 
                         s = reader.Value.Trim();
@@ -109,8 +109,8 @@ namespace Plugins
                         break;
                     case XmlNodeType.EndElement:
                         switch(reader.Name) {
-                            case "area":
-                                validArea = false;
+                            case "tileset":
+                                validTileset = false;
                                 break;
                             case "smoother":
                                 smoother.Apply(manager);

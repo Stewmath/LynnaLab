@@ -549,7 +549,7 @@ namespace LynnaLab
                 return 0x600;
         }
 
-        public int GetNumAreas() {
+        public int GetNumTilesets() {
             if (GameString == "ages")
                 return 0x67;
             else

@@ -6,32 +6,32 @@ using Gtk;
 namespace LynnaLab
 {
     [System.ComponentModel.ToolboxItem(true)]
-    public class AreaViewer : TileGridViewer
+    public class TilesetViewer : TileGridViewer
     {
         public Project Project {
             get {
-                if (area == null)
+                if (tileset == null)
                     return null;
-                return area.Project;
+                return tileset.Project;
             }
         }
 
-        public Area Area
+        public Tileset Tileset
         {
-            get { return area; }
+            get { return tileset; }
         }
 
         protected override Bitmap Image {
             get {
-                if (Area == null)
+                if (Tileset == null)
                     return null;
-                return Area.GetFullCachedImage();
+                return Tileset.GetFullCachedImage();
             }
         }
 
-        Area area;
+        Tileset tileset;
 
-        public AreaViewer() : base()
+        public TilesetViewer() : base()
         {
             TileWidth = 16;
             TileHeight = 16;
@@ -41,15 +41,15 @@ namespace LynnaLab
             SelectedIndex = 0;
         }
 
-        public void SetArea(Area a) {
-            Area.TileModifiedHandler handler = new Area.TileModifiedHandler(ModifiedTileCallback);
-            if (area != null)
-                area.TileModifiedEvent -= handler;
-            a.TileModifiedEvent += handler;
+        public void SetTileset(Tileset t) {
+            Tileset.TileModifiedHandler handler = new Tileset.TileModifiedHandler(ModifiedTileCallback);
+            if (tileset != null)
+                tileset.TileModifiedEvent -= handler;
+            t.TileModifiedEvent += handler;
 
-            area = a;
+            tileset = t;
 
-            area.DrawAllTiles();
+            tileset.DrawAllTiles();
 
             this.QueueDraw();
         }

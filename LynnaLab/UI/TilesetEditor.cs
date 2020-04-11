@@ -5,24 +5,24 @@ using Gtk;
 namespace LynnaLab
 {
     [System.ComponentModel.ToolboxItem(true)]
-    public partial class AreaEditor : Gtk.Bin
+    public partial class TilesetEditor : Gtk.Bin
     {
         Project Project {
-            get { return area.Project; }
+            get { return tileset.Project; }
         }
 
-        public Area Area {
+        public Tileset Tileset {
             get {
-                return area;
+                return tileset;
             }
         }
 
-        Area area;
+        Tileset tileset;
 
         internal SubTileEditor subTileEditor;
         internal GfxViewer subTileGfxViewer;
 
-        public AreaEditor(Area a)
+        public TilesetEditor(Tileset t)
         {
             this.Build();
 
@@ -36,68 +36,68 @@ namespace LynnaLab
             subTileEditor = new SubTileEditor(this);
             subTileContainer.Add(subTileEditor);
 
-            SetArea(a);
+            SetTileset(t);
 
-            areaSpinButton.Adjustment.Upper = 0x66;
+            tilesetSpinButton.Adjustment.Upper = 0x66;
             uniqueGfxComboBox.SetConstantsMapping(Project.UniqueGfxMapping);
             mainGfxComboBox.SetConstantsMapping(Project.MainGfxMapping);
             palettesComboBox.SetConstantsMapping(Project.PaletteHeaderMapping);
-            tilesetSpinButton.Adjustment.Upper = 0x32;
+            tilesetLayoutSpinButton.Adjustment.Upper = 0x32;
             layoutGroupSpinButton.Adjustment.Upper = 5;
             animationsSpinButton.Adjustment.Upper = 0x15;
             animationsSpinButton.Adjustment.Lower = -1;
 
-            SetArea(a);
+            SetTileset(t);
         }
 
-        void SetArea(Area a) {
-            Area.TileModifiedHandler handler = delegate(int tile) {
+        void SetTileset(Tileset t) {
+            Tileset.TileModifiedHandler handler = delegate(int tile) {
                 if (tile == subTileEditor.subTileViewer.TileIndex) {
                     subTileEditor.subTileViewer.QueueDraw();
                 }
             };
 
-            if (area != null)
-                area.TileModifiedEvent -= handler;
-            a.TileModifiedEvent += handler;
+            if (tileset != null)
+                tileset.TileModifiedEvent -= handler;
+            t.TileModifiedEvent += handler;
 
-            area = a;
-            subTileEditor.SetArea(area);
-            if (area != null) {
-                subTileGfxViewer.SetGraphicsState(area.GraphicsState, 0x2000, 0x3000);
+            tileset = t;
+            subTileEditor.SetTileset(tileset);
+            if (tileset != null) {
+                subTileGfxViewer.SetGraphicsState(tileset.GraphicsState, 0x2000, 0x3000);
             }
 
-            area.DrawInvalidatedTiles = true;
+            tileset.DrawInvalidatedTiles = true;
 
-            areaviewer1.SetArea(area);
+            tilesetviewer1.SetTileset(tileset);
 
-            areaviewer1.AddTileSelectedHandler(delegate(object sender, int index) {
+            tilesetviewer1.AddTileSelectedHandler(delegate(object sender, int index) {
                 subTileEditor.SetTileIndex(index);
             });
 
-            areaSpinButton.Value = area.Index;
-            SetFlags1(a.Flags1);
-            SetFlags2(a.Flags2);
-            SetUniqueGfx(a.UniqueGfx);
-            SetMainGfx(a.MainGfx);
-            SetPaletteHeader(a.PaletteHeader);
-            SetTileset(a.TilesetIndex);
-            SetLayoutGroup(a.LayoutGroup);
-            SetAnimation(a.AnimationIndex);
+            tilesetSpinButton.Value = tileset.Index;
+            SetFlags1(t.Flags1);
+            SetFlags2(t.Flags2);
+            SetUniqueGfx(t.UniqueGfx);
+            SetMainGfx(t.MainGfx);
+            SetPaletteHeader(t.PaletteHeader);
+            SetTilesetLayout(t.TilesetLayoutIndex);
+            SetLayoutGroup(t.LayoutGroup);
+            SetAnimation(t.AnimationIndex);
         }
 
         void SetFlags1(int value) {
             flags1SpinButton.Value = value;
-            area.Flags1 = value;
+            tileset.Flags1 = value;
         }
         void SetFlags2(int value) {
             flags2SpinButton.Value = value;
-            area.Flags2 = value;
+            tileset.Flags2 = value;
         }
         void SetUniqueGfx(int value) {
             try {
                 uniqueGfxComboBox.ActiveValue = value;
-                area.UniqueGfx = value;
+                tileset.UniqueGfx = value;
             }
             catch (FormatException) {
             }
@@ -105,7 +105,7 @@ namespace LynnaLab
         void SetMainGfx(int value) {
             try {
                 mainGfxComboBox.ActiveValue = value;
-                area.MainGfx = value;
+                tileset.MainGfx = value;
             }
             catch (FormatException) {
             }
@@ -113,24 +113,24 @@ namespace LynnaLab
         void SetPaletteHeader(int value) {
             try {
                 palettesComboBox.ActiveValue = value;
-                area.PaletteHeader = value;
+                tileset.PaletteHeader = value;
             }
             catch (FormatException) {
             }
         }
-        void SetTileset(int value) {
-            tilesetSpinButton.Value = value;
-            area.TilesetIndex = value;
+        void SetTilesetLayout(int value) {
+            tilesetLayoutSpinButton.Value = value;
+            tileset.TilesetLayoutIndex = value;
         }
         void SetLayoutGroup(int value) {
             layoutGroupSpinButton.Value = value;
-            area.LayoutGroup = value;
+            tileset.LayoutGroup = value;
         }
         void SetAnimation(int value) {
             if (value == 0xff)
                 value = -1;
             animationsSpinButton.Value = value;
-            area.AnimationIndex = value;
+            tileset.AnimationIndex = value;
         }
 
         protected void OnOkButtonClicked(object sender, EventArgs e)
@@ -151,10 +151,10 @@ namespace LynnaLab
             SetFlags2(button.ValueAsInt);
         }
 
-        protected void OnAreaSpinButtonValueChanged(object sender, EventArgs e)
+        protected void OnTilesetSpinButtonValueChanged(object sender, EventArgs e)
         {
             SpinButton button = sender as SpinButton;
-            SetArea(Project.GetIndexedDataType<Area>(button.ValueAsInt));
+            SetTileset(Project.GetIndexedDataType<Tileset>(button.ValueAsInt));
         }
 
         protected void OnUniqueGfxComboBoxChanged(object sender, EventArgs e) {
@@ -177,9 +177,9 @@ namespace LynnaLab
                 SetPaletteHeader(comboBox.ActiveValue);
         }
 
-        protected void OnTilesetSpinButtonValueChanged(object sender, EventArgs e)
+        protected void OnTilesetLayoutSpinButtonValueChanged(object sender, EventArgs e)
         {
-            SetTileset(tilesetSpinButton.ValueAsInt);
+            SetTilesetLayout(tilesetLayoutSpinButton.ValueAsInt);
         }
 
         protected void OnLayoutGroupSpinButtonValueChanged(object sender, EventArgs e)
@@ -193,12 +193,12 @@ namespace LynnaLab
         }
     }
 
-    // Draws the tile with the ability to select a quadrant to change the
+    // Draws the tile with the ability to select t quadrant to change the
     // properties.
     class SubTileViewer : TileGridViewer {
 
         int _tileIndex;
-        Area area;
+        Tileset tileset;
 
         public delegate void TileChangedHandler();
 
@@ -216,32 +216,32 @@ namespace LynnaLab
         }
         public byte SubTileFlags {
             get {
-                if (area == null)
+                if (tileset == null)
                     return 0;
-                return area.GetSubTileFlags(TileIndex, SelectedX, SelectedY);
+                return tileset.GetSubTileFlags(TileIndex, SelectedX, SelectedY);
             } set {
-                if (area == null)
+                if (tileset == null)
                     return;
-                area.SetSubTileFlags(TileIndex, SelectedX, SelectedY, value);
+                tileset.SetSubTileFlags(TileIndex, SelectedX, SelectedY, value);
             }
         }
         public byte SubTileIndex {
             get {
-                if (area == null)
+                if (tileset == null)
                     return 0;
-                return area.GetSubTileIndex(TileIndex, SelectedX, SelectedY);
+                return tileset.GetSubTileIndex(TileIndex, SelectedX, SelectedY);
             } set {
-                if (area == null)
+                if (tileset == null)
                     return;
-                area.SetSubTileIndex(TileIndex, SelectedX, SelectedY, value);
+                tileset.SetSubTileIndex(TileIndex, SelectedX, SelectedY, value);
             }
         }
 
         override protected Bitmap Image {
             get {
-                if (area == null)
+                if (tileset == null)
                     return null;
-                return area.GetTileImage(TileIndex);
+                return tileset.GetTileImage(TileIndex);
             }
         }
 
@@ -259,8 +259,8 @@ namespace LynnaLab
             });
         }
 
-        public void SetArea(Area a) {
-            area = a;
+        public void SetTileset(Tileset t) {
+            tileset = t;
         }
     }
 
@@ -268,7 +268,7 @@ namespace LynnaLab
     class SubTileCollisionEditor : TileGridViewer {
 
         int _tileIndex;
-        Area area;
+        Tileset tileset;
 
         public event System.Action CollisionsChangedHandler;
 
@@ -284,16 +284,16 @@ namespace LynnaLab
 
         override protected Bitmap Image {
             get {
-                if (area == null)
+                if (tileset == null)
                     return null;
-                Bitmap image = new Bitmap(area.GetTileImage(TileIndex));
+                Bitmap image = new Bitmap(tileset.GetTileImage(TileIndex));
                 Graphics g = Graphics.FromImage(image);
 
                 // Made solid tiles red
                 for (int i=0; i<4; i++) {
                     int x=i%2;
                     int y=i/2;
-                    if ((area.GetTileCollision(TileIndex)&0xf0) == 0) {
+                    if ((tileset.GetTileCollision(TileIndex)&0xf0) == 0) {
                         if (GetBasicCollision(TileIndex, x, y)) {
                             Color c = Color.FromArgb(0x80, 255, 0, 0);
                             g.FillRectangle(new SolidBrush(c), x*8,y*8,8,8);
@@ -318,7 +318,7 @@ namespace LynnaLab
             TileGridEventHandler callback = delegate(object sender, int index) {
                 // Toggle the collision of the subtile if it uses the
                 // "basic" collision mode (upper nibble is zero).
-                if ((area.GetTileCollision(TileIndex)&0xf0) == 0) {
+                if ((tileset.GetTileCollision(TileIndex)&0xf0) == 0) {
                     SetBasicCollision(TileIndex, HoveringX, HoveringY,
                             !GetBasicCollision(TileIndex, HoveringX, HoveringY));
                 }
@@ -328,17 +328,17 @@ namespace LynnaLab
         }
 
         bool GetBasicCollision(int subTile, int x, int y) {
-            return area.GetSubTileBasicCollision(subTile, x, y);
+            return tileset.GetSubTileBasicCollision(subTile, x, y);
         }
 
         void SetBasicCollision(int subTile, int x, int y, bool val) {
-            area.SetSubTileBasicCollision(subTile, x, y, val);
+            tileset.SetSubTileBasicCollision(subTile, x, y, val);
             if (CollisionsChangedHandler != null)
                 CollisionsChangedHandler();
         }
 
-        public void SetArea(Area a) {
-            area = a;
+        public void SetTileset(Tileset t) {
+            tileset = t;
         }
     }
 
@@ -358,15 +358,15 @@ namespace LynnaLab
             }
         }
 
-        Area Area {
+        Tileset Tileset {
             get {
-                return areaEditor.Area;
+                return tilesetEditor.Tileset;
             }
         }
 
         internal SubTileViewer subTileViewer;
         SubTileCollisionEditor subTileCollisionEditor;
-        AreaEditor areaEditor;
+        TilesetEditor tilesetEditor;
 
         SpinButton collisionSpinButton;
 
@@ -376,8 +376,8 @@ namespace LynnaLab
         CheckButton priorityCheckButton;
         CheckButton bankCheckButton;
 
-        public SubTileEditor(AreaEditor areaEditor) : base(0,0,0,0) {
-            this.areaEditor = areaEditor;
+        public SubTileEditor(TilesetEditor tilesetEditor) : base(0,0,0,0) {
+            this.tilesetEditor = tilesetEditor;
 
             Gtk.Box tmpBox;
 
@@ -412,7 +412,7 @@ namespace LynnaLab
             collisionSpinButton.Digits = 2;
             collisionSpinButton.CanFocus = false;
             collisionSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
-                Area.SetTileCollision(TileIndex, (byte)collisionSpinButton.ValueAsInt);
+                Tileset.SetTileCollision(TileIndex, (byte)collisionSpinButton.ValueAsInt);
                 subTileCollisionEditor.QueueDraw();
             };
 
@@ -505,9 +505,9 @@ namespace LynnaLab
             PullEverything();
         }
 
-        public void SetArea(Area a) {
-            subTileViewer.SetArea(a);
-            subTileCollisionEditor.SetArea(a);
+        public void SetTileset(Tileset t) {
+            subTileViewer.SetTileset(t);
+            subTileCollisionEditor.SetTileset(t);
             PullEverything();
         }
 
@@ -518,15 +518,15 @@ namespace LynnaLab
         }
 
         void PullEverything() {
-            if (Area != null) {
-                collisionSpinButton.Value = Area.GetTileCollision(TileIndex);
+            if (Tileset != null) {
+                collisionSpinButton.Value = Tileset.GetTileCollision(TileIndex);
                 subTileCollisionEditor.QueueDraw();
             }
 
             byte flags = subTileViewer.SubTileFlags;
 
             subTileSpinButton.Value = subTileViewer.SubTileIndex;
-            areaEditor.subTileGfxViewer.SelectedIndex = subTileViewer.SubTileIndex^0x80;
+            tilesetEditor.subTileGfxViewer.SelectedIndex = subTileViewer.SubTileIndex^0x80;
 
             paletteSpinButton.Value = flags&7;
             flipXCheckButton.Active = ((flags & 0x20) != 0);
@@ -549,7 +549,7 @@ namespace LynnaLab
 
             subTileViewer.SubTileFlags = flags;
             subTileViewer.SubTileIndex = (byte)(subTileSpinButton.ValueAsInt);
-            areaEditor.subTileGfxViewer.SelectedIndex = subTileViewer.SubTileIndex^0x80;
+            tilesetEditor.subTileGfxViewer.SelectedIndex = subTileViewer.SubTileIndex^0x80;
         }
     }
 }
