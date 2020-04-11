@@ -17,7 +17,8 @@ namespace LynnaLab
         LockableEvent<ValueModifiedEventArgs> eventHandler = new LockableEvent<ValueModifiedEventArgs>();
 
 
-        // Standard constructor for most DataValueTypes
+        // Constructors
+
         public AbstractIntValueReference(Project project, string name, ValueReferenceType type, Func<int> getter, Action<int> setter, int maxValue, bool editable=true, string constantsMappingString=null)
         : base(name, type, editable, constantsMappingString) {
             base.Project = project;
@@ -31,6 +32,20 @@ namespace LynnaLab
             this.getter = r.getter;
             this.setter = r.setter;
         }
+
+        public AbstractIntValueReference(ValueReference r, Func<int> getter = null, Action<int> setter = null)
+        : base(r) {
+            this.getter = getter;
+            this.setter = setter;
+
+            if (this.getter == null)
+                this.getter = r.GetIntValue;
+            if (this.setter == null)
+                this.setter = r.SetValue;
+        }
+
+
+        // Methods
 
         public override string GetStringValue() {
             return Wla.ToHex(GetIntValue(), 2);

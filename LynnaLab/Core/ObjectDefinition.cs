@@ -15,7 +15,18 @@ namespace LynnaLab {
         public ObjectDefinition(ObjectGroup group, ObjectData objectData) {
             this.objectGroup = group;
             this.objectData = objectData;
-            base.SetValueReferences(objectData.ValueReferenceGroup.GetValueReferences());
+
+            var valueReferences = new List<ValueReference>();
+
+            foreach (var vref in objectData.ValueReferenceGroup.GetValueReferences()) {
+                string name = vref.Name;
+                var newVref = new AbstractIntValueReference(
+                        vref,
+                        setter: (v) => OnValueSet(name, v));
+                valueReferences.Add(newVref);
+            }
+
+            base.SetValueReferences(valueReferences);
         }
 
 
@@ -127,6 +138,13 @@ namespace LynnaLab {
             // Don't include "Part" objects because, when converted to the "QuadrupleValue" type,
             // they can have fine-grained position values.
             return GetObjectType() == ObjectType.ItemDrop;
+        }
+
+        void OnValueSet(string name, int value) {
+            if (objectData.ValueReferenceGroup.GetIntValue(name) == value)
+                return;
+            objectGroup.Isolate();
+            objectData.ValueReferenceGroup.SetValue(name, value);
         }
     }
 }

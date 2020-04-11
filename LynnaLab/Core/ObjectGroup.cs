@@ -193,6 +193,8 @@ namespace LynnaLab
             if (IsStub()) {
                 parent.UnstubChild(this);
             }
+            Isolate();
+
             rawObjectGroup.InsertObject(rawObjectGroup.GetNumObjects(), type);
 
             ObjectStruct st = new ObjectStruct();
@@ -212,6 +214,8 @@ namespace LynnaLab
             if (IsStub() || index >= objectList.Count)
                 throw new ArgumentException("Argument index=" + index + " is too high.");
 
+            Isolate();
+
             rawObjectGroup.RemoveObject(objectList[index].rawIndex);
 
             objectList[index].def.RemoveValueModifiedHandler(ModifiedHandler);
@@ -224,6 +228,8 @@ namespace LynnaLab
         public void MoveObject(int oldIndex, int newIndex) {
             if (oldIndex == newIndex)
                 return;
+
+            Isolate();
 
             ObjectStruct oldSt = objectList[oldIndex];
             ObjectStruct newSt = objectList[newIndex];
@@ -259,6 +265,8 @@ namespace LynnaLab
 
             if (!foundGroup)
                 throw new Exception("Error removing '" + group.Identifier + "' from the object group.");
+
+            Isolate();
 
             children.Remove(group);
 
