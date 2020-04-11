@@ -44,146 +44,164 @@ namespace LynnaLab
             }
         };
 
-        public static List<List<ValueReference>> warpValueReferences =
-            new List<List<ValueReference>> {
-                new List<ValueReference> { // StandardWarp
-                    new DataValueReference("Opcode",0,DataValueType.Byte, false),
-                    new DataValueReference("Top-Left",0,0,0,DataValueType.ByteBit),
-                    new DataValueReference("Top-Right",0,1,1,DataValueType.ByteBit),
-                    new DataValueReference("Bottom-Left",0,2,2,DataValueType.ByteBit),
-                    new DataValueReference("Bottom-Right",0,3,3,DataValueType.ByteBit),
-                    new DataValueReference("Map",1,DataValueType.Byte, false),
-                    new DataValueReference("Dest Index",2,DataValueType.WarpDestIndex),
-                    new DataValueReference("Dest Group",3,DataValueType.HalfByte),
-                    new DataValueReference("Transition",4,DataValueType.HalfByte,true,"SourceTransitionMapping"),
-                },
-                new List<ValueReference> { // PointedWarp
-                    new DataValueReference("Opcode",0,DataValueType.Byte, false),
+        private static List<ValueReference> GetWarpValueReferences(WarpSourceType type, Data data) {
+            switch (type) {
+            case WarpSourceType.StandardWarp:
+                return new List<ValueReference> { // StandardWarp
+                    new DataValueReference(data,"Opcode",0,DataValueType.Byte, editable:false),
+                    new DataValueReference(data,"Top-Left",0,DataValueType.ByteBit,0,0),
+                    new DataValueReference(data,"Top-Right",0,DataValueType.ByteBit,1,1),
+                    new DataValueReference(data,"Bottom-Left",0,DataValueType.ByteBit,2,2),
+                    new DataValueReference(data,"Bottom-Right",0,DataValueType.ByteBit,3,3),
+                    new DataValueReference(data,"Map",1,DataValueType.Byte, editable:false),
+                    new DataValueReference(data,"Dest Index",2,DataValueType.WarpDestIndex),
+                    new DataValueReference(data,"Dest Group",3,DataValueType.HalfByte),
+                    new DataValueReference(data,"Transition",4,DataValueType.HalfByte,
+                        constantsMappingString:"SourceTransitionMapping"),
+                };
+            case WarpSourceType.PointedWarp:
+                return new List<ValueReference> { // PointedWarp
+                    new DataValueReference(data,"Opcode",0,DataValueType.Byte, editable:false),
 
                     // For "pointed" warp sources, "map" is instead a position
-                    new DataValueReference("Y",1,4,7,DataValueType.ByteBits),
-                    new DataValueReference("X",1,0,3,DataValueType.ByteBits),
+                    new DataValueReference(data,"Y",1,DataValueType.ByteBits,4,7),
+                    new DataValueReference(data,"X",1,DataValueType.ByteBits,0,3),
 
-                    new DataValueReference("Dest Index",2,DataValueType.WarpDestIndex),
-                    new DataValueReference("Dest Group",3,DataValueType.HalfByte),
-                    new DataValueReference("Transition",4,DataValueType.HalfByte,true,"SourceTransitionMapping"),
-                },
-                new List<ValueReference> { // PointerWarp
-                    new DataValueReference("Opcode",0,DataValueType.Byte, false),
-                    new DataValueReference("Map",1,DataValueType.Byte, false),
+                    new DataValueReference(data,"Dest Index",2,DataValueType.WarpDestIndex),
+                    new DataValueReference(data,"Dest Group",3,DataValueType.HalfByte),
+                    new DataValueReference(data,"Transition",4,DataValueType.HalfByte,
+                        constantsMappingString:"SourceTransitionMapping"),
+                };
+            case WarpSourceType.PointerWarp:
+                return new List<ValueReference> { // PointerWarp
+                    new DataValueReference(data,"Opcode",0,DataValueType.Byte, editable:false),
+                    new DataValueReference(data,"Map",1,DataValueType.Byte, editable:false),
 
                     // For warp sources which point to others, the pointer replaces
                     // Group/Entrance/Dest Index.
-                    new DataValueReference("Pointer", 2, DataValueType.String, false),
-                },
-                new List<ValueReference> { // WarpSourcesEnd
-                }
-            };
+                    new DataValueReference(data,"Pointer", 2, DataValueType.String, editable:false),
+                };
+            case WarpSourceType.WarpSourcesEnd:
+                return new List<ValueReference> { // WarpSourcesEnd
+                };
+            }
 
+            return null;
+        }
+
+
+
+
+        // Private variables
+        WarpDestData referencedDestData;
 
         WarpSourceType _type;
+        ValueReferenceGroup vrg;
+
+
+        // Properties
 
         public WarpSourceType WarpSourceType {
             get { return _type; }
         }
+        public ValueReferenceGroup ValueReferenceGroup {
+            get { return vrg; }
+        }
 
         public int Opcode {
             get {
-                return GetIntValue("Opcode");
+                return vrg.GetIntValue("Opcode");
             }
             set {
-                SetValue("Opcode",value);
+                vrg.SetValue("Opcode",value);
             }
         }
         public int Map {
             get {
                 try {
-                    return GetIntValue("Map");
+                    return vrg.GetIntValue("Map");
                 }
                 catch (InvalidLookupException) {
                     return -1;
                 }
             }
             set {
-                SetValue("Map", value);
+                vrg.SetValue("Map", value);
             }
         }
         public int DestIndex {
             get {
                 try {
-                    return GetIntValue("Dest Index");
+                    return vrg.GetIntValue("Dest Index");
                 }
                 catch (InvalidLookupException) {
                     return -1;
                 }
             }
             set {
-                SetValue("Dest Index",value);
+                vrg.SetValue("Dest Index",value);
             }
         }
         public int DestGroup {
             get {
                 try {
-                    return GetIntValue("Dest Group");
+                    return vrg.GetIntValue("Dest Group");
                 }
                 catch (InvalidLookupException) {
                     return -1;
                 }
             }
             set {
-                SetValue("Dest Group",value);
+                vrg.SetValue("Dest Group",value);
             }
         }
         public int Transition {
             get {
                 try {
-                    return GetIntValue("Transition");
+                    return vrg.GetIntValue("Transition");
                 }
                 catch (InvalidLookupException) {
                     return -1;
                 }
             }
             set {
-                SetValue("Transition",value);
+                vrg.SetValue("Transition",value);
             }
         }
         public int X {
             get {
                 try {
-                    return GetIntValue("X");
+                    return vrg.GetIntValue("X");
                 }
                 catch (InvalidLookupException) {
                     return -1;
                 }
             }
             set {
-                SetValue("X",value);
+                vrg.SetValue("X",value);
             }
         }
         public int Y {
             get {
                 try {
-                    return GetIntValue("Y");
+                    return vrg.GetIntValue("Y");
                 }
                 catch (InvalidLookupException) {
                     return -1;
                 }
             }
             set {
-                SetValue("Y",value);
+                vrg.SetValue("Y",value);
             }
         }
         public string PointerString {
             get {
-                return GetValue("Pointer");
+                return vrg.GetValue("Pointer");
             }
             set {
-                SetValue("Pointer",value);
+                vrg.SetValue("Pointer",value);
             }
         }
-
-
-        WarpDestData referencedDestData;
 
 
         public WarpSourceData(Project p, string command, IEnumerable<string> values,
@@ -199,13 +217,13 @@ namespace LynnaLab
                 }
             }
 
-            SetValueReferences(warpValueReferences[(int)WarpSourceType]);
+            vrg = new ValueReferenceGroup(GetWarpValueReferences(_type, this));
 
             referencedDestData = GetReferencedDestData();
             if (referencedDestData != null)
                 referencedDestData.AddReference(this);
 
-            this.AddValueModifiedHandler(delegate(object sender, ValueModifiedEventArgs e) {
+            this.AddModifiedEventHandler(delegate(object sender, DataModifiedEventArgs args) {
                 WarpDestData newDestData = GetReferencedDestData();
                 if (newDestData != referencedDestData) {
                     // Update DestData reference
@@ -224,7 +242,7 @@ namespace LynnaLab
             if (WarpSourceType != WarpSourceType.PointerWarp)
                 throw new ArgumentException("Invalid warp type for 'GetPointedWarp' call.");
 
-            WarpSourceData data = (WarpSourceData)Project.GetData(GetValue("Pointer"));
+            WarpSourceData data = Project.GetData(vrg.GetValue("Pointer")) as WarpSourceData;
             return data;
         }
 

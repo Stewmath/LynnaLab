@@ -242,6 +242,30 @@ namespace LynnaLab
             ModifiedHandler(this, null);
         }
 
+        public void RemoveGroup(ObjectGroup group) {
+            if (!children.Contains(group) || group.type != ObjectGroupType.Other)
+                throw new Exception("Tried to remove an invalid object group.");
+
+            bool foundGroup = false;
+
+            for (int i=0; i<rawObjectGroup.GetNumObjects(); i++) {
+                ObjectData data = rawObjectGroup.GetObjectData(i);
+                if (data.IsPointerType() && data.GetValue(0) == group.Identifier) {
+                    rawObjectGroup.RemoveObject(i);
+                    foundGroup = true;
+                    break;
+                }
+            }
+
+            if (!foundGroup)
+                throw new Exception("Error removing '" + group.Identifier + "' from the object group.");
+
+            children.Remove(group);
+
+            UpdateRawIndices();
+            ModifiedHandler(this, null);
+        }
+
 
         // Internal methods
 
@@ -296,30 +320,6 @@ namespace LynnaLab
             }
 
             beganIsolate = false;
-        }
-
-        public void RemoveGroup(ObjectGroup group) {
-            if (!children.Contains(group) || group.type != ObjectGroupType.Other)
-                throw new Exception("Tried to remove an invalid object group.");
-
-            bool foundGroup = false;
-
-            for (int i=0; i<rawObjectGroup.GetNumObjects(); i++) {
-                ObjectData data = rawObjectGroup.GetObjectData(i);
-                if (data.IsPointerType() && data.GetValue(0) == group.Identifier) {
-                    rawObjectGroup.RemoveObject(i);
-                    foundGroup = true;
-                    break;
-                }
-            }
-
-            if (!foundGroup)
-                throw new Exception("Error removing '" + group.Identifier + "' from the object group.");
-
-            children.Remove(group);
-
-            UpdateRawIndices();
-            ModifiedHandler(this, null);
         }
 
 

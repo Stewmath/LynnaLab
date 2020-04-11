@@ -4,13 +4,10 @@ using System.Drawing;
 
 namespace LynnaLab {
     // Public interface over the ObjectData class.
-    // As it turned out, I ended up putting a lot of the abstraction in the "ObjectData" class,
-    // when it should have gone here in the end, making the whole thing more complicated. Oh well...
     public class ObjectDefinition : ValueReferenceGroup
     {
         ObjectGroup objectGroup;
         ObjectData objectData;
-        ObjectValueReferenceHandler valueReferenceHandler;
 
 
         // Constructors
@@ -18,16 +15,7 @@ namespace LynnaLab {
         public ObjectDefinition(ObjectGroup group, ObjectData objectData) {
             this.objectGroup = group;
             this.objectData = objectData;
-
-            var valueReferences = new List<ValueReference>();
-            valueReferenceHandler = new ObjectValueReferenceHandler(this);
-
-            foreach (var vref in objectData.GetValueReferences()) {
-                var newVref = new AbstractIntValueReference(vref, valueReferenceHandler);
-                valueReferences.Add(newVref);
-            }
-
-            base.SetValueReferences(valueReferences);
+            base.SetValueReferences(objectData.ValueReferenceGroup.GetValueReferences());
         }
 
 
@@ -125,23 +113,12 @@ namespace LynnaLab {
             return GetGameObject()?.GetSubIDDocumentation();
         }
 
-        public void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
-            valueReferenceHandler.AddValueModifiedHandler(handler);
-        }
-
-        public void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
-            valueReferenceHandler.RemoveValueModifiedHandler(handler);
-        }
-
 
         internal void SetObjectData(ObjectData data) {
-            valueReferenceHandler.RemoveValueModifiedHandler();
             objectData = data;
-            valueReferenceHandler.InstallValueModifiedHandler();
+            base.SetValueReferences(data.ValueReferenceGroup.GetValueReferences());
         }
 
-
-        // Private methods
 
         // Returns true if the object's type causes the XY values to have 4 bits rather than 8.
         // (DOES NOT account for "@postype" parameter which can set interactions to have both Y/X
@@ -150,54 +127,6 @@ namespace LynnaLab {
             // Don't include "Part" objects because, when converted to the "QuadrupleValue" type,
             // they can have fine-grained position values.
             return GetObjectType() == ObjectType.ItemDrop;
-        }
-
-
-        class ObjectValueReferenceHandler : BasicIntValueReferenceHandler {
-            ObjectDefinition parent;
-            HashSet<EventHandler<ValueModifiedEventArgs>> handlers = new HashSet<EventHandler<ValueModifiedEventArgs>>();
-
-
-            public override Project Project { get { return parent.objectData.Project; } }
-
-
-            public ObjectValueReferenceHandler(ObjectDefinition parent) {
-                this.parent = parent;
-                InstallValueModifiedHandler();
-            }
-
-
-            public override int GetIntValue(string name) {
-                return parent.objectData.GetIntValue(name);
-            }
-
-            public override void SetValue(string name, int value) {
-                if (value == GetIntValue(name))
-                    return;
-                parent.objectGroup.Isolate();
-                parent.objectData.SetValue(name, value);
-            }
-
-            public override void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
-                handlers.Add(handler);
-            }
-            public override void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
-                handlers.Remove(handler);
-            }
-
-
-            public void RemoveValueModifiedHandler() {
-                parent.objectData.RemoveValueModifiedHandler(OnModified);
-            }
-
-            public void InstallValueModifiedHandler() {
-                parent.objectData.AddValueModifiedHandler(OnModified);
-            }
-
-            void OnModified(object sender, ValueModifiedEventArgs args) {
-                foreach (var handler in handlers)
-                    handler(sender, args);
-            }
         }
     }
 }

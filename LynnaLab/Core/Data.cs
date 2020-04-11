@@ -5,9 +5,21 @@ using System.Linq;
 
 namespace LynnaLab
 {
+    // Args passed by the "AddModifiedEventHandler" function.
+    public class DataModifiedEventArgs {
+        // The index of the value changed (starting at 0), or -1 if a size-changing operation occurred.
+        public readonly int ValueIndex;
 
-    public class Data : FileComponent, ValueReferenceHandler
+        public DataModifiedEventArgs(int valueIndex) {
+            this.ValueIndex = valueIndex;
+        }
+    }
+
+    public class Data : FileComponent
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+
         // Size in bytes
         // -1 if indeterminate? (consider getting rid of this, it's unreliable)
         protected int size;
@@ -17,11 +29,7 @@ namespace LynnaLab
         List<string> values;
 
         // Event called whenever data is modified
-        LockableEvent<ValueModifiedEventArgs> dataModifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
-
-        // The ValueReferenceGroup provides an alternate method to access the data (via string
-        // names)
-        ValueReferenceGroup valueReferenceGroup;
+        LockableEvent<DataModifiedEventArgs> dataModifiedEvent = new LockableEvent<DataModifiedEventArgs>();
 
 
         // Properties
@@ -85,12 +93,6 @@ namespace LynnaLab
         }
 
 
-        public bool HasValue(string name) {
-            if (valueReferenceGroup == null)
-                return false;
-            return valueReferenceGroup.HasValue(name);
-        }
-
         public virtual string GetValue(int i) {
             if (i >= GetNumValues())
                 throw new InvalidLookupException("Value " + i + " is out of range in Data object.");
@@ -115,7 +117,7 @@ namespace LynnaLab
             if (values[i] != value) {
                 values[i] = value;
                 Modified = true;
-                dataModifiedEvent.Invoke(this, null);
+                dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(i));
             }
         }
         public void SetByteValue(int i, byte value) {
@@ -129,35 +131,12 @@ namespace LynnaLab
         }
 
 
-        // Implementation of ValueReferenceHandler
-        public virtual string GetValue(string s) { // Get a value based on a value reference name
-            ValueReference r = GetValueReference(s);
-            if (r == null)
-                ThrowException(new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + s + "\"."));
-            return r.GetStringValue();
-        }
-        public virtual int GetIntValue(string s) {
-            ValueReference r = GetValueReference(s);
-            if (r == null) {
-                throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + s + "\".");
-            }
-            else {
-                return r.GetIntValue();
-            }
-        }
-        public virtual void SetValue(string s, string value) {
-            GetValueReference(s).SetValue(value);
-        }
-        public virtual void SetValue(string s, int i) {
-            GetValueReference(s).SetValue(i);
-        }
-        public virtual void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
+        public virtual void AddModifiedEventHandler(EventHandler<DataModifiedEventArgs> handler) {
             dataModifiedEvent += handler;
         }
-        public virtual void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
+        public virtual void RemoveModifiedEventHandler(EventHandler<DataModifiedEventArgs> handler) {
             dataModifiedEvent -= handler;
         }
-        // End of ValueReferenceHandler implementation
 
 
         public void SetNumValues(int n, string defaultValue) {
@@ -173,35 +152,13 @@ namespace LynnaLab
             values.RemoveAt(i);
             spacing.RemoveAt(i+1);
             Modified = true;
-            dataModifiedEvent.Invoke(this, null);
+            dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(-1));
         }
         public void InsertValue(int i, string value, string priorSpaces=" ") {
             values.Insert(i, value);
             spacing.Insert(i+1, priorSpaces);
             Modified = true;
-            dataModifiedEvent.Invoke(this, null);
-        }
-
-        public ValueReferenceGroup GetValueReferenceGroup() {
-            return valueReferenceGroup;
-        }
-        public IList<ValueReference> GetValueReferences() {
-            if (valueReferenceGroup == null)
-                return null;
-            return valueReferenceGroup.GetValueReferences();
-        }
-        public ValueReference GetValueReference(string name) {
-            if (valueReferenceGroup == null)
-                return null;
-            return valueReferenceGroup.GetValueReference(name);
-        }
-        public void SetValueReferences(IList<ValueReference> references) {
-            SetValueReferences(new ValueReferenceGroup(references));
-        }
-        public void SetValueReferences(ValueReferenceGroup group) {
-            valueReferenceGroup = group;
-            foreach (ValueReference r in valueReferenceGroup.GetValueReferences())
-                r.SetHandler(this);
+            dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(-1));
         }
 
         public override string GetString() {

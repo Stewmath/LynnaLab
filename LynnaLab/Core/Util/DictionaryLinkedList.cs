@@ -67,7 +67,7 @@ namespace LynnaLab
         }
 
         public LinkedListNode<T> Find(T value) {
-            if (!dict.ContainsKey(value))
+            if (value == null || !dict.ContainsKey(value))
                 return null;
             return dict[value];
         }

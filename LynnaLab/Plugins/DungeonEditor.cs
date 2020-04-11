@@ -54,14 +54,14 @@ namespace Plugins
                 roomSpinButton.Value = room.Index&0xff;
 
                 var vrs = new List<ValueReference>();
-                vrs.Add(new StreamValueReference("Up", room.Index&0xff, 0,0, DataValueType.ByteBit));
-                vrs.Add(new StreamValueReference("Right", room.Index&0xff, 1,1, DataValueType.ByteBit));
-                vrs.Add(new StreamValueReference("Down", room.Index&0xff, 2,2, DataValueType.ByteBit));
-                vrs.Add(new StreamValueReference("Left", room.Index&0xff, 3,3, DataValueType.ByteBit));
-                vrs.Add(new StreamValueReference("Key", room.Index&0xff, 4,4, DataValueType.ByteBit));
-                vrs.Add(new StreamValueReference("Chest", room.Index&0xff, 5,5, DataValueType.ByteBit));
-                vrs.Add(new StreamValueReference("Boss", room.Index&0xff, 6,6, DataValueType.ByteBit));
-                vrs.Add(new StreamValueReference("Dark", room.Index&0xff, 7,7, DataValueType.ByteBit));
+                vrs.Add(new StreamValueReference("Up", room.Index&0xff, DataValueType.ByteBit, 0,0));
+                vrs.Add(new StreamValueReference("Right", room.Index&0xff, DataValueType.ByteBit, 1,1));
+                vrs.Add(new StreamValueReference("Down", room.Index&0xff, DataValueType.ByteBit, 2,2));
+                vrs.Add(new StreamValueReference("Left", room.Index&0xff, DataValueType.ByteBit, 3,3));
+                vrs.Add(new StreamValueReference("Key", room.Index&0xff, DataValueType.ByteBit, 4,4));
+                vrs.Add(new StreamValueReference("Chest", room.Index&0xff, DataValueType.ByteBit, 5,5));
+                vrs.Add(new StreamValueReference("Boss", room.Index&0xff, DataValueType.ByteBit, 6,6));
+                vrs.Add(new StreamValueReference("Dark", room.Index&0xff, DataValueType.ByteBit, 7,7));
 
                 Stream stream = Project.GetBinaryFile("rooms/" + Project.GameString + "/group" + dungeon.Group + "DungeonProperties.bin");
                 foreach (StreamValueReference r in vrs)
@@ -84,18 +84,18 @@ namespace Plugins
                     floorSpinButton.Value = dungeon.NumFloors-1;
 
                 var vrs = new List<ValueReference>();
-                vrs.Add(new DataValueReference("Group", 0, DataValueType.String, false));
-                vrs.Add(new DataValueReference("Wallmaster dest room", 0, DataValueType.Byte));
-                vrs.Add(new DataValueReference("Bottom floor layout", 0, DataValueType.Byte, false));
-                vrs.Add(new DataValueReference("# of floors", 0, DataValueType.Byte, false));
-                vrs.Add(new DataValueReference("Base floor name", 0, DataValueType.Byte));
-                vrs.Add(new DataValueReference("Floors unlocked with compass", 0, DataValueType.Byte));
-
                 Data data = dungeon.DataStart;
-                foreach (DataValueReference r in vrs) {
-                    r.SetHandler(data);
-                    data = data.NextData;
-                }
+                vrs.Add(new DataValueReference(data, "Group", 0, DataValueType.String, editable:false));
+                data = data.NextData;
+                vrs.Add(new DataValueReference(data, "Wallmaster dest room", 0, DataValueType.Byte));
+                data = data.NextData;
+                vrs.Add(new DataValueReference(data, "Bottom floor layout", 0, DataValueType.Byte, editable:false));
+                data = data.NextData;
+                vrs.Add(new DataValueReference(data, "# of floors", 0, DataValueType.Byte, editable:false));
+                data = data.NextData;
+                vrs.Add(new DataValueReference(data, "Base floor name", 0, DataValueType.Byte));
+                data = data.NextData;
+                vrs.Add(new DataValueReference(data, "Floors unlocked with compass", 0, DataValueType.Byte));
 
                 // Remove last ValueReferenceEditor
                 if (dungeonVre != null)

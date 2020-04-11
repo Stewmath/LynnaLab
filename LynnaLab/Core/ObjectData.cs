@@ -52,82 +52,105 @@ namespace LynnaLab {
 
 
 
-        private static List<List<ValueReference>> objectValueReferences =
+        private static IList<ValueReference> GetObjectValueReferences(ObjectType type, Data data) {
             // Interaction, Part, SpecificEnemyA, and ItemDrop objects have a variable number of
             // parameters. In the constructor, the data is set to always have the maximum number of
             // parameters so that all of these ValueReferences are valid. The extra parameters are
             // removed when it is time to save.
-            new List<List<ValueReference>> {
-                new List<ValueReference> { // Condition
-                    new DataValueReference("Condition",0,DataValueType.Byte),
-                },
-                new List<ValueReference> { // Interaction
-                    new DataValueReference("ID",0,8,15,DataValueType.WordBits,true,"InteractionMapping"),
-                    new DataValueReference("SubID",0,0,7,DataValueType.WordBits),
-                    new DataValueReference("Y",1,DataValueType.Byte),
-                    new DataValueReference("X",2,DataValueType.Byte),
-                    new DataValueReference("Var03",3,DataValueType.Byte),
-                },
-                new List<ValueReference> { // Pointer
-                    new DataValueReference("Pointer",0,DataValueType.ObjectPointer),
-                },
-                new List<ValueReference> { // BeforeEvent
-                    new DataValueReference("Pointer",0,DataValueType.ObjectPointer),
-                },
-                new List<ValueReference> { // AfterEvent
-                    new DataValueReference("Pointer",0,DataValueType.ObjectPointer),
-                },
-                new List<ValueReference> { // Random Enemy
-                    new DataValueReference("Flags",0,DataValueType.Byte,editable:false),
-                    new DataValueReference("Respawn",0,0,0,DataValueType.ByteBit),
-                    new DataValueReference("Uncounted",0,1,1,DataValueType.ByteBit),
-                    new DataValueReference("Spawn anywhere",0,2,2,DataValueType.ByteBit),
-                    new DataValueReference("Quantity",0,5,7,DataValueType.ByteBits),
-                    new DataValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
-                    new DataValueReference("SubID",1,0,7,DataValueType.WordBits),
-                },
-                new List<ValueReference> { // Specific Enemy A
-                    new DataValueReference("Flags",0,DataValueType.Byte,editable:false),
-                    new DataValueReference("Respawn",0,0,0,DataValueType.ByteBit),
-                    new DataValueReference("Uncounted",0,1,1,DataValueType.ByteBit),
-                    new DataValueReference("ID",1,8,15,DataValueType.WordBits,true,"EnemyMapping"),
-                    new DataValueReference("SubID",1,0,7,DataValueType.WordBits),
-                    new DataValueReference("Y",2,DataValueType.Byte),
-                    new DataValueReference("X",3,DataValueType.Byte),
-                },
-                new List<ValueReference> { // Specific Enemy B
-                    new DataValueReference("ID",0,8,15,DataValueType.WordBits),
-                    new DataValueReference("SubID",0,0,7,DataValueType.WordBits),
-                    new DataValueReference("Y",1,DataValueType.Byte),
-                    new DataValueReference("X",2,DataValueType.Byte),
-                    new DataValueReference("Var03",3,DataValueType.Byte),
-                },
-                new List<ValueReference> { // Part
-                    new DataValueReference("ID",0,8,15,DataValueType.WordBits,true,"PartMapping"),
-                    new DataValueReference("SubID",0,0,7,DataValueType.WordBits),
-                    new DataValueReference("Y",1,DataValueType.Byte),
-                    new DataValueReference("X",2,DataValueType.Byte),
-                    new DataValueReference("Var03",3,DataValueType.Byte),
-                },
-                new List<ValueReference> { // Item Drop
-                    new DataValueReference("Flags",0,DataValueType.Byte,editable:false),
-                    new DataValueReference("Respawn",0,0,0,DataValueType.ByteBit),
-                    new DataValueReference("Item",1,DataValueType.Byte),
-                    new DataValueReference("Y",2,4,7,DataValueType.ByteBits),
-                    new DataValueReference("X",2,0,3,DataValueType.ByteBits),
-                },
-                new List<ValueReference> { // InteracEnd
-                },
-                new List<ValueReference> { // InteracEndPointer
-                },
-                new List<ValueReference> { // Garbage
-                }
-            };
+            switch (type) {
+            case ObjectType.Condition:
+                return new List<ValueReference> { // Condition
+                    new DataValueReference(data,"Condition",0,DataValueType.Byte),
+                };
+            case ObjectType.Interaction:
+                return new List<ValueReference> { // Interaction
+                    new DataValueReference(data,"ID",0,DataValueType.WordBits,8,15,true,"InteractionMapping"),
+                    new DataValueReference(data,"SubID",0,DataValueType.WordBits,0,7),
+                    new DataValueReference(data,"Y",1,DataValueType.Byte),
+                    new DataValueReference(data,"X",2,DataValueType.Byte),
+                    new DataValueReference(data,"Var03",3,DataValueType.Byte),
+                };
+            case ObjectType.Pointer:
+                return new List<ValueReference> { // Pointer
+                    new DataValueReference(data,"Pointer",0,DataValueType.ObjectPointer),
+                };
+            case ObjectType.BeforeEvent:
+                return new List<ValueReference> { // BeforeEvent
+                    new DataValueReference(data,"Pointer",0,DataValueType.ObjectPointer),
+                };
+            case ObjectType.AfterEvent:
+                return new List<ValueReference> { // AfterEvent
+                    new DataValueReference(data,"Pointer",0,DataValueType.ObjectPointer),
+                };
+            case ObjectType.RandomEnemy:
+                return new List<ValueReference> { // Random Enemy
+                    new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
+                    new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0),
+                    new DataValueReference(data,"Uncounted",0,DataValueType.ByteBit,1,1),
+                    new DataValueReference(data,"Spawn anywhere",0,DataValueType.ByteBit,2,2),
+                    new DataValueReference(data,"Quantity",0,DataValueType.ByteBits,5,7),
+                    new DataValueReference(data,"ID",1,DataValueType.WordBits,8,15,true,"EnemyMapping"),
+                    new DataValueReference(data,"SubID",1,DataValueType.WordBits,0,7),
+                };
+            case ObjectType.SpecificEnemyA:
+                return new List<ValueReference> { // Specific Enemy A
+                    new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
+                    new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0),
+                    new DataValueReference(data,"Uncounted",0,DataValueType.ByteBit,1,1),
+                    new DataValueReference(data,"ID",1,DataValueType.WordBits,8,15,true,"EnemyMapping"),
+                    new DataValueReference(data,"SubID",1,DataValueType.WordBits,0,7),
+                    new DataValueReference(data,"Y",2,DataValueType.Byte),
+                    new DataValueReference(data,"X",3,DataValueType.Byte),
+                };
+            case ObjectType.SpecificEnemyB:
+                return new List<ValueReference> { // Specific Enemy B
+                    new DataValueReference(data,"ID",0,DataValueType.WordBits,8,15),
+                    new DataValueReference(data,"SubID",0,DataValueType.WordBits,0,7),
+                    new DataValueReference(data,"Y",1,DataValueType.Byte),
+                    new DataValueReference(data,"X",2,DataValueType.Byte),
+                    new DataValueReference(data,"Var03",3,DataValueType.Byte),
+                };
+            case ObjectType.Part:
+                return new List<ValueReference> { // Part
+                    new DataValueReference(data,"ID",0,DataValueType.WordBits,8,15,true,"PartMapping"),
+                    new DataValueReference(data,"SubID",0,DataValueType.WordBits,0,7),
+                    new DataValueReference(data,"Y",1,DataValueType.Byte),
+                    new DataValueReference(data,"X",2,DataValueType.Byte),
+                    new DataValueReference(data,"Var03",3,DataValueType.Byte),
+                };
+            case ObjectType.ItemDrop:
+                return new List<ValueReference> { // Item Drop
+                    new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
+                    new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0),
+                    new DataValueReference(data,"Item",1,DataValueType.Byte),
+                    new DataValueReference(data,"Y",2,DataValueType.ByteBits,4,7),
+                    new DataValueReference(data,"X",2,DataValueType.ByteBits,0,3),
+                };
+            case ObjectType.End:
+                return new List<ValueReference> { // InteracEnd
+                };
+            case ObjectType.EndPointer:
+                return new List<ValueReference> { // InteracEndPointer
+                };
+            case ObjectType.Garbage:
+                return new List<ValueReference> { // Garbage
+                };
+            }
+            return null;
+        }
 
 
         private ObjectType objectType;
-        private ValueReferenceGroup dataValueReferenceGroup;
+        private ValueReferenceGroup vrg;
 
+
+        // Properties
+        public ValueReferenceGroup ValueReferenceGroup {
+            get { return vrg; }
+        }
+
+        
+        // Constructors
 
         public ObjectData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int objType, ObjectData last)
             : base(p, command, values, -1, parser, spacing) {
@@ -156,7 +179,8 @@ namespace LynnaLab {
 
             base.LockModifiedEvents();
 
-            DataValueReference.InitializeDataValues(this, dataValueReferenceGroup.GetValueReferences());
+            foreach (ValueReference vref in vrg.GetValueReferences())
+                vref.Initialize();
 
             base.ClearAndUnlockModifiedEvents();
         }
@@ -177,8 +201,7 @@ namespace LynnaLab {
 
         // Common code for constructors
         void InitializeValueReferenceGroup() {
-            dataValueReferenceGroup = new ValueReferenceGroup(objectValueReferences[(int)objectType]);
-            base.SetValueReferences(dataValueReferenceGroup);
+            vrg = new ValueReferenceGroup(GetObjectValueReferences(objectType, this));
         }
 
         public ObjectType GetObjectType() {

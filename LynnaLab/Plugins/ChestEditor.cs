@@ -285,22 +285,16 @@ namespace Plugins
             vrContainer.Remove(vrEditor);
 
             Data data = Treasure.GetTreasureDataBase(index);
-            DataValueReference v1 = new DataValueReference("Spawn Mode", 0, 4,6, DataValueType.ByteBits);
-            v1.SetHandler(data);
-            DataValueReference v5 = new DataValueReference("Grab Mode", 0, 0,2, DataValueType.ByteBits);
-            v5.SetHandler(data);
-            DataValueReference v6 = new DataValueReference("Unknown", 0, 3,3, DataValueType.ByteBit);
-            v6.SetHandler(data);
+            DataValueReference v1 = new DataValueReference(data, "Spawn Mode", 0, DataValueType.ByteBits, 4,6);
+            DataValueReference v5 = new DataValueReference(data, "Grab Mode", 0, DataValueType.ByteBits, 0,2);
+            DataValueReference v6 = new DataValueReference(data, "Unknown", 0, DataValueType.ByteBit, 3,3);
 
             data = data.NextData;
-            DataValueReference v2 = new DataValueReference("Parameter", 0, DataValueType.Byte);
-            v2.SetHandler(data);
+            DataValueReference v2 = new DataValueReference(data, "Parameter", 0, DataValueType.Byte);
             data = data.NextData;
-            DataValueReference v3 = new DataValueReference("Text ID", 0, DataValueType.Byte);
-            v3.SetHandler(data);
+            DataValueReference v3 = new DataValueReference(data, "Text ID", 0, DataValueType.Byte);
             data = data.NextData;
-            DataValueReference v4 = new DataValueReference("Gfx", 0, DataValueType.Byte);
-            v4.SetHandler(data);
+            DataValueReference v4 = new DataValueReference(data, "Gfx", 0, DataValueType.Byte);
             data = data.NextData;
 
             // Byte 1 is sometimes set to 0x80 for unused treasures?
@@ -653,17 +647,13 @@ namespace Plugins
             }
             else {
 
-                v1 = new DataValueReference("YX", 0, DataValueType.Byte);
-                v1.SetHandler(data);
+                v1 = new DataValueReference(data, "YX", 0, DataValueType.Byte);
                 data = data.NextData;
-                v2 = new DataValueReference("Room", 0, DataValueType.Byte, false);
-                v2.SetHandler(data);
+                v2 = new DataValueReference(data, "Room", 0, DataValueType.Byte, editable:false);
                 data = data.NextData;
-                v3 = new DataValueReference("ID1", 0, DataValueType.Byte);
-                v3.SetHandler(data);
+                v3 = new DataValueReference(data, "ID1", 0, DataValueType.Byte);
                 data = data.NextData;
-                v4 = new DataValueReference("ID2", 0, DataValueType.Byte);
-                v4.SetHandler(data);
+                v4 = new DataValueReference(data, "ID2", 0, DataValueType.Byte);
                 data = data.NextData;
 
                 ValueReferenceGroup vrGroup = new ValueReferenceGroup(new DataValueReference[] {v1, v2, v3, v4});

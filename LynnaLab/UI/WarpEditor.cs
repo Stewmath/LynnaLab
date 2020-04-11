@@ -121,7 +121,7 @@ namespace LynnaLab
             warpSourceTypeLabel.UseMarkup = true;
 
             SetDestIndex(warpSourceData.DestGroup, warpSourceData.DestIndex);
-            sourceEditor = new ValueReferenceEditor(Project, warpSourceData);
+            sourceEditor = new ValueReferenceEditor(Project, warpSourceData.ValueReferenceGroup);
 
             Alignment a = new Alignment(0,0,0,0);
             a.Add(sourceEditor);
@@ -168,7 +168,7 @@ namespace LynnaLab
             }
 
             destData = destGroup.GetWarpDest(index);
-            ValueReferenceEditor editor = new ValueReferenceEditor(Project,destData);
+            ValueReferenceEditor editor = new ValueReferenceEditor(Project,destData.ValueReferenceGroup);
 
             destInfoLabel.Text = "Group " + group + " Index " + Wla.ToHex(index, 2) + ": ";
             int numReferences = destData.GetNumReferences()-1;

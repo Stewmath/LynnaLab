@@ -22,8 +22,7 @@ namespace LynnaLab
         public ValueReferenceGroup(IList<ValueReference> refs) {
             valueReferences = new List<ValueReference>();
             foreach (var vref in refs) {
-                ValueReference copy =
-                    (ValueReference)Activator.CreateInstance(vref.GetType(), new object[] { vref });
+                ValueReference copy = vref.Clone();
                 valueReferences.Add(copy);
             }
         }
@@ -83,28 +82,32 @@ namespace LynnaLab
             throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
         }
 
-        public void SetValue(string name, string val) {
+        public void SetValue(string name, string value) {
             foreach (var r in valueReferences) {
                 if (r.Name == name) {
-                    r.SetValue(val);
+                    r.SetValue(value);
                     return;
                 }
             }
             throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
         }
-        public void SetValue(string name, int val) {
+        public void SetValue(string name, int value) {
             foreach (var r in valueReferences) {
                 if (r.Name == name) {
-                    r.SetValue(val);
+                    r.SetValue(value);
                     return;
                 }
             }
             throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
         }
 
-        public void SetHandler(ValueReferenceHandler handler) {
-            foreach (var r in valueReferences)
-                r.SetHandler(handler);
+        public void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
+            foreach (var vref in valueReferences)
+                vref.AddValueModifiedHandler(handler);
+        }
+        public void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
+            foreach (var vref in valueReferences)
+                vref.RemoveValueModifiedHandler(handler);
         }
 
 

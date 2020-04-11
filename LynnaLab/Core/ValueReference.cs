@@ -3,56 +3,14 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
-    // Enum of types of values that can be had.
-    public enum DataValueType {
-        String=0,
-        HalfByte,
-        Byte,
-        Word,
-        ByteBit,
-        ByteBits,
-        WordBits,
-        ObjectPointer,
-        WarpDestIndex,
-    }
-
-
-    // This is primarily used by the Data class to handle modifications based on string names.
-    public interface ValueReferenceHandler {
-        Project Project { get; }
-
-        string GetValue(string name);
-        int GetIntValue(string name);
-
-        void SetValue(string name, string value);
-        void SetValue(string name, int value);
-
-        void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
-        void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
+    public enum ValueReferenceType {
+        String = 0,
+        Int,
+        Bool
     }
 
     // This is a stub for now
     public class ValueModifiedEventArgs {
-    }
-
-
-    public abstract class BasicIntValueReferenceHandler : ValueReferenceHandler {
-        public abstract Project Project {get;}
-
-        public virtual string GetValue(string name) {
-            return Wla.ToHex(GetIntValue(name), 2);
-        }
-
-        public abstract int GetIntValue(string name);
-
-        public virtual void SetValue(string name, string value) {
-            SetValue(name, Project.EvalToInt(value));
-        }
-
-        public abstract void SetValue(string name, int value);
-
-        public abstract void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
-        public abstract void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
     }
 
 
@@ -63,170 +21,87 @@ namespace LynnaLab
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 
-        private ValueReferenceHandler handler;
+        // Private variables
+
+        private ConstantsMapping constantsMapping;
+        Project _project;
 
 
-        protected string constantsMappingString;
-        protected ConstantsMapping constantsMapping;
-        protected Documentation _documentation;
-
-        protected int startBit,endBit;
-
+        // To be set by the subclasses
 
         public Project Project {
-            get {
-                return handler?.Project;
-            }
-        }
-
-        public ValueReferenceHandler Handler {
-            get { return handler; }
-        }
-
-        public DataValueType ValueType {get; set;}
-        public string Name {get; set;}
-        public bool Editable {get; set;}
-
-        public int MaxValue { // For integer-based ones
-            get {
-                switch(ValueType) {
-                    case DataValueType.Byte:
-                        return 0xff;
-                    case DataValueType.Word:
-                        return 0xffff;
-                    case DataValueType.ByteBit:
-                        return 1;
-                    case DataValueType.ByteBits:
-                    case DataValueType.WordBits:
-                        return (1<<(endBit-startBit+1))-1;
-                    default:
-                        return 0;
+            get { return _project; }
+            protected set {
+                _project = value;
+                if (_project != null && ConstantsMappingString != null) {
+                    constantsMapping = (ConstantsMapping)typeof(Project).GetField(ConstantsMappingString)
+                        .GetValue(Project);
+                    Documentation = constantsMapping.OverallDocumentation;
+                    Documentation.Name = "Field: " + Name;
                 }
             }
         }
+        public int MaxValue { get; protected set; }
+        public ValueReferenceType ValueType { get; protected set; }
+
+
+        // Other properties
+
+        public string Name { get; protected set; }
+        public bool Editable { get; protected set; }
+
+        public string ConstantsMappingString { get; private set; }
         public ConstantsMapping ConstantsMapping {
             get { return constantsMapping; }
         }
 
         // This documentation tends to change based on what the current value is...
-        public Documentation Documentation {
-            get {
-                return _documentation;
-            }
-            set {
-                _documentation = value;
-            }
-        }
+        public Documentation Documentation { get; set; }
 
-        // Standard constructor for most DataValueTypes
-        public ValueReference(string n, DataValueType t, bool editable=true, string constantsMappingString=null) {
-            ValueType = t;
-            Name = n;
+
+        // Constructors
+
+        // Standard constructor for most ValueReferenceTypes
+        public ValueReference(string name, ValueReferenceType type, bool editable, string constantsMappingString) {
+            ValueType = type;
+            Name = name;
             Editable = editable;
-            this.constantsMappingString = constantsMappingString;
-        }
-        // Constructor for DataValueType.ByteBits (TODO: make startBit and endBit optional
-        // parameters in above constructor)
-        public ValueReference(string n, int startBit, int endBit, DataValueType t, bool editable=true, string constantsMappingString=null) {
-            ValueType = t;
-            Name = n;
-            this.startBit = startBit;
-            this.endBit = endBit;
-            Editable = editable;
-            this.constantsMappingString = constantsMappingString;
+            this.ConstantsMappingString = constantsMappingString;
         }
 
         public ValueReference(ValueReference r) {
-            handler = r.handler;
+            _project = r._project;
+            MaxValue = r.MaxValue;
             ValueType = r.ValueType;
             Name = r.Name;
-            startBit = r.startBit;
-            endBit = r.endBit;
             Editable = r.Editable;
-            constantsMappingString = r.constantsMappingString;
+            ConstantsMappingString = r.ConstantsMappingString;
             constantsMapping = r.constantsMapping;
-            _documentation = r._documentation;
-        }
-
-        public void SetHandler(ValueReferenceHandler handler) {
-            this.handler = handler;
-            if (Project != null && constantsMappingString != null) {
-                constantsMapping = (ConstantsMapping)typeof(Project).GetField(constantsMappingString).GetValue(Project);
-                _documentation = constantsMapping.OverallDocumentation;
-                _documentation.Name = "Field: " + Name;
-            }
+            Documentation = r.Documentation;
         }
 
 
-        // NOTE: For the "Bit" DataTypes, this gets the value of the whole string, not just the bits
-        // in question!
+        // Methods
+
         public abstract string GetStringValue();
-
-        // This correctly handles the "Bit" DataType.
-        public virtual int GetIntValue() {
-            int intValue = Project.EvalToInt(GetStringValue());
-            switch(ValueType) {
-                case DataValueType.ByteBits:
-                case DataValueType.WordBits:
-                    {
-                        int andValue = (1<<(endBit-startBit+1))-1;
-                        return (intValue>>startBit)&andValue;
-                    }
-                case DataValueType.ByteBit:
-                    return (intValue>>startBit)&1;
-                default:
-                    return intValue;
-            }
-        }
-
-        // This has the same caveat as "GetStringValue".
+        public abstract int GetIntValue();
         public abstract void SetValue(string s);
-
-        public virtual void SetValue(int i) {
-            switch(ValueType) {
-                case DataValueType.HalfByte:
-                    SetValue(Wla.ToHalfByte((byte)i));
-                    break;
-                case DataValueType.Byte:
-                case DataValueType.WarpDestIndex:
-                default:
-                    SetValue(Wla.ToByte((byte)i));
-                    break;
-                case DataValueType.Word:
-                    SetValue(Wla.ToWord(i));
-                    break;
-                case DataValueType.ByteBits:
-                case DataValueType.WordBits:
-                    {
-                        int andValue = ((1<<(endBit-startBit+1))-1);
-                        int value = Project.EvalToInt(GetStringValue()) & (~(andValue<<startBit));
-                        value |= ((i&andValue)<<startBit);
-                        if (ValueType == DataValueType.ByteBits)
-                            SetValue(Wla.ToByte((byte)value));
-                        else
-                            SetValue(Wla.ToWord(value));
-                    }
-                    break;
-                case DataValueType.ByteBit:
-                    {
-                        int value = Project.EvalToInt(GetStringValue()) & ~(1<<startBit);
-                        value |= ((i&1)<<startBit);
-                        SetValue(Wla.ToByte((byte)value));
-                    }
-                    break;
-            }
-        }
+        public abstract void SetValue(int i);
+        public abstract void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
+        public abstract void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
 
         // Sets the value to its default.
         public abstract void Initialize();
+
+        public abstract ValueReference Clone();
 
         /// <summary>
         ///  Returns a field from documentation (ie. "@desc{An interaction}").
         /// </summary>
         public string GetDocumentationField(string name) {
-            if (_documentation == null)
+            if (Documentation == null)
                 return null;
-            return _documentation.GetField(name);
+            return Documentation.GetField(name);
         }
     }
 }

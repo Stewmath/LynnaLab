@@ -6,14 +6,20 @@ namespace LynnaLab
 {
     public class WarpDestGroup : ProjectIndexedDataType
     {
+        List<WarpDestData> warpDestDataList;
+        FileParser fileParser;
+
+
+        // Properties
+
         public int Group {
             get {
                 return Index;
             }
         }
 
-        List<WarpDestData> warpDestDataList;
-        FileParser fileParser;
+
+        // Constructors
 
         internal WarpDestGroup(Project p, int id) : base(p,id) {
             fileParser = Project.GetFileWithLabel("warpDestTable");
@@ -46,6 +52,9 @@ namespace LynnaLab
             }
         }
 
+
+        // Methods
+
         public int GetNumWarpDests() {
             return warpDestDataList.Count;
         }
@@ -62,7 +71,8 @@ namespace LynnaLab
                     fileParser,
                     new List<string>{"\t"});
 
-            DataValueReference.InitializeDataValues(newData, newData.GetValueReferences());
+            foreach (ValueReference vref in newData.ValueReferenceGroup.GetValueReferences())
+                vref.Initialize();
 
             newData.Transition = 1;
 

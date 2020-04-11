@@ -8,48 +8,57 @@ namespace LynnaLab
     {
         public static string WarpCommand = "m_WarpDest";
 
-        public static List<ValueReference> warpValueReferences = 
-            new List<ValueReference> {
-                new DataValueReference("Map",0,DataValueType.Byte),
-                new DataValueReference("Y",1,4,7,DataValueType.ByteBits),
-                new DataValueReference("X",1,0,3,DataValueType.ByteBits),
-                new DataValueReference("Parameter",2,DataValueType.HalfByte),
-                new DataValueReference("Transition",3,DataValueType.HalfByte,true,"DestTransitionMapping"),
+
+        private static List<ValueReference> GetWarpValueReferences(Data data) {
+            return new List<ValueReference> {
+                new DataValueReference(data,"Map",0,DataValueType.Byte),
+                new DataValueReference(data,"Y",1,DataValueType.ByteBits,4,7),
+                new DataValueReference(data,"X",1,DataValueType.ByteBits,0,3),
+                new DataValueReference(data,"Parameter",2,DataValueType.HalfByte),
+                new DataValueReference(data,"Transition",3,DataValueType.HalfByte,
+                    constantsMappingString:"DestTransitionMapping"),
             };
+        }
+
+
+        // Private variables
+
+        HashSet<WarpSourceData> referenceSet;
+        ValueReferenceGroup vrg;
+
 
         // Properties
 
         public int Map {
             get {
-                return GetIntValue("Map");
+                return vrg.GetIntValue("Map");
             }
             set {
-                SetValue("Map", value);
+                vrg.SetValue("Map", value);
             }
         }
         public int Transition {
             get {
-                return GetIntValue("Transition");
+                return vrg.GetIntValue("Transition");
             }
             set {
-                SetValue("Transition", value);
+                vrg.SetValue("Transition", value);
             }
         }
-        // Don't edit these properties outside of the WarpDestGroup class
-        public WarpDestGroup DestGroup {get; set;}
-        public int DestIndex {get; set;}
+        public ValueReferenceGroup ValueReferenceGroup {
+            get { return vrg; }
+        }
 
-
-        // Variables
-
-        HashSet<WarpSourceData> referenceSet;
+        // Don't edit these properties outside of the WarpDestGroup class (TODO: review this)
+        internal WarpDestGroup DestGroup {get; set;}
+        internal int DestIndex {get; set;}
 
 
         public WarpDestData(Project p, string command, IEnumerable<string> values,
                 FileParser parser, IList<string> spacing)
             : base(p, command, values, 3, parser, spacing)
         {
-            SetValueReferences(warpValueReferences);
+            vrg = new ValueReferenceGroup(GetWarpValueReferences(this));
 
             referenceSet = new HashSet<WarpSourceData>();
 

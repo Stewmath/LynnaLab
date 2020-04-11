@@ -18,26 +18,14 @@ namespace LynnaLab {
         // The main table which holds all the widgets.
         Gtk.Table table;
 
-        Gtk.Frame pointerFrame;
-        ObjectGroupEditor subEditor;
-
         event System.Action dataModifiedExternalEvent;
         event System.Action dataModifiedInternalEvent;
 
 
         Project Project {get; set;}
 
-        public ObjectGroupEditor SubEditor { // This is only for ObjectPointer values
-            get { return subEditor; }
-        }
-
         public ValueReferenceGroup ValueReferenceGroup {
             get { return valueReferenceGroup; }
-        }
-
-        public ValueReferenceEditor(Project p, Data data, string frameText=null) 
-            : this(p, data.GetValueReferenceGroup(), frameText)
-        {
         }
 
         public ValueReferenceEditor(Project p, ValueReferenceGroup vrg, string frameText=null) 
@@ -97,176 +85,81 @@ namespace LynnaLab {
                 // ConstantsMapping == null
 
                 switch(r.ValueType) {
-                    case DataValueType.String:
-                    default:
-                        {
-                            table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
-                            Gtk.Entry entry = new Gtk.Entry();
-                            if (!r.Editable)
-                                entry.Sensitive = false;
-                            dataModifiedExternalEvent += delegate() {
-                                entry.Text = r.GetStringValue();
-                                OnDataModifiedInternal();
-                            };
-                            table.Attach(entry, x+1,x+2, y, y+1);
-                            widgets[index] = entry;
+                case ValueReferenceType.String:
+                    {
+                        table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
+                        Gtk.Entry entry = new Gtk.Entry();
+                        if (!r.Editable)
+                            entry.Sensitive = false;
+                        dataModifiedExternalEvent += delegate() {
+                            entry.Text = r.GetStringValue();
+                            OnDataModifiedInternal();
+                        };
+                        table.Attach(entry, x+1,x+2, y, y+1);
+                        widgets[index] = entry;
 
-                            helpButtonContainers[index] = new Gtk.HBox();
-                            table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
-                            break;
-                        }
-                    case DataValueType.Byte:
-                    case DataValueType.HalfByte:
-byteCase:
-                        {
-                            table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
-                            SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,255);
-                            if (!r.Editable)
-                                spinButton.Sensitive = false;
-                            if (r.ValueType == DataValueType.HalfByte) {
-                                spinButton.Digits = 1;
-                                spinButton.Adjustment.Upper = 15;
+                        helpButtonContainers[index] = new Gtk.HBox();
+                        table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+                        break;
+                    }
+                case ValueReferenceType.Int:
+intCase:
+                    {
+                        table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
+                        SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,r.MaxValue);
+                        if (!r.Editable)
+                            spinButton.Sensitive = false;
+                        if (r.MaxValue < 0x10)
+                            spinButton.Digits = 1;
+                        else if (r.MaxValue < 0x100)
+                            spinButton.Digits = 2;
+                        else if (r.MaxValue < 0x1000)
+                            spinButton.Digits = 3;
+                        else
+                            spinButton.Digits = 4;
+                        spinButton.Adjustment.Upper = r.MaxValue;
+                        spinButton.ValueChanged += delegate(object sender, EventArgs e) {
+                            Gtk.SpinButton button = sender as Gtk.SpinButton;
+                            if (maxBounds[index] == 0 || button.ValueAsInt <= maxBounds[index]) {
+                                r.SetValue(button.ValueAsInt);
                             }
                             else
-                                spinButton.Digits = 2;
-                            spinButton.ValueChanged += delegate(object sender, EventArgs e) {
-                                Gtk.SpinButton button = sender as Gtk.SpinButton;
-                                if (maxBounds[index] == 0 || button.ValueAsInt <= maxBounds[index]) {
-                                    r.SetValue(button.ValueAsInt);
-                                }
-                                else
-                                    button.Value = maxBounds[index];
-                                OnDataModifiedInternal();
-                            };
-                            dataModifiedExternalEvent += delegate() {
-                                spinButton.Value = r.GetIntValue();
-                            };
-                            table.Attach(spinButton, x+1,x+2, y, y+1);
-                            widgets[index] = spinButton;
+                                button.Value = maxBounds[index];
+                            OnDataModifiedInternal();
+                        };
+                        dataModifiedExternalEvent += delegate() {
+                            spinButton.Value = r.GetIntValue();
+                        };
+                        table.Attach(spinButton, x+1,x+2, y, y+1);
+                        widgets[index] = spinButton;
 
-                            helpButtonContainers[index] = new Gtk.HBox();
-                            table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
-                        }
-                        break;
+                        helpButtonContainers[index] = new Gtk.HBox();
+                        table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+                    }
+                    break;
 
-                    case DataValueType.WarpDestIndex:
-                        {
-                            Gtk.Button newDestButton = new Gtk.Button("New/Unused\nDestination");
-                            newDestButton.FocusOnClick = false;
-                            newDestButton.Clicked += delegate(object sender, EventArgs e) {
-                                WarpSourceData warpData = r.Handler as WarpSourceData;
-                                WarpDestGroup destGroup = warpData.GetReferencedDestGroup();
-                                warpData.SetDestData(destGroup.GetNewOrUnusedDestData());
-                            };
-                            table.Attach(newDestButton, x+2,x+3, y, y+2);
-                        }
-                        goto byteCase;
+                case ValueReferenceType.Bool:
+                    {
+                        table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
+                        Gtk.CheckButton checkButton = new Gtk.CheckButton();
+                        checkButton.FocusOnClick = false;
+                        if (!r.Editable)
+                            checkButton.Sensitive = false;
+                        checkButton.Toggled += delegate(object sender, EventArgs e) {
+                            Gtk.CheckButton button = sender as Gtk.CheckButton;
+                            r.SetValue(button.Active ? 1 : 0);
+                            OnDataModifiedInternal();
+                        };
+                        dataModifiedExternalEvent += delegate() {
+                            checkButton.Active = r.GetIntValue() == 1;
+                        };
+                        table.Attach(checkButton, x+1,x+2, y, y+1);
+                        widgets[index] = checkButton;
 
-                    case DataValueType.Word:
-                        {
-                            table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
-                            SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,0xffff);
-                            if (!r.Editable)
-                                spinButton.Sensitive = false;
-                            spinButton.Digits = 4;
-                            spinButton.ValueChanged += delegate(object sender, EventArgs e) {
-                                Gtk.SpinButton button = sender as Gtk.SpinButton;
-                                if (maxBounds[index] == 0 || button.ValueAsInt <= maxBounds[index]) {
-                                    r.SetValue(button.ValueAsInt);
-                                }
-                                else
-                                    button.Value = maxBounds[index];
-                                OnDataModifiedInternal();
-                            };
-                            dataModifiedExternalEvent += delegate() {
-                                spinButton.Value = r.GetIntValue();
-                            };
-                            table.Attach(spinButton, x+1,x+2, y, y+1);
-                            widgets[index] = spinButton;
-
-                            helpButtonContainers[index] = new Gtk.HBox();
-                            table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
-                        }
-                        break;
-                    case DataValueType.ByteBit:
-                        {
-                            table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
-                            Gtk.CheckButton checkButton = new Gtk.CheckButton();
-                            checkButton.FocusOnClick = false;
-                            if (!r.Editable)
-                                checkButton.Sensitive = false;
-                            checkButton.Toggled += delegate(object sender, EventArgs e) {
-                                Gtk.CheckButton button = sender as Gtk.CheckButton;
-                                r.SetValue(button.Active ? 1 : 0);
-                                OnDataModifiedInternal();
-                            };
-                            dataModifiedExternalEvent += delegate() {
-                                checkButton.Active = r.GetIntValue() == 1;
-                            };
-                            table.Attach(checkButton, x+1,x+2, y, y+1);
-                            widgets[index] = checkButton;
-
-                            helpButtonContainers[index] = new Gtk.HBox();
-                            table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
-                        }
-                        break;
-                    case DataValueType.ByteBits:
-                    case DataValueType.WordBits:
-                        {
-                            table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
-                            SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,r.MaxValue);
-                            if (!r.Editable)
-                                spinButton.Sensitive = false;
-                            spinButton.Digits = (uint)Math.Pow(r.MaxValue, ((double)1)/16)+1;
-                            spinButton.ValueChanged += delegate(object sender, EventArgs e) {
-                                Gtk.SpinButton button = sender as Gtk.SpinButton;
-                                if (maxBounds[index] == 0 || button.ValueAsInt <= maxBounds[index]) {
-                                    r.SetValue(button.ValueAsInt);
-                                }
-                                else
-                                    button.Value = maxBounds[index];
-                                OnDataModifiedInternal();
-                            };
-                            dataModifiedExternalEvent += delegate() {
-                                spinButton.Value = r.GetIntValue();
-                            };
-                            table.Attach(spinButton, x+1,x+2, y, y+1);
-                            widgets[index] = spinButton;
-
-                            helpButtonContainers[index] = new Gtk.HBox();
-                            table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
-                        }
-                        break;
-                    case DataValueType.ObjectPointer:
-                        {
-                            table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
-
-                            Gtk.Entry entry = new Gtk.Entry();
-                            if (!r.Editable)
-                                entry.Sensitive = false;
-                            entry.Changed += delegate(object sender, EventArgs e) {
-                                UpdatePointerTextBox(sender as Gtk.Entry, r);
-                                OnDataModifiedInternal();
-                            };
-                            table.Attach(entry, x+1,x+2, y, y+1);
-                            widgets[index] = entry;
-
-                            pointerFrame = new Gtk.Frame();
-                            pointerFrame.Label = "Pointer data (possibly shared)";
-                            pointerFrame.BorderWidth = 5;
-
-                            y++;
-                            table.Attach(pointerFrame, x+0,x+2, y, y+1);
-
-                            dataModifiedExternalEvent += delegate() {
-                                entry.Text = r.GetStringValue();
-                                UpdatePointerTextBox(entry, r);
-                            };
-
-                            helpButtonContainers[index] = new Gtk.HBox();
-                            table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
-                        }
-                        break;
+                        helpButtonContainers[index] = new Gtk.HBox();
+                        table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+                    }
+                    break;
                 }
 
 loopEnd:
@@ -285,16 +178,12 @@ loopEnd:
 
             this.ShowAll();
 
-            ValueReferenceHandler lastHandler = null;
-            foreach (ValueReference r in valueReferenceGroup.GetValueReferences()) {
-                if (lastHandler != r.Handler && r.Handler != null) {
-                    lastHandler = r.Handler;
-                    r.Handler.AddValueModifiedHandler(OnDataModifiedExternal);
-                    // Destroy handler
-                    this.Destroyed += delegate(object sender, EventArgs e) {
-                        r.Handler.RemoveValueModifiedHandler(OnDataModifiedExternal);
-                    };
-                }
+            foreach (ValueReference vref in valueReferenceGroup.GetValueReferences()) {
+                vref.AddValueModifiedHandler(OnDataModifiedExternal);
+                // Destroy handler
+                this.Destroyed += delegate(object sender, EventArgs e) {
+                    vref.RemoveValueModifiedHandler(OnDataModifiedExternal);
+                };
             }
 
             // Initial values
@@ -341,29 +230,6 @@ loopEnd:
         void OnDataModifiedInternal() {
             if (dataModifiedInternalEvent != null)
                 dataModifiedInternalEvent();
-        }
-
-        void UpdatePointerTextBox(Gtk.Entry entry, ValueReference r) {
-            pointerFrame.Remove(pointerFrame.Child);
-
-            subEditor = new ObjectGroupEditor();
-            Gtk.Alignment alignment = new Gtk.Alignment(0.5F, 0.5F, 0.0F, 0.8F);
-            try {
-                Project.GetFileWithLabel(entry.Text.Trim());
-                subEditor.SetObjectGroup(Project.GetDataType<ObjectGroup>(r.GetStringValue()));
-                subEditor.ShowAll();
-                alignment.Add(subEditor);
-                r.SetValue(entry.Text.Trim());
-            }
-            catch (InvalidLookupException) {
-                subEditor.SetObjectGroup(null);
-                Gtk.Label label = new Gtk.Label("Error: label \"" + entry.Text + "\" not found.");
-                label.Show();
-                alignment.Add(label);
-            }
-            pointerFrame.Label = entry.Text;
-            pointerFrame.Add(alignment);
-            pointerFrame.ShowAll();
         }
 
         // Check if there are entries that should have help buttons
