@@ -55,10 +55,10 @@ namespace LynnaLab
         }
         public override void SetValue(string s) {
             SetValue(Project.EvalToInt(s));
-            eventHandler.Invoke(this, null);
         }
         public override void SetValue(int i) {
             setter(i);
+            eventHandler.Invoke(this, null);
         }
 
         public override void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
