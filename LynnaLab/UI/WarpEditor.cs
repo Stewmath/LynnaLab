@@ -140,15 +140,6 @@ namespace LynnaLab
         WarpSourceData GetWarpSourceDataIndex(int i) {
             var sourceDataList = sourceGroup.GetMapWarpSourceData(map);
             WarpSourceData warpSourceData = sourceDataList[Math.Min(sourceDataList.Count-1, i)];
-
-            if (i != -1 && i >= sourceDataList.Count-1 && warpSourceData.WarpSourceType == WarpSourceType.PointerWarp) {
-                int offset = i - (sourceDataList.Count - 1);
-                warpSourceData = warpSourceData.GetPointedWarp();
-                for (int j=0; j<offset; j++) {
-                    warpSourceData = warpSourceData.GetNextWarp();
-                }
-            }
-
             return warpSourceData;
         }
 

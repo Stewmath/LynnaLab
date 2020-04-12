@@ -157,6 +157,7 @@
     <Compile Include="Core\ObjectDefinition.cs" />
     <Compile Include="Core\Util\LockableEvent.cs" />
     <Compile Include="Core\Util\DictionaryLinkedList.cs" />
+    <Compile Include="UI\SelectionBox.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -173,6 +174,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
+    <None Include="ZeldaOracles.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources/AutoSmoother.xml">

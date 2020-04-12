@@ -1,75 +1,37 @@
 using System;
-using System.Drawing;
-using Gtk;
-using Cairo;
+using System.Collections.Generic;
+using Bitmap = System.Drawing.Bitmap;
 
 namespace LynnaLab {
 
-    public class ObjectBox : TileGridViewer {
-        ObjectGroup objectGroup;
-
-
-        public ObjectGroup ObjectGroup { get { return objectGroup; } }
+    public class ObjectBox : SelectionBox {
+        public ObjectGroup ObjectGroup { get; private set; }
 
 
         // Constructors
 
         public ObjectBox(ObjectGroup group) : base() {
-            objectGroup = group;
+            this.ObjectGroup = group;
 
-            base.Width = 8;
-            base.Height = 2;
-            base.TileWidth = 18;
-            base.TileHeight = 18;
-            base.TilePaddingX = 2;
-            base.TilePaddingY = 2;
+            MaxIndex = ObjectGroup.GetNumObjects() - 1;
 
-            base.Selectable = true;
-            base.MaxIndex = objectGroup.GetNumObjects() - 1;
-
-            objectGroup.ModifiedEvent += (sender, args) => {
+            ObjectGroup.ModifiedEvent += (sender, args) => {
                 RedrawAll();
-                base.MaxIndex = objectGroup.GetNumObjects() - 1;
+                MaxIndex = ObjectGroup.GetNumObjects() - 1;
             };
-
-            TileGridEventHandler dragCallback = (sender, index) => {
-                if (index != SelectedIndex) {
-                    objectGroup.MoveObject(SelectedIndex, index);
-                    SelectedIndex = index;
-                }
-            };
-
-
-            base.AddMouseAction(MouseButton.LeftClick, MouseModifier.Any | MouseModifier.Drag,
-                    GridAction.Callback, dragCallback);
-
-            ButtonPressEventHandler OnButtonPressEvent = delegate(object sender, ButtonPressEventArgs args) {
-                int x,y;
-                Gdk.ModifierType state;
-                args.Event.Window.GetPointer(out x, out y, out state);
-
-                if (state.HasFlag(Gdk.ModifierType.Button3Mask)) {
-                    if (HoveringIndex != -1)
-                        SelectedIndex = HoveringIndex;
-                    ShowPopupMenu(args.Event);
-                }
-            };
-
-            this.ButtonPressEvent += new ButtonPressEventHandler(OnButtonPressEvent);
 
             RedrawAll();
         }
 
 
-        // Methods
+        // SelectionBox overrides
 
-        public void SetSelectedIndex(int index) {
-            SelectedIndex = index;
+        protected override void OnMoveSelection(int oldIndex, int newIndex) {
+            ObjectGroup.MoveObject(oldIndex, newIndex);
         }
 
-        void ShowPopupMenu(Gdk.EventButton ev) {
+        protected override void ShowPopupMenu(Gdk.EventButton ev) {
             Gtk.Menu menu = new Gtk.Menu();
-
             for (int i=0; i<ObjectGroupEditor.ObjectNames.Length; i++) {
                 if (i >= 2 && i <= 4) // Skip "Pointer" objects
                     continue;
@@ -79,7 +41,7 @@ namespace LynnaLab {
                 int index = i;
 
                 item.Activated += (sender, args) => {
-                    SetSelectedIndex(objectGroup.AddObject((ObjectType)index));
+                    SetSelectedIndex(ObjectGroup.AddObject((ObjectType)index));
                 };
             }
 
@@ -89,7 +51,7 @@ namespace LynnaLab {
                 Gtk.MenuItem deleteItem = new Gtk.MenuItem("Delete");
                 deleteItem.Activated += (sender, args) => {
                     if (SelectedIndex != -1)
-                        objectGroup.RemoveObject(SelectedIndex);
+                        ObjectGroup.RemoveObject(SelectedIndex);
                 };
                 menu.Append(deleteItem);
             }
@@ -99,15 +61,14 @@ namespace LynnaLab {
             menu.Popup(null, null, null, IntPtr.Zero, ev.Button, ev.Time);
         }
 
-
-        Bitmap TileDrawer(int index) {
-            if (index >= objectGroup.GetNumObjects())
+        protected override Bitmap TileDrawer(int index) {
+            if (index >= ObjectGroup.GetNumObjects())
                 return null;
 
             Bitmap bitmap = new Bitmap(18, 18);
 
             using (Cairo.Context cr = new BitmapContext(bitmap)) {
-                ObjectDefinition obj = objectGroup.GetObject(index);
+                ObjectDefinition obj = ObjectGroup.GetObject(index);
                 cr.SetSourceColor(ObjectGroupEditor.GetObjectColor(obj.GetObjectType()));
                 cr.Rectangle(0, 0, 18, 18);
                 cr.Fill();
@@ -117,6 +78,9 @@ namespace LynnaLab {
             }
             return bitmap;
         }
+
+
+        // Private methods
 
         void DrawObject(ObjectDefinition obj, Cairo.Context cr, double x, double y) {
             if (obj.GetGameObject() != null) {
@@ -141,10 +105,6 @@ namespace LynnaLab {
                     cr.Stroke();
                 }
             }
-        }
-
-        void RedrawAll() {
-            base.DrawImageWithTiles(this.TileDrawer);
         }
     }
 }

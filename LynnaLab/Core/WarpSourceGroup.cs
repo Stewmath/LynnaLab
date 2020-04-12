@@ -6,6 +6,14 @@ namespace LynnaLab
 {
     // Reads/writes warp source data per group. Can search through all of a group's warp data to get
     // only data for a particular room index (a list of "WarpSourceData" instances).
+    //
+    // Assertions:
+    // - A full-screen warp is not used with "specific-position" warps. (Whichever comes first takes
+    //   precedence.)
+    // - If a "PointerWarp" referencing "PointedWarps" is used, no warp data for the room is defined
+    //   after that point. (The game would not see it.)
+    // - Each warp type is only used in its appropriate location (StandardWarp and PointerWarp at
+    //   the top level, PointedWarp only as the data pointed to by a PointerWarp).
     public class WarpSourceGroup : ProjectIndexedDataType
     {
         public int Group {
@@ -50,27 +58,35 @@ namespace LynnaLab
         }
 
         // Returns a new list of all the WarpSourceData objects for the given room.
-        // In the future it would probably better if this abstracts things such that it only returns
-        // "StandardWarps" and "PointedWarps", and not "PointerWarps". But I ended up implementing
-        // that abstraction in the UI section instead.
+        // This does not return "PointerWarp" types. It instead traverses them and returns the
+        // resulting PointedWarps.
         public List<WarpSourceData> GetMapWarpSourceData(int map) {
             List<WarpSourceData> newList = new List<WarpSourceData>();
 
             foreach (WarpSourceData warp in warpSourceDataList) {
-                if (warp.Map == map)
-                    newList.Add(warp);
+                if (warp.Map == map) {
+                    if (warp.WarpSourceType == WarpSourceType.PointerWarp) {
+                        WarpSourceData pWarp = warp.GetPointedWarp();
+                        while (pWarp != null) {
+                            if (pWarp.WarpSourceType != WarpSourceType.PointedWarp)
+                                throw new AssemblyErrorException(string.Format(
+                                        "Unexpected warp type '{0}' in {1}!",
+                                        pWarp.WarpSourceType, warp.PointerString));
+                            newList.Add(pWarp);
+                            pWarp = pWarp.GetNextWarp();
+                        }
+                    }
+                    else if (warp.WarpSourceType == WarpSourceType.StandardWarp)
+                        newList.Add(warp);
+                    else {
+                        throw new AssemblyErrorException(string.Format(
+                                    "Unexpected warp type '{0}' for room {1:X3}!",
+                                    warp.WarpSourceType, map));
+                    }
+                }
             }
 
             return newList;
-        }
-
-        // Returns the (hopefully unique) PointerWarp for a given map, or null if not found.
-        public WarpSourceData GetMapPointerWarp(int map) {
-            foreach (WarpSourceData warp in warpSourceDataList) {
-                if (warp.WarpSourceType == WarpSourceType.PointerWarp && warp.Map == map)
-                    return warp;
-            }
-            return null;
         }
 
         // Adds the given data to the group and inserts the data into the FileParser.
@@ -162,5 +178,18 @@ namespace LynnaLab
 
             RegenWarpSourceDataList();
         }
+
+
+        // Private methods
+
+        // Returns the (hopefully unique) PointerWarp for a given map, or null if not found.
+        WarpSourceData GetMapPointerWarp(int map) {
+            foreach (WarpSourceData warp in warpSourceDataList) {
+                if (warp.WarpSourceType == WarpSourceType.PointerWarp && warp.Map == map)
+                    return warp;
+            }
+            return null;
+        }
+
     }
 }
