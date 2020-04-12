@@ -201,8 +201,8 @@ namespace LynnaLab
 
         // Convert a "real" position (in pixels) into a grid position (in tiles).
         public Cairo.Point GetGridPosition(int x, int y) {
-            int x2 = (x - XOffset) / ((TileWidth  * Scale) + (TilePaddingX * 2));
-            int y2 = (y - YOffset) / ((TileHeight * Scale) + (TilePaddingY * 2));
+            int x2 = (x - XOffset) / ((TileWidth  * Scale) + (TilePaddingX * Scale * 2));
+            int y2 = (y - YOffset) / ((TileHeight * Scale) + (TilePaddingY * Scale * 2));
             return new Cairo.Point(x2, y2);
         }
 
@@ -360,11 +360,15 @@ namespace LynnaLab
             cr.Rectangle(totalRect.X, totalRect.Y, totalRect.Width, totalRect.Height);
             cr.Fill();
 
+            cr.Save();
+            cr.Translate(XOffset, YOffset);
+            cr.Scale(Scale, Scale);
+
             if (Image == null) {
                 for (int i=0; i<Width*Height; i++) {
                     int tileX = i%Width;
                     int tileY = i/Width;
-                    Cairo.Rectangle rect = GetTileRectWithPadding(tileX, tileY);
+                    Cairo.Rectangle rect = GetTileRectWithPadding(tileX, tileY, scale:false, offset:false);
 
                     cr.Save();
                     cr.Translate(rect.X + TilePaddingX, rect.Y + TilePaddingY);
@@ -374,20 +378,19 @@ namespace LynnaLab
                     cr.Restore();
                 }
             }
-
-            if (Image != null) {
+            else {
                 using (Surface source = new BitmapSurface(Image)) {
-                    cr.Scale(Scale, Scale);
-                    cr.SetSource(source, XOffset, YOffset);
+                    cr.SetSource(source, 0, 0);
 
                     using (SurfacePattern pattern = (SurfacePattern)cr.GetSource()) {
                         pattern.Filter = Filter.Nearest;
                     }
 
-                    cr.Scale(1.0/Scale, 1.0/Scale);
                     cr.Paint();
                 }
             }
+
+            cr.Restore(); // Undo scale, offset
 
             if (Hoverable && hoveringIndex != -1) {
                 Cairo.Rectangle rect = GetTileRectSansPadding(HoveringX, HoveringY);
@@ -425,20 +428,38 @@ namespace LynnaLab
             natural_height = (int)rect.Height;
         }
 
-        protected Cairo.Rectangle GetTileRectWithPadding(int x, int y) {
+        protected Cairo.Rectangle GetTileRectWithPadding(int x, int y, bool scale = true, bool offset = true) {
+            int s = Scale;
+            int xoffset = XOffset;
+            int yoffset = YOffset;
+            if (!scale)
+                s = 1;
+            if (!offset) {
+                xoffset = 0;
+                yoffset = 0;
+            }
             return new Cairo.Rectangle(
-                    XOffset + x * (TilePaddingX * 2 + TileWidth)  * Scale,
-                    YOffset + y * (TilePaddingY * 2 + TileHeight) * Scale,
-                    TileWidth  * Scale + TilePaddingX * Scale * 2,
-                    TileHeight * Scale + TilePaddingY * Scale * 2);
+                    xoffset + x * (TilePaddingX * 2 + TileWidth)  * s,
+                    yoffset + y * (TilePaddingY * 2 + TileHeight) * s,
+                    TileWidth  * s + TilePaddingX * s * 2,
+                    TileHeight * s + TilePaddingY * s * 2);
         }
 
-        protected Cairo.Rectangle GetTileRectSansPadding(int x, int y) {
+        protected Cairo.Rectangle GetTileRectSansPadding(int x, int y, bool scale = true, bool offset = true) {
+            int s = Scale;
+            int xoffset = XOffset;
+            int yoffset = YOffset;
+            if (!scale)
+                s = 1;
+            if (!offset) {
+                xoffset = 0;
+                yoffset = 0;
+            }
             return new Cairo.Rectangle(
-                    XOffset + x * (TilePaddingX * 2 + TileWidth)  * Scale + TilePaddingX * Scale,
-                    YOffset + y * (TilePaddingY * 2 + TileHeight) * Scale + TilePaddingY * Scale,
-                    TileWidth  * Scale,
-                    TileHeight * Scale);
+                    xoffset + x * (TilePaddingX * 2 + TileWidth)  * s + TilePaddingX * s,
+                    yoffset + y * (TilePaddingY * 2 + TileHeight) * s + TilePaddingY * s,
+                    TileWidth  * s,
+                    TileHeight * s);
         }
 
         protected Cairo.Rectangle GetTotalBounds() {

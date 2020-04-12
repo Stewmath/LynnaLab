@@ -110,6 +110,9 @@ public class ObjectAnimationFrame {
 
             using (Cairo.Surface s = new BitmapSurface(bitmap)) {
                 cr.SetSourceSurface(s,x,y);
+                using (Cairo.SurfacePattern pattern = (Cairo.SurfacePattern)cr.GetSource()) {
+                    pattern.Filter = Cairo.Filter.Nearest;
+                }
                 cr.Paint();
             }
         }
