@@ -145,9 +145,11 @@ namespace LynnaLab
         }
 
 
-        // Subclasses can either override "Image" to set the image, or call the "DrawImageWithTiles"
-        // function to set the image using a per-tile draw function.
+        // Subclasses can either override "Image" to set the image, or override the "TileDrawer" property
+        // to set the image using a per-tile draw function.
         protected virtual Bitmap Image { get { return null; } }
+
+        public Cairo.Color BackgroundColor { get; set; }
 
 
         // Event triggered when the hovering tile changes
@@ -167,7 +169,6 @@ namespace LynnaLab
         int hoveringIndex = -1, selectedIndex = -1;
         int _maxIndex = int.MaxValue;
         bool _selectable = false, _hoverable = true;
-        Bitmap _image;
 
         IList<TileGridAction> actionList = new List<TileGridAction>();
         TileGridAction activeAction = null;
@@ -354,17 +355,28 @@ namespace LynnaLab
         }
 
         protected override bool OnDrawn(Cairo.Context cr) {
-            /*
-            if (!base.OnDrawn(cr))
-                return false;
-                */
+            var totalRect = GetTotalBounds();
+            cr.SetSourceColor(BackgroundColor);
+            cr.Rectangle(totalRect.X, totalRect.Y, totalRect.Width, totalRect.Height);
+            cr.Fill();
 
-            Bitmap image = _image;
-            if (_image == null)
-                image = Image;
+            if (Image == null) {
+                for (int i=0; i<Width*Height; i++) {
+                    int tileX = i%Width;
+                    int tileY = i/Width;
+                    Cairo.Rectangle rect = GetTileRectWithPadding(tileX, tileY);
 
-            if (image != null) {
-                using (Surface source = new BitmapSurface(image)) {
+                    cr.Save();
+                    cr.Translate(rect.X + TilePaddingX, rect.Y + TilePaddingY);
+                    cr.Rectangle(0, 0, TileWidth, TileHeight);
+                    cr.Clip();
+                    TileDrawer(i, cr);
+                    cr.Restore();
+                }
+            }
+
+            if (Image != null) {
+                using (Surface source = new BitmapSurface(Image)) {
                     cr.Scale(Scale, Scale);
                     cr.SetSource(source, XOffset, YOffset);
 
@@ -442,35 +454,7 @@ namespace LynnaLab
             QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
         }
 
-
-        // Subclasses can either override "Image" to set the image, or call the "DrawImageWithTiles"
-        // function to set the image using a per-tile draw function.
-        protected void DrawImageWithTiles(Func<int,Bitmap> tileDrawer) {
-            var totalRect = GetTotalBounds();
-
-            _image = new Bitmap((int)totalRect.Width, (int)totalRect.Height);
-
-            using (Cairo.Context cr = new BitmapContext(_image)) {
-                cr.SetSourceColor(new Cairo.Color(0.8, 0.8, 0.8));
-                cr.Rectangle(totalRect.X, totalRect.Y, totalRect.Width, totalRect.Height);
-                cr.Fill();
-
-                for (int i=0; i<Width*Height; i++) {
-                    int tileX = i%Width;
-                    int tileY = i/Width;
-                    Cairo.Rectangle rect = GetTileRectSansPadding(tileX, tileY);
-                    Bitmap tileImage = tileDrawer(i);
-                    if (tileImage == null)
-                        continue;
-                    using (Surface src = new BitmapSurface(tileImage)) {
-                        cr.SetSource(src, rect.X, rect.Y);
-                        cr.Paint();
-                    }
-                }
-            }
-
-            QueueDraw();
-        }
+        protected virtual void TileDrawer(int index, Cairo.Context cr) {}
 
 
         // Nested class

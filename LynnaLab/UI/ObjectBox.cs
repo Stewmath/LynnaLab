@@ -13,14 +13,13 @@ namespace LynnaLab {
         public ObjectBox(ObjectGroup group) : base() {
             this.ObjectGroup = group;
 
+            BackgroundColor = new Cairo.Color(0.8, 0.8, 0.8);
             MaxIndex = ObjectGroup.GetNumObjects() - 1;
 
             ObjectGroup.ModifiedEvent += (sender, args) => {
-                RedrawAll();
+                QueueDraw();
                 MaxIndex = ObjectGroup.GetNumObjects() - 1;
             };
-
-            RedrawAll();
         }
 
 
@@ -61,22 +60,17 @@ namespace LynnaLab {
             menu.Popup(null, null, null, IntPtr.Zero, ev.Button, ev.Time);
         }
 
-        protected override Bitmap TileDrawer(int index) {
+        protected override void TileDrawer(int index, Cairo.Context cr) {
             if (index >= ObjectGroup.GetNumObjects())
-                return null;
+                return;
 
-            Bitmap bitmap = new Bitmap(18, 18);
-
-            using (Cairo.Context cr = new BitmapContext(bitmap)) {
-                ObjectDefinition obj = ObjectGroup.GetObject(index);
-                cr.SetSourceColor(ObjectGroupEditor.GetObjectColor(obj.GetObjectType()));
-                cr.Rectangle(0, 0, 18, 18);
-                cr.Fill();
-                cr.Rectangle(1, 1, 16, 16); // Cut off object drawing outside 16x16 area
-                cr.Clip();
-                DrawObject(obj, cr, 9, 9);
-            }
-            return bitmap;
+            ObjectDefinition obj = ObjectGroup.GetObject(index);
+            cr.SetSourceColor(ObjectGroupEditor.GetObjectColor(obj.GetObjectType()));
+            cr.Rectangle(0, 0, 18, 18);
+            cr.Fill();
+            cr.Rectangle(1, 1, 16, 16); // Cut off object drawing outside 16x16 area
+            cr.Clip();
+            DrawObject(obj, cr, 9, 9);
         }
 
 

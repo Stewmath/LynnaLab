@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Bitmap = System.Drawing.Bitmap;
-using System.Drawing;
-using System.Drawing.Text;
 
 namespace LynnaLab {
 
@@ -24,13 +22,13 @@ namespace LynnaLab {
 
             TileGridEventHandler dragCallback = (sender, index) => {
                 if (index != SelectedIndex) {
-		    OnMoveSelection(SelectedIndex, index);
-		    SelectedIndex = index;
+                    OnMoveSelection(SelectedIndex, index);
+                    SelectedIndex = index;
                 }
             };
 
-	    base.AddMouseAction(MouseButton.LeftClick, MouseModifier.Any | MouseModifier.Drag,
-		    GridAction.Callback, dragCallback);
+            base.AddMouseAction(MouseButton.LeftClick, MouseModifier.Any | MouseModifier.Drag,
+                    GridAction.Callback, dragCallback);
 
             Gtk.ButtonPressEventHandler OnButtonPressEvent = delegate(object sender, Gtk.ButtonPressEventArgs args) {
                 int x,y;
@@ -41,7 +39,7 @@ namespace LynnaLab {
                     if (HoveringIndex != -1)
                         SelectedIndex = HoveringIndex;
 
-		    ShowPopupMenu(args.Event);
+                    ShowPopupMenu(args.Event);
                 }
             };
 
@@ -61,46 +59,25 @@ namespace LynnaLab {
         protected abstract void OnMoveSelection(int oldIndex, int newIndex);
         protected abstract void ShowPopupMenu(Gdk.EventButton ev);
 
-        protected virtual Bitmap TileDrawer(int index) {
-            Bitmap bitmap = new Bitmap(18, 18);
+        protected override void TileDrawer(int index, Cairo.Context cr) {
+            if (index > MaxIndex)
+                return;
 
-            // Draw text with pango
-            /*
-            using (var cr = new BitmapContext(bitmap))
+            // Draw index number with pango
             using (var context = Pango.CairoHelper.CreateContext(cr))
             using (var layout = new Pango.Layout(context)) {
-                cr.SetSourceColor(new Cairo.Color(1, 1, 1));
-                cr.Rectangle(0, 0, 18, 18);
-                //cr.Fill();
-                layout.Width = bitmap.Width;
-                layout.Height = bitmap.Height;
+                cr.SetSourceColor(new Cairo.Color(0, 0, 0));
+
+                layout.Width = Pango.Units.FromPixels(TileWidth);
+                layout.Height = Pango.Units.FromPixels(TileHeight);
+                layout.Alignment = Pango.Alignment.Center;
 
                 // TODO: install the font on the system
-                layout.FontDescription = Pango.FontDescription.FromString("ZeldaOracles");
+                layout.FontDescription = Pango.FontDescription.FromString("ZeldaOracles 12");
 
                 layout.SetText(index.ToString("X"));
                 Pango.CairoHelper.ShowLayout(cr, layout);
             }
-            */
-
-            // Draw text with System.Drawing
-
-            using (Graphics g = Graphics.FromImage(bitmap)) {
-                PrivateFontCollection pfc = new PrivateFontCollection();
-                pfc.AddFontFile("ZeldaOracles.ttf");
-
-                Font font = new Font(pfc.Families[0], 12);
-
-                Console.WriteLine(font.Name); // Reports "Zelda Oracles" even though it uses "DejaVu Sans"
-
-                g.DrawString(index.ToString(), font, new SolidBrush(Color.Black), 0, 0);
-            }
-
-            return bitmap;
-        }
-
-        protected void RedrawAll() {
-            base.DrawImageWithTiles(this.TileDrawer);
         }
     }
 }
