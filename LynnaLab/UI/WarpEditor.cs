@@ -4,6 +4,7 @@ using Gtk;
 
 namespace LynnaLab
 {
+    // TODO: Fix crash when warpdest is too high
     public class WarpEditor : Gtk.Bin
     {
         public static readonly Cairo.Color WarpSourceColor = CairoHelper.ConvertColor(186, 8, 206, 0xc0);
@@ -19,6 +20,7 @@ namespace LynnaLab
         Gtk.Frame warpSourceFrame, warpDestFrame;
         Gtk.Box infoBarHolder;
         InfoBar infoBar;
+        WarpSourceBox warpSourceBox;
 
         MainWindow mainWindow;
 
@@ -66,10 +68,7 @@ namespace LynnaLab
         public int SelectedIndex {
             get { return _selectedIndex; }
             set {
-                if (_selectedIndex != value) {
-                    _selectedIndex = value;
-                    SetWarpIndex(_selectedIndex);
-                }
+                SetWarpIndex(value);
             }
         }
 
@@ -79,8 +78,12 @@ namespace LynnaLab
                 if (_warpSourceGroup != value) {
                     _warpSourceGroup = value;
 
-                    warpSourceBoxContainer.Foreach((c) => { c.Dispose(); });
-                    var warpSourceBox = new WarpSourceBox(_warpSourceGroup);
+                    if (warpSourceBox != null)
+                        warpSourceBox.Dispose();
+                    warpSourceBox = new WarpSourceBox(_warpSourceGroup);
+                    warpSourceBox.AddTileSelectedHandler((sender, index) => {
+                        SelectedIndex = index;
+                    });
                     warpSourceBoxContainer.Add(warpSourceBox);
                     warpSourceBoxContainer.ShowAll();
                 }
@@ -99,7 +102,7 @@ namespace LynnaLab
 
             this.map = map;
 
-            SetWarpIndex(0);
+            SetWarpIndex(-1);
         }
 
         // Load the i'th warp in the current map.
@@ -117,7 +120,7 @@ namespace LynnaLab
             if (i == -1) {
                 warpSourceFrame.Visible = false;
                 warpSourceFrame.Hide();
-                SetDestIndex(-1,-1);
+                OnDestIndexChanged(-1,-1);
                 return;
             }
 
@@ -132,19 +135,25 @@ namespace LynnaLab
 
             warpSourceTypeLabel.UseMarkup = true;
 
-            SetDestIndex(warpSourceData.DestGroup, warpSourceData.DestIndex);
+            OnDestIndexChanged(warpSourceData.DestGroup, warpSourceData.DestIndex);
             sourceEditor = new ValueReferenceEditor(Project, warpSourceData.ValueReferenceGroup);
 
-            Alignment a = new Alignment(0,0,0,0);
-            a.Add(sourceEditor);
-            hbox.Add(a);
+            Gtk.Button newDestButton = new Gtk.Button("New/Unused\nDestination");
+            newDestButton.Clicked += (sender, args) => {
+                if (destGroup != null) {
+                    WarpDestData data = destGroup.GetNewOrUnusedDestData();
+                    GetWarpSourceDataIndex(SelectedIndex).SetDestData(data);
+                }
+            };
 
-            sourceEditor.AddDataModifiedHandler(delegate() {
-                SetDestIndex(warpSourceData.DestGroup, warpSourceData.DestIndex);
-            });
+            sourceEditor.AddDataModifiedHandler(OnSourceDataModified);
+            sourceEditor.AddWidgetToSide("Dest Index", newDestButton, height:2);
 
+            hbox.Add(sourceEditor);
             valueEditorContainer.Add(hbox);
             warpSourceFrame.ShowAll();
+
+            warpSourceBox.SelectedIndex = i;
 
             if (SelectedWarpEvent != null)
                 SelectedWarpEvent(this, null);
@@ -155,7 +164,7 @@ namespace LynnaLab
             return WarpSourceGroup.GetWarpSource(i);
         }
 
-        void SetDestIndex(int group, int index) {
+        void OnDestIndexChanged(int group, int index) {
             if (group == -1 || group >= Project.GetNumGroups() || index == -1)
             {
                 destGroup = null;
@@ -231,6 +240,11 @@ namespace LynnaLab
             }
         }
 
+        void OnSourceDataModified() {
+            WarpSourceData data = GetWarpSourceDataIndex(SelectedIndex);
+            OnDestIndexChanged(data.DestGroup, data.DestIndex);
+        }
+
 
 
         class WarpSourceBox : SelectionBox {
@@ -238,10 +252,6 @@ namespace LynnaLab
                 this.WarpSourceGroup = warpSourceGroup;
                 WarpSourceGroup.AddModifiedHandler(OnWarpSourceGroupModified);
                 OnWarpSourceGroupModified(null, null);
-            }
-
-            ~WarpSourceBox() {
-                Console.WriteLine("Dead");
             }
 
 

@@ -10,15 +10,6 @@ namespace LynnaLab
         IList<ValueReference> valueReferences;
 
 
-        public Project Project {
-            get {
-                if (valueReferences.Count == 0)
-                    return null;
-                return valueReferences[0].Project;
-            }
-        }
-
-
         public ValueReferenceGroup(IList<ValueReference> refs) {
             valueReferences = new List<ValueReference>();
             foreach (var vref in refs) {
@@ -31,7 +22,26 @@ namespace LynnaLab
         protected ValueReferenceGroup() {}
 
 
-        // Public
+        // Properties
+
+        public Project Project {
+            get {
+                if (valueReferences.Count == 0)
+                    return null;
+                return valueReferences[0].Project;
+            }
+        }
+
+        public int Count {
+            get { return valueReferences.Count; }
+        }
+
+        public ValueReference this[int i] {
+            get { return valueReferences[i]; }
+        }
+
+
+        // Public methods
 
         public IList<ValueReference> GetValueReferences() {
             return valueReferences;
@@ -45,7 +55,7 @@ namespace LynnaLab
             return null;
         }
 
-        public int GetNumValueReferences() {
+        public int GetNumValueReferences() { // TODO: replace with "Count" property
             return valueReferences.Count;
         }
 

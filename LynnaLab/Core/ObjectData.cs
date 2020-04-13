@@ -72,15 +72,15 @@ namespace LynnaLab {
                 };
             case ObjectType.Pointer:
                 return new List<ValueReference> { // Pointer
-                    new DataValueReference(data,"Pointer",0,DataValueType.ObjectPointer),
+                    new DataValueReference(data,"Pointer",0,DataValueType.String),
                 };
             case ObjectType.BeforeEvent:
                 return new List<ValueReference> { // BeforeEvent
-                    new DataValueReference(data,"Pointer",0,DataValueType.ObjectPointer),
+                    new DataValueReference(data,"Pointer",0,DataValueType.String),
                 };
             case ObjectType.AfterEvent:
                 return new List<ValueReference> { // AfterEvent
-                    new DataValueReference(data,"Pointer",0,DataValueType.ObjectPointer),
+                    new DataValueReference(data,"Pointer",0,DataValueType.String),
                 };
             case ObjectType.RandomEnemy:
                 return new List<ValueReference> { // Random Enemy

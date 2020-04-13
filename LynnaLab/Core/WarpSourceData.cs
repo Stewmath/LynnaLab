@@ -54,7 +54,7 @@ namespace LynnaLab
                     new DataValueReference(data,"Bottom-Left",0,DataValueType.ByteBit,2,2),
                     new DataValueReference(data,"Bottom-Right",0,DataValueType.ByteBit,3,3),
                     new DataValueReference(data,"Map",1,DataValueType.Byte, editable:false),
-                    new DataValueReference(data,"Dest Index",2,DataValueType.WarpDestIndex),
+                    new DataValueReference(data,"Dest Index",2,DataValueType.Byte),
                     new DataValueReference(data,"Dest Group",3,DataValueType.HalfByte),
                     new DataValueReference(data,"Transition",4,DataValueType.HalfByte,
                         constantsMappingString:"SourceTransitionMapping"),
@@ -67,7 +67,7 @@ namespace LynnaLab
                     new DataValueReference(data,"Y",1,DataValueType.ByteBits,4,7),
                     new DataValueReference(data,"X",1,DataValueType.ByteBits,0,3),
 
-                    new DataValueReference(data,"Dest Index",2,DataValueType.WarpDestIndex),
+                    new DataValueReference(data,"Dest Index",2,DataValueType.Byte),
                     new DataValueReference(data,"Dest Group",3,DataValueType.HalfByte),
                     new DataValueReference(data,"Transition",4,DataValueType.HalfByte,
                         constantsMappingString:"SourceTransitionMapping"),

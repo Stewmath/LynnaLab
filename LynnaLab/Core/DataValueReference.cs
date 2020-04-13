@@ -12,8 +12,6 @@ namespace LynnaLab
         ByteBit,
         ByteBits,
         WordBits,
-        ObjectPointer,
-        WarpDestIndex,
     }
 
 
@@ -33,8 +31,6 @@ namespace LynnaLab
             "0",
             "$00",
             "$0000",
-            ".",
-            "$00",
         };
 
 
@@ -67,7 +63,6 @@ namespace LynnaLab
             // Set MaxValue
             switch(dataType) {
             case DataValueType.Byte:
-            case DataValueType.WarpDestIndex:
                 MaxValue = 0xff;
                 break;
             case DataValueType.HalfByte:
@@ -101,11 +96,11 @@ namespace LynnaLab
 
         // This is borrowed by StreamValueReference also
         public static ValueReferenceType GetValueType(DataValueType dataType) {
-            if (dataType == DataValueType.String || dataType == DataValueType.ObjectPointer)
+            if (dataType == DataValueType.String)
                 return ValueReferenceType.String;
             else if (dataType == DataValueType.HalfByte || dataType == DataValueType.Byte
                     || dataType == DataValueType.Word || dataType == DataValueType.ByteBits
-                    || dataType == DataValueType.WordBits || dataType == DataValueType.WarpDestIndex)
+                    || dataType == DataValueType.WordBits)
                 return ValueReferenceType.Int;
             else if (dataType == DataValueType.ByteBit)
                 return ValueReferenceType.Bool;
@@ -147,7 +142,6 @@ namespace LynnaLab
                     SetValue(Wla.ToHalfByte((byte)i));
                     break;
                 case DataValueType.Byte:
-                case DataValueType.WarpDestIndex:
                 default:
                     SetValue(Wla.ToByte((byte)i));
                     break;

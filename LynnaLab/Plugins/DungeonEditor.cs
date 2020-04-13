@@ -117,7 +117,7 @@ namespace Plugins
                 groupSpinButton.ValueChanged += (c,d) => {
                     vrg.SetValue("Group", ">wGroup" + groupSpinButton.ValueAsInt + "Flags");
                 };
-                dungeonVre.ReplaceWidget(0, groupSpinButton);
+                dungeonVre.ReplaceWidget("Group", groupSpinButton);
                 dungeonVre.ShowAll();
 
                 // Tooltips

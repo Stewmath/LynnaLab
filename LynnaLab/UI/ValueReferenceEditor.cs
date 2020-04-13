@@ -199,11 +199,29 @@ loopEnd:
             maxBounds[i] = max;
         }
 
-        public void ReplaceWidget(int i, Gtk.Widget newWidget) {
-            table.Remove(widgets[i]);
+        // Add a new widget to the right side of a value
+        public void AddWidgetToSide(string name, Gtk.Widget newWidget, uint width=1, uint height=1) {
+            int i = GetValueIndex(name);
+            var pos = widgetPositions[i];
+            table.Attach(newWidget, pos.Item1+2, pos.Item1+2+width, pos.Item2, pos.Item2+height);
+            widgets[i] = newWidget;
+        }
+
+        // Substitute the widget for a value (index "i") with the new widget.
+        public void ReplaceWidget(string name, Gtk.Widget newWidget) {
+            int i = GetValueIndex(name);
+            widgets[i].Dispose();
             var pos = widgetPositions[i];
             table.Attach(newWidget, pos.Item1+1, pos.Item1+2, pos.Item2, pos.Item2+1);
             widgets[i] = newWidget;
+        }
+
+        int GetValueIndex(string name) {
+            for (int i = 0; i < valueReferenceGroup.Count; i++) {
+                if (valueReferenceGroup[i].Name == name)
+                    return i;
+            }
+            throw new ArgumentException("Couldn't find '" + name + "' in ValueReferenceGroup.");
         }
 
         public void SetTooltip(int i, string tooltip) {
