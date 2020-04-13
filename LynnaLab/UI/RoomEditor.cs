@@ -358,7 +358,7 @@ namespace LynnaLab
                             drawWarpBox(middle, bottom, right - middle, 16);
 
                         if (!warp.TopLeft && !warp.TopRight && !warp.BottomLeft && !warp.BottomRight) {
-                            drawWarpBox(0, 0, Room.Width * 16, Room.Height * 16);
+                            drawWarpBox(0, 16 * 13, Room.Width * 16, 32);
                         }
                     }
                     else if (warp.WarpSourceType == WarpSourceType.Pointed) {
@@ -395,11 +395,11 @@ namespace LynnaLab
         // Override preferred width/height so that objects can be drawn even outside normal room
         // boundaries.
         protected override void OnGetPreferredHeight(out int minimum_height, out int natural_height) {
-            minimum_height = 17*16;
+            minimum_height = 17*16*Scale;
             natural_height = minimum_height;
         }        
         protected override void OnGetPreferredWidth(out int minimum_width, out int natural_width) {
-            minimum_width = 17*16;
+            minimum_width = 17*16*Scale;
             natural_width = minimum_width;
         }        
 
