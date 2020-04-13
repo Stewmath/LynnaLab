@@ -19,6 +19,7 @@ namespace LynnaLab {
             base.TilePaddingY = 2;
 
             base.Selectable = true;
+            base.BackgroundColor = new Cairo.Color(0.8, 0.8, 0.8);
 
             TileGridEventHandler dragCallback = (sender, index) => {
                 if (index != SelectedIndex) {
@@ -58,12 +59,6 @@ namespace LynnaLab {
 
         protected abstract void OnMoveSelection(int oldIndex, int newIndex);
         protected abstract void ShowPopupMenu(Gdk.EventButton ev);
-
-        protected override void TileDrawer(int index, Cairo.Context cr) {
-            if (index > MaxIndex)
-                return;
-            CairoHelper.DrawText(cr, index.ToString("X"), 12, 0, 0, TileWidth, TileHeight);
-        }
     }
 }
 

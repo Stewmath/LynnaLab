@@ -13,13 +13,21 @@ namespace LynnaLab {
         public ObjectBox(ObjectGroup group) : base() {
             this.ObjectGroup = group;
 
-            BackgroundColor = new Cairo.Color(0.8, 0.8, 0.8);
             MaxIndex = ObjectGroup.GetNumObjects() - 1;
 
-            ObjectGroup.AddModifiedHandler((sender, args) => {
-                QueueDraw();
-                MaxIndex = ObjectGroup.GetNumObjects() - 1;
-            });
+            ObjectGroup.AddModifiedHandler(OnObjectGroupModified);
+        }
+
+
+        protected override void OnDestroyed() {
+            ObjectGroup.RemoveModifiedHandler(OnObjectGroupModified);
+            base.OnDestroyed();
+        }
+
+
+        void OnObjectGroupModified(object sender, EventArgs args) {
+            QueueDraw();
+            MaxIndex = ObjectGroup.GetNumObjects() - 1;
         }
 
 

@@ -34,6 +34,10 @@ namespace LynnaLab
             }
         }
 
+        public int Count {
+            get { return warpSourceDataList.Count; }
+        }
+
         WarpSourceData EndData { get; set; }
         WarpSourceData PointerWarp { get; set; }
 
@@ -116,7 +120,8 @@ namespace LynnaLab
         // "PointerWarp" list; it automatically creates a "PointerWarp" if necessary.
         // For any other warp type, this throws an ArgumentException.
         // The "room" argument is necessary for PointedWarps (which don't have a field for it).
-        public void AddWarpSource(WarpSourceData data) {
+        // Returns the index at which the new warp was placed.
+        public int AddWarpSource(WarpSourceData data) {
             if (warpSourceDataList.Contains(data)) // (doesn't check pointed warps...)
                 throw new ArgumentException("Argument already exists in the warp source group.");
 
@@ -171,6 +176,9 @@ namespace LynnaLab
             data.AddModifiedEventHandler(OnDataModified);
             RegenWarpSourceDataList();
             ModifiedEvent.Invoke(this, null);
+
+            // TODO
+            return 0;
         }
 
         // Similar to above, this only supports removing StandardWarps or PointedWarps (the rest is

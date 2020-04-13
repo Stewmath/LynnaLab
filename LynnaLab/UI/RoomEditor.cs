@@ -520,7 +520,7 @@ namespace LynnaLab
 
             public override Cairo.Color BoxColor {
                 get {
-                    return CairoHelper.ConvertColor(186, 8, 206, 0xc0);
+                    return WarpEditor.WarpSourceColor;
                 }
             }
 
