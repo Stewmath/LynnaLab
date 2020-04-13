@@ -38,8 +38,9 @@ namespace LynnaLab
             get { return warpSourceDataList.Count; }
         }
 
-        WarpSourceData EndData { get; set; }
-        WarpSourceData PointerWarp { get; set; }
+        WarpSourceData EndWarp { get; set; } // "m_WarpDataEnd" (shouldn't be null)
+        WarpSourceData PointerWarp { get; set; } // "m_PointerWarp" (can be null but should be unique)
+        WarpSourceData LastStandardWarp { get; set; } // New data added goes after this (can be null)
 
         int Map {
             get { return Index & 0xff; }
@@ -64,12 +65,17 @@ namespace LynnaLab
 
             warpSourceDataList = new List<WarpSourceData>();
             WarpSourceData warp = fileParser.GetData(label) as WarpSourceData;
+
+            EndWarp = null;
+            PointerWarp = null;
+            LastStandardWarp = null;
+
             while (warp != null && warp.WarpSourceType != WarpSourceType.End) {
                 if (Map == warp.Map) {
                     if (warp.WarpSourceType == WarpSourceType.Pointer) {
                         if (PointerWarp != null) {
                             throw new AssemblyErrorException(string.Format(
-                                        "Room {0:3} has multiple 'Pointer' warp sources!", Index));
+                                        "Room {0:X3} has multiple 'Pointer' warp sources!", Index));
                         }
                         PointerWarp = warp;
                         WarpSourceData pWarp = warp.GetPointedWarp();
@@ -84,8 +90,12 @@ namespace LynnaLab
                             pWarp = pWarp.GetNextWarp();
                         }
                     }
-                    else if (warp.WarpSourceType == WarpSourceType.Standard)
+                    else if (warp.WarpSourceType == WarpSourceType.Standard) {
+                        if (PointerWarp != null)
+                            throw new AssemblyErrorException("Encountered a 'Standard Warp' after a Pointer Warp; this is invalid!");
                         warpSourceDataList.Add(warp);
+                        LastStandardWarp = warp;
+                    }
                     else {
                         throw new AssemblyErrorException(string.Format(
                                     "Unexpected warp type '{0}' for room {1:X3}!",
@@ -95,7 +105,7 @@ namespace LynnaLab
                 warp = warp.NextData as WarpSourceData;
             }
             if (warp != null)
-                EndData = warp;
+                EndWarp = warp;
             else {
                 throw new AssemblyErrorException(string.Format(
                             "Warp source data for room {0:X3} doesn't have an end?", Index));
@@ -121,28 +131,34 @@ namespace LynnaLab
         // For any other warp type, this throws an ArgumentException.
         // The "room" argument is necessary for PointedWarps (which don't have a field for it).
         // Returns the index at which the new warp was placed.
-        public int AddWarpSource(WarpSourceData data) {
-            if (warpSourceDataList.Contains(data)) // (doesn't check pointed warps...)
-                throw new ArgumentException("Argument already exists in the warp source group.");
-
-            // This code locating the "pointerWarp" assumes that the data is well-formed (if
-            // a PointerWarp exists, it's the last entry for that room)
-
-            if (data.WarpSourceType == WarpSourceType.Standard) {
-                Data insertPosition;
-                if (PointerWarp != null) {
-                    insertPosition = PointerWarp;
+        // TODO: Bit 7 of PointedWarps
+        public int AddWarpSource(WarpSourceType type) {
+            Action<WarpSourceData> InsertInMainList = (d) => {
+                if (LastStandardWarp != null) {
+                    FileParser.InsertComponentAfter(LastStandardWarp, d);
+                }
+                else if (PointerWarp != null && d != PointerWarp) {
+                    FileParser.InsertComponentBefore(PointerWarp, d);
                 }
                 else {
-                    // Assumes the last element of warpSourceDataList is always the
-                    // "m_WarpSourcesEnd" command
-                    insertPosition = EndData;
+                    FileParser.InsertComponentBefore(EndWarp, d);
                 }
+            };
 
-                FileParser.InsertComponentBefore(insertPosition, data);
+            WarpSourceData data = new WarpSourceData(Project,
+                    command: WarpSourceData.WarpCommands[(int)type],
+                    values: WarpSourceData.DefaultValues[(int)type],
+                    parser: FileParser,
+                    spacing: new List<string>{"\t"});
+
+            if (type == WarpSourceType.Standard) {
+                data.Map = Map;
+                InsertInMainList(data);
             }
-            else if (data.WarpSourceType == WarpSourceType.Pointed) {
-                FileComponent insertPosition;
+            else if (type == WarpSourceType.Pointed) {
+                data.Opcode = 0x80; // Set this as the last pointed warp
+
+                FileComponent pointedDataInsertPosition;
                 if (PointerWarp == null) {
                     PointerWarp = new WarpSourceData(Project,
                             command: WarpSourceData.WarpCommands[(int)WarpSourceType.Pointer],
@@ -157,17 +173,19 @@ namespace LynnaLab
                     PointerWarp.PointerString = name;
                     Label newLabel = new Label(FileParser, name);
 
-                    // Insert PointerWarp before m_WarpSourcesEnd
-                    FileParser.InsertComponentBefore(EndData, PointerWarp);
+                    InsertInMainList(PointerWarp);
 
                     // Insert label after m_WarpSourcesEnd
-                    FileParser.InsertComponentAfter(EndData, newLabel);
-                    insertPosition = newLabel;
+                    FileParser.InsertComponentAfter(EndWarp, newLabel);
+                    pointedDataInsertPosition = newLabel;
                 }
-                else // Already exists, jump to the end of the pointed warp list
-                    insertPosition = PointerWarp.TraversePointedChain(PointerWarp.GetPointedChainLength()-1);
+                else { // Already exists, jump to the end of the pointed warp list
+                    var lastPointedWarp = PointerWarp.TraversePointedChain(PointerWarp.GetPointedChainLength()-1);
+                    lastPointedWarp.Opcode &= 0x7f; // Unset the "stop pointer chain" bit
+                    pointedDataInsertPosition = lastPointedWarp;
+                }
 
-                FileParser.InsertComponentAfter(insertPosition, data);
+                FileParser.InsertComponentAfter(pointedDataInsertPosition, data);
             }
             else {
                 throw new ArgumentException("Can't add this warp source type to the warp source group.");
@@ -196,7 +214,7 @@ namespace LynnaLab
                     // Delete label & PointerWarp (do this before deleting its last PointedWarp,
                     // otherwise it'll start reading subsequent data and get an incorrect count)
                     fileParser.RemoveFileComponent(Project.GetLabel(PointerWarp.PointerString));
-                    fileParser.RemoveFileComponent(PointerWarp);
+                    PointerWarp.Detach();
                 }
 
                 data.RemoveModifiedEventHandler(OnDataModified);
@@ -208,6 +226,10 @@ namespace LynnaLab
 
             RegenWarpSourceDataList();
             ModifiedEvent.Invoke(this, null);
+        }
+
+        public void RemoveWarpSource(int index) {
+            RemoveWarpSource(GetWarpSource(index));
         }
 
         public void AddModifiedHandler(EventHandler<EventArgs> handler) {

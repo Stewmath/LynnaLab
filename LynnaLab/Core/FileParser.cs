@@ -663,6 +663,12 @@ arbitraryLengthData:
                     throw new Exception("Tried to insert after a FileComponent that's not in the FileParser.");
                 fileStructure.AddAfter(refComponent, newComponent);
             }
+
+            // TODO: this is messy. Would be better if the "fileStructure" was smarter and could
+            // handle the labels as we add them, or else just use another function for adding to it.
+            if (newComponent is Label)
+                AddLabelToDictionaries(newComponent as Label);
+            Modified = true;
         }
 
         // Insert at the beginning if refComponent is null.
@@ -674,6 +680,10 @@ arbitraryLengthData:
                     throw new Exception("Tried to insert before a FileComponent that's not in the FileParser.");
                 fileStructure.AddBefore(refComponent, newComponent);
             }
+
+            if (newComponent is Label)
+                AddLabelToDictionaries(newComponent as Label);
+            Modified = true;
         }
 
         // Parse an array of text (each element is a line) and insert it after
@@ -696,6 +706,8 @@ arbitraryLengthData:
                     fileStructure.AddAfter(node, nextNode);
                 node = nextNode;
             }
+
+            Modified = true;
         }
         public void InsertParseableTextBefore(FileComponent refComponent, string[] text) {
             context = "";
@@ -715,6 +727,8 @@ arbitraryLengthData:
                     fileStructure.AddBefore(node, nextNode);
                 node = nextNode;
             }
+
+            Modified = true;
         }
 
         public FileComponent GetNextFileComponent(FileComponent reference) {

@@ -26,8 +26,8 @@ namespace LynnaLab {
 
 
         void OnObjectGroupModified(object sender, EventArgs args) {
-            QueueDraw();
             MaxIndex = ObjectGroup.GetNumObjects() - 1;
+            QueueDraw();
         }
 
 

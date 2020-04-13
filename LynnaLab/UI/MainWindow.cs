@@ -18,7 +18,6 @@ public class MainWindow
 
 	Gtk.MenuBar menubar1;
     Gtk.MenuItem editMenuItem, actionMenuItem, debugMenuItem;
-	Gtk.CheckButton viewObjectsCheckBox;
 
 	Gtk.Notebook minimapNotebook;
 	Gtk.SpinButton worldSpinButton;
@@ -87,7 +86,6 @@ public class MainWindow
         editMenuItem = (Gtk.MenuItem)builder.GetObject("editMenuItem");
         actionMenuItem = (Gtk.MenuItem)builder.GetObject("actionMenuItem");
         debugMenuItem = (Gtk.MenuItem)builder.GetObject("debugMenuItem");
-        viewObjectsCheckBox = (Gtk.CheckButton)builder.GetObject("viewObjectsCheckBox");
 
         minimapNotebook = (Gtk.Notebook)builder.GetObject("minimapNotebook");
         worldSpinButton = (Gtk.SpinButton)builder.GetObject("worldSpinButton");
@@ -475,7 +473,13 @@ public class MainWindow
 
     protected void OnViewObjectsCheckBoxToggled(object sender, EventArgs e)
     {
-        roomeditor1.ViewObjects = viewObjectsCheckBox.Active;
+        roomeditor1.ViewObjects = (sender as Gtk.CheckButton).Active;
+        roomeditor1.QueueDraw();
+    }
+
+    protected void OnViewWarpsCheckBoxToggled(object sender, EventArgs e)
+    {
+        roomeditor1.ViewWarps = (sender as Gtk.CheckButton).Active;
         roomeditor1.QueueDraw();
     }
 

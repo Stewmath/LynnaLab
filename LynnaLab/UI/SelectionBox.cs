@@ -31,20 +31,14 @@ namespace LynnaLab {
             base.AddMouseAction(MouseButton.LeftClick, MouseModifier.Any | MouseModifier.Drag,
                     GridAction.Callback, dragCallback);
 
-            Gtk.ButtonPressEventHandler OnButtonPressEvent = delegate(object sender, Gtk.ButtonPressEventArgs args) {
-                int x,y;
-                Gdk.ModifierType state;
-                args.Event.Window.GetPointer(out x, out y, out state);
 
-                if (state.HasFlag(Gdk.ModifierType.Button3Mask)) {
+            this.ButtonPressEvent += (sender, args) => {
+                if (args.Event.Button == 3) {
                     if (HoveringIndex != -1)
                         SelectedIndex = HoveringIndex;
-
                     ShowPopupMenu(args.Event);
                 }
             };
-
-            this.ButtonPressEvent += new Gtk.ButtonPressEventHandler(OnButtonPressEvent);
         }
 
 

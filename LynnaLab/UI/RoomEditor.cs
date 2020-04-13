@@ -97,8 +97,6 @@ namespace LynnaLab
             base.Halign = Gtk.Align.Start;
             base.Valign = Gtk.Align.Start;
 
-            ViewWarps = true;
-
             this.ButtonPressEvent += delegate(object o, ButtonPressEventArgs args)
             {
                 if (TilesetViewer == null)
