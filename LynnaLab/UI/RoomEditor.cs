@@ -13,14 +13,22 @@ namespace LynnaLab
             get { return room; }
         }
 
+        public bool EnableTileEditing {
+            get { return _enableTileEditing; }
+            set {
+                _enableTileEditing = value;
+                base.Hoverable = value;
+            }
+        }
+
         public bool ViewObjects {
             get {
                 return _viewObjects;
             }
             set {
                 _viewObjects = value;
-                base.Hoverable = !DrawRoomComponents;
                 GenerateRoomComponents();
+                QueueDraw();
             }
         }
 
@@ -28,8 +36,8 @@ namespace LynnaLab
             get { return _viewWarps; }
             set {
                 _viewWarps = value;
-                base.Hoverable = !DrawRoomComponents;
                 GenerateRoomComponents();
+                QueueDraw();
             }
         }
 
@@ -68,8 +76,14 @@ namespace LynnaLab
             get { return room.Project; }
         }
 
+        // Should we draw the room components (objects, warps)?
         bool DrawRoomComponents {
             get { return ViewObjects || ViewWarps; }
+        }
+
+        // Should we be able to select & drag the room components?
+        bool SelectRoomComponents {
+            get { return DrawRoomComponents && !EnableTileEditing; }
         }
 
 
@@ -83,7 +97,7 @@ namespace LynnaLab
 
         int mouseX=-1,mouseY=-1;
 
-        bool _viewObjects, _viewWarps;
+        bool _enableTileEditing, _viewObjects, _viewWarps;
         bool draggingObject;
 
         RoomComponent hoveringComponent;
@@ -96,6 +110,8 @@ namespace LynnaLab
             base.TileHeight = 16;
             base.Halign = Gtk.Align.Start;
             base.Valign = Gtk.Align.Start;
+
+            EnableTileEditing = true;
 
             this.ButtonPressEvent += delegate(object o, ButtonPressEventArgs args)
             {
@@ -212,12 +228,12 @@ namespace LynnaLab
 
         void OnClicked(int posX, int posY) {
             Cairo.Point p = GetGridPosition(posX, posY);
-            if (!DrawRoomComponents) {
+            if (EnableTileEditing) {
                 if (!IsInBounds(posX, posY))
                     return;
                 room.SetTile(p.X, p.Y, TilesetViewer.SelectedIndex);
             }
-            else {
+            else if (DrawRoomComponents) {
                 if (hoveringComponent != null) {
                     selectedComponent = hoveringComponent;
                     hoveringComponent.Select();
@@ -228,9 +244,9 @@ namespace LynnaLab
         }
 
         void OnDragged(int x, int y) {
-            if (!DrawRoomComponents)
+            if (EnableTileEditing)
                 OnClicked(x,y);
-            else {
+            else if (DrawRoomComponents) {
                 if (!draggingObject)
                     return;
 
@@ -291,16 +307,18 @@ namespace LynnaLab
                 }
             }
 
-            // Object hovering over
-            if (hoveringComponent != null) {
-                cr.SetSourceColor(TileGridViewer.HoverColor);
-                CairoHelper.DrawRectOutline(cr, 2, hoveringComponent.BoxRectangle);
+            if (SelectRoomComponents) {
+                // Object hovering over
+                if (hoveringComponent != null) {
+                    cr.SetSourceColor(TileGridViewer.HoverColor);
+                    CairoHelper.DrawRectOutline(cr, 2, hoveringComponent.BoxRectangle);
 
-            }
-            // Object selected
-            if (selectedComponent != null) {
-                cr.SetSourceColor(TileGridViewer.SelectionColor);
-                CairoHelper.DrawRectOutline(cr, 1, selectedComponent.BoxRectangle);
+                }
+                // Object selected
+                if (selectedComponent != null) {
+                    cr.SetSourceColor(TileGridViewer.SelectionColor);
+                    CairoHelper.DrawRectOutline(cr, 1, selectedComponent.BoxRectangle);
+                }
             }
 
             return true;

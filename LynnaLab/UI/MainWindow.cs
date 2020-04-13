@@ -19,8 +19,9 @@ public class MainWindow
 	Gtk.MenuBar menubar1;
     Gtk.MenuItem editMenuItem, actionMenuItem, debugMenuItem;
 
-	Gtk.Notebook minimapNotebook;
+	Gtk.Notebook minimapNotebook, contextNotebook;
 	Gtk.SpinButton worldSpinButton;
+    Gtk.CheckButton viewObjectsCheckButton, viewWarpsCheckButton;
 	Gtk.CheckButton darkenDungeonRoomsCheckbox;
 	LynnaLab.HighlightingMinimap worldMinimap;
 	Gtk.SpinButton dungeonSpinButton;
@@ -71,6 +72,16 @@ public class MainWindow
         }
     }
 
+    bool RoomContextActive { // "Room" tab
+        get { return contextNotebook.Page == 0; }
+    }
+    bool ObjectContextActive { // "Objects" tab
+        get { return contextNotebook.Page == 1; }
+    }
+    bool WarpContextActive { // "Warps" tab
+        get { return contextNotebook.Page == 2; }
+    }
+
     internal MainWindow() : this("") {}
     internal MainWindow (string directory)
     {
@@ -88,7 +99,10 @@ public class MainWindow
         debugMenuItem = (Gtk.MenuItem)builder.GetObject("debugMenuItem");
 
         minimapNotebook = (Gtk.Notebook)builder.GetObject("minimapNotebook");
+        contextNotebook = (Gtk.Notebook)builder.GetObject("contextNotebook");
         worldSpinButton = (Gtk.SpinButton)builder.GetObject("worldSpinButton");
+        viewObjectsCheckButton = (Gtk.CheckButton)builder.GetObject("viewObjectsCheckButton");
+        viewWarpsCheckButton = (Gtk.CheckButton)builder.GetObject("viewWarpsCheckButton");
         darkenDungeonRoomsCheckbox = (Gtk.CheckButton)builder.GetObject("darkenDungeonRoomsCheckbox");
         dungeonSpinButton = (Gtk.SpinButton)builder.GetObject("dungeonSpinButton");
         floorSpinButton = (Gtk.SpinButton)builder.GetObject("floorSpinButton");
@@ -427,14 +441,33 @@ public class MainWindow
     {
         if (Project == null)
             return;
-        GLib.Idle.Add(new GLib.IdleHandler(delegate() {
-                    Notebook nb = minimapNotebook;
-                    if (nb.Page == 0)
-                        SetWorld(worldSpinButton.ValueAsInt);
-                    else if (nb.Page == 1)
-                        SetDungeon(dungeonSpinButton.ValueAsInt);
-                    return false;
-        }));
+        Notebook nb = minimapNotebook;
+        if (nb.Page == 0)
+            SetWorld(worldSpinButton.ValueAsInt);
+        else if (nb.Page == 1)
+            SetDungeon(dungeonSpinButton.ValueAsInt);
+    }
+
+    protected void OnContextNotebookSwitchPage(object o, SwitchPageArgs args)
+    {
+        UpdateRoomEditorViews();
+    }
+
+    void UpdateRoomEditorViews() {
+        bool viewObjects = viewObjectsCheckButton.Active;
+        bool viewWarps = viewWarpsCheckButton.Active;
+
+        roomeditor1.EnableTileEditing = RoomContextActive;
+
+        if (ObjectContextActive) { // Object editor
+            viewObjects = true;
+        }
+        if (WarpContextActive) { // Warp editor
+            viewWarps = true;
+        }
+
+        roomeditor1.ViewObjects = viewObjects;
+        roomeditor1.ViewWarps = viewWarps;
     }
 
     protected void OnRoomSpinButtonValueChanged(object sender, EventArgs e)

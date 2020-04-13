@@ -214,7 +214,7 @@
                         <property name="can_focus">False</property>
                         <property name="spacing">5</property>
                         <child>
-                          <object class="GtkCheckButton" id="viewObjectsCheckBox">
+                          <object class="GtkCheckButton" id="viewObjectsCheckButton">
                             <property name="label" translatable="yes">View Objects</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
@@ -229,7 +229,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkCheckButton" id="viewWarpsCheckBox">
+                          <object class="GtkCheckButton" id="viewWarpsCheckButton">
                             <property name="label" translatable="yes">View Warps</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
@@ -258,6 +258,7 @@
                         <property name="width_request">600</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
+                        <signal name="switch-page" handler="OnContextNotebookSwitchPage" swapped="no"/>
                         <child>
                           <object class="GtkBox">
                             <property name="visible">True</property>
