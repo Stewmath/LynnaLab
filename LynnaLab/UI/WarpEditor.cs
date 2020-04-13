@@ -37,7 +37,7 @@ namespace LynnaLab
         SpinButtonHexadecimal roomSpinButton;
         Gtk.SpinButton indexSpinButton;
         Gtk.Label destInfoLabel, warpSourceTypeLabel;
-        Gtk.Alignment valueEditorContainer, destEditorContainer;
+        Gtk.Container valueEditorContainer, destEditorContainer;
         Gtk.Frame warpSourceFrame, warpDestFrame;
         Gtk.Box infoBarHolder;
         InfoBar infoBar;
@@ -73,8 +73,8 @@ namespace LynnaLab
             indexSpinButton = (Gtk.SpinButton)builder.GetObject("indexSpinButton");
             destInfoLabel = (Gtk.Label)builder.GetObject("destInfoLabel");
             warpSourceTypeLabel = (Gtk.Label)builder.GetObject("warpSourceTypeLabel");
-            valueEditorContainer = (Gtk.Alignment)builder.GetObject("valueEditorContainer");
-            destEditorContainer = (Gtk.Alignment)builder.GetObject("destEditorContainer");
+            valueEditorContainer = (Gtk.Container)builder.GetObject("valueEditorContainer");
+            destEditorContainer = (Gtk.Container)builder.GetObject("destEditorContainer");
             warpSourceFrame = (Gtk.Frame)builder.GetObject("warpSourceFrame");
             warpDestFrame = (Gtk.Frame)builder.GetObject("warpDestFrame");
             infoBarHolder = (Gtk.Box)builder.GetObject("infoBarHolder");
@@ -118,10 +118,13 @@ namespace LynnaLab
             if (i > indexSpinButton.Adjustment.Upper)
                 i = (int)indexSpinButton.Adjustment.Upper;
 
+            if (_selectedIndex == i)
+                return;
+
             _selectedIndex = i;
             indexSpinButton.Value = i;
 
-            valueEditorContainer.Remove(valueEditorContainer.Child);
+            valueEditorContainer.Foreach(valueEditorContainer.Remove);
 
             if (i == -1) {
                 warpSourceFrame.Visible = false;
@@ -165,19 +168,29 @@ namespace LynnaLab
         }
 
         void SetDestIndex(int group, int index) {
-            destEditorContainer.Remove(destEditorContainer.Child);
-
-            if (group != -1 && group < Project.GetNumGroups())
-                destGroup = Project.GetIndexedDataType<WarpDestGroup>(group);
-
-            if (group == -1 || group >= Project.GetNumGroups() ||
-                    index == -1 || index >= destGroup.GetNumWarpDests())
+            if (group == -1 || group >= Project.GetNumGroups() || index == -1)
             {
                 destGroup = null;
                 destData = null;
                 warpDestFrame.Hide();
                 return;
             }
+
+            // Check for change
+            if (destGroup == Project.GetIndexedDataType<WarpDestGroup>(group)
+                    && destData == destGroup?.GetWarpDest(index))
+                return;
+
+            destGroup = Project.GetIndexedDataType<WarpDestGroup>(group);
+
+            if (index >= destGroup.GetNumWarpDests()) {
+                destGroup = null;
+                destData = null;
+                warpDestFrame.Hide();
+                return;
+            }
+
+            destEditorContainer.Foreach(destEditorContainer.Remove);
 
             destData = destGroup.GetWarpDest(index);
             ValueReferenceEditor editor = new ValueReferenceEditor(Project,destData.ValueReferenceGroup);
