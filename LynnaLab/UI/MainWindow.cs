@@ -14,31 +14,36 @@ public class MainWindow
     private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
     // GUI stuff
-    private Gtk.Window mainWindow;
+    Gtk.Window mainWindow;
 
-	private Gtk.MenuBar menubar1;
-    private Gtk.MenuItem editMenuItem, actionMenuItem, debugMenuItem;
-	private Gtk.CheckButton viewObjectsCheckBox;
+	Gtk.MenuBar menubar1;
+    Gtk.MenuItem editMenuItem, actionMenuItem, debugMenuItem;
+	Gtk.CheckButton viewObjectsCheckBox;
 
-	private Gtk.Notebook minimapNotebook;
-	private Gtk.SpinButton worldSpinButton;
-	private Gtk.CheckButton darkenDungeonRoomsCheckbox;
-	private LynnaLab.HighlightingMinimap worldMinimap;
-	private Gtk.SpinButton dungeonSpinButton;
-	private Gtk.SpinButton floorSpinButton;
-	private LynnaLab.Minimap dungeonMinimap;
+	Gtk.Notebook minimapNotebook;
+	Gtk.SpinButton worldSpinButton;
+	Gtk.CheckButton darkenDungeonRoomsCheckbox;
+	LynnaLab.HighlightingMinimap worldMinimap;
+	Gtk.SpinButton dungeonSpinButton;
+	Gtk.SpinButton floorSpinButton;
+	LynnaLab.Minimap dungeonMinimap;
 
-	private Gtk.Statusbar statusbar1;
+	Gtk.Statusbar statusbar1;
 
-	private LynnaLab.SpinButtonHexadecimal roomSpinButton, tilesetSpinButton;
-    private ComboBoxFromConstants musicComboBox;
-	private LynnaLab.ObjectGroupEditor objectgroupeditor1;
-	private LynnaLab.TilesetViewer tilesetViewer1;
-	private LynnaLab.RoomEditor roomeditor1;
+	LynnaLab.SpinButtonHexadecimal roomSpinButton, tilesetSpinButton;
+    ComboBoxFromConstants musicComboBox;
+	LynnaLab.ObjectGroupEditor objectgroupeditor1;
+	LynnaLab.TilesetViewer tilesetViewer1;
+	LynnaLab.RoomEditor roomeditor1;
+
+    WarpEditor warpEditor = null;
 
     // Variables
     uint animationTimerID = 0;
     PluginCore pluginCore;
+
+
+    // Properties
 
     internal Project Project { get; set; }
     internal Room ActiveRoom {
@@ -106,6 +111,7 @@ public class MainWindow
         roomeditor1 = new RoomEditor();
         worldMinimap = new HighlightingMinimap();
         dungeonMinimap = new Minimap();
+        warpEditor = new WarpEditor(this);
 
         ((Gtk.Box)builder.GetObject("roomSpinButtonHolder")).Add(roomSpinButton);
         ((Gtk.Box)builder.GetObject("tilesetSpinButtonHolder")).Add(tilesetSpinButton);
@@ -115,9 +121,11 @@ public class MainWindow
         ((Gtk.Box)builder.GetObject("roomEditorHolder")).Add(roomeditor1);
         ((Gtk.Box)builder.GetObject("worldMinimapHolder")).Add(worldMinimap);
         ((Gtk.Box)builder.GetObject("dungeonMinimapHolder")).Add(dungeonMinimap);
+        ((Gtk.Box)builder.GetObject("warpEditorHolder")).Add(warpEditor);
 
-        roomeditor1.SetClient(tilesetViewer1);
-        roomeditor1.SetObjectGroupEditor(objectgroupeditor1);
+        roomeditor1.TilesetViewer = tilesetViewer1;
+        roomeditor1.ObjectGroupEditor = objectgroupeditor1;
+        roomeditor1.WarpEditor = warpEditor;
         dungeonMinimap.AddTileSelectedHandler(delegate(object sender, int index) {
             Room room = dungeonMinimap.GetRoom();
             SetRoom(room);
@@ -275,14 +283,9 @@ public class MainWindow
             return;
         roomeditor1.SetRoom(room);
         SetTileset(room.Tileset);
-        musicComboBox.Active = Project.MusicMapping.IndexOf((byte)room.GetMusicID());
         roomSpinButton.Value = room.Index;
-
-        objectgroupeditor1.SetObjectGroup(room.GetObjectGroup());
-
-        if (warpEditor != null && warpEditor.SyncWithMainWindow) {
-            warpEditor.SetMap(room.Index>>8, room.Index&0xff);
-        }
+        musicComboBox.Active = Project.MusicMapping.IndexOf((byte)room.GetMusicID());
+        warpEditor.SetMap(room.Index>>8, room.Index&0xff);
     }
 
     void SetDungeon(Dungeon dungeon) {
@@ -474,28 +477,6 @@ public class MainWindow
     {
         roomeditor1.ViewObjects = viewObjectsCheckBox.Active;
         roomeditor1.QueueDraw();
-    }
-
-    WarpEditor warpEditor = null;
-    protected void OnWarpsActionActivated(object sender, EventArgs e) {
-        if (warpEditor != null)
-            return;
-        warpEditor = new WarpEditor(Project, this);
-        warpEditor.SetMap(roomSpinButton.ValueAsInt >> 8, roomSpinButton.ValueAsInt & 0xff);
-
-        Gtk.Window win = new Window(WindowType.Toplevel);
-        win.Modal = false;
-        win.Add(warpEditor);
-
-        warpEditor.Destroyed += delegate(object sender2, EventArgs e2) {
-            win.Dispose();
-            warpEditor = null;
-        };
-        win.Destroyed += delegate(object sender2, EventArgs e2) {
-            warpEditor = null;
-        };
-
-        win.ShowAll();
     }
 
     protected void OnDarkenDungeonRoomsCheckboxToggled(object sender, EventArgs e)

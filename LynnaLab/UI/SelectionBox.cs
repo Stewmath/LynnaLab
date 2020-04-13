@@ -62,22 +62,7 @@ namespace LynnaLab {
         protected override void TileDrawer(int index, Cairo.Context cr) {
             if (index > MaxIndex)
                 return;
-
-            // Draw index number with pango
-            using (var context = Pango.CairoHelper.CreateContext(cr))
-            using (var layout = new Pango.Layout(context)) {
-                cr.SetSourceColor(new Cairo.Color(0, 0, 0));
-
-                layout.Width = Pango.Units.FromPixels(TileWidth);
-                layout.Height = Pango.Units.FromPixels(TileHeight);
-                layout.Alignment = Pango.Alignment.Center;
-
-                // TODO: install the font on the system
-                layout.FontDescription = Pango.FontDescription.FromString("ZeldaOracles 12");
-
-                layout.SetText(index.ToString("X"));
-                Pango.CairoHelper.ShowLayout(cr, layout);
-            }
+            CairoHelper.DrawText(cr, index.ToString("X"), 12, 0, 0, TileWidth, TileHeight);
         }
     }
 }

@@ -142,6 +142,10 @@ namespace LynnaLab
             return Project.GetObjectGroup(label, ObjectGroupType.Main);
         }
 
+        public WarpSourceGroup GetWarpSourceGroup() {
+            return Project.GetIndexedDataType<WarpSourceGroup>(Index);
+        }
+
         void UpdateRoomData() {
             // Get the tileDataFile
             int layoutGroup = tileset.LayoutGroup;
@@ -202,9 +206,6 @@ namespace LynnaLab
             cachedImage = null;
             if (RoomModifiedEvent != null)
                 RoomModifiedEvent();
-        }
-
-        public override void Save() {
         }
     }
 }

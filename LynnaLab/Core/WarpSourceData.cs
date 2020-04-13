@@ -5,10 +5,10 @@ using System.Collections.Generic;
 namespace LynnaLab
 {
     public enum WarpSourceType {
-        StandardWarp=0,
-        PointedWarp, // An m_StandardWarp referenced by a PointerWarp
-        PointerWarp,
-        WarpSourcesEnd,
+        Standard=0,
+        Pointed, // An m_StandardWarp referenced by a PointerWarp
+        Pointer,
+        End,
     };
 
     public class WarpSourceData : Data
@@ -46,7 +46,7 @@ namespace LynnaLab
 
         private static List<ValueReference> GetWarpValueReferences(WarpSourceType type, Data data) {
             switch (type) {
-            case WarpSourceType.StandardWarp:
+            case WarpSourceType.Standard:
                 return new List<ValueReference> { // StandardWarp
                     new DataValueReference(data,"Opcode",0,DataValueType.Byte, editable:false),
                     new DataValueReference(data,"Top-Left",0,DataValueType.ByteBit,0,0),
@@ -59,7 +59,7 @@ namespace LynnaLab
                     new DataValueReference(data,"Transition",4,DataValueType.HalfByte,
                         constantsMappingString:"SourceTransitionMapping"),
                 };
-            case WarpSourceType.PointedWarp:
+            case WarpSourceType.Pointed:
                 return new List<ValueReference> { // PointedWarp
                     new DataValueReference(data,"Opcode",0,DataValueType.Byte, editable:false),
 
@@ -72,7 +72,7 @@ namespace LynnaLab
                     new DataValueReference(data,"Transition",4,DataValueType.HalfByte,
                         constantsMappingString:"SourceTransitionMapping"),
                 };
-            case WarpSourceType.PointerWarp:
+            case WarpSourceType.Pointer:
                 return new List<ValueReference> { // PointerWarp
                     new DataValueReference(data,"Opcode",0,DataValueType.Byte, editable:false),
                     new DataValueReference(data,"Map",1,DataValueType.Byte, editable:false),
@@ -81,7 +81,7 @@ namespace LynnaLab
                     // Group/Entrance/Dest Index.
                     new DataValueReference(data,"Pointer", 2, DataValueType.String, editable:false),
                 };
-            case WarpSourceType.WarpSourcesEnd:
+            case WarpSourceType.End:
                 return new List<ValueReference> { // WarpSourcesEnd
                 };
             }
@@ -116,14 +116,41 @@ namespace LynnaLab
                 vrg.SetValue("Opcode",value);
             }
         }
+        public bool TopLeft {
+            get {
+                return vrg.GetIntValue("Top-Left") != 0;
+            }
+            set {
+                vrg.SetValue("Top-Left", value ? 1 : 0);
+            }
+        }
+        public bool TopRight {
+            get {
+                return vrg.GetIntValue("Top-Right") != 0;
+            }
+            set {
+                vrg.SetValue("Top-Right", value ? 1 : 0);
+            }
+        }
+        public bool BottomLeft {
+            get {
+                return vrg.GetIntValue("Bottom-Left") != 0;
+            }
+            set {
+                vrg.SetValue("Bottom-Left", value ? 1 : 0);
+            }
+        }
+        public bool BottomRight {
+            get {
+                return vrg.GetIntValue("Bottom-Right") != 0;
+            }
+            set {
+                vrg.SetValue("Bottom-Right", value ? 1 : 0);
+            }
+        }
         public int Map {
             get {
-                try {
-                    return vrg.GetIntValue("Map");
-                }
-                catch (InvalidLookupException) {
-                    return -1;
-                }
+                return vrg.GetIntValue("Map");
             }
             set {
                 vrg.SetValue("Map", value);
@@ -131,12 +158,7 @@ namespace LynnaLab
         }
         public int DestIndex {
             get {
-                try {
-                    return vrg.GetIntValue("Dest Index");
-                }
-                catch (InvalidLookupException) {
-                    return -1;
-                }
+                return vrg.GetIntValue("Dest Index");
             }
             set {
                 vrg.SetValue("Dest Index",value);
@@ -144,12 +166,7 @@ namespace LynnaLab
         }
         public int DestGroup {
             get {
-                try {
-                    return vrg.GetIntValue("Dest Group");
-                }
-                catch (InvalidLookupException) {
-                    return -1;
-                }
+                return vrg.GetIntValue("Dest Group");
             }
             set {
                 vrg.SetValue("Dest Group",value);
@@ -157,12 +174,7 @@ namespace LynnaLab
         }
         public int Transition {
             get {
-                try {
-                    return vrg.GetIntValue("Transition");
-                }
-                catch (InvalidLookupException) {
-                    return -1;
-                }
+                return vrg.GetIntValue("Transition");
             }
             set {
                 vrg.SetValue("Transition",value);
@@ -170,12 +182,7 @@ namespace LynnaLab
         }
         public int X {
             get {
-                try {
-                    return vrg.GetIntValue("X");
-                }
-                catch (InvalidLookupException) {
-                    return -1;
-                }
+                return vrg.GetIntValue("X");
             }
             set {
                 vrg.SetValue("X",value);
@@ -183,12 +190,7 @@ namespace LynnaLab
         }
         public int Y {
             get {
-                try {
-                    return vrg.GetIntValue("Y");
-                }
-                catch (InvalidLookupException) {
-                    return -1;
-                }
+                return vrg.GetIntValue("Y");
             }
             set {
                 vrg.SetValue("Y",value);
@@ -201,6 +203,10 @@ namespace LynnaLab
             set {
                 vrg.SetValue("Pointer",value);
             }
+        }
+
+        public bool HasEdgeWarp {
+            get { return (Opcode & 0x0f) != 0; }
         }
 
 
@@ -239,7 +245,7 @@ namespace LynnaLab
         // If this is the kind of warp which points to another warp, return the
         // pointed warp, otherwise return null
         public WarpSourceData GetPointedWarp() {
-            if (WarpSourceType != WarpSourceType.PointerWarp)
+            if (WarpSourceType != WarpSourceType.Pointer)
                 throw new ArgumentException("Invalid warp type for 'GetPointedWarp' call.");
 
             WarpSourceData data = Project.GetData(vrg.GetValue("Pointer")) as WarpSourceData;
@@ -249,7 +255,7 @@ namespace LynnaLab
         // If this is a WarpSourceData which is pointed to from another one,
         // return the next in the sequence, or null if the sequence is over.
         public WarpSourceData GetNextWarp() {
-            if (WarpSourceType != WarpSourceType.PointedWarp)
+            if (WarpSourceType != WarpSourceType.Pointed)
                 throw new ArgumentException("Invalid warp type for 'GetNextWarp' call.");
 
             // A warp with opcode bit 7 set signals the end of the sequence
@@ -277,9 +283,9 @@ namespace LynnaLab
         // If called on a PointerWarp, it returns the corresponding value for
         // its PointedWarp.
         public int GetPointedChainLength() {
-            if (WarpSourceType == WarpSourceType.PointerWarp)
+            if (WarpSourceType == WarpSourceType.Pointer)
                 return GetPointedWarp().GetPointedChainLength();
-            else if (WarpSourceType != WarpSourceType.PointedWarp)
+            else if (WarpSourceType != WarpSourceType.Pointed)
                 throw new ArgumentException("Invalid warp type for 'GetPointedChainLength' call.");
 
             WarpSourceData next = GetNextWarp();
@@ -291,9 +297,9 @@ namespace LynnaLab
         // Returns the WarpSourceData object that's "index" entries after this one.
         // (Assumes this is a PointedWarp or PointerWarp..)
         public WarpSourceData TraversePointedChain(int count) {
-            if (WarpSourceType == WarpSourceType.PointerWarp)
+            if (WarpSourceType == WarpSourceType.Pointer)
                 return GetPointedWarp().TraversePointedChain(count);
-            else if (WarpSourceType != WarpSourceType.PointedWarp)
+            else if (WarpSourceType != WarpSourceType.Pointed)
                 throw new ArgumentException("Invalid warp type for 'TraversePointedWarpChain' call.");
 
             if (count == 0)
@@ -314,8 +320,8 @@ namespace LynnaLab
         }
 
         public WarpDestGroup GetReferencedDestGroup() {
-            if (_type == WarpSourceType.PointerWarp ||
-                    _type == WarpSourceType.WarpSourcesEnd)
+            if (_type == WarpSourceType.Pointer ||
+                    _type == WarpSourceType.End)
                 return null;
             if (DestGroup >= Project.GetNumGroups())
                 return null;

@@ -16,10 +16,10 @@ namespace LynnaLab {
             BackgroundColor = new Cairo.Color(0.8, 0.8, 0.8);
             MaxIndex = ObjectGroup.GetNumObjects() - 1;
 
-            ObjectGroup.ModifiedEvent += (sender, args) => {
+            ObjectGroup.AddModifiedHandler((sender, args) => {
                 QueueDraw();
                 MaxIndex = ObjectGroup.GetNumObjects() - 1;
-            };
+            });
         }
 
 

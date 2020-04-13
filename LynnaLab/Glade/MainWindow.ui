@@ -84,14 +84,6 @@
                   <object class="GtkMenu">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <child>
-                      <object class="GtkMenuItem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Warp Editor</property>
-                        <signal name="activate" handler="OnWarpsActionActivated" swapped="no"/>
-                      </object>
-                    </child>
                   </object>
                 </child>
               </object>
@@ -437,7 +429,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkBox" id="warpEditorContainer">
+                          <object class="GtkBox" id="warpEditorHolder">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="orientation">vertical</property>

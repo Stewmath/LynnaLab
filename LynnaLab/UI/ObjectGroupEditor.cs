@@ -72,6 +72,8 @@ namespace LynnaLab
 
         public ObjectDefinition SelectedObject {
             get {
+                if (SelectedIndex == -1)
+                    return null;
                 return SelectedObjectGroup.GetObject(SelectedIndex);
             }
         }
@@ -97,9 +99,9 @@ namespace LynnaLab
 
         public void SetObjectGroup(ObjectGroup topObjectGroup) {
             if (this.topObjectGroup != null)
-                this.topObjectGroup.ModifiedEvent -= ObjectGroupModifiedHandler;
+                this.topObjectGroup.RemoveModifiedHandler(ObjectGroupModifiedHandler);
             this.topObjectGroup = topObjectGroup;
-            this.topObjectGroup.ModifiedEvent += ObjectGroupModifiedHandler;
+            this.topObjectGroup.AddModifiedHandler(ObjectGroupModifiedHandler);
 
             ReloadObjectBoxes();
         }
@@ -141,24 +143,17 @@ namespace LynnaLab
                 return;
             activeObject = obj;
 
-            System.Action handler = delegate() {
-                if (RoomEditor != null)
-                    RoomEditor.OnObjectsModified();
-
-                UpdateDocumentation();
-            };
-
             foreach (Gtk.Widget widget in objectDataContainer.Children) {
                 objectDataContainer.Remove(widget);
                 widget.Dispose();
             }
             if (ObjectDataEditor != null) {
-                ObjectDataEditor.RemoveDataModifiedHandler(handler);
+                ObjectDataEditor.RemoveDataModifiedHandler(OnObjectDataModified);
                 ObjectDataEditor = null;
             }
 
             if (RoomEditor != null)
-                RoomEditor.OnObjectsModified();
+                RoomEditor.OnObjectSelected();
 
             if (obj == null) {
                 frameLabel.Text = "";
@@ -167,11 +162,15 @@ namespace LynnaLab
             frameLabel.Text = ObjectNames[(int)activeObject.GetObjectType()];
 
             ObjectDataEditor = new ValueReferenceEditor(Project, obj);
-            ObjectDataEditor.AddDataModifiedHandler(handler);
+            ObjectDataEditor.AddDataModifiedHandler(OnObjectDataModified);
 
             objectDataContainer.Add(ObjectDataEditor);
             objectDataContainer.ShowAll();
 
+            UpdateDocumentation();
+        }
+
+        void OnObjectDataModified() {
             UpdateDocumentation();
         }
 
@@ -232,7 +231,7 @@ namespace LynnaLab
             this.ShowAll();
         }
 
-        void ObjectGroupModifiedHandler(object sender, ValueModifiedEventArgs args) {
+        void ObjectGroupModifiedHandler(object sender, EventArgs args) {
             SelectObject(selectedObjectGroup, activeObject);
         }
 

@@ -40,7 +40,7 @@ namespace LynnaLab
 
 
         // Invoked when the group is modified in any way (including modifying objects themselves).
-        public EventHandler<ValueModifiedEventArgs> ModifiedEvent;
+        EventHandler<EventArgs> modifiedEvent;
 
 
         // NOTE: this list may not be complete at any given time
@@ -101,7 +101,7 @@ namespace LynnaLab
                 else {
                     ObjectStruct st = new ObjectStruct();
                     st.rawIndex = i;
-                    st.def = new ObjectDefinition(this, obj);
+                    st.def = new ObjectDefinition(this, obj, objectList.Count);
                     st.data = obj;
                     objectList.Add(st);
 
@@ -178,6 +178,14 @@ namespace LynnaLab
             return objectList[index].def;
         }
 
+        public int IndexOf(ObjectDefinition obj) {
+            for (int i=0; i<objectList.Count; i++) {
+                if (objectList[i].def == obj)
+                    return i;
+            }
+            return -1;
+        }
+
         // Returns a list of ObjectGroups representing each main group (Main, Enemy, BeforeEvent,
         // AfterEvent) plus "Shared" groups if they exist. This should only be called on the "Main"
         // type.
@@ -197,7 +205,7 @@ namespace LynnaLab
             ObjectStruct st = new ObjectStruct();
             st.rawIndex = rawObjectGroup.GetNumObjects()-1;
             st.data = rawObjectGroup.GetObjectData(st.rawIndex);
-            st.def = new ObjectDefinition(this, st.data);
+            st.def = new ObjectDefinition(this, st.data, objectList.Count);
             st.def.AddValueModifiedHandler(ModifiedHandler);
             objectList.Add(st);
 
@@ -271,6 +279,14 @@ namespace LynnaLab
             ModifiedHandler(this, null);
         }
 
+        public void AddModifiedHandler(EventHandler<EventArgs> handler) {
+            modifiedEvent += handler;
+        }
+
+        public void RemoveModifiedHandler(EventHandler<EventArgs> handler) {
+            modifiedEvent -= handler;
+        }
+
 
         // Internal methods
 
@@ -335,6 +351,7 @@ namespace LynnaLab
             parents.Add(group);
         }
 
+        // Call this whenever the ordering of objects in objectList changes
         void UpdateRawIndices() {
             Dictionary<ObjectData,int> dict = new Dictionary<ObjectData,int>();
             for (int i=0; i<rawObjectGroup.GetNumObjects(); i++)
@@ -342,6 +359,7 @@ namespace LynnaLab
 
             foreach (ObjectStruct st in objectList) {
                 st.rawIndex = dict[st.data];
+                st.def.UpdateIndex();
             }
         }
 
@@ -412,8 +430,8 @@ namespace LynnaLab
         }
 
         void ModifiedHandler(object sender, ValueModifiedEventArgs args) {
-            if (ModifiedEvent != null)
-                ModifiedEvent(this, args);
+            if (modifiedEvent != null)
+                modifiedEvent(this, null);
             foreach (var parent in parents)
                 parent.ModifiedHandler(sender, args);
         }

@@ -6,6 +6,30 @@ namespace LynnaLab
 {
     public class WarpEditor : Gtk.Bin
     {
+        // Events
+        public event EventHandler<EventArgs> SelectedWarpEvent;
+
+        // Properties
+
+        Project Project {
+            get { return mainWindow.Project; }
+        }
+
+        public bool SyncWithMainWindow {
+            get { return syncCheckButton.Active; }
+        }
+
+        public int SelectedIndex {
+            get { return _selectedIndex; }
+            set {
+                if (_selectedIndex != value) {
+                    _selectedIndex = value;
+                    SetWarpIndex(_selectedIndex);
+                }
+            }
+        }
+
+
         // GUI stuff
         Gtk.Box mainVBox;
         Gtk.Button addScreenWarpButton, addPositionWarpButton;
@@ -20,12 +44,6 @@ namespace LynnaLab
 
         MainWindow mainWindow;
 
-        // Properties
-
-        Project Project {get; set;}
-        public bool SyncWithMainWindow {
-            get { return syncCheckButton.Active; }
-        }
 
         // Variables
 
@@ -34,14 +52,14 @@ namespace LynnaLab
         WarpDestData destData;
 
         ValueReferenceEditor sourceEditor;
-        ValueReferenceEditor destEditor;
 
         int map;
+        int _selectedIndex;
+
 
         // Constructor
 
-        public WarpEditor(Project p, MainWindow main) {
-            Project = p;
+        public WarpEditor(MainWindow main) {
             mainWindow = main;
 
             Gtk.Builder builder = new Builder();
@@ -71,7 +89,7 @@ namespace LynnaLab
             addPositionWarpButton.Image = new Gtk.Image(Stock.Add, Gtk.IconSize.Button);
 
             roomSpinButton.Adjustment.Lower = 0;
-            roomSpinButton.Adjustment.Upper = Project.GetNumRooms()-1;
+            roomSpinButton.Adjustment.Upper = 0;
             roomSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
                 SetMap(roomSpinButton.ValueAsInt>>8, roomSpinButton.ValueAsInt&0xff);
             };
@@ -84,8 +102,10 @@ namespace LynnaLab
         }
 
         public void SetMap(int group, int map) {
+            roomSpinButton.Adjustment.Upper = Project.GetNumRooms()-1; // Couldn't find a good place for this
+
             roomSpinButton.Value = (group<<8) | map;
-            sourceGroup = Project.GetIndexedDataType<WarpSourceGroup>(group);
+            sourceGroup = Project.GetIndexedDataType<WarpSourceGroup>((group<<8) | map);
 
             this.map = map;
 
@@ -94,10 +114,11 @@ namespace LynnaLab
         }
 
         // Load the i'th warp in the current map.
-        void SetWarpIndex(int i) {
+        public void SetWarpIndex(int i) {
             if (i > indexSpinButton.Adjustment.Upper)
                 i = (int)indexSpinButton.Adjustment.Upper;
 
+            _selectedIndex = i;
             indexSpinButton.Value = i;
 
             valueEditorContainer.Remove(valueEditorContainer.Child);
@@ -113,7 +134,7 @@ namespace LynnaLab
 
             WarpSourceData warpSourceData = GetWarpSourceDataIndex(i);
 
-            if (warpSourceData.WarpSourceType == WarpSourceType.PointedWarp)
+            if (warpSourceData.WarpSourceType == WarpSourceType.Pointed)
                 warpSourceTypeLabel.Text = "<b>Type</b>: Position Warp";
             else
                 warpSourceTypeLabel.Text = "<b>Type</b>: Screen Warp";
@@ -133,14 +154,14 @@ namespace LynnaLab
 
             valueEditorContainer.Add(hbox);
             warpSourceFrame.ShowAll();
+
+            if (SelectedWarpEvent != null)
+                SelectedWarpEvent(this, null);
         }
 
         // Gets the index corresponding to a spin button value.
-        // This class needs to transparently traverse PointerWarps, so that's done here.
         WarpSourceData GetWarpSourceDataIndex(int i) {
-            var sourceDataList = sourceGroup.GetMapWarpSourceData(map);
-            WarpSourceData warpSourceData = sourceDataList[Math.Min(sourceDataList.Count-1, i)];
-            return warpSourceData;
+            return sourceGroup.GetWarpSource(i);
         }
 
         void SetDestIndex(int group, int index) {
@@ -180,11 +201,11 @@ namespace LynnaLab
         void UpdateIndexSpinButtonRange() {
             infoBar.RemoveAll();
 
-            List<WarpSourceData> sourceDataList = sourceGroup.GetMapWarpSourceData(map);
+            IList<WarpSourceData> sourceDataList = sourceGroup.GetWarpSources();
 
             // Sanity check: make sure there's only one PointerWarp and it's at the end.
             for (int i=0; i<sourceDataList.Count-1; i++) {
-                if (sourceDataList[i].WarpSourceType == WarpSourceType.PointerWarp) {
+                if (sourceDataList[i].WarpSourceType == WarpSourceType.Pointer) {
                     infoBar.Push(InfoLevel.Error, "Warp data formatting error: Warp #" + i + " is a PointerWarp, but there are other warps after it which won't be read. You may need to fix this manually.");
                     break;
                 }
@@ -193,7 +214,7 @@ namespace LynnaLab
             indexSpinButton.Adjustment.Lower = -1;
 
             int count = sourceDataList.Count;
-            if (count != 0 && sourceDataList[count-1].WarpSourceType == WarpSourceType.PointerWarp) {
+            if (count != 0 && sourceDataList[count-1].WarpSourceType == WarpSourceType.Pointer) {
                 count += sourceDataList[count-1].GetPointedChainLength();
                 count--; // Don't count the "PointerWarp"
             }
@@ -203,32 +224,32 @@ namespace LynnaLab
         protected void OnAddScreenWarpButtonClicked(object sender, EventArgs e)
         {
             WarpSourceData data = new WarpSourceData(Project,
-                    command: WarpSourceData.WarpCommands[(int)WarpSourceType.StandardWarp],
-                    values: WarpSourceData.DefaultValues[(int)WarpSourceType.StandardWarp],
+                    command: WarpSourceData.WarpCommands[(int)WarpSourceType.Standard],
+                    values: WarpSourceData.DefaultValues[(int)WarpSourceType.Standard],
                     parser: sourceGroup.FileParser,
                     spacing: new List<string>{"\t"});
             data.Map = map;
 
-            sourceGroup.AddWarpSourceData(data, map);
+            sourceGroup.AddWarpSource(data);
             UpdateIndexSpinButtonRange();
 
-            // Determine what index corresponds to this newly created warp
-            var warpSourceList = sourceGroup.GetMapWarpSourceData(map);
-            if (warpSourceList[warpSourceList.Count-1].WarpSourceType == WarpSourceType.PointerWarp)
-                SetWarpIndex(sourceGroup.GetMapWarpSourceData(map).Count-2);
+            // Determine what index corresponds to this newly created warp (TODO: probably broken)
+            var warpSourceList = sourceGroup.GetWarpSources();
+            if (warpSourceList[warpSourceList.Count-1].WarpSourceType == WarpSourceType.Pointer)
+                SetWarpIndex(sourceGroup.GetWarpSources().Count-2);
             else
-                SetWarpIndex(sourceGroup.GetMapWarpSourceData(map).Count-1);
+                SetWarpIndex(sourceGroup.GetWarpSources().Count-1);
         }
 
         protected void OnAddPositionWarpButtonClicked(object sender, EventArgs e)
         {
             WarpSourceData data = new WarpSourceData(Project,
-                    command: WarpSourceData.WarpCommands[(int)WarpSourceType.PointedWarp],
-                    values: WarpSourceData.DefaultValues[(int)WarpSourceType.PointedWarp],
+                    command: WarpSourceData.WarpCommands[(int)WarpSourceType.Pointed],
+                    values: WarpSourceData.DefaultValues[(int)WarpSourceType.Pointed],
                     parser: sourceGroup.FileParser,
                     spacing: new List<string>{"\t"});
 
-            sourceGroup.AddWarpSourceData(data, map);
+            sourceGroup.AddWarpSource(data);
             UpdateIndexSpinButtonRange();
             SetWarpIndex((int)indexSpinButton.Adjustment.Upper);
         }
@@ -236,7 +257,7 @@ namespace LynnaLab
         protected void OnRemoveWarpButtonClicked(object sender, EventArgs e)
         {
             if (indexSpinButton.ValueAsInt != -1) {
-                sourceGroup.RemoveWarpSourceData(GetWarpSourceDataIndex(indexSpinButton.ValueAsInt), map);
+                sourceGroup.RemoveWarpSource(GetWarpSourceDataIndex(indexSpinButton.ValueAsInt));
                 UpdateIndexSpinButtonRange();
                 SetWarpIndex(indexSpinButton.ValueAsInt);
             }

@@ -27,6 +27,65 @@ namespace LynnaLab
         public static Cairo.Color ConvertColor(System.Drawing.Color color) {
             return new Cairo.Color(color.R / 256.0, color.G / 256.0, color.B / 256.0, color.A / 256.0);
         }
+
+        public static Cairo.Color ConvertColor(int r, int g, int b, int a = 256) {
+            return new Cairo.Color(r / 256.0, g / 256.0, b / 256.0, a / 256.0);
+        }
+
+        public static void DrawText(Cairo.Context cr, string text, int size, Cairo.Rectangle rect) {
+            cr.Save();
+            cr.Translate(rect.X, rect.Y);
+            using (var context = Pango.CairoHelper.CreateContext(cr))
+            using (var layout = new Pango.Layout(context)) {
+                layout.Width = Pango.Units.FromPixels((int)rect.Width);
+                layout.Height = Pango.Units.FromPixels((int)rect.Height);
+                layout.Alignment = Pango.Alignment.Center;
+
+                // TODO: install the font on the system
+                layout.FontDescription = Pango.FontDescription.FromString("ZeldaOracles " + size);
+                //layout.FontDescription.Weight = (Pango.Weight)10000;
+
+                layout.SetText(text);
+
+                // Center vertically
+                int pixelWidth, pixelHeight;
+                layout.GetPixelSize(out pixelWidth, out pixelHeight);
+                cr.Translate(0, ((int)rect.Height - pixelHeight) / 2.0);
+
+                Pango.CairoHelper.ShowLayout(cr, layout);
+            }
+            cr.Restore();
+        }
+
+        public static void DrawText(Cairo.Context cr, string text, int size, int x, int y, int width, int height) {
+            DrawText(cr, text, size, new Cairo.Rectangle(x, y, width, height));
+        }
+
+        // Draws the outline of a rectangle without drawing anything outside of it. The "lineWidth"
+        // is all drawn inside the rectangle instead of being equally outside and inside.
+        public static void DrawRectOutline(Cairo.Context cr, double lineWidth, Cairo.Rectangle rect) {
+            cr.LineWidth = lineWidth;
+            cr.Rectangle(rect.X + lineWidth / 2, rect.Y + lineWidth / 2,
+                    rect.Width - lineWidth, rect.Height - lineWidth);
+            cr.Stroke();
+        }
+
+        public static void DrawRectOutline(Cairo.Context cr, double lineWidth, double x, double y, double width, double height) {
+            DrawRectOutline(cr, lineWidth, new Cairo.Rectangle(x, y, width, height));
+        }
+
+        public static bool PointInRect(Cairo.Point p, Cairo.Rectangle rect) {
+            return p.X >= rect.X && p.Y >= rect.Y
+                && p.X < rect.X + rect.Width && p.Y < rect.Y + rect.Height;
+        }
+
+        public static bool PointInRect(int x, int y, Cairo.Rectangle rect) {
+            return PointInRect(new Cairo.Point(x, y), rect);
+        }
+
+        public static bool PointInRect(int x, int y, int left, int top, int width, int height) {
+            return PointInRect(new Cairo.Point(x, y), new Cairo.Rectangle(left, top, width, height));
+        }
     }
 
 

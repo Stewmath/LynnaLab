@@ -12,9 +12,10 @@ namespace LynnaLab {
 
         // Constructors
 
-        public ObjectDefinition(ObjectGroup group, ObjectData objectData) {
+        public ObjectDefinition(ObjectGroup group, ObjectData objectData, int index) {
             this.objectGroup = group;
             this.objectData = objectData;
+            this.Index = index;
 
             var valueReferences = new List<ValueReference>();
 
@@ -28,6 +29,12 @@ namespace LynnaLab {
 
             base.SetValueReferences(valueReferences);
         }
+
+
+        // Properties
+
+        public ObjectGroup ObjectGroup { get { return objectGroup; } }
+        public int Index { get; private set; } // Index within the ObjectGroup
 
 
         // Public methods
@@ -128,6 +135,12 @@ namespace LynnaLab {
         internal void SetObjectData(ObjectData data) {
             objectData = data;
             base.SetValueReferences(data.ValueReferenceGroup.GetValueReferences());
+        }
+
+        internal void UpdateIndex() {
+            Index = objectGroup.IndexOf(this);
+            if (Index == -1)
+                throw new Exception("Unexpected thing happened");
         }
 
 
