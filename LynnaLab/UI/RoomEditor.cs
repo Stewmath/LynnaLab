@@ -350,7 +350,7 @@ namespace LynnaLab
                 int index = 0;
 
                 foreach (WarpSourceData warp in room.GetWarpSourceGroup().GetWarpSources()) {
-                    Action<int,int,int,int> drawWarpBox = (x, y, width, height) => {
+                    Action<int,int,int,int> addWarpComponent = (x, y, width, height) => {
                         var rect = new Cairo.Rectangle(x, y, width, height);
                         var com = new WarpSourceRoomComponent(warp, index, rect);
                         com.SelectedEvent += (sender, args) => {
@@ -360,25 +360,29 @@ namespace LynnaLab
                     };
 
                     if (warp.WarpSourceType == WarpSourceType.Standard) {
-                        int middle = ((Room.Width + 1) / 2) * 16;
+                        int middle;
+                        if (Room.Width == 15) // Large room
+                            middle = ((Room.Width + 1) / 2) * 16;
+                        else // Small room
+                            middle = ((Room.Width + 1) / 2) * 16 + 8;
                         int right = Room.Width * 16;
                         int bottom = Room.Height * 16 - 8;
 
                         if (warp.TopLeft)
-                            drawWarpBox(0, -8, middle, 16);
+                            addWarpComponent(0, -8, middle, 16);
                         if (warp.TopRight)
-                            drawWarpBox(middle, -8, right - middle, 16);
+                            addWarpComponent(middle, -8, right - middle, 16);
                         if (warp.BottomLeft)
-                            drawWarpBox(0, bottom, middle, 16);
+                            addWarpComponent(0, bottom, middle, 16);
                         if (warp.BottomRight)
-                            drawWarpBox(middle, bottom, right - middle, 16);
+                            addWarpComponent(middle, bottom, right - middle, 16);
 
                         if (!warp.TopLeft && !warp.TopRight && !warp.BottomLeft && !warp.BottomRight) {
-                            drawWarpBox(0, 16 * 13, Room.Width * 16, 32);
+                            addWarpComponent(0, 16 * 13, Room.Width * 16, 32);
                         }
                     }
                     else if (warp.WarpSourceType == WarpSourceType.Pointed) {
-                        drawWarpBox(warp.X * TileWidth, warp.Y * TileHeight, TileWidth, TileHeight);
+                        addWarpComponent(warp.X * TileWidth, warp.Y * TileHeight, TileWidth, TileHeight);
                     }
                     index++;
                 }
