@@ -135,6 +135,8 @@ public class MainWindow
         ((Gtk.Box)builder.GetObject("dungeonMinimapHolder")).Add(dungeonMinimap);
         ((Gtk.Box)builder.GetObject("warpEditorHolder")).Add(warpEditor);
 
+        roomeditor1.Scale = 2;
+
         roomeditor1.TilesetViewer = tilesetViewer1;
         roomeditor1.ObjectGroupEditor = objectgroupeditor1;
         roomeditor1.WarpEditor = warpEditor;

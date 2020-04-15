@@ -192,17 +192,26 @@ namespace LynnaLab
 
         // Check if the given "real" position (in pixels) is in bounds. This ALSO check that the
         // index that it's hovering over does not exceet MaxIndex.
-        public bool IsInBounds(int x, int y) {
-            Cairo.Rectangle p = GetTotalBounds();
+        public bool IsInBounds(int x, int y, bool scale = true, bool offset = true) {
+            Cairo.Rectangle p = GetTotalBounds(scale:scale, offset:offset);
             if (!(x >= p.X && y >= p.Y && x < p.X + p.Width && y < p.Y + p.Height))
                 return false;
             return GetGridIndex(x, y) <= MaxIndex;
         }
 
         // Convert a "real" position (in pixels) into a grid position (in tiles).
-        public Cairo.Point GetGridPosition(int x, int y) {
-            int x2 = (x - XOffset) / ((TileWidth  * Scale) + (TilePaddingX * Scale * 2));
-            int y2 = (y - YOffset) / ((TileHeight * Scale) + (TilePaddingY * Scale * 2));
+        public Cairo.Point GetGridPosition(int x, int y, bool scale = true, bool offset = true) {
+            int s = Scale;
+            int xoffset = XOffset;
+            int yoffset = YOffset;
+            if (!scale)
+                s = 1;
+            if (!offset) {
+                xoffset = 0;
+                yoffset = 0;
+            }
+            int x2 = (x - xoffset) / ((TileWidth  * s) + (TilePaddingX * s * 2));
+            int y2 = (y - yoffset) / ((TileHeight * s) + (TilePaddingY * s * 2));
             return new Cairo.Point(x2, y2);
         }
 
@@ -462,12 +471,21 @@ namespace LynnaLab
                     TileHeight * s);
         }
 
-        protected Cairo.Rectangle GetTotalBounds() {
+        protected Cairo.Rectangle GetTotalBounds(bool scale = true, bool offset = true) {
+            int s = Scale;
+            int xoffset = XOffset;
+            int yoffset = YOffset;
+            if (!scale)
+                s = 1;
+            if (!offset) {
+                xoffset = 0;
+                yoffset = 0;
+            }
             return new Cairo.Rectangle(
-                    XOffset,
-                    YOffset,
-                    Width  * (TilePaddingX * 2 + TileWidth)  * Scale,
-                    Height * (TilePaddingY * 2 + TileHeight) * Scale);
+                    xoffset,
+                    yoffset,
+                    Width  * (TilePaddingX * 2 + TileWidth)  * s,
+                    Height * (TilePaddingY * 2 + TileHeight) * s);
         }
 
         protected void QueueDrawTile(int x, int y) {

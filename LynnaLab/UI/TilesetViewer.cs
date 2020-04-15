@@ -69,14 +69,5 @@ namespace LynnaLab
             base.OnSizeAllocated(allocation);
             // Insert layout code here.
         }
-
-        protected override void OnGetPreferredWidth(out int minimum_width, out int natural_width) {
-            minimum_width = 16*16;
-            natural_width = minimum_width;
-        }
-        protected override void OnGetPreferredHeight(out int minimum_height, out int natural_height) {
-            minimum_height = 16*16;
-            natural_height = minimum_height;
-        }
     }
 }

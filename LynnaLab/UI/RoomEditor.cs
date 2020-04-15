@@ -121,9 +121,9 @@ namespace LynnaLab
                 args.Event.Window.GetPointer(out x, out y, out gdkState);
                 UpdateMouse(x,y);
                 if (gdkState.HasFlag(Gdk.ModifierType.Button1Mask))
-                    OnClicked(x, y);
-                if (IsInBounds(x, y)) {
-                    Cairo.Point p = GetGridPosition(x, y);
+                    OnClicked(mouseX, mouseY);
+                if (IsInBounds(mouseX, mouseY, scale:false, offset:false)) {
+                    Cairo.Point p = GetGridPosition(mouseX, mouseY, scale:false, offset:false);
                     if (gdkState.HasFlag(Gdk.ModifierType.Button3Mask))
                         TilesetViewer.SelectedIndex = room.GetTile(p.X, p.Y);
                 }
@@ -142,7 +142,7 @@ namespace LynnaLab
                 args.Event.Window.GetPointer(out x, out y, out gdkState);
                 UpdateMouse(x,y);
                 if (gdkState.HasFlag(Gdk.ModifierType.Button1Mask))
-                    OnDragged(x, y);
+                    OnDragged(mouseX, mouseY);
             };
         }
 
@@ -227,9 +227,9 @@ namespace LynnaLab
         }
 
         void OnClicked(int posX, int posY) {
-            Cairo.Point p = GetGridPosition(posX, posY);
+            Cairo.Point p = GetGridPosition(posX, posY, scale:false, offset:false);
             if (EnableTileEditing) {
-                if (!IsInBounds(posX, posY))
+                if (!IsInBounds(posX, posY, scale:false, offset:false))
                     return;
                 room.SetTile(p.X, p.Y, TilesetViewer.SelectedIndex);
             }
@@ -254,8 +254,8 @@ namespace LynnaLab
                 if (com != null && com.HasXY) {
                     int newX,newY;
                     if (gdkState.HasFlag(Gdk.ModifierType.ControlMask) || com.HasShortenedXY) {
-                        newX = x-XOffset;
-                        newY = y-YOffset;
+                        newX = x;
+                        newY = y;
                     }
                     else {
                         // Move comects in increments of 8 pixels
@@ -266,8 +266,8 @@ namespace LynnaLab
                         int dataY = com.Y+unit/2;
                         int alignX = (dataX)%unit;
                         int alignY = (dataY)%unit;
-                        newX = (x-XOffset-alignX)>>unitLog;
-                        newY = (y-YOffset-alignY)>>unitLog;
+                        newX = (x-alignX)>>unitLog;
+                        newY = (y-alignY)>>unitLog;
                         newX = newX*unit+alignX+unit/2;
                         newY = newY*unit+alignY+unit/2;
                     }
@@ -408,8 +408,8 @@ namespace LynnaLab
             base.OnSizeAllocated(allocation);
 
             // Offset the image so that objects at position (0,0) can be fully drawn
-            base.XOffset = Math.Max(base.XOffset, 8);
-            base.YOffset = Math.Max(base.YOffset, 8);
+            base.XOffset = Math.Max(base.XOffset, 8 * Scale);
+            base.YOffset = Math.Max(base.YOffset, 8 * Scale);
         }
 
         // Override preferred width/height so that objects can be drawn even outside normal room
