@@ -70,11 +70,6 @@ namespace LynnaLab
         public void SetSpacing(int index, string space) {
             spacing[index] = space;
         }
-        public void SetFileParser(FileParser p) {
-            parser = p;
-            if (parser != null)
-                _project = parser.Project;
-        }
 
         public abstract string GetString();
 

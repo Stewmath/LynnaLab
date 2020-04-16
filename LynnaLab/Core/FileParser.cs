@@ -663,6 +663,7 @@ arbitraryLengthData:
                     throw new Exception("Tried to insert after a FileComponent that's not in the FileParser.");
                 fileStructure.AddAfter(refComponent, newComponent);
             }
+            newComponent.Attach(this);
 
             // TODO: this is messy. Would be better if the "fileStructure" was smarter and could
             // handle the labels as we add them, or else just use another function for adding to it.
@@ -680,6 +681,7 @@ arbitraryLengthData:
                     throw new Exception("Tried to insert before a FileComponent that's not in the FileParser.");
                 fileStructure.AddBefore(refComponent, newComponent);
             }
+            newComponent.Attach(this);
 
             if (newComponent is Label)
                 AddLabelToDictionaries(newComponent as Label);
