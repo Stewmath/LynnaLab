@@ -131,6 +131,11 @@ namespace LynnaLab {
             return GetGameObject()?.GetSubIDDocumentation();
         }
 
+        // Remove self from the parent ObjectGroup.
+        public void Remove() {
+            objectGroup.RemoveObject(Index);
+        }
+
 
         internal void SetObjectData(ObjectData data) {
             objectData = data;

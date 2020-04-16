@@ -120,8 +120,7 @@ namespace LynnaLab
                 int x,y;
                 args.Event.Window.GetPointer(out x, out y, out gdkState);
                 UpdateMouse(x,y);
-                if (gdkState.HasFlag(Gdk.ModifierType.Button1Mask))
-                    OnClicked(mouseX, mouseY);
+                OnClicked(mouseX, mouseY, args.Event, args.Event.Button);
                 if (IsInBounds(mouseX, mouseY, scale:false, offset:false)) {
                     Cairo.Point p = GetGridPosition(mouseX, mouseY, scale:false, offset:false);
                     if (gdkState.HasFlag(Gdk.ModifierType.Button3Mask))
@@ -142,7 +141,7 @@ namespace LynnaLab
                 args.Event.Window.GetPointer(out x, out y, out gdkState);
                 UpdateMouse(x,y);
                 if (gdkState.HasFlag(Gdk.ModifierType.Button1Mask))
-                    OnDragged(mouseX, mouseY);
+                    OnDragged(mouseX, mouseY, args.Event);
             };
         }
 
@@ -226,7 +225,7 @@ namespace LynnaLab
             }
         }
 
-        void OnClicked(int posX, int posY) {
+        void OnClicked(int posX, int posY, Gdk.Event triggerEvent, uint button) {
             Cairo.Point p = GetGridPosition(posX, posY, scale:false, offset:false);
             if (EnableTileEditing) {
                 if (!IsInBounds(posX, posY, scale:false, offset:false))
@@ -237,15 +236,41 @@ namespace LynnaLab
                 if (hoveringComponent != null) {
                     selectedComponent = hoveringComponent;
                     hoveringComponent.Select();
-                    draggingObject = true;
+
+                    if (button == 1) { // Left click
+                        draggingObject = true;
+                    }
+                    else if (button == 3) { // Right click
+                        Gtk.Menu menu = new Gtk.Menu();
+
+                        foreach (Gtk.MenuItem item in selectedComponent.GetRightClickMenuItems()) {
+                            menu.Add(item);
+                        }
+
+                        if (menu.Children.Length != 0)
+                            menu.Add(new Gtk.SeparatorMenuItem());
+
+                        {
+                            var deleteButton = new Gtk.MenuItem("Delete");
+                            RoomComponent comp = selectedComponent;
+                            deleteButton.Activated += (sender, args) => {
+                                comp.Delete();
+                            };
+                            menu.Add(deleteButton);
+                        }
+
+                        menu.AttachToWidget(this, null);
+                        menu.ShowAll();
+                        menu.PopupAtPointer(triggerEvent);
+                    }
                 }
             }
             QueueDraw();
         }
 
-        void OnDragged(int x, int y) {
+        void OnDragged(int x, int y, Gdk.Event triggerEvent) {
             if (EnableTileEditing)
-                OnClicked(x,y);
+                OnClicked(x, y, triggerEvent, 0);
             else if (DrawRoomComponents) {
                 if (!draggingObject)
                     return;
@@ -348,11 +373,12 @@ namespace LynnaLab
 
             if (ViewWarps) {
                 int index = 0;
+                WarpSourceGroup group = room.GetWarpSourceGroup();
 
-                foreach (WarpSourceData warp in room.GetWarpSourceGroup().GetWarpSources()) {
+                foreach (WarpSourceData warp in group.GetWarpSources()) {
                     Action<int,int,int,int> addWarpComponent = (x, y, width, height) => {
                         var rect = new Cairo.Rectangle(x, y, width, height);
-                        var com = new WarpSourceRoomComponent(warp, index, rect);
+                        var com = new WarpSourceRoomComponent(this, group, warp, index, rect);
                         com.SelectedEvent += (sender, args) => {
                             WarpEditor.SetWarpIndex(com.index);
                         };
@@ -450,6 +476,10 @@ namespace LynnaLab
                     SelectedEvent(this, null);
             }
 
+            public virtual IList<Gtk.MenuItem> GetRightClickMenuItems() {
+                return new List<Gtk.MenuItem>();
+            }
+
             public abstract bool Compare(RoomComponent com); // Returns true if the underlying data is the same
             public abstract void Delete(); // Right-click, select "delete", or press "Delete" key while selected
         }
@@ -520,18 +550,23 @@ namespace LynnaLab
             }
 
             public override void Delete() {
-                throw new NotImplementedException();
+                obj.Remove();
             }
         }
 
         class WarpSourceRoomComponent : RoomComponent {
+            RoomEditor parent;
+            WarpSourceGroup group;
             public WarpSourceData data;
             public int index;
 
             Cairo.Rectangle rect;
 
 
-            public WarpSourceRoomComponent(WarpSourceData data, int index, Cairo.Rectangle rect) {
+            public WarpSourceRoomComponent(RoomEditor parent,
+                    WarpSourceGroup group, WarpSourceData data, int index, Cairo.Rectangle rect) {
+                this.parent = parent;
+                this.group = group;
                 this.data = data;
                 this.index = index;
                 this.rect = rect;
@@ -576,12 +611,26 @@ namespace LynnaLab
                 CairoHelper.DrawText(cr, index.ToString("X"), 9, BoxRectangle);
             }
 
+            public override IList<Gtk.MenuItem> GetRightClickMenuItems() {
+                var list = new List<Gtk.MenuItem>();
+
+                {
+                    Gtk.MenuItem followButton = new Gtk.MenuItem("Follow");
+                    followButton.Activated += (sender, args) => {
+                        parent.SetRoom(data.GetDestRoom());
+                    };
+                    list.Add(followButton);
+                }
+
+                return list;
+            }
+
             public override bool Compare(RoomComponent com) {
                 return data == (com as WarpSourceRoomComponent)?.data;
             }
 
             public override void Delete() {
-                throw new NotImplementedException();
+                group.RemoveWarpSource(data);
             }
 
 

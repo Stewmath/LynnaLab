@@ -336,5 +336,11 @@ namespace LynnaLab
             // The handler defined in the constructor will update the
             // referencedData variable
         }
+
+        // This hides the annoyance of the "DestData" intermediate layer
+        public Room GetDestRoom() {
+            WarpDestData destData = GetReferencedDestData();
+            return Project.GetIndexedDataType<Room>((destData.Group<<8) + destData.Map);
+        }
     }
 }

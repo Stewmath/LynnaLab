@@ -49,6 +49,10 @@ namespace LynnaLab
             get { return vrg; }
         }
 
+        public int Group {
+            get { return DestGroup.Index; }
+        }
+
         // Don't edit these properties outside of the WarpDestGroup class (TODO: review this)
         internal WarpDestGroup DestGroup {get; set;}
         internal int DestIndex {get; set;}
