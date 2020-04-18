@@ -123,11 +123,6 @@ namespace LynnaLab
                 args.Event.Window.GetPointer(out x, out y, out gdkState);
                 UpdateMouse(x,y);
                 OnClicked(mouseX, mouseY, args.Event, args.Event.Button);
-                if (IsInBounds(mouseX, mouseY, scale:false, offset:false)) {
-                    Cairo.Point p = GetGridPosition(mouseX, mouseY, scale:false, offset:false);
-                    if (gdkState.HasFlag(Gdk.ModifierType.Button3Mask))
-                        TilesetViewer.SelectedIndex = room.GetTile(p.X, p.Y);
-                }
             };
             this.ButtonReleaseEvent += delegate(object o, ButtonReleaseEventArgs args) {
                 int x,y;
@@ -235,7 +230,12 @@ namespace LynnaLab
             if (EnableTileEditing) {
                 if (!IsInBounds(posX, posY, scale:false, offset:false))
                     return;
-                room.SetTile(p.X, p.Y, TilesetViewer.SelectedIndex);
+                if (button == 1) { // Left-click
+                    room.SetTile(p.X, p.Y, TilesetViewer.SelectedIndex);
+                }
+                else if (button == 3) { // Right-click
+                    TilesetViewer.SelectedIndex = room.GetTile(p.X, p.Y);
+                }
             }
             else if (DrawRoomComponents) {
                 if (hoveringComponent != null) {
