@@ -33,6 +33,8 @@ namespace LynnaLab
                 return _floor;
             }
             set {
+                if (value >= (_map as Dungeon).NumFloors)
+                    throw new ArgumentException(string.Format("Floor {0} too high.", value));
                 _floor = value;
                 GenerateImage();
             }
@@ -56,7 +58,7 @@ namespace LynnaLab
             this.scale = scale;
         }
 
-        public void SetMap(Map m) {
+        public void SetMap(Map m, int index = -1) {
             if (_map != m) {
                 _map = m;
                 _floor = 0;
@@ -72,6 +74,10 @@ namespace LynnaLab
                 TileHeight = (int)(_map.RoomHeight*16*scale);
 
                 GenerateImage();
+            }
+
+            if (index != -1) {
+                SelectedIndex = index;
             }
         }
 

@@ -556,8 +556,12 @@ namespace LynnaLab
                 return 0x63;
         }
 
-        public int GetFirstDungeonGroup() {
-            return 4;
+        // Gets the dungeon a room is in. Also returns the coordinates within the dungeon in x/y
+        // parameters.
+        public Dungeon GetRoomDungeon(Room room, out int x, out int y) {
+            x = -1;
+            y = -1;
+            return null;
         }
 
         public FileParser GetDefaultEnemyObjectFile() {

@@ -42,35 +42,61 @@ public class MainWindow
     uint animationTimerID = 0;
     PluginCore pluginCore;
 
+    Room _activeRoom;
+    Map _lastActiveMap;
+
 
     // Properties
 
-    internal Project Project { get; set; }
-    internal Room ActiveRoom {
+    public Project Project { get; set; }
+    public Room ActiveRoom {
         get {
-            return roomeditor1.Room;
+            return _activeRoom;
+        }
+        set {
+            if (_activeRoom != value) {
+                _activeRoom = value;
+                OnRoomChanged();
+            }
         }
     }
-    internal Map ActiveMap {
+    public Map ActiveMap {
         get {
-            return minimapNotebook.Page == 0 ? worldMinimap.Map : dungeonMinimap.Map;
+            return ActiveMinimap.Map;
+        }
+        set {
+            if (ActiveMap != value && value != null) {
+                if (value is Dungeon)
+                    minimapNotebook.Page = 1;
+                else
+                    minimapNotebook.Page = 0;
+                ActiveMinimap.SetMap(value);
+                OnMapChanged();
+            }
         }
     }
-    internal int MapSelectedX {
+    public int MapSelectedX {
         get {
-            return minimapNotebook.Page == 0 ? worldMinimap.SelectedX : dungeonMinimap.SelectedX;
+            return ActiveMinimap.SelectedX;
         }
     }
-    internal int MapSelectedY {
+    public int MapSelectedY {
         get {
-            return minimapNotebook.Page == 0 ? worldMinimap.SelectedY : dungeonMinimap.SelectedY;
+            return ActiveMinimap.SelectedY;
         }
     }
-    internal int MapSelectedFloor {
+    public int MapSelectedFloor {
         get {
-            return minimapNotebook.Page == 0 ? worldMinimap.Floor : dungeonMinimap.Floor;
+            return ActiveMinimap.Floor;
         }
     }
+
+    Minimap ActiveMinimap {
+        get {
+            return minimapNotebook.Page == 0 ? worldMinimap : dungeonMinimap;
+        }
+    }
+
 
     bool RoomContextActive { // "Room" tab
         get { return contextNotebook.Page == 0; }
@@ -82,8 +108,8 @@ public class MainWindow
         get { return contextNotebook.Page == 2; }
     }
 
-    internal MainWindow() : this("") {}
-    internal MainWindow (string directory)
+    public MainWindow() : this("") {}
+    public MainWindow (string directory)
     {
         log.Debug("Beginning Program");
 
@@ -136,17 +162,21 @@ public class MainWindow
         ((Gtk.Box)builder.GetObject("warpEditorHolder")).Add(warpEditor);
 
         roomeditor1.Scale = 2;
-
         roomeditor1.TilesetViewer = tilesetViewer1;
         roomeditor1.ObjectGroupEditor = objectgroupeditor1;
         roomeditor1.WarpEditor = warpEditor;
+        roomeditor1.RoomChangedEvent += (sender, room) => {
+            if (room != ActiveRoom) {
+                ActiveRoom = room;
+                UpdateMinimapFromRoom();
+            }
+        };
+
         dungeonMinimap.AddTileSelectedHandler(delegate(object sender, int index) {
-            Room room = dungeonMinimap.GetRoom();
-            SetRoom(room);
+            OnMinimapTileSelected(sender, index);
         });
         worldMinimap.AddTileSelectedHandler(delegate(object sender, int index) {
-            Room room = worldMinimap.GetRoom();
-            SetRoom(room);
+            OnMinimapTileSelected(sender, index);
         });
 
         tilesetViewer1.HoverChangedEvent += delegate() {
@@ -282,46 +312,65 @@ public class MainWindow
             return;
         tilesetViewer1.SetTileset(tileset);
         tilesetSpinButton.Value = tileset.Index;
-        roomeditor1.Room.SetTileset(tileset);
-        roomeditor1.QueueDraw();
+        ActiveRoom.SetTileset(tileset);
     }
 
-    public void SetRoom(int room) {
-        if (Project == null)
-            return;
-        SetRoom(Project.GetIndexedDataType<Room>(room));
+    void OnRoomChanged() {
+        roomeditor1.SetRoom(ActiveRoom);
+        roomSpinButton.Value = ActiveRoom.Index;
+        warpEditor.SetMap(ActiveRoom.Index>>8, ActiveRoom.Index&0xff);
+        SetTileset(ActiveRoom.Tileset);
+        musicComboBox.Active = Project.MusicMapping.IndexOf((byte)ActiveRoom.GetMusicID());
     }
 
-    public void SetRoom(Room room) {
-        if (Project == null)
-            return;
-        roomeditor1.SetRoom(room);
-        SetTileset(room.Tileset);
-        roomSpinButton.Value = room.Index;
-        musicComboBox.Active = Project.MusicMapping.IndexOf((byte)room.GetMusicID());
-        warpEditor.SetMap(room.Index>>8, room.Index&0xff);
+    public void UpdateMinimapFromRoom() {
+        int x, y;
+        Dungeon dungeon = Project.GetRoomDungeon(ActiveRoom, out x, out y);
+        if (dungeon != null) {
+            //SetDungeon(dungeon);
+        }
+        else {
+            Room r = ActiveRoom;
+            Map map = Project.GetIndexedDataType<WorldMap>(ActiveRoom.Index >> 8);
+            ActiveMap = map;
+            ActiveMinimap.SelectedIndex = r.Index & 0xff;
+        }
     }
 
-    void SetDungeon(Dungeon dungeon) {
-        if (Project == null)
-            return;
-        dungeonSpinButton.Value = dungeon.Index;
-        floorSpinButton.Value = 0;
-        floorSpinButton.Adjustment = new Adjustment(0, 0, dungeon.NumFloors-1, 1, 0, 0);
-        dungeonMinimap.SetMap(dungeon);
-        SetRoom(dungeonMinimap.GetRoom());
+    void OnMinimapTileSelected(object sender, int index) {
+        if (sender == worldMinimap) {
+            ActiveRoom = worldMinimap.GetRoom();
+            worldSpinButton.Value = worldMinimap.Map.Index;
+        }
+        else {
+            ActiveRoom = dungeonMinimap.GetRoom();
+            dungeonSpinButton.Value = dungeonMinimap.Map.Index;
+        }
     }
-    void SetDungeon(int index) {
-        if (Project == null)
+
+    void OnMapChanged() {
+        if (_lastActiveMap == ActiveMap)
             return;
-        SetDungeon(Project.GetIndexedDataType<Dungeon>(index));
+        _lastActiveMap = ActiveMap;
+
+        ActiveMinimap.SetMap(ActiveMap);
+
+        if (ActiveMap is Dungeon) {
+            Dungeon dungeon = ActiveMap as Dungeon;
+            dungeonSpinButton.Value = dungeon.Index;
+            floorSpinButton.Adjustment = new Adjustment(0, 0, dungeon.NumFloors-1, 1, 0, 0);
+        }
+        else {
+            worldSpinButton.Value = ActiveMap.Index;
+        }
+
+        ActiveRoom = ActiveMinimap.GetRoom();
     }
+
     void SetWorld(WorldMap map) {
         if (Project == null)
             return;
-        worldSpinButton.Value = map.Index;
-        worldMinimap.SetMap(map);
-        SetRoom(worldMinimap.GetRoom());
+        ActiveMap = map;
     }
     void SetWorld(int index) {
         if (Project == null)
@@ -412,31 +461,25 @@ public class MainWindow
     {
         if (Project == null)
             return;
-        GLib.Idle.Add(new GLib.IdleHandler(delegate() {
-                    SetDungeon(Project.GetIndexedDataType<Dungeon>(dungeonSpinButton.ValueAsInt));
-                    return false;
-        }));
+        dungeonMinimap.SetMap(Project.GetIndexedDataType<Dungeon>(dungeonSpinButton.ValueAsInt));
+        OnMapChanged();
     }
 
     protected void OnFloorSpinButtonValueChanged(object sender, EventArgs e)
     {
         if (Project == null)
             return;
-        GLib.Idle.Add(new GLib.IdleHandler(delegate() {
-                    dungeonMinimap.Floor = floorSpinButton.ValueAsInt;
-                    SetRoom(dungeonMinimap.GetRoom());
-                    return false;
-        }));
+        dungeonMinimap.Floor = (sender as Gtk.SpinButton).ValueAsInt;
+        OnMapChanged();
     }
 
     protected void OnWorldSpinButtonValueChanged(object sender, EventArgs e)
     {
         if (Project == null)
             return;
-        GLib.Idle.Add(new GLib.IdleHandler(delegate() {
-                    SetWorld(worldSpinButton.ValueAsInt);
-                    return false;
-        }));
+        WorldMap world = Project.GetIndexedDataType<WorldMap>(worldSpinButton.ValueAsInt);
+        if (ActiveMap != world)
+            SetWorld(world);
     }
 
     protected void OnMinimapNotebookSwitchPage(object o, SwitchPageArgs args)
@@ -445,9 +488,10 @@ public class MainWindow
             return;
         Notebook nb = minimapNotebook;
         if (nb.Page == 0)
-            SetWorld(worldSpinButton.ValueAsInt);
+            ActiveMinimap.SetMap(Project.GetIndexedDataType<WorldMap>(worldSpinButton.ValueAsInt));
         else if (nb.Page == 1)
-            SetDungeon(dungeonSpinButton.ValueAsInt);
+            ActiveMinimap.SetMap(Project.GetIndexedDataType<Dungeon>(dungeonSpinButton.ValueAsInt));
+        OnMapChanged();
     }
 
     protected void OnContextNotebookSwitchPage(object o, SwitchPageArgs args)
@@ -477,7 +521,11 @@ public class MainWindow
         if (Project == null)
             return;
         SpinButton button = sender as SpinButton;
-        SetRoom(Project.GetIndexedDataType<Room>(button.ValueAsInt));
+        Room r = Project.GetIndexedDataType<Room>(button.ValueAsInt);
+        if (r != ActiveRoom) {
+            ActiveRoom = r;
+            UpdateMinimapFromRoom();
+        }
     }
 
     protected void OnTilesetSpinButtonValueChanged(object sender, EventArgs e)
@@ -492,7 +540,7 @@ public class MainWindow
     protected void OnMusicComboBoxChanged(object sender, EventArgs e) {
         if (Project == null)
             return;
-        roomeditor1.Room.SetMusicID(Project.MusicMapping.StringToByte(musicComboBox.ActiveId));
+        ActiveRoom.SetMusicID(Project.MusicMapping.StringToByte(musicComboBox.ActiveId));
     }
 
     protected void OnTilesetEditorButtonClicked(object sender, EventArgs e)

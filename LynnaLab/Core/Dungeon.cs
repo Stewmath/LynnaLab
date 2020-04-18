@@ -95,9 +95,14 @@ namespace LynnaLab
 
         public override Room GetRoom(int x, int y, int floor=0) {
             int i = FirstLayoutIndex + floor;
+            int pos = y * 8 + x;
+            if (pos >= 0x40)
+                throw new ArgumentException(string.Format("Arguments {0:X},{1:X} to 'GetRoom' too high.", x, y));
+            if (floor >= NumFloors)
+                throw new ArgumentException(string.Format("Floor {0} too high.", floor));
             Stream file = Project.GetBinaryFile(
                     "rooms/" + Project.GameString + "/dungeonLayouts.bin");
-            file.Position = i*64+y*8+x;
+            file.Position = i*64+pos;
             int roomIndex = file.ReadByte();
             Room room = Project.GetIndexedDataType<Room>(roomIndex + Group*0x100);
             return room;

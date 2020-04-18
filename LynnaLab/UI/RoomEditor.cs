@@ -89,11 +89,13 @@ namespace LynnaLab
 
         // Variables
 
+        public event EventHandler<Room> RoomChangedEvent = delegate {};
+
         Room room;
         ObjectGroupEditor _objectEditor;
         WarpEditor _warpEditor;
 
-        List<RoomComponent> roomComponents;
+        List<RoomComponent> roomComponents = new List<RoomComponent>();
 
         int mouseX=-1,mouseY=-1;
 
@@ -148,7 +150,7 @@ namespace LynnaLab
         public void SetRoom(Room r) {
             if (room != null) {
                 room.RoomModifiedEvent -= OnRoomModified;
-                room.GetObjectGroup().AddModifiedHandler(OnObjectModified);
+                room.GetObjectGroup().RemoveModifiedHandler(OnObjectModified);
                 room.GetWarpSourceGroup().RemoveModifiedHandler(OnWarpSourceModified);
             }
             r.RoomModifiedEvent += OnRoomModified;
@@ -163,6 +165,9 @@ namespace LynnaLab
 
             GenerateRoomComponents();
             selectedComponent = null;
+
+            RoomChangedEvent(this, r);
+
             QueueDraw();
         }
 

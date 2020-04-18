@@ -213,7 +213,8 @@ namespace LynnaLab
 
         void OnJumpToDestClicked(object sender, EventArgs e) {
             if (destData != null) {
-                mainWindow.SetRoom((destData.DestGroup.Index<<8) | destData.Map);
+                Room room = Project.GetIndexedDataType<Room>((destData.DestGroup.Index<<8) | destData.Map);
+                mainWindow.ActiveRoom = room;
             }
         }
 
