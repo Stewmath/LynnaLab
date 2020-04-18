@@ -558,9 +558,17 @@ namespace LynnaLab
 
         // Gets the dungeon a room is in. Also returns the coordinates within the dungeon in x/y
         // parameters.
-        public Dungeon GetRoomDungeon(Room room, out int x, out int y) {
+        public Dungeon GetRoomDungeon(Room room, out int x, out int y, out int floor) {
             x = -1;
             y = -1;
+            floor = -1;
+
+            for (int d=0; d<GetNumDungeons(); d++) {
+                Dungeon dungeon = GetIndexedDataType<Dungeon>(d);
+                if (dungeon.GetRoomPosition(room, out x, out y, out floor))
+                    return dungeon;
+            }
+
             return null;
         }
 

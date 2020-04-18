@@ -183,10 +183,10 @@ public class MainWindow
         });
 
         dungeonMinimap.AddTileSelectedHandler(eventGroup.Add<int>(delegate(object sender, int index) {
-            OnMinimapTileSelected(sender, index);
+            OnMinimapTileSelected(sender, dungeonMinimap.SelectedIndex);
         }));
         worldMinimap.AddTileSelectedHandler(eventGroup.Add<int>(delegate(object sender, int index) {
-            OnMinimapTileSelected(sender, index);
+            OnMinimapTileSelected(sender, worldMinimap.SelectedIndex);
         }));
 
         tilesetViewer1.HoverChangedEvent += eventGroup.Add<int>((sender, tile) => {
@@ -345,10 +345,12 @@ public class MainWindow
     public void UpdateMinimapFromRoom() {
         eventGroup.Lock();
 
-        int x, y;
-        Dungeon dungeon = Project.GetRoomDungeon(ActiveRoom, out x, out y);
+        int x, y, floor;
+        Dungeon dungeon = Project.GetRoomDungeon(ActiveRoom, out x, out y, out floor);
         if (dungeon != null) {
-            //SetDungeon(dungeon);
+            ActiveMap = dungeon;
+            ActiveMinimap.Floor = floor;
+            ActiveMinimap.SelectedIndex = x + y * ActiveMinimap.Width;
         }
         else {
             Room r = ActiveRoom;
@@ -357,22 +359,12 @@ public class MainWindow
             ActiveMinimap.SelectedIndex = r.Index & 0xff;
         }
 
-        eventGroup.Unlock();
+        OnMapChanged();
+        eventGroup.UnlockAndClear();
     }
 
     void OnMinimapTileSelected(object sender, int index) {
-        eventGroup.Lock();
-
-        if (sender == worldMinimap) {
-            ActiveRoom = worldMinimap.GetRoom();
-            worldSpinButton.Value = worldMinimap.Map.Index;
-        }
-        else {
-            ActiveRoom = dungeonMinimap.GetRoom();
-            dungeonSpinButton.Value = dungeonMinimap.Map.Index;
-        }
-
-        eventGroup.Unlock();
+        ActiveRoom = ActiveMinimap.GetRoom();
     }
 
     void OnMapChanged() {

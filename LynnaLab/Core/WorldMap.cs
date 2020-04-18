@@ -42,21 +42,22 @@ namespace LynnaLab
         public override Room GetRoom(int x, int y, int floor=0) {
             return Project.GetIndexedDataType<Room>(Index*0x100+x+y*16);
         }
-        public override void GetRoomPosition(Room room, out int x, out int y) {
+        public override bool GetRoomPosition(Room room, out int x, out int y) {
             int f;
-            GetRoomPosition(room, out x, out y, out f);
+            return GetRoomPosition(room, out x, out y, out f);
         }
-        public override void GetRoomPosition(Room room, out int x, out int y, out int floor) {
+        public override bool GetRoomPosition(Room room, out int x, out int y, out int floor) {
             if (room.Index/0x100 != Index) {
                 // Not in this group
                 x = -1;
                 y = -1;
                 floor = -1;
-                return;
+                return false;
             }
             x = room.Index%16;
             y = (room.Index%0x100)/16;
             floor = 0;
+            return true;
         }
     }
 }

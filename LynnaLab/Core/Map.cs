@@ -19,7 +19,7 @@ namespace LynnaLab
         }
 
         public abstract Room GetRoom(int x, int y, int floor=0);
-        public abstract void GetRoomPosition(Room room, out int x, out int y);
-        public abstract void GetRoomPosition(Room room, out int x, out int y, out int floor);
+        public abstract bool GetRoomPosition(Room room, out int x, out int y);
+        public abstract bool GetRoomPosition(Room room, out int x, out int y, out int floor);
     }
 }

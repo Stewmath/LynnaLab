@@ -108,7 +108,7 @@ namespace LynnaLab
             return room;
         }
 
-        public override void GetRoomPosition(Room room, out int x, out int y, out int floor) {
+        public override bool GetRoomPosition(Room room, out int x, out int y, out int floor) {
             x = -1;
             y = -1;
             floor = -1;
@@ -120,16 +120,18 @@ namespace LynnaLab
                             x = i;
                             y = j;
                             floor = f;
-                            return;
+                            return true;
                         }
                     }
                 }
             }
+
+            return false;
         }
 
-        public override void GetRoomPosition(Room room, out int x, out int y) {
+        public override bool GetRoomPosition(Room room, out int x, out int y) {
             int f;
-            GetRoomPosition(room, out x, out y, out f);
+            return GetRoomPosition(room, out x, out y, out f);
         }
     }
 }
