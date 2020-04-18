@@ -246,7 +246,6 @@
                     <property name="width_request">550</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <signal name="switch-page" handler="OnContextNotebookSwitchPage" swapped="no"/>
                     <child>
                       <object class="GtkBox">
                         <property name="visible">True</property>
@@ -519,7 +518,6 @@
                 <child>
                   <object class="GtkNotebook" id="minimapNotebook">
                     <property name="can_focus">True</property>
-                    <signal name="switch-page" handler="OnMinimapNotebookSwitchPage" swapped="no"/>
                     <child>
                       <object class="GtkVBox" id="vbox4">
                         <property name="can_focus">False</property>
@@ -547,7 +545,6 @@
                             <child>
                               <object class="GtkSpinButton" id="worldSpinButton">
                                 <property name="can_focus">True</property>
-                                <signal name="value-changed" handler="OnWorldSpinButtonValueChanged" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -624,7 +621,6 @@
                             <child>
                               <object class="GtkSpinButton" id="dungeonSpinButton">
                                 <property name="can_focus">True</property>
-                                <signal name="value-changed" handler="OnDungeonSpinButtonValueChanged" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -645,7 +641,6 @@
                             <child>
                               <object class="GtkSpinButton" id="floorSpinButton">
                                 <property name="can_focus">True</property>
-                                <signal name="value-changed" handler="OnFloorSpinButtonValueChanged" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>

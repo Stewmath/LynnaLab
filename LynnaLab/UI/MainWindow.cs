@@ -45,6 +45,11 @@ public class MainWindow
     Room _activeRoom;
     Map _lastActiveMap;
 
+    // Certain "update" events are called indirectly through this. Certain updates are delayed until
+    // it is "unlocked", because we sometimes don't want updates to certain widget properties to be
+    // applied immediately.
+    LockableEventGroup eventGroup = new LockableEventGroup();
+
 
     // Properties
 
@@ -56,7 +61,7 @@ public class MainWindow
         set {
             if (_activeRoom != value) {
                 _activeRoom = value;
-                OnRoomChanged();
+                eventGroup.Invoke(OnRoomChanged);
             }
         }
     }
@@ -71,7 +76,7 @@ public class MainWindow
                 else
                     minimapNotebook.Page = 0;
                 ActiveMinimap.SetMap(value);
-                OnMapChanged();
+                eventGroup.Invoke(OnMapChanged);
             }
         }
     }
@@ -118,12 +123,10 @@ public class MainWindow
         builder.Autoconnect(this);
 
         mainWindow = (builder.GetObject("mainWindow") as Gtk.Window);
-
         menubar1 = (Gtk.MenuBar)builder.GetObject("menubar1");
         editMenuItem = (Gtk.MenuItem)builder.GetObject("editMenuItem");
         actionMenuItem = (Gtk.MenuItem)builder.GetObject("actionMenuItem");
         debugMenuItem = (Gtk.MenuItem)builder.GetObject("debugMenuItem");
-
         minimapNotebook = (Gtk.Notebook)builder.GetObject("minimapNotebook");
         contextNotebook = (Gtk.Notebook)builder.GetObject("contextNotebook");
         worldSpinButton = (Gtk.SpinButton)builder.GetObject("worldSpinButton");
@@ -136,14 +139,10 @@ public class MainWindow
 
         roomSpinButton = new SpinButtonHexadecimal(0, 0x5ff);
         roomSpinButton.Digits = 3;
-        roomSpinButton.ValueChanged += OnRoomSpinButtonValueChanged;
         tilesetSpinButton = new SpinButtonHexadecimal();
         tilesetSpinButton.Digits = 2;
-        tilesetSpinButton.ValueChanged += OnTilesetSpinButtonValueChanged;
 
         musicComboBox = new ComboBoxFromConstants();
-        musicComboBox.Changed += OnMusicComboBoxChanged;
-
         objectgroupeditor1 = new ObjectGroupEditor();
         tilesetViewer1 = new TilesetViewer();
         roomeditor1 = new RoomEditor();
@@ -165,34 +164,45 @@ public class MainWindow
         roomeditor1.TilesetViewer = tilesetViewer1;
         roomeditor1.ObjectGroupEditor = objectgroupeditor1;
         roomeditor1.WarpEditor = warpEditor;
-        roomeditor1.RoomChangedEvent += (sender, room) => {
+
+        musicComboBox.Changed += eventGroup.Add(OnMusicComboBoxChanged);
+        roomSpinButton.ValueChanged += eventGroup.Add(OnRoomSpinButtonValueChanged);
+        tilesetSpinButton.ValueChanged += eventGroup.Add(OnTilesetSpinButtonValueChanged);
+
+        worldSpinButton.ValueChanged += eventGroup.Add(OnWorldSpinButtonValueChanged);
+        dungeonSpinButton.ValueChanged += eventGroup.Add(OnDungeonSpinButtonValueChanged);
+        floorSpinButton.ValueChanged += eventGroup.Add(OnFloorSpinButtonValueChanged);
+        minimapNotebook.SwitchPage += new SwitchPageHandler(eventGroup.Add<SwitchPageArgs>(OnMinimapNotebookSwitchPage));
+        contextNotebook.SwitchPage += new SwitchPageHandler(eventGroup.Add<SwitchPageArgs>(OnContextNotebookSwitchPage));
+
+        roomeditor1.RoomChangedEvent += eventGroup.Add<Room>((sender, room) => {
             if (room != ActiveRoom) {
                 ActiveRoom = room;
                 UpdateMinimapFromRoom();
             }
-        };
-
-        dungeonMinimap.AddTileSelectedHandler(delegate(object sender, int index) {
-            OnMinimapTileSelected(sender, index);
-        });
-        worldMinimap.AddTileSelectedHandler(delegate(object sender, int index) {
-            OnMinimapTileSelected(sender, index);
         });
 
-        tilesetViewer1.HoverChangedEvent += delegate() {
+        dungeonMinimap.AddTileSelectedHandler(eventGroup.Add<int>(delegate(object sender, int index) {
+            OnMinimapTileSelected(sender, index);
+        }));
+        worldMinimap.AddTileSelectedHandler(eventGroup.Add<int>(delegate(object sender, int index) {
+            OnMinimapTileSelected(sender, index);
+        }));
+
+        tilesetViewer1.HoverChangedEvent += eventGroup.Add<int>((sender, tile) => {
             if (tilesetViewer1.HoveringIndex == -1)
                 statusbar1.Push(1,
                         "Selected Tile: 0x" + tilesetViewer1.SelectedIndex.ToString("X2"));
             else
                 statusbar1.Push(1,
                         "Hovering Tile: 0x" + tilesetViewer1.HoveringIndex.ToString("X2"));
-        };
-        tilesetViewer1.AddTileSelectedHandler(delegate(object sender, int index) {
+        });
+        tilesetViewer1.AddTileSelectedHandler(eventGroup.Add<int>(delegate(object sender, int index) {
             statusbar1.Push(1,
                     "Selected Tile: 0x" + index.ToString("X2"));
-        });
+        }));
 
-        roomeditor1.HoverChangedEvent += delegate() {
+        roomeditor1.HoverChangedEvent += eventGroup.Add<int>((sender, tile) => {
             if (roomeditor1.HoveringIndex == -1)
                 statusbar1.Push(1,
                         "Selected Tile: 0x" + tilesetViewer1.SelectedIndex.ToString("X2"));
@@ -200,7 +210,7 @@ public class MainWindow
                 statusbar1.Push(2,
                         "Hovering Tile: (" + roomeditor1.HoveringX +
                         ", " + roomeditor1.HoveringY + ")");
-        };
+        });
 
         worldSpinButton.Adjustment = new Adjustment(0, 0, 5, 1, 0, 0);
         dungeonSpinButton.Adjustment = new Adjustment(0, 0, 15, 1, 0, 0);
@@ -310,20 +320,31 @@ public class MainWindow
     void SetTileset(Tileset tileset) {
         if (Project == null)
             return;
+
+        eventGroup.Lock();
+
         tilesetViewer1.SetTileset(tileset);
         tilesetSpinButton.Value = tileset.Index;
         ActiveRoom.SetTileset(tileset);
+
+        eventGroup.Unlock();
     }
 
     void OnRoomChanged() {
+        eventGroup.Lock();
+
         roomeditor1.SetRoom(ActiveRoom);
         roomSpinButton.Value = ActiveRoom.Index;
         warpEditor.SetMap(ActiveRoom.Index>>8, ActiveRoom.Index&0xff);
         SetTileset(ActiveRoom.Tileset);
         musicComboBox.Active = Project.MusicMapping.IndexOf((byte)ActiveRoom.GetMusicID());
+
+        eventGroup.Unlock();
     }
 
     public void UpdateMinimapFromRoom() {
+        eventGroup.Lock();
+
         int x, y;
         Dungeon dungeon = Project.GetRoomDungeon(ActiveRoom, out x, out y);
         if (dungeon != null) {
@@ -335,9 +356,13 @@ public class MainWindow
             ActiveMap = map;
             ActiveMinimap.SelectedIndex = r.Index & 0xff;
         }
+
+        eventGroup.Unlock();
     }
 
     void OnMinimapTileSelected(object sender, int index) {
+        eventGroup.Lock();
+
         if (sender == worldMinimap) {
             ActiveRoom = worldMinimap.GetRoom();
             worldSpinButton.Value = worldMinimap.Map.Index;
@@ -346,12 +371,16 @@ public class MainWindow
             ActiveRoom = dungeonMinimap.GetRoom();
             dungeonSpinButton.Value = dungeonMinimap.Map.Index;
         }
+
+        eventGroup.Unlock();
     }
 
     void OnMapChanged() {
         if (_lastActiveMap == ActiveMap)
             return;
         _lastActiveMap = ActiveMap;
+
+        eventGroup.Lock();
 
         ActiveMinimap.SetMap(ActiveMap);
 
@@ -365,6 +394,8 @@ public class MainWindow
         }
 
         ActiveRoom = ActiveMinimap.GetRoom();
+
+        eventGroup.Unlock();
     }
 
     void SetWorld(WorldMap map) {

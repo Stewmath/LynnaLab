@@ -153,7 +153,7 @@ namespace LynnaLab
 
 
         // Event triggered when the hovering tile changes
-        public event System.Action HoverChangedEvent;
+        public event EventHandler<int> HoverChangedEvent;
 
 
         public delegate void TileGridEventHandler(object sender, int tileIndex);
@@ -308,7 +308,7 @@ namespace LynnaLab
                 this.QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
 
                 if (HoverChangedEvent != null)
-                    HoverChangedEvent();
+                    HoverChangedEvent(this, hoveringIndex);
 
                 // Drag actions
                 if (activeAction != null && activeAction.mod.HasFlag(MouseModifier.Drag) && IsInBounds(x, y)) {
@@ -328,7 +328,7 @@ namespace LynnaLab
             hoveringIndex = -1;
 
             if (changed && HoverChangedEvent != null)
-                HoverChangedEvent();
+                HoverChangedEvent(this, hoveringIndex);
 
             // Don't check for drag actions because we'll ignore out-of-bounds events?
         }
