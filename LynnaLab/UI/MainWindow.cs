@@ -43,7 +43,6 @@ public class MainWindow
     PluginCore pluginCore;
 
     Room _activeRoom;
-    Map _lastActiveMap;
 
     // Certain "update" events are called indirectly through this. Certain updates are delayed until
     // it is "unlocked", because we sometimes don't want updates to certain widget properties to be
@@ -368,26 +367,23 @@ public class MainWindow
     }
 
     void OnMapChanged() {
-        if (_lastActiveMap == ActiveMap)
+        if (ActiveMap == null)
             return;
-        _lastActiveMap = ActiveMap;
 
         eventGroup.Lock();
-
-        ActiveMinimap.SetMap(ActiveMap);
 
         if (ActiveMap is Dungeon) {
             Dungeon dungeon = ActiveMap as Dungeon;
             dungeonSpinButton.Value = dungeon.Index;
-            floorSpinButton.Adjustment = new Adjustment(0, 0, dungeon.NumFloors-1, 1, 0, 0);
+            floorSpinButton.Adjustment = new Adjustment(ActiveMinimap.Floor, 0, dungeon.NumFloors-1, 1, 0, 0);
         }
         else {
             worldSpinButton.Value = ActiveMap.Index;
         }
 
-        ActiveRoom = ActiveMinimap.GetRoom();
+        eventGroup.UnlockAndClear();
 
-        eventGroup.Unlock();
+        ActiveRoom = ActiveMinimap.GetRoom();
     }
 
     void SetWorld(WorldMap map) {
