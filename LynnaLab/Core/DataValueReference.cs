@@ -172,7 +172,8 @@ namespace LynnaLab
                     }
                     break;
             }
-            modifiedEvent.Invoke(this, null);
+            // Shouldn't need to invoke modifiedEvent here because a handler is installed on the
+            // underlying data.
         }
 
         public override void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {

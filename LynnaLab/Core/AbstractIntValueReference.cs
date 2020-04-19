@@ -3,8 +3,11 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
-    // In order to use this properly, the Handler class must implement (or override if inheriting
-    // from "Data") the "GetIntValue" and "SetValue(string, int)" functions.
+    // A ValueReference which isn't directly tied to any data; instead it takes getter and setter
+    // functions for data modifications.
+    // A caveat about using this: if this is used as a layer on top of actual Data values, then if
+    // those Data values are changed, the event handlers installed by "AddValueModifiedHandler"
+    // won't trigger. They will only trigger if modifications are made through this class.
     public class AbstractIntValueReference : ValueReference {
 
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);

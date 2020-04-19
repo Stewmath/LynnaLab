@@ -14,7 +14,9 @@ namespace LynnaLab
         }
 
         public bool EnableTileEditing {
-            get { return _enableTileEditing; }
+            get {
+                return _enableTileEditing && EditingWarpDestination == null;
+            }
             set {
                 _enableTileEditing = value;
                 base.Hoverable = value;
@@ -63,6 +65,22 @@ namespace LynnaLab
             }
         }
 
+        // This is set to a warp when we're in "warp destination editing mode".
+        public Warp EditingWarpDestination {
+            get {
+                return _editingWarpDestination;
+            }
+            private set {
+                if (_editingWarpDestination != null)
+                    _editingWarpDestination.RemoveModifiedHandler(OnWarpModified);
+
+                _editingWarpDestination = value;
+
+                if (_editingWarpDestination != null)
+                    _editingWarpDestination.AddModifiedHandler(OnWarpModified);
+            }
+        }
+
 
         protected override Bitmap Image {
             get {
@@ -78,7 +96,7 @@ namespace LynnaLab
 
         // Should we draw the room components (objects, warps)?
         bool DrawRoomComponents {
-            get { return ViewObjects || ViewWarps; }
+            get { return ViewObjects || ViewWarps || EditingWarpDestination != null; }
         }
 
         // Should we be able to select & drag the room components?
@@ -102,6 +120,7 @@ namespace LynnaLab
         Room room;
         ObjectGroupEditor _objectEditor;
         WarpEditor _warpEditor;
+        Warp _editingWarpDestination;
 
         List<RoomComponent> roomComponents = new List<RoomComponent>();
 
@@ -153,11 +172,11 @@ namespace LynnaLab
             if (room != null) {
                 room.RoomModifiedEvent -= OnRoomModified;
                 room.GetObjectGroup().RemoveModifiedHandler(OnObjectModified);
-                room.GetWarpGroup().RemoveModifiedHandler(OnWarpSourceModified);
+                room.GetWarpGroup().RemoveModifiedHandler(OnWarpModified);
             }
             r.RoomModifiedEvent += OnRoomModified;
             r.GetObjectGroup().AddModifiedHandler(OnObjectModified);
-            r.GetWarpGroup().AddModifiedHandler(OnWarpSourceModified);
+            r.GetWarpGroup().AddModifiedHandler(OnWarpModified);
 
             room = r;
             Width = room.Width;
@@ -167,6 +186,9 @@ namespace LynnaLab
 
             GenerateRoomComponents();
             selectedComponent = null;
+
+            if (EditingWarpDestination != null)
+                EditingWarpDestination.DestRoom = r;
 
             RoomChangedEvent(this, r);
 
@@ -197,11 +219,15 @@ namespace LynnaLab
         // Called when a warp is selected from the WarpEditor
         void OnWarpSelected(object sender, EventArgs args) {
             foreach (RoomComponent com in roomComponents) {
-                if (!(com is WarpSourceRoomComponent))
+                Warp warp;
+                if (com is WarpSourceRoomComponent)
+                    warp = (com as WarpSourceRoomComponent).warp;
+                else if (com is WarpDestRoomComponent)
+                    warp = (com as WarpDestRoomComponent).warp;
+                else
                     continue;
-                var warpCom = com as WarpSourceRoomComponent;
-                if (WarpEditor.SelectedIndex == warpCom.index) {
-                    selectedComponent = warpCom;
+                if (WarpEditor.SelectedWarp == warp) {
+                    selectedComponent = com;
                     break;
                 }
             }
@@ -215,7 +241,7 @@ namespace LynnaLab
         }
 
         // Called when the WarpGroup is modified
-        void OnWarpSourceModified(object sender, EventArgs args) {
+        void OnWarpModified(object sender, EventArgs args) {
             GenerateRoomComponents();
             QueueDraw();
         }
@@ -260,12 +286,13 @@ namespace LynnaLab
                             menu.Add(item);
                         }
 
-                        if (menu.Children.Length != 0)
-                            menu.Add(new Gtk.SeparatorMenuItem());
+                        RoomComponent comp = selectedComponent;
 
-                        {
+                        if (comp.Deletable) {
+                            if (menu.Children.Length != 0)
+                                menu.Add(new Gtk.SeparatorMenuItem());
+
                             var deleteButton = new Gtk.MenuItem("Delete");
-                            RoomComponent comp = selectedComponent;
                             deleteButton.Activated += (sender, args) => {
                                 comp.Delete();
                             };
@@ -379,6 +406,16 @@ namespace LynnaLab
             roomComponents = new List<RoomComponent>();
             hoveringComponent = null;
 
+            // We only draw the 1 component if we're editing a warp destination
+            if (EditingWarpDestination != null) {
+                WarpDestRoomComponent com = new WarpDestRoomComponent(this, EditingWarpDestination);
+                com.SelectedEvent += (sender, args) => {
+                    WarpEditor.SetSelectedWarp(com.warp);
+                };
+                roomComponents.Add(com);
+                goto addedAllComponents; // I love being evil
+            }
+
             if (ViewObjects && ObjectGroupEditor.TopObjectGroup != null) {
                 foreach (ObjectGroup group in ObjectGroupEditor.TopObjectGroup.GetAllGroups()) {
                     for (int i=0; i<group.GetNumObjects(); i++) {
@@ -438,6 +475,7 @@ namespace LynnaLab
             }
 
 
+addedAllComponents:
             // The "selectedComponent" now refers to an old object. Look for the corresponding new
             // object.
             RoomComponent newSelectedComponent = null;
@@ -481,6 +519,7 @@ namespace LynnaLab
 
             public abstract Cairo.Color BoxColor { get; }
 
+            public abstract bool Deletable { get; }
             public abstract bool HasXY { get; }
             public abstract bool HasShortenedXY { get; }
             public abstract int X { get; set; } // These are always in the full range even if "ShortPosition" is true
@@ -523,6 +562,9 @@ namespace LynnaLab
                 }
             }
 
+            public override bool Deletable {
+                get { return true; }
+            }
             public override bool HasXY {
                 get { return obj.HasXY(); }
             }
@@ -599,6 +641,9 @@ namespace LynnaLab
                 }
             }
 
+            public override bool Deletable {
+                get { return true; }
+            }
             public override bool HasXY {
                 get { return warp.WarpSourceType == WarpSourceType.Pointed; }
             }
@@ -641,6 +686,15 @@ namespace LynnaLab
                     };
                     list.Add(followButton);
                 }
+                {
+                    Gtk.MenuItem setDestButton = new Gtk.MenuItem("Edit Destination");
+                    setDestButton.Activated += (sender, args) => {
+                        parent.EditingWarpDestination = warp;
+                        parent.SetRoom(warp.DestRoom);
+                        parent.WarpEditor.SetSelectedWarp(warp);
+                    };
+                    list.Add(setDestButton);
+                }
 
                 return list;
             }
@@ -658,6 +712,81 @@ namespace LynnaLab
                 rect = new Cairo.Rectangle(X - rect.Width / 2.0, Y - rect.Height / 2.0, rect.Width, rect.Height);
             }
         }
-    }
 
+        // The singular room component that's drawn when editing a warp destination
+        // TODO: Editing the data in the WarpEditor doesn't trigger a redraw of the room. Figure out
+        // why.
+        class WarpDestRoomComponent : RoomComponent {
+            RoomEditor parent;
+            public Warp warp;
+
+
+            public WarpDestRoomComponent(RoomEditor parent, Warp warp) {
+                this.parent = parent;
+                this.warp = warp;
+            }
+
+
+            public override Cairo.Color BoxColor {
+                get {
+                    return WarpEditor.WarpSourceColor;
+                }
+            }
+
+            public override bool Deletable {
+                get { return false; }
+            }
+            public override bool HasXY {
+                get { return true; }
+            }
+            public override bool HasShortenedXY {
+                get { return true; }
+            }
+            public override int X {
+                get { return warp.DestX * 16 + 8; }
+                set {
+                    warp.DestX = value / 16;
+                }
+            }
+            public override int Y {
+                get { return warp.DestY * 16 + 8; }
+                set {
+                    warp.DestY = value / 16;
+                }
+            }
+
+            public override int BoxWidth { get { return 16; } }
+            public override int BoxHeight { get { return 16; } }
+
+
+            public override void Draw(Cairo.Context cr) {
+                cr.SetSourceColor(new Cairo.Color(1, 1, 1));
+                CairoHelper.DrawText(cr, "W", 9, BoxRectangle);
+            }
+
+            public override IList<Gtk.MenuItem> GetRightClickMenuItems() {
+                var list = new List<Gtk.MenuItem>();
+
+                {
+                    Gtk.MenuItem doneButton = new Gtk.MenuItem("Done");
+                    doneButton.Activated += (sender, args) => {
+                        parent.EditingWarpDestination = null;
+                        parent.SetRoom(warp.SourceRoom);
+                    };
+                    list.Add(doneButton);
+                }
+
+                return list;
+            }
+
+            public override bool Compare(RoomComponent com) {
+                return warp == (com as WarpDestRoomComponent)?.warp;
+            }
+
+            // TODO
+            public override void Delete() {
+                throw new NotImplementedException();
+            }
+        }
+    }
 }

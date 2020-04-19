@@ -38,6 +38,10 @@ namespace LynnaLab
             get { return warpSourceDataList.Count; }
         }
 
+        public Room Room {
+            get { return Project.GetIndexedDataType<Room>(Index); }
+        }
+
         WarpSourceData EndWarp { get; set; } // "m_WarpDataEnd" (shouldn't be null)
         WarpSourceData PointerWarp { get; set; } // "m_PointerWarp" (can be null but should be unique)
         WarpSourceData LastStandardWarp { get; set; } // New data added goes after this (can be null)
@@ -55,9 +59,6 @@ namespace LynnaLab
 
         internal WarpGroup(Project p, int id) : base(p,id) {
             RegenWarpSourceDataList();
-
-            foreach (WarpSourceData data in warpSourceDataList)
-                data.AddModifiedEventHandler(OnDataModified);
         }
 
         void RegenWarpSourceDataList() {
@@ -69,42 +70,42 @@ namespace LynnaLab
             var newWarpList = new List<Warp>();
             warpSourceDataList = new List<WarpSourceData>();
 
-            WarpSourceData warp = fileParser.GetData(label) as WarpSourceData;
+            WarpSourceData warpData = fileParser.GetData(label) as WarpSourceData;
 
             EndWarp = null;
             PointerWarp = null;
             LastStandardWarp = null;
 
-            while (warp != null && warp.WarpSourceType != WarpSourceType.End) {
-                if (Map == warp.Map) {
-                    if (warp.WarpSourceType == WarpSourceType.Pointer) {
+            while (warpData != null && warpData.WarpSourceType != WarpSourceType.End) {
+                if (Map == warpData.Map) {
+                    if (warpData.WarpSourceType == WarpSourceType.Pointer) {
                         if (PointerWarp != null) {
                             throw new AssemblyErrorException(string.Format(
                                         "Room {0:X3} has multiple 'Pointer' warp sources!", Index));
                         }
-                        PointerWarp = warp;
-                        WarpSourceData pWarp = warp.GetPointedWarp();
+                        PointerWarp = warpData;
+                        WarpSourceData pWarp = warpData.GetPointedWarp();
                         while (pWarp != null) {
                             if (pWarp.WarpSourceType == WarpSourceType.End)
                                 break;
                             if (pWarp.WarpSourceType != WarpSourceType.Pointed)
                                 throw new AssemblyErrorException(string.Format(
                                             "Unexpected warp type '{0}' in {1}!",
-                                            pWarp.WarpSourceType, warp.PointerString));
+                                            pWarp.WarpSourceType, warpData.PointerString));
                             warpSourceDataList.Add(pWarp);
                             pWarp = pWarp.GetNextWarp();
                         }
                     }
-                    else if (warp.WarpSourceType == WarpSourceType.Standard) {
+                    else if (warpData.WarpSourceType == WarpSourceType.Standard) {
                         if (PointerWarp != null)
                             throw new AssemblyErrorException("Encountered a 'Standard Warp' after a Pointer Warp; this is invalid!");
-                        warpSourceDataList.Add(warp);
-                        LastStandardWarp = warp;
+                        warpSourceDataList.Add(warpData);
+                        LastStandardWarp = warpData;
                     }
                     else {
                         throw new AssemblyErrorException(string.Format(
                                     "Unexpected warp type '{0}' for room {1:X3}!",
-                                    warp.WarpSourceType, Index));
+                                    warpData.WarpSourceType, Index));
                     }
                 }
 
@@ -123,14 +124,17 @@ namespace LynnaLab
                             }
                         }
                     }
-                    if (!addedData)
-                        newWarpList.Add(new Warp(this, dataToAdd));
+                    if (!addedData) {
+                        var warp = new Warp(this, dataToAdd);
+                        warp.AddModifiedHandler(OnDataModified);
+                        newWarpList.Add(warp);
+                    }
                 }
 
-                warp = warp.NextData as WarpSourceData;
+                warpData = warpData.NextData as WarpSourceData;
             }
-            if (warp != null)
-                EndWarp = warp;
+            if (warpData != null)
+                EndWarp = warpData;
             else {
                 throw new AssemblyErrorException(string.Format(
                             "Warp source data for room {0:X3} doesn't have an end?", Index));
@@ -144,6 +148,10 @@ namespace LynnaLab
         // resulting PointedWarps.
         public ReadOnlyCollection<Warp> GetWarps() {
             return new ReadOnlyCollection<Warp>(warpList);
+        }
+
+        public int IndexOf(Warp warp) {
+            return warpList.IndexOf(warp);
         }
 
         public Warp GetWarp(int index) {
@@ -221,7 +229,6 @@ namespace LynnaLab
             data.SetDestData(data.DestGroup.GetNewOrUnusedDestData());
             data.GetReferencedDestData().Map = 0;
 
-            data.AddModifiedEventHandler(OnDataModified);
             RegenWarpSourceDataList();
             ModifiedEvent.Invoke(this, null);
 
@@ -232,9 +239,10 @@ namespace LynnaLab
         // Similar to above, this only supports removing StandardWarps or PointedWarps (the rest is
         // handled automatically).
         public void RemoveWarp(Warp warp) {
+            warp.RemoveModifiedHandler(OnDataModified);
+
             WarpSourceData data = warp.SourceData;
             if (data.WarpSourceType == WarpSourceType.Standard) {
-                data.RemoveModifiedEventHandler(OnDataModified);
                 data.Detach();
             }
             else if (data.WarpSourceType == WarpSourceType.Pointed) {
@@ -248,7 +256,6 @@ namespace LynnaLab
                     PointerWarp.Detach();
                 }
 
-                data.RemoveModifiedEventHandler(OnDataModified);
                 data.Detach();
                 PointerWarp = null;
             }
@@ -272,8 +279,8 @@ namespace LynnaLab
         }
 
 
-        void OnDataModified(object sender, DataModifiedEventArgs args) {
-            ModifiedEvent.Invoke(this, null);
+        void OnDataModified(object sender, EventArgs args) {
+            ModifiedEvent.Invoke(sender, args);
         }
     }
 }

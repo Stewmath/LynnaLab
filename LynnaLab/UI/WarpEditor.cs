@@ -6,6 +6,9 @@ namespace LynnaLab
 {
     public class WarpEditor : Gtk.Bin
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+
         public static readonly Cairo.Color WarpSourceColor = CairoHelper.ConvertColor(186, 8, 206, 0xc0);
 
         // Events
@@ -27,11 +30,11 @@ namespace LynnaLab
         // Variables
 
         WarpGroup _warpGroup;
+        Warp _selectedWarp;
 
         ValueReferenceEditor sourceEditor;
 
         int map;
-        int _selectedIndex;
 
 
         // Constructor
@@ -63,7 +66,7 @@ namespace LynnaLab
         // Properties
 
         public int SelectedIndex {
-            get { return _selectedIndex; }
+            get { return GetWarpIndex(SelectedWarp); }
             set {
                 SetWarpIndex(value);
             }
@@ -88,7 +91,7 @@ namespace LynnaLab
         }
 
         public Warp SelectedWarp {
-            get { return GetWarpIndex(SelectedIndex); }
+            get { return _selectedWarp; }
         }
 
         Project Project {
@@ -108,25 +111,31 @@ namespace LynnaLab
 
         // Load the i'th warp in the current map.
         public void SetWarpIndex(int i) {
-            if (i >= WarpGroup.Count)
+            if (i >= WarpGroup.Count) {
+                log.Warn(string.Format("Tried to select warp index {0} (highest is {1})", i, WarpGroup.Count-1));
                 i = WarpGroup.Count-1;
+            }
 
-            if (_selectedIndex == i)
+            SetSelectedWarp(GetWarpIndex(i));
+        }
+
+        // This can be a warp that isn't in the warp list (as when editing a warp destination).
+        public void SetSelectedWarp(Warp warp) {
+            if (_selectedWarp == warp)
                 return;
-
-            _selectedIndex = i;
+            _selectedWarp = warp;
 
             valueEditorContainer.Foreach((c) => c.Dispose());
 
-            if (i == -1) {
-                warpSourceFrame.Visible = false;
+            if (warp == null) {
                 warpSourceFrame.Hide();
                 return;
             }
 
-            Gtk.HBox hbox = new Gtk.HBox();
+            int index = GetWarpIndex(warp);
+            warpSourceBox.SelectedIndex = index;
 
-            Warp warp = SelectedWarp;
+            Gtk.HBox hbox = new Gtk.HBox();
 
             if (warp.WarpSourceType == WarpSourceType.Pointed)
                 warpSourceTypeLabel.Text = "<b>Type</b>: Position Warp";
@@ -140,15 +149,19 @@ namespace LynnaLab
             valueEditorContainer.Add(sourceEditor);
             warpSourceFrame.ShowAll();
 
-            warpSourceBox.SelectedIndex = i;
-
             if (SelectedWarpEvent != null)
                 SelectedWarpEvent(this, null);
         }
 
         // Gets the index corresponding to a spin button value.
         Warp GetWarpIndex(int i) {
+            if (i == -1)
+                return null;
             return WarpGroup.GetWarp(i);
+        }
+
+        int GetWarpIndex(Warp warp) {
+            return WarpGroup.IndexOf(warp);
         }
 
 
