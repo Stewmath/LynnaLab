@@ -48,7 +48,7 @@ namespace LynnaLab
         // Other properties
 
         public string Name { get; protected set; }
-        public bool Editable { get; protected set; }
+        public bool Editable { get; set; }
 
         public string ConstantsMappingString { get; private set; }
         public ConstantsMapping ConstantsMapping {

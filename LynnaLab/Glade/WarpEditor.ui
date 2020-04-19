@@ -102,7 +102,7 @@
               <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">&lt;b&gt;Warp Source&lt;/b&gt;</property>
+                <property name="label" translatable="yes">&lt;b&gt;Warp Data&lt;/b&gt;</property>
                 <property name="use_markup">True</property>
               </object>
             </child>
@@ -114,88 +114,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkFrame" id="warpDestFrame">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="halign">center</property>
-            <property name="margin_left">5</property>
-            <property name="margin_right">5</property>
-            <property name="margin_top">5</property>
-            <property name="margin_bottom">5</property>
-            <property name="label_xalign">0.5</property>
-            <child>
-              <object class="GtkAlignment" id="GtkAlignment2">
-                <property name="can_focus">False</property>
-                <property name="xalign">0</property>
-                <property name="yalign">0</property>
-                <property name="top_padding">5</property>
-                <property name="bottom_padding">5</property>
-                <property name="left_padding">12</property>
-                <property name="right_padding">12</property>
-                <child>
-                  <object class="GtkBox" id="vbox3">
-                    <property name="can_focus">False</property>
-                    <property name="orientation">vertical</property>
-                    <property name="spacing">6</property>
-                    <child>
-                      <object class="GtkLabel" id="destInfoLabel">
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Group X Index Y: &lt;span foreground="red"&gt;Used by Z other sources&lt;/span&gt;</property>
-                        <property name="use_markup">True</property>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkButton">
-                        <property name="label" translatable="yes">Jump to here</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="focus_on_click">False</property>
-                        <property name="receives_default">True</property>
-                        <property name="halign">center</property>
-                        <signal name="clicked" handler="OnJumpToDestClicked" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkAlignment" id="destEditorContainer">
-                        <property name="can_focus">False</property>
-                        <child>
-                          <placeholder/>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="expand">True</property>
-                        <property name="fill">True</property>
-                        <property name="position">3</property>
-                      </packing>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child type="label">
-              <object class="GtkLabel">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">&lt;b&gt;Warp Destination&lt;/b&gt;</property>
-                <property name="use_markup">True</property>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">5</property>
-          </packing>
+          <placeholder/>
         </child>
         <child>
           <placeholder/>

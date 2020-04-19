@@ -142,8 +142,8 @@ namespace LynnaLab
             return Project.GetObjectGroup(label, ObjectGroupType.Main);
         }
 
-        public WarpSourceGroup GetWarpSourceGroup() {
-            return Project.GetIndexedDataType<WarpSourceGroup>(Index);
+        public WarpGroup GetWarpGroup() {
+            return Project.GetIndexedDataType<WarpGroup>(Index);
         }
 
         void UpdateRoomData() {

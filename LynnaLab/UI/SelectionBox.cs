@@ -52,7 +52,7 @@ namespace LynnaLab {
         // Protected methods
 
         protected abstract void OnMoveSelection(int oldIndex, int newIndex);
-        protected abstract void ShowPopupMenu(Gdk.EventButton ev);
+        protected abstract void ShowPopupMenu(Gdk.Event ev);
     }
 }
 

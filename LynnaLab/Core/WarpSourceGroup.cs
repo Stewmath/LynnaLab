@@ -15,7 +15,7 @@ namespace LynnaLab
     //   after that point. (The game would not see it.)
     // - Each warp type is only used in its appropriate location (StandardWarp and PointerWarp at
     //   the top level, PointedWarp only as the data pointed to by a PointerWarp).
-    public class WarpSourceGroup : ProjectIndexedDataType
+    public class WarpGroup : ProjectIndexedDataType
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -46,11 +46,14 @@ namespace LynnaLab
             get { return Index & 0xff; }
         }
 
+        // Parallel lists
+        List<Warp> warpList;
         List<WarpSourceData> warpSourceDataList;
+
         FileParser fileParser;
 
 
-        internal WarpSourceGroup(Project p, int id) : base(p,id) {
+        internal WarpGroup(Project p, int id) : base(p,id) {
             RegenWarpSourceDataList();
 
             foreach (WarpSourceData data in warpSourceDataList)
@@ -63,7 +66,9 @@ namespace LynnaLab
 
             string label = d.GetValue(0);
 
+            var newWarpList = new List<Warp>();
             warpSourceDataList = new List<WarpSourceData>();
+
             WarpSourceData warp = fileParser.GetData(label) as WarpSourceData;
 
             EndWarp = null;
@@ -102,6 +107,26 @@ namespace LynnaLab
                                     warp.WarpSourceType, Index));
                     }
                 }
+
+                while (newWarpList.Count < warpSourceDataList.Count) {
+                    WarpSourceData dataToAdd = warpSourceDataList[newWarpList.Count];
+
+                    // Check if the object existed in the old list. If it didn't, create a new one.
+                    // If it did, add it to the new list.
+                    bool addedData = false;
+                    if (warpList != null) {
+                        foreach (Warp oldWarp in warpList) {
+                            if (oldWarp.SourceData == dataToAdd) {
+                                newWarpList.Add(oldWarp);
+                                addedData = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!addedData)
+                        newWarpList.Add(new Warp(this, dataToAdd));
+                }
+
                 warp = warp.NextData as WarpSourceData;
             }
             if (warp != null)
@@ -110,17 +135,19 @@ namespace LynnaLab
                 throw new AssemblyErrorException(string.Format(
                             "Warp source data for room {0:X3} doesn't have an end?", Index));
             }
+
+            warpList = newWarpList;
         }
 
         // Returns a new list of all the WarpSourceData objects for the given room.
         // This does not return "PointerWarp" types. It instead traverses them and returns the
         // resulting PointedWarps.
-        public ReadOnlyCollection<WarpSourceData> GetWarpSources() {
-            return new ReadOnlyCollection<WarpSourceData>(warpSourceDataList);
+        public ReadOnlyCollection<Warp> GetWarps() {
+            return new ReadOnlyCollection<Warp>(warpList);
         }
 
-        public WarpSourceData GetWarpSource(int index) {
-            return warpSourceDataList[index];
+        public Warp GetWarp(int index) {
+            return warpList[index];
         }
 
         // Adds the given data to the group and inserts the data into the FileParser.
@@ -131,8 +158,7 @@ namespace LynnaLab
         // For any other warp type, this throws an ArgumentException.
         // The "room" argument is necessary for PointedWarps (which don't have a field for it).
         // Returns the index at which the new warp was placed.
-        // TODO: Bit 7 of PointedWarps
-        public int AddWarpSource(WarpSourceType type) {
+        public int AddWarp(WarpSourceType type) {
             Action<WarpSourceData> InsertInMainList = (d) => {
                 if (LastStandardWarp != null) {
                     FileParser.InsertComponentAfter(LastStandardWarp, d);
@@ -191,6 +217,10 @@ namespace LynnaLab
                 throw new ArgumentException("Can't add this warp source type to the warp source group.");
             }
 
+            // Default warp destination should use unique data
+            data.SetDestData(data.DestGroup.GetNewOrUnusedDestData());
+            data.GetReferencedDestData().Map = 0;
+
             data.AddModifiedEventHandler(OnDataModified);
             RegenWarpSourceDataList();
             ModifiedEvent.Invoke(this, null);
@@ -201,14 +231,15 @@ namespace LynnaLab
 
         // Similar to above, this only supports removing StandardWarps or PointedWarps (the rest is
         // handled automatically).
-        public void RemoveWarpSource(WarpSourceData data) {
+        public void RemoveWarp(Warp warp) {
+            WarpSourceData data = warp.SourceData;
             if (data.WarpSourceType == WarpSourceType.Standard) {
                 data.RemoveModifiedEventHandler(OnDataModified);
                 data.Detach();
             }
             else if (data.WarpSourceType == WarpSourceType.Pointed) {
                 if (PointerWarp == null)
-                    throw new ArgumentException("WarpSourceGroup doesn't contain the data to remove?");
+                    throw new ArgumentException("WarpGroup doesn't contain the data to remove?");
 
                 if (PointerWarp.GetPointedChainLength() == 1) {
                     // Delete label & PointerWarp (do this before deleting its last PointedWarp,
@@ -222,14 +253,14 @@ namespace LynnaLab
                 PointerWarp = null;
             }
             else
-                throw new ArgumentException("RemoveWarpSourceData doesn't support this warp source type.");
+                throw new ArgumentException("RemoveWarp doesn't support this warp source type.");
 
             RegenWarpSourceDataList();
             ModifiedEvent.Invoke(this, null);
         }
 
-        public void RemoveWarpSource(int index) {
-            RemoveWarpSource(GetWarpSource(index));
+        public void RemoveWarp(int index) {
+            RemoveWarp(GetWarp(index));
         }
 
         public void AddModifiedHandler(EventHandler<EventArgs> handler) {

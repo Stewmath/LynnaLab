@@ -37,7 +37,7 @@ namespace LynnaLab {
             ObjectGroup.MoveObject(oldIndex, newIndex);
         }
 
-        protected override void ShowPopupMenu(Gdk.EventButton ev) {
+        protected override void ShowPopupMenu(Gdk.Event ev) {
             Gtk.Menu menu = new Gtk.Menu();
             for (int i=0; i<ObjectGroupEditor.ObjectNames.Length; i++) {
                 if (i >= 2 && i <= 4) // Skip "Pointer" objects
@@ -65,7 +65,7 @@ namespace LynnaLab {
 
             menu.AttachToWidget(this, null);
             menu.ShowAll();
-            menu.Popup(null, null, null, IntPtr.Zero, ev.Button, ev.Time);
+            menu.PopupAtPointer(ev);
         }
 
         protected override void TileDrawer(int index, Cairo.Context cr) {

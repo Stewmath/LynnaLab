@@ -164,13 +164,16 @@ namespace LynnaLab
                 vrg.SetValue("Dest Index",value);
             }
         }
-        public int DestGroup {
+        public int DestGroupIndex {
             get {
                 return vrg.GetIntValue("Dest Group");
             }
             set {
                 vrg.SetValue("Dest Group",value);
             }
+        }
+        public WarpDestGroup DestGroup {
+            get { return Project.GetIndexedDataType<WarpDestGroup>(DestGroupIndex); }
         }
         public int Transition {
             get {
@@ -205,10 +208,6 @@ namespace LynnaLab
             }
         }
 
-        public bool HasEdgeWarp {
-            get { return (Opcode & 0x0f) != 0; }
-        }
-
 
         public WarpSourceData(Project p, string command, IEnumerable<string> values,
                 FileParser parser, IList<string> spacing)
@@ -228,6 +227,9 @@ namespace LynnaLab
             referencedDestData = GetReferencedDestData();
             if (referencedDestData != null)
                 referencedDestData.AddReference(this);
+
+            this.AddModifiedEventHandler((sender, args) => Sanitize());
+            Sanitize();
 
             this.AddModifiedEventHandler(delegate(object sender, DataModifiedEventArgs args) {
                 WarpDestData newDestData = GetReferencedDestData();
@@ -323,16 +325,14 @@ namespace LynnaLab
             if (_type == WarpSourceType.Pointer ||
                     _type == WarpSourceType.End)
                 return null;
-            if (DestGroup >= Project.GetNumGroups())
-                return null;
-            return Project.GetIndexedDataType<WarpDestGroup>(DestGroup);
+            return Project.GetIndexedDataType<WarpDestGroup>(DestGroupIndex);
         }
 
         // Set the WarpDestData associated with this source, setting DestIndex
         // and DestGroup appropriately
         public void SetDestData(WarpDestData data) {
             DestIndex = data.DestIndex;
-            DestGroup = data.DestGroup.Index;
+            DestGroupIndex = data.DestGroup.Index;
             // The handler defined in the constructor will update the
             // referencedData variable
         }
@@ -341,6 +341,18 @@ namespace LynnaLab
         public Room GetDestRoom() {
             WarpDestData destData = GetReferencedDestData();
             return Project.GetIndexedDataType<Room>((destData.Group<<8) + destData.Map);
+        }
+
+
+        // Make sure there are no surprises
+        void Sanitize() {
+            if (WarpSourceType == WarpSourceType.Standard || WarpSourceType == WarpSourceType.Pointed) {
+                if (DestGroupIndex >= Project.GetNumGroups()) {
+                    throw new AssemblyErrorException("Dest group for warp too high: \"" + GetString().Trim() + "\".");
+                }
+                if (DestIndex >= DestGroup.GetNumWarpDests())
+                    throw new AssemblyErrorException("Dest index for warp too high: \"" + GetString().Trim() + "\".");
+            }
         }
     }
 }

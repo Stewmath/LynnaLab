@@ -153,11 +153,11 @@ namespace LynnaLab
             if (room != null) {
                 room.RoomModifiedEvent -= OnRoomModified;
                 room.GetObjectGroup().RemoveModifiedHandler(OnObjectModified);
-                room.GetWarpSourceGroup().RemoveModifiedHandler(OnWarpSourceModified);
+                room.GetWarpGroup().RemoveModifiedHandler(OnWarpSourceModified);
             }
             r.RoomModifiedEvent += OnRoomModified;
             r.GetObjectGroup().AddModifiedHandler(OnObjectModified);
-            r.GetWarpSourceGroup().AddModifiedHandler(OnWarpSourceModified);
+            r.GetWarpGroup().AddModifiedHandler(OnWarpSourceModified);
 
             room = r;
             Width = room.Width;
@@ -214,7 +214,7 @@ namespace LynnaLab
             QueueDraw();
         }
 
-        // Called when the WarpSourceGroup is modified
+        // Called when the WarpGroup is modified
         void OnWarpSourceModified(object sender, EventArgs args) {
             GenerateRoomComponents();
             QueueDraw();
@@ -396,12 +396,12 @@ namespace LynnaLab
 
             if (ViewWarps) {
                 int index = 0;
-                WarpSourceGroup group = room.GetWarpSourceGroup();
+                WarpGroup group = room.GetWarpGroup();
 
-                foreach (WarpSourceData warp in group.GetWarpSources()) {
+                foreach (Warp warp in group.GetWarps()) {
                     Action<int,int,int,int> addWarpComponent = (x, y, width, height) => {
                         var rect = new Cairo.Rectangle(x, y, width, height);
-                        var com = new WarpSourceRoomComponent(this, group, warp, index, rect);
+                        var com = new WarpSourceRoomComponent(this, warp, index, rect);
                         com.SelectedEvent += (sender, args) => {
                             WarpEditor.SetWarpIndex(com.index);
                         };
@@ -579,18 +579,15 @@ namespace LynnaLab
 
         class WarpSourceRoomComponent : RoomComponent {
             RoomEditor parent;
-            WarpSourceGroup group;
-            public WarpSourceData data;
+            public Warp warp;
             public int index;
 
             Cairo.Rectangle rect;
 
 
-            public WarpSourceRoomComponent(RoomEditor parent,
-                    WarpSourceGroup group, WarpSourceData data, int index, Cairo.Rectangle rect) {
+            public WarpSourceRoomComponent(RoomEditor parent, Warp warp, int index, Cairo.Rectangle rect) {
                 this.parent = parent;
-                this.group = group;
-                this.data = data;
+                this.warp = warp;
                 this.index = index;
                 this.rect = rect;
             }
@@ -603,22 +600,22 @@ namespace LynnaLab
             }
 
             public override bool HasXY {
-                get { return data.WarpSourceType == WarpSourceType.Pointed; }
+                get { return warp.WarpSourceType == WarpSourceType.Pointed; }
             }
             public override bool HasShortenedXY {
                 get { return true; }
             }
             public override int X {
-                get { return data.X * 16 + 8; }
+                get { return warp.X * 16 + 8; }
                 set {
-                    data.X = value / 16;
+                    warp.X = value / 16;
                     UpdateRect();
                 }
             }
             public override int Y {
-                get { return data.Y * 16 + 8; }
+                get { return warp.Y * 16 + 8; }
                 set {
-                    data.Y = value / 16;
+                    warp.Y = value / 16;
                     UpdateRect();
                 }
             }
@@ -640,7 +637,7 @@ namespace LynnaLab
                 {
                     Gtk.MenuItem followButton = new Gtk.MenuItem("Follow");
                     followButton.Activated += (sender, args) => {
-                        parent.SetRoom(data.GetDestRoom());
+                        parent.SetRoom(warp.DestRoom);
                     };
                     list.Add(followButton);
                 }
@@ -649,11 +646,11 @@ namespace LynnaLab
             }
 
             public override bool Compare(RoomComponent com) {
-                return data == (com as WarpSourceRoomComponent)?.data;
+                return warp == (com as WarpSourceRoomComponent)?.warp;
             }
 
             public override void Delete() {
-                group.RemoveWarpSource(data);
+                warp.Remove();
             }
 
 

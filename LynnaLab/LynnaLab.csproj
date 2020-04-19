@@ -159,6 +159,7 @@
     <Compile Include="Core\Util\DictionaryLinkedList.cs" />
     <Compile Include="UI\SelectionBox.cs" />
     <Compile Include="Core\Util\LockableEventGroup.cs" />
+    <Compile Include="Core\Warp.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
