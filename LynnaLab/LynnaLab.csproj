@@ -106,7 +106,7 @@
     <Compile Include="Core\DataValueReference.cs" />
     <Compile Include="UI\ValueReferenceEditor.cs" />
     <Compile Include="Core\WarpSourceData.cs" />
-    <Compile Include="Core\WarpSourceGroup.cs" />
+    <Compile Include="Core\WarpGroup.cs" />
     <Compile Include="UI\WarpEditor.cs" />
     <Compile Include="Core\WarpDestGroup.cs" />
     <Compile Include="Core\WarpDestData.cs" />
