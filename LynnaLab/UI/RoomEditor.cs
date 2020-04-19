@@ -431,7 +431,7 @@ namespace LynnaLab
                         }
                     }
                     else if (warp.WarpSourceType == WarpSourceType.Pointed) {
-                        addWarpComponent(warp.X * TileWidth, warp.Y * TileHeight, TileWidth, TileHeight);
+                        addWarpComponent(warp.SourceX * TileWidth, warp.SourceY * TileHeight, TileWidth, TileHeight);
                     }
                     index++;
                 }
@@ -606,16 +606,16 @@ namespace LynnaLab
                 get { return true; }
             }
             public override int X {
-                get { return warp.X * 16 + 8; }
+                get { return warp.SourceX * 16 + 8; }
                 set {
-                    warp.X = value / 16;
+                    warp.SourceX = value / 16;
                     UpdateRect();
                 }
             }
             public override int Y {
-                get { return warp.Y * 16 + 8; }
+                get { return warp.SourceY * 16 + 8; }
                 set {
-                    warp.Y = value / 16;
+                    warp.SourceY = value / 16;
                     UpdateRect();
                 }
             }

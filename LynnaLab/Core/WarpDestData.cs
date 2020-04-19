@@ -37,6 +37,30 @@ namespace LynnaLab
                 vrg.SetValue("Map", value);
             }
         }
+        public int Y {
+            get {
+                return vrg.GetIntValue("Y");
+            }
+            set {
+                vrg.SetValue("Y", value);
+            }
+        }
+        public int X {
+            get {
+                return vrg.GetIntValue("X");
+            }
+            set {
+                vrg.SetValue("X", value);
+            }
+        }
+        public int Parameter {
+            get {
+                return vrg.GetIntValue("Parameter");
+            }
+            set {
+                vrg.SetValue("Parameter", value);
+            }
+        }
         public int Transition {
             get {
                 return vrg.GetIntValue("Transition");
@@ -45,6 +69,7 @@ namespace LynnaLab
                 vrg.SetValue("Transition", value);
             }
         }
+
         public ValueReferenceGroup ValueReferenceGroup {
             get { return vrg; }
         }

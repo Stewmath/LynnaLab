@@ -80,7 +80,7 @@ namespace LynnaLab
                 SourceData.Transition = value;
             }
         }
-        public int X {
+        public int SourceX {
             get {
                 return SourceData.X;
             }
@@ -88,7 +88,7 @@ namespace LynnaLab
                 SourceData.X = value;
             }
         }
-        public int Y {
+        public int SourceY {
             get {
                 return SourceData.Y;
             }
@@ -110,10 +110,7 @@ namespace LynnaLab
             set {
                 if (DestRoomIndex != value) {
                     if (SourceData.DestGroupIndex != value >> 8) { // Group changed
-                        if (value >> 8 >= Project.GetNumGroups())
-                            throw new Exception(string.Format("Room {0} is too high for warp destination.", value));
-                        var destGroup = Project.GetIndexedDataType<WarpDestGroup>(value >> 8);
-                        SourceData.SetDestData(destGroup.GetNewOrUnusedDestData());
+                        IsolateDestData(value >> 8);
                     }
                     else
                         IsolateDestData();
@@ -127,6 +124,33 @@ namespace LynnaLab
             set { DestRoomIndex = value.Index; }
         }
 
+        public int DestY {
+            get { return DestData.Y; }
+            set {
+                if (DestY != value) {
+                    IsolateDestData();
+                    DestData.Y = value;
+                }
+            }
+        }
+        public int DestX {
+            get { return DestData.X; }
+            set {
+                if (DestX != value) {
+                    IsolateDestData();
+                    DestData.X = value;
+                }
+            }
+        }
+        public int DestParameter {
+            get { return DestData.Parameter; }
+            set {
+                if (DestParameter != value) {
+                    IsolateDestData();
+                    DestData.Parameter = value;
+                }
+            }
+        }
         public int DestTransition {
             get { return DestData.Transition; }
             set {
@@ -207,18 +231,18 @@ namespace LynnaLab
             }
             else if (WarpSourceType == WarpSourceType.Pointed) {
                 vref = new AbstractIntValueReference(Project,
-                        name: "Y",
+                        name: "Source Y",
                         type: ValueReferenceType.Int,
-                        getter: () => Y,
-                        setter: (value) => Y = value,
+                        getter: () => SourceY,
+                        setter: (value) => SourceY = value,
                         maxValue: 15);
                 valueReferences.Add(vref);
 
                 vref = new AbstractIntValueReference(Project,
-                        name: "X",
+                        name: "Source X",
                         type: ValueReferenceType.Int,
-                        getter: () => X,
-                        setter: (value) => X = value,
+                        getter: () => SourceX,
+                        setter: (value) => SourceX = value,
                         maxValue: 15);
                 valueReferences.Add(vref);
             }
@@ -243,6 +267,30 @@ namespace LynnaLab
             valueReferences.Add(vref);
 
             vref = new AbstractIntValueReference(Project,
+                    name: "Dest Y",
+                    type: ValueReferenceType.Int,
+                    getter: () => DestY,
+                    setter: (value) => DestY = value,
+                    maxValue: 15);
+            valueReferences.Add(vref);
+
+            vref = new AbstractIntValueReference(Project,
+                    name: "Dest X",
+                    type: ValueReferenceType.Int,
+                    getter: () => DestX,
+                    setter: (value) => DestX = value,
+                    maxValue: 15);
+            valueReferences.Add(vref);
+
+            vref = new AbstractIntValueReference(Project,
+                    name: "Dest Parameter",
+                    type: ValueReferenceType.Int,
+                    getter: () => DestParameter,
+                    setter: (value) => DestParameter = value,
+                    maxValue: 15);
+            valueReferences.Add(vref);
+
+            vref = new AbstractIntValueReference(Project,
                     name: "Dest Transition",
                     type: ValueReferenceType.Int,
                     getter: () => DestTransition,
@@ -258,15 +306,34 @@ namespace LynnaLab
 
         // Call this to ensure that the destination data this warp uses is not also used by anything
         // else. If it is, we find unused dest data or create new data.
-        void IsolateDestData() {
-            WarpDestData dest = DestData;
-            if (dest.GetNumReferences() != 1) { // Used by another warp source
-                dest = SourceData.DestGroup.GetNewOrUnusedDestData();
-                SourceData.SetDestData(dest);
+        void IsolateDestData(int newGroup = -1) {
+            if (newGroup == -1)
+                newGroup = SourceData.DestGroupIndex;
+
+            WarpDestData oldDest = DestData;
+            if (newGroup != SourceData.DestGroupIndex) {
+                if (newGroup >= Project.GetNumGroups())
+                    throw new Exception(string.Format("Group {0} is too high for warp destination.", newGroup));
+                var destGroup = Project.GetIndexedDataType<WarpDestGroup>(newGroup);
+                SourceData.SetDestData(destGroup.GetNewOrUnusedDestData());
             }
-            if (dest.GetNumReferences() != 1)
+            else {
+                if (DestData.GetNumReferences() != 1) { // Used by another warp source
+                    SourceData.SetDestData(SourceData.DestGroup.GetNewOrUnusedDestData());
+                }
+            }
+
+            if (oldDest != DestData) {
+                DestData.Map = oldDest.Map;
+                DestData.Y = oldDest.Y;
+                DestData.X = oldDest.X;
+                DestData.Parameter = oldDest.Parameter;
+                DestData.Transition = oldDest.Transition;
+            }
+
+            if (DestData.GetNumReferences() != 1)
                 throw new Exception("Internal error: New warp destination has "
-                        + dest.GetNumReferences() + " references.");
+                        + DestData.GetNumReferences() + " references.");
         }
     }
 }

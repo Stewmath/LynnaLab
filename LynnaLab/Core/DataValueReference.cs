@@ -137,6 +137,10 @@ namespace LynnaLab
             Data.SetValue(valueIndex,s);
         }
         public override void SetValue(int i) {
+            if (i > MaxValue) {
+                log.Warn(string.Format("Tried to set \"{0}\" to {1} (max value is {2})", Name, i, MaxValue));
+                i = MaxValue;
+            }
             switch(dataType) {
                 case DataValueType.HalfByte:
                     SetValue(Wla.ToHalfByte((byte)i));
