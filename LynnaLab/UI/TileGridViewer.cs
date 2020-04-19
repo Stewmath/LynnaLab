@@ -364,6 +364,13 @@ namespace LynnaLab
         }
 
         protected override bool OnDrawn(Cairo.Context cr) {
+            DrawBackground(cr);
+            DrawHoverAndSelection(cr);
+
+            return true;
+        }
+
+        protected void DrawBackground(Cairo.Context cr) {
             var totalRect = GetTotalBounds();
             cr.SetSourceColor(BackgroundColor);
             cr.Rectangle(totalRect.X, totalRect.Y, totalRect.Width, totalRect.Height);
@@ -400,9 +407,16 @@ namespace LynnaLab
             }
 
             cr.Restore(); // Undo scale, offset
+        }
+
+        protected void DrawHoverAndSelection(Cairo.Context cr) {
+            cr.Save();
+
+            cr.Translate(XOffset, YOffset);
+            cr.Scale(Scale, Scale);
 
             if (Hoverable && hoveringIndex != -1) {
-                Cairo.Rectangle rect = GetTileRectSansPadding(HoveringX, HoveringY);
+                Cairo.Rectangle rect = GetTileRectSansPadding(HoveringX, HoveringY, scale:false, offset:false);
                 cr.NewPath();
                 cr.SetSourceColor(HoverColor);
                 cr.Rectangle(new Cairo.Rectangle(rect.X + 0.5, rect.Y + 0.5, rect.Width-1, rect.Height-1));
@@ -412,7 +426,7 @@ namespace LynnaLab
             }
 
             if (Selectable) {
-                var rect = GetTileRectSansPadding(SelectedX, SelectedY);
+                var rect = GetTileRectSansPadding(SelectedX, SelectedY, scale:false, offset:false);
 
                 if (IsInBounds((int)rect.X, (int)rect.Y)) {
                     cr.NewPath();
@@ -423,7 +437,7 @@ namespace LynnaLab
                 }
             }
 
-            return true;
+            cr.Restore();
         }
 
         protected override void OnGetPreferredWidth(out int minimum_width, out int natural_width) {
