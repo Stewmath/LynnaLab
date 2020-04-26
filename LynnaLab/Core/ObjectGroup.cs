@@ -21,7 +21,8 @@ namespace LynnaLab
     //
     // Assumptions made:
     //   - The "children" do not, themselves, have any children. The tree is at most 1 level deep.
-    //   - All "EnemyObjectData" and "Before/AfterEvent" references are named uniquely based on
+    //   - The "Main" data for each group is named "groupXMapYYObjectData".
+    //   - All "EnemyData" and "Before/AfterEvent" references are named uniquely based on
     //     their room number. This is almost always true. There is one case in Seasons
     //     ("group5Map10EnemyData"; fairy fountains) which cannot follow this rule because multiple
     //     rooms use the same "obj_Pointer" opcode. As a result, LynnaLab cannot separate the data
@@ -34,6 +35,9 @@ namespace LynnaLab
     //   - This generally isn't designed to work if the underlying ObjectData or RawObjectGroup
     //     structures are modified independently. This should be the primary (only) interface for
     //     editing objects.
+    //   - Some groups share their data (ie. groups 4/6 and 5/7 in both games, + seasons groups
+    //     1-3). In this case, a label named, say, "group4Map00ObjectData" would also apply to group
+    //     6 despite the name. This shouldn't cause any problems.
     public class ObjectGroup : ProjectDataType
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);

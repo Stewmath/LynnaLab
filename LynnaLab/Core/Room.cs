@@ -102,14 +102,25 @@ namespace LynnaLab
         // These 2 functions may be deprecated later if I switch to using
         // constant definitions
         public int GetMusicID() {
-            Stream file = Project.GetBinaryFile("audio/" + Project.GameString + "/group" + (Index>>8) + "IDs.bin");
+            Stream file = GetMusicFile();
             file.Position = Index&0xff;
             return file.ReadByte();
         }
         public void SetMusicID(int id) {
-            Stream file = Project.GetBinaryFile("audio/" + Project.GameString + "/group" + (Index>>8) + "IDs.bin");
+            Stream file = GetMusicFile();
             file.Position = Index&0xff;
             file.WriteByte((byte)id);
+        }
+
+        private Stream GetMusicFile() {
+            Data data = Project.GetData("musicAssignmentGroupTable", 2*(Index>>8));
+            data = Project.GetData(data.GetValue(0)); // Follow .dw pointer
+
+            string path = data.GetValue(0);
+            path = path.Substring(1, path.Length-2); // Remove quotes
+
+            Stream stream = Project.GetBinaryFile(path);
+            return stream;
         }
 
         public void SetTileset(Tileset t) {
@@ -138,7 +149,8 @@ namespace LynnaLab
         }
 
         public ObjectGroup GetObjectGroup() {
-            String label = "group" + (Index/0x100).ToString("x") + "Map" + (Index%0x100).ToString("x2") + "ObjectData";
+            string tableLabel = Project.GetData("objectDataGroupTable", 2*(Index>>8)).GetValue(0);
+            string label = Project.GetData(tableLabel, 2*(Index&0xff)).GetValue(0);
             return Project.GetObjectGroup(label, ObjectGroupType.Main);
         }
 

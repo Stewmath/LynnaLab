@@ -13,6 +13,6 @@ namespace LynnaLab
 
 
         // Variables imported from YAML config file
-        public bool ExpandedTilesets {get; set;}
+        public bool ExpandedTilesets {get; private set;}
     }
 }
