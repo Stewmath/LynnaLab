@@ -180,7 +180,7 @@ namespace LynnaLab
 
         // The string to use for navigating game-specific folders in the disassembly
         public string GameString {
-            get { return "seasons"; }
+            get { return Config.EditingGame; }
         }
 
         public int NumDungeons {
