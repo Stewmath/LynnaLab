@@ -47,21 +47,6 @@ namespace LynnaLab
         ProjectConfig config;
 
 
-        public ProjectConfig Config {
-            get {
-                return config;
-            }
-        }
-
-        public string BaseDirectory {
-            get { return baseDirectory; }
-        }
-
-        // The string to use for navigating game-specific folders in the disassembly
-        public string GameString {
-            get { return "ages"; }
-        }
-
         public Project(string d)
         {
             baseDirectory = d + '/';
@@ -179,6 +164,65 @@ namespace LynnaLab
                 }
             }
         }
+
+
+        // Properties
+
+        public ProjectConfig Config {
+            get {
+                return config;
+            }
+        }
+
+        public string BaseDirectory {
+            get { return baseDirectory; }
+        }
+
+        // The string to use for navigating game-specific folders in the disassembly
+        public string GameString {
+            get { return "seasons"; }
+        }
+
+        public int NumDungeons {
+            get {
+                if (GameString == "ages")
+                    return 16;
+                else
+                    return 12;
+            }
+        }
+
+        public int NumGroups {
+            get {
+                if (GameString == "ages")
+                    return 8;
+                else
+                    return 8;
+            }
+        }
+
+        public int NumRooms {
+            get {
+                if (GameString == "ages")
+                    return 0x800;
+                else
+                    return 0x800;
+            }
+        }
+
+        public int NumTilesets {
+            get {
+                if (Config.ExpandedTilesets)
+                    return 0x80;
+                else if (GameString == "ages")
+                    return 0x67;
+                else
+                    return 0x63;
+            }
+        }
+
+
+        // Methods
 
         internal FileParser GetFileParser(string filename) {
             if (!FileExists(filename))
@@ -492,7 +536,7 @@ namespace LynnaLab
         public HashSet<int> GetRoomsUsedInDungeons() {
             var rooms = new HashSet<int>();
 
-            for (int i=0; i<GetNumDungeons(); i++) {
+            for (int i=0; i<NumDungeons; i++) {
                 Dungeon d = GetIndexedDataType<Dungeon>(i);
                 for (int f=0; f<d.NumFloors; f++) {
                     for (int x=0; x<d.MapWidth; x++) {
@@ -528,34 +572,6 @@ namespace LynnaLab
             return _standardSpritePalettes;
         }
 
-        public int GetNumDungeons() {
-            if (GameString == "ages")
-                return 16;
-            else
-                return 12;
-        }
-
-        public int GetNumGroups() {
-            if (GameString == "ages")
-                return 8;
-            else
-                return 8;
-        }
-
-        public int GetNumRooms() {
-            if (GameString == "ages")
-                return 0x600;
-            else
-                return 0x600;
-        }
-
-        public int GetNumTilesets() {
-            if (GameString == "ages")
-                return 0x67;
-            else
-                return 0x63;
-        }
-
         // Gets the dungeon a room is in. Also returns the coordinates within the dungeon in x/y
         // parameters.
         public Dungeon GetRoomDungeon(Room room, out int x, out int y, out int floor) {
@@ -563,7 +579,7 @@ namespace LynnaLab
             y = -1;
             floor = -1;
 
-            for (int d=0; d<GetNumDungeons(); d++) {
+            for (int d=0; d<NumDungeons; d++) {
                 Dungeon dungeon = GetIndexedDataType<Dungeon>(d);
                 if (dungeon.GetRoomPosition(room, out x, out y, out floor))
                     return dungeon;

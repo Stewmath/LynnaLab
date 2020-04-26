@@ -278,7 +278,7 @@ namespace LynnaLab
                             DestData.Map = value & 0xff;
                         }
                     },
-                    maxValue: Project.GetNumRooms()-1); // TODO: seasons has some "gap" rooms
+                    maxValue: Project.NumRooms-1); // TODO: seasons has some "gap" rooms
             valueReferences.Add(vref);
 
             vref = new AbstractIntValueReference(Project,
@@ -347,7 +347,7 @@ namespace LynnaLab
 
             WarpDestData oldDest = DestData;
             if (newGroup != SourceData.DestGroupIndex) {
-                if (newGroup >= Project.GetNumGroups())
+                if (newGroup >= Project.NumGroups)
                     throw new Exception(string.Format("Group {0} is too high for warp destination.", newGroup));
                 var destGroup = Project.GetIndexedDataType<WarpDestGroup>(newGroup);
                 SetDestData(destGroup.GetNewOrUnusedDestData());

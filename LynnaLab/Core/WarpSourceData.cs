@@ -347,7 +347,7 @@ namespace LynnaLab
         // Make sure there are no surprises
         void Sanitize() {
             if (WarpSourceType == WarpSourceType.Standard || WarpSourceType == WarpSourceType.Pointed) {
-                if (DestGroupIndex >= Project.GetNumGroups()) {
+                if (DestGroupIndex >= Project.NumGroups) {
                     throw new AssemblyErrorException("Dest group for warp too high: \"" + GetString().Trim() + "\".");
                 }
                 if (DestIndex >= DestGroup.GetNumWarpDests())

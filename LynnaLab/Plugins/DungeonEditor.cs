@@ -178,7 +178,7 @@ namespace Plugins
                     layoutFile.WriteByte(0);
 
                 // Shift each dungeon's "FirstLayoutIndex" to match the shifted layouts.
-                for (int i=0; i<Project.GetNumDungeons(); i++) {
+                for (int i=0; i<Project.NumDungeons; i++) {
                     Dungeon d2 = Project.GetIndexedDataType<Dungeon>(i);
                     if (d2.FirstLayoutIndex >= newFloorIndex)
                         d2.FirstLayoutIndex++;
@@ -224,7 +224,7 @@ namespace Plugins
                     layoutFile.SetLength(layoutFile.Length-64);
 
                     // Shift each dungeon's "FirstLayoutIndex" to match the shifted layouts.
-                    for (int i=0; i<Project.GetNumDungeons(); i++) {
+                    for (int i=0; i<Project.NumDungeons; i++) {
                         Dungeon d2 = Project.GetIndexedDataType<Dungeon>(i);
                         if (d2.FirstLayoutIndex > deletedFloorIndex)
                             d2.FirstLayoutIndex--;

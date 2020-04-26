@@ -136,7 +136,7 @@ public class MainWindow
         floorSpinButton = (Gtk.SpinButton)builder.GetObject("floorSpinButton");
         statusbar1 = (Gtk.Statusbar)builder.GetObject("statusbar1");
 
-        roomSpinButton = new SpinButtonHexadecimal(0, 0x5ff);
+        roomSpinButton = new SpinButtonHexadecimal();
         roomSpinButton.Digits = 3;
         tilesetSpinButton = new SpinButtonHexadecimal();
         tilesetSpinButton.Digits = 2;
@@ -211,11 +211,7 @@ public class MainWindow
                         ", " + roomeditor1.HoveringY + ")");
         });
 
-        worldSpinButton.Adjustment = new Adjustment(0, 0, 5, 1, 0, 0);
-        dungeonSpinButton.Adjustment = new Adjustment(0, 0, 15, 1, 0, 0);
-
         OnDarkenDungeonRoomsCheckboxToggled(null, null);
-
 
         pluginCore = new PluginCore(this);
 
@@ -312,6 +308,11 @@ public class MainWindow
     */
 
             musicComboBox.SetConstantsMapping(Project.MusicMapping);
+
+            worldSpinButton.Adjustment = new Adjustment(0, 0, Project.NumGroups-1, 1, 4, 0);
+            dungeonSpinButton.Adjustment = new Adjustment(0, 0, Project.NumDungeons-1, 1, 1, 0);
+            roomSpinButton.Adjustment = new Adjustment(0, 0, Project.NumRooms-1, 1, 16, 0);
+
             SetWorld(0);
         }
     }

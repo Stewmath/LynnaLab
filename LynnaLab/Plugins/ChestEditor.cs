@@ -565,7 +565,7 @@ namespace Plugins
         {
             manager = m;
 
-            indexSpinButton = new SpinButtonHexadecimal(0,Project.GetNumRooms()-1);
+            indexSpinButton = new SpinButtonHexadecimal(0,Project.NumRooms-1);
             indexSpinButton.Digits = 3;
             indexSpinButton.ValueChanged += (a,b) => {
                 SetRoom(indexSpinButton.ValueAsInt);
