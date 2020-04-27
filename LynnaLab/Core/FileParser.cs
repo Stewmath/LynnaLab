@@ -444,149 +444,148 @@ arbitraryLengthData:
                 }
 
                 switch (tokens[0].ToLower()) {
-                    // Built-in directives
-                    case ".ramsection": {
-                        context = "RAMSECTION";
-                        // Find the last token which specifies the name
-                        int tokenIndex = 1;
-                        while (tokens[tokenIndex][tokens[tokenIndex].Length-1] != '"')
-                            tokenIndex++;
+                // Built-in directives
+                case ".ramsection": {
+                    context = "RAMSECTION";
+                    // Find the last token which specifies the name
+                    int tokenIndex = 1;
+                    while (tokens[tokenIndex][tokens[tokenIndex].Length-1] != '"')
                         tokenIndex++;
+                    tokenIndex++;
 
-                        while (tokenIndex < tokens.Count) {
-                            if (tokens[tokenIndex] == "BANK") {
-                                tokenIndex++;
-                                bank = Project.EvalToInt(tokens[tokenIndex++]);
-                            }
-                            else if (tokens[tokenIndex] == "SLOT") {
-                                tokenIndex++;
-                                string slotString = tokens[tokenIndex++];
-                                int slot = Project.EvalToInt(slotString);
-                                if (slot == 2)
-                                    address = 0xc000;
-                                else { // Assuming slot >= 3
-                                    address = 0xd000;
-                                }
+                    while (tokenIndex < tokens.Count) {
+                        if (tokens[tokenIndex] == "BANK") {
+                            tokenIndex++;
+                            bank = Project.EvalToInt(tokens[tokenIndex++]);
+                        }
+                        else if (tokens[tokenIndex] == "SLOT") {
+                            tokenIndex++;
+                            string slotString = tokens[tokenIndex++];
+                            int slot = Project.EvalToInt(slotString);
+                            if (slot == 2)
+                                address = 0xc000;
+                            else { // Assuming slot >= 3
+                                address = 0xd000;
                             }
                         }
+                    }
+                    break;
+                }
+                case ".ends":
+                    if (context == "RAMSECTION")
+                        context = "";
+                    break;
+
+                case ".enum":
+                    context = "ENUM";
+                    address = Project.EvalToInt(tokens[1]);
+                    break;
+                    // Not supported: "DESC" (descreasing order)
+
+                case ".ende":
+                    if (context == "ENUM")
+                        context = "";
+                    break;
+
+                case ".define":
+                    {
+                        if (tokens.Count < 3) {
+                            log.Debug(warningString + "Expected .DEFINE to have a string and a value.");
+                            break;
+                        }
+                        string value = "";
+                        for (int j = 2; j < tokens.Count; j++) {
+                            value += tokens[j];
+                            value += " ";
+                        }
+                        value = value.Trim();
+                        AddDefinition(tokens[1], value);
                         break;
                     }
-                    case ".ends":
-                        if (context == "RAMSECTION")
-                            context = "";
+
+                case ".ifdef":
+                    if (tokens.Count < 2) {
+                        log.Warn(warningString + "Expected .IFDEF to have a value.");
                         break;
-
-                    case ".enum":
-                        context = "ENUM";
-                        address = Project.EvalToInt(tokens[1]);
-                        break;
-                        // Not supported: "DESC" (descreasing order)
-
-                    case ".ende":
-                        if (context == "ENUM")
-                            context = "";
-                        break;
-
-                    case ".define":
-                        {
-                            if (tokens.Count < 3) {
-                                log.Debug(warningString + "Expected .DEFINE to have a string and a value.");
-                                break;
-                            }
-                            string value = "";
-                            for (int j = 2; j < tokens.Count; j++) {
-                                value += tokens[j];
-                                value += " ";
-                            }
-                            value = value.Trim();
-                            AddDefinition(tokens[1], value);
-                            break;
-                        }
-
-                    case ".ifdef":
-                        if (tokens.Count < 2) {
-                            log.Warn(warningString + "Expected .IFDEF to have a value.");
-                            break;
-                        }
-                        ifdefDepth++;
-                        if (Project.GetDefinition(tokens[1]) != null)
-                            ifdefCondition = true;
-                        else {
-                            ifdefCondition = false;
-                            failedIfdefDepth = ifdefDepth-1;
-                        }
-                        break;
-
-                    case ".else":
-                        if (ifdefDepth == 0) {
-                            log.Warn(warningString + "Expected .IFDEF before .ENDIF.");
-                            break;
-                        }
+                    }
+                    ifdefDepth++;
+                    if (Project.GetDefinition(tokens[1]) != null)
+                        ifdefCondition = true;
+                    else {
                         ifdefCondition = false;
-                        break;
+                        failedIfdefDepth = ifdefDepth-1;
+                    }
+                    break;
 
-                    case ".endif":
-                        if (ifdefDepth == 0) {
-                            log.Warn(warningString + "Expected .IFDEF before .ENDIF.");
-                            break;
+                case ".else":
+                    if (ifdefDepth == 0) {
+                        log.Warn(warningString + "Expected .IFDEF before .ENDIF.");
+                        break;
+                    }
+                    ifdefCondition = false;
+                    break;
+
+                case ".endif":
+                    if (ifdefDepth == 0) {
+                        log.Warn(warningString + "Expected .IFDEF before .ENDIF.");
+                        break;
+                    }
+                    ifdefDepth--;
+                    break;
+
+                default: {
+                    bool isData = ParseData(tokens, spacing);
+
+                    // In ramsections or enums, assume any unidentifiable data is a label.
+                    // Technically this should be the case in any context, but it's more
+                    // useful for the parser to tell me what it doesn't understand.
+                    if (!isData && (tokens[0][tokens[0].Length - 1] == ':' || context == "RAMSECTION" || context == "ENUM")) {
+                        // Label
+                        string s = tokens[0];
+                        if (tokens[0][tokens[0].Length-1] == ':')
+                            s = tokens[0].Substring(0, tokens[0].Length - 1); 
+
+                        FileComponent addedComponent;
+                        if (context == "RAMSECTION" || context == "ENUM") {
+                            AddDefinition(s, address.ToString());
+                            if (context == "RAMSECTION")
+                                AddDefinition(":"+s, bank.ToString());
+                            PopFileStructure();
+                            StringFileComponent sc = new StringFileComponent(this, tokens[0], spacing);
+                            AddComponent(sc);
+                            addedComponent = sc;
                         }
-                        ifdefDepth--;
-                        break;
+                        else {
+                            Label label = new Label(this,s,spacing);
+                            AddDataAndPopFileStructure(label);
+                            addedComponent = label;
+                        }
+                        if (tokens.Count > 1) { // There may be data directly after the label
+                            string[] tokens2 = new string[tokens.Count-1];
+                            List<string> spacing2 = new List<string>();
 
-                    default:
-                        {
-                            bool isData = ParseData(tokens, spacing);
+                            addedComponent.EndsLine = false;
 
-                            // In ramsections or enums, assume any unidentifiable data is a label.
-                            // Technically this should be the case in any context, but it's more
-                            // useful for the parser to tell me what it doesn't understand.
-                            if (!isData && (tokens[0][tokens[0].Length - 1] == ':' || context == "RAMSECTION" || context == "ENUM")) {
-                                // Label
-                                string s = tokens[0];
-                                if (tokens[0][tokens[0].Length-1] == ':')
-                                    s = tokens[0].Substring(0, tokens[0].Length - 1); 
+                            // Add raw string to file structure, it'll be removed if a better
+                            // representation is found
+                            AddComponent(new StringFileComponent(
+                                        this, line.Substring(spacing[0].Length+tokens[0].Length), spacing2));
 
-                                FileComponent addedComponent;
-                                if (context == "RAMSECTION" || context == "ENUM") {
-                                    AddDefinition(s, address.ToString());
-                                    if (context == "RAMSECTION")
-                                        AddDefinition(":"+s, bank.ToString());
-                                    PopFileStructure();
-                                    StringFileComponent sc = new StringFileComponent(this, tokens[0], spacing);
-                                    AddComponent(sc);
-                                    addedComponent = sc;
-                                }
-                                else {
-                                    Label label = new Label(this,s,spacing);
-                                    AddDataAndPopFileStructure(label);
-                                    addedComponent = label;
-                                }
-                                if (tokens.Count > 1) { // There may be data directly after the label
-                                    string[] tokens2 = new string[tokens.Count-1];
-                                    List<string> spacing2 = new List<string>();
-
-                                    addedComponent.EndsLine = false;
-
-                                    // Add raw string to file structure, it'll be removed if a better
-                                    // representation is found
-                                    AddComponent(new StringFileComponent(
-                                                this, line.Substring(spacing[0].Length+tokens[0].Length), spacing2));
-
-                                    for (int j=1; j<tokens.Count; j++)
-                                        tokens2[j-1] = tokens[j];
-                                    for (int j=1; j<spacing.Count; j++)
-                                        spacing2.Add(spacing[j]);
-                                    if (!ParseData(tokens2, spacing2)) {
-                                        log.Debug(warningString + "Error parsing line.");
-                                    }
-                                }
-                            }
-                            else {
-                                // Unknown data
-                                log.Debug(warningString + "Did not understand \"" + tokens[0] + "\".");
+                            for (int j=1; j<tokens.Count; j++)
+                                tokens2[j-1] = tokens[j];
+                            for (int j=1; j<spacing.Count; j++)
+                                spacing2.Add(spacing[j]);
+                            if (!ParseData(tokens2, spacing2)) {
+                                log.Debug(warningString + "Error parsing line.");
                             }
                         }
-                        break;
+                    }
+                    else {
+                        // Unknown data
+                        log.Debug(warningString + "Did not understand \"" + tokens[0] + "\".");
+                    }
+                    break;
+                }
                 }
             }
         }
