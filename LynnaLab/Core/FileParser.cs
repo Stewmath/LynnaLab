@@ -545,6 +545,11 @@ arbitraryLengthData:
                         if (tokens[0][tokens[0].Length-1] == ':')
                             s = tokens[0].Substring(0, tokens[0].Length - 1); 
 
+                        if (s[0] == '@') {
+                            log.Warn("Ignoring label '" + s + "': child labels not supported.");
+                            break;
+                        }
+
                         FileComponent addedComponent;
                         if (context == "RAMSECTION" || context == "ENUM") {
                             AddDefinition(s, address.ToString());
