@@ -160,6 +160,7 @@
     <Compile Include="UI\SelectionBox.cs" />
     <Compile Include="Core\Util\LockableEventGroup.cs" />
     <Compile Include="Core\Warp.cs" />
+    <Compile Include="Core\PngGfxStream.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

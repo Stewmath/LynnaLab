@@ -11,7 +11,7 @@ namespace LynnaLab
     public class ObjectGfxHeaderData : Data,IGfxHeader {
         List<string> gfxDirectories = new List<string>();
 
-        Stream gfxFile;
+        Stream gfxStream;
 
         public int? SourceAddr {
             get { return null; }
@@ -20,7 +20,7 @@ namespace LynnaLab
             get { return null; }
         }
 
-        public Stream GfxStream { get { return gfxFile; } }
+        public Stream GfxStream { get { return gfxStream; } }
 
         // The number of blocks (16 bytes each) to be read.
         public int BlockCount {
@@ -43,10 +43,10 @@ namespace LynnaLab
         public ObjectGfxHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing) 
             : base(p, command, values, 3, parser, spacing)
         {
-            string filename = GetValue(0) + ".bin";
+            string filename = GetValue(0);
 
-            gfxFile = Project.FindGfxFile(filename);
-            if (gfxFile == null) {
+            gfxStream = Project.LoadGfx(filename);
+            if (gfxStream == null) {
                 throw new Exception("Could not find graphics file " + filename);
             }
         }

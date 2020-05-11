@@ -27,6 +27,13 @@ public class DuplicateLabelException : AssemblyErrorException {
         : base(message, inner) {}
 }
 
+// Used by PngGfxStream when an image is formatted in an unexpected way
+public class InvalidImageException : Exception {
+    public InvalidImageException() : base() {}
+    public InvalidImageException(string s) : base(s) {}
+    public InvalidImageException(Exception e) : base(e.Message) {}
+}
+
 // Used by ObjectAnimation.cs and ObjectAnimationFrame.cs.
 public class InvalidAnimationException : Exception {
     public InvalidAnimationException() : base() {}

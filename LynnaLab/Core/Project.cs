@@ -31,8 +31,10 @@ namespace LynnaLab
 
         // Maps label to file which contains it
         Dictionary<string,FileParser> labelDictionary = new Dictionary<string,FileParser>();
-        // List of opened binary files
+        // Dict of opened binary files
         Dictionary<string,MemoryFileStream> binaryFileDictionary = new Dictionary<string,MemoryFileStream>();
+        // Dict of opened .PNG files
+        Dictionary<string,PngGfxStream> pngGfxStreamDictionary = new Dictionary<string,PngGfxStream>();
         // Dictionary of .DEFINE's
         Dictionary<string,string> definesDictionary = new Dictionary<string,string>();
 
@@ -248,17 +250,27 @@ namespace LynnaLab
         /// <summary>
         ///  Searches for a gfx file in all gfx directories (for the current game).
         /// </summary>
-        public MemoryFileStream FindGfxFile(string filename) {
+        public Stream LoadGfx(string filename) {
+            PngGfxStream pngGfxStream;
+            if (pngGfxStreamDictionary.TryGetValue(filename, out pngGfxStream))
+                return pngGfxStream;
+
             var directories = new List<string>();
 
-            directories.Add("gfx/");
-            directories.Add("gfx_compressible/");
+            directories.Add("gfx/common/");
+            directories.Add("gfx_compressible/common/");
             directories.Add("gfx/" + GameString + "/");
             directories.Add("gfx_compressible/" + GameString + "/");
 
             foreach (string directory in directories) {
-                if (File.Exists(BaseDirectory + directory + filename)) {
-                    return GetBinaryFile(directory + filename);
+                string baseFilename = directory + filename;
+                if (FileExists(baseFilename + ".bin")) {
+                    return GetBinaryFile(baseFilename + ".bin");
+                }
+                else if (FileExists(baseFilename + ".png")) {
+                    pngGfxStream = new PngGfxStream(BaseDirectory + baseFilename + ".png");
+                    pngGfxStreamDictionary.Add(filename, pngGfxStream);
+                    return pngGfxStream;
                 }
             }
 
