@@ -199,8 +199,10 @@ namespace LynnaLab
             SetAnimation((byte)Project.EvalToInt(data.GetValue(0)));
 
             if (Project.Config.ExpandedTilesets) {
-                MemoryFileStream stream = Project.GetBinaryFile(
-                        String.Format("gfx/{0}/gfx_tileset{1:x2}.bin", Project.GameString, Index));
+                string name = String.Format("gfx_tileset{1:x2}", Project.GameString, Index);
+                Stream stream = Project.LoadGfx(name);
+                if (stream == null)
+                    throw new ProjectErrorException("Couldn't find \"" + name + "\" in project.");
                 byte[] gfx = new byte[0x1000];
                 stream.Read(gfx, 0, 0x1000);
                 graphicsState.AddRawVram(1, 0x800, gfx);
