@@ -50,16 +50,16 @@ namespace LynnaLab
             SetTileset(t);
         }
 
-        void SetTileset(Tileset t) {
-            Tileset.TileModifiedHandler handler = delegate(int tile) {
-                if (tile == subTileEditor.subTileViewer.TileIndex) {
-                    subTileEditor.subTileViewer.QueueDraw();
-                }
-            };
+        void TileModifiedHandler(int tile) {
+            if (tile == subTileEditor.subTileViewer.TileIndex) {
+                subTileEditor.OnTileModified();
+            }
+        }
 
+        void SetTileset(Tileset t) {
             if (tileset != null)
-                tileset.TileModifiedEvent -= handler;
-            t.TileModifiedEvent += handler;
+                tileset.TileModifiedEvent -= TileModifiedHandler;
+            t.TileModifiedEvent += TileModifiedHandler;
 
             tileset = t;
             subTileEditor.SetTileset(tileset);
@@ -193,7 +193,7 @@ namespace LynnaLab
         }
     }
 
-    // Draws the tile with the ability to select t quadrant to change the
+    // Draws the tile with the ability to select the quadrant to change the
     // properties.
     class SubTileViewer : TileGridViewer {
 
@@ -515,6 +515,11 @@ namespace LynnaLab
             subTileViewer.TileIndex = tile;
             subTileCollisionEditor.TileIndex = tile;
             PullEverything();
+        }
+
+        public void OnTileModified() {
+            subTileViewer.QueueDraw();
+            subTileCollisionEditor.QueueDraw();
         }
 
         void PullEverything() {
