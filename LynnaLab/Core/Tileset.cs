@@ -299,8 +299,7 @@ namespace LynnaLab
         // Functions dealing with subtiles
         public byte GetSubTileIndex(int index, int x, int y) {
             if (Project.Config.ExpandedTilesets) {
-                MemoryFileStream stream = Project.GetBinaryFile(
-                        String.Format("tileset_layouts/{0}/tilesetMappings{1:x2}.bin", Project.GameString, Index));
+                MemoryFileStream stream = GetExpandedMappingsFile();
                 stream.Seek(index * 8 + y * 2 + x, SeekOrigin.Begin);
                 return (byte)stream.ReadByte();
             }
@@ -309,15 +308,16 @@ namespace LynnaLab
         }
         public void SetSubTileIndex(int index, int x, int y, byte value) {
             if (Project.Config.ExpandedTilesets) {
-                // TODO
+                MemoryFileStream stream = GetExpandedMappingsFile();
+                stream.Seek(index * 8 + y * 2 + x, SeekOrigin.Begin);
+                stream.WriteByte(value);
             }
             else
                 tilesetHeaderGroup.SetMappingsData(index*8+y*2+x, value);
         }
         public byte GetSubTileFlags(int index, int x, int y) {
             if (Project.Config.ExpandedTilesets) {
-                MemoryFileStream stream = Project.GetBinaryFile(
-                        String.Format("tileset_layouts/{0}/tilesetMappings{1:x2}.bin", Project.GameString, Index));
+                MemoryFileStream stream = GetExpandedMappingsFile();
                 stream.Seek(index * 8 + 4 + y * 2 + x, SeekOrigin.Begin);
                 return (byte)stream.ReadByte();
             }
@@ -326,7 +326,9 @@ namespace LynnaLab
         }
         public void SetSubTileFlags(int index, int x, int y, byte value) {
             if (Project.Config.ExpandedTilesets) {
-                // TODO
+                MemoryFileStream stream = GetExpandedMappingsFile();
+                stream.Seek(index * 8 + 4 + y * 2 + x, SeekOrigin.Begin);
+                stream.WriteByte(value);
             }
             else {
                 tilesetHeaderGroup.SetMappingsData(index*8+y*2+x+4, value);
@@ -339,42 +341,34 @@ namespace LynnaLab
         // solid). This ignores the upper half of the collision data bytes and
         // assumes it is zero.
         public bool GetSubTileBasicCollision(int index, int x, int y) {
-            if (Project.Config.ExpandedTilesets) {
-                // TODO
-                return false;
-            }
-            else {
-                byte b = tilesetHeaderGroup.GetCollisionsData(index);
-                byte i = (byte)(1<<(3-(x+y*2)));
-                return (b&i) != 0;
-            }
+            byte b = GetTileCollision(index);
+            byte i = (byte)(1<<(3-(x+y*2)));
+            return (b&i) != 0;
         }
         public void SetSubTileBasicCollision(int index, int x, int y, bool val) {
-            if (Project.Config.ExpandedTilesets) {
-                // TODO
-            }
-            else {
-                byte b = tilesetHeaderGroup.GetCollisionsData(index);
-                byte i = (byte)(1<<(3-(x+y*2)));
-                b = (byte)(b & ~i);
-                if (val)
-                    b |= i;
-                tilesetHeaderGroup.SetCollisionsData(index, b);
-            }
+            byte b = GetTileCollision(index);
+            byte i = (byte)(1<<(3-(x+y*2)));
+            b = (byte)(b & ~i);
+            if (val)
+                b |= i;
+            SetTileCollision(index, b);
         }
 
         // Get the full collision byte for a tile.
         public byte GetTileCollision(int index) {
             if (Project.Config.ExpandedTilesets) {
-                // TODO
-                return 0;
+                MemoryFileStream stream = GetExpandedCollisionsFile();
+                stream.Seek(index, SeekOrigin.Begin);
+                return (byte)stream.ReadByte();
             }
             else
                 return tilesetHeaderGroup.GetCollisionsData(index);
         }
         public void SetTileCollision(int index, byte val) {
             if (Project.Config.ExpandedTilesets) {
-                // TODO
+                MemoryFileStream stream = GetExpandedCollisionsFile();
+                stream.Seek(index, SeekOrigin.Begin);
+                stream.WriteByte(val);
             }
             else
                 tilesetHeaderGroup.SetCollisionsData(index, val);
@@ -507,6 +501,7 @@ namespace LynnaLab
             InvalidateAllTiles();
         }
 
+        // TODO: Rename this... (it refers to a particular field of the tileset)
         void SetTileset(int index) {
             if (Project.Config.ExpandedTilesets) // Field has no effect in this case
                 return;
@@ -542,6 +537,17 @@ namespace LynnaLab
             else
                 animationGroup = null;
             InvalidateAllTiles();
+        }
+
+
+        MemoryFileStream GetExpandedMappingsFile() {
+            return Project.GetBinaryFile(
+                    String.Format("tileset_layouts/{0}/tilesetMappings{1:x2}.bin", Project.GameString, Index));
+        }
+
+        MemoryFileStream GetExpandedCollisionsFile() {
+            return Project.GetBinaryFile(
+                    String.Format("tileset_layouts/{0}/tilesetCollisions{1:x2}.bin", Project.GameString, Index));
         }
     }
 }
