@@ -49,6 +49,7 @@ namespace LynnaLab
 
             tileset = t;
 
+            tileset.ResetAnimation();
             tileset.DrawAllTiles();
 
             this.QueueDraw();

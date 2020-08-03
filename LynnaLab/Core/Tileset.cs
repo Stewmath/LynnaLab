@@ -13,7 +13,6 @@ namespace LynnaLab
         Data tilesetData;
 
         int flags1, flags2;
-        int layoutGroup;
 
         TilesetHeaderGroup tilesetHeaderGroup;
         AnimationGroup animationGroup;
@@ -72,7 +71,7 @@ namespace LynnaLab
             set {
                 Data d = GetDataIndex(2);
                 d.SetValue(0, value);
-                SetUniqueGfx(Project.EvalToInt(value));
+                LoadUniqueGfx();
             }
         }
         public int UniqueGfx {
@@ -91,7 +90,7 @@ namespace LynnaLab
             set {
                 Data d = GetDataIndex(3);
                 d.SetValue(0, value);
-                SetMainGfx(Project.EvalToInt(value));
+                LoadMainGfx();
             }
         }
         public int MainGfx {
@@ -110,7 +109,7 @@ namespace LynnaLab
             set {
                 Data d = GetDataIndex(4);
                 d.SetValue(0, value);
-                SetPaletteHeader(Project.EvalToInt(value));
+                LoadPaletteHeader();
             }
         }
         public int PaletteHeader {
@@ -129,13 +128,15 @@ namespace LynnaLab
             set {
                 Data d = GetDataIndex(5);
                 d.SetValue(0, Wla.ToByte((byte)value));
-                SetTileset(value);
+                LoadTilesetLayout();
             }
         }
         public int LayoutGroup {
-            get { return layoutGroup; }
+            get {
+                Data d = GetDataIndex(6);
+                return Project.EvalToInt(d.GetValue(0));
+            }
             set {
-                layoutGroup = value;
                 Data d = GetDataIndex(6);
                 d.SetValue(0, Wla.ToByte((byte)value));
                 if (LayoutGroupModifiedEvent != null)
@@ -150,7 +151,7 @@ namespace LynnaLab
             set {
                 Data d = GetDataIndex(7);
                 d.SetValue(0, Wla.ToByte((byte)value));
-                SetAnimation((byte)value);
+                LoadAnimation();
             }
         }
 
@@ -168,35 +169,27 @@ namespace LynnaLab
             }
 
             // Initialize graphics state
-            graphicsState = new GraphicsState();
-            // Global palettes
-            PaletteHeaderGroup globalPaletteHeaderGroup = 
-                Project.GetIndexedDataType<PaletteHeaderGroup>(0xf);
-            graphicsState.AddPaletteHeaderGroup(globalPaletteHeaderGroup, PaletteGroupType.Common);
-
             Data data = tilesetData;
             flags1 = p.EvalToInt(data.GetValue(0));
 
             data = data.NextData;
             flags2 = p.EvalToInt(data.GetValue(0));
 
-            data = data.NextData;
-            SetUniqueGfx(Project.EvalToInt(data.GetValue(0)));
 
-            data = data.NextData;
-            SetMainGfx(Project.EvalToInt(data.GetValue(0)));
+            graphicsState = new GraphicsState();
 
-            data = data.NextData;
-            SetPaletteHeader(Project.EvalToInt(data.GetValue(0)));
+            // Global palettes
+            PaletteHeaderGroup globalPaletteHeaderGroup =
+                Project.GetIndexedDataType<PaletteHeaderGroup>(0xf);
+            graphicsState.AddPaletteHeaderGroup(globalPaletteHeaderGroup, PaletteGroupType.Common);
 
-            data = data.NextData;
-            SetTileset(Project.EvalToInt(data.GetValue(0)));
+            LoadAllGfxData();
+            LoadPaletteHeader();
+            LoadTilesetLayout();
+        }
 
-            data = data.NextData;
-            layoutGroup = Project.EvalToInt(data.GetValue(0));
-
-            data = data.NextData;
-            SetAnimation((byte)Project.EvalToInt(data.GetValue(0)));
+        void LoadAllGfxData() {
+            graphicsState.ClearGfx();
 
             if (Project.Config.ExpandedTilesets) {
                 string name = String.Format("gfx_tileset{1:x2}", Project.GameString, Index);
@@ -207,6 +200,12 @@ namespace LynnaLab
                 stream.Read(gfx, 0, 0x1000);
                 graphicsState.AddRawVram(1, 0x800, gfx);
             }
+            else {
+                LoadUniqueGfx();
+                LoadMainGfx();
+            }
+
+            LoadAnimation();
         }
 
         Data GetDataIndex(int i) {
@@ -216,18 +215,15 @@ namespace LynnaLab
             return data;
         }
 
+        // Clear all tile image caches. Won't necessarily redraw the cached image itself, for
+        // performance reasons... call "DrawAllTiles" afterwards if that's necessary.
         public void InvalidateAllTiles() {
             for (int i=0; i<256; i++)
                 tileImagesCache[i] = null;
             if (DrawInvalidatedTiles)
                 DrawAllTiles();
         }
-        public void RedrawAllTiles() {
-            tileUpdaterIndex = 0;
-            tileUpdaterRedraw = true;
-            GLib.IdleHandler handler = new GLib.IdleHandler(TileUpdater);
-            GLib.Idle.Add(handler);
-        }
+        // Trigger lazy draw of all tiles onto the cached tileset image
         public void DrawAllTiles() {
             tileUpdaterIndex = 0;
             tileUpdaterRedraw = false;
@@ -375,7 +371,7 @@ namespace LynnaLab
         }
 
         // This function doesn't guarantee to return a fully rendered image,
-        // only what is currently available
+        // only what is currently available.
         public Bitmap GetFullCachedImage() {
             if (fullCachedImageData != null) {
                 fullCachedImage.UnlockBits(fullCachedImageData);
@@ -386,9 +382,9 @@ namespace LynnaLab
 
         // Returns a list of tiles which have changed
         public IList<byte> UpdateAnimations(int frames) {
-            List<byte> retData = new List<byte>();
+            HashSet<byte> changedTiles = new HashSet<byte>();
             if (animationGroup == null)
-                return retData;
+                return new List<byte>();
 
             for (int i=0; i<animationGroup.NumAnimations; i++) {
                 Animation animation = animationGroup.GetAnimationIndex(i);
@@ -415,35 +411,42 @@ namespace LynnaLab
                             if (tile < 0)
                                 tile += 256;
                             foreach (byte metatile in usedTileList[tile]) {
-                                tileImagesCache[metatile] = null;
-                                retData.Add(metatile);
+                                changedTiles.Add(metatile);
                             }
                         }
                     }
                 }
             }
 
-            if (TileModifiedEvent != null)
-                foreach (byte b in retData)
-                    TileModifiedEvent(b);
+            foreach (int t in changedTiles) {
+                // Refresh the image of each animated metatile
+                tileImagesCache[t] = null;
+                GetTileImage(t);
 
-            if (DrawInvalidatedTiles)
-                DrawAllTiles();
+                if (TileModifiedEvent != null)
+                    TileModifiedEvent(t);
+            }
 
-            return retData;
+            return new List<byte>(changedTiles);
+        }
+
+        public void ResetAnimation() {
+            graphicsState.RemoveGfxHeaderType(GfxHeaderType.Animation);
+            InvalidateAllTiles();
+            DrawAllTiles();
         }
 
         public override void Save() {
         }
 
-        void SetMainGfx(int index) {
+        void LoadMainGfx() {
             if (Project.Config.ExpandedTilesets) // Field has no effect in this case
                 return;
 
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Main);
 
             FileParser gfxHeaderFile = Project.GetFileWithLabel("gfxHeaderTable");
-            Data pointerData = gfxHeaderFile.GetData("gfxHeaderTable", index*2);
+            Data pointerData = gfxHeaderFile.GetData("gfxHeaderTable", MainGfx*2);
             GfxHeaderData header = gfxHeaderFile.GetData(pointerData.GetValue(0))
                 as GfxHeaderData;
             if (header != null) {
@@ -464,15 +467,15 @@ namespace LynnaLab
             InvalidateAllTiles();
         }
 
-        void SetUniqueGfx(int index) {
+        void LoadUniqueGfx() {
             if (Project.Config.ExpandedTilesets) // Field has no effect in this case
                 return;
 
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Unique);
-            if (index != 0) {
+            if (UniqueGfx != 0) {
                 FileParser uniqueGfxHeaderFile = Project.GetFileWithLabel("uniqueGfxHeadersStart");
                 GfxHeaderData header
-                    = uniqueGfxHeaderFile.GetData("uniqueGfxHeader" + index.ToString("x2"))
+                    = uniqueGfxHeaderFile.GetData("uniqueGfxHeader" + UniqueGfx.ToString("x2"))
                     as GfxHeaderData;
                 if (header != null) {
                     bool next = true;
@@ -493,20 +496,19 @@ namespace LynnaLab
             InvalidateAllTiles();
         }
 
-        void SetPaletteHeader(int index) {
+        void LoadPaletteHeader() {
             graphicsState.RemovePaletteGroupType(PaletteGroupType.Main);
             var paletteHeaderGroup =
-                Project.GetIndexedDataType<PaletteHeaderGroup>(index);
+                Project.GetIndexedDataType<PaletteHeaderGroup>(PaletteHeader);
             graphicsState.AddPaletteHeaderGroup(paletteHeaderGroup, PaletteGroupType.Main);
             InvalidateAllTiles();
         }
 
-        // TODO: Rename this... (it refers to a particular field of the tileset)
-        void SetTileset(int index) {
+        void LoadTilesetLayout() {
             if (Project.Config.ExpandedTilesets) // Field has no effect in this case
                 return;
 
-            tilesetHeaderGroup = Project.GetIndexedDataType<TilesetHeaderGroup>(index);
+            tilesetHeaderGroup = Project.GetIndexedDataType<TilesetHeaderGroup>(TilesetLayoutIndex);
 
             // Generate usedTileList for quick lookup of which metatiles use
             // which 4 gameboy tiles
@@ -527,12 +529,11 @@ namespace LynnaLab
             InvalidateAllTiles();
         }
 
-        void SetAnimation(byte index) {
+        void LoadAnimation() {
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Animation);
             // Animation
-            if (index != 0xff) {
-                animationGroup
-                    = Project.GetIndexedDataType<AnimationGroup>(index);
+            if (AnimationIndex != 0xff) {
+                animationGroup = Project.GetIndexedDataType<AnimationGroup>(AnimationIndex);
             }
             else
                 animationGroup = null;

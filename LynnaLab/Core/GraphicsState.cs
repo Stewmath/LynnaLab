@@ -27,6 +27,8 @@ namespace LynnaLab
 		byte[][] wramBuffer;
 		Color[][][] paletteBuffer;
 
+        // TODO: this is a hack, "raw data" should be dealt with in a similar way as "gfx headers"
+        // (managed by category, "GfxHeaderType" enum).
         List<Tuple<int,int,byte[]>> rawDataList = new List<Tuple<int,int,byte[]>>();
 
         // Parallel lists
@@ -57,6 +59,21 @@ namespace LynnaLab
             RegenerateBuffers();
             RegeneratePalettes();
 		}
+
+        public void ClearGfx() {
+            gfxHeaderDataList = new List<GfxHeaderData>();
+            gfxHeaderDataTypes = new List<GfxHeaderType>();
+            rawDataList.Clear();
+
+            RegenerateBuffers();
+        }
+
+        public void ClearGfxPalettes() {
+            paletteHeaderGroupList = new List<PaletteHeaderGroup>();
+            paletteHeaderGroupTypes = new List<PaletteGroupType>();
+
+            RegenerateBuffers();
+        }
 
         public Color[][] GetPalettes(PaletteType type) {
             if (palettesModified)

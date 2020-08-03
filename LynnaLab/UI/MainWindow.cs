@@ -259,6 +259,10 @@ public class MainWindow
         if (animationTimerID != 0)
             GLib.Source.Remove(animationTimerID);
         animationTimerID = 0;
+
+        var tileset = tilesetViewer1.Tileset;
+        if (tileset != null)
+            tileset.ResetAnimation();
     }
 
     bool AnimationUpdater() {
