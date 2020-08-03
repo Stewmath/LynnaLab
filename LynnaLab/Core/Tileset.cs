@@ -310,6 +310,7 @@ namespace LynnaLab
             }
             else
                 tilesetHeaderGroup.SetMappingsData(index*8+y*2+x, value);
+            GenerateUsedTileList();
         }
         public byte GetSubTileFlags(int index, int x, int y) {
             if (Project.Config.ExpandedTilesets) {
@@ -510,8 +511,11 @@ namespace LynnaLab
                 InvalidateAllTiles();
             }
 
-            // Generate usedTileList for quick lookup of which metatiles use
-            // which 4 gameboy tiles
+            GenerateUsedTileList();
+        }
+
+        // Generate usedTileList for quick lookup of which metatiles use which 4 gameboy tiles.
+        void GenerateUsedTileList() {
             for (int j=0; j<256; j++)
                 usedTileList[j] = new List<byte>();
             for (int j=0; j<256; j++) {
