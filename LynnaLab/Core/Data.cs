@@ -189,6 +189,11 @@ namespace LynnaLab
             dataModifiedEvent.Unlock();
         }
 
+        // Returns data which comes "offset" bytes after this data.
+        // Generally only works with ".db" and ".dw" data, otherwise there is no size defined.
+        public Data GetDataAtOffset(int offset) {
+            return FileParser.GetData(this, offset);
+        }
 
 
         // Helper function for GetString

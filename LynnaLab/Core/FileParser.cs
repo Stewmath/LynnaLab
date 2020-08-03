@@ -618,28 +618,30 @@ arbitraryLengthData:
         }
 
         public Data GetData(string labelStr, int offset=0) {
+            Label label = labelDictionary[labelStr];
+            if (label == null)
+                throw new InvalidLookupException(string.Format("Label \"{0}\" could not be found.", labelStr));
+            return GetData(label, offset);
+        }
+        public Data GetData(FileComponent component, int offset=0) {
             int origOffset = offset;
 
-            Label label = labelDictionary[labelStr];
-            if (label != null) {
-                FileComponent component = label;
-                while (component != null && !(component is Data))
-                    component = component.Next;
+            while (component != null && !(component is Data))
+                component = component.Next;
 
-                Data data = component as Data;
-                while (data != null) {
-                    if (offset == 0)
-                        return data;
-                    if (data.Size == -1)
-                        break;
-                    offset -= data.Size;
-                    if (offset < 0)
-                        break;
-                    data = data.NextData;
-                }
+            Data data = component as Data;
+            while (data != null) {
+                if (offset == 0)
+                    return data;
+                if (data.Size == -1)
+                    break;
+                offset -= data.Size;
+                if (offset < 0)
+                    break;
+                data = data.NextData;
             }
-            throw new InvalidLookupException("Provided offset (" + origOffset + ") relative to label \"" + labelStr +
-                    "\" was invalid.");
+            throw new InvalidLookupException("Provided offset (" + origOffset + ") relative to file component \""
+                    + component.GetString() + "\" was invalid.");
         }
 
         // Returns the label immediately before this data, or null if there is

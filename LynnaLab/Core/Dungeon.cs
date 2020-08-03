@@ -75,6 +75,10 @@ namespace LynnaLab
             return Project.EvalToInt(d.GetValue(0));
         }
 
+        Data GetFloorLayoutData(int floor) {
+            return Project.GetData("dungeonLayoutData", (FirstLayoutIndex + floor) * 64);
+        }
+
         void SetDataIndex(int i, int val) {
             Data d = dataStart;
             for (int j=0; j<i; j++) {
@@ -84,26 +88,25 @@ namespace LynnaLab
         }
 
         public void SetRoom(int x, int y, int floor, int room) {
-            int i = FirstLayoutIndex + floor;
-            Stream file = Project.GetBinaryFile(
-                    "rooms/" + Project.GameString + "/dungeonLayouts.bin");
-            file.Position = i*64+y*8+x;
-            file.WriteByte((byte)(room&0xff));
+            int pos = y * 8 + x;
+            if (pos >= 0x40)
+                throw new ArgumentException(string.Format("Arguments {0:X},{1:X} to 'SetRoom' too high.", x, y));
+            if (floor >= NumFloors)
+                throw new ArgumentException(string.Format("Floor {0} too high.", floor));
+
+            Data d = GetFloorLayoutData(floor).GetDataAtOffset(y * 8 + x);
+            d.SetByteValue(0, (byte)room);
         }
 
         // Map methods
 
         public override Room GetRoom(int x, int y, int floor=0) {
-            int i = FirstLayoutIndex + floor;
             int pos = y * 8 + x;
             if (pos >= 0x40)
                 throw new ArgumentException(string.Format("Arguments {0:X},{1:X} to 'GetRoom' too high.", x, y));
             if (floor >= NumFloors)
                 throw new ArgumentException(string.Format("Floor {0} too high.", floor));
-            Stream file = Project.GetBinaryFile(
-                    "rooms/" + Project.GameString + "/dungeonLayouts.bin");
-            file.Position = i*64+pos;
-            int roomIndex = file.ReadByte();
+            int roomIndex = GetFloorLayoutData(floor).GetDataAtOffset(y * 8 + x).GetIntValue(0);
             Room room = Project.GetIndexedDataType<Room>(roomIndex + Group*0x100);
             return room;
         }
