@@ -433,6 +433,12 @@ namespace LynnaLab
 
         public void ResetAnimation() {
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Animation);
+
+            for (int i=0; i<4; i++) {
+                animationPos[i] = 0;
+                animationCounter[i] = 0;
+            }
+
             InvalidateAllTiles();
             DrawAllTiles();
         }
