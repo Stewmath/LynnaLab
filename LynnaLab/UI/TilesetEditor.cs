@@ -67,7 +67,7 @@ namespace LynnaLab
 
             SetTileset(t);
 
-            tilesetSpinButton.Changed += TilesetSpinButtonChanged;
+            tilesetSpinButton.ValueChanged += TilesetSpinButtonChanged;
         }
 
         void TilesetSpinButtonChanged(object sender, EventArgs args) {
