@@ -182,56 +182,6 @@ namespace LynnaLab
             // TODO: save main gfx, unique gfx, palette as strings, not ints
             var list = new List<ValueReference>();
 
-            list.AddRange(new ValueReference[] {
-                new DataValueReference(GetDataIndex(0),
-                        name: "Dungeon",
-                        index: 0,
-                        startBit: 0,
-                        endBit: 3,
-                        type: DataValueType.ByteBits),
-                new DataValueReference(GetDataIndex(0),
-                        name: "Collision Type",
-                        index: 0,
-                        startBit: 4,
-                        endBit: 6,
-                        type: DataValueType.ByteBits)
-            });
-            list.AddRange(new ValueReference[] {
-                new DataValueReference(GetDataIndex(2),
-                        name: "Unique Gfx",
-                        index: 0,
-                        type: DataValueType.Byte,
-                        constantsMappingString: "UniqueGfxMapping"),
-                new DataValueReference(GetDataIndex(3),
-                        name: "Main Gfx",
-                        index: 0,
-                        type: DataValueType.Byte,
-                        constantsMappingString: "MainGfxMapping"),
-                new DataValueReference(GetDataIndex(4),
-                        name: "Palettes",
-                        index: 0,
-                        type: DataValueType.Byte,
-                        constantsMappingString: "PaletteHeaderMapping"),
-                new DataValueReference(GetDataIndex(5),
-                        name: "Layout",
-                        index: 0,
-                        type: DataValueType.Byte),
-                new DataValueReference(GetDataIndex(6),
-                        name: "Layout Group",
-                        index: 0,
-                        type: DataValueType.Byte),
-                new DataValueReference(GetDataIndex(7),
-                        name: "Animations",
-                        index: 0,
-                        type: DataValueType.Byte),
-            });
-            list.AddRange(new ValueReference[] {
-                new DataValueReference(GetDataIndex(0),
-                        name: "Unused(?) Bit",
-                        index: 0,
-                        startBit: 7,
-                        type: DataValueType.ByteBit),
-            });
             if (Project.GameString == "ages") {
                 list.AddRange(new ValueReference[] {
                     new DataValueReference(GetDataIndex(1),
@@ -300,6 +250,64 @@ namespace LynnaLab
                         startBit: 0,
                         type: DataValueType.ByteBit,
                         tooltip: "Does various things. In Ages this must be checked for the minimap to update your position."),
+            });
+
+            list.AddRange(new ValueReference[] {
+                new DataValueReference(GetDataIndex(0),
+                        name: "Dungeon",
+                        index: 0,
+                        startBit: 0,
+                        endBit: 3,
+                        type: DataValueType.ByteBits),
+                new DataValueReference(GetDataIndex(0),
+                        name: "Collision Type",
+                        index: 0,
+                        startBit: 4,
+                        endBit: 6,
+                        type: DataValueType.ByteBits)
+            });
+
+            // These fields do nothing with the expanded tilesets patch.
+            if (!Project.Config.ExpandedTilesets) {
+                list.AddRange(new ValueReference[] {
+                    new DataValueReference(GetDataIndex(2),
+                            name: "Unique Gfx",
+                            index: 0,
+                            type: DataValueType.Byte,
+                            constantsMappingString: "UniqueGfxMapping"),
+                    new DataValueReference(GetDataIndex(3),
+                            name: "Main Gfx",
+                            index: 0,
+                            type: DataValueType.Byte,
+                            constantsMappingString: "MainGfxMapping"),
+                    new DataValueReference(GetDataIndex(5),
+                            name: "Layout",
+                            index: 0,
+                            type: DataValueType.Byte),
+                });
+            }
+
+            list.AddRange(new ValueReference[] {
+                new DataValueReference(GetDataIndex(4),
+                        name: "Palettes",
+                        index: 0,
+                        type: DataValueType.Byte,
+                        constantsMappingString: "PaletteHeaderMapping"),
+                new DataValueReference(GetDataIndex(6),
+                        name: "Layout Group",
+                        index: 0,
+                        type: DataValueType.Byte),
+                new DataValueReference(GetDataIndex(7),
+                        name: "Animations",
+                        index: 0,
+                        type: DataValueType.Byte),
+            });
+            list.AddRange(new ValueReference[] {
+                new DataValueReference(GetDataIndex(0),
+                        name: "Unused(?) Bit",
+                        index: 0,
+                        startBit: 7,
+                        type: DataValueType.ByteBit),
             });
 
 
