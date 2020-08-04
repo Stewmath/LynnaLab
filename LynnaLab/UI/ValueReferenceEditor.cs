@@ -254,6 +254,9 @@ loopEnd:
         public void SetTooltip(ValueReference r, string tooltip) {
             SetTooltip(valueReferenceGroup.GetIndexOf(r), tooltip);
         }
+        public void SetTooltip(string name, string tooltip) {
+            SetTooltip(valueReferenceGroup.GetValueReference(name), tooltip);
+        }
 
         public void AddDataModifiedHandler(System.Action handler) {
             dataModifiedInternalEvent += handler;

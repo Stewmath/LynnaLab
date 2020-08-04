@@ -180,15 +180,23 @@ namespace LynnaLab
         // Alternative method to access data fields
         void ConstructValueReferenceGroup() {
             // TODO: save main gfx, unique gfx, palette as strings, not ints
-            vrg = new ValueReferenceGroup(new List<ValueReference> {
+            var list = new List<ValueReference>();
+
+            list.AddRange(new ValueReference[] {
                 new DataValueReference(GetDataIndex(0),
-                        name: "Flags 1",
+                        name: "Dungeon",
                         index: 0,
-                        type: DataValueType.Byte),
-                new DataValueReference(GetDataIndex(1),
-                        name: "Flags 2",
+                        startBit: 0,
+                        endBit: 3,
+                        type: DataValueType.HalfByte),
+                new DataValueReference(GetDataIndex(0),
+                        name: "Collision Type",
                         index: 0,
-                        type: DataValueType.Byte),
+                        startBit: 4,
+                        endBit: 6,
+                        type: DataValueType.ByteBits)
+            });
+            list.AddRange(new ValueReference[] {
                 new DataValueReference(GetDataIndex(2),
                         name: "Unique Gfx",
                         index: 0,
@@ -217,6 +225,76 @@ namespace LynnaLab
                         index: 0,
                         type: DataValueType.Byte),
             });
+            list.AddRange(new ValueReference[] {
+                new DataValueReference(GetDataIndex(0),
+                        name: "Unused(?) Bit",
+                        index: 0,
+                        startBit: 7,
+                        type: DataValueType.ByteBit),
+            });
+            if (Project.GameString == "ages") {
+                list.AddRange(new ValueReference[] {
+                    new DataValueReference(GetDataIndex(1),
+                            name: "Past",
+                            index: 0,
+                            startBit: 7,
+                            type: DataValueType.ByteBit),
+                    new DataValueReference(GetDataIndex(1),
+                            name: "Underwater",
+                            index: 0,
+                            startBit: 6,
+                            type: DataValueType.ByteBit)
+                });
+            }
+            else { // seasons
+                list.AddRange(new ValueReference[] {
+                    new DataValueReference(GetDataIndex(1),
+                            name: "Subrosia",
+                            index: 0,
+                            startBit: 7,
+                            type: DataValueType.ByteBit),
+                    new DataValueReference(GetDataIndex(1),
+                            name: "Bit 6 (0x40)",
+                            index: 0,
+                            startBit: 6,
+                            type: DataValueType.ByteBit)
+                });
+            }
+            list.AddRange(new ValueReference[] {
+                new DataValueReference(GetDataIndex(1),
+                        name: "Sidescrolling",
+                        index: 0,
+                        startBit: 5,
+                        type: DataValueType.ByteBit),
+                new DataValueReference(GetDataIndex(1),
+                        name: "Large Indoor Room",
+                        index: 0,
+                        startBit: 4,
+                        type: DataValueType.ByteBit),
+                new DataValueReference(GetDataIndex(1),
+                        name: "Dungeon",
+                        index: 0,
+                        startBit: 3,
+                        type: DataValueType.ByteBit),
+                new DataValueReference(GetDataIndex(1),
+                        name: "Indoors",
+                        index: 0,
+                        startBit: 2,
+                        type: DataValueType.ByteBit),
+                new DataValueReference(GetDataIndex(1),
+                        name: "Maku tree",
+                        index: 0,
+                        startBit: 1,
+                        type: DataValueType.ByteBit),
+                new DataValueReference(GetDataIndex(1),
+                        name: "Outdoors",
+                        index: 0,
+                        startBit: 0,
+                        type: DataValueType.ByteBit),
+            });
+
+
+            vrg = new ValueReferenceGroup(list);
         }
 
 
