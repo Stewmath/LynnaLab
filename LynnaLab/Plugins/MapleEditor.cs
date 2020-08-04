@@ -67,7 +67,7 @@ namespace Plugins
                 minimapContainer.Add(minimap);
                 minimapContainer.ShowAll();
             };
-            if (manager.GetActiveMap().Group == 1)
+            if (manager.GetActiveMap().MainGroup == 1)
                 comboBox.Active = 3;
             else
                 comboBox.Active = 0;

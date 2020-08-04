@@ -33,9 +33,16 @@ namespace LynnaLab
 
         // Map properties
 
-        public override int Group {
+        public override int MainGroup {
             get {
                 return GetDataIndex(0)-Project.EvalToInt(">wGroup4Flags")+4;
+            }
+        }
+
+        // I don't know why, but sidescrolling rooms use groups 6/7 instead of 4/5
+        public int SidescrollGroup {
+            get {
+                return MainGroup + 2;
             }
         }
 
@@ -106,8 +113,16 @@ namespace LynnaLab
                 throw new ArgumentException(string.Format("Arguments {0:X},{1:X} to 'GetRoom' too high.", x, y));
             if (floor >= NumFloors)
                 throw new ArgumentException(string.Format("Floor {0} too high.", floor));
+
             int roomIndex = GetFloorLayoutData(floor).GetDataAtOffset(y * 8 + x).GetIntValue(0);
-            Room room = Project.GetIndexedDataType<Room>(roomIndex + Group*0x100);
+            Room room = Project.GetIndexedDataType<Room>(roomIndex + MainGroup*0x100);
+
+            // Change the group if the room is sidescrolling. As a result, the group number of
+            // sidescrolling rooms in a dungeon will be different from other rooms, which will look
+            // weird, but that's the way it works apparently...
+            if (room.Tileset.SidescrollFlag)
+                room = Project.GetIndexedDataType<Room>(roomIndex + SidescrollGroup*0x100);
+
             return room;
         }
 

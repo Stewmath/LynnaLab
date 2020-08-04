@@ -45,20 +45,8 @@ namespace LynnaLab
 
         // Following properties correspond to the 8 bytes defining the tileset.
 
-        // TODO: replace flags with more useful subdivisions
-        public int Flags1 {
-            get { return GetDataIndex(0).GetIntValue(0); }
-            set {
-                Data data = GetDataIndex(0);
-                data.SetValue(0, Wla.ToByte((byte)value));
-            }
-        }
-        public int Flags2 {
-            get { return GetDataIndex(1).GetIntValue(0); }
-            set {
-                Data data = GetDataIndex(1);
-                data.SetValue(0, Wla.ToByte((byte)value));
-            }
+        public bool SidescrollFlag {
+            get { return vrg.GetIntValue("Sidescrolling") != 0 ? true : false; }
         }
         public int UniqueGfx {
             get {

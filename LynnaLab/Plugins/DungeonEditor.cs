@@ -256,7 +256,7 @@ namespace Plugins
             // Replace the "group" option with a custom widget for finer
             // control.
             SpinButton groupSpinButton = new SpinButton(4,5,1);
-            groupSpinButton.Value = dungeon.Group;
+            groupSpinButton.Value = dungeon.MainGroup;
             groupSpinButton.ValueChanged += (c,d) => {
                 vrg.SetValue("Group", ">wGroup" + groupSpinButton.ValueAsInt + "Flags");
             };
@@ -293,7 +293,7 @@ namespace Plugins
             vrs.Add(new StreamValueReference("Boss", room.Index&0xff, DataValueType.ByteBit, 6,6));
             vrs.Add(new StreamValueReference("Dark", room.Index&0xff, DataValueType.ByteBit, 7,7));
 
-            Stream stream = Project.GetBinaryFile("rooms/" + Project.GameString + "/group" + dungeon.Group + "DungeonProperties.bin");
+            Stream stream = Project.GetBinaryFile("rooms/" + Project.GameString + "/group" + dungeon.MainGroup + "DungeonProperties.bin");
             foreach (StreamValueReference r in vrs)
                 r.SetStream(stream);
 
