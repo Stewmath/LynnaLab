@@ -145,6 +145,8 @@ namespace LynnaLab
                 tileset = t;
 
                 UpdateRoomData();
+                if (RoomModifiedEvent != null)
+                    RoomModifiedEvent();
             }
         }
 
