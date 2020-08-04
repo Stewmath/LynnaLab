@@ -49,6 +49,7 @@ namespace LynnaLab
 
         public string Name { get; protected set; }
         public bool Editable { get; set; }
+        public string Tooltip { get; protected set; }
 
         public string ConstantsMappingString { get; private set; }
         public ConstantsMapping ConstantsMapping {
@@ -78,6 +79,7 @@ namespace LynnaLab
             ConstantsMappingString = r.ConstantsMappingString;
             constantsMapping = r.constantsMapping;
             Documentation = r.Documentation;
+            Tooltip = r.Tooltip;
         }
 
 

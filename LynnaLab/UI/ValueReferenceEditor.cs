@@ -10,7 +10,7 @@ namespace LynnaLab {
         // X/Y positions where the widgets are in the table
         IList<Tuple<uint,uint>> widgetPositions;
         // The widgets by index.
-        IList<Gtk.Widget> widgets;
+        IList<IList<Gtk.Widget>> widgetLists;
 
         // List of container widgets for help buttons (1 per item)
         IList<Gtk.Container> helpButtonContainers;
@@ -41,7 +41,7 @@ namespace LynnaLab {
             valueReferenceGroup = vrg;
             maxBounds = new int[valueReferenceGroup.GetNumValueReferences()];
             widgetPositions = new Tuple<uint,uint>[maxBounds.Count];
-            widgets = new Gtk.Widget[maxBounds.Count];
+            widgetLists = new List<IList<Gtk.Widget>>();
             helpButtonContainers = new Gtk.Container[maxBounds.Count];
 
             table = new Gtk.Table(2, 2, false);
@@ -57,6 +57,9 @@ namespace LynnaLab {
                     y = 0;
                     x += 3;
                 }
+
+                // Each ValueReference may use up to 3 widgets in the table row
+                Gtk.Widget[] widgetList = new Gtk.Widget[3];
 
                 widgetPositions[i] = new Tuple<uint,uint>(x,y);
 
@@ -74,12 +77,8 @@ namespace LynnaLab {
                         comboBox.ActiveValue = valueReferenceGroup[i].GetIntValue ();
                     };
 
-                    table.Attach(new Gtk.Label(valueReferenceGroup[i].Name), x+0,x+1,y,y+1);
-                    table.Attach(comboBox, x+1,x+2,y,y+1);
-                    widgets[i] = comboBox;
-
-                    helpButtonContainers[i] = new Gtk.HBox();
-                    table.Attach(helpButtonContainers[i], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+                    widgetList[0] = new Gtk.Label(valueReferenceGroup[i].Name);
+                    widgetList[1] = comboBox;
 
                     goto loopEnd;
                 }
@@ -88,7 +87,8 @@ namespace LynnaLab {
                 switch(valueReferenceGroup[i].ValueType) {
                 case ValueReferenceType.String:
                     {
-                        table.Attach(new Gtk.Label(valueReferenceGroup[i].Name), x+0,x+1, y, y+1);
+                        widgetList[0] = new Gtk.Label(valueReferenceGroup[i].Name);
+
                         Gtk.Entry entry = new Gtk.Entry();
                         if (!valueReferenceGroup[i].Editable)
                             entry.Sensitive = false;
@@ -96,17 +96,14 @@ namespace LynnaLab {
                             entry.Text = valueReferenceGroup[i].GetStringValue();
                             OnDataModifiedInternal();
                         };
-                        table.Attach(entry, x+1,x+2, y, y+1);
-                        widgets[i] = entry;
 
-                        helpButtonContainers[i] = new Gtk.HBox();
-                        table.Attach(helpButtonContainers[i], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+                        widgetList[1] = entry;
                         break;
                     }
                 case ValueReferenceType.Int:
-intCase:
                     {
-                        table.Attach(new Gtk.Label(valueReferenceGroup[i].Name), x+0,x+1, y, y+1);
+                        widgetList[0] = new Gtk.Label(valueReferenceGroup[i].Name);
+
                         SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,valueReferenceGroup[i].MaxValue);
                         if (!valueReferenceGroup[i].Editable)
                             spinButton.Sensitive = false;
@@ -131,17 +128,15 @@ intCase:
                         dataModifiedExternalEvent += delegate() {
                             spinButton.Value = valueReferenceGroup[i].GetIntValue();
                         };
-                        table.Attach(spinButton, x+1,x+2, y, y+1);
-                        widgets[i] = spinButton;
 
-                        helpButtonContainers[i] = new Gtk.HBox();
-                        table.Attach(helpButtonContainers[i], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+                        widgetList[1] = spinButton;
                     }
                     break;
 
                 case ValueReferenceType.Bool:
                     {
-                        table.Attach(new Gtk.Label(valueReferenceGroup[i].Name), x+0,x+1, y, y+1);
+                        widgetList[0] = new Gtk.Label(valueReferenceGroup[i].Name);
+
                         Gtk.CheckButton checkButton = new Gtk.CheckButton();
                         checkButton.FocusOnClick = false;
                         if (!valueReferenceGroup[i].Editable)
@@ -154,16 +149,25 @@ intCase:
                         dataModifiedExternalEvent += delegate() {
                             checkButton.Active = valueReferenceGroup[i].GetIntValue() == 1;
                         };
-                        table.Attach(checkButton, x+1,x+2, y, y+1);
-                        widgets[i] = checkButton;
 
-                        helpButtonContainers[i] = new Gtk.HBox();
-                        table.Attach(helpButtonContainers[i], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+                        widgetList[1] = checkButton;
                     }
                     break;
                 }
 
 loopEnd:
+                table.Attach(widgetList[0], x+0,x+1, y, y+1);
+                table.Attach(widgetList[1], x+1,x+2, y, y+1);
+
+                helpButtonContainers[i] = new Gtk.HBox();
+                widgetList[2] = helpButtonContainers[i];
+                table.Attach(widgetList[2], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+
+                widgetLists.Add(widgetList);
+
+                if (valueReferenceGroup[i].Tooltip != null) {
+                    SetTooltip(i, valueReferenceGroup[i].Tooltip);
+                }
                 y++;
             }
 
@@ -223,21 +227,13 @@ loopEnd:
             maxBounds[i] = max;
         }
 
-        // Add a new widget to the right side of a value
-        public void AddWidgetToSide(string name, Gtk.Widget newWidget, uint width=1, uint height=1) {
-            int i = GetValueIndex(name);
-            var pos = widgetPositions[i];
-            table.Attach(newWidget, pos.Item1+2, pos.Item1+2+width, pos.Item2, pos.Item2+height);
-            widgets[i] = newWidget;
-        }
-
         // Substitute the widget for a value (index "i") with the new widget.
         public void ReplaceWidget(string name, Gtk.Widget newWidget) {
             int i = GetValueIndex(name);
-            widgets[i].Dispose();
+            widgetLists[i][1].Dispose();
             var pos = widgetPositions[i];
             table.Attach(newWidget, pos.Item1+1, pos.Item1+2, pos.Item2, pos.Item2+1);
-            widgets[i] = newWidget;
+            widgetLists[i][1] = newWidget;
         }
 
         int GetValueIndex(string name) {
@@ -249,7 +245,8 @@ loopEnd:
         }
 
         public void SetTooltip(int i, string tooltip) {
-            widgets[i].TooltipText = tooltip;
+            for (int j=0; j<widgetLists[i].Count; j++)
+                widgetLists[i][j].TooltipText = tooltip;
         }
         public void SetTooltip(ValueReference r, string tooltip) {
             SetTooltip(valueReferenceGroup.GetIndexOf(r), tooltip);

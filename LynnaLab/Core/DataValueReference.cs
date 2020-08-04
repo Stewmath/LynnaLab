@@ -49,7 +49,7 @@ namespace LynnaLab
         }
 
 
-        public DataValueReference(Data data, string name, int index, DataValueType type, int startBit=0, int endBit=0, bool editable=true, string constantsMappingString=null)
+        public DataValueReference(Data data, string name, int index, DataValueType type, int startBit=0, int endBit=0, bool editable=true, string constantsMappingString=null, string tooltip=null)
         : base(name, GetValueType(type), editable, constantsMappingString) {
             this._data = data;
             this.dataType = type;
@@ -57,6 +57,8 @@ namespace LynnaLab
 
             this.startBit = startBit;
             this.endBit = endBit;
+
+            base.Tooltip = tooltip;
 
             base.Project = _data.Project;
 
