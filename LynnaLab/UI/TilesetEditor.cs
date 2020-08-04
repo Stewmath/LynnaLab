@@ -54,6 +54,7 @@ namespace LynnaLab
             if (tile == subTileEditor.subTileViewer.TileIndex) {
                 subTileEditor.OnTileModified();
             }
+            tilesetviewer1.QueueDraw();
         }
 
         void SetTileset(Tileset t) {

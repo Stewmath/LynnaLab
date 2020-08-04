@@ -25,7 +25,9 @@ namespace LynnaLab
 
         public delegate void TileModifiedHandler(int tile);
         public delegate void LayoutGroupModifiedHandler();
+        // Invoked whenever the image of a tile is modified
         public event TileModifiedHandler TileModifiedEvent;
+
         public event LayoutGroupModifiedHandler LayoutGroupModifiedEvent;
 
         // For dynamically showing an animation
@@ -226,12 +228,10 @@ namespace LynnaLab
         // Trigger lazy draw of all tiles onto the cached tileset image
         public void DrawAllTiles() {
             tileUpdaterIndex = 0;
-            tileUpdaterRedraw = false;
             GLib.IdleHandler handler = new GLib.IdleHandler(TileUpdater);
             GLib.Idle.Add(handler);
         }
 
-        bool tileUpdaterRedraw;
         int tileUpdaterIndex;
 
         // TileUpdater is called by GLib.IdleHandler, which just calls this "when it has time".
@@ -240,11 +240,9 @@ namespace LynnaLab
                 return false;
             int numDrawnTiles = 0;
             while (tileUpdaterIndex < 256 && numDrawnTiles < 16) {
-                if (tileUpdaterRedraw)
-                    tileImagesCache[tileUpdaterIndex] = null;
                 if (tileImagesCache[tileUpdaterIndex] == null)
                     numDrawnTiles++;
-                GetTileImage(tileUpdaterIndex);
+                GetTileImage(tileUpdaterIndex); // Will generate the image if it's not cached
 
                 if (TileModifiedEvent != null)
                     TileModifiedEvent(tileUpdaterIndex);
@@ -255,6 +253,8 @@ namespace LynnaLab
             return true;
         }
 
+        // This returns an image for the specified tile index, and also updates the "master" tileset
+        // image if said tile has been changed.
         public Bitmap GetTileImage(int index) {
             if (tileImagesCache[index] != null)
                 return tileImagesCache[index];
@@ -310,7 +310,11 @@ namespace LynnaLab
             }
             else
                 tilesetHeaderGroup.SetMappingsData(index*8+y*2+x, value);
+
             GenerateUsedTileList();
+            tileImagesCache[index] = null;
+            GetTileImage(index); // Redraw tile image
+            TileModifiedEvent(index);
         }
         public byte GetSubTileFlags(int index, int x, int y) {
             if (Project.Config.ExpandedTilesets) {
@@ -329,9 +333,10 @@ namespace LynnaLab
             }
             else {
                 tilesetHeaderGroup.SetMappingsData(index*8+y*2+x+4, value);
-                tileImagesCache[index] = null;
-                TileModifiedEvent(index);
             }
+            tileImagesCache[index] = null;
+            GetTileImage(index); // Redraw tile image
+            TileModifiedEvent(index);
         }
 
         // Get the "basic collision" of a subtile (whether or not that part is
@@ -539,7 +544,12 @@ namespace LynnaLab
 
         void LoadAnimation() {
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Animation);
-            // Animation
+
+            for (int i=0; i<4; i++) {
+                animationPos[i] = 0;
+                animationCounter[i] = 0;
+            }
+
             if (AnimationIndex != 0xff) {
                 animationGroup = Project.GetIndexedDataType<AnimationGroup>(AnimationIndex);
             }
