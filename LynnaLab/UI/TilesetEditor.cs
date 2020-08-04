@@ -24,7 +24,7 @@ namespace LynnaLab
         internal GfxViewer subTileGfxViewer;
 
 
-        SpinButtonHexadecimal tilesetSpinButton = new SpinButtonHexadecimal(); // TODO: show this
+        SpinButtonHexadecimal tilesetSpinButton = new SpinButtonHexadecimal();
         Gtk.Box tilesetSpinButtonContainer;
         Gtk.Box tilesetVreContainer, tilesetViewerContainer, subTileContainer, subTileGfxContainer;
         ValueReferenceEditor tilesetVre;
@@ -93,8 +93,6 @@ namespace LynnaLab
             if (tileset != null) {
                 subTileGfxViewer.SetGraphicsState(tileset.GraphicsState, 0x2000, 0x3000);
             }
-
-            //tileset.DrawInvalidatedTiles = true; // TODO
 
             tilesetviewer1.SetTileset(tileset);
 

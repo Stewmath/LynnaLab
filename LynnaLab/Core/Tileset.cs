@@ -21,6 +21,8 @@ namespace LynnaLab
         Bitmap fullCachedImage = new Bitmap(16*16,16*16);
         BitmapData fullCachedImageData;
 
+        bool constructorFinished = false;
+
         public delegate void TileModifiedHandler(int tile);
         public delegate void LayoutGroupModifiedHandler();
         // Invoked whenever the image of a tile is modified
@@ -34,10 +36,6 @@ namespace LynnaLab
 
         List<byte>[] usedTileList = new List<byte>[256];
 
-
-        // If true, tiles which must be updated are always slated to be
-        // redrawn, so they'll be ready when they're needed.
-        public bool DrawInvalidatedTiles { get; set; }
 
         // The GraphicsState which contains the data as it will be loaded into
         // vram.
@@ -120,7 +118,7 @@ namespace LynnaLab
             // If this is Seasons, it's possible that tilesetData does not point to 8 bytes as
             // expected, but instead to an "m_SeasonalData" macro.
             if (tilesetData.CommandLowerCase == "m_seasonaltileset") {
-                int season=0;
+                int season=0; // TODO: season switching
                 tilesetData = Project.GetData(tilesetData.GetValue(0), season*8);
             }
 
@@ -148,6 +146,8 @@ namespace LynnaLab
             LoadTilesetLayout();
             LoadAllGfxData();
             LoadPaletteHeader();
+
+            constructorFinished = true;
         }
 
         void LoadAllGfxData() {
@@ -220,15 +220,16 @@ namespace LynnaLab
         }
 
 
-        // Clear all tile image caches. Won't necessarily redraw the cached image itself, for
-        // performance reasons... call "DrawAllTiles" afterwards if that's necessary.
+        // Clear all tile image caches. This is called when certain major fields of the tileset are
+        // modified. This will trigger an asynchronous redraw of the tileset image (unless called
+        // from the constructor), which is costly.
         public void InvalidateAllTiles() {
             for (int i=0; i<256; i++)
                 tileImagesCache[i] = null;
-            if (DrawInvalidatedTiles)
+            if (constructorFinished)
                 DrawAllTiles();
         }
-        // Trigger lazy draw of all tiles onto the cached tileset image
+        // Trigger asynchronous redraw of all tiles that are marked as needing to be redrawn
         public void DrawAllTiles() {
             tileUpdaterIndex = 0;
             GLib.IdleHandler handler = new GLib.IdleHandler(TileUpdater);
@@ -243,12 +244,12 @@ namespace LynnaLab
                 return false;
             int numDrawnTiles = 0;
             while (tileUpdaterIndex < 256 && numDrawnTiles < 16) {
-                if (tileImagesCache[tileUpdaterIndex] == null)
+                if (tileImagesCache[tileUpdaterIndex] == null) {
                     numDrawnTiles++;
-                GetTileImage(tileUpdaterIndex); // Will generate the image if it's not cached
-
-                if (TileModifiedEvent != null)
-                    TileModifiedEvent(tileUpdaterIndex);
+                    GetTileImage(tileUpdaterIndex); // Will generate the image if it's not cached
+                    if (TileModifiedEvent != null)
+                        TileModifiedEvent(tileUpdaterIndex);
+                }
                 tileUpdaterIndex++;
             }
 
@@ -379,8 +380,12 @@ namespace LynnaLab
                 tilesetHeaderGroup.SetCollisionsData(index, val);
         }
 
-        // This function doesn't guarantee to return a fully rendered image,
-        // only what is currently available.
+        // This function doesn't guarantee to return a fully rendered image, only what is currently
+        // available. Call "DrawAllTiles" to begin drawing the full image (though it will run
+        // asynchronously).
+        // The full image is not drawn after initialization, but it IS updated properly when any
+        // properties of the tileset are modified. This is because it is inefficient to draw the
+        // full tileset image for every single tileset when drawing the minimap.
         public Bitmap GetFullCachedImage() {
             if (fullCachedImageData != null) {
                 fullCachedImage.UnlockBits(fullCachedImageData);
@@ -440,6 +445,9 @@ namespace LynnaLab
         }
 
         public void ResetAnimation() {
+            if (!graphicsState.HasGfxHeaderType(GfxHeaderType.Animation))
+                return;
+
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Animation);
 
             for (int i=0; i<4; i++) {
@@ -448,7 +456,6 @@ namespace LynnaLab
             }
 
             InvalidateAllTiles();
-            DrawAllTiles();
         }
 
         public ValueReferenceGroup GetValueReferenceGroup() {
@@ -550,19 +557,12 @@ namespace LynnaLab
         }
 
         void LoadAnimation() {
-            graphicsState.RemoveGfxHeaderType(GfxHeaderType.Animation);
-
-            for (int i=0; i<4; i++) {
-                animationPos[i] = 0;
-                animationCounter[i] = 0;
-            }
-
-            if (AnimationIndex != 0xff) {
+            if (AnimationIndex != 0xff)
                 animationGroup = Project.GetIndexedDataType<AnimationGroup>(AnimationIndex);
-            }
             else
                 animationGroup = null;
-            InvalidateAllTiles();
+
+            ResetAnimation();
         }
 
 

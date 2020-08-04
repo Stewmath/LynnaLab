@@ -122,6 +122,15 @@ namespace LynnaLab
             gfxModified = true;
         }
 
+        public bool HasGfxHeaderType(GfxHeaderType type) {
+            for (int i=0; i<gfxHeaderDataList.Count; i++) {
+                if (gfxHeaderDataTypes[i] == type) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public void AddPaletteHeaderGroup(PaletteHeaderGroup group, PaletteGroupType type) {
             int i = 0;
             while (i < paletteHeaderGroupList.Count && paletteHeaderGroupTypes[i] <= type)
