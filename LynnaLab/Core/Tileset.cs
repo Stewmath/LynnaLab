@@ -177,7 +177,7 @@ namespace LynnaLab
             return data;
         }
 
-        // Alternative method to access data fields
+        // Alternative method to access data fields (this data feeds the GUI directly)
         void ConstructValueReferenceGroup() {
             // TODO: save main gfx, unique gfx, palette as strings, not ints
             var list = new List<ValueReference>();
@@ -254,17 +254,19 @@ namespace LynnaLab
 
             list.AddRange(new ValueReference[] {
                 new DataValueReference(GetDataIndex(0),
-                        name: "Dungeon",
+                        name: "Dungeon Index",
                         index: 0,
                         startBit: 0,
                         endBit: 3,
-                        type: DataValueType.ByteBits),
+                        type: DataValueType.ByteBits,
+                        tooltip: "Dungeon index (should match value in the Dungeons tab; Dungeon bit must be set)."),
                 new DataValueReference(GetDataIndex(0),
                         name: "Collision Type",
                         index: 0,
                         startBit: 4,
                         endBit: 6,
-                        type: DataValueType.ByteBits)
+                        type: DataValueType.ByteBits,
+                        tooltip: "Determines most collision behaviour aside from solidity (ie. water, holes)")
             });
 
             // These fields do nothing with the expanded tilesets patch.
@@ -296,7 +298,8 @@ namespace LynnaLab
                 new DataValueReference(GetDataIndex(6),
                         name: "Layout Group",
                         index: 0,
-                        type: DataValueType.Byte),
+                        type: DataValueType.Byte,
+                        tooltip: "Determines where to read the room layout from (ie. for value '2', it reads from the file 'room02XX.bin', even if the group number is not 2). In general, to prevent confusion, all rooms in the same overworld (or group) should use tilesets which have the same value for this."),
                 new DataValueReference(GetDataIndex(7),
                         name: "Animations",
                         index: 0,
