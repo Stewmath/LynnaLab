@@ -167,7 +167,7 @@ namespace LynnaLab
             FileParser parserFile = Project.GetFileWithLabel(label);
             Data data = parserFile.GetData(label);
             if (data.CommandLowerCase != "m_roomlayoutdata") {
-                throw new Exception("Expected label \"" + label + "\" to be followed by the m_RoomLayoutData macro.");
+                throw new AssemblyErrorException("Expected label \"" + label + "\" to be followed by the m_RoomLayoutData macro.");
             }
             string roomString = data.GetValue(0) + ".bin";
             try {
@@ -180,7 +180,7 @@ namespace LynnaLab
                             "rooms/" + Project.GameString + "/large/" + roomString);
                 }
                 catch (FileNotFoundException) {
-                    throw new FileNotFoundException("Couldn't find \"" + roomString + "\" in \"rooms/small\" or \"rooms/large\".");
+                    throw new AssemblyErrorException("Couldn't find \"" + roomString + "\" in \"rooms/small\" or \"rooms/large\".");
                 }
             }
 
@@ -194,7 +194,7 @@ namespace LynnaLab
                 height = 0xb;
             }
             else
-                throw new Exception("Size of file \"" + tileDataFile.Name + "\" was invalid!");
+                throw new AssemblyErrorException("Size of file \"" + tileDataFile.Name + "\" was invalid!");
         }
 
         void ModifiedTileCallback(int tile) {
