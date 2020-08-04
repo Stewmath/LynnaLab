@@ -47,117 +47,118 @@ namespace LynnaLab {
             table = new Gtk.Table(2, 2, false);
             uint x=0,y=0;
 
-            int cnt=0;
-            foreach (ValueReference r in valueReferenceGroup.GetValueReferences()) {
-                int index = cnt;
-                cnt++;
+            // Do not use "foreach" here. The "valueReferenceGroup" may be changed. So, whenever we
+            // access a ValueReference from within an event handler, we must do so though the
+            // "valueReferenceGroup" class variable, and NOT though an alias (like with foreach).
+            for (int tmpCounter=0; tmpCounter < valueReferenceGroup.Count; tmpCounter++) {
+                int i = tmpCounter; // Variable must be distinct within each closure
 
                 if (y >= rows) {
                     y = 0;
                     x += 3;
                 }
 
-                widgetPositions[index] = new Tuple<uint,uint>(x,y);
+                widgetPositions[i] = new Tuple<uint,uint>(x,y);
 
                 // If it has a ConstantsMapping, use a combobox instead of anything else
-                if (r.ConstantsMapping != null) {
+                if (valueReferenceGroup[i].ConstantsMapping != null) {
                     ComboBoxFromConstants comboBox = new ComboBoxFromConstants(false);
-                    comboBox.SetConstantsMapping(r.ConstantsMapping);
+                    comboBox.SetConstantsMapping(valueReferenceGroup[i].ConstantsMapping);
 
                     comboBox.Changed += delegate(object sender, EventArgs e) {
-                        r.SetValue(comboBox.ActiveValue);
+                        valueReferenceGroup[i].SetValue(comboBox.ActiveValue);
                         OnDataModifiedInternal();
                     };
 
                     dataModifiedExternalEvent += delegate() {
-                        comboBox.ActiveValue = r.GetIntValue ();
+                        comboBox.ActiveValue = valueReferenceGroup[i].GetIntValue ();
                     };
 
-                    table.Attach(new Gtk.Label(r.Name), x+0,x+1,y,y+1);
+                    table.Attach(new Gtk.Label(valueReferenceGroup[i].Name), x+0,x+1,y,y+1);
                     table.Attach(comboBox, x+1,x+2,y,y+1);
-                    widgets[index] = comboBox;
+                    widgets[i] = comboBox;
 
-                    helpButtonContainers[index] = new Gtk.HBox();
-                    table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+                    helpButtonContainers[i] = new Gtk.HBox();
+                    table.Attach(helpButtonContainers[i], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
 
                     goto loopEnd;
                 }
                 // ConstantsMapping == null
 
-                switch(r.ValueType) {
+                switch(valueReferenceGroup[i].ValueType) {
                 case ValueReferenceType.String:
                     {
-                        table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
+                        table.Attach(new Gtk.Label(valueReferenceGroup[i].Name), x+0,x+1, y, y+1);
                         Gtk.Entry entry = new Gtk.Entry();
-                        if (!r.Editable)
+                        if (!valueReferenceGroup[i].Editable)
                             entry.Sensitive = false;
                         dataModifiedExternalEvent += delegate() {
-                            entry.Text = r.GetStringValue();
+                            entry.Text = valueReferenceGroup[i].GetStringValue();
                             OnDataModifiedInternal();
                         };
                         table.Attach(entry, x+1,x+2, y, y+1);
-                        widgets[index] = entry;
+                        widgets[i] = entry;
 
-                        helpButtonContainers[index] = new Gtk.HBox();
-                        table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+                        helpButtonContainers[i] = new Gtk.HBox();
+                        table.Attach(helpButtonContainers[i], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
                         break;
                     }
                 case ValueReferenceType.Int:
 intCase:
                     {
-                        table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
-                        SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,r.MaxValue);
-                        if (!r.Editable)
+                        table.Attach(new Gtk.Label(valueReferenceGroup[i].Name), x+0,x+1, y, y+1);
+                        SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,valueReferenceGroup[i].MaxValue);
+                        if (!valueReferenceGroup[i].Editable)
                             spinButton.Sensitive = false;
-                        if (r.MaxValue < 0x10)
+                        if (valueReferenceGroup[i].MaxValue < 0x10)
                             spinButton.Digits = 1;
-                        else if (r.MaxValue < 0x100)
+                        else if (valueReferenceGroup[i].MaxValue < 0x100)
                             spinButton.Digits = 2;
-                        else if (r.MaxValue < 0x1000)
+                        else if (valueReferenceGroup[i].MaxValue < 0x1000)
                             spinButton.Digits = 3;
                         else
                             spinButton.Digits = 4;
-                        spinButton.Adjustment.Upper = r.MaxValue;
+                        spinButton.Adjustment.Upper = valueReferenceGroup[i].MaxValue;
                         spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton button = sender as Gtk.SpinButton;
-                            if (maxBounds[index] == 0 || button.ValueAsInt <= maxBounds[index]) {
-                                r.SetValue(button.ValueAsInt);
+                            if (maxBounds[i] == 0 || button.ValueAsInt <= maxBounds[i]) {
+                                valueReferenceGroup[i].SetValue(button.ValueAsInt);
                             }
                             else
-                                button.Value = maxBounds[index];
+                                button.Value = maxBounds[i];
                             OnDataModifiedInternal();
                         };
                         dataModifiedExternalEvent += delegate() {
-                            spinButton.Value = r.GetIntValue();
+                            spinButton.Value = valueReferenceGroup[i].GetIntValue();
                         };
                         table.Attach(spinButton, x+1,x+2, y, y+1);
-                        widgets[index] = spinButton;
+                        widgets[i] = spinButton;
 
-                        helpButtonContainers[index] = new Gtk.HBox();
-                        table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+                        helpButtonContainers[i] = new Gtk.HBox();
+                        table.Attach(helpButtonContainers[i], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
                     }
                     break;
 
                 case ValueReferenceType.Bool:
                     {
-                        table.Attach(new Gtk.Label(r.Name), x+0,x+1, y, y+1);
+                        table.Attach(new Gtk.Label(valueReferenceGroup[i].Name), x+0,x+1, y, y+1);
                         Gtk.CheckButton checkButton = new Gtk.CheckButton();
                         checkButton.FocusOnClick = false;
-                        if (!r.Editable)
+                        if (!valueReferenceGroup[i].Editable)
                             checkButton.Sensitive = false;
                         checkButton.Toggled += delegate(object sender, EventArgs e) {
                             Gtk.CheckButton button = sender as Gtk.CheckButton;
-                            r.SetValue(button.Active ? 1 : 0);
+                            valueReferenceGroup[i].SetValue(button.Active ? 1 : 0);
                             OnDataModifiedInternal();
                         };
                         dataModifiedExternalEvent += delegate() {
-                            checkButton.Active = r.GetIntValue() == 1;
+                            checkButton.Active = valueReferenceGroup[i].GetIntValue() == 1;
                         };
                         table.Attach(checkButton, x+1,x+2, y, y+1);
-                        widgets[index] = checkButton;
+                        widgets[i] = checkButton;
 
-                        helpButtonContainers[index] = new Gtk.HBox();
-                        table.Attach(helpButtonContainers[index], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+                        helpButtonContainers[i] = new Gtk.HBox();
+                        table.Attach(helpButtonContainers[i], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
                     }
                     break;
                 }
@@ -178,13 +179,36 @@ loopEnd:
 
             this.ShowAll();
 
+            // Initial values
+            if (dataModifiedExternalEvent != null)
+                dataModifiedExternalEvent();
+
+            UpdateHelpButtons();
+
+            AddModifiedHandlers();
+            this.Destroyed += (sender, args) => RemoveModifiedHandlers();
+        }
+
+        void AddModifiedHandlers() {
             foreach (ValueReference vref in valueReferenceGroup.GetValueReferences()) {
                 vref.AddValueModifiedHandler(OnDataModifiedExternal);
-                // Destroy handler
-                this.Destroyed += delegate(object sender, EventArgs e) {
-                    vref.RemoveValueModifiedHandler(OnDataModifiedExternal);
-                };
             }
+        }
+
+        void RemoveModifiedHandlers() {
+            foreach (ValueReference vref in valueReferenceGroup.GetValueReferences()) {
+                vref.RemoveValueModifiedHandler(OnDataModifiedExternal);
+            }
+        }
+
+        // ONLY call this function if the new ValueReferenceGroup matches the exact structure of the
+        // old one. If there is any mismatch, a new ValueReferenceEditor should be created instead.
+        // But when the structures do match exactly, this is preferred, so that we don't need to
+        // recreate all of the necessary widgets again.
+        public void ReplaceValueReferenceGroup(ValueReferenceGroup vrg) {
+            RemoveModifiedHandlers();
+            this.valueReferenceGroup = vrg;
+            AddModifiedHandlers();
 
             // Initial values
             if (dataModifiedExternalEvent != null)

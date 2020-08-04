@@ -27,6 +27,7 @@ namespace LynnaLab
         SpinButtonHexadecimal tilesetSpinButton = new SpinButtonHexadecimal(); // TODO: show this
         Gtk.Box tilesetSpinButtonContainer;
         Gtk.Box tilesetVreContainer, tilesetViewerContainer, subTileContainer, subTileGfxContainer;
+        ValueReferenceEditor tilesetVre;
 
         TilesetViewer tilesetviewer1;
 
@@ -97,11 +98,13 @@ namespace LynnaLab
 
             tilesetviewer1.SetTileset(tileset);
 
-            // Replace ValueReferenceGroupEditor
-            tilesetVreContainer.Foreach((c) => c.Dispose());
             ValueReferenceGroup vrg = tileset.GetValueReferenceGroup();
-            ValueReferenceEditor e = new ValueReferenceEditor(Project, vrg);
-            tilesetVreContainer.Add(e);
+            if (tilesetVre == null) {
+                tilesetVre = new ValueReferenceEditor(Project, vrg);
+                tilesetVreContainer.Add(tilesetVre);
+            }
+            else
+                tilesetVre.ReplaceValueReferenceGroup(vrg);
 
             tilesetSpinButton.Value = tileset.Index;
             tilesetSpinButton.Adjustment.Upper = Project.NumTilesets - 1;
