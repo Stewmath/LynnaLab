@@ -6,7 +6,11 @@ namespace LynnaLab
     // Enum of types of values that can be had.
     public enum DataValueType {
         String = 0,
+
+        // Use this if the _entire_ value being edited is a half-byte. If you want to edit part of
+        // a full byte, use "bytebits" instead.
         HalfByte,
+
         Byte,
         Word,
         ByteBit,
