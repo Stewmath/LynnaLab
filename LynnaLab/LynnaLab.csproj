@@ -96,7 +96,6 @@
     <Compile Include="Core\Animation.cs" />
     <Compile Include="Core\AnimationGroup.cs" />
     <Compile Include="UI\TilesetEditor.cs" />
-    <Compile Include="gtk-gui\LynnaLab.TilesetEditor.cs" />
     <Compile Include="Wla.cs" />
     <Compile Include="UI\TileGridViewer.cs" />
     <Compile Include="Widgets\SpinButtonHexadecimal.cs" />
@@ -189,6 +188,8 @@
     <EmbeddedResource Include="Glade/MainWindow.ui">
     </EmbeddedResource>
     <EmbeddedResource Include="Glade/ObjectGroupEditor.ui">
+    </EmbeddedResource>
+    <EmbeddedResource Include="Glade/TilesetEditor.ui">
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="..\packages\GtkSharp.3.22.25.56\build\GtkSharp.targets" Condition="Exists('..\packages\GtkSharp.3.22.25.56\build\GtkSharp.targets')" />

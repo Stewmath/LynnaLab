@@ -5,7 +5,7 @@ using Gtk;
 namespace LynnaLab
 {
     [System.ComponentModel.ToolboxItem(true)]
-    public partial class TilesetEditor : Gtk.Bin
+    public class TilesetEditor : Gtk.Bin
     {
         Project Project {
             get { return tileset.Project; }
@@ -19,12 +19,37 @@ namespace LynnaLab
 
         Tileset tileset;
 
+        // TODO: why are these internal
         internal SubTileEditor subTileEditor;
         internal GfxViewer subTileGfxViewer;
 
+
+        SpinButtonHexadecimal tilesetSpinButton = new SpinButtonHexadecimal(); // TODO: show this
+        Gtk.Box tilesetSpinButtonContainer;
+        Gtk.Box tilesetVreContainer, tilesetViewerContainer, subTileContainer, subTileGfxContainer;
+
+        TilesetViewer tilesetviewer1;
+
         public TilesetEditor(Tileset t)
         {
-            this.Build();
+            Gtk.Builder builder = new Builder();
+            builder.AddFromString(Helper.ReadResourceFile("LynnaLab.Glade.TilesetEditor.ui"));
+            builder.Autoconnect(this);
+
+            tilesetSpinButtonContainer = (Gtk.Box)builder.GetObject("tilesetSpinButtonContainer");
+            tilesetVreContainer = (Gtk.Box)builder.GetObject("tilesetVreContainer");
+            tilesetViewerContainer = (Gtk.Box)builder.GetObject("tilesetViewerContainer");
+            subTileContainer = (Gtk.Box)builder.GetObject("subTileContainer");
+            subTileGfxContainer = (Gtk.Box)builder.GetObject("subTileGfxContainer");
+
+            base.Child = (Gtk.Widget)builder.GetObject("TilesetEditor");
+
+
+            tilesetviewer1 = new TilesetViewer();
+            tilesetviewer1.AddTileSelectedHandler(delegate(object sender, int index) {
+                subTileEditor.SetTileIndex(index);
+            });
+            tilesetViewerContainer.Add(tilesetviewer1);
 
             subTileGfxViewer = new GfxViewer();
             subTileGfxViewer.AddTileSelectedHandler(delegate(object sender, int index) {
@@ -36,18 +61,16 @@ namespace LynnaLab
             subTileEditor = new SubTileEditor(this);
             subTileContainer.Add(subTileEditor);
 
-            SetTileset(t);
-
-            tilesetSpinButton.Adjustment.Upper = 0x66;
-            uniqueGfxComboBox.SetConstantsMapping(Project.UniqueGfxMapping);
-            mainGfxComboBox.SetConstantsMapping(Project.MainGfxMapping);
-            palettesComboBox.SetConstantsMapping(Project.PaletteHeaderMapping);
-            tilesetLayoutSpinButton.Adjustment.Upper = 0x32;
-            layoutGroupSpinButton.Adjustment.Upper = 5;
-            animationsSpinButton.Adjustment.Upper = 0x15;
-            animationsSpinButton.Adjustment.Lower = -1;
+            tilesetSpinButton = new SpinButtonHexadecimal();
+            tilesetSpinButtonContainer.Add(tilesetSpinButton);
 
             SetTileset(t);
+
+            tilesetSpinButton.Changed += TilesetSpinButtonChanged;
+        }
+
+        void TilesetSpinButtonChanged(object sender, EventArgs args) {
+            SetTileset(Project.GetIndexedDataType<Tileset>(tilesetSpinButton.ValueAsInt));
         }
 
         void TileModifiedHandler(int tile) {
@@ -58,6 +81,8 @@ namespace LynnaLab
         }
 
         void SetTileset(Tileset t) {
+            if (t == tileset)
+                return;
             if (tileset != null)
                 tileset.TileModifiedEvent -= TileModifiedHandler;
             t.TileModifiedEvent += TileModifiedHandler;
@@ -68,129 +93,24 @@ namespace LynnaLab
                 subTileGfxViewer.SetGraphicsState(tileset.GraphicsState, 0x2000, 0x3000);
             }
 
-            tileset.DrawInvalidatedTiles = true;
+            //tileset.DrawInvalidatedTiles = true; // TODO
 
             tilesetviewer1.SetTileset(tileset);
 
-            tilesetviewer1.AddTileSelectedHandler(delegate(object sender, int index) {
-                subTileEditor.SetTileIndex(index);
-            });
+            // Replace ValueReferenceGroupEditor
+            tilesetVreContainer.Foreach((c) => c.Dispose());
+            ValueReferenceGroup vrg = tileset.GetValueReferenceGroup();
+            ValueReferenceEditor e = new ValueReferenceEditor(Project, vrg);
+            tilesetVreContainer.Add(e);
 
             tilesetSpinButton.Value = tileset.Index;
-            SetFlags1(t.Flags1);
-            SetFlags2(t.Flags2);
-            SetUniqueGfx(t.UniqueGfx);
-            SetMainGfx(t.MainGfx);
-            SetPaletteHeader(t.PaletteHeader);
-            SetTilesetLayout(t.TilesetLayoutIndex);
-            SetLayoutGroup(t.LayoutGroup);
-            SetAnimation(t.AnimationIndex);
-        }
-
-        void SetFlags1(int value) {
-            flags1SpinButton.Value = value;
-            tileset.Flags1 = value;
-        }
-        void SetFlags2(int value) {
-            flags2SpinButton.Value = value;
-            tileset.Flags2 = value;
-        }
-        void SetUniqueGfx(int value) {
-            try {
-                uniqueGfxComboBox.ActiveValue = value;
-                tileset.UniqueGfx = value;
-            }
-            catch (FormatException) {
-            }
-        }
-        void SetMainGfx(int value) {
-            try {
-                mainGfxComboBox.ActiveValue = value;
-                tileset.MainGfx = value;
-            }
-            catch (FormatException) {
-            }
-        }
-        void SetPaletteHeader(int value) {
-            try {
-                palettesComboBox.ActiveValue = value;
-                tileset.PaletteHeader = value;
-            }
-            catch (FormatException) {
-            }
-        }
-        void SetTilesetLayout(int value) {
-            tilesetLayoutSpinButton.Value = value;
-            tileset.TilesetLayoutIndex = value;
-        }
-        void SetLayoutGroup(int value) {
-            layoutGroupSpinButton.Value = value;
-            tileset.LayoutGroup = value;
-        }
-        void SetAnimation(int value) {
-            if (value == 0xff)
-                value = -1;
-            animationsSpinButton.Value = value;
-            tileset.AnimationIndex = value;
+            tilesetSpinButton.Adjustment.Upper = Project.NumTilesets - 1;
         }
 
         protected void OnOkButtonClicked(object sender, EventArgs e)
         {
             Parent.Hide();
             Parent.Dispose();
-        }
-
-        protected void OnFlags1SpinButtonValueChanged(object sender, EventArgs e)
-        {
-            SpinButton button = sender as SpinButton;
-            SetFlags1(button.ValueAsInt);
-        }
-
-        protected void OnFlags2SpinButtonValueChanged(object sender, EventArgs e)
-        {
-            SpinButton button = sender as SpinButton;
-            SetFlags2(button.ValueAsInt);
-        }
-
-        protected void OnTilesetSpinButtonValueChanged(object sender, EventArgs e)
-        {
-            SpinButton button = sender as SpinButton;
-            SetTileset(Project.GetIndexedDataType<Tileset>(button.ValueAsInt));
-        }
-
-        protected void OnUniqueGfxComboBoxChanged(object sender, EventArgs e) {
-            var comboBox = sender as ComboBoxFromConstants;
-            if (comboBox.ActiveValue != -1)
-                SetUniqueGfx(comboBox.ActiveValue);
-        }
-
-        protected void OnMainGfxComboBoxChanged(object sender, EventArgs e)
-        {
-            var comboBox = sender as ComboBoxFromConstants;
-            if (comboBox.ActiveValue != -1)
-                SetMainGfx(comboBox.ActiveValue);
-        }
-
-        protected void OnPalettesComboBoxChanged(object sender, EventArgs e)
-        {
-            var comboBox = sender as ComboBoxFromConstants;
-            if (comboBox.ActiveValue != -1)
-                SetPaletteHeader(comboBox.ActiveValue);
-        }
-
-        protected void OnTilesetLayoutSpinButtonValueChanged(object sender, EventArgs e)
-        {
-            SetTilesetLayout(tilesetLayoutSpinButton.ValueAsInt);
-        }
-
-        protected void OnLayoutGroupSpinButtonValueChanged(object sender, EventArgs e)
-        {
-            SetLayoutGroup(layoutGroupSpinButton.ValueAsInt);
-        }
-
-        protected void OnAnimationsSpinButtonValueChanged(object sender, EventArgs e)
-        {
-            SetAnimation(animationsSpinButton.ValueAsInt);
         }
     }
 

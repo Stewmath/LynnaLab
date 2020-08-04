@@ -9,10 +9,8 @@ namespace LynnaLab
     public class Tileset : ProjectIndexedDataType
     {
         FileParser tilesetFile;
-
         Data tilesetData;
-
-        int flags1, flags2;
+        ValueReferenceGroup vrg;
 
         TilesetHeaderGroup tilesetHeaderGroup;
         AnimationGroup animationGroup;
@@ -49,111 +47,67 @@ namespace LynnaLab
 
         // Following properties correspond to the 8 bytes defining the tileset.
 
+        // TODO: replace flags with more useful subdivisions
         public int Flags1 {
-            get { return flags1; }
+            get { return GetDataIndex(0).GetIntValue(0); }
             set {
-                flags1 = value;
                 Data data = GetDataIndex(0);
-                data.SetValue(0,Wla.ToByte((byte)flags1));
+                data.SetValue(0, Wla.ToByte((byte)value));
             }
         }
         public int Flags2 {
-            get { return flags2; }
+            get { return GetDataIndex(1).GetIntValue(0); }
             set {
-                flags2 = value;
                 Data data = GetDataIndex(1);
-                data.SetValue(0,Wla.ToByte((byte)flags2));
-            }
-        }
-        public string UniqueGfxString {
-            get {
-                Data d = GetDataIndex(2);
-                return d.GetValue(0);
-            }
-            set {
-                Data d = GetDataIndex(2);
-                d.SetValue(0, value);
-                LoadUniqueGfx();
+                data.SetValue(0, Wla.ToByte((byte)value));
             }
         }
         public int UniqueGfx {
             get {
-                return Project.EvalToInt(UniqueGfxString);
+                return vrg.GetIntValue("Unique Gfx");
             }
             set {
-                UniqueGfxString = Project.UniqueGfxMapping.ByteToString(value);
-            }
-        }
-        public string MainGfxString {
-            get {
-                Data d = GetDataIndex(3);
-                return d.GetValue(0);
-            }
-            set {
-                Data d = GetDataIndex(3);
-                d.SetValue(0, value);
-                LoadMainGfx();
+                vrg.SetValue("Unique Gfx", value);
             }
         }
         public int MainGfx {
             get {
-                return Project.EvalToInt(MainGfxString);
+                return vrg.GetIntValue("Main Gfx");
             }
             set {
-                MainGfxString = Project.MainGfxMapping.ByteToString(value);
-            }
-        }
-        public string PaletteHeaderString {
-            get {
-                Data d = GetDataIndex(4);
-                return d.GetValue(0);
-            }
-            set {
-                Data d = GetDataIndex(4);
-                d.SetValue(0, value);
-                LoadPaletteHeader();
+                vrg.SetValue("Main Gfx", value);
             }
         }
         public int PaletteHeader {
             get {
-                return Project.EvalToInt(PaletteHeaderString);
+                return vrg.GetIntValue("Palettes");
             }
             set {
-                PaletteHeaderString = Project.PaletteHeaderMapping.ByteToString(value);
+                vrg.SetValue("Palettes", value);
             }
         }
         public int TilesetLayoutIndex {
             get {
-                Data d = GetDataIndex(5);
-                return Project.EvalToInt(d.GetValue(0));
+                return vrg.GetIntValue("Layout");
             }
             set {
-                Data d = GetDataIndex(5);
-                d.SetValue(0, Wla.ToByte((byte)value));
-                LoadTilesetLayout();
+                vrg.SetValue("Layout", value);
             }
         }
         public int LayoutGroup {
             get {
-                Data d = GetDataIndex(6);
-                return Project.EvalToInt(d.GetValue(0));
+                return vrg.GetIntValue("Layout Group");
             }
             set {
-                Data d = GetDataIndex(6);
-                d.SetValue(0, Wla.ToByte((byte)value));
-                if (LayoutGroupModifiedEvent != null)
-                    LayoutGroupModifiedEvent();
+                vrg.SetValue("Layout Group", value);
             }
         }
         public int AnimationIndex {
             get {
-                Data d = GetDataIndex(7);
-                return Project.EvalToInt(d.GetValue(0));
+                return vrg.GetIntValue("Animations");
             }
             set {
-                Data d = GetDataIndex(7);
-                d.SetValue(0, Wla.ToByte((byte)value));
-                LoadAnimation();
+                vrg.SetValue("Animations", value);
             }
         }
 
@@ -170,14 +124,20 @@ namespace LynnaLab
                 tilesetData = Project.GetData(tilesetData.GetValue(0), season*8);
             }
 
+            ConstructValueReferenceGroup();
+
+            // Data modified handlers
+            GetDataIndex(2).AddModifiedEventHandler((sender, args) => LoadUniqueGfx());
+            GetDataIndex(3).AddModifiedEventHandler((sender, args) => LoadMainGfx());
+            GetDataIndex(4).AddModifiedEventHandler((sender, args) => LoadPaletteHeader());
+            GetDataIndex(5).AddModifiedEventHandler((sender, args) => LoadTilesetLayout());
+            GetDataIndex(6).AddModifiedEventHandler((sender, args) => {
+                if (LayoutGroupModifiedEvent != null)
+                    LayoutGroupModifiedEvent();
+            });
+            GetDataIndex(7).AddModifiedEventHandler((sender, args) => LoadAnimation());
+
             // Initialize graphics state
-            Data data = tilesetData;
-            flags1 = p.EvalToInt(data.GetValue(0));
-
-            data = data.NextData;
-            flags2 = p.EvalToInt(data.GetValue(0));
-
-
             graphicsState = new GraphicsState();
 
             // Global palettes
@@ -216,6 +176,49 @@ namespace LynnaLab
                 data = data.NextData;
             return data;
         }
+
+        // Alternative method to access data fields
+        void ConstructValueReferenceGroup() {
+            // TODO: save main gfx, unique gfx, palette as strings, not ints
+            vrg = new ValueReferenceGroup(new List<ValueReference> {
+                new DataValueReference(GetDataIndex(0),
+                        name: "Flags 1",
+                        index: 0,
+                        type: DataValueType.Byte),
+                new DataValueReference(GetDataIndex(1),
+                        name: "Flags 2",
+                        index: 0,
+                        type: DataValueType.Byte),
+                new DataValueReference(GetDataIndex(2),
+                        name: "Unique Gfx",
+                        index: 0,
+                        type: DataValueType.Byte,
+                        constantsMappingString: "UniqueGfxMapping"),
+                new DataValueReference(GetDataIndex(3),
+                        name: "Main Gfx",
+                        index: 0,
+                        type: DataValueType.Byte,
+                        constantsMappingString: "MainGfxMapping"),
+                new DataValueReference(GetDataIndex(4),
+                        name: "Palettes",
+                        index: 0,
+                        type: DataValueType.Byte,
+                        constantsMappingString: "PaletteHeaderMapping"),
+                new DataValueReference(GetDataIndex(5),
+                        name: "Layout",
+                        index: 0,
+                        type: DataValueType.Byte),
+                new DataValueReference(GetDataIndex(6),
+                        name: "Layout Group",
+                        index: 0,
+                        type: DataValueType.Byte),
+                new DataValueReference(GetDataIndex(7),
+                        name: "Animations",
+                        index: 0,
+                        type: DataValueType.Byte),
+            });
+        }
+
 
         // Clear all tile image caches. Won't necessarily redraw the cached image itself, for
         // performance reasons... call "DrawAllTiles" afterwards if that's necessary.
@@ -446,6 +449,10 @@ namespace LynnaLab
 
             InvalidateAllTiles();
             DrawAllTiles();
+        }
+
+        public ValueReferenceGroup GetValueReferenceGroup() {
+            return vrg;
         }
 
         public override void Save() {
