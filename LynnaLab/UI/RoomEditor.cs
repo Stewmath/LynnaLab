@@ -8,6 +8,9 @@ namespace LynnaLab
     [System.ComponentModel.ToolboxItem(true)]
     public class RoomEditor : TileGridViewer
     {
+        public static readonly Cairo.Color ObjectHoverColor = new Cairo.Color(0.0, 1.0, 1.0);
+
+
         public Room Room
         {
             get { return room; }
@@ -380,13 +383,13 @@ namespace LynnaLab
             if (SelectRoomComponents) {
                 // Object hovering over
                 if (hoveringComponent != null) {
-                    cr.SetSourceColor(TileGridViewer.HoverColor);
-                    CairoHelper.DrawRectOutline(cr, 2, hoveringComponent.BoxRectangle);
+                    cr.SetSourceColor(ObjectHoverColor);
+                    CairoHelper.DrawRectOutline(cr, 1, hoveringComponent.BoxRectangle);
 
                 }
                 // Object selected
                 if (selectedComponent != null) {
-                    cr.SetSourceColor(TileGridViewer.SelectionColor);
+                    cr.SetSourceColor(TileGridViewer.DefaultSelectionColor);
                     CairoHelper.DrawRectOutline(cr, 1, selectedComponent.BoxRectangle);
                 }
             }

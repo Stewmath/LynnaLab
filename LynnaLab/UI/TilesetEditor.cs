@@ -54,6 +54,7 @@ namespace LynnaLab
             tilesetViewerContainer.Add(tilesetviewer1);
 
             subTileGfxViewer = new GfxViewer();
+            subTileGfxViewer.SelectionColor = CairoHelper.ConvertColor(0, 256, 0);
             subTileGfxViewer.AddTileSelectedHandler(delegate(object sender, int index) {
                 if (subTileEditor != null)
                     subTileEditor.SubTileIndex = (byte)(index^0x80);

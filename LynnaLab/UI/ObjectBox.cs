@@ -13,7 +13,7 @@ namespace LynnaLab {
         public ObjectBox(ObjectGroup group) : base() {
             this.ObjectGroup = group;
 
-            MaxIndex = ObjectGroup.GetNumObjects() - 1;
+            base.MaxIndex = ObjectGroup.GetNumObjects() - 1;
 
             ObjectGroup.AddModifiedHandler(OnObjectGroupModified);
         }

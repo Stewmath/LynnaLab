@@ -20,6 +20,7 @@ namespace LynnaLab {
 
             base.Selectable = true;
             base.BackgroundColor = new Cairo.Color(0.8, 0.8, 0.8);
+            base.HoverColor = RoomEditor.ObjectHoverColor;
 
             TileGridEventHandler dragCallback = (sender, index) => {
                 if (index != SelectedIndex) {

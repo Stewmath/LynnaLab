@@ -31,10 +31,17 @@ namespace LynnaLab
         Callback      // Invoke a callback whenever the tile is clicked, or the drag changes
     }
 
-    public abstract class TileGridViewer : Gtk.DrawingArea {
-        public static readonly Cairo.Color HoverColor = new Cairo.Color(1.0, 0, 0);
-        public static readonly Cairo.Color SelectionColor = new Cairo.Color(1.0, 1.0, 1.0);
 
+    /* Represents any kind of tile-based grid. It can be hovered over with the mouse, and optionally
+     * allows one to select tiles by clicking, or define actions to occur with other mouse buttons.
+     */
+    public abstract class TileGridViewer : Gtk.DrawingArea {
+        public static readonly Cairo.Color DefaultHoverColor = new Cairo.Color(1.0, 0, 0);
+        public static readonly Cairo.Color DefaultSelectionColor = new Cairo.Color(1.0, 1.0, 1.0);
+
+
+        public Cairo.Color HoverColor { get; set; } = DefaultHoverColor;
+        public Cairo.Color SelectionColor { get; set; } = DefaultSelectionColor;
 
         public int Width { get; set; }
         public int Height { get; set; }
