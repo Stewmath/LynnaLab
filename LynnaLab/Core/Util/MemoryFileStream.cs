@@ -1,7 +1,19 @@
 using System;
 using System.IO;
+using LynnaLab;
 
 public class MemoryFileStream : Stream {
+    // Arguments for modification callback
+    public class ModifiedEventArgs {
+        public ModifiedEventArgs(long s, long e) {
+            modifiedRangeStart = s;
+            modifiedRangeEnd = e;
+        }
+
+        public readonly long modifiedRangeStart; // First changed address (inclusive)
+        public readonly long modifiedRangeEnd;   // Last changed address (exclusive)
+    }
+
     public override bool CanRead {
         get { return true; }
     }
@@ -30,8 +42,10 @@ public class MemoryFileStream : Stream {
     long _position;
     byte[] data;
     bool modified = false;
-
     string filename;
+
+    LockableEvent<ModifiedEventArgs> modifiedEvent = new LockableEvent<ModifiedEventArgs>();
+
 
     public MemoryFileStream(string filename) {
         this.filename = filename;
@@ -56,14 +70,22 @@ public class MemoryFileStream : Stream {
     }
 
     public override void SetLength(long len) {
+        // This code should work, but it's not currently needed. Not sure how to handle the modified
+        // event handler for this. See todo below.
+        throw new NotImplementedException();
+
+        /*
         if (Length != len) {
-            modified = true;
             byte[] newData = new byte[len];
             Array.Copy(data, newData, Math.Min(len, _length));
             data = newData;
 
             _length = len;
+
+            modified = true;
+            modifiedEvent.Invoke(this, null); // TODO: should send an actual argument I guess
         }
+        */
     }
 
     public override long Seek(long dest, SeekOrigin origin) {
@@ -97,6 +119,7 @@ public class MemoryFileStream : Stream {
         if (Position > Length)
             Position = Length;
         modified = true;
+        modifiedEvent.Invoke(this, new ModifiedEventArgs(offset, offset + count));
     }
 
     public override int ReadByte() {
@@ -108,5 +131,14 @@ public class MemoryFileStream : Stream {
         data[Position] = value;
         Position++;
         modified = true;
+        modifiedEvent.Invoke(this, new ModifiedEventArgs(Position-1, Position));
+    }
+
+
+    public void AddModifiedEventHandler(EventHandler<ModifiedEventArgs> handler) {
+        modifiedEvent += handler;
+    }
+    public void RemoveModifiedEventHandler(EventHandler<ModifiedEventArgs> handler) {
+        modifiedEvent -= handler;
     }
 }

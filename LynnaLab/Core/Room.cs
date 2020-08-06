@@ -17,10 +17,8 @@ namespace LynnaLab
         // Event invoked when the room's image is modified in any way
         public event RoomModifiedHandler RoomModifiedEvent;
 
-        // Actual width and height of room
+        // Actual width and height of room (note that width can differ from Stride, below)
         int width, height;
-        // Actual width of file; large rooms always have an extra 0 at the end of each row
-        int fileWidth;
 
         MemoryFileStream tileDataFile;
 
@@ -38,6 +36,13 @@ namespace LynnaLab
         public Tileset Tileset
         {
             get { return tileset; }
+        }
+
+        // # of bytes per row (including unused bytes; this means it has a value of 16 for large
+        // rooms, which is 1 higher than the width, which is 15).
+        int Stride {
+            get { return width == 10 ? 10 : 16; }
+
         }
 
         internal Room(Project p, int i) : base(p,i) {
@@ -81,21 +86,14 @@ namespace LynnaLab
         }
 
         public int GetTile(int x, int y) {
-            tileDataFile.Position = y*fileWidth+x;
+            tileDataFile.Position = y*Stride+x;
             return tileDataFile.ReadByte();
         }
         public void SetTile(int x, int y, int value) {
             if (GetTile(x,y) != value) {
-                tileDataFile.Position = y*fileWidth+x;
+                tileDataFile.Position = y*Stride+x;
                 tileDataFile.WriteByte((byte)value);
-                if (cachedImage != null) {
-                    Graphics g = Graphics.FromImage(cachedImage);
-                    g.DrawImageUnscaled(tileset.GetTileImage(value), x*16, y*16);
-                    g.Dispose();
-                }
-                Modified = true;
-                if (RoomModifiedEvent != null)
-                    RoomModifiedEvent();
+                // Modifying the data will trigger the callback to the TileDataModified function
             }
         }
 
@@ -131,7 +129,7 @@ namespace LynnaLab
                 groupTilesetsFile.Position = Index&0xff;
                 groupTilesetsFile.WriteByte((byte)((t.Index&0x7f) | lastValue));
 
-                var handler = new Tileset.TileModifiedHandler(ModifiedTileCallback);
+                var handler = new Tileset.TileModifiedHandler(ModifiedTilesetCallback);
                 var layoutHandler = new Tileset.LayoutGroupModifiedHandler(ModifiedLayoutGroupCallback);
                 if (tileset != null) {
                     tileset.TileModifiedEvent -= handler;
@@ -161,6 +159,10 @@ namespace LynnaLab
         }
 
         void UpdateRoomData() {
+            if (tileDataFile != null) {
+                tileDataFile.RemoveModifiedEventHandler(TileDataModified);
+                tileDataFile = null;
+            }
             // Get the tileDataFile
             int layoutGroup = tileset.LayoutGroup;
             string label = "room" + ((layoutGroup<<8)+(Index&0xff)).ToString("X4").ToLower();
@@ -184,20 +186,41 @@ namespace LynnaLab
                 }
             }
 
+            tileDataFile.AddModifiedEventHandler(TileDataModified);
+
             if (tileDataFile.Length == 80) { // Small map
-                width = fileWidth = 10;
+                width = 10;
                 height = 8;
             }
             else if (tileDataFile.Length == 176) { // Large map
                 width = 0xf;
-                fileWidth = 0x10;
                 height = 0xb;
             }
             else
                 throw new AssemblyErrorException("Size of file \"" + tileDataFile.Name + "\" was invalid!");
         }
 
-        void ModifiedTileCallback(int tile) {
+        // Room layout modified
+        void TileDataModified(object sender, MemoryFileStream.ModifiedEventArgs args) {
+            if (cachedImage != null) {
+                Graphics g = Graphics.FromImage(cachedImage);
+
+                for (long i=args.modifiedRangeStart; i<args.modifiedRangeEnd; i++) {
+                    int x = (int)(i % Stride);
+                    int y = (int)(i / Stride);
+                    if (x >= Width)
+                        continue;
+                    g.DrawImageUnscaled(tileset.GetTileImage(GetTile(x, y)), x*16, y*16);
+                }
+                g.Dispose();
+            }
+            Modified = true;
+            if (RoomModifiedEvent != null)
+                RoomModifiedEvent();
+        }
+
+        // Tileset modified
+        void ModifiedTilesetCallback(int tile) {
             Graphics g = null;
             if (cachedImage != null)
                 g = Graphics.FromImage(cachedImage);
