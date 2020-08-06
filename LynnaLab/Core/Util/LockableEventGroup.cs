@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace LynnaLab {
+namespace Util {
     // Unlike "LockableEvent" class this operates tn the event handlers. Allows one to define a set
     // of handlers which can be "locked" to prevent their execution, and "unlocked" later.
     public class LockableEventGroup {

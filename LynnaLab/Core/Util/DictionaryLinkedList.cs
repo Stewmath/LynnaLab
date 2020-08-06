@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace LynnaLab
+namespace Util
 {
     // Like LinkedList<T>, but lookups (for adds/removals/finds) can be done in O(1)-ish time like
     // a Dictionary. Can't have the same value twice as a consequence.

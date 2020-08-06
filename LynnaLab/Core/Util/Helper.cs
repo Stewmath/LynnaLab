@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-namespace LynnaLab {
+namespace Util {
 
     // Some static functions
     public class Helper {

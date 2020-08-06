@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LynnaLab {
+namespace Util {
     // This is just like an Event, but you can "Lock" it to pause callbacks, and "Unlock" it to
     // resume them. Useful for doing atomic operations.
     public class LockableEvent<T> {
