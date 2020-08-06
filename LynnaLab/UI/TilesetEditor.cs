@@ -381,6 +381,7 @@ namespace LynnaLab
                 bankCheckButton.Toggled += delegate(object sender, EventArgs e) {
                     PushFlags();
                 };
+                bankCheckButton.Sensitive = false; // On second thought, nobody actually needs this
 
                 Gtk.Label subTileLabel = new Gtk.Label("Subtile Index");
                 Gtk.Label paletteLabel = new Gtk.Label("Palette");
@@ -395,8 +396,8 @@ namespace LynnaLab
                 priorityLabel.TooltipText = "Check to make colors 1-3 appear above sprites";
                 priorityCheckButton.TooltipText = "Check to make colors 1-3 appear above sprites";
 
-                bankLabel.TooltipText = "You're better off leaving this checked.";
-                bankCheckButton.TooltipText = "You're better off leaving this checked.";
+                bankLabel.TooltipText = "This should always be checked.";
+                bankCheckButton.TooltipText = "This should always be checked.";
 
                 uint y = 0;
 
