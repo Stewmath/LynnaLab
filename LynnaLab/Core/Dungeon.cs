@@ -9,16 +9,27 @@ namespace LynnaLab
         public int x, y, floor; // Position in grid of changed room
     }
 
-    public class Dungeon : Map, WrappableEvent<DungeonRoomChangedEventArgs>
+    public class Dungeon : Map
     {
         // The start of the data, at the "dungeonDataXX" label
         Data dataStart;
 
-        // Event invoked when a room number changes
-        LockableEvent<DungeonRoomChangedEventArgs> roomChangedEvent = new LockableEvent<DungeonRoomChangedEventArgs>();
-
         // roomsUsed[i] = # of times room "i" is used in this dungeon
         int[] roomsUsed = new int[256];
+
+
+        internal Dungeon(Project p, int i) : base(p, i) {
+            FileParser dungeonDataFile = Project.GetFileWithLabel("dungeonDataTable");
+            Data pointerData = dungeonDataFile.GetData("dungeonDataTable", Index*2);
+            string label = pointerData.GetValue(0);
+            dataStart = dungeonDataFile.GetData(label);
+
+            DetermineRoomsUsed();
+        }
+
+
+        // Event invoked when a room number changes
+        public event EventHandler<DungeonRoomChangedEventArgs> RoomChangedEvent;
 
 
         public Data DataStart {
@@ -79,44 +90,6 @@ namespace LynnaLab
             }
         }
 
-        internal Dungeon(Project p, int i) : base(p, i) {
-            FileParser dungeonDataFile = Project.GetFileWithLabel("dungeonDataTable");
-            Data pointerData = dungeonDataFile.GetData("dungeonDataTable", Index*2);
-            string label = pointerData.GetValue(0);
-            dataStart = dungeonDataFile.GetData(label);
-
-            DetermineRoomsUsed();
-        }
-
-        void DetermineRoomsUsed() {
-            for (int f=0; f<NumFloors; f++) {
-                for (int x=0; x<MapWidth; x++) {
-                    for (int y=0; y<MapHeight; y++) {
-                        roomsUsed[GetRoom(x, y, f).Index & 0xff]++;
-                    }
-                }
-            }
-        }
-
-        int GetDataIndex(int i) {
-            Data d = dataStart;
-            for (int j=0; j<i; j++) {
-                d = d.NextData;
-            }
-            return Project.EvalToInt(d.GetValue(0));
-        }
-
-        Data GetFloorLayoutData(int floor) {
-            return Project.GetData("dungeonLayoutData", (FirstLayoutIndex + floor) * 64);
-        }
-
-        void SetDataIndex(int i, int val) {
-            Data d = dataStart;
-            for (int j=0; j<i; j++) {
-                d = d.NextData;
-            }
-            d.SetByteValue(0, (byte)val);
-        }
 
         public void SetRoom(int x, int y, int floor, int room) {
             int pos = y * 8 + x;
@@ -131,7 +104,8 @@ namespace LynnaLab
             d.SetByteValue(0, (byte)room);
             roomsUsed[(byte)room]++;
 
-            roomChangedEvent.Invoke(this, new DungeonRoomChangedEventArgs {x = x, y = y, floor = floor});
+            if (RoomChangedEvent != null)
+                RoomChangedEvent(this, new DungeonRoomChangedEventArgs {x = x, y = y, floor = floor});
         }
 
         public bool RoomUsed(int roomIndex) {
@@ -189,14 +163,35 @@ namespace LynnaLab
         }
 
 
-        // EventWrapper
-
-        public void AddEventHandler(EventHandler<DungeonRoomChangedEventArgs> handler) {
-            roomChangedEvent += handler;
+        void DetermineRoomsUsed() {
+            for (int f=0; f<NumFloors; f++) {
+                for (int x=0; x<MapWidth; x++) {
+                    for (int y=0; y<MapHeight; y++) {
+                        roomsUsed[GetRoom(x, y, f).Index & 0xff]++;
+                    }
+                }
+            }
         }
 
-        public void RemoveEventHandler(EventHandler<DungeonRoomChangedEventArgs> handler) {
-            roomChangedEvent -= handler;
+        int GetDataIndex(int i) {
+            Data d = dataStart;
+            for (int j=0; j<i; j++) {
+                d = d.NextData;
+            }
+            return Project.EvalToInt(d.GetValue(0));
         }
+
+        Data GetFloorLayoutData(int floor) {
+            return Project.GetData("dungeonLayoutData", (FirstLayoutIndex + floor) * 64);
+        }
+
+        void SetDataIndex(int i, int val) {
+            Data d = dataStart;
+            for (int j=0; j<i; j++) {
+                d = d.NextData;
+            }
+            d.SetByteValue(0, (byte)val);
+        }
+
     }
 }

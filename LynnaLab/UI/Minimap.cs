@@ -18,8 +18,6 @@ namespace LynnaLab
         Map _map;
         double _scale;
         int _floor;
-        EventWrapper<DungeonRoomChangedEventArgs> dungeonEditedEventWrapper
-            = new EventWrapper<DungeonRoomChangedEventArgs>();
 
         Dictionary<Room,Cairo.Surface> cachedImageDict = new Dictionary<Room,Cairo.Surface>();
 
@@ -54,12 +52,6 @@ namespace LynnaLab
         {
             Selectable = true;
             SelectedIndex = 0;
-
-            // Redraw rooms when dungeon layout is changed
-            dungeonEditedEventWrapper.Event += (sender, args) => {
-                if (args.floor == Floor)
-                    QueueDrawTile(args.x, args.y);
-            };
         }
 
         public Minimap(double scale) : this() {
@@ -68,12 +60,13 @@ namespace LynnaLab
 
         public void SetMap(Map m, int index = -1) {
             if (_map != m) {
+                if (_map is Dungeon)
+                    (_map as Dungeon).RoomChangedEvent -= DungeonRoomChanged;
+                if (m is Dungeon)
+                    (m as Dungeon).RoomChangedEvent += DungeonRoomChanged;
+
                 _map = m;
                 _floor = 0;
-
-                dungeonEditedEventWrapper.UnbindAll();
-                if (_map is Dungeon)
-                    dungeonEditedEventWrapper.Bind(_map as Dungeon);
 
                 if (m.MapWidth >= 16 && m.RoomWidth >= 15)
                     _scale = 1.0/12; // Draw large indoor groups smaller
@@ -169,6 +162,11 @@ namespace LynnaLab
             var tileSurface = GenerateTileImage(x, y);
             cachedImageDict[room] = tileSurface;
             return tileSurface;
+        }
+
+        void DungeonRoomChanged(object sender, DungeonRoomChangedEventArgs args) {
+            if (args.floor == Floor)
+                QueueDrawTile(args.x, args.y);
         }
     }
 }
