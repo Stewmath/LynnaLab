@@ -43,13 +43,10 @@ namespace LynnaLab
                 if (value >= (_map as Dungeon).NumFloors)
                     throw new ArgumentException(string.Format("Floor {0} too high.", value));
                 _floor = value;
-
-                InvalidateImageCache();
             }
         }
 
-        public Minimap()
-        {
+        public Minimap() {
             Selectable = true;
             SelectedIndex = 0;
         }
@@ -79,7 +76,6 @@ namespace LynnaLab
                 TileHeight = (int)(_map.RoomHeight*16*_scale);
 
                 base.UpdateSizeRequest();
-                InvalidateImageCache();
             }
 
             if (index != -1) {
@@ -148,6 +144,13 @@ namespace LynnaLab
             }
 
             return tileSurface;
+        }
+
+        protected override void Dispose(bool disposeAll) {
+            base.Dispose(disposeAll);
+            foreach (var img in cachedImageDict.Values)
+                img.Dispose();
+            cachedImageDict.Clear();
         }
 
 
