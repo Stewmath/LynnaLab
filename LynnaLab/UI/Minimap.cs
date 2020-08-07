@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Collections.Generic;
+using Util;
 
 namespace LynnaLab
 {
@@ -8,12 +9,17 @@ namespace LynnaLab
      *
      * Images in the minimap are cached until the "SetMap" function is called. Calling
      * "InvalidateImageCache" will force the image to update.
+     *
+     * The only external event that causes the images to update is dungeon editing. Room editing
+     * does not dynamically update the image since I'm concerned about performance.
      */
     public class Minimap : TileGridViewer
     {
         Map _map;
         double _scale;
         int _floor;
+        EventWrapper<DungeonRoomChangedEventArgs> dungeonEditedEventWrapper
+            = new EventWrapper<DungeonRoomChangedEventArgs>();
 
         Dictionary<Room,Cairo.Surface> cachedImageDict = new Dictionary<Room,Cairo.Surface>();
 
@@ -48,6 +54,12 @@ namespace LynnaLab
         {
             Selectable = true;
             SelectedIndex = 0;
+
+            // Redraw rooms when dungeon layout is changed
+            dungeonEditedEventWrapper.Event += (sender, args) => {
+                if (args.floor == Floor)
+                    QueueDrawTile(args.x, args.y);
+            };
         }
 
         public Minimap(double scale) : this() {
@@ -58,6 +70,10 @@ namespace LynnaLab
             if (_map != m) {
                 _map = m;
                 _floor = 0;
+
+                dungeonEditedEventWrapper.UnbindAll();
+                if (_map is Dungeon)
+                    dungeonEditedEventWrapper.Bind(_map as Dungeon);
 
                 if (m.MapWidth >= 16 && m.RoomWidth >= 15)
                     _scale = 1.0/12; // Draw large indoor groups smaller

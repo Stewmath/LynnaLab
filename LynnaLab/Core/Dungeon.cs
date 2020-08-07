@@ -1,13 +1,21 @@
 using System;
 using System.Drawing;
 using System.IO;
+using Util;
 
 namespace LynnaLab
 {
-    public class Dungeon : Map
+    public class DungeonRoomChangedEventArgs {
+        public int x, y, floor; // Position in grid of changed room
+    }
+
+    public class Dungeon : Map, WrappableEvent<DungeonRoomChangedEventArgs>
     {
         // The start of the data, at the "dungeonDataXX" label
         Data dataStart;
+
+        // Event invoked when a room number changes
+        LockableEvent<DungeonRoomChangedEventArgs> roomChangedEvent = new LockableEvent<DungeonRoomChangedEventArgs>();
 
         // roomsUsed[i] = # of times room "i" is used in this dungeon
         int[] roomsUsed = new int[256];
@@ -121,8 +129,9 @@ namespace LynnaLab
 
             roomsUsed[d.GetIntValue(0)]--;
             d.SetByteValue(0, (byte)room);
-
             roomsUsed[(byte)room]++;
+
+            roomChangedEvent.Invoke(this, new DungeonRoomChangedEventArgs {x = x, y = y, floor = floor});
         }
 
         public bool RoomUsed(int roomIndex) {
@@ -177,6 +186,17 @@ namespace LynnaLab
         public override bool GetRoomPosition(Room room, out int x, out int y) {
             int f;
             return GetRoomPosition(room, out x, out y, out f);
+        }
+
+
+        // EventWrapper
+
+        public void AddEventHandler(EventHandler<DungeonRoomChangedEventArgs> handler) {
+            roomChangedEvent += handler;
+        }
+
+        public void RemoveEventHandler(EventHandler<DungeonRoomChangedEventArgs> handler) {
+            roomChangedEvent -= handler;
         }
     }
 }

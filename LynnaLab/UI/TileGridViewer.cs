@@ -533,7 +533,7 @@ namespace LynnaLab
         }
 
         protected void QueueDrawTile(int x, int y) {
-            Cairo.Rectangle rect = GetTileRectWithPadding(x, y);
+            Cairo.Rectangle rect = GetTileRectSansPadding(x, y);
             QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
         }
 
