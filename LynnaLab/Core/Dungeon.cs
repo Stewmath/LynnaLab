@@ -141,6 +141,11 @@ namespace LynnaLab
             y = -1;
             floor = -1;
 
+            if (room.Group != MainGroup && room.Group != SidescrollGroup)
+                return false;
+            if (roomsUsed[room.Index & 0xff] == 0)
+                return false;
+
             for (int f=0;f<NumFloors;f++) {
                 for (int j=0;j<MapHeight;j++) {
                     for (int i=0;i<MapWidth;i++) {
@@ -155,11 +160,6 @@ namespace LynnaLab
             }
 
             return false;
-        }
-
-        public override bool GetRoomPosition(Room room, out int x, out int y) {
-            int f;
-            return GetRoomPosition(room, out x, out y, out f);
         }
 
 

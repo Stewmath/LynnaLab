@@ -26,10 +26,66 @@ namespace LynnaLab
         Tileset tileset;
         Bitmap cachedImage;
 
+
+        internal Room(Project p, int i) : base(p,i) {
+            Stream groupTilesetsFile = GetTilesetMappingFile();
+            groupTilesetsFile.Position = Index&0xff;
+            int areaID = groupTilesetsFile.ReadByte() & 0x7f;
+
+            Tileset t = Project.GetIndexedDataType<Tileset>(areaID);
+            SetTileset(t);
+
+        }
+
+
         public int Group
         {
             get { return Index >> 8; }
         }
+
+        /// Some rooms are "duplicates" (share tile data and object data) but only a specific
+        /// version is expected to be used. Most notable in sidescrolling areas. This gets the
+        /// group number for the version of the room that's expected to be used.
+        public int ExpectedGroup
+        {
+            get {
+                if (Project.GameString == "ages") {
+                    if (Group < 4)
+                        return Group;
+                    else if (Group < 8) {
+                        int g = 4 + (Group % 2);
+                        if (Tileset.SidescrollFlag)
+                            return g + 2;
+                        else
+                            return g;
+                    }
+                    else
+                        throw new Exception("Group number too high?");
+                }
+                else { // Seasons
+                    if (Group == 0)
+                        return Group;
+                    else if (Group < 4)
+                        return Group; // TODO: subrosia, maku tree, and indoor rooms have different values
+                    else if (Group < 8) {
+                        int g = 4 + (Group % 2);
+                        if (Tileset.SidescrollFlag)
+                            return g + 2;
+                        else
+                            return g;
+                    }
+                    else
+                        throw new Exception("Group number too high?");
+                }
+            }
+        }
+
+        // Like above
+        public int ExpectedIndex
+        {
+            get { return ExpectedGroup << 8 | (Index & 0xff); }
+        }
+
         public int Height
         {
             get { return height; }
@@ -50,27 +106,6 @@ namespace LynnaLab
 
         }
 
-        internal Room(Project p, int i) : base(p,i) {
-            Stream groupTilesetsFile = GetTilesetMappingFile();
-            groupTilesetsFile.Position = Index&0xff;
-            int areaID = groupTilesetsFile.ReadByte() & 0x7f;
-
-            Tileset t = Project.GetIndexedDataType<Tileset>(areaID);
-            SetTileset(t);
-
-        }
-
-        // Returns a stream for the tileset mapping file (256 bytes, one byte per room)
-        private Stream GetTilesetMappingFile() {
-            Data data = Project.GetData("roomTilesetsGroupTable", 2*(Index>>8));
-            data = Project.GetData(data.GetValue(0)); // Follow .dw pointer
-
-            string path = data.GetValue(0);
-            path = path.Substring(1, path.Length-2); // Remove quotes
-
-            Stream stream = Project.GetBinaryFile(path);
-            return stream;
-        }
 
         public Bitmap GetImage() {
             if (cachedImage != null)
@@ -115,17 +150,6 @@ namespace LynnaLab
             file.WriteByte((byte)id);
         }
 
-        private Stream GetMusicFile() {
-            Data data = Project.GetData("musicAssignmentGroupTable", 2*(Index>>8));
-            data = Project.GetData(data.GetValue(0)); // Follow .dw pointer
-
-            string path = data.GetValue(0);
-            path = path.Substring(1, path.Length-2); // Remove quotes
-
-            Stream stream = Project.GetBinaryFile(path);
-            return stream;
-        }
-
         public void SetTileset(Tileset t) {
             if (tileset == null || t.Index != tileset.Index) {
                 Stream groupTilesetsFile = GetTilesetMappingFile();
@@ -161,6 +185,35 @@ namespace LynnaLab
 
         public WarpGroup GetWarpGroup() {
             return Project.GetIndexedDataType<WarpGroup>(Index);
+        }
+
+        /// Returns true if the rooms are equal, or if they share duplicate room layout data.
+        public bool EqualsOrDuplicate(Room room) {
+            return tileDataFile == room.tileDataFile;
+        }
+
+
+        // Returns a stream for the tileset mapping file (256 bytes, one byte per room)
+        Stream GetTilesetMappingFile() {
+            Data data = Project.GetData("roomTilesetsGroupTable", 2*(Index>>8));
+            data = Project.GetData(data.GetValue(0)); // Follow .dw pointer
+
+            string path = data.GetValue(0);
+            path = path.Substring(1, path.Length-2); // Remove quotes
+
+            Stream stream = Project.GetBinaryFile(path);
+            return stream;
+        }
+
+        Stream GetMusicFile() {
+            Data data = Project.GetData("musicAssignmentGroupTable", 2*(Index>>8));
+            data = Project.GetData(data.GetValue(0)); // Follow .dw pointer
+
+            string path = data.GetValue(0);
+            path = path.Substring(1, path.Length-2); // Remove quotes
+
+            Stream stream = Project.GetBinaryFile(path);
+            return stream;
         }
 
         void UpdateRoomData() {

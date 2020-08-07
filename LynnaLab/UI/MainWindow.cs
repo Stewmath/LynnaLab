@@ -165,6 +165,9 @@ public class MainWindow
         roomeditor1.ObjectGroupEditor = objectgroupeditor1;
         roomeditor1.WarpEditor = warpEditor;
 
+
+        eventGroup.Lock();
+
         musicComboBox.Changed += eventGroup.Add(OnMusicComboBoxChanged);
         roomSpinButton.ValueChanged += eventGroup.Add(OnRoomSpinButtonValueChanged);
         tilesetSpinButton.ValueChanged += eventGroup.Add(OnTilesetSpinButtonValueChanged);
@@ -217,6 +220,8 @@ public class MainWindow
         pluginCore = new PluginCore(this);
 
         LoadPlugins();
+
+        eventGroup.UnlockAndClear();
 
         if (directory != "")
             OpenProject(directory);
@@ -312,11 +317,14 @@ public class MainWindow
             }
     */
 
-            musicComboBox.SetConstantsMapping(Project.MusicMapping);
+            eventGroup.Lock();
 
+            musicComboBox.SetConstantsMapping(Project.MusicMapping);
             worldSpinButton.Adjustment = new Adjustment(0, 0, Project.NumGroups-1, 1, 4, 0);
             dungeonSpinButton.Adjustment = new Adjustment(0, 0, Project.NumDungeons-1, 1, 1, 0);
             roomSpinButton.Adjustment = new Adjustment(0, 0, Project.NumRooms-1, 1, 16, 0);
+
+            eventGroup.UnlockAndClear();
 
             SetWorld(0);
         }
@@ -350,16 +358,21 @@ public class MainWindow
     public void UpdateMinimapFromRoom() {
         eventGroup.Lock();
 
-        int x, y, floor;
-        Dungeon dungeon = Project.GetRoomDungeon(ActiveRoom, out x, out y, out floor);
-        if (dungeon != null) {
-            ActiveMap = dungeon;
-            ActiveMinimap.Floor = floor;
-            ActiveMinimap.SelectedIndex = x + y * ActiveMinimap.Width;
+
+        if (ActiveMap is Dungeon) {
+            int x, y, floor;
+            Dungeon dungeon = Project.GetRoomDungeon(ActiveRoom, out x, out y, out floor);
+
+            if (dungeon != null) {
+                ActiveMap = dungeon;
+
+                ActiveMinimap.Floor = floor;
+                ActiveMinimap.SelectedIndex = x + y * ActiveMinimap.Width;
+            }
         }
         else {
             Room r = ActiveRoom;
-            Map map = Project.GetIndexedDataType<WorldMap>(ActiveRoom.Index >> 8);
+            Map map = Project.GetIndexedDataType<WorldMap>(ActiveRoom.Group);
             ActiveMap = map;
             ActiveMinimap.SelectedIndex = r.Index & 0xff;
         }
@@ -546,6 +559,17 @@ public class MainWindow
         if (Project == null)
             return;
         SpinButton button = sender as SpinButton;
+
+        // If in a dungeon, "correct" the room value by looking for the "expected" version of the
+        // room (sidescrolling rooms have duplicates, only one is the "correct" version).
+        if (ActiveMap is Dungeon) {
+            Room room = Project.GetIndexedDataType<Room>(button.ValueAsInt);
+            if (room.ExpectedIndex != button.ValueAsInt) {
+                button.Value = room.ExpectedIndex;
+                return; // Callback will get invoked again
+            }
+        }
+
         Room r = Project.GetIndexedDataType<Room>(button.ValueAsInt);
         if (r != ActiveRoom) {
             ActiveRoom = r;

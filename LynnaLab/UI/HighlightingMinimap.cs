@@ -13,8 +13,6 @@ namespace LynnaLab
     {
         bool _darkenUsedDungeonRooms = true;
 
-        HashSet<int> roomsUsedInDungeons;
-
         public bool DarkenUsedDungeonRooms {
             get {
                 return _darkenUsedDungeonRooms;
