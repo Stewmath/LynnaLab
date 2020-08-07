@@ -201,8 +201,8 @@ namespace LynnaLab
 
         // Methods
 
-        // Check if the given "real" position (in pixels) is in bounds. This ALSO check that the
-        // index that it's hovering over does not exceet MaxIndex.
+        // Check if the given "real" position (in pixels) is in bounds. This ALSO checks that the
+        // index that it's hovering over does not exceed MaxIndex.
         public bool IsInBounds(int x, int y, bool scale = true, bool offset = true) {
             Cairo.Rectangle p = GetTotalBounds(scale:scale, offset:offset);
             if (!(x >= p.X && y >= p.Y && x < p.X + p.Width && y < p.Y + p.Height))
@@ -458,7 +458,7 @@ namespace LynnaLab
             if (Selectable) {
                 var rect = GetTileRectSansPadding(SelectedX, SelectedY, scale:false, offset:false);
 
-                if (IsInBounds((int)rect.X, (int)rect.Y)) {
+                if (IsInBounds((int)rect.X, (int)rect.Y, scale:false, offset:false)) {
                     cr.NewPath();
                     cr.SetSourceColor(SelectionColor);
                     cr.Rectangle(rect.X + 0.5, rect.Y + 0.5, rect.Width-1, rect.Height-1);
