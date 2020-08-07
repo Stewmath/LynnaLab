@@ -160,7 +160,6 @@ namespace Plugins
             roomSpinButton.ValueChanged += (a,b) => {
                 (minimap.Map as Dungeon).SetRoom(minimap.SelectedX, minimap.SelectedY,
                         minimap.Floor, roomSpinButton.ValueAsInt);
-                minimap.GenerateImage();
                 RoomChanged();
             };
             tmpBox2.Add(roomSpinButton);
@@ -249,7 +248,6 @@ namespace Plugins
 
             dungeonVre.AddDataModifiedHandler(() => {
                 floorSpinButton.Adjustment.Upper = dungeon.NumFloors;
-                minimap.GenerateImage();
                 RoomChanged();
             });
 

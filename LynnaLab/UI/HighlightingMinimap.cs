@@ -22,8 +22,7 @@ namespace LynnaLab
             set {
                 if (_darkenUsedDungeonRooms != value) {
                     _darkenUsedDungeonRooms = value;
-                    base.ClearImageCache();
-                    GenerateImage();
+                    QueueDraw();
                 }
             }
         }
@@ -32,44 +31,22 @@ namespace LynnaLab
         {
         }
 
-        public override void GenerateImage() {
-            if (Map == null)
-                return;
-
-            roomsUsedInDungeons = Project.GetRoomsUsedInDungeons();
-
-            base.GenerateImage();
-        }
-
-        protected override Bitmap GenerateTileImage(int x, int y) {
-            Room room = GetRoom(x, y);
-            Bitmap orig = room.GetImage();
-            Bitmap newImage = orig;
-
-            if (!DarkenUsedDungeonRooms || !roomsUsedInDungeons.Contains(room.Index))
-                return orig;
-
-            newImage = new Bitmap(orig.Width, orig.Height);
-
-            const float ratio = (float)1.0/4;
-            var matrix = new float[][] {
-                new float[] { ratio,0,0,0,0 },
-                new float[] { 0,ratio,0,0,0 },
-                new float[] { 0,0,ratio,0,0 },
-                new float[] { 0,0,0,1,0 },
-                new float[] { 0,0,0,0,1 }
-            };
-
-            var attributes = new ImageAttributes();
-            attributes.SetColorMatrix(new ColorMatrix(matrix));
-            using (Graphics g = Graphics.FromImage(newImage)) {
-                g.DrawImage(orig,
-                        new Rectangle(0, 0, orig.Width, orig.Height),
-                        0, 0, orig.Width, orig.Height,
-                        GraphicsUnit.Pixel, attributes);
+        protected override void TileDrawer(int index, Cairo.Context cr) {
+            if (roomsUsedInDungeons == null) {
+                if (Project != null)
+                    roomsUsedInDungeons = Project.GetRoomsUsedInDungeons();
+                else
+                    return;
             }
 
-            return newImage;
+            int roomIndex = (Map.MainGroup << 8) | index;
+
+            base.TileDrawer(index, cr);
+
+            if (DarkenUsedDungeonRooms && roomsUsedInDungeons.Contains(roomIndex)) {
+                cr.SetSourceRGB(0, 0, 0);
+                cr.PaintWithAlpha(0.8);
+            }
         }
     }
 }

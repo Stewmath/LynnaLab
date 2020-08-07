@@ -86,6 +86,16 @@ namespace LynnaLab
         public static bool PointInRect(int x, int y, int left, int top, int width, int height) {
             return PointInRect(new Cairo.Point(x, y), new Cairo.Rectangle(left, top, width, height));
         }
+
+        public static bool RectsOverlap(Cairo.Rectangle rect1, Cairo.Rectangle rect2) {
+            double r1 = rect1.X + rect1.Width;
+            double r2 = rect2.X + rect2.Width;
+            double b1 = rect1.Y + rect1.Height;
+            double b2 = rect2.Y + rect2.Height;
+
+            return r1 > rect2.X && r2 > rect1.X
+                && b1 > rect2.Y && b2 > rect1.Y;
+        }
     }
 
 

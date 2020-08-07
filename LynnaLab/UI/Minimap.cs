@@ -4,16 +4,18 @@ using System.Collections.Generic;
 
 namespace LynnaLab
 {
+    /** A minimap represents a map of either an overworld or a dungeon.
+     *
+     * Images in the minimap are cached until the "SetMap" function is called. Calling
+     * "InvalidateImageCache" will force the image to update.
+     */
     public class Minimap : TileGridViewer
     {
-        Cairo.Surface _surface;
-
         Map _map;
-        double scale;
+        double _scale;
         int _floor;
 
-        Dictionary<Tuple<Map,int>,Cairo.Surface> cachedImageDict = new Dictionary<Tuple<Map,int>,Cairo.Surface>();
-        GLib.IdleHandler idleHandler;
+        Dictionary<Room,Cairo.Surface> cachedImageDict = new Dictionary<Room,Cairo.Surface>();
 
         public Project Project {
             get {
@@ -37,15 +39,8 @@ namespace LynnaLab
                 if (value >= (_map as Dungeon).NumFloors)
                     throw new ArgumentException(string.Format("Floor {0} too high.", value));
                 _floor = value;
-                GenerateImage();
-            }
-        }
 
-        protected override Cairo.Surface Surface {
-            get {
-                if (_surface == null)
-                    GenerateImage();
-                return _surface;
+                InvalidateImageCache();
             }
         }
 
@@ -56,7 +51,7 @@ namespace LynnaLab
         }
 
         public Minimap(double scale) : this() {
-            this.scale = scale;
+            this._scale = scale;
         }
 
         public void SetMap(Map m, int index = -1) {
@@ -65,16 +60,17 @@ namespace LynnaLab
                 _floor = 0;
 
                 if (m.MapWidth >= 16 && m.RoomWidth >= 15)
-                    scale = 1.0/12; // Draw large indoor groups smaller
+                    _scale = 1.0/12; // Draw large indoor groups smaller
                 else
-                    scale = 1.0/8;
+                    _scale = 1.0/8;
 
                 Width = Map.MapWidth;
                 Height = Map.MapHeight;
-                TileWidth = (int)(_map.RoomWidth*16*scale);
-                TileHeight = (int)(_map.RoomHeight*16*scale);
+                TileWidth = (int)(_map.RoomWidth*16*_scale);
+                TileHeight = (int)(_map.RoomHeight*16*_scale);
 
-                GenerateImage();
+                base.UpdateSizeRequest();
+                InvalidateImageCache();
             }
 
             if (index != -1) {
@@ -91,44 +87,13 @@ namespace LynnaLab
             return GetRoom(SelectedX, SelectedY);
         }
 
-        public virtual void GenerateImage() {
-            GLib.Idle.Remove(idleHandler);
-
-            if (_map == null) {
-                _surface = null;
-                return;
-            }
-
-            if (this.Window == null) // Need the Window for the "CreateSimilarSurface" function
-                return;
-
-            int width = (int)(_map.RoomWidth*_map.MapWidth*16*scale);
-            int height = (int)(_map.RoomHeight*_map.MapHeight*16*scale);
-            SetSizeRequest(width, height);
-
-            var key = new Tuple<Map,int>(Map, Floor);
-
-            if (cachedImageDict.ContainsKey(key)) {
-                _surface = cachedImageDict[key];
-                QueueDraw();
-                return;
-            }
-
-            _surface = this.Window.CreateSimilarSurface(Cairo.Content.Color, width, height);
-
-            // The below line works fine, but doesn't look as good on hidpi monitors
-            //_surface = new Cairo.ImageSurface(Cairo.Format.Rgb24, width, height);
-
-            idleX = 0;
-            idleY = 0;
-            GLib.Idle.Add(idleHandler = new GLib.IdleHandler(OnIdleGenerateImage));
+        public void InvalidateImageCache() {
+            foreach (var s in cachedImageDict.Values)
+                s.Dispose();
+            cachedImageDict.Clear();
+            QueueDraw();
         }
 
-        protected virtual Bitmap GenerateTileImage(int x, int y) {
-            Room room = GetRoom(x, y);
-            Bitmap img = room.GetImage();
-            return img;
-        }
 
         protected override bool OnButtonPressEvent(Gdk.EventButton ev)
         {
@@ -142,46 +107,52 @@ namespace LynnaLab
             // Insert layout code here.
         }
 
-        protected void ClearImageCache() {
-            cachedImageDict = new Dictionary<Tuple<Map,int>,Cairo.Surface>();
+        // TileGridViewer override
+        protected override void TileDrawer(int index, Cairo.Context cr) {
+            int x = index % _map.MapWidth;
+            int y = index / _map.MapWidth;
+            var source = GetTileImage(x, y);
+
+            cr.SetSource(source, 0, 0);
+            cr.Paint();
+        }
+
+        // Overridable function which generates the image for a tile on the map.
+        // Child classes could choose override "TileDrawer" instead. The advantage of overriding
+        // this function is that the image will be cached.
+        protected virtual Cairo.Surface GenerateTileImage(int x, int y) {
+            Room room = GetRoom(x, y);
+            var tileSurface = this.Window.CreateSimilarSurface(Cairo.Content.Color,
+                    (int)(room.Width * 16 * _scale), (int)(room.Height * 16 * _scale));
+
+            // The below line works fine, but doesn't look as good on hidpi monitors
+            //_surface = new Cairo.ImageSurface(Cairo.Format.Rgb24,
+            //        (int)(room.Width * 16 * _scale), (int)(room.Height * 16 * _scale));
+
+            Bitmap img = room.GetImage();
+
+            using (var cr = new Cairo.Context(tileSurface))
+            using (var source = new BitmapSurface(img)) {
+                cr.Scale(_scale, _scale);
+                cr.SetSource(source, 0, 0);
+                cr.Paint();
+            }
+
+            return tileSurface;
         }
 
 
         // Private methods
 
-        int idleX, idleY;
-        bool OnIdleGenerateImage() {
-            int x = idleX;
-            int y = idleY;
+        Cairo.Surface GetTileImage(int x, int y) {
+            Room room = GetRoom(x, y);
 
-            if (idleY >= _map.MapHeight) {
-                var key = new Tuple<Map,int>(Map, Floor);
-                cachedImageDict[key] = _surface;
-                return false;
-            }
+            if (cachedImageDict.ContainsKey(room))
+                return cachedImageDict[room];
 
-            int drawX = (int)(_map.RoomWidth * 16 * scale) * x;
-            int drawY = (int)(_map.RoomHeight * 16 * scale) * y;
-
-            Bitmap img = GenerateTileImage(x,y);
-            using (var cr = new Cairo.Context(_surface)) {
-                using (var source = new BitmapSurface(img)) {
-                    cr.Translate(drawX, drawY);
-                    cr.Scale(scale, scale);
-                    cr.SetSource(source, 0, 0);
-                    cr.Paint();
-                }
-            }
-
-            base.QueueDrawTile(x, y);
-
-            idleX++;
-            if (idleX >= _map.MapWidth) {
-                idleY++;
-                idleX = 0;
-            }
-
-            return true;
+            var tileSurface = GenerateTileImage(x, y);
+            cachedImageDict[room] = tileSurface;
+            return tileSurface;
         }
     }
 }

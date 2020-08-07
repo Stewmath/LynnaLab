@@ -263,6 +263,12 @@ namespace LynnaLab
             tileSelectedEvent -= handler;
         }
 
+        // May need to call this after updating Width, Height, TileWidth, TileHeight
+        public void UpdateSizeRequest() {
+            Cairo.Rectangle r = GetTotalBounds(scale:true, offset:false);
+            SetSizeRequest((int)r.Width, (int)r.Height);
+        }
+
 
         // Protected methods
 
@@ -412,10 +418,14 @@ namespace LynnaLab
                 }
             }
             else {
+                Cairo.Rectangle extents = cr.ClipExtents();
                 for (int i=0; i<Width*Height; i++) {
                     int tileX = i%Width;
                     int tileY = i/Width;
                     Cairo.Rectangle rect = GetTileRectWithPadding(tileX, tileY, scale:false, offset:false);
+
+                    if (!CairoHelper.RectsOverlap(extents, rect))
+                        continue;
 
                     cr.Save();
                     cr.Translate(rect.X + TilePaddingX, rect.Y + TilePaddingY);
