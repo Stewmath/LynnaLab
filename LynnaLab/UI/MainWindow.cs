@@ -181,7 +181,7 @@ public class MainWindow
         roomeditor1.RoomChangedEvent += eventGroup.Add<Room>((sender, room) => {
             if (room != ActiveRoom) {
                 ActiveRoom = room;
-                UpdateMinimapFromRoom();
+                UpdateMinimapFromRoom(true);
             }
         });
 
@@ -355,14 +355,22 @@ public class MainWindow
         eventGroup.Unlock();
     }
 
-    public void UpdateMinimapFromRoom() {
+    public void UpdateMinimapFromRoom(bool changeWorldDungeonTab) {
         eventGroup.Lock();
 
+        int x, y, floor;
+        Dungeon dungeon = Project.GetRoomDungeon(ActiveRoom, out x, out y, out floor);
 
-        if (ActiveMap is Dungeon) {
-            int x, y, floor;
-            Dungeon dungeon = Project.GetRoomDungeon(ActiveRoom, out x, out y, out floor);
+        bool toDungeonTab;
 
+        // If true, we switch to the dungeon tab if the room is there and vice-versa; if false, we
+        // stay on the tab we're on already.
+        if (changeWorldDungeonTab)
+            toDungeonTab = dungeon != null;
+        else
+            toDungeonTab = ActiveMap is Dungeon;
+
+        if (toDungeonTab) {
             if (dungeon != null) {
                 ActiveMap = dungeon;
 
@@ -573,7 +581,7 @@ public class MainWindow
         Room r = Project.GetIndexedDataType<Room>(button.ValueAsInt);
         if (r != ActiveRoom) {
             ActiveRoom = r;
-            UpdateMinimapFromRoom();
+            UpdateMinimapFromRoom(false);
         }
     }
 
