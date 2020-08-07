@@ -6,12 +6,13 @@ namespace LynnaLab
 {
     public class Minimap : TileGridViewer
     {
-        Bitmap _image;
+        Cairo.Surface _surface;
+
         Map _map;
         double scale;
         int _floor;
 
-        Dictionary<Tuple<Map,int>,Bitmap> cachedImageDict = new Dictionary<Tuple<Map,int>,Bitmap>();
+        Dictionary<Tuple<Map,int>,Cairo.Surface> cachedImageDict = new Dictionary<Tuple<Map,int>,Cairo.Surface>();
         GLib.IdleHandler idleHandler;
 
         public Project Project {
@@ -40,11 +41,11 @@ namespace LynnaLab
             }
         }
 
-        protected override Bitmap Image {
+        protected override Cairo.Surface Surface {
             get {
-                if (_image == null)
+                if (_surface == null)
                     GenerateImage();
-                return _image;
+                return _surface;
             }
         }
 
@@ -94,9 +95,12 @@ namespace LynnaLab
             GLib.Idle.Remove(idleHandler);
 
             if (_map == null) {
-                _image = null;
+                _surface = null;
                 return;
             }
+
+            if (this.Window == null) // Need the Window for the "CreateSimilarSurface" function
+                return;
 
             int width = (int)(_map.RoomWidth*_map.MapWidth*16*scale);
             int height = (int)(_map.RoomHeight*_map.MapHeight*16*scale);
@@ -105,19 +109,22 @@ namespace LynnaLab
             var key = new Tuple<Map,int>(Map, Floor);
 
             if (cachedImageDict.ContainsKey(key)) {
-                _image = cachedImageDict[key];
+                _surface = cachedImageDict[key];
                 QueueDraw();
                 return;
             }
 
-            _image = new Bitmap(width,height);
+            _surface = this.Window.CreateSimilarSurface(Cairo.Content.Color, width, height);
+
+            // The below line works fine, but doesn't look as good on hidpi monitors
+            //_surface = new Cairo.ImageSurface(Cairo.Format.Rgb24, width, height);
 
             idleX = 0;
             idleY = 0;
             GLib.Idle.Add(idleHandler = new GLib.IdleHandler(OnIdleGenerateImage));
         }
 
-        protected virtual Image GenerateTileImage(int x, int y) {
+        protected virtual Bitmap GenerateTileImage(int x, int y) {
             Room room = GetRoom(x, y);
             Bitmap img = room.GetImage();
             return img;
@@ -136,7 +143,7 @@ namespace LynnaLab
         }
 
         protected void ClearImageCache() {
-            cachedImageDict = new Dictionary<Tuple<Map,int>,Bitmap>();
+            cachedImageDict = new Dictionary<Tuple<Map,int>,Cairo.Surface>();
         }
 
 
@@ -149,24 +156,22 @@ namespace LynnaLab
 
             if (idleY >= _map.MapHeight) {
                 var key = new Tuple<Map,int>(Map, Floor);
-                cachedImageDict[key] = _image;
+                cachedImageDict[key] = _surface;
                 return false;
             }
 
-            int roomWidth = (int)(_map.RoomWidth*16*scale);
-            int roomHeight = (int)(_map.RoomHeight*16*scale);
+            int drawX = (int)(_map.RoomWidth * 16 * scale) * x;
+            int drawY = (int)(_map.RoomHeight * 16 * scale) * y;
 
-            const System.Drawing.Drawing2D.InterpolationMode interpolationMode =
-                System.Drawing.Drawing2D.InterpolationMode.High;
-
-            Graphics g = Graphics.FromImage(_image);
-            g.InterpolationMode = interpolationMode;
-
-            Image img = GenerateTileImage(x,y);
-            g.DrawImage(img, (int)(x*roomWidth), (int)(y*roomHeight),
-                    (int)(roomWidth), (int)(roomHeight));
-
-            g.Dispose();
+            Bitmap img = GenerateTileImage(x,y);
+            using (var cr = new Cairo.Context(_surface)) {
+                using (var source = new BitmapSurface(img)) {
+                    cr.Translate(drawX, drawY);
+                    cr.Scale(scale, scale);
+                    cr.SetSource(source, 0, 0);
+                    cr.Paint();
+                }
+            }
 
             base.QueueDrawTile(x, y);
 

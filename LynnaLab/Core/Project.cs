@@ -606,6 +606,41 @@ namespace LynnaLab
             return GetFileParser(filename);
         }
 
+        // There are "groups" (high digit of room number) and "layout groups". The layout group is
+        // a tileset value which determines where the room layout will be loaded from (room0XYY.bin,
+        // where "X" is the layout group, and YY is the low byte of the room). This is a dumb and
+        // confusing distinction, but it's the way things are.
+        // We can at least warn the user when a room is using a tileset with an unexpected layout
+        // group. This function gets the expected "layout group" for a given "group".
+        public int GetCanonicalLayoutGroup(int group) {
+            if (GameString == "ages") {
+                if (group == 1) // Present underwater & past overworld are swapped because reasons?
+                    return 2;
+                else if (group == 2)
+                    return 1;
+                else if (group >= 0 && group < 6)
+                    return group;
+                else if (group == 6 || group == 7) // "Duplicate" groups used for dungeon sidescrollers
+                    return group - 2;
+                else
+                    throw new ArgumentException();
+            }
+            else if (GameString == "seasons") {
+                if (group == 0)
+                    return 0; // TODO: seasons use layout groups 0-3, how to handle?
+                else if (group == 1 || group == 2 || group == 3)
+                    return 4;
+                else if (group == 4 || group == 5)
+                    return group+1;
+                else if (group == 6 || group == 7)
+                    return group-1;
+                else
+                    throw new ArgumentException();
+            }
+            else
+                throw new Exception();
+        }
+
 
         // Private methods
 

@@ -157,6 +157,9 @@ namespace LynnaLab
         // to set the image using a per-tile draw function.
         protected virtual Bitmap Image { get { return null; } }
 
+        // TODO: Replace "Image" property above in favor of this
+        protected virtual Cairo.Surface Surface { get { return null; } }
+
         public Cairo.Color BackgroundColor { get; set; }
 
 
@@ -388,7 +391,27 @@ namespace LynnaLab
             cr.Translate(XOffset, YOffset);
             cr.Scale(Scale, Scale);
 
-            if (Image == null) {
+            if (Surface != null) {
+                cr.SetSource(Surface, 0, 0);
+
+                using (SurfacePattern pattern = (SurfacePattern)cr.GetSource()) {
+                    pattern.Filter = Filter.Nearest;
+                }
+
+                cr.Paint();
+            }
+            else if (Image != null) {
+                using (Surface source = new BitmapSurface(Image)) {
+                    cr.SetSource(source, 0, 0);
+
+                    using (SurfacePattern pattern = (SurfacePattern)cr.GetSource()) {
+                        pattern.Filter = Filter.Nearest;
+                    }
+
+                    cr.Paint();
+                }
+            }
+            else {
                 for (int i=0; i<Width*Height; i++) {
                     int tileX = i%Width;
                     int tileY = i/Width;
@@ -400,17 +423,6 @@ namespace LynnaLab
                     cr.Clip();
                     TileDrawer(i, cr);
                     cr.Restore();
-                }
-            }
-            else {
-                using (Surface source = new BitmapSurface(Image)) {
-                    cr.SetSource(source, 0, 0);
-
-                    using (SurfacePattern pattern = (SurfacePattern)cr.GetSource()) {
-                        pattern.Filter = Filter.Nearest;
-                    }
-
-                    cr.Paint();
                 }
             }
 

@@ -26,6 +26,10 @@ namespace LynnaLab
         Tileset tileset;
         Bitmap cachedImage;
 
+        public int Group
+        {
+            get { return Index >> 8; }
+        }
         public int Height
         {
             get { return height; }

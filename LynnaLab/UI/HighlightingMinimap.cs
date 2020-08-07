@@ -41,14 +41,15 @@ namespace LynnaLab
             base.GenerateImage();
         }
 
-        protected override Image GenerateTileImage(int x, int y) {
+        protected override Bitmap GenerateTileImage(int x, int y) {
             Room room = GetRoom(x, y);
             Bitmap orig = room.GetImage();
+            Bitmap newImage = orig;
 
             if (!DarkenUsedDungeonRooms || !roomsUsedInDungeons.Contains(room.Index))
                 return orig;
 
-            Bitmap newImage = new Bitmap(orig.Width, orig.Height);
+            newImage = new Bitmap(orig.Width, orig.Height);
 
             const float ratio = (float)1.0/4;
             var matrix = new float[][] {
