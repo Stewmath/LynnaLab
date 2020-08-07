@@ -544,23 +544,18 @@ namespace LynnaLab
             return (byte)byteVal;
         }
 
-        // Get a set of all rooms used in the dungeons. Used by
-        // HighlightingMinimap.
-        public HashSet<int> GetRoomsUsedInDungeons() {
+        // Check if a room is used in a dungeon. Used by HighlightingMinimap.
+        // Efficiency is O(D), where D = number of dungeons.
+        public bool RoomUsedInDungeon(int roomIndex) {
             var rooms = new HashSet<int>();
 
             for (int i=0; i<NumDungeons; i++) {
                 Dungeon d = GetIndexedDataType<Dungeon>(i);
-                for (int f=0; f<d.NumFloors; f++) {
-                    for (int x=0; x<d.MapWidth; x++) {
-                        for (int y=0; y<d.MapHeight; y++) {
-                            rooms.Add(d.GetRoom(x, y, f).Index);
-                        }
-                    }
-                }
+                if (d.RoomUsed(roomIndex))
+                    return true;
             }
 
-            return rooms;
+            return false;
         }
 
         /// <summary>

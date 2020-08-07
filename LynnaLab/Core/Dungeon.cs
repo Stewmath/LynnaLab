@@ -9,6 +9,10 @@ namespace LynnaLab
         // The start of the data, at the "dungeonDataXX" label
         Data dataStart;
 
+        // roomsUsed[i] = # of times room "i" is used in this dungeon
+        int[] roomsUsed = new int[256];
+
+
         public Data DataStart {
             get {
                 return dataStart;
@@ -72,6 +76,18 @@ namespace LynnaLab
             Data pointerData = dungeonDataFile.GetData("dungeonDataTable", Index*2);
             string label = pointerData.GetValue(0);
             dataStart = dungeonDataFile.GetData(label);
+
+            DetermineRoomsUsed();
+        }
+
+        void DetermineRoomsUsed() {
+            for (int f=0; f<NumFloors; f++) {
+                for (int x=0; x<MapWidth; x++) {
+                    for (int y=0; y<MapHeight; y++) {
+                        roomsUsed[GetRoom(x, y, f).Index & 0xff]++;
+                    }
+                }
+            }
         }
 
         int GetDataIndex(int i) {
@@ -102,7 +118,18 @@ namespace LynnaLab
                 throw new ArgumentException(string.Format("Floor {0} too high.", floor));
 
             Data d = GetFloorLayoutData(floor).GetDataAtOffset(y * 8 + x);
+
+            roomsUsed[d.GetIntValue(0)]--;
             d.SetByteValue(0, (byte)room);
+
+            roomsUsed[(byte)room]++;
+        }
+
+        public bool RoomUsed(int roomIndex) {
+            int group = roomIndex >> 8;
+            if (group != MainGroup && group != SidescrollGroup)
+                return false;
+            return roomsUsed[roomIndex & 0xff] > 0;
         }
 
         // Map methods

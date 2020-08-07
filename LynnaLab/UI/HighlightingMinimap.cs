@@ -32,18 +32,11 @@ namespace LynnaLab
         }
 
         protected override void TileDrawer(int index, Cairo.Context cr) {
-            if (roomsUsedInDungeons == null) {
-                if (Project != null)
-                    roomsUsedInDungeons = Project.GetRoomsUsedInDungeons();
-                else
-                    return;
-            }
-
             int roomIndex = (Map.MainGroup << 8) | index;
 
             base.TileDrawer(index, cr);
 
-            if (DarkenUsedDungeonRooms && roomsUsedInDungeons.Contains(roomIndex)) {
+            if (DarkenUsedDungeonRooms && Project.RoomUsedInDungeon(roomIndex)) {
                 cr.SetSourceRGB(0, 0, 0);
                 cr.PaintWithAlpha(0.8);
             }
