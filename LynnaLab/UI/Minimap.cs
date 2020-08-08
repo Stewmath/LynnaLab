@@ -17,6 +17,7 @@ namespace LynnaLab
     {
         Map _map;
         double _scale;
+        bool scaleSetInConstructor;
         int _floor;
 
         Dictionary<Room,Cairo.Surface> cachedImageDict = new Dictionary<Room,Cairo.Surface>();
@@ -54,6 +55,7 @@ namespace LynnaLab
 
         public Minimap(double scale) : this() {
             this._scale = scale;
+            scaleSetInConstructor = true;
         }
 
         public void SetMap(Map m, int index = -1) {
@@ -66,10 +68,12 @@ namespace LynnaLab
                 _map = m;
                 _floor = 0;
 
-                if (m.MapWidth >= 16 && m.RoomWidth >= 15)
-                    _scale = 1.0/12; // Draw large indoor groups smaller
-                else
-                    _scale = 1.0/8;
+                if (!scaleSetInConstructor) {
+                    if (m.MapWidth >= 16 && m.RoomWidth >= 15)
+                        _scale = 1.0/12; // Draw large indoor groups smaller
+                    else
+                        _scale = 1.0/8;
+                }
 
                 Width = Map.MapWidth;
                 Height = Map.MapHeight;

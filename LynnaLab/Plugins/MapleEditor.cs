@@ -2,7 +2,6 @@ using System;
 using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
-using Gtk;
 using LynnaLab;
 
 namespace Plugins
@@ -30,11 +29,11 @@ namespace Plugins
         }
 
         public override void Clicked() {
-            Window w = new Window("Maple Appearance Locations");
+            Gtk.Window w = new Gtk.Window("Maple Appearance Locations");
 
-            var minimapContainer = new Alignment(1.0f,1.0f,1.0f,1.0f);
+            var minimapContainer = new Gtk.Alignment(1.0f,1.0f,1.0f,1.0f);
 
-            ComboBox comboBox = new ComboBox(
+            Gtk.ComboBox comboBox = new Gtk.ComboBox(
                     new string[] {
                     "Present (Ricky)",
                     "Present (Dimitri)",
@@ -72,7 +71,7 @@ namespace Plugins
             else
                 comboBox.Active = 0;
 
-            VBox vbox = new VBox();
+            Gtk.VBox vbox = new Gtk.VBox();
             vbox.Add(comboBox);
             vbox.Add(minimapContainer);
 
@@ -87,13 +86,15 @@ namespace Plugins
             public MyMinimap(Data d) : base(1.0/4) {
                 bitData = d;
 
+                base.HoverColor = new Cairo.Color(1.0, 1.0, 1.0);
+
                 Action<int,int> OnDragged = (x, y) => {
                     x /= TileWidth;
                     y /= TileHeight;
                     SetSelected(x, y, dragSet);
                 };
 
-                this.ButtonPressEvent += delegate(object o, ButtonPressEventArgs args) {
+                this.ButtonPressEvent += delegate(object o, Gtk.ButtonPressEventArgs args) {
                     int x,y;
                     Gdk.ModifierType state;
                     args.Event.Window.GetPointer(out x, out y, out state);
@@ -108,7 +109,7 @@ namespace Plugins
                         }
                     }
                 };
-                this.MotionNotifyEvent += delegate(object o, MotionNotifyEventArgs args) {
+                this.MotionNotifyEvent += delegate(object o, Gtk.MotionNotifyEventArgs args) {
                     int x,y;
                     Gdk.ModifierType state;
                     args.Event.Window.GetPointer(out x, out y, out state);
@@ -143,12 +144,21 @@ namespace Plugins
                 QueueDrawArea(x*TileWidth, y*TileHeight, TileWidth, TileHeight);
             }
 
-            protected override bool OnDrawn(Cairo.Context cr) {
-                if (!base.OnDrawn(cr))
-                    return false;
+            protected override void TileDrawer(int index, Cairo.Context cr) {
+                base.TileDrawer(index, cr);
 
+                int x = index % Width;
+                int y = index / Width;
 
-                return true;
+                cr.Save();
+                if (GetSelected(x,y)) {
+                    cr.SetSourceRGB(1.0, 0, 0);
+                    //cr.Rectangle(0, 0, TileWidth, TileHeight);
+                    cr.PaintWithAlpha(0.4);
+
+                    CairoHelper.DrawRectOutline(cr, 1, new Cairo.Rectangle(0, 0, TileWidth, TileHeight));
+                }
+                cr.Restore();
             }
 
             /*

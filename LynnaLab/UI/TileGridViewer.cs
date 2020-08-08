@@ -249,9 +249,12 @@ namespace LynnaLab
         }
 
         public void RemoveMouseAction(MouseButton button, MouseModifier mod) {
-            foreach (var act in actionList) {
-                if (act.button == button && act.mod == mod)
+            for (int i=0; i<actionList.Count; i++) {
+                var act = actionList[i];
+                if (act.button == button && act.mod == mod) {
                     actionList.Remove(act);
+                    i--;
+                }
             }
         }
 
