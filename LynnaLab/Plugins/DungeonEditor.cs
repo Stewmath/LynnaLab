@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Gtk;
+using Util;
 using LynnaLab;
 
 namespace Plugins
@@ -16,6 +17,10 @@ namespace Plugins
 
         Box dungeonVreContainer, roomVreContainer;
         ValueReferenceEditor dungeonVre, roomVre;
+
+        EventWrapper<DungeonRoomChangedEventArgs> dungeonRoomChangedEventWrapper
+            = new EventWrapper<DungeonRoomChangedEventArgs>();
+
 
         Project Project {
             get {
@@ -163,10 +168,17 @@ namespace Plugins
                 dungeonSpinButton.Value = map.Index;
 
             DungeonChanged();
+
+
+            dungeonRoomChangedEventWrapper.Event += (sender, args) => { RoomChanged(); };
+            w.Destroyed += (a, b) => dungeonRoomChangedEventWrapper.UnbindAll();
         }
 
         void DungeonChanged() {
             Dungeon dungeon = Project.GetIndexedDataType<Dungeon>(dungeonSpinButton.ValueAsInt);
+
+            dungeonRoomChangedEventWrapper.UnbindAll();
+            dungeonRoomChangedEventWrapper.Bind(dungeon, "RoomChangedEvent");
 
             floorSpinButton.Adjustment.Upper = dungeon.NumFloors-1;
             if (floorSpinButton.ValueAsInt >= dungeon.NumFloors)
