@@ -227,7 +227,7 @@ loopEnd:
             maxBounds[i] = max;
         }
 
-        // Substitute the widget for a value (index "i") with the new widget.
+        // Substitute the widget for a value (index "i") with the new widget. (Currently unused)
         public void ReplaceWidget(string name, Gtk.Widget newWidget) {
             int i = GetValueIndex(name);
             widgetLists[i][1].Dispose();

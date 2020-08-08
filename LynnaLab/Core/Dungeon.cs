@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.IO;
+using System.Collections.Generic;
 using Util;
 
 namespace LynnaLab
@@ -9,13 +10,26 @@ namespace LynnaLab
         public int x, y, floor; // Position in grid of changed room
     }
 
+    /// Represents a dungeon, which is really just an organized layout of rooms. Some "dungeons" are
+    /// just collections of miscellaneous large rooms (like Ambi's Palace).
+    ///
+    /// This class assumes that each dungeon uniquely controls its own dungeon layout data. This is
+    /// technically not true in vanilla Ages, as dungeons 0 and 9 reference the same layout data
+    /// (maku path). This has been changed in the hack-base branch (fresh duplicate data created).
+    ///
+    /// The above assumption could also break down if there is overlap between dungeons in the
+    /// "dungeonLayouts.s" file, but that should only occur if there is a misconfiguration.
+    ///
+    /// Utmost flexibility to overcome the above limitations would involve installing handlers on
+    /// the underlying data itself, rather than doing things when the "SetRoom" function, etc. is
+    /// called. That's annoying to do when floors can be added and deleted though.
     public class Dungeon : Map
     {
         // The start of the data, at the "dungeonDataXX" label
         Data dataStart;
 
         // roomsUsed[i] = # of times room "i" is used in this dungeon
-        int[] roomsUsed = new int[256];
+        int[] roomsUsed;
 
 
         internal Dungeon(Project p, int i) : base(p, i) {
@@ -32,24 +46,16 @@ namespace LynnaLab
         public event EventHandler<DungeonRoomChangedEventArgs> RoomChangedEvent;
 
 
-        public Data DataStart {
+        public Data DataStart { // TODO: remove this
             get {
                 return dataStart;
-            }
-        }
-        public int FirstLayoutIndex {
-            get {
-                return GetDataIndex(2);
-            }
-            set {
-                SetDataIndex(2, value);
             }
         }
         public int NumFloors {
             get {
                 return GetDataIndex(3);
             }
-            set {
+            private set {
                 SetDataIndex(3, value);
             }
         }
@@ -162,8 +168,67 @@ namespace LynnaLab
             return false;
         }
 
+        /// Insert a floor below "floorIndex". If "floorIndex == NumFloors" then the floor is
+        /// inserted at the top.
+        public void InsertFloor(int floorIndex) {
+            if (floorIndex < 0 || floorIndex > NumFloors)
+                throw new ArgumentException("Can't insert floor " + floorIndex + ".");
+
+            FileComponent component;
+            string dungeonLayoutLabel = dataStart.GetValue(2);
+
+            if (floorIndex == 0)
+                component = Project.GetLabel(dungeonLayoutLabel);
+            else
+                component = Project.GetData(dungeonLayoutLabel, floorIndex * 64 - 1);
+
+            // Insert the blank floor data
+            List<string> textToInsert = new List<string>();
+            for (int y=0; y<8; y++)
+                textToInsert.Add("\t.db $00 $00 $00 $00 $00 $00 $00 $00");
+
+            // Location to add extra newline differs if this is the first floor
+            if (floorIndex == 0) {
+                component.FileParser.InsertParseableTextAfter(component, new string[] {""});
+                component.FileParser.InsertParseableTextAfter(component, textToInsert.ToArray());
+            }
+            else {
+                component.FileParser.InsertParseableTextAfter(component, textToInsert.ToArray());
+                component.FileParser.InsertParseableTextAfter(component, new string[] {""});
+            }
+
+            NumFloors++;
+            DetermineRoomsUsed();
+        }
+
+        public void RemoveFloor(int floorIndex) {
+            if (floorIndex < 0 || floorIndex >= NumFloors)
+                throw new ArgumentException("Can't remove floor " + floorIndex + ": doesn't exist.");
+            if (NumFloors <= 1)
+                throw new ArgumentException("Can't remove last remaining floor in a dungeon. (Or at least it's not a good idea.)");
+
+            FileComponent component = GetFloorLayoutData(floorIndex);
+            FileParser parser = component.FileParser;
+            int count = 0;
+            while (count < 64) {
+                if (component is Data)
+                    count++;
+                FileComponent next = component.Next;
+                parser.RemoveFileComponent(component);
+                component = next;
+            }
+            // Remove ending newline, but don't want to accidentally remove data
+            if (component is StringFileComponent)
+                parser.RemoveFileComponent(component);
+
+            NumFloors--;
+            DetermineRoomsUsed();
+        }
+
+
 
         void DetermineRoomsUsed() {
+            roomsUsed = new int[256];
             for (int f=0; f<NumFloors; f++) {
                 for (int x=0; x<MapWidth; x++) {
                     for (int y=0; y<MapHeight; y++) {
@@ -174,23 +239,15 @@ namespace LynnaLab
         }
 
         int GetDataIndex(int i) {
-            Data d = dataStart;
-            for (int j=0; j<i; j++) {
-                d = d.NextData;
-            }
-            return Project.EvalToInt(d.GetValue(0));
+            return dataStart.GetIntValue(i);
         }
 
         Data GetFloorLayoutData(int floor) {
-            return Project.GetData("dungeonLayoutData", (FirstLayoutIndex + floor) * 64);
+            return Project.GetData(dataStart.GetValue(2), floor * 64);
         }
 
         void SetDataIndex(int i, int val) {
-            Data d = dataStart;
-            for (int j=0; j<i; j++) {
-                d = d.NextData;
-            }
-            d.SetByteValue(0, (byte)val);
+            dataStart.SetByteValue(i, (byte)val);
         }
 
     }

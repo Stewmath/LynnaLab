@@ -77,7 +77,10 @@ namespace Plugins
             var addFloorAboveButton = new Button("Add Floor Above");
             addFloorAboveButton.Image = new Gtk.Image(Gtk.Stock.Add, Gtk.IconSize.Button);
             addFloorAboveButton.Clicked += (a,b) => {
-                InsertFloor(minimap.Map as Dungeon, floorSpinButton.ValueAsInt + 1);
+                int floorIndex = floorSpinButton.ValueAsInt + 1;
+                (minimap.Map as Dungeon).InsertFloor(floorIndex);
+                DungeonChanged();
+                floorSpinButton.Value = floorIndex;
             };
             tmpAlign = new Gtk.Alignment(0.5f,0,0,0);
             tmpAlign.Add(addFloorAboveButton);
@@ -86,13 +89,15 @@ namespace Plugins
             var addFloorBelowButton = new Button("Add Floor Below");
             addFloorBelowButton.Image = new Gtk.Image(Gtk.Stock.Add, Gtk.IconSize.Button);
             addFloorBelowButton.Clicked += (a,b) => {
-                InsertFloor(minimap.Map as Dungeon, floorSpinButton.ValueAsInt);
+                int floorIndex = floorSpinButton.ValueAsInt;
+                (minimap.Map as Dungeon).InsertFloor(floorIndex);
+                DungeonChanged();
             };
             tmpAlign = new Gtk.Alignment(0.5f,0,0,0);
             tmpAlign.Add(addFloorBelowButton);
             tmpBox.Add(tmpAlign);
 
-            var removeFloorButton = new Button("Remove Top Floor");
+            var removeFloorButton = new Button("Remove Floor");
             removeFloorButton.Image = new Gtk.Image(Gtk.Stock.Remove, Gtk.IconSize.Button);
             removeFloorButton.Clicked += (a,b) => {
                 Dungeon dungeon = minimap.Map as Dungeon;
@@ -104,34 +109,12 @@ namespace Plugins
                         DialogFlags.DestroyWithParent,
                         MessageType.Warning,
                         ButtonsType.YesNo,
-                        "Are you quite certain that you wish to delete the top floor of this dungeon?");
+                        "Really delete this floor?");
                 var response = (ResponseType)d.Run();
-                d.Destroy();
+                d.Dispose();
 
                 if (response == Gtk.ResponseType.Yes) {
-                    int deletedFloorIndex = dungeon.FirstLayoutIndex + dungeon.NumFloors-1;
-
-                    // Shift all subsequent layouts 64 bytes up in the data file
-                    Stream layoutFile = Project.GetBinaryFile("rooms/" + Project.GameString + "/dungeonLayouts.bin");
-                    for (int i=deletedFloorIndex; i<layoutFile.Length/64-1; i++) {
-                        var buf = new byte[64];
-                        layoutFile.Position = (i+1)*64;
-                        layoutFile.Read(buf, 0, 64);
-                        layoutFile.Position = i*64;
-                        layoutFile.Write(buf, 0, 64);
-                    }
-
-                    layoutFile.SetLength(layoutFile.Length-64);
-
-                    // Shift each dungeon's "FirstLayoutIndex" to match the shifted layouts.
-                    for (int i=0; i<Project.NumDungeons; i++) {
-                        Dungeon d2 = Project.GetIndexedDataType<Dungeon>(i);
-                        if (d2.FirstLayoutIndex > deletedFloorIndex)
-                            d2.FirstLayoutIndex--;
-                    }
-
-                    dungeon.NumFloors = dungeon.NumFloors-1;
-
+                    dungeon.RemoveFloor(floorSpinButton.ValueAsInt);
                     DungeonChanged();
                 }
             };
@@ -183,41 +166,6 @@ namespace Plugins
             DungeonChanged();
         }
 
-        void InsertFloor(Dungeon dungeon, int floorIndex) {
-            int layoutIndex = dungeon.FirstLayoutIndex + floorIndex;
-
-            FileComponent component;
-            if (layoutIndex == 0)
-                component = Project.GetLabel("dungeonLayoutData");
-            else
-                component = Project.GetData("dungeonLayoutData", layoutIndex * 64 - 1);
-
-            // Insert the blank floor data
-            List<string> textToInsert = new List<string>();
-            for (int y=0; y<8; y++) {
-                string line = "\t.db";
-                for (int x=0; x<8; x++) {
-                    line += " $00";
-                }
-                textToInsert.Add(line);
-            }
-            component.FileParser.InsertParseableTextAfter(component, textToInsert.ToArray());
-            component.FileParser.InsertParseableTextAfter(component, new string[] {""});
-
-            // Shift each dungeon's "FirstLayoutIndex" to match the shifted layouts
-            for (int i=0; i<Project.NumDungeons; i++) {
-                Dungeon d2 = Project.GetIndexedDataType<Dungeon>(i);
-                if (i == dungeon.Index)
-                    continue;
-                if (d2.FirstLayoutIndex >= layoutIndex)
-                    d2.FirstLayoutIndex++;
-            }
-
-            dungeon.NumFloors = dungeon.NumFloors+1;
-            DungeonChanged();
-            floorSpinButton.Value = floorIndex;
-        }
-
         void DungeonChanged() {
             Dungeon dungeon = Project.GetIndexedDataType<Dungeon>(dungeonSpinButton.ValueAsInt);
 
@@ -228,28 +176,12 @@ namespace Plugins
             var vrs = new List<ValueReference>();
             Data data = dungeon.DataStart;
             vrs.Add(new DataValueReference(data, "Group", 0, DataValueType.String, editable:false));
-            data = data.NextData;
-            vrs.Add(new DataValueReference(data, "Wallmaster dest room", 0, DataValueType.Byte));
-            data = data.NextData;
-            vrs.Add(new DataValueReference(data, "Bottom floor layout", 0, DataValueType.Byte, editable:false));
-            data = data.NextData;
-            vrs.Add(new DataValueReference(data, "# of floors", 0, DataValueType.Byte, editable:false));
-            data = data.NextData;
-            vrs.Add(new DataValueReference(data, "Base floor name", 0, DataValueType.Byte));
-            data = data.NextData;
-            vrs.Add(new DataValueReference(data, "Floors unlocked with compass", 0, DataValueType.Byte));
-
-            // Remove last ValueReferenceEditor
-            if (dungeonVre != null)
-                dungeonVreContainer.Remove(dungeonVre);
+            vrs.Add(new DataValueReference(data, "Wallmaster dest room", 1, DataValueType.Byte));
+            vrs.Add(new DataValueReference(data, "# of floors", 3, DataValueType.Byte, editable:false));
+            vrs.Add(new DataValueReference(data, "Base floor name", 4, DataValueType.Byte));
+            vrs.Add(new DataValueReference(data, "Floors unlocked with compass", 5, DataValueType.Byte));
 
             var vrg = new ValueReferenceGroup(vrs);
-            dungeonVre = new ValueReferenceEditor(Project, vrg, "Base Data");
-
-            dungeonVre.AddDataModifiedHandler(() => {
-                floorSpinButton.Adjustment.Upper = dungeon.NumFloors;
-                RoomChanged();
-            });
 
             // Replace the "group" option with a custom widget for finer
             // control.
@@ -258,17 +190,24 @@ namespace Plugins
             groupSpinButton.ValueChanged += (c,d) => {
                 vrg.SetValue("Group", ">wGroup" + groupSpinButton.ValueAsInt + "Flags");
             };
-            dungeonVre.ReplaceWidget("Group", groupSpinButton);
-            dungeonVre.ShowAll();
 
-            // Tooltips
-            dungeonVre.SetTooltip(0, "Also known as the high byte of the room index.");
-            dungeonVre.SetTooltip(1, "The low byte of the room index wallmasters will send you to.");
-            dungeonVre.SetTooltip(2, "The index of the layout for the bottom floor. Subsequent floors will use subsequent indices.");
-            dungeonVre.SetTooltip(4, "Determines what the game will call the bottom floor. For a value of:\n$00: The bottom floor is 'B3'.\n$01: The bottom floor is 'B2'.\n$02: The bottom floor is 'B1'.\n$03: The bottom floor is 'F1'.");
-            dungeonVre.SetTooltip(5, "A bitset of floors that will appear on the map when the compass is obtained.\n\nEg. If this is $05, then floors 0 and 2 will be unlocked (bits 0 and 2 are set).");
 
-            dungeonVreContainer.Add(dungeonVre);
+            if (dungeonVre != null)
+                dungeonVre.ReplaceValueReferenceGroup(vrg);
+            else {
+                dungeonVre = new ValueReferenceEditor(Project, vrg, "Base Data");
+                dungeonVre.ReplaceWidget("Group", groupSpinButton); // TODO
+                dungeonVre.ShowAll();
+
+                // Tooltips
+                dungeonVre.SetTooltip(0, "Also known as the high byte of the room index.");
+                dungeonVre.SetTooltip(1, "The low byte of the room index wallmasters will send you to.");
+                dungeonVre.SetTooltip(3, "Determines what the game will call the bottom floor. For a value of:\n$00: The bottom floor is 'B3'.\n$01: The bottom floor is 'B2'.\n$02: The bottom floor is 'B1'.\n$03: The bottom floor is 'F1'.");
+                dungeonVre.SetTooltip(4, "A bitset of floors that will appear on the map when the compass is obtained.\n\nEg. If this is $05, then floors 0 and 2 will be unlocked (bits 0 and 2 are set).");
+
+                dungeonVreContainer.Add(dungeonVre);
+            }
+
             minimap.SetMap(dungeon);
             minimap.Floor = floorSpinButton.ValueAsInt;
 

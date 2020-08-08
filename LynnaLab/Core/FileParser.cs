@@ -326,6 +326,15 @@ arbitraryLengthData:
                     AddDataAndPopFileStructure(d);
                     break;
                 }
+                case "m_dungeondata": {
+                    if (!(fTokens.Count == 9)) {
+                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 8 parameters");
+                        break;
+                    }
+                    Data d = new Data(Project, fTokens[0], standardValues, 8, this, fSpacing);
+                    AddDataAndPopFileStructure(d);
+                    break;
+                }
 
                 default:
                     {
@@ -625,6 +634,7 @@ arbitraryLengthData:
             return GetData(label, offset);
         }
         public Data GetData(FileComponent component, int offset=0) {
+            FileComponent orig = component;
             int origOffset = offset;
 
             while (component != null && !(component is Data))
@@ -642,7 +652,7 @@ arbitraryLengthData:
                 data = data.NextData;
             }
             throw new InvalidLookupException("Provided offset (" + origOffset + ") relative to file component \""
-                    + component.GetString() + "\" was invalid.");
+                    + orig.GetString() + "\" was invalid.");
         }
 
         // Returns the label immediately before this data, or null if there is
@@ -822,7 +832,7 @@ arbitraryLengthData:
             List<string> spacing = new List<string>();
 
             Func<string,int,bool> spacingStart = (s, i2) => {
-                if (s[i2] == ' ' || s[i2] == '\t' || s[i2] == ';')
+                if (s[i2] == ' ' || s[i2] == ',' || s[i2] == '\t' || s[i2] == ';')
                     return true;
                 if (i2 < s.Length-1 && s.Substring(i2,2) == "/*")
                     return true;
