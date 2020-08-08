@@ -143,7 +143,6 @@ namespace Plugins
             roomSpinButton.ValueChanged += (a,b) => {
                 (minimap.Map as Dungeon).SetRoom(minimap.SelectedX, minimap.SelectedY,
                         minimap.Floor, roomSpinButton.ValueAsInt);
-                RoomChanged();
             };
             tmpBox2.Add(roomSpinButton);
 
@@ -173,38 +172,13 @@ namespace Plugins
             if (floorSpinButton.ValueAsInt >= dungeon.NumFloors)
                 floorSpinButton.Value = dungeon.NumFloors-1;
 
-            var vrs = new List<ValueReference>();
-            Data data = dungeon.DataStart;
-            vrs.Add(new DataValueReference(data, "Group", 0, DataValueType.String, editable:false));
-            vrs.Add(new DataValueReference(data, "Wallmaster dest room", 1, DataValueType.Byte));
-            vrs.Add(new DataValueReference(data, "# of floors", 3, DataValueType.Byte, editable:false));
-            vrs.Add(new DataValueReference(data, "Base floor name", 4, DataValueType.Byte));
-            vrs.Add(new DataValueReference(data, "Floors unlocked with compass", 5, DataValueType.Byte));
-
-            var vrg = new ValueReferenceGroup(vrs);
-
-            // Replace the "group" option with a custom widget for finer
-            // control.
-            SpinButton groupSpinButton = new SpinButton(4,5,1);
-            groupSpinButton.Value = dungeon.MainGroup;
-            groupSpinButton.ValueChanged += (c,d) => {
-                vrg.SetValue("Group", ">wGroup" + groupSpinButton.ValueAsInt + "Flags");
-            };
-
+            var vrg = dungeon.ValueReferenceGroup;
 
             if (dungeonVre != null)
                 dungeonVre.ReplaceValueReferenceGroup(vrg);
             else {
                 dungeonVre = new ValueReferenceEditor(Project, vrg, "Base Data");
-                dungeonVre.ReplaceWidget("Group", groupSpinButton); // TODO
                 dungeonVre.ShowAll();
-
-                // Tooltips
-                dungeonVre.SetTooltip(0, "Also known as the high byte of the room index.");
-                dungeonVre.SetTooltip(1, "The low byte of the room index wallmasters will send you to.");
-                dungeonVre.SetTooltip(3, "Determines what the game will call the bottom floor. For a value of:\n$00: The bottom floor is 'B3'.\n$01: The bottom floor is 'B2'.\n$02: The bottom floor is 'B1'.\n$03: The bottom floor is 'F1'.");
-                dungeonVre.SetTooltip(4, "A bitset of floors that will appear on the map when the compass is obtained.\n\nEg. If this is $05, then floors 0 and 2 will be unlocked (bits 0 and 2 are set).");
-
                 dungeonVreContainer.Add(dungeonVre);
             }
 

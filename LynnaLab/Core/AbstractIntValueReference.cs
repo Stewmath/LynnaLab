@@ -23,12 +23,16 @@ namespace LynnaLab
 
         // Constructors
 
-        public AbstractIntValueReference(Project project, string name, Func<int> getter, Action<int> setter, int maxValue, ValueReferenceType type=ValueReferenceType.Int, bool editable=true, string constantsMappingString=null)
+        public AbstractIntValueReference(Project project, string name, Func<int> getter, Action<int> setter, int maxValue, int minValue=0, ValueReferenceType type=ValueReferenceType.Int, bool editable=true, string constantsMappingString=null, string tooltip=null)
         : base(name, type, editable, constantsMappingString) {
             base.Project = project;
             this.getter = getter;
             this.setter = setter;
+
             base.MaxValue = maxValue;
+            base.MinValue = minValue;
+
+            base.Tooltip = tooltip;
         }
 
         public AbstractIntValueReference(AbstractIntValueReference r)
@@ -65,6 +69,8 @@ namespace LynnaLab
                 log.Warn(string.Format("Tried to set \"{0}\" to {1} (max value is {2})", Name, i, MaxValue));
                 i = MaxValue;
             }
+            if (i == GetIntValue())
+                return;
             setter(i);
             eventHandler.Invoke(this, null);
         }

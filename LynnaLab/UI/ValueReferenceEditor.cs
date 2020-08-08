@@ -104,7 +104,8 @@ namespace LynnaLab {
                     {
                         widgetList[0] = new Gtk.Label(valueReferenceGroup[i].Name);
 
-                        SpinButtonHexadecimal spinButton = new SpinButtonHexadecimal(0,valueReferenceGroup[i].MaxValue);
+                        SpinButtonHexadecimal spinButton =
+                            new SpinButtonHexadecimal(valueReferenceGroup[i].MinValue, valueReferenceGroup[i].MaxValue);
                         if (!valueReferenceGroup[i].Editable)
                             spinButton.Sensitive = false;
                         if (valueReferenceGroup[i].MaxValue < 0x10)
@@ -115,6 +116,7 @@ namespace LynnaLab {
                             spinButton.Digits = 3;
                         else
                             spinButton.Digits = 4;
+                        spinButton.Adjustment.Lower = valueReferenceGroup[i].MinValue;
                         spinButton.Adjustment.Upper = valueReferenceGroup[i].MaxValue;
                         spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton button = sender as Gtk.SpinButton;

@@ -12,7 +12,7 @@ namespace LynnaLab
 
         // Constructors
 
-        public AbstractBoolValueReference(Project project, string name, Func<bool> getter, Action<bool> setter, ValueReferenceType type=ValueReferenceType.Bool, bool editable=true)
+        public AbstractBoolValueReference(Project project, string name, Func<bool> getter, Action<bool> setter, ValueReferenceType type=ValueReferenceType.Bool, bool editable=true, string tooltip=null)
         : base(
                 project,
                 name,
@@ -21,7 +21,8 @@ namespace LynnaLab
                 maxValue: 1,
                 type: type,
                 editable: editable,
-                constantsMappingString: null) {}
+                constantsMappingString: null,
+                tooltip: tooltip) {}
 
         public AbstractBoolValueReference(AbstractBoolValueReference r)
         : base(r) {}

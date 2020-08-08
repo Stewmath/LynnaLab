@@ -170,7 +170,9 @@ namespace LynnaLab
         }
 
         void DungeonRoomChanged(object sender, DungeonRoomChangedEventArgs args) {
-            if (args.floor == Floor)
+            if (args.all)
+                QueueDraw();
+            else if (args.floor == Floor)
                 QueueDrawTile(args.x, args.y);
         }
     }

@@ -6,8 +6,12 @@ using Util;
 
 namespace LynnaLab
 {
+    // Invoked when something changes the image of a dungeon (currently only accounting for stuff
+    // internal to the dungeon itself, not stuff like editing the individual rooms)
     public class DungeonRoomChangedEventArgs {
-        public int x, y, floor; // Position in grid of changed room
+        public bool all; // True if all rooms must be updated
+
+        public int x, y, floor; // Otherwise, this is the position in grid of changed room
     }
 
     /// Represents a dungeon, which is really just an organized layout of rooms. Some "dungeons" are
@@ -39,6 +43,7 @@ namespace LynnaLab
             dataStart = dungeonDataFile.GetData(label);
 
             DetermineRoomsUsed();
+            GenerateValueReferenceGroup();
         }
 
 
@@ -46,11 +51,8 @@ namespace LynnaLab
         public event EventHandler<DungeonRoomChangedEventArgs> RoomChangedEvent;
 
 
-        public Data DataStart { // TODO: remove this
-            get {
-                return dataStart;
-            }
-        }
+        public ValueReferenceGroup ValueReferenceGroup { get; private set; }
+
         public int NumFloors {
             get {
                 return GetDataIndex(3);
@@ -226,6 +228,40 @@ namespace LynnaLab
         }
 
 
+        void GenerateValueReferenceGroup() {
+            var groupValueReference = new AbstractIntValueReference(Project,
+                    name: "Group",
+                    getter: () => MainGroup,
+                    setter: (v) => SetGroup(v),
+                    minValue: 4,
+                    maxValue: 5,
+                    tooltip: "Also known as the high byte of the room index."
+                    );
+
+            var list = new ValueReference[] {
+                groupValueReference,
+                new DataValueReference(
+                        data: dataStart,
+                        name: "Wallmaster dest room",
+                        index: 1,
+                        type: DataValueType.Byte,
+                        tooltip: "The low byte of the room index wallmasters will send you to."),
+                new DataValueReference(
+                        data: dataStart,
+                        name: "Base floor name",
+                        index: 4,
+                        type: DataValueType.Byte,
+                        tooltip: "Determines what the game will call the bottom floor. For a value of:\n$00: The bottom floor is 'B3'.\n$01: The bottom floor is 'B2'.\n$02: The bottom floor is 'B1'.\n$03: The bottom floor is 'F1'."),
+                new DataValueReference(
+                        data: dataStart,
+                        name: "Floors unlocked with compass",
+                        index: 5,
+                        type: DataValueType.Byte,
+                        tooltip: "A bitset of floors that will appear on the map when the compass is obtained.\n\nEg. If this is $05, then floors 0 and 2 will be unlocked (bits 0 and 2 are set).")
+            };
+
+            ValueReferenceGroup = new ValueReferenceGroup(list);
+        }
 
         void DetermineRoomsUsed() {
             roomsUsed = new int[256];
@@ -250,5 +286,13 @@ namespace LynnaLab
             dataStart.SetByteValue(i, (byte)val);
         }
 
+        void SetGroup(int g) {
+            if (!(g == 4 || g == 5))
+                throw new ArgumentException("Invalid group '" + g + "' for dungeon.");
+            dataStart.SetValue(0, ">wGroup" + g.ToString() + "Flags");
+
+            if (RoomChangedEvent != null)
+                RoomChangedEvent(this, new DungeonRoomChangedEventArgs {all = true});
+        }
     }
 }

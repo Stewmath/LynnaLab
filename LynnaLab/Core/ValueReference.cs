@@ -42,6 +42,7 @@ namespace LynnaLab
             }
         }
         public int MaxValue { get; protected set; }
+        public int MinValue { get; protected set; }
         public ValueReferenceType ValueType { get; protected set; }
 
 
@@ -73,6 +74,7 @@ namespace LynnaLab
         public ValueReference(ValueReference r) {
             _project = r._project;
             MaxValue = r.MaxValue;
+            MinValue = r.MinValue;
             ValueType = r.ValueType;
             Name = r.Name;
             Editable = r.Editable;
