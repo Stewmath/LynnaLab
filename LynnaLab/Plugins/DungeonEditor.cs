@@ -220,27 +220,50 @@ namespace Plugins
 
             roomSpinButton.Value = room.Index&0xff;
 
-            var vrs = new List<ValueReference>();
-            vrs.Add(new StreamValueReference("Up", room.Index&0xff, DataValueType.ByteBit, 0,0));
-            vrs.Add(new StreamValueReference("Right", room.Index&0xff, DataValueType.ByteBit, 1,1));
-            vrs.Add(new StreamValueReference("Down", room.Index&0xff, DataValueType.ByteBit, 2,2));
-            vrs.Add(new StreamValueReference("Left", room.Index&0xff, DataValueType.ByteBit, 3,3));
-            vrs.Add(new StreamValueReference("Key", room.Index&0xff, DataValueType.ByteBit, 4,4));
-            vrs.Add(new StreamValueReference("Chest", room.Index&0xff, DataValueType.ByteBit, 5,5));
-            vrs.Add(new StreamValueReference("Boss", room.Index&0xff, DataValueType.ByteBit, 6,6));
-            vrs.Add(new StreamValueReference("Dark", room.Index&0xff, DataValueType.ByteBit, 7,7));
-
-            Stream stream = Project.GetBinaryFile("rooms/" + Project.GameString + "/group" + dungeon.MainGroup + "DungeonProperties.bin");
-            foreach (StreamValueReference r in vrs)
-                r.SetStream(stream);
-
-            if (roomVre != null)
-                roomVreContainer.Remove(roomVre);
+            // This could go in the constructor I guess
+            var vrs = new ValueReference[] {
+                new AbstractBoolValueReference(Project,
+                        name: "Up",
+                        getter: () => minimap.GetRoom().DungeonFlagUp,
+                        setter: (v) => minimap.GetRoom().DungeonFlagUp = v),
+                new AbstractBoolValueReference(Project,
+                        name: "Right",
+                        getter: () => minimap.GetRoom().DungeonFlagRight,
+                        setter: (v) => minimap.GetRoom().DungeonFlagRight = v),
+                new AbstractBoolValueReference(Project,
+                        name: "Down",
+                        getter: () => minimap.GetRoom().DungeonFlagDown,
+                        setter: (v) => minimap.GetRoom().DungeonFlagDown = v),
+                new AbstractBoolValueReference(Project,
+                        name: "Left",
+                        getter: () => minimap.GetRoom().DungeonFlagLeft,
+                        setter: (v) => minimap.GetRoom().DungeonFlagLeft = v),
+                new AbstractBoolValueReference(Project,
+                        name: "Key",
+                        getter: () => minimap.GetRoom().DungeonFlagKey,
+                        setter: (v) => minimap.GetRoom().DungeonFlagKey = v),
+                new AbstractBoolValueReference(Project,
+                        name: "Chest",
+                        getter: () => minimap.GetRoom().DungeonFlagChest,
+                        setter: (v) => minimap.GetRoom().DungeonFlagChest = v),
+                new AbstractBoolValueReference(Project,
+                        name: "Boss",
+                        getter: () => minimap.GetRoom().DungeonFlagBoss,
+                        setter: (v) => minimap.GetRoom().DungeonFlagBoss = v),
+                new AbstractBoolValueReference(Project,
+                        name: "Dark",
+                        getter: () => minimap.GetRoom().DungeonFlagDark,
+                        setter: (v) => minimap.GetRoom().DungeonFlagDark = v),
+            };
 
             var vrg = new ValueReferenceGroup(vrs);
-            roomVre = new ValueReferenceEditor(Project, vrg, 4, "Minimap Data");
 
-            roomVreContainer.Add(roomVre);
+            if (roomVre != null)
+                roomVre.ReplaceValueReferenceGroup(vrg);
+            else {
+                roomVre = new ValueReferenceEditor(Project, vrg, 4, "Minimap Data");
+                roomVreContainer.Add(roomVre);
+            }
         }
     }
 }

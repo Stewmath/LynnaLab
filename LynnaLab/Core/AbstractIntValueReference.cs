@@ -23,7 +23,7 @@ namespace LynnaLab
 
         // Constructors
 
-        public AbstractIntValueReference(Project project, string name, ValueReferenceType type, Func<int> getter, Action<int> setter, int maxValue, bool editable=true, string constantsMappingString=null)
+        public AbstractIntValueReference(Project project, string name, Func<int> getter, Action<int> setter, int maxValue, ValueReferenceType type=ValueReferenceType.Int, bool editable=true, string constantsMappingString=null)
         : base(name, type, editable, constantsMappingString) {
             base.Project = project;
             this.getter = getter;

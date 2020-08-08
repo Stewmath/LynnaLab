@@ -22,6 +22,7 @@ namespace LynnaLab
         int width, height;
 
         MemoryFileStream tileDataFile;
+        MemoryFileStream dungeonFlagStream;
 
         Tileset tileset;
         Bitmap cachedImage;
@@ -35,6 +36,10 @@ namespace LynnaLab
             Tileset t = Project.GetIndexedDataType<Tileset>(areaID);
             SetTileset(t);
 
+            // Get dungeon flag file
+            Data data = Project.GetData("dungeonRoomPropertiesGroupTable", (Group % 2) * 2);
+            data = Project.GetData(data.GetValue(0));
+            dungeonFlagStream = Project.GetBinaryFile("rooms/" + Project.GameString + "/" + data.GetValue(0));
         }
 
 
@@ -98,6 +103,88 @@ namespace LynnaLab
         {
             get { return tileset; }
         }
+
+        public byte DungeonFlags {
+            get {
+                if (!(Group >= 4 && Group < 8))
+                    throw new Exception(string.Format("Room {0:X3} is not in a dungeon group, doesn't have dungeon flags.", Index));
+                dungeonFlagStream.Seek(Index & 0xff, SeekOrigin.Begin);
+                return (byte)dungeonFlagStream.ReadByte();
+            }
+            set {
+                if (!(Group >= 4 && Group < 8))
+                    throw new Exception(string.Format("Room {0:X3} is not in a dungeon group, doesn't have dungeon flags.", Index));
+                dungeonFlagStream.Seek(Index & 0xff, SeekOrigin.Begin);
+                dungeonFlagStream.WriteByte(value);
+            }
+        }
+
+        // Dungeon flag individual bits
+        public bool DungeonFlagUp {
+            get {
+                return GetDungeonFlagBit(0);
+            }
+            set {
+                SetDungeonFlagBit(0, value);
+            }
+        }
+        public bool DungeonFlagRight {
+            get {
+                return GetDungeonFlagBit(1);
+            }
+            set {
+                SetDungeonFlagBit(1, value);
+            }
+        }
+        public bool DungeonFlagDown {
+            get {
+                return GetDungeonFlagBit(2);
+            }
+            set {
+                SetDungeonFlagBit(2, value);
+            }
+        }
+        public bool DungeonFlagLeft {
+            get {
+                return GetDungeonFlagBit(3);
+            }
+            set {
+                SetDungeonFlagBit(3, value);
+            }
+        }
+        public bool DungeonFlagKey {
+            get {
+                return GetDungeonFlagBit(4);
+            }
+            set {
+                SetDungeonFlagBit(4, value);
+            }
+        }
+        public bool DungeonFlagChest {
+            get {
+                return GetDungeonFlagBit(5);
+            }
+            set {
+                SetDungeonFlagBit(5, value);
+            }
+        }
+        public bool DungeonFlagBoss {
+            get {
+                return GetDungeonFlagBit(6);
+            }
+            set {
+                SetDungeonFlagBit(6, value);
+            }
+        }
+        public bool DungeonFlagDark {
+            get {
+                return GetDungeonFlagBit(7);
+            }
+            set {
+                SetDungeonFlagBit(7, value);
+            }
+        }
+
 
         // # of bytes per row (including unused bytes; this means it has a value of 16 for large
         // rooms, which is 1 higher than the width, which is 15).
@@ -301,6 +388,16 @@ namespace LynnaLab
             cachedImage = null;
             if (RoomModifiedEvent != null)
                 RoomModifiedEvent();
+        }
+
+        bool GetDungeonFlagBit(int bit) {
+            return (DungeonFlags & (1 << bit)) != 0;
+        }
+
+        void SetDungeonFlagBit(int bit, bool value) {
+            DungeonFlags &= (byte)~(1 << bit);
+            if (value)
+                DungeonFlags |= (byte)(1 << bit);
         }
     }
 }

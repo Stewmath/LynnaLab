@@ -196,7 +196,6 @@ namespace LynnaLab
 
             vref = new AbstractIntValueReference(Project,
                     name: "Opcode",
-                    type: ValueReferenceType.Int,
                     getter: () => SourceData.Opcode,
                     setter: (value) => {},
                     maxValue: 255);
@@ -204,42 +203,33 @@ namespace LynnaLab
             valueReferences.Add(vref);
 
             if (WarpSourceType == WarpSourceType.Standard) {
-                vref = new AbstractIntValueReference(Project,
+                vref = new AbstractBoolValueReference(Project,
                         name: "Top-Left",
-                        type: ValueReferenceType.Bool,
-                        getter: () => SourceData.TopLeft ? 1 : 0,
-                        setter: (value) => SourceData.TopLeft = value == 0 ? false : true,
-                        maxValue: 1);
+                        getter: () => SourceData.TopLeft,
+                        setter: (value) => SourceData.TopLeft = value);
                 valueReferences.Add(vref);
 
-                vref = new AbstractIntValueReference(Project,
+                vref = new AbstractBoolValueReference(Project,
                         name: "Top-Right",
-                        type: ValueReferenceType.Bool,
-                        getter: () => SourceData.TopRight ? 1 : 0,
-                        setter: (value) => SourceData.TopRight = value == 0 ? false : true,
-                        maxValue: 1);
+                        getter: () => SourceData.TopRight,
+                        setter: (value) => SourceData.TopRight = value);
                 valueReferences.Add(vref);
 
-                vref = new AbstractIntValueReference(Project,
+                vref = new AbstractBoolValueReference(Project,
                         name: "Bottom-Left",
-                        type: ValueReferenceType.Bool,
-                        getter: () => SourceData.BottomLeft ? 1 : 0,
-                        setter: (value) => SourceData.BottomLeft = value == 0 ? false : true,
-                        maxValue: 1);
+                        getter: () => SourceData.BottomLeft,
+                        setter: (value) => SourceData.BottomLeft = value);
                 valueReferences.Add(vref);
 
-                vref = new AbstractIntValueReference(Project,
+                vref = new AbstractBoolValueReference(Project,
                         name: "Bottom-Right",
-                        type: ValueReferenceType.Bool,
-                        getter: () => SourceData.BottomRight ? 1 : 0,
-                        setter: (value) => SourceData.BottomRight = value == 0 ? false : true,
-                        maxValue: 1);
+                        getter: () => SourceData.BottomRight,
+                        setter: (value) => SourceData.BottomRight = value);
                 valueReferences.Add(vref);
             }
             else if (WarpSourceType == WarpSourceType.Pointed) {
                 vref = new AbstractIntValueReference(Project,
                         name: "Source Y",
-                        type: ValueReferenceType.Int,
                         getter: () => SourceData.Y,
                         setter: (value) => SourceData.Y = value,
                         maxValue: 15);
@@ -247,7 +237,6 @@ namespace LynnaLab
 
                 vref = new AbstractIntValueReference(Project,
                         name: "Source X",
-                        type: ValueReferenceType.Int,
                         getter: () => SourceData.X,
                         setter: (value) => SourceData.X = value,
                         maxValue: 15);
@@ -258,7 +247,6 @@ namespace LynnaLab
 
             vref = new AbstractIntValueReference(Project,
                     name: "Source Transition",
-                    type: ValueReferenceType.Int,
                     getter: () => SourceData.Transition,
                     setter: (value) => SourceData.Transition = value,
                     maxValue: 15,
@@ -267,7 +255,6 @@ namespace LynnaLab
 
             vref = new AbstractIntValueReference(Project,
                     name: "Dest Room",
-                    type: ValueReferenceType.Int,
                     getter: () => (SourceData.DestGroupIndex << 8) | DestData.Map,
                     setter: (value) => {
                         if (DestRoomIndex != value) {
@@ -284,7 +271,6 @@ namespace LynnaLab
 
             vref = new AbstractIntValueReference(Project,
                     name: "Dest Y",
-                    type: ValueReferenceType.Int,
                     getter: () => DestData.Y,
                     setter: (value) => {
                         if (DestData.Y != value) {
@@ -297,7 +283,6 @@ namespace LynnaLab
 
             vref = new AbstractIntValueReference(Project,
                     name: "Dest X",
-                    type: ValueReferenceType.Int,
                     getter: () => DestData.X,
                     setter: (value) => {
                         if (DestData.X != value) {
@@ -310,7 +295,6 @@ namespace LynnaLab
 
             vref = new AbstractIntValueReference(Project,
                     name: "Dest Parameter",
-                    type: ValueReferenceType.Int,
                     getter: () => DestData.Parameter,
                     setter: (value) => {
                         if (DestData.Parameter != value) {
@@ -323,7 +307,6 @@ namespace LynnaLab
 
             vref = new AbstractIntValueReference(Project,
                     name: "Dest Transition",
-                    type: ValueReferenceType.Int,
                     getter: () => DestData.Transition,
                     setter: (value) => {
                         if (DestData.Transition != value) {

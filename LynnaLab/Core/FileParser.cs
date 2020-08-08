@@ -335,6 +335,15 @@ arbitraryLengthData:
                     AddDataAndPopFileStructure(d);
                     break;
                 }
+                case "m_incroomdata": {
+                    if (!(fTokens.Count == 2)) {
+                        log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
+                        break;
+                    }
+                    Data d = new Data(Project, fTokens[0], standardValues, 8, this, fSpacing);
+                    AddDataAndPopFileStructure(d);
+                    break;
+                }
 
                 default:
                     {
