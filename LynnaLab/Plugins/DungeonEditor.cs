@@ -18,8 +18,8 @@ namespace Plugins
         Box dungeonVreContainer, roomVreContainer;
         ValueReferenceEditor dungeonVre, roomVre;
 
-        EventWrapper<DungeonRoomChangedEventArgs> dungeonRoomChangedEventWrapper
-            = new EventWrapper<DungeonRoomChangedEventArgs>();
+        WeakEventWrapper<Dungeon, DungeonRoomChangedEventArgs> dungeonRoomChangedEventWrapper
+            = new WeakEventWrapper<Dungeon, DungeonRoomChangedEventArgs>();
 
 
         Project Project {
@@ -170,7 +170,7 @@ namespace Plugins
             DungeonChanged();
 
 
-            dungeonRoomChangedEventWrapper.Event += (sender, args) => { RoomChanged(); };
+            dungeonRoomChangedEventWrapper.Event += (sender, args) => RoomChanged();
             w.Destroyed += (a, b) => dungeonRoomChangedEventWrapper.UnbindAll();
         }
 
@@ -207,6 +207,9 @@ namespace Plugins
             roomSpinButton.Value = room.Index&0xff;
 
             // This could go in the constructor I guess
+            // TODO: Not tied to underlying event handlers, should generate this in Room.cs instead
+            // (but doesn't currently matter since the data is not editable in multiple places at
+            // once)
             var vrs = new ValueReference[] {
                 new AbstractBoolValueReference(Project,
                         name: "Up",
