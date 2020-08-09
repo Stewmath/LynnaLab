@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Util;
+using System.Windows;
 
 namespace LynnaLab
 {
@@ -45,6 +46,7 @@ namespace LynnaLab
         DataValueType dataType;
         Data _data;
 
+        WeakEventWrapper<Data, DataModifiedEventArgs> dataEventWrapper = new WeakEventWrapper<Data, DataModifiedEventArgs>();
         LockableEvent<ValueModifiedEventArgs> modifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
 
 
@@ -90,7 +92,8 @@ namespace LynnaLab
                 break;
             }
 
-            _data.AddModifiedEventHandler(OnDataModified);
+            dataEventWrapper.Bind(_data, "DataModifiedEvent");
+            dataEventWrapper.Event += OnDataModified;
         }
 
         public DataValueReference(DataValueReference vref) : base(vref) {
@@ -99,6 +102,11 @@ namespace LynnaLab
             this.startBit = vref.startBit;
             this.endBit = vref.endBit;
             this._data = vref._data;
+
+            this.modifiedEvent = vref.modifiedEvent;
+
+            dataEventWrapper.Bind(_data, "DataModifiedEvent");
+            dataEventWrapper.Event += OnDataModified;
         }
 
         // This is borrowed by StreamValueReference also
@@ -204,7 +212,7 @@ namespace LynnaLab
 
         void OnDataModified(object sender, DataModifiedEventArgs args) {
             if (sender != _data)
-                log.Error("DataValueReference.OnDataModified: Wrong data object called OnDataModified?");
+                throw new Exception("DataValueReference.OnDataModified: Wrong data object called OnDataModified?");
             else if (args.ValueIndex == valueIndex) { // NOTE: Doesn't check for "size change" events (value -1).
                 modifiedEvent.Invoke(this, null);
             }

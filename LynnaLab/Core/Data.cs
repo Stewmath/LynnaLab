@@ -32,6 +32,9 @@ namespace LynnaLab
         // Event called whenever data is modified
         LockableEvent<DataModifiedEventArgs> dataModifiedEvent = new LockableEvent<DataModifiedEventArgs>();
 
+        // TODO: replace above with this
+        public event EventHandler<DataModifiedEventArgs> DataModifiedEvent;
+
 
         // Properties
 
@@ -91,6 +94,8 @@ namespace LynnaLab
                 this.spacing.Add("");
 
             PrintCommand = true;
+
+            dataModifiedEvent += (sender, args) => { if (DataModifiedEvent != null) DataModifiedEvent(sender, args); };
         }
 
 
