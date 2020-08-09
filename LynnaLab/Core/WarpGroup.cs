@@ -228,7 +228,13 @@ namespace LynnaLab
 
             // Default warp destination should use unique data
             data.SetDestData(data.DestGroup.GetNewOrUnusedDestData());
+
+            // Default values (we may be overwriting a previously unused warp)
             data.GetReferencedDestData().Map = 0;
+            data.GetReferencedDestData().Y = 0;
+            data.GetReferencedDestData().X = 0;
+            data.GetReferencedDestData().Parameter = 0;
+            data.GetReferencedDestData().Transition = 1;
 
             RegenWarpSourceDataList();
             ModifiedEvent.Invoke(this, null);
