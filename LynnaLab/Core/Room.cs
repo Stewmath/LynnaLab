@@ -6,12 +6,10 @@ using Util;
 
 namespace LynnaLab
 {
-    /* Room class
-     * Provides an interface for modifying layout and keeping track of changes
-     * to the image.
-     * Doesn't keep track of much else, like objects or dungeon data,
-     * though it may have getter functions.
-     */
+    /// Provides an interface for modifying layout and keeping track of changes
+    /// to the image.
+    /// Can also use this to modify various room properties, or to get related
+    /// classes, ie. relating to warps or objects.
     public class Room : ProjectIndexedDataType {
         public delegate void RoomModifiedHandler();
         // Event invoked when the room's image is modified in any way
@@ -23,22 +21,19 @@ namespace LynnaLab
         MemoryFileStream tileDataFile;
         MemoryFileStream dungeonFlagStream;
 
-        Tileset tileset;
+        Tileset loadedTileset;
         Bitmap cachedImage;
 
 
         internal Room(Project p, int i) : base(p,i) {
-            int tilesetID = GetTilesetByte() & 0x7f;
-
-            Tileset t = Project.GetIndexedDataType<Tileset>(tilesetID);
-            SetTileset(t);
-
             // Get dungeon flag file
             Data data = Project.GetData("dungeonRoomPropertiesGroupTable", (Group % 2) * 2);
             data = Project.GetData(data.GetValue(0));
             dungeonFlagStream = Project.GetBinaryFile("rooms/" + Project.GameString + "/" + data.GetValue(0));
 
             GenerateValueReferenceGroup();
+
+            UpdateTileset();
         }
 
 
@@ -100,7 +95,12 @@ namespace LynnaLab
         }
         public Tileset Tileset
         {
-            get { return tileset; }
+            get {
+                return Project.GetIndexedDataType<Tileset>(ValueReferenceGroup.GetIntValue("Tileset"));
+            }
+            set {
+                ValueReferenceGroup.SetValue("Tileset", value.Index);
+            }
         }
         /// If true, tileset graphics are loaded after the screen transition instead of before.
         /// Often used in "buffer" rooms to transition between 2 tilesets.
@@ -212,7 +212,7 @@ namespace LynnaLab
 
             for (int x=0; x<width; x++) {
                 for (int y=0; y<height; y++) {
-                    g.DrawImageUnscaled(tileset.GetTileImage(GetTile(x,y)), x*16, y*16);
+                    g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x,y)), x*16, y*16);
                 }
             }
 
@@ -246,33 +246,6 @@ namespace LynnaLab
             file.WriteByte((byte)id);
         }
 
-        public void SetTileset(Tileset t) {
-            if (tileset == null || t.Index != tileset.Index) {
-                Stream groupTilesetsFile = GetTilesetMappingFile();
-                groupTilesetsFile.Position = Index&0xff;
-                int lastValue = groupTilesetsFile.ReadByte() & 0x80;
-                groupTilesetsFile.Position = Index&0xff;
-                groupTilesetsFile.WriteByte((byte)((t.Index&0x7f) | lastValue));
-
-                var handler = new Tileset.TileModifiedHandler(ModifiedTilesetCallback);
-                var layoutHandler = new Tileset.LayoutGroupModifiedHandler(ModifiedLayoutGroupCallback);
-                if (tileset != null) {
-                    tileset.TileModifiedEvent -= handler;
-                    tileset.LayoutGroupModifiedEvent -= layoutHandler;
-                }
-                t.TileModifiedEvent += handler;
-                t.LayoutGroupModifiedEvent += layoutHandler;
-
-                cachedImage = null;
-
-                tileset = t;
-
-                UpdateRoomData();
-                if (RoomModifiedEvent != null)
-                    RoomModifiedEvent();
-            }
-        }
-
         public ObjectGroup GetObjectGroup() {
             string tableLabel = Project.GetData("objectDataGroupTable", 2*(Index>>8)).GetValue(0);
             string label = Project.GetData(tableLabel, 2*(Index&0xff)).GetValue(0);
@@ -288,6 +261,26 @@ namespace LynnaLab
             return tileDataFile == room.tileDataFile;
         }
 
+
+        // Private methods
+
+        void UpdateTileset() {
+            if (loadedTileset != Tileset) {
+                if (loadedTileset != null) {
+                    loadedTileset.TileModifiedEvent -= ModifiedTilesetCallback;
+                    loadedTileset.LayoutGroupModifiedEvent -= ModifiedLayoutGroupCallback;
+                }
+                Tileset.TileModifiedEvent += ModifiedTilesetCallback;
+                Tileset.LayoutGroupModifiedEvent += ModifiedLayoutGroupCallback;
+
+                cachedImage = null;
+                loadedTileset = Tileset;
+
+                UpdateRoomData();
+                if (RoomModifiedEvent != null)
+                    RoomModifiedEvent();
+            }
+        }
 
         // Returns a stream for the tileset mapping file (256 bytes, one byte per room)
         MemoryFileStream GetTilesetMappingFile() {
@@ -320,7 +313,7 @@ namespace LynnaLab
                 tileDataFile = null;
             }
             // Get the tileDataFile
-            int layoutGroup = tileset.LayoutGroup;
+            int layoutGroup = Tileset.LayoutGroup;
             string label = "room" + ((layoutGroup<<8)+(Index&0xff)).ToString("X4").ToLower();
             FileParser parserFile = Project.GetFileWithLabel(label);
             Data data = parserFile.GetData(label);
@@ -366,7 +359,7 @@ namespace LynnaLab
                     int y = (int)(i / Stride);
                     if (x >= Width)
                         continue;
-                    g.DrawImageUnscaled(tileset.GetTileImage(GetTile(x, y)), x*16, y*16);
+                    g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x, y)), x*16, y*16);
                 }
                 g.Dispose();
             }
@@ -384,7 +377,7 @@ namespace LynnaLab
                 for (int y=0; y<Height; y++) {
                     if (GetTile(x, y) == tile) {
                         if (cachedImage != null)
-                            g.DrawImageUnscaled(tileset.GetTileImage(GetTile(x,y)), x*16, y*16);
+                            g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x,y)), x*16, y*16);
                         if (RoomModifiedEvent != null)
                             RoomModifiedEvent();
                     }
@@ -413,22 +406,32 @@ namespace LynnaLab
 
         void GenerateValueReferenceGroup() {
             var vrs = new ValueReference[] {
-                new StreamValueReference(
+                new StreamValueReference(Project,
+                        stream: GetMusicFile(),
+                        name: "Music",
+                        offset: Index & 0xff,
+                        type: DataValueType.Byte,
+                        constantsMappingString: "MusicMapping"),
+                new StreamValueReference(Project,
+                        stream: GetTilesetMappingFile(),
+                        name: "Tileset",
+                        offset: Index & 0xff,
+                        type: DataValueType.ByteBits,
+                        startBit: 0,
+                        endBit: 6),
+                new StreamValueReference(Project,
                         stream: GetTilesetMappingFile(),
                         name: "Gfx Load After Transition",
                         offset: Index & 0xff,
                         type: DataValueType.ByteBit,
-                        startBit: 7)
-                /*
-                new StreamValueReference(
-                        stream: GetMusicFile(),
-                        name: "Music",
-                        offset: Index & 0xff,
-                        type: DataValueType.Byte),
-                        */
+                        startBit: 7),
             };
 
             ValueReferenceGroup = new ValueReferenceGroup(vrs);
+
+            ValueReferenceGroup["Tileset"].AddValueModifiedHandler((sender, args) => {
+                UpdateTileset();
+            });
         }
     }
 }

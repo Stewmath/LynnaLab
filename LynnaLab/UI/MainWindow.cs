@@ -31,8 +31,8 @@ public class MainWindow
     Gtk.Statusbar statusbar1;
     Gtk.Box roomVreHolder;
 
-    LynnaLab.SpinButtonHexadecimal roomSpinButton, tilesetSpinButton;
-    ComboBoxFromConstants musicComboBox;
+    LynnaLab.SpinButtonHexadecimal roomSpinButton;
+    Gtk.Button editTilesetButton;
     LynnaLab.ObjectGroupEditor objectgroupeditor1;
     LynnaLab.TilesetViewer tilesetViewer1;
     LynnaLab.RoomEditor roomeditor1;
@@ -141,10 +141,10 @@ public class MainWindow
 
         roomSpinButton = new SpinButtonHexadecimal();
         roomSpinButton.Digits = 3;
-        tilesetSpinButton = new SpinButtonHexadecimal();
-        tilesetSpinButton.Digits = 2;
 
-        musicComboBox = new ComboBoxFromConstants();
+        editTilesetButton = new Gtk.Button("Edit");
+        editTilesetButton.Clicked += OnTilesetEditorButtonClicked;
+
         objectgroupeditor1 = new ObjectGroupEditor();
         tilesetViewer1 = new TilesetViewer();
         roomeditor1 = new RoomEditor();
@@ -153,8 +153,6 @@ public class MainWindow
         warpEditor = new WarpEditor(this);
 
         ((Gtk.Box)builder.GetObject("roomSpinButtonHolder")).Add(roomSpinButton);
-        ((Gtk.Box)builder.GetObject("tilesetSpinButtonHolder")).Add(tilesetSpinButton);
-        ((Gtk.Box)builder.GetObject("musicComboBoxHolder")).Add(musicComboBox);
         ((Gtk.Box)builder.GetObject("objectGroupEditorHolder")).Add(objectgroupeditor1);
         ((Gtk.Box)builder.GetObject("tilesetViewerHolder")).Add(tilesetViewer1);
         ((Gtk.Box)builder.GetObject("roomEditorHolder")).Add(roomeditor1);
@@ -170,9 +168,7 @@ public class MainWindow
 
         eventGroup.Lock();
 
-        musicComboBox.Changed += eventGroup.Add(OnMusicComboBoxChanged);
         roomSpinButton.ValueChanged += eventGroup.Add(OnRoomSpinButtonValueChanged);
-        tilesetSpinButton.ValueChanged += eventGroup.Add(OnTilesetSpinButtonValueChanged);
 
         worldSpinButton.ValueChanged += eventGroup.Add(OnWorldSpinButtonValueChanged);
         dungeonSpinButton.ValueChanged += eventGroup.Add(OnDungeonSpinButtonValueChanged);
@@ -321,7 +317,6 @@ public class MainWindow
 
             eventGroup.Lock();
 
-            musicComboBox.SetConstantsMapping(Project.MusicMapping);
             worldSpinButton.Adjustment = new Adjustment(0, 0, Project.NumGroups-1, 1, 4, 0);
             dungeonSpinButton.Adjustment = new Adjustment(0, 0, Project.NumDungeons-1, 1, 1, 0);
             roomSpinButton.Adjustment = new Adjustment(0, 0, Project.NumRooms-1, 1, 16, 0);
@@ -339,8 +334,7 @@ public class MainWindow
         eventGroup.Lock();
 
         tilesetViewer1.SetTileset(tileset);
-        tilesetSpinButton.Value = tileset.Index;
-        ActiveRoom.SetTileset(tileset);
+        ActiveRoom.Tileset = tileset;
 
         eventGroup.Unlock();
     }
@@ -352,10 +346,10 @@ public class MainWindow
         roomSpinButton.Value = ActiveRoom.Index;
         warpEditor.SetMap(ActiveRoom.Index>>8, ActiveRoom.Index&0xff);
         SetTileset(ActiveRoom.Tileset);
-        musicComboBox.Active = Project.MusicMapping.IndexOf((byte)ActiveRoom.GetMusicID());
 
         if (roomVre == null) {
             roomVre = new ValueReferenceEditor(Project, ActiveRoom.ValueReferenceGroup);
+            roomVre.AddWidgetToRight("Tileset", editTilesetButton);
             roomVreHolder.Add(roomVre);
             roomVre.ShowAll();
         }
@@ -594,21 +588,6 @@ public class MainWindow
             ActiveRoom = r;
             UpdateMinimapFromRoom(false);
         }
-    }
-
-    protected void OnTilesetSpinButtonValueChanged(object sender, EventArgs e)
-    {
-        if (Project == null)
-            return;
-        SpinButton button = sender as SpinButton;
-        SetTileset(Project.GetIndexedDataType<Tileset>(button.ValueAsInt));
-    }
-
-
-    protected void OnMusicComboBoxChanged(object sender, EventArgs e) {
-        if (Project == null)
-            return;
-        ActiveRoom.SetMusicID(Project.MusicMapping.StringToByte(musicComboBox.ActiveId));
     }
 
     protected void OnTilesetEditorButtonClicked(object sender, EventArgs e)

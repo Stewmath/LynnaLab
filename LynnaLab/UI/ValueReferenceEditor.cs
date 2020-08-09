@@ -238,6 +238,14 @@ loopEnd:
             widgetLists[i][1] = newWidget;
         }
 
+        public void AddWidgetToRight(string name, Gtk.Widget widget) {
+            int i = GetValueIndex(name);
+            widgetLists[i][2].Dispose(); // Removes help button
+            widgetLists[i][2] = widget;
+            var pos = widgetPositions[i];
+            table.Attach(widget, pos.Item1+2, pos.Item1+3, pos.Item2, pos.Item2+1);
+        }
+
         int GetValueIndex(string name) {
             for (int i = 0; i < valueReferenceGroup.Count; i++) {
                 if (valueReferenceGroup[i].Name == name)

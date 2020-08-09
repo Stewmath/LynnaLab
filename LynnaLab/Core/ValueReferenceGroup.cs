@@ -36,8 +36,20 @@ namespace LynnaLab
             get { return valueReferences.Count; }
         }
 
+
+        // Indexers
+
         public ValueReference this[int i] {
             get { return valueReferences[i]; }
+        }
+        public ValueReference this[string name] {
+            get {
+                foreach (var r in valueReferences) {
+                    if (r.Name == name)
+                        return r;
+                }
+                throw new ArgumentException("ValueReference \"" + name + "\" isn't in this group.");
+            }
         }
 
 

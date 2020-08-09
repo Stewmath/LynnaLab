@@ -91,6 +91,8 @@ namespace LynnaLab
         public abstract int GetIntValue();
         public abstract void SetValue(string s);
         public abstract void SetValue(int i);
+
+        // TODO: Replace these with a normal event object
         public abstract void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
         public abstract void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
 

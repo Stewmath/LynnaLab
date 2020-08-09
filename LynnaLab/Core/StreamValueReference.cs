@@ -19,9 +19,11 @@ namespace LynnaLab
         LockableEvent<ValueModifiedEventArgs> eventHandler = new LockableEvent<ValueModifiedEventArgs>();
 
         // Standard constructor
-        public StreamValueReference(MemoryFileStream stream, string name, int offset, DataValueType type, int startBit=0, int endBit=0, bool editable=true)
-            : base(name, DataValueReference.GetValueType(type), editable, null)
+        public StreamValueReference(Project project, MemoryFileStream stream, string name, int offset, DataValueType type, int startBit=0, int endBit=0, bool editable=true, string constantsMappingString=null)
+            : base(name, DataValueReference.GetValueType(type), editable, constantsMappingString)
         {
+            base.Project = project;
+
             this.stream = stream;
             this.dataType = type;
             this.offset = offset;
@@ -85,7 +87,11 @@ namespace LynnaLab
         }
 
         public override void SetValue(int i) {
+            if (GetIntValue() == i)
+                return;
+
             stream.Seek(offset, SeekOrigin.Begin);
+
             switch (dataType) {
                 case DataValueType.Byte:
                     stream.WriteByte((byte)i);
