@@ -39,6 +39,25 @@ namespace LynnaLab
             "$0000",
         };
 
+        public static int GetMaxValueForType(DataValueType type, int startBit, int endBit) {
+            switch(type) {
+            case DataValueType.Byte:
+                return 0xff;
+            case DataValueType.HalfByte:
+                return 0xf;
+            case DataValueType.Word:
+                return 0xffff;
+            case DataValueType.ByteBit:
+                return 1;
+            case DataValueType.ByteBits:
+            case DataValueType.WordBits:
+                return (1<<(endBit-startBit+1))-1;
+            default:
+                return 0; // String types
+            }
+            throw new Exception();
+        }
+
 
         // Private variables
         int valueIndex;
@@ -61,39 +80,16 @@ namespace LynnaLab
             this._data = data;
             this.dataType = type;
             this.valueIndex = index;
-
             this.startBit = startBit;
             this.endBit = endBit;
 
             base.Tooltip = tooltip;
-
             base.Project = _data.Project;
 
-            // Set MaxValue
-            switch(dataType) {
-            case DataValueType.Byte:
-                MaxValue = 0xff;
-                break;
-            case DataValueType.HalfByte:
-                MaxValue = 0xf;
-                break;
-            case DataValueType.Word:
-                MaxValue = 0xffff;
-                break;
-            case DataValueType.ByteBit:
-                MaxValue = 1;
-                break;
-            case DataValueType.ByteBits:
-            case DataValueType.WordBits:
-                MaxValue = (1<<(endBit-startBit+1))-1;
-                break;
-            default:
-                MaxValue = 0; // String types
-                break;
-            }
+            MaxValue = GetMaxValueForType(type, startBit, endBit);
 
-            dataEventWrapper.Bind(_data, "DataModifiedEvent");
             dataEventWrapper.Event += OnDataModified;
+            BindEventHandler();
         }
 
         public DataValueReference(DataValueReference vref) : base(vref) {
@@ -104,10 +100,15 @@ namespace LynnaLab
             this._data = vref._data;
 
             this.modifiedEvent = vref.modifiedEvent;
-
-            dataEventWrapper.Bind(_data, "DataModifiedEvent");
             dataEventWrapper.Event += OnDataModified;
+            BindEventHandler();
         }
+
+        void BindEventHandler() {
+            dataEventWrapper.UnbindAll();
+            dataEventWrapper.Bind(_data, "DataModifiedEvent");
+        }
+
 
         // This is borrowed by StreamValueReference also
         public static ValueReferenceType GetValueType(DataValueType dataType) {
@@ -212,7 +213,7 @@ namespace LynnaLab
 
         void OnDataModified(object sender, DataModifiedEventArgs args) {
             if (sender != _data)
-                throw new Exception("DataValueReference.OnDataModified: Wrong data object called OnDataModified?");
+                throw new Exception("DataValueReference.OnDataModified: Wrong data object?");
             else if (args.ValueIndex == valueIndex) { // NOTE: Doesn't check for "size change" events (value -1).
                 modifiedEvent.Invoke(this, null);
             }

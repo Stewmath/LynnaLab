@@ -5,13 +5,18 @@ namespace Util {
     public class MemoryFileStream : Stream {
         // Arguments for modification callback
         public class ModifiedEventArgs {
+
+            public readonly long modifiedRangeStart; // First changed address (inclusive)
+            public readonly long modifiedRangeEnd;   // Last changed address (exclusive)
+
             public ModifiedEventArgs(long s, long e) {
                 modifiedRangeStart = s;
                 modifiedRangeEnd = e;
             }
 
-            public readonly long modifiedRangeStart; // First changed address (inclusive)
-            public readonly long modifiedRangeEnd;   // Last changed address (exclusive)
+            public bool ByteChanged(long position) {
+                return position >= modifiedRangeStart && position < modifiedRangeEnd;
+            }
         }
 
         public override bool CanRead {
@@ -46,6 +51,9 @@ namespace Util {
 
         LockableEvent<ModifiedEventArgs> modifiedEvent = new LockableEvent<ModifiedEventArgs>();
 
+        // TODO: replace above with this
+        public event EventHandler<ModifiedEventArgs> ModifiedEvent;
+
 
         public MemoryFileStream(string filename) {
             this.filename = filename;
@@ -58,6 +66,8 @@ namespace Util {
             modified = false;
             input.Read(data, 0, (int)Length);
             input.Close();
+
+            modifiedEvent += (sender, args) => { if (ModifiedEvent != null) ModifiedEvent(sender, args); };
         }
 
         public override void Flush() {
@@ -132,6 +142,12 @@ namespace Util {
             Position++;
             modified = true;
             modifiedEvent.Invoke(this, new ModifiedEventArgs(Position-1, Position));
+        }
+
+
+
+        public int GetByte(int position) {
+            return data[position];
         }
 
 

@@ -28,6 +28,8 @@ namespace LynnaLab
         }
 
         public void ReloadPlugins() {
+            pluginManagers.Clear();
+
             foreach (Module module in Assembly.GetExecutingAssembly().GetModules()) {
                 foreach (Type type in module.GetTypes()) {
                     if (type.BaseType == typeof(Plugin)) {

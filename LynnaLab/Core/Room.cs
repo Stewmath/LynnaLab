@@ -13,7 +13,6 @@ namespace LynnaLab
      * though it may have getter functions.
      */
     public class Room : ProjectIndexedDataType {
-
         public delegate void RoomModifiedHandler();
         // Event invoked when the room's image is modified in any way
         public event RoomModifiedHandler RoomModifiedEvent;
@@ -29,17 +28,17 @@ namespace LynnaLab
 
 
         internal Room(Project p, int i) : base(p,i) {
-            Stream groupTilesetsFile = GetTilesetMappingFile();
-            groupTilesetsFile.Position = Index&0xff;
-            int areaID = groupTilesetsFile.ReadByte() & 0x7f;
+            int tilesetID = GetTilesetByte() & 0x7f;
 
-            Tileset t = Project.GetIndexedDataType<Tileset>(areaID);
+            Tileset t = Project.GetIndexedDataType<Tileset>(tilesetID);
             SetTileset(t);
 
             // Get dungeon flag file
             Data data = Project.GetData("dungeonRoomPropertiesGroupTable", (Group % 2) * 2);
             data = Project.GetData(data.GetValue(0));
             dungeonFlagStream = Project.GetBinaryFile("rooms/" + Project.GameString + "/" + data.GetValue(0));
+
+            GenerateValueReferenceGroup();
         }
 
 
@@ -102,6 +101,13 @@ namespace LynnaLab
         public Tileset Tileset
         {
             get { return tileset; }
+        }
+        /// If true, tileset graphics are loaded after the screen transition instead of before.
+        /// Often used in "buffer" rooms to transition between 2 tilesets.
+        public bool GfxLoadAfterTransition {
+            get {
+                return (GetTilesetByte() & 0x80) != 0;
+            }
         }
 
         public byte DungeonFlags {
@@ -184,6 +190,9 @@ namespace LynnaLab
                 SetDungeonFlagBit(7, value);
             }
         }
+
+        /// Alternative interface for accessing certain properties
+        public ValueReferenceGroup ValueReferenceGroup { get; private set; }
 
 
         // # of bytes per row (including unused bytes; this means it has a value of 16 for large
@@ -281,26 +290,28 @@ namespace LynnaLab
 
 
         // Returns a stream for the tileset mapping file (256 bytes, one byte per room)
-        Stream GetTilesetMappingFile() {
+        MemoryFileStream GetTilesetMappingFile() {
             Data data = Project.GetData("roomTilesetsGroupTable", 2*(Index>>8));
             data = Project.GetData(data.GetValue(0)); // Follow .dw pointer
 
             string path = data.GetValue(0);
             path = path.Substring(1, path.Length-2); // Remove quotes
 
-            Stream stream = Project.GetBinaryFile(path);
-            return stream;
+            return Project.GetBinaryFile(path);
         }
 
-        Stream GetMusicFile() {
+        byte GetTilesetByte() {
+            return (byte)GetTilesetMappingFile().GetByte(Index & 0xff);
+        }
+
+        MemoryFileStream GetMusicFile() {
             Data data = Project.GetData("musicAssignmentGroupTable", 2*(Index>>8));
             data = Project.GetData(data.GetValue(0)); // Follow .dw pointer
 
             string path = data.GetValue(0);
             path = path.Substring(1, path.Length-2); // Remove quotes
 
-            Stream stream = Project.GetBinaryFile(path);
-            return stream;
+            return Project.GetBinaryFile(path);
         }
 
         void UpdateRoomData() {
@@ -398,6 +409,26 @@ namespace LynnaLab
             DungeonFlags &= (byte)~(1 << bit);
             if (value)
                 DungeonFlags |= (byte)(1 << bit);
+        }
+
+        void GenerateValueReferenceGroup() {
+            var vrs = new ValueReference[] {
+                new StreamValueReference(
+                        stream: GetTilesetMappingFile(),
+                        name: "Gfx Load After Transition",
+                        offset: Index & 0xff,
+                        type: DataValueType.ByteBit,
+                        startBit: 7)
+                /*
+                new StreamValueReference(
+                        stream: GetMusicFile(),
+                        name: "Music",
+                        offset: Index & 0xff,
+                        type: DataValueType.Byte),
+                        */
+            };
+
+            ValueReferenceGroup = new ValueReferenceGroup(vrs);
         }
     }
 }

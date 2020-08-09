@@ -10,30 +10,50 @@ namespace LynnaLab
     public class StreamValueReference : ValueReference
     {
         DataValueType dataType; // Enum borrowed from DataValueReference
-        Stream stream;
+        MemoryFileStream stream;
         int offset;
         int startBit, endBit;
+
+        WeakEventWrapper<MemoryFileStream, MemoryFileStream.ModifiedEventArgs> streamEventWrapper
+            = new WeakEventWrapper<MemoryFileStream, MemoryFileStream.ModifiedEventArgs>();
         LockableEvent<ValueModifiedEventArgs> eventHandler = new LockableEvent<ValueModifiedEventArgs>();
 
         // Standard constructor
-        public StreamValueReference(string name, int offset, DataValueType type, int startBit=0, int endBit=0, bool editable=true)
+        public StreamValueReference(MemoryFileStream stream, string name, int offset, DataValueType type, int startBit=0, int endBit=0, bool editable=true)
             : base(name, DataValueReference.GetValueType(type), editable, null)
         {
+            this.stream = stream;
             this.dataType = type;
             this.offset = offset;
             this.startBit = startBit;
             this.endBit = endBit;
+
+            MaxValue = DataValueReference.GetMaxValueForType(type, startBit, endBit);
+
+            streamEventWrapper.Event += OnStreamModified;
+            BindEventHandler();
         }
 
         public StreamValueReference(StreamValueReference r)
             : base(r)
         {
             this.stream = r.stream;
+            this.dataType = r.dataType;
+            this.offset = r.offset;
+            this.startBit = r.startBit;
+            this.endBit = r.endBit;
+            this.eventHandler = r.eventHandler;
+
+            this.eventHandler = r.eventHandler;
+            streamEventWrapper.Event += OnStreamModified;
+            BindEventHandler();
         }
 
-        public void SetStream(Stream stream) {
-            this.stream = stream;
+        void BindEventHandler() {
+            streamEventWrapper.UnbindAll();
+            streamEventWrapper.Bind(stream, "ModifiedEvent");
         }
+
 
         public override string GetStringValue() {
             return Wla.ToHex(GetIntValue(), 2);
@@ -111,6 +131,15 @@ namespace LynnaLab
 
         public override ValueReference Clone() {
             return new StreamValueReference(this);
+        }
+
+
+        void OnStreamModified(object sender, MemoryFileStream.ModifiedEventArgs args) {
+            if (sender != stream)
+                throw new Exception("StreamValueReference.OnStreamModified: Wrong stream object?");
+            else if (args.ByteChanged(offset)) {
+                eventHandler.Invoke(this, null);
+            }
         }
     }
 }

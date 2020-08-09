@@ -6,8 +6,7 @@ using Util;
 
 namespace LynnaLab
 {
-    // Invoked when something changes the image of a dungeon (currently only accounting for stuff
-    // internal to the dungeon itself, not stuff like editing the individual rooms)
+    // Invoked when something changes the layout of rooms in a dungeon.
     public class DungeonRoomChangedEventArgs {
         public bool all; // True if all rooms must be updated
 
@@ -172,6 +171,7 @@ namespace LynnaLab
 
         /// Insert a floor below "floorIndex". If "floorIndex == NumFloors" then the floor is
         /// inserted at the top.
+        /// TODO: should invoke RoomChangedEvent (along with RemoveFloor)
         public void InsertFloor(int floorIndex) {
             if (floorIndex < 0 || floorIndex > NumFloors)
                 throw new ArgumentException("Can't insert floor " + floorIndex + ".");
@@ -237,6 +237,7 @@ namespace LynnaLab
                     maxValue: 5,
                     tooltip: "Also known as the high byte of the room index."
                     );
+            // TODO: tie groupValueReference to the underlying data's modified event handler somehow
 
             var list = new ValueReference[] {
                 groupValueReference,

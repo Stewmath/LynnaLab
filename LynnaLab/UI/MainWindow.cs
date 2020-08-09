@@ -17,25 +17,26 @@ public class MainWindow
     // GUI stuff
     Gtk.Window mainWindow;
 
-	Gtk.MenuBar menubar1;
+    Gtk.MenuBar menubar1;
     Gtk.MenuItem editMenuItem, actionMenuItem, debugMenuItem;
 
-	Gtk.Notebook minimapNotebook, contextNotebook;
-	Gtk.SpinButton worldSpinButton;
+    Gtk.Notebook minimapNotebook, contextNotebook;
+    Gtk.SpinButton worldSpinButton;
     Gtk.CheckButton viewObjectsCheckButton, viewWarpsCheckButton;
-	Gtk.CheckButton darkenDungeonRoomsCheckbox;
-	LynnaLab.HighlightingMinimap worldMinimap;
-	Gtk.SpinButton dungeonSpinButton;
-	Gtk.SpinButton floorSpinButton;
-	LynnaLab.Minimap dungeonMinimap;
+    Gtk.CheckButton darkenDungeonRoomsCheckbox;
+    LynnaLab.HighlightingMinimap worldMinimap;
+    Gtk.SpinButton dungeonSpinButton;
+    Gtk.SpinButton floorSpinButton;
+    LynnaLab.Minimap dungeonMinimap;
+    Gtk.Statusbar statusbar1;
+    Gtk.Box roomVreHolder;
 
-	Gtk.Statusbar statusbar1;
-
-	LynnaLab.SpinButtonHexadecimal roomSpinButton, tilesetSpinButton;
+    LynnaLab.SpinButtonHexadecimal roomSpinButton, tilesetSpinButton;
     ComboBoxFromConstants musicComboBox;
-	LynnaLab.ObjectGroupEditor objectgroupeditor1;
-	LynnaLab.TilesetViewer tilesetViewer1;
-	LynnaLab.RoomEditor roomeditor1;
+    LynnaLab.ObjectGroupEditor objectgroupeditor1;
+    LynnaLab.TilesetViewer tilesetViewer1;
+    LynnaLab.RoomEditor roomeditor1;
+    ValueReferenceEditor roomVre;
 
     WarpEditor warpEditor = null;
 
@@ -136,6 +137,7 @@ public class MainWindow
         dungeonSpinButton = (Gtk.SpinButton)builder.GetObject("dungeonSpinButton");
         floorSpinButton = (Gtk.SpinButton)builder.GetObject("floorSpinButton");
         statusbar1 = (Gtk.Statusbar)builder.GetObject("statusbar1");
+        roomVreHolder = (Gtk.Box)builder.GetObject("roomVreHolder");
 
         roomSpinButton = new SpinButtonHexadecimal();
         roomSpinButton.Digits = 3;
@@ -248,7 +250,7 @@ public class MainWindow
             var item = new MenuItem(plugin.Name);
             item.Activated += ((a, b) =>
                     {
-                    plugin.Clicked();
+                        plugin.Clicked();
                     });
             pluginSubMenu.Append(item);
         }
@@ -351,6 +353,15 @@ public class MainWindow
         warpEditor.SetMap(ActiveRoom.Index>>8, ActiveRoom.Index&0xff);
         SetTileset(ActiveRoom.Tileset);
         musicComboBox.Active = Project.MusicMapping.IndexOf((byte)ActiveRoom.GetMusicID());
+
+        if (roomVre == null) {
+            roomVre = new ValueReferenceEditor(Project, ActiveRoom.ValueReferenceGroup);
+            roomVreHolder.Add(roomVre);
+            roomVre.ShowAll();
+        }
+        else {
+            roomVre.ReplaceValueReferenceGroup(ActiveRoom.ValueReferenceGroup);
+        }
 
         eventGroup.Unlock();
     }
