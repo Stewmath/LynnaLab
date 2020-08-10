@@ -16,7 +16,6 @@ namespace LynnaLab
 
         WeakEventWrapper<MemoryFileStream, MemoryFileStream.ModifiedEventArgs> streamEventWrapper
             = new WeakEventWrapper<MemoryFileStream, MemoryFileStream.ModifiedEventArgs>();
-        LockableEvent<ValueModifiedEventArgs> eventHandler = new LockableEvent<ValueModifiedEventArgs>();
 
         // Standard constructor
         public StreamValueReference(Project project, MemoryFileStream stream, string name, int offset, DataValueType type, int startBit=0, int endBit=0, bool editable=true, string constantsMappingString=null, string tooltip=null)
@@ -45,9 +44,7 @@ namespace LynnaLab
             this.offset = r.offset;
             this.startBit = r.startBit;
             this.endBit = r.endBit;
-            this.eventHandler = r.eventHandler;
 
-            this.eventHandler = r.eventHandler;
             streamEventWrapper.Event += OnStreamModified;
             BindEventHandler();
         }
@@ -122,18 +119,11 @@ namespace LynnaLab
                     throw new NotImplementedException();
             }
 
-            eventHandler.Invoke(this, null);
+            RaiseModifiedEvent(null);
         }
 
         public override void Initialize() {
             throw new NotImplementedException();
-        }
-
-        public override void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
-            eventHandler += handler;
-        }
-        public override void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
-            eventHandler += handler;
         }
 
         public override ValueReference Clone() {
@@ -145,7 +135,7 @@ namespace LynnaLab
             if (sender != stream)
                 throw new Exception("StreamValueReference.OnStreamModified: Wrong stream object?");
             else if (args.ByteChanged(offset)) {
-                eventHandler.Invoke(this, null);
+                RaiseModifiedEvent(null);
             }
         }
     }

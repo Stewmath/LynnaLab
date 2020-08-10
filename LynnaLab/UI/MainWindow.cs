@@ -33,12 +33,15 @@ public class MainWindow
 
     LynnaLab.SpinButtonHexadecimal roomSpinButton;
     Gtk.Button editTilesetButton;
+    ValueReferenceEditor roomVre;
+
     LynnaLab.ObjectGroupEditor objectgroupeditor1;
     LynnaLab.TilesetViewer tilesetViewer1;
     LynnaLab.RoomEditor roomeditor1;
-    ValueReferenceEditor roomVre;
-
     WarpEditor warpEditor = null;
+
+    WeakEventWrapper<ValueReference, ValueModifiedEventArgs> roomTilesetModifiedEventWrapper
+        = new WeakEventWrapper<ValueReference, ValueModifiedEventArgs>();
 
     // Variables
     uint animationTimerID = 0;
@@ -338,6 +341,12 @@ public class MainWindow
 
         eventGroup.Unlock();
     }
+    void SetTileset(int index) {
+        if (Project == null)
+            return;
+
+        SetTileset(Project.GetIndexedDataType<Tileset>(index));
+    }
 
     void OnRoomChanged() {
         eventGroup.Lock();
@@ -348,14 +357,22 @@ public class MainWindow
         SetTileset(ActiveRoom.Tileset);
 
         if (roomVre == null) {
+            // This only runs once
             roomVre = new ValueReferenceEditor(Project, ActiveRoom.ValueReferenceGroup);
             roomVre.AddWidgetToRight("Tileset", editTilesetButton);
             roomVreHolder.Add(roomVre);
             roomVre.ShowAll();
+
+            roomTilesetModifiedEventWrapper.Event
+                += (sender, args) => SetTileset((sender as ValueReference).GetIntValue());
         }
         else {
             roomVre.ReplaceValueReferenceGroup(ActiveRoom.ValueReferenceGroup);
         }
+
+        // Watch for changes to this room's tileset
+        roomTilesetModifiedEventWrapper.UnbindAll();
+        roomTilesetModifiedEventWrapper.Bind(ActiveRoom.ValueReferenceGroup["Tileset"], "ModifiedEvent");
 
         eventGroup.Unlock();
     }

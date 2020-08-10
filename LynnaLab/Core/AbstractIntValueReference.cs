@@ -18,7 +18,6 @@ namespace LynnaLab
 
         Func<int> getter;
         Action<int> setter;
-        LockableEvent<ValueModifiedEventArgs> eventHandler = new LockableEvent<ValueModifiedEventArgs>();
 
 
         // Constructors
@@ -72,14 +71,7 @@ namespace LynnaLab
             if (i == GetIntValue())
                 return;
             setter(i);
-            eventHandler.Invoke(this, null);
-        }
-
-        public override void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
-            eventHandler += handler;
-        }
-        public override void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
-            eventHandler -= handler;
+            RaiseModifiedEvent(null);
         }
 
         public override void Initialize() {

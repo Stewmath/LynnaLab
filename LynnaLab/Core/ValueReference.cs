@@ -61,6 +61,9 @@ namespace LynnaLab
         public Documentation Documentation { get; set; }
 
 
+        public event EventHandler<ValueModifiedEventArgs> ModifiedEvent;
+
+
         // Constructors
 
         // Standard constructor for most ValueReferenceTypes
@@ -82,6 +85,7 @@ namespace LynnaLab
             constantsMapping = r.constantsMapping;
             Documentation = r.Documentation;
             Tooltip = r.Tooltip;
+            ModifiedEvent = r.ModifiedEvent;
         }
 
 
@@ -92,9 +96,18 @@ namespace LynnaLab
         public abstract void SetValue(string s);
         public abstract void SetValue(int i);
 
-        // TODO: Replace these with a normal event object
-        public abstract void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
-        public abstract void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler);
+        // TODO: Remove these functions in favor of just using the Modified event
+        public void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
+            ModifiedEvent += handler;
+        }
+        public void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
+            ModifiedEvent -= handler;
+        }
+
+        // Subclasses must call this to raise the event
+        protected void RaiseModifiedEvent(ValueModifiedEventArgs args) {
+            ModifiedEvent?.Invoke(this, args);
+        }
 
         // Sets the value to its default.
         public abstract void Initialize();

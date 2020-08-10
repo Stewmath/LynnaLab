@@ -30,6 +30,10 @@ namespace Util {
         /// Pass an object along with the name of the event to subscribe to.
         public void Bind(TEventSource obj, string eventName) {
             EventInfo ev = obj.GetType().GetEvent(eventName, BindingFlags.Public | BindingFlags.Instance);
+
+            if (ev == null)
+                throw new ArgumentException("EventBinder: Couldn't locate event \"" + eventName + "\".");
+
             ev.GetAddMethod().Invoke(obj, new object[] { signalledDelegate });
 
             signallers.Add(new Tuple<TEventSource, EventInfo>(obj, ev));
@@ -117,6 +121,9 @@ namespace Util {
             // Could add BindingFlag.NonInstance, but there's no benefit to using this class in that
             // case? (since the whole point is to allow the GC to free the object)
             eventInfo = typeof(TEventSource).GetEvent(eventName, BindingFlags.Public | BindingFlags.Instance);
+
+            if (eventInfo == null)
+                throw new ArgumentException("WeakEventBinder: Couldn't locate event \"" + eventName + "\".");
 
             AddHandler(source);
         }

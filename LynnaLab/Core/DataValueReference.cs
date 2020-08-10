@@ -66,7 +66,6 @@ namespace LynnaLab
         Data _data;
 
         WeakEventWrapper<Data, DataModifiedEventArgs> dataEventWrapper = new WeakEventWrapper<Data, DataModifiedEventArgs>();
-        LockableEvent<ValueModifiedEventArgs> modifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
 
 
         // Properties
@@ -99,7 +98,6 @@ namespace LynnaLab
             this.endBit = vref.endBit;
             this._data = vref._data;
 
-            this.modifiedEvent = vref.modifiedEvent;
             dataEventWrapper.Event += OnDataModified;
             BindEventHandler();
         }
@@ -192,18 +190,11 @@ namespace LynnaLab
             // underlying data.
         }
 
-        public override void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
-            modifiedEvent += handler;
-        }
-        public override void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
-            modifiedEvent -= handler;
-        }
-
         public override void Initialize() {
             if (valueIndex >= Data.GetNumValues())
                 Data.SetNumValues(valueIndex+1, "$00");
             Data.SetValue(valueIndex, defaultDataValues[(int)dataType]);
-            modifiedEvent.Invoke(this, null);
+            RaiseModifiedEvent(null);
         }
 
         public override ValueReference Clone() {
@@ -215,7 +206,7 @@ namespace LynnaLab
             if (sender != _data)
                 throw new Exception("DataValueReference.OnDataModified: Wrong data object?");
             else if (args.ValueIndex == valueIndex) { // NOTE: Doesn't check for "size change" events (value -1).
-                modifiedEvent.Invoke(this, null);
+                RaiseModifiedEvent(null);
             }
         }
     }
