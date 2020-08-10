@@ -398,18 +398,23 @@ namespace LynnaLab
             Graphics g = null;
             if (cachedImage != null)
                 g = Graphics.FromImage(cachedImage);
+
+            bool changed = false;
             for (int x=0; x<Width; x++) {
                 for (int y=0; y<Height; y++) {
                     if (GetTile(x, y) == tile) {
                         if (cachedImage != null)
                             g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x,y)), x*16, y*16);
-                        if (RoomModifiedEvent != null)
-                            RoomModifiedEvent();
+                        changed = true;
                     }
                 }
             }
+
             if (g != null)
                 g.Dispose();
+
+            if (changed && RoomModifiedEvent != null)
+                RoomModifiedEvent();
         }
 
         void ModifiedLayoutGroupCallback() {

@@ -12,9 +12,6 @@ namespace LynnaLab {
         // The widgets by index.
         IList<IList<Gtk.Widget>> widgetLists;
 
-        // List of container widgets for help buttons (1 per item)
-        IList<Gtk.Container> helpButtonContainers;
-
         // The main table which holds all the widgets.
         Gtk.Table table;
 
@@ -42,7 +39,6 @@ namespace LynnaLab {
             maxBounds = new int[valueReferenceGroup.GetNumValueReferences()];
             widgetPositions = new Tuple<uint,uint>[maxBounds.Count];
             widgetLists = new List<IList<Gtk.Widget>>();
-            helpButtonContainers = new Gtk.Container[maxBounds.Count];
 
             table = new Gtk.Table(2, 2, false);
             uint x=0,y=0;
@@ -161,8 +157,7 @@ loopEnd:
                 table.Attach(widgetList[0], x+0,x+1, y, y+1);
                 table.Attach(widgetList[1], x+1,x+2, y, y+1);
 
-                helpButtonContainers[i] = new Gtk.HBox();
-                widgetList[2] = helpButtonContainers[i];
+                widgetList[2] = new Gtk.HBox(); // Container for help button
                 table.Attach(widgetList[2], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
 
                 widgetLists.Add(widgetList);
@@ -246,6 +241,8 @@ loopEnd:
             widgetLists[i][1] = newWidget;
         }
 
+        // Can replace the help button widget with something else. However if you put a container
+        // there it could get overwritten with a help button again.
         public void AddWidgetToRight(string name, Gtk.Widget widget) {
             int i = GetValueIndex(name);
             widgetLists[i][2].Dispose(); // Removes help button
@@ -297,7 +294,7 @@ loopEnd:
             IList<ValueReference> refs = valueReferenceGroup.GetValueReferences();
 
             for (int i=0; i<refs.Count; i++) {
-                Gtk.Container container = helpButtonContainers[i];
+                Gtk.Container container = widgetLists[i][2] as Gtk.Container;
                 if (container == null)
                     continue;
 
