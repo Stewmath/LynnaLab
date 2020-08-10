@@ -298,11 +298,23 @@ loopEnd:
                 if (container == null)
                     continue;
 
+                bool isHelpButton = true;
+
                 // Remove previous help button
                 foreach (Gtk.Widget widget in container.Children) {
+                    // Really hacky way to check whether this is the help button as we expect, or
+                    // whether the "AddWidgetToRight" function was called to replace it, in which
+                    // case we don't try to add the help button at all
+                    if (!(widget is Gtk.Button && (widget as Gtk.Button).Label == "?")) {
+                        isHelpButton = false;
+                        continue;
+                    }
                     container.Remove(widget);
                     widget.Dispose();
                 }
+
+                if (!isHelpButton)
+                    continue;
 
                 ValueReference r = refs[i];
                 if (r.Documentation != null) {
