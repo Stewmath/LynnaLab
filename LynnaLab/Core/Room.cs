@@ -195,11 +195,18 @@ namespace LynnaLab
         public ValueReferenceGroup ValueReferenceGroup { get; private set; }
 
 
-        // # of bytes per row (including unused bytes; this means it has a value of 16 for large
-        // rooms, which is 1 higher than the width, which is 15).
+        /// # of bytes per row (including unused bytes; this means it has a value of 16 for large
+        /// rooms, which is 1 higher than the width, which is 15).
         int Stride {
             get { return width == 10 ? 10 : 16; }
 
+        }
+
+        /// Whether a room pack value exists or not (only exists for the main overworld groups)
+        bool HasRoomPack {
+            get {
+                return GetRoomPackFile() != null;
+            }
         }
 
 
@@ -307,6 +314,24 @@ namespace LynnaLab
             return Project.GetBinaryFile(path);
         }
 
+        MemoryFileStream GetRoomPackFile() {
+            string s;
+            if (Project.GameString == "seasons") {
+                if (Group != 0)
+                    return null;
+                s = "rooms/seasons/roomPacks.bin";
+            }
+            else { // ages
+                if (Group == 0)
+                    s = "rooms/ages/roomPacksPresent.bin";
+                else if (Group == 1)
+                    s = "rooms/ages/roomPacksPast.bin";
+                else
+                    return null;
+            }
+            return Project.GetBinaryFile(s);
+        }
+
         void UpdateRoomData() {
             if (tileDataFile != null) {
                 tileDataFile.RemoveModifiedEventHandler(TileDataModified);
@@ -405,6 +430,28 @@ namespace LynnaLab
         }
 
         void GenerateValueReferenceGroup() {
+            ValueReference roomPackVr;
+            if (HasRoomPack) {
+                roomPackVr = new StreamValueReference(Project,
+                        stream: GetRoomPackFile(),
+                        name: "Room Pack",
+                        offset: Index & 0xff,
+                        type: DataValueType.Byte);
+            }
+            else {
+                // Placeholder (need to keep elements the same at all times to make the UI simpler)
+                roomPackVr = new AbstractIntValueReference(Project,
+                        name: "Room Pack",
+                        getter: () => 0,
+                        setter: (v) => {},
+                        maxValue: 255,
+                        editable: false);
+            }
+            roomPackVr.Tooltip = "Seasons: Forces a season recheck when transitioning between rooms with different values."
+                + "\nBoth games: Specific values force different tilesets to load in animal companion regions."
+                + "\nAges: Forces seasons-like screen reloads only if bit 7 is set (value $80 or above).";
+
+
             var vrs = new ValueReference[] {
                 new StreamValueReference(Project,
                         stream: GetMusicFile(),
@@ -419,12 +466,14 @@ namespace LynnaLab
                         type: DataValueType.ByteBits,
                         startBit: 0,
                         endBit: 6),
+                roomPackVr,
                 new StreamValueReference(Project,
                         stream: GetTilesetMappingFile(),
                         name: "Gfx Load After Transition",
                         offset: Index & 0xff,
                         type: DataValueType.ByteBit,
-                        startBit: 7),
+                        startBit: 7,
+                        tooltip: "Check to load this screen's tileset graphics after the screen transition, instead of before."),
             };
 
             ValueReferenceGroup = new ValueReferenceGroup(vrs);

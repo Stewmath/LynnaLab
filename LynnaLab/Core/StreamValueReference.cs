@@ -19,9 +19,10 @@ namespace LynnaLab
         LockableEvent<ValueModifiedEventArgs> eventHandler = new LockableEvent<ValueModifiedEventArgs>();
 
         // Standard constructor
-        public StreamValueReference(Project project, MemoryFileStream stream, string name, int offset, DataValueType type, int startBit=0, int endBit=0, bool editable=true, string constantsMappingString=null)
+        public StreamValueReference(Project project, MemoryFileStream stream, string name, int offset, DataValueType type, int startBit=0, int endBit=0, bool editable=true, string constantsMappingString=null, string tooltip=null)
             : base(name, DataValueReference.GetValueType(type), editable, constantsMappingString)
         {
+            base.Tooltip = tooltip;
             base.Project = project;
 
             this.stream = stream;
