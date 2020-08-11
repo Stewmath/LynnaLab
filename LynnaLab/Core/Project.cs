@@ -23,6 +23,7 @@ namespace LynnaLab
         public readonly ConstantsMapping PartMapping;
         public readonly ConstantsMapping ItemMapping;
         public readonly ConstantsMapping SpecialObjectMapping;
+        public readonly ConstantsMapping ItemDropMapping;
 
         log4net.Appender.RollingFileAppender logAppender;
 
@@ -129,6 +130,9 @@ namespace LynnaLab
             SpecialObjectMapping = new ConstantsMapping(
                     GetFileParser("constants/specialObjectTypes.s"),
                     "SPECIALOBJECTID_");
+            ItemDropMapping = new ConstantsMapping(
+                    GetFileParser("constants/itemDrops.s"),
+                    "ITEM_DROP_");
 
             // Parse everything in data/
             // A few files need to be loaded before others through

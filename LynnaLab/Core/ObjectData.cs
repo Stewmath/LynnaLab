@@ -122,7 +122,7 @@ namespace LynnaLab {
                 return new List<ValueReference> { // Item Drop
                     new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
                     new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0),
-                    new DataValueReference(data,"Item",1,DataValueType.Byte),
+                    new DataValueReference(data,"Item",1,DataValueType.Byte,constantsMappingString:"ItemDropMapping"),
                     new DataValueReference(data,"Y",2,DataValueType.ByteBits,4,7),
                     new DataValueReference(data,"X",2,DataValueType.ByteBits,0,3),
                 };
