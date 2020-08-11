@@ -68,7 +68,6 @@ namespace LynnaLab
         // The index of the selected object within SelectedObjectGroup.
         public int SelectedIndex {
             get { return selectedIndex; }
-            set { selectedIndex = value; }
         }
 
         public ObjectDefinition SelectedObject {
@@ -210,6 +209,11 @@ namespace LynnaLab
                     button.Valign = Gtk.Align.Center;
 
                     button.Clicked += (sender, args) => {
+                        if (selectedObjectGroup == group) {
+                            selectedObjectGroup = null;
+                            activeObject = null;
+                            selectedIndex = -1;
+                        }
                         topObjectGroup.RemoveGroup(group);
                         ReloadObjectBoxes();
                     };
@@ -233,7 +237,8 @@ namespace LynnaLab
         }
 
         void ObjectGroupModifiedHandler(object sender, EventArgs args) {
-            SelectObject(selectedObjectGroup, activeObject);
+            if (selectedObjectGroup != null && activeObject != null)
+                SelectObject(selectedObjectGroup, activeObject);
         }
 
         void UpdateDocumentation() {
