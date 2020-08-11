@@ -81,6 +81,8 @@ namespace LynnaLab
 
                 if (_editingWarpDestination != null)
                     _editingWarpDestination.AddModifiedHandler(OnWarpModified);
+
+                WarpDestEditModeChangedEvent?.Invoke(this, _editingWarpDestination != null);
             }
         }
 
@@ -116,9 +118,13 @@ namespace LynnaLab
         }
 
 
-        // Variables
+        // Events
 
-        public event EventHandler<Room> RoomChangedEvent = delegate {};
+        public event EventHandler<Room> RoomChangedEvent;
+        public event EventHandler<bool> WarpDestEditModeChangedEvent;
+
+
+        // Variables
 
         Room room;
         ObjectGroupEditor _objectEditor;
@@ -193,7 +199,7 @@ namespace LynnaLab
             if (EditingWarpDestination != null)
                 EditingWarpDestination.DestRoom = r;
 
-            RoomChangedEvent(this, r);
+            RoomChangedEvent?.Invoke(this, r);
 
             QueueDraw();
         }

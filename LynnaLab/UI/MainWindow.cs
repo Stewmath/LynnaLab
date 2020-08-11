@@ -194,27 +194,33 @@ public class MainWindow
         }));
 
         tilesetViewer1.HoverChangedEvent += eventGroup.Add<int>((sender, tile) => {
-            if (tilesetViewer1.HoveringIndex == -1)
-                statusbar1.Push(1,
-                        "Selected Tile: 0x" + tilesetViewer1.SelectedIndex.ToString("X2"));
-            else
-                statusbar1.Push(1,
-                        "Hovering Tile: 0x" + tilesetViewer1.HoveringIndex.ToString("X2"));
+            if (roomeditor1.EditingWarpDestination != null)
+                return;
+            statusbar1.Pop(1);
+            if (tilesetViewer1.HoveringIndex != -1)
+                statusbar1.Push(1, "Hovering Tile: 0x" + tilesetViewer1.HoveringIndex.ToString("X2"));
         });
         tilesetViewer1.AddTileSelectedHandler(eventGroup.Add<int>(delegate(object sender, int index) {
-            statusbar1.Push(1,
-                    "Selected Tile: 0x" + index.ToString("X2"));
+            if (roomeditor1.EditingWarpDestination != null)
+                return;
+            statusbar1.Push(2, "Selected Tile: 0x" + index.ToString("X2"));
         }));
 
         roomeditor1.HoverChangedEvent += eventGroup.Add<int>((sender, tile) => {
-            if (roomeditor1.HoveringIndex == -1)
+            if (roomeditor1.EditingWarpDestination != null)
+                return;
+            statusbar1.Pop(1);
+            if (roomeditor1.HoveringIndex != -1)
                 statusbar1.Push(1,
-                        "Selected Tile: 0x" + tilesetViewer1.SelectedIndex.ToString("X2"));
-            else
-                statusbar1.Push(2,
-                        "Hovering Tile: (" + roomeditor1.HoveringX +
-                        ", " + roomeditor1.HoveringY + ")");
+                        "Hovering Pos (YX): $" + roomeditor1.HoveringY + roomeditor1.HoveringX);
         });
+        roomeditor1.WarpDestEditModeChangedEvent += eventGroup.Add<bool>((sender, activated) => {
+            if (activated)
+                statusbar1.Push(10, "Entered warp destination editing mode. To exit this mode, right-click on the warp destination and select \"Done\".");
+            else
+                statusbar1.Pop(10);
+        });
+        statusbar1.Push(2, "Selected Tile: 0x00");
 
         OnDarkenDungeonRoomsCheckboxToggled(null, null);
 
