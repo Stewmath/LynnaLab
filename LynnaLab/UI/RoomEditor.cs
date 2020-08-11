@@ -75,12 +75,12 @@ namespace LynnaLab
             }
             private set {
                 if (_editingWarpDestination != null)
-                    _editingWarpDestination.RemoveModifiedHandler(OnWarpModified);
+                    _editingWarpDestination.RemoveModifiedHandler(OnDestinationWarpModified);
 
                 _editingWarpDestination = value;
 
                 if (_editingWarpDestination != null)
-                    _editingWarpDestination.AddModifiedHandler(OnWarpModified);
+                    _editingWarpDestination.AddModifiedHandler(OnDestinationWarpModified);
 
                 WarpDestEditModeChangedEvent?.Invoke(this, _editingWarpDestination != null);
             }
@@ -249,7 +249,17 @@ namespace LynnaLab
             QueueDraw();
         }
 
-        // Called when the WarpGroup is modified
+        // Called when the "EditingWarpDestination" is modified
+        void OnDestinationWarpModified(object sender, EventArgs args) {
+            if (EditingWarpDestination.DestRoom != Room)
+                SetRoom(EditingWarpDestination.DestRoom);
+            else {
+                GenerateRoomComponents();
+                QueueDraw();
+            }
+        }
+
+        // Called when the WarpGroup is modified (not the warp destination if in that mode)
         void OnWarpModified(object sender, EventArgs args) {
             GenerateRoomComponents();
             QueueDraw();

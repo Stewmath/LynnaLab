@@ -21,7 +21,7 @@ namespace LynnaLab
 
             SourceData.AddModifiedEventHandler(OnDataModified);
 
-            vrg = ConstructValueReferenceGroup();
+            ConstructValueReferenceGroup();
         }
 
 
@@ -189,7 +189,7 @@ namespace LynnaLab
         // ValueReferenceGroup for simpler editing based on a few named parameters.
         // All modifications to the underlying data should be done through the ValueReferenceGroup
         // when possible, so that its "value changed" event handlers are properly invoked.
-        ValueReferenceGroup ConstructValueReferenceGroup() {
+        void ConstructValueReferenceGroup() {
             var valueReferences = new List<ValueReference>();
 
             ValueReference vref;
@@ -318,8 +318,8 @@ namespace LynnaLab
                     constantsMappingString: "DestTransitionMapping");
             valueReferences.Add(vref);
 
-
-            return new ValueReferenceGroup(valueReferences);
+            vrg = new ValueReferenceGroup(valueReferences);
+            vrg.AddValueModifiedHandler((sender, args) => OnDataModified(sender, null));
         }
 
 
@@ -355,11 +355,11 @@ namespace LynnaLab
                         + DestData.GetNumReferences() + " references.");
         }
 
-        // Always use this function when changing the DestData so that modified handlers are updated
+        // Used to always use this function so that I could add and remove modified hooks on the
+        // underlying "dest data". But all modifications should be done through the "Warp" class
+        // anyway, not the "WarpDestData" class, so that's not necessary.
         void SetDestData(WarpDestData newDestData) {
-            DestData.RemoveModifiedEventHandler(OnDataModified);
             SourceData.SetDestData(newDestData);
-            DestData.AddModifiedEventHandler(OnDataModified);
         }
 
 
