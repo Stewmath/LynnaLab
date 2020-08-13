@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 
 namespace LynnaLab {
-    // Public interface over the ObjectData class.
+    /// Public interface over the ObjectData class.
     public class ObjectDefinition : ValueReferenceGroup
     {
         ObjectGroup objectGroup;

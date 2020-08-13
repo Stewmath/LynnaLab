@@ -18,6 +18,13 @@ namespace LynnaLab {
         Garbage
     }
 
+    /// Data object corresponding to objects, as in "which objects go in a given room". For most
+    /// purposes use the "ObjectDefinition" class instead which is an abstraction over this.
+    ///
+    /// This class hides the fact that certain object opcodes can take variable number of
+    /// parameters. For example, "obj_Interaction $01 $00" has only the ID ($01) and subID ($00)
+    /// bytes set; but the parameters which would come after that (Y, X, and var03) are implicitly
+    /// "0", and this value will be returned if one attempts to access them.
     public class ObjectData : Data {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -39,15 +46,15 @@ namespace LynnaLab {
 
         // # of parameters for each opcode, used by FileParser.cs
         public static int[] ObjectCommandMinParams = {
-            1,  1,  1,  1,  1,  2,  3,  4,  2,  2,  0,  0, 2
+            1,  2,  1,  1,  1,  3,  4,  5,  3,  2,  0,  0, 2
         };
 
         public static int[] ObjectCommandMaxParams = {
-            -1, 4, -1, -1, -1, -1,  4, -1,  4,  3, -1, -1, 2
+            -1, 5, -1, -1, -1, -1,  5, -1,  5,  3, -1, -1, 2
         };
 
         public static int[] ObjectCommandDefaultParams = {
-            1,  1,  1,  1,  1,  2,  4,  4,  2,  3,  0,  0, 2
+            1,  2,  1,  1,  1,  3,  5,  5,  3,  3,  0,  0, 2
         };
 
 
@@ -64,11 +71,11 @@ namespace LynnaLab {
                 };
             case ObjectType.Interaction:
                 return new List<ValueReference> { // Interaction
-                    new DataValueReference(data,"ID",0,DataValueType.WordBits,8,15,true,"InteractionMapping"),
-                    new DataValueReference(data,"SubID",0,DataValueType.WordBits,0,7),
-                    new DataValueReference(data,"Y",1,DataValueType.Byte),
-                    new DataValueReference(data,"X",2,DataValueType.Byte),
-                    new DataValueReference(data,"Var03",3,DataValueType.Byte),
+                    new DataValueReference(data,"ID",0,DataValueType.Byte,constantsMappingString:"InteractionMapping"),
+                    new DataValueReference(data,"SubID",1,DataValueType.Byte),
+                    new DataValueReference(data,"Y",2,DataValueType.Byte),
+                    new DataValueReference(data,"X",3,DataValueType.Byte),
+                    new DataValueReference(data,"Var03",4,DataValueType.Byte),
                 };
             case ObjectType.Pointer:
                 return new List<ValueReference> { // Pointer
@@ -89,34 +96,34 @@ namespace LynnaLab {
                     new DataValueReference(data,"Uncounted",0,DataValueType.ByteBit,1,1),
                     new DataValueReference(data,"Spawn anywhere",0,DataValueType.ByteBit,2,2),
                     new DataValueReference(data,"Quantity",0,DataValueType.ByteBits,5,7),
-                    new DataValueReference(data,"ID",1,DataValueType.WordBits,8,15,true,"EnemyMapping"),
-                    new DataValueReference(data,"SubID",1,DataValueType.WordBits,0,7),
+                    new DataValueReference(data,"ID",1,DataValueType.Byte,constantsMappingString:"EnemyMapping"),
+                    new DataValueReference(data,"SubID",2,DataValueType.Byte),
                 };
             case ObjectType.SpecificEnemyA:
                 return new List<ValueReference> { // Specific Enemy A
                     new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
                     new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0),
                     new DataValueReference(data,"Uncounted",0,DataValueType.ByteBit,1,1),
-                    new DataValueReference(data,"ID",1,DataValueType.WordBits,8,15,true,"EnemyMapping"),
-                    new DataValueReference(data,"SubID",1,DataValueType.WordBits,0,7),
-                    new DataValueReference(data,"Y",2,DataValueType.Byte),
-                    new DataValueReference(data,"X",3,DataValueType.Byte),
+                    new DataValueReference(data,"ID",1,DataValueType.Byte,constantsMappingString:"EnemyMapping"),
+                    new DataValueReference(data,"SubID",2,DataValueType.Byte),
+                    new DataValueReference(data,"Y",3,DataValueType.Byte),
+                    new DataValueReference(data,"X",4,DataValueType.Byte),
                 };
             case ObjectType.SpecificEnemyB:
                 return new List<ValueReference> { // Specific Enemy B
-                    new DataValueReference(data,"ID",0,DataValueType.WordBits,8,15),
-                    new DataValueReference(data,"SubID",0,DataValueType.WordBits,0,7),
-                    new DataValueReference(data,"Y",1,DataValueType.Byte),
-                    new DataValueReference(data,"X",2,DataValueType.Byte),
-                    new DataValueReference(data,"Var03",3,DataValueType.Byte),
+                    new DataValueReference(data,"ID",0,DataValueType.Byte,constantsMappingString:"EnemyMapping"),
+                    new DataValueReference(data,"SubID",1,DataValueType.Byte),
+                    new DataValueReference(data,"Y",2,DataValueType.Byte),
+                    new DataValueReference(data,"X",3,DataValueType.Byte),
+                    new DataValueReference(data,"Var03",4,DataValueType.Byte),
                 };
             case ObjectType.Part:
                 return new List<ValueReference> { // Part
-                    new DataValueReference(data,"ID",0,DataValueType.WordBits,8,15,true,"PartMapping"),
-                    new DataValueReference(data,"SubID",0,DataValueType.WordBits,0,7),
-                    new DataValueReference(data,"Y",1,DataValueType.Byte),
-                    new DataValueReference(data,"X",2,DataValueType.Byte),
-                    new DataValueReference(data,"Var03",3,DataValueType.Byte),
+                    new DataValueReference(data,"ID",0,DataValueType.Byte,constantsMappingString:"PartMapping"),
+                    new DataValueReference(data,"SubID",1,DataValueType.Byte),
+                    new DataValueReference(data,"Y",2,DataValueType.Byte),
+                    new DataValueReference(data,"X",3,DataValueType.Byte),
+                    new DataValueReference(data,"Var03",4,DataValueType.Byte),
                 };
             case ObjectType.ItemDrop:
                 return new List<ValueReference> { // Item Drop
@@ -232,7 +239,7 @@ namespace LynnaLab {
 
         // Returns true if this object reuses a byte from the last one
         bool IsShortened() {
-            return ((GetObjectType() == ObjectType.SpecificEnemyA && base.GetNumValues() < 4) ||
+            return ((GetObjectType() == ObjectType.SpecificEnemyA && base.GetNumValues() < 5) ||
                     (GetObjectType() == ObjectType.ItemDrop && base.GetNumValues() < 3));
         }
 
@@ -248,18 +255,18 @@ namespace LynnaLab {
                 base.InsertValue(0, last.GetValue(0));
             }
             else if (objectType == ObjectType.Interaction) {
-                if (base.GetNumValues() < 4)
-                    base.SetNumValues(4, "$00");
+                if (base.GetNumValues() < 5)
+                    base.SetNumValues(5, "$00");
             }
             else if (objectType == ObjectType.Part) {
-                if (base.GetNumValues() != 2 && base.GetNumValues() != 4)
+                if (base.GetNumValues() != 3 && base.GetNumValues() != 5)
                     log.Warn("Part object has an unexpected number of parameters: " + base.GetString());
-                if (base.GetNumValues() < 4) {
-                    int y = (base.GetIntValue(1) & 0xf0) + 8;
-                    int x = ((base.GetIntValue(1) & 0x0f) << 4) + 8;
-                    base.SetNumValues(4, "$00");
-                    base.SetValue(1, Wla.ToHex(y, 2));
-                    base.SetValue(2, Wla.ToHex(x, 2));
+                if (base.GetNumValues() < 5) {
+                    int y = (base.GetIntValue(2) & 0xf0) + 8;
+                    int x = ((base.GetIntValue(2) & 0x0f) << 4) + 8;
+                    base.SetNumValues(5, "$00");
+                    base.SetValue(2, Wla.ToHex(y, 2));
+                    base.SetValue(3, Wla.ToHex(x, 2));
                 }
             }
         }
@@ -275,25 +282,25 @@ namespace LynnaLab {
                 }
             }
             else if (objectType == ObjectType.Interaction) {
-                if (base.GetIntValue(3) == 0) { // Check var03
-                    if (base.GetIntValue(1) == 0 && base.GetIntValue(2) == 0) // Check Y, X
-                        base.SetNumValues(1, "$00");
+                if (base.GetIntValue(4) == 0) { // Check var03
+                    if (base.GetIntValue(2) == 0 && base.GetIntValue(3) == 0) // Check Y, X
+                        base.SetNumValues(2, "$00");
                     else
-                        base.SetNumValues(3, "$00");
+                        base.SetNumValues(4, "$00");
                 }
             }
             else if (objectType == ObjectType.Part) {
                 bool expanded = false;
 
-                if (base.GetIntValue(3) != 0) // Check var03
+                if (base.GetIntValue(4) != 0) // Check var03
                     expanded = true;
-                else if ((base.GetIntValue(1) - 8) % 16 != 0 || (base.GetIntValue(2) - 8) % 16 != 0) // Check Y, X
+                else if ((base.GetIntValue(2) - 8) % 16 != 0 || (base.GetIntValue(3) - 8) % 16 != 0) // Check Y, X
                     expanded = true;
 
                 if (!expanded) {
-                    int yx = (((base.GetIntValue(1) - 8) / 16) << 4) | ((base.GetIntValue(2) - 8) / 16);
-                    base.SetNumValues(2, "$00");
-                    base.SetValue(1, Wla.ToHex(yx, 2));
+                    int yx = (((base.GetIntValue(2) - 8) / 16) << 4) | ((base.GetIntValue(3) - 8) / 16);
+                    base.SetNumValues(3, "$00");
+                    base.SetValue(2, Wla.ToHex(yx, 2));
                 }
             }
         }
