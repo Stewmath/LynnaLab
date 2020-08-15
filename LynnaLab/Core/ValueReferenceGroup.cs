@@ -15,8 +15,14 @@ namespace LynnaLab
             foreach (var vref in refs) {
                 ValueReference copy = vref.Clone();
                 valueReferences.Add(copy);
+
+                copy.AddValueModifiedHandler((sender, args) => ModifiedEvent?.Invoke(sender, args));
             }
         }
+
+
+        public event EventHandler<ValueModifiedEventArgs> ModifiedEvent;
+
 
         // Let subclasses set valueReferences manually
         protected ValueReferenceGroup() {}
@@ -123,13 +129,12 @@ namespace LynnaLab
             throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
         }
 
+        // TODO: remove these, use the public event instead
         public void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
-            foreach (var vref in valueReferences)
-                vref.AddValueModifiedHandler(handler);
+            ModifiedEvent += handler;
         }
         public void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
-            foreach (var vref in valueReferences)
-                vref.RemoveValueModifiedHandler(handler);
+            ModifiedEvent -= handler;
         }
 
 

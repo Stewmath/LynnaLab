@@ -161,6 +161,7 @@
     <Compile Include="Core\PngGfxStream.cs" />
     <Compile Include="Core\AbstractBoolValueReference.cs" />
     <Compile Include="Core\Util\EventWrapper.cs" />
+    <Compile Include="Widgets\PriorityStatusbar.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

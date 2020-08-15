@@ -14,6 +14,16 @@ public class MainWindow
 {
     private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
+
+    // Status bar message priority constants
+    enum StatusbarMessage {
+        TileSelected,
+        TileHovering,
+        WrongLayoutGroup,
+        WarpDestEditMode,
+    }
+
+
     // GUI stuff
     Gtk.Window mainWindow;
 
@@ -28,7 +38,6 @@ public class MainWindow
     Gtk.SpinButton dungeonSpinButton;
     Gtk.SpinButton floorSpinButton;
     LynnaLab.Minimap dungeonMinimap;
-    Gtk.Statusbar statusbar1;
     Gtk.Box roomVreHolder;
 
     LynnaLab.SpinButtonHexadecimal roomSpinButton;
@@ -39,9 +48,11 @@ public class MainWindow
     LynnaLab.TilesetViewer tilesetViewer1;
     LynnaLab.RoomEditor roomeditor1;
     WarpEditor warpEditor = null;
+    PriorityStatusbar statusbar1;
 
     WeakEventWrapper<ValueReference, ValueModifiedEventArgs> roomTilesetModifiedEventWrapper
         = new WeakEventWrapper<ValueReference, ValueModifiedEventArgs>();
+    WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs> tilesetModifiedEventWrapper;
 
     // Variables
     uint animationTimerID = 0;
@@ -139,7 +150,6 @@ public class MainWindow
         darkenDungeonRoomsCheckbox = (Gtk.CheckButton)builder.GetObject("darkenDungeonRoomsCheckbox");
         dungeonSpinButton = (Gtk.SpinButton)builder.GetObject("dungeonSpinButton");
         floorSpinButton = (Gtk.SpinButton)builder.GetObject("floorSpinButton");
-        statusbar1 = (Gtk.Statusbar)builder.GetObject("statusbar1");
         roomVreHolder = (Gtk.Box)builder.GetObject("roomVreHolder");
 
         roomSpinButton = new SpinButtonHexadecimal();
@@ -154,6 +164,7 @@ public class MainWindow
         worldMinimap = new HighlightingMinimap();
         dungeonMinimap = new Minimap();
         warpEditor = new WarpEditor(this);
+        statusbar1 = new PriorityStatusbar();
 
         ((Gtk.Box)builder.GetObject("roomSpinButtonHolder")).Add(roomSpinButton);
         ((Gtk.Box)builder.GetObject("objectGroupEditorHolder")).Add(objectgroupeditor1);
@@ -162,6 +173,7 @@ public class MainWindow
         ((Gtk.Box)builder.GetObject("worldMinimapHolder")).Add(worldMinimap);
         ((Gtk.Box)builder.GetObject("dungeonMinimapHolder")).Add(dungeonMinimap);
         ((Gtk.Box)builder.GetObject("warpEditorHolder")).Add(warpEditor);
+        ((Gtk.Box)builder.GetObject("statusbarHolder")).Add(statusbar1);
 
         roomeditor1.Scale = 2;
         roomeditor1.TilesetViewer = tilesetViewer1;
@@ -194,33 +206,32 @@ public class MainWindow
         }));
 
         tilesetViewer1.HoverChangedEvent += eventGroup.Add<int>((sender, tile) => {
-            if (roomeditor1.EditingWarpDestination != null)
-                return;
-            statusbar1.Pop(1);
             if (tilesetViewer1.HoveringIndex != -1)
-                statusbar1.Push(1, "Hovering Tile: 0x" + tilesetViewer1.HoveringIndex.ToString("X2"));
+                statusbar1.Set((uint)StatusbarMessage.TileHovering,
+                        "Hovering Tile: 0x" + tilesetViewer1.HoveringIndex.ToString("X2"));
+            else
+                statusbar1.RemoveAll((uint)StatusbarMessage.TileHovering);
         });
         tilesetViewer1.AddTileSelectedHandler(eventGroup.Add<int>(delegate(object sender, int index) {
-            if (roomeditor1.EditingWarpDestination != null)
-                return;
-            statusbar1.Push(2, "Selected Tile: 0x" + index.ToString("X2"));
+            statusbar1.RemoveAll((uint)StatusbarMessage.TileHovering);
+            statusbar1.Set((uint)StatusbarMessage.TileSelected, "Selected Tile: 0x" + index.ToString("X2"));
         }));
 
         roomeditor1.HoverChangedEvent += eventGroup.Add<int>((sender, tile) => {
-            if (roomeditor1.EditingWarpDestination != null)
-                return;
-            statusbar1.Pop(1);
             if (roomeditor1.HoveringIndex != -1)
-                statusbar1.Push(1,
+                statusbar1.Set((uint)StatusbarMessage.TileHovering,
                         "Hovering Pos (YX): $" + roomeditor1.HoveringY + roomeditor1.HoveringX);
+            else
+                statusbar1.RemoveAll((uint)StatusbarMessage.TileHovering);
         });
         roomeditor1.WarpDestEditModeChangedEvent += eventGroup.Add<bool>((sender, activated) => {
             if (activated)
-                statusbar1.Push(10, "Entered warp destination editing mode. To exit this mode, right-click on the warp destination and select \"Done\".");
+                statusbar1.Set((uint)StatusbarMessage.WarpDestEditMode,
+                        "Entered warp destination editing mode. To exit this mode, right-click on the warp destination and select \"Done\".");
             else
-                statusbar1.Pop(10);
+                statusbar1.RemoveAll((uint)StatusbarMessage.WarpDestEditMode);
         });
-        statusbar1.Push(2, "Selected Tile: 0x00");
+        statusbar1.Set((uint)StatusbarMessage.TileSelected, "Selected Tile: 0x00");
 
         OnDarkenDungeonRoomsCheckboxToggled(null, null);
 
@@ -294,7 +305,7 @@ public class MainWindow
                     DialogFlags.DestroyWithParent,
                     MessageType.Warning,
                     ButtonsType.YesNo,
-                    "The folder you selected does not have a " + mainFile + " file. This probably indicates the folder does not contain the ages disassembly. Attempt to continue anyway?");
+                    "The folder you selected does not have a " + mainFile + " file. This probably indicates the folder does not contain the oracles disassembly. Attempt to continue anyway?");
             response = (ResponseType)d.Run();
             d.Dispose();
         }
@@ -339,19 +350,44 @@ public class MainWindow
     void SetTileset(Tileset tileset) {
         if (Project == null)
             return;
+        if (tileset == tilesetViewer1.Tileset)
+            return;
 
         eventGroup.Lock();
 
         tilesetViewer1.SetTileset(tileset);
         ActiveRoom.Tileset = tileset;
 
+        if (tilesetModifiedEventWrapper == null) {
+            tilesetModifiedEventWrapper = new WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs>();
+            tilesetModifiedEventWrapper.Event += (sender, args) => UpdateLayoutGroupWarning();
+        }
+        tilesetModifiedEventWrapper.UnbindAll();
+        tilesetModifiedEventWrapper.Bind(tileset.GetValueReferenceGroup(), "ModifiedEvent");
+
         eventGroup.Unlock();
+
+        UpdateLayoutGroupWarning();
     }
     void SetTileset(int index) {
         if (Project == null)
             return;
 
         SetTileset(Project.GetIndexedDataType<Tileset>(index));
+    }
+
+    void UpdateLayoutGroupWarning() {
+        Tileset tileset = tilesetViewer1.Tileset;
+
+        if (tileset.LayoutGroup != Project.GetCanonicalLayoutGroup(ActiveRoom.Group)) {
+            statusbar1.Set((uint)StatusbarMessage.WrongLayoutGroup, string.Format(
+                    "WARNING: Layout group of tileset ({0:X}) does not match expected value ({1:X})!"
+                    + " This room's layout data might be shared with another's.",
+                    tileset.LayoutGroup,
+                    Project.GetCanonicalLayoutGroup(ActiveRoom.Group)));
+        }
+        else
+            statusbar1.RemoveAll((uint)StatusbarMessage.WrongLayoutGroup);
     }
 
     void OnRoomChanged() {
@@ -381,6 +417,8 @@ public class MainWindow
         roomTilesetModifiedEventWrapper.Bind(ActiveRoom.ValueReferenceGroup["Tileset"], "ModifiedEvent");
 
         eventGroup.Unlock();
+
+        UpdateLayoutGroupWarning();
     }
 
     public void UpdateMinimapFromRoom(bool changeWorldDungeonTab) {
@@ -496,7 +534,7 @@ public class MainWindow
 
     protected void OnOpenActionActivated(object sender, EventArgs e)
     {
-        Gtk.FileChooserDialog dialog = new FileChooserDialog("Select the ages disassembly base directory",
+        Gtk.FileChooserDialog dialog = new FileChooserDialog("Select the oracles disassembly base directory",
                 mainWindow,
                 FileChooserAction.SelectFolder,
                 "Cancel", ResponseType.Cancel,
