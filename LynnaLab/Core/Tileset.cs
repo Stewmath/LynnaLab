@@ -168,7 +168,6 @@ namespace LynnaLab
 
         // Alternative method to access data fields (this data feeds the GUI directly)
         void ConstructValueReferenceGroup() {
-            // TODO: save main gfx, unique gfx, palette as strings, not ints
             var list = new List<ValueReference>();
 
             if (Project.GameString == "ages") {
@@ -265,12 +264,14 @@ namespace LynnaLab
                             name: "Unique Gfx",
                             index: 0,
                             type: DataValueType.Byte,
-                            constantsMappingString: "UniqueGfxMapping"),
+                            constantsMappingString: "UniqueGfxMapping",
+                            useConstantAlias: true),
                     new DataValueReference(GetDataIndex(3),
                             name: "Main Gfx",
                             index: 0,
                             type: DataValueType.Byte,
-                            constantsMappingString: "MainGfxMapping"),
+                            constantsMappingString: "MainGfxMapping",
+                            useConstantAlias: true),
                     new DataValueReference(GetDataIndex(5),
                             name: "Layout",
                             index: 0,
@@ -283,7 +284,8 @@ namespace LynnaLab
                         name: "Palettes",
                         index: 0,
                         type: DataValueType.Byte,
-                        constantsMappingString: "PaletteHeaderMapping"),
+                        constantsMappingString: "PaletteHeaderMapping",
+                        useConstantAlias: true),
                 new DataValueReference(GetDataIndex(6),
                         name: "Layout Group",
                         index: 0,

@@ -64,6 +64,7 @@ namespace LynnaLab
         int startBit,endBit;
         DataValueType dataType;
         Data _data;
+        bool useConstantAlias; // If true, save value as ConstantsMapping string instead of as int
 
         WeakEventWrapper<Data, DataModifiedEventArgs> dataEventWrapper = new WeakEventWrapper<Data, DataModifiedEventArgs>();
 
@@ -74,13 +75,14 @@ namespace LynnaLab
         }
 
 
-        public DataValueReference(Data data, string name, int index, DataValueType type, int startBit=0, int endBit=0, bool editable=true, string constantsMappingString=null, string tooltip=null)
+        public DataValueReference(Data data, string name, int index, DataValueType type, int startBit=0, int endBit=0, bool editable=true, string constantsMappingString=null, bool useConstantAlias=false, string tooltip=null)
         : base(name, GetValueType(type), editable, constantsMappingString) {
             this._data = data;
             this.dataType = type;
             this.valueIndex = index;
             this.startBit = startBit;
             this.endBit = endBit;
+            this.useConstantAlias = useConstantAlias;
 
             base.Tooltip = tooltip;
             base.Project = _data.Project;
@@ -97,6 +99,7 @@ namespace LynnaLab
             this.startBit = vref.startBit;
             this.endBit = vref.endBit;
             this._data = vref._data;
+            this.useConstantAlias = vref.useConstantAlias;
 
             dataEventWrapper.Event += OnDataModified;
             BindEventHandler();
@@ -154,6 +157,16 @@ namespace LynnaLab
             if (i > MaxValue) {
                 log.Warn(string.Format("Tried to set \"{0}\" to {1} (max value is {2})", Name, i, MaxValue));
                 i = MaxValue;
+            }
+
+            if (useConstantAlias) {
+                if (dataType == DataValueType.ByteBits || dataType == DataValueType.WordBits 
+                        || dataType == DataValueType.ByteBit) {
+                    throw new Exception("Can't use constant alias on this data type");
+                }
+
+                SetValue(ConstantsMapping.ByteToString(i));
+                return;
             }
             switch(dataType) {
                 case DataValueType.HalfByte:
