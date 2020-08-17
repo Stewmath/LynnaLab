@@ -19,7 +19,12 @@ namespace LynnaLab
             SourceGroup = group;
             SourceData = data;
 
-            SourceData.AddModifiedEventHandler(OnDataModified);
+            // Do not, repeat, do NOT install a modified handler onto the source data - not as long
+            // as the "DestGroup" and "DestIndex" fields behave as they do currently; they should
+            // behave as a single atomic field, but they don't. The handler would trigger when only
+            // one, but not the other, has been modified, putting things into a invalid state.
+            // In any case there is NO NEED for a modified handler from the source data because it
+            // should never be modified except through this class.
 
             ConstructValueReferenceGroup();
         }
