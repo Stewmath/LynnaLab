@@ -58,8 +58,6 @@ public class MainWindow
     uint animationTimerID = 0;
     PluginCore pluginCore;
 
-    Room _activeRoom;
-
     // Certain "update" events are called indirectly through this. Certain updates are delayed until
     // it is "unlocked", because we sometimes don't want updates to certain widget properties to be
     // applied immediately.
@@ -71,12 +69,13 @@ public class MainWindow
     public Project Project { get; set; }
     public Room ActiveRoom {
         get {
-            return _activeRoom;
+            return roomeditor1.Room;
         }
         set {
-            if (_activeRoom != value) {
-                _activeRoom = value;
-                eventGroup.Invoke(OnRoomChanged);
+            if (roomeditor1.Room != value) {
+                roomeditor1.SetRoom(value);
+                // roomeditor1's changed event handler will fire, which in turn invokes
+                // "OnRoomChanged", so don't call that here.
             }
         }
     }
@@ -191,11 +190,16 @@ public class MainWindow
         minimapNotebook.SwitchPage += new SwitchPageHandler(eventGroup.Add<SwitchPageArgs>(OnMinimapNotebookSwitchPage));
         contextNotebook.SwitchPage += new SwitchPageHandler(eventGroup.Add<SwitchPageArgs>(OnContextNotebookSwitchPage));
 
-        roomeditor1.RoomChangedEvent += eventGroup.Add<Room>((sender, room) => {
-            if (room != ActiveRoom) {
-                ActiveRoom = room;
-                UpdateMinimapFromRoom(true);
-            }
+        roomeditor1.RoomChangedEvent += eventGroup.Add<RoomChangedEventArgs>((sender, args) => {
+            eventGroup.Lock();
+            OnRoomChanged();
+
+            // Only update minimap if the room editor did a "follow warp". Otherwise, we'll decide
+            // whether to update the minimap from whatever code changed the room.
+            if (args.fromFollowWarp)
+                UpdateMinimapFromRoom(args.fromFollowWarp);
+
+            eventGroup.Unlock();
         });
 
         dungeonMinimap.AddTileSelectedHandler(eventGroup.Add<int>(delegate(object sender, int index) {
@@ -393,7 +397,6 @@ public class MainWindow
     void OnRoomChanged() {
         eventGroup.Lock();
 
-        roomeditor1.SetRoom(ActiveRoom);
         roomSpinButton.Value = ActiveRoom.Index;
         warpEditor.SetMap(ActiveRoom.Index>>8, ActiveRoom.Index&0xff);
         SetTileset(ActiveRoom.Tileset);

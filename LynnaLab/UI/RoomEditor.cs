@@ -5,6 +5,11 @@ using Gtk;
 
 namespace LynnaLab
 {
+    public class RoomChangedEventArgs {
+        public Room room;
+        public bool fromFollowWarp;
+    }
+
     [System.ComponentModel.ToolboxItem(true)]
     public class RoomEditor : TileGridViewer
     {
@@ -120,7 +125,7 @@ namespace LynnaLab
 
         // Events
 
-        public event EventHandler<Room> RoomChangedEvent;
+        public event EventHandler<RoomChangedEventArgs> RoomChangedEvent;
         public event EventHandler<bool> WarpDestEditModeChangedEvent;
 
 
@@ -177,7 +182,10 @@ namespace LynnaLab
             };
         }
 
-        public void SetRoom(Room r) {
+        public void SetRoom(Room r, bool changedFromWarpFollow = false) {
+            if (r == Room)
+                return;
+
             if (room != null) {
                 room.RoomModifiedEvent -= OnRoomModified;
                 room.GetObjectGroup().RemoveModifiedHandler(OnObjectModified);
@@ -199,7 +207,8 @@ namespace LynnaLab
             if (EditingWarpDestination != null)
                 EditingWarpDestination.DestRoom = r;
 
-            RoomChangedEvent?.Invoke(this, r);
+            RoomChangedEvent?.Invoke(this,
+                    new RoomChangedEventArgs { room = r, fromFollowWarp = changedFromWarpFollow });
 
             QueueDraw();
         }
@@ -701,7 +710,7 @@ addedAllComponents:
                 {
                     Gtk.MenuItem followButton = new Gtk.MenuItem("Follow");
                     followButton.Activated += (sender, args) => {
-                        parent.SetRoom(warp.DestRoom);
+                        parent.SetRoom(warp.DestRoom, true);
                     };
                     list.Add(followButton);
                 }
@@ -709,7 +718,7 @@ addedAllComponents:
                     Gtk.MenuItem setDestButton = new Gtk.MenuItem("Edit Destination");
                     setDestButton.Activated += (sender, args) => {
                         parent.EditingWarpDestination = warp;
-                        parent.SetRoom(warp.DestRoom);
+                        parent.SetRoom(warp.DestRoom, true);
                         parent.WarpEditor.SetSelectedWarp(warp);
                     };
                     list.Add(setDestButton);
@@ -790,7 +799,7 @@ addedAllComponents:
                     Gtk.MenuItem doneButton = new Gtk.MenuItem("Done");
                     doneButton.Activated += (sender, args) => {
                         parent.EditingWarpDestination = null;
-                        parent.SetRoom(warp.SourceRoom);
+                        parent.SetRoom(warp.SourceRoom, true);
                     };
                     list.Add(doneButton);
                 }
