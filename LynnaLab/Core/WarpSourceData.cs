@@ -160,7 +160,7 @@ namespace LynnaLab
             get {
                 return vrg.GetIntValue("Dest Index");
             }
-            set {
+            private set {
                 vrg.SetValue("Dest Index",value);
             }
         }
@@ -168,7 +168,13 @@ namespace LynnaLab
             get {
                 return vrg.GetIntValue("Dest Group");
             }
-            set {
+            private set {
+                // HACKY WORKAROUND: Set "DestIndex" to 0 first. This will prevent "index out of
+                // bounds" errors if you set the group to one which has fewer indices than the
+                // previous one.
+                // Always set the "dest group" first, then the "dest index".
+                DestIndex = 0;
+
                 vrg.SetValue("Dest Group",value);
             }
         }
@@ -331,8 +337,8 @@ namespace LynnaLab
         // Set the WarpDestData associated with this source, setting DestIndex
         // and DestGroup appropriately
         public void SetDestData(WarpDestData data) {
-            DestIndex = data.DestIndex;
             DestGroupIndex = data.DestGroup.Index;
+            DestIndex = data.DestIndex;
             // The handler defined in the constructor will update the
             // referencedData variable
         }
