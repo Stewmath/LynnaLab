@@ -223,8 +223,8 @@ public class MainWindow
 
         roomeditor1.HoverChangedEvent += eventGroup.Add<int>((sender, tile) => {
             if (roomeditor1.HoveringIndex != -1)
-                statusbar1.Set((uint)StatusbarMessage.TileHovering,
-                        "Hovering Pos (YX): $" + roomeditor1.HoveringY + roomeditor1.HoveringX);
+                statusbar1.Set((uint)StatusbarMessage.TileHovering, string.Format(
+                        "Hovering Pos (YX): ${0:X}{1:X}", roomeditor1.HoveringY, roomeditor1.HoveringX));
             else
                 statusbar1.RemoveAll((uint)StatusbarMessage.TileHovering);
         });
@@ -252,6 +252,11 @@ public class MainWindow
     }
 
     void LoadPlugins() {
+        // TEMPORARY: Hide "Action" and "Debug" menus for now (AutoSmoother will be hidden until
+        // it's more fleshed out)
+        menubar1.Remove(actionMenuItem);
+        menubar1.Remove(debugMenuItem);
+
         pluginCore.ReloadPlugins();
 
         foreach (Plugin plugin in pluginCore.GetPlugins()) {
