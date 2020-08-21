@@ -24,6 +24,7 @@ namespace LynnaLab
         public readonly ConstantsMapping ItemMapping;
         public readonly ConstantsMapping SpecialObjectMapping;
         public readonly ConstantsMapping ItemDropMapping;
+        public readonly ConstantsMapping TreasureMapping;
 
         log4net.Appender.RollingFileAppender logAppender;
 
@@ -133,6 +134,10 @@ namespace LynnaLab
             ItemDropMapping = new ConstantsMapping(
                     GetFileParser("constants/itemDrops.s"),
                     "ITEM_DROP_");
+            TreasureMapping = new ConstantsMapping(
+                    GetFileParser("constants/treasure.s"),
+                    "TREASURE_",
+                    maxValue: 256);
 
             // Parse everything in data/
             // A few files need to be loaded before others through
@@ -307,13 +312,23 @@ namespace LynnaLab
             ProjectDataType o;
             if (dataStructDictionary.TryGetValue(s, out o))
                 return o as T;
-            o = (ProjectIndexedDataType)Activator.CreateInstance(
-                    typeof(T),
-                    BindingFlags.NonPublic | BindingFlags.CreateInstance | BindingFlags.Instance,
-                    null,
-                    new object[] { this, identifier },
-                    null
-                    );
+
+            try {
+                o = (ProjectIndexedDataType)Activator.CreateInstance(
+                        typeof(T),
+                        BindingFlags.NonPublic | BindingFlags.CreateInstance | BindingFlags.Instance,
+                        null,
+                        new object[] { this, identifier },
+                        null
+                        );
+            }
+            // If an exception occurs during reflection, it always throws
+            // a TargetInvocationException. So we unpack that and throw the "real" exception.
+            catch (System.Reflection.TargetInvocationException ex) {
+                throw ex.InnerException;
+            }
+
+            AddDataType(o);
 
             return o as T;
         }
@@ -327,13 +342,23 @@ namespace LynnaLab
             ProjectDataType o;
             if (dataStructDictionary.TryGetValue(s, out o))
                 return o as T;
-            o = (ProjectDataType)Activator.CreateInstance(
-                    typeof(T),
-                    BindingFlags.NonPublic | BindingFlags.CreateInstance | BindingFlags.Instance,
-                    null,
-                    new object[] { this, identifier },
-                    null
-                    );
+
+            try {
+                o = (ProjectDataType)Activator.CreateInstance(
+                        typeof(T),
+                        BindingFlags.NonPublic | BindingFlags.CreateInstance | BindingFlags.Instance,
+                        null,
+                        new object[] { this, identifier },
+                        null
+                        );
+            }
+            // If an exception occurs during reflection, it always throws
+            // a TargetInvocationException. So we unpack that and throw the "real" exception.
+            catch (System.Reflection.TargetInvocationException ex) {
+                throw ex.InnerException;
+            }
+
+            AddDataType(o);
 
             return o as T;
         }
@@ -365,7 +390,7 @@ namespace LynnaLab
 
         }
 
-        public void AddDataType(ProjectDataType data) {
+        void AddDataType(ProjectDataType data) {
             string s = data.GetIdentifier();
             if (dataStructDictionary.ContainsKey(s))
                 throw new Exception("Data with identifier \"" + data.GetIdentifier() +

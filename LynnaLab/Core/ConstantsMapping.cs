@@ -57,32 +57,43 @@ public class ConstantsMapping
         }
     }
 
-    public ConstantsMapping(FileParser parser, string prefix)
-        : this(parser, new string[] { prefix }) {}
+    /// If the optional "maxValue" parameter is passed, any constants with this value or above is
+    /// ignored when generating the mapping.
+    public ConstantsMapping(FileParser parser, string prefix, int maxValue = -1)
+        : this(parser, new string[] { prefix }, maxValue) {}
 
-    public ConstantsMapping(FileParser _parser, string[] _prefixes)
+    public ConstantsMapping(FileParser _parser, string[] _prefixes, int maxValue = -1)
     {
         this.parser = _parser;
         this.prefixes = _prefixes;
 
+        if (maxValue == -1)
+            maxValue = Int32.MaxValue;
+
         Dictionary<string,Tuple<string,DocumentationFileComponent>> definesDictionary = parser.DefinesDictionary;
         foreach (string key in definesDictionary.Keys) {
             bool acceptable = false;
-            foreach (string prefix in prefixes)
+            foreach (string prefix in prefixes) {
                 if (key.Substring(0, prefix.Length) == prefix) {
                     acceptable = true;
                     break;
                 }
+            }
 
             if (acceptable) {
-                Entry tmp;
-                if (!stringToByte.TryGetValue(key, out tmp)) {
+                if (!stringToByte.ContainsKey(key)) {
                     try {
                         var tup = definesDictionary[key];
                         string valStr = tup.Item1;
                         var docComponent = tup.Item2; // May be null
 
                         int val = Project.EvalToInt(valStr);
+
+                        if (val >= maxValue)
+                            continue;
+                        if (byteToString.ContainsKey(val))
+                            continue;
+
                         stringList.Add(key);
 
                         Documentation doc = null;

@@ -10,7 +10,10 @@ namespace LynnaLab
     /// to the image.
     /// Can also use this to modify various room properties, or to get related
     /// classes, ie. relating to warps or objects.
-    public class Room : ProjectIndexedDataType {
+    public partial class Room : ProjectIndexedDataType {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+
         public delegate void RoomModifiedHandler();
         // Event invoked when the room's image is modified in any way
         public event RoomModifiedHandler RoomModifiedEvent;
@@ -34,6 +37,7 @@ namespace LynnaLab
             GenerateValueReferenceGroup();
 
             UpdateTileset();
+            InitializeChest();
         }
 
 
@@ -102,6 +106,8 @@ namespace LynnaLab
                 ValueReferenceGroup.SetValue("Tileset", value.Index);
             }
         }
+        public Chest Chest { get; private set; }
+
         /// If true, tileset graphics are loaded after the screen transition instead of before.
         /// Often used in "buffer" rooms to transition between 2 tilesets.
         public bool GfxLoadAfterTransition {
@@ -267,6 +273,57 @@ namespace LynnaLab
         public bool EqualsOrDuplicate(Room room) {
             return tileDataFile == room.tileDataFile;
         }
+
+
+        // Chest-related stuff
+
+        public void AddChest() {
+            if (Chest != null) {
+                log.Warn(string.Format("Tried to add chest data to room {0:x3} which already has chest data.", Index));
+                return;
+            }
+
+            int room = Index;
+
+            int group = room>>8;
+            room &= 0xff;
+
+            FileParser chestFileParser = Project.GetFileWithLabel("chestDataGroupTable");
+            Data chestPointer = chestFileParser.GetData("chestDataGroupTable", group*2);
+            string pointerString = chestPointer.GetValue(0);
+            Data chestGroupData = Project.GetData(pointerString);
+
+            Data newData = new Data(Project, ".db", new string[] {"$00"}, -1, null, new List<string>{"\t"});
+            newData.EndsLine = false;
+            chestFileParser.InsertComponentBefore(chestGroupData, newData);
+
+            newData = new Data(Project, ".db", new string[] {Wla.ToByte((byte)room)}, -1, null, null);
+            newData.PrintCommand = false;
+            newData.EndsLine = false;
+            chestFileParser.InsertComponentBefore(chestGroupData, newData);
+
+            newData = new Data(Project, ".db", new string[] {"$00"}, -1, null, null);
+            newData.PrintCommand = false;
+            newData.EndsLine = false;
+            chestFileParser.InsertComponentBefore(chestGroupData, newData);
+
+            newData = new Data(Project, ".db", new string[] {"$00"}, -1, null, null);
+            newData.PrintCommand = false;
+            chestFileParser.InsertComponentBefore(chestGroupData, newData);
+
+            InitializeChest();
+        }
+
+        public void DeleteChest() {
+            if (Chest == null) {
+                log.Warn(string.Format("Tried to remove chest data to room {0:x3} which doesn't have chest data.", Index));
+                return;
+            }
+
+            Chest.Delete();
+            // Deletion handler will set "chest" to null
+        }
+
 
 
         // Private methods
@@ -486,6 +543,38 @@ namespace LynnaLab
             ValueReferenceGroup["Tileset"].AddValueModifiedHandler((sender, args) => {
                 UpdateTileset();
             });
+        }
+
+        // Find the data corresponding to the chest for this room, or "null" if it doesn't exist.
+        Data GetChestData() {
+            int room = Index;
+
+            int group = room>>8;
+            room &= 0xff;
+
+            FileParser chestFileParser = Project.GetFileWithLabel("chestDataGroupTable");
+            Data chestPointer = chestFileParser.GetData("chestDataGroupTable", group*2);
+            string pointerString = chestPointer.GetValue(0);
+            Data chestGroupData = Project.GetData(pointerString);
+
+            while (chestGroupData.GetIntValue(0) != 0xff) {
+                if (chestGroupData.NextData.GetIntValue(0) == room)
+                    return chestGroupData;
+                for (int i=0;i<4;i++)
+                    chestGroupData = chestGroupData.NextData;
+            }
+
+            return null;
+        }
+
+        void InitializeChest() {
+            if (Chest != null)
+                throw new Exception("Internal error");
+            Data d = GetChestData();
+            if (d == null)
+                return;
+            Chest = new Chest(d);
+            Chest.DeletedEvent += (sender, args) => { Chest = null; };
         }
     }
 }

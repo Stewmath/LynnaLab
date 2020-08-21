@@ -16,6 +16,70 @@ namespace LynnaLab
         public static readonly Cairo.Color ObjectHoverColor = new Cairo.Color(0.0, 1.0, 1.0);
 
 
+        // Variables
+
+        Room room;
+        ObjectGroupEditor _objectEditor;
+        WarpEditor _warpEditor;
+        Warp _editingWarpDestination;
+
+        List<RoomComponent> roomComponents = new List<RoomComponent>();
+
+        int mouseX=-1,mouseY=-1;
+
+        bool _enableTileEditing, _viewObjects, _viewWarps, _viewChests;
+        bool draggingTile, draggingObject;
+
+        RoomComponent hoveringComponent;
+        RoomComponent selectedComponent;
+
+        Gdk.ModifierType gdkState;
+
+        // Events
+
+        public event EventHandler<RoomChangedEventArgs> RoomChangedEvent;
+        public event EventHandler<bool> WarpDestEditModeChangedEvent;
+
+
+        // Constructors
+
+        public RoomEditor() {
+            base.TileWidth = 16;
+            base.TileHeight = 16;
+            base.Halign = Gtk.Align.Start;
+            base.Valign = Gtk.Align.Start;
+
+            EnableTileEditing = true;
+
+            this.ButtonPressEvent += delegate(object o, ButtonPressEventArgs args)
+            {
+                if (TilesetViewer == null)
+                    return;
+                int x,y;
+                args.Event.Window.GetPointer(out x, out y, out gdkState);
+                UpdateMouse(x,y);
+                OnClicked(mouseX, mouseY, args.Event, args.Event.Button);
+            };
+            this.ButtonReleaseEvent += delegate(object o, ButtonReleaseEventArgs args) {
+                if (args.Event.Button == 1) {
+                    draggingObject = false;
+                    draggingTile = false;
+                }
+            };
+            this.MotionNotifyEvent += delegate(object o, MotionNotifyEventArgs args) {
+                if (TilesetViewer == null)
+                    return;
+                int x,y;
+                args.Event.Window.GetPointer(out x, out y, out gdkState);
+                UpdateMouse(x,y);
+                if (gdkState.HasFlag(Gdk.ModifierType.Button1Mask))
+                    OnDragged(mouseX, mouseY, args.Event);
+            };
+        }
+
+
+        // Properties
+
         public Room Room
         {
             get { return room; }
@@ -46,6 +110,17 @@ namespace LynnaLab
             get { return _viewWarps; }
             set {
                 _viewWarps = value;
+                GenerateRoomComponents();
+                QueueDraw();
+            }
+        }
+
+        public bool ViewChests {
+            get {
+                return _viewChests;
+            }
+            set {
+                _viewChests = value;
                 GenerateRoomComponents();
                 QueueDraw();
             }
@@ -91,7 +166,6 @@ namespace LynnaLab
             }
         }
 
-
         protected override Bitmap Image {
             get {
                 if (room == null)
@@ -106,7 +180,7 @@ namespace LynnaLab
 
         // Should we draw the room components (objects, warps)?
         bool DrawRoomComponents {
-            get { return ViewObjects || ViewWarps || EditingWarpDestination != null; }
+            get { return ViewObjects || ViewWarps || ViewChests || EditingWarpDestination != null; }
         }
 
         // Should we be able to select & drag the room components?
@@ -123,64 +197,8 @@ namespace LynnaLab
         }
 
 
-        // Events
 
-        public event EventHandler<RoomChangedEventArgs> RoomChangedEvent;
-        public event EventHandler<bool> WarpDestEditModeChangedEvent;
-
-
-        // Variables
-
-        Room room;
-        ObjectGroupEditor _objectEditor;
-        WarpEditor _warpEditor;
-        Warp _editingWarpDestination;
-
-        List<RoomComponent> roomComponents = new List<RoomComponent>();
-
-        int mouseX=-1,mouseY=-1;
-
-        bool _enableTileEditing, _viewObjects, _viewWarps;
-        bool draggingTile, draggingObject;
-
-        RoomComponent hoveringComponent;
-        RoomComponent selectedComponent;
-
-        Gdk.ModifierType gdkState;
-
-        public RoomEditor() {
-            base.TileWidth = 16;
-            base.TileHeight = 16;
-            base.Halign = Gtk.Align.Start;
-            base.Valign = Gtk.Align.Start;
-
-            EnableTileEditing = true;
-
-            this.ButtonPressEvent += delegate(object o, ButtonPressEventArgs args)
-            {
-                if (TilesetViewer == null)
-                    return;
-                int x,y;
-                args.Event.Window.GetPointer(out x, out y, out gdkState);
-                UpdateMouse(x,y);
-                OnClicked(mouseX, mouseY, args.Event, args.Event.Button);
-            };
-            this.ButtonReleaseEvent += delegate(object o, ButtonReleaseEventArgs args) {
-                if (args.Event.Button == 1) {
-                    draggingObject = false;
-                    draggingTile = false;
-                }
-            };
-            this.MotionNotifyEvent += delegate(object o, MotionNotifyEventArgs args) {
-                if (TilesetViewer == null)
-                    return;
-                int x,y;
-                args.Event.Window.GetPointer(out x, out y, out gdkState);
-                UpdateMouse(x,y);
-                if (gdkState.HasFlag(Gdk.ModifierType.Button1Mask))
-                    OnDragged(mouseX, mouseY, args.Event);
-            };
-        }
+        // Methods
 
         public void SetRoom(Room r, bool changedFromWarpFollow = false) {
             if (r == Room)
@@ -502,6 +520,13 @@ namespace LynnaLab
                 }
             }
 
+            if (ViewChests) {
+                if (Room.Chest != null) {
+                    ChestRoomComponent com = new ChestRoomComponent(Room.Chest);
+                    roomComponents.Add(com);
+                }
+            }
+
 
 addedAllComponents:
             // The "selectedComponent" now refers to an old object. Look for the corresponding new
@@ -741,9 +766,7 @@ addedAllComponents:
             }
         }
 
-        // The singular room component that's drawn when editing a warp destination
-        // TODO: Editing the data in the WarpEditor doesn't trigger a redraw of the room. Figure out
-        // why.
+        /// The singular room component that's drawn when editing a warp destination.
         class WarpDestRoomComponent : RoomComponent {
             RoomEditor parent;
             public Warp warp;
@@ -814,6 +837,68 @@ addedAllComponents:
             // TODO
             public override void Delete() {
                 throw new NotImplementedException();
+            }
+        }
+
+        /// Draggable chest
+        class ChestRoomComponent : RoomComponent {
+            Chest chest;
+            Treasure treasure;
+            ValueReferenceGroup chestVrg;
+
+            public ChestRoomComponent(Chest chest) {
+                this.chest = chest;
+                chestVrg = chest.ValueReferenceGroup;
+
+                try {
+                    int index = chest.TreasureIndex;
+                    treasure = chest.Treasure;
+                }
+                catch (InvalidTreasureException) {
+                    treasure = null;
+                }
+            }
+
+            Project Project { get { return chest.Project; } }
+
+            public override Cairo.Color BoxColor { get { return CairoHelper.ConvertColor(204, 51, 153, 0xc0); } }
+
+            public override bool Deletable { get { return true; } }
+            public override bool HasXY { get { return true; } }
+            public override bool HasShortenedXY { get { return true; } }
+            public override int X {
+                get { return chestVrg.GetIntValue("X") * 16 + 8; }
+                set { chestVrg.SetValue("X", value / 16); }
+            }
+            public override int Y {
+                get { return chestVrg.GetIntValue("Y") * 16 + 8; }
+                set { chestVrg.SetValue("Y", value / 16); }
+            }
+            public override int BoxWidth { get { return 18; } }
+            public override int BoxHeight { get { return 18; } }
+
+            public override void Draw(Cairo.Context cr) {
+                if (treasure == null)
+                    return;
+                GameObject obj = Project.GetIndexedDataType<InteractionObject>(
+                        Project.EvalToInt("INTERACID_TREASURE") * 256 + treasure.Graphics);
+                try {
+                    obj.DefaultAnimation.GetFrame(0).Draw(cr, X, Y);
+                }
+                catch (InvalidAnimationException) {
+                }
+            }
+
+            public override void Select() {
+                base.Select();
+            }
+
+            public override bool Compare(RoomComponent com) {
+                return chest == (com as ChestRoomComponent)?.chest;
+            }
+
+            public override void Delete() {
+                // TODO
             }
         }
     }

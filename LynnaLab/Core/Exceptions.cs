@@ -2,7 +2,7 @@ using System;
 
 namespace LynnaLab {
 
-// An exception resulting from some kind of unexpected thing in the dissasembly (possibly caused by
+// An exception resulting from some kind of unexpected thing in the disassembly (possibly caused by
 // the user).
 public class ProjectErrorException : Exception {
     public ProjectErrorException() {}
@@ -17,7 +17,8 @@ public class InvalidLookupException : ProjectErrorException {
     public InvalidLookupException(string s) : base(s) {}
 }
 
-// Generic error resulting from unexpected things in the disassembly files.
+// Generic error resulting from unexpected things in the disassembly files (where there is
+// definitely something unexpected and wrong with the disassembly itself).
 public class AssemblyErrorException : ProjectErrorException {
     public AssemblyErrorException()
         : base() {}
@@ -48,6 +49,13 @@ public class InvalidAnimationException : ProjectErrorException {
     public InvalidAnimationException() : base() {}
     public InvalidAnimationException(string s) : base(s) {}
     public InvalidAnimationException(Exception e) : base(e.Message) {}
+}
+
+// Used by Treasure class when you try to instantiate one that doesn't exist
+public class InvalidTreasureException : ProjectErrorException {
+    public InvalidTreasureException() : base() {}
+    public InvalidTreasureException(string s) : base(s) {}
+    public InvalidTreasureException(Exception e) : base(e.Message) {}
 }
 
 // This is different from "InvalidAnimationException" because it's not really an error; the

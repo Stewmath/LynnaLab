@@ -38,11 +38,13 @@ public class MainWindow
     Gtk.SpinButton dungeonSpinButton;
     Gtk.SpinButton floorSpinButton;
     LynnaLab.Minimap dungeonMinimap;
-    Gtk.Box roomVreHolder;
+    Gtk.Box roomVreHolder, chestAddHolder, chestEditorBox, chestVreHolder, treasureVreHolder;
+    Gtk.Widget treasureDataFrame;
+    Gtk.Label treasureDataLabel;
 
     LynnaLab.SpinButtonHexadecimal roomSpinButton;
     Gtk.Button editTilesetButton;
-    ValueReferenceEditor roomVre;
+    ValueReferenceEditor roomVre, chestVre, treasureVre;
 
     LynnaLab.ObjectGroupEditor objectgroupeditor1;
     LynnaLab.TilesetViewer tilesetViewer1;
@@ -126,6 +128,9 @@ public class MainWindow
     bool WarpContextActive { // "Warps" tab
         get { return contextNotebook.Page == 2; }
     }
+    bool ChestContextActive { // "Chests" tab
+        get { return contextNotebook.Page == 3; }
+    }
 
     public MainWindow() : this("") {}
     public MainWindow (string directory)
@@ -150,6 +155,12 @@ public class MainWindow
         dungeonSpinButton = (Gtk.SpinButton)builder.GetObject("dungeonSpinButton");
         floorSpinButton = (Gtk.SpinButton)builder.GetObject("floorSpinButton");
         roomVreHolder = (Gtk.Box)builder.GetObject("roomVreHolder");
+        chestAddHolder = (Gtk.Box)builder.GetObject("chestAddHolder");
+        chestEditorBox = (Gtk.Box)builder.GetObject("chestEditorBox");
+        chestVreHolder = (Gtk.Box)builder.GetObject("chestVreHolder");
+        treasureVreHolder = (Gtk.Box)builder.GetObject("treasureVreHolder");
+        treasureDataFrame = (Gtk.Widget)builder.GetObject("treasureDataFrame");
+        treasureDataLabel = (Gtk.Label)builder.GetObject("treasureDataLabel");
 
         roomSpinButton = new SpinButtonHexadecimal();
         roomSpinButton.Digits = 3;
@@ -243,12 +254,12 @@ public class MainWindow
 
         LoadPlugins();
 
+        mainWindow.ShowAll();
+
         eventGroup.UnlockAndClear();
 
         if (directory != "")
             OpenProject(directory);
-
-        mainWindow.ShowAll();
     }
 
     void LoadPlugins() {
@@ -424,9 +435,55 @@ public class MainWindow
         roomTilesetModifiedEventWrapper.UnbindAll();
         roomTilesetModifiedEventWrapper.Bind(ActiveRoom.ValueReferenceGroup["Tileset"], "ModifiedEvent");
 
+        UpdateChestData();
+
         eventGroup.Unlock();
 
         UpdateLayoutGroupWarning();
+    }
+
+    void UpdateChestData() {
+        Chest chest = ActiveRoom.Chest;
+
+        if (chest != null) {
+            ValueReferenceGroup vrg = ActiveRoom.Chest.ValueReferenceGroup;
+            if (chestVre == null) {
+                chestVre = new ValueReferenceEditor(Project, vrg);
+                chestVreHolder.Add(chestVre);
+            }
+            else {
+                chestVre.ReplaceValueReferenceGroup(vrg);
+            }
+
+            try {
+                int index = chest.TreasureIndex;
+                Treasure treasure = Project.GetIndexedDataType<Treasure>(index);
+
+                if (treasureVre == null) {
+                    treasureVre = new ValueReferenceEditor(Project, treasure.ValueReferenceGroup);
+                    treasureVreHolder.Add(treasureVre);
+                }
+                else {
+                    treasureVre.ReplaceValueReferenceGroup(treasure.ValueReferenceGroup);
+                }
+                treasureDataFrame.ShowAll();
+                treasureDataLabel.Text = string.Format("Treasure ${0:X2} Subid ${1:X2} Data",
+                        vrg.GetIntValue("ID"), vrg.GetIntValue("SubID"));
+            }
+            catch (InvalidTreasureException) {
+                treasureDataFrame.Hide();
+            }
+        }
+
+        if (chest == null) {
+            chestEditorBox.Hide();
+            treasureDataFrame.Hide();
+            chestAddHolder.ShowAll();
+        }
+        else {
+            chestEditorBox.ShowAll();
+            chestAddHolder.Hide();
+        }
     }
 
     public void UpdateMinimapFromRoom(bool changeWorldDungeonTab) {
@@ -540,8 +597,7 @@ public class MainWindow
         a.RetVal = true;
     }
 
-    protected void OnOpenActionActivated(object sender, EventArgs e)
-    {
+    protected void OnOpenActionActivated(object sender, EventArgs e) {
         Gtk.FileChooserDialog dialog = new FileChooserDialog("Select the oracles disassembly base directory",
                 mainWindow,
                 FileChooserAction.SelectFolder,
@@ -559,8 +615,7 @@ public class MainWindow
         dialog.Dispose();
     }
 
-    protected void OnSaveActionActivated(object sender, EventArgs e)
-    {
+    protected void OnSaveActionActivated(object sender, EventArgs e) {
         if (Project != null)
             Project.Save();
     }
@@ -572,29 +627,25 @@ public class MainWindow
             EndAnimations();
     }
 
-    protected void OnQuitActionActivated(object sender, EventArgs e)
-    {
+    protected void OnQuitActionActivated(object sender, EventArgs e) {
         AskQuit();
     }
 
-    protected void OnDungeonSpinButtonValueChanged(object sender, EventArgs e)
-    {
+    protected void OnDungeonSpinButtonValueChanged(object sender, EventArgs e) {
         if (Project == null)
             return;
         dungeonMinimap.SetMap(Project.GetIndexedDataType<Dungeon>(dungeonSpinButton.ValueAsInt));
         OnMapChanged();
     }
 
-    protected void OnFloorSpinButtonValueChanged(object sender, EventArgs e)
-    {
+    protected void OnFloorSpinButtonValueChanged(object sender, EventArgs e) {
         if (Project == null)
             return;
         dungeonMinimap.Floor = (sender as Gtk.SpinButton).ValueAsInt;
         OnMapChanged();
     }
 
-    protected void OnWorldSpinButtonValueChanged(object sender, EventArgs e)
-    {
+    protected void OnWorldSpinButtonValueChanged(object sender, EventArgs e) {
         if (Project == null)
             return;
         WorldMap world = Project.GetIndexedDataType<WorldMap>(worldSpinButton.ValueAsInt);
@@ -602,8 +653,7 @@ public class MainWindow
             SetWorld(world);
     }
 
-    protected void OnMinimapNotebookSwitchPage(object o, SwitchPageArgs args)
-    {
+    protected void OnMinimapNotebookSwitchPage(object o, SwitchPageArgs args) {
         if (Project == null)
             return;
         Notebook nb = minimapNotebook;
@@ -614,8 +664,7 @@ public class MainWindow
         OnMapChanged();
     }
 
-    protected void OnContextNotebookSwitchPage(object o, SwitchPageArgs args)
-    {
+    protected void OnContextNotebookSwitchPage(object o, SwitchPageArgs args) {
         UpdateRoomEditorViews();
     }
 
@@ -634,10 +683,10 @@ public class MainWindow
 
         roomeditor1.ViewObjects = viewObjects;
         roomeditor1.ViewWarps = viewWarps;
+        roomeditor1.ViewChests = ChestContextActive;
     }
 
-    protected void OnRoomSpinButtonValueChanged(object sender, EventArgs e)
-    {
+    protected void OnRoomSpinButtonValueChanged(object sender, EventArgs e) {
         if (Project == null)
             return;
         SpinButton button = sender as SpinButton;
@@ -659,8 +708,7 @@ public class MainWindow
         }
     }
 
-    protected void OnTilesetEditorButtonClicked(object sender, EventArgs e)
-    {
+    protected void OnTilesetEditorButtonClicked(object sender, EventArgs e) {
         if (Project == null)
             return;
         Window win = new Window(WindowType.Toplevel);
@@ -670,21 +718,28 @@ public class MainWindow
         win.ShowAll();
     }
 
-    protected void OnViewObjectsCheckBoxToggled(object sender, EventArgs e)
-    {
+    protected void OnViewObjectsCheckBoxToggled(object sender, EventArgs e) {
         roomeditor1.ViewObjects = (sender as Gtk.CheckButton).Active;
         roomeditor1.QueueDraw();
     }
 
-    protected void OnViewWarpsCheckBoxToggled(object sender, EventArgs e)
-    {
+    protected void OnViewWarpsCheckBoxToggled(object sender, EventArgs e) {
         roomeditor1.ViewWarps = (sender as Gtk.CheckButton).Active;
         roomeditor1.QueueDraw();
     }
 
-    protected void OnDarkenDungeonRoomsCheckboxToggled(object sender, EventArgs e)
-    {
+    protected void OnDarkenDungeonRoomsCheckboxToggled(object sender, EventArgs e) {
         worldMinimap.DarkenUsedDungeonRooms = darkenDungeonRoomsCheckbox.Active;
+    }
+
+    protected void OnAddChestButtonClicked(object sender, EventArgs e) {
+        ActiveRoom.AddChest();
+        UpdateChestData();
+    }
+
+    protected void OnRemoveChestButtonClicked(object sender, EventArgs e) {
+        ActiveRoom.DeleteChest();
+        UpdateChestData();
     }
 
     void OnWindowClosed(object sender, DeleteEventArgs e) {

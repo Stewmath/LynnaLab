@@ -20,7 +20,8 @@ namespace LynnaLab
         internal ProjectDataType(Project p, string identifier) {
             project = p;
             this.identifier = identifier;
-            project.AddDataType(this);
+            // TODO: Somehow assert that this is always instantiated through the Project class (to
+            // ensure that duplicate instances for the same data are not created)
         }
         internal ProjectDataType(Project p, int i)
             : this(p, i.ToString()) {
