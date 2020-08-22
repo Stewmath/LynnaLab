@@ -115,7 +115,7 @@ namespace LynnaLab
         }
 
         void UpdateTreasureEvents() {
-            treasureModifiedEventWrapper.ReplaceEventSource(Treasure.ValueReferenceGroup);
+            treasureModifiedEventWrapper.ReplaceEventSource(Treasure?.ValueReferenceGroup);
         }
     }
 }
