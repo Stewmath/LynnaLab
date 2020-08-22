@@ -24,12 +24,8 @@ namespace LynnaLab
         WarpEditor _warpEditor;
         Warp _editingWarpDestination;
 
-        WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs> chestModifiedEventWrapper
-            = new WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs>();
-        WeakEventWrapper<Room, EventArgs> chestAddedEventWrapper = new WeakEventWrapper<Room, EventArgs>();
-        WeakEventWrapper<Chest, EventArgs> chestDeletedEventWrapper = new WeakEventWrapper<Chest, EventArgs>();
-        WeakEventWrapper<Chest, ValueModifiedEventArgs> treasureModifiedEventWrapper
-            = new WeakEventWrapper<Chest, ValueModifiedEventArgs>();
+        NewEventWrapper<Room> roomEventWrapper = new NewEventWrapper<Room>();
+        NewEventWrapper<Chest> chestEventWrapper = new NewEventWrapper<Chest>();
 
         List<RoomComponent> roomComponents = new List<RoomComponent>();
 
@@ -84,10 +80,11 @@ namespace LynnaLab
                     OnDragged(mouseX, mouseY, args.Event);
             };
 
-            chestAddedEventWrapper.Event += OnChestAdded;
-            chestDeletedEventWrapper.Event += OnChestDeleted;
-            chestModifiedEventWrapper.Event += OnChestModified;
-            treasureModifiedEventWrapper.Event += OnTreasureModified;
+            roomEventWrapper.Bind<EventArgs>("ChestAddedEvent", OnChestAdded);
+
+            chestEventWrapper.Bind<EventArgs>("DeletedEvent", OnChestDeleted);
+            chestEventWrapper.Bind<ValueModifiedEventArgs>("ModifiedEvent", OnChestModified);
+            chestEventWrapper.Bind<ValueModifiedEventArgs>("TreasureModifiedEvent", OnTreasureModified);
         }
 
 
@@ -240,8 +237,7 @@ namespace LynnaLab
             if (EditingWarpDestination != null)
                 EditingWarpDestination.DestRoom = r;
 
-            chestAddedEventWrapper.UnbindAll();
-            chestAddedEventWrapper.Bind(room, "ChestAddedEvent");
+            roomEventWrapper.ReplaceEventSource(room);
             UpdateChestEvents();
 
             RoomChangedEvent?.Invoke(this,
@@ -326,14 +322,7 @@ namespace LynnaLab
         }
 
         void UpdateChestEvents() {
-            chestModifiedEventWrapper.UnbindAll();
-            chestDeletedEventWrapper.UnbindAll();
-            treasureModifiedEventWrapper.UnbindAll();
-            if (room.Chest != null) {
-                chestModifiedEventWrapper.Bind(room.Chest.ValueReferenceGroup, "ModifiedEvent");
-                chestDeletedEventWrapper.Bind(room.Chest, "DeletedEvent");
-                treasureModifiedEventWrapper.Bind(room.Chest, "TreasureModifiedEvent");
-            }
+            chestEventWrapper.ReplaceEventSource(room.Chest);
         }
 
         void UpdateMouse(int x, int y) {

@@ -53,9 +53,7 @@ public class MainWindow
     PriorityStatusbar statusbar1;
 
     NewEventWrapper<ValueReference> roomTilesetModifiedEventWrapper = new NewEventWrapper<ValueReference>();
-    WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs> chestModifiedEventWrapper
-        = new WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs>();
-    WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs> tilesetModifiedEventWrapper;
+    NewEventWrapper<ValueReferenceGroup> tilesetModifiedEventWrapper;
     NewEventWrapper<Chest> chestEventWrapper = new NewEventWrapper<Chest>();
 
     // Variables
@@ -392,11 +390,11 @@ public class MainWindow
         ActiveRoom.Tileset = tileset;
 
         if (tilesetModifiedEventWrapper == null) {
-            tilesetModifiedEventWrapper = new WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs>();
-            tilesetModifiedEventWrapper.Event += (sender, args) => UpdateLayoutGroupWarning();
+            tilesetModifiedEventWrapper = new NewEventWrapper<ValueReferenceGroup>();
+            tilesetModifiedEventWrapper.Bind<ValueModifiedEventArgs>("ModifiedEvent",
+                    (sender, args) => { UpdateLayoutGroupWarning(); Console.WriteLine("YO"); });
         }
-        tilesetModifiedEventWrapper.UnbindAll();
-        tilesetModifiedEventWrapper.Bind(tileset.GetValueReferenceGroup(), "ModifiedEvent");
+        tilesetModifiedEventWrapper.ReplaceEventSource(tileset.GetValueReferenceGroup());
 
         eventGroup.Unlock();
 
@@ -438,10 +436,7 @@ public class MainWindow
             roomVre.ShowAll();
 
             roomTilesetModifiedEventWrapper.Bind<ValueModifiedEventArgs>("ModifiedEvent",
-                    (sender, args) => {
-                        SetTileset((sender as ValueReference).GetIntValue());
-                        Console.WriteLine("Tileset changed");
-                    });
+                    (sender, args) => SetTileset((sender as ValueReference).GetIntValue()));
         }
         else {
             roomVre.ReplaceValueReferenceGroup(ActiveRoom.ValueReferenceGroup);

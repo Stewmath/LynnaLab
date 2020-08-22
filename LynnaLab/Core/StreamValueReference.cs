@@ -14,8 +14,7 @@ namespace LynnaLab
         int offset;
         int startBit, endBit;
 
-        WeakEventWrapper<MemoryFileStream, MemoryFileStream.ModifiedEventArgs> streamEventWrapper
-            = new WeakEventWrapper<MemoryFileStream, MemoryFileStream.ModifiedEventArgs>();
+        NewEventWrapper<MemoryFileStream> streamEventWrapper = new NewEventWrapper<MemoryFileStream>();
 
         // Standard constructor
         public StreamValueReference(Project project, MemoryFileStream stream, string name, int offset, DataValueType type, int startBit=0, int endBit=0, bool editable=true, string constantsMappingString=null, string tooltip=null)
@@ -32,7 +31,6 @@ namespace LynnaLab
 
             MaxValue = DataValueReference.GetMaxValueForType(type, startBit, endBit);
 
-            streamEventWrapper.Event += OnStreamModified;
             BindEventHandler();
         }
 
@@ -45,13 +43,12 @@ namespace LynnaLab
             this.startBit = r.startBit;
             this.endBit = r.endBit;
 
-            streamEventWrapper.Event += OnStreamModified;
             BindEventHandler();
         }
 
         void BindEventHandler() {
-            streamEventWrapper.UnbindAll();
-            streamEventWrapper.Bind(stream, "ModifiedEvent");
+            streamEventWrapper.Bind<MemoryFileStream.ModifiedEventArgs>("ModifiedEvent", OnStreamModified);
+            streamEventWrapper.ReplaceEventSource(stream);
         }
 
 

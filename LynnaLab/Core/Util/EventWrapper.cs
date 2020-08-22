@@ -172,7 +172,7 @@ namespace Util {
         }
 
 
-        /// Pass an event name and the handler for the event.
+        /// Pass an event name that's in "TEventSource" and the handler for the event.
         public void Bind<TEventArgs>(string eventName, EventHandler<TEventArgs> handler) {
             EventStruct ev = new EventStruct();
 

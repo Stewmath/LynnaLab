@@ -66,7 +66,7 @@ namespace LynnaLab
         Data _data;
         bool useConstantAlias; // If true, save value as ConstantsMapping string instead of as int
 
-        WeakEventWrapper<Data, DataModifiedEventArgs> dataEventWrapper = new WeakEventWrapper<Data, DataModifiedEventArgs>();
+        NewEventWrapper<Data> dataEventWrapper = new NewEventWrapper<Data>();
 
 
         // Properties
@@ -89,7 +89,6 @@ namespace LynnaLab
 
             MaxValue = GetMaxValueForType(type, startBit, endBit);
 
-            dataEventWrapper.Event += OnDataModified;
             BindEventHandler();
         }
 
@@ -101,13 +100,12 @@ namespace LynnaLab
             this._data = vref._data;
             this.useConstantAlias = vref.useConstantAlias;
 
-            dataEventWrapper.Event += OnDataModified;
             BindEventHandler();
         }
 
         void BindEventHandler() {
-            dataEventWrapper.UnbindAll();
-            dataEventWrapper.Bind(_data, "DataModifiedEvent");
+            dataEventWrapper.Bind<DataModifiedEventArgs>("DataModifiedEvent", OnDataModified);
+            dataEventWrapper.ReplaceEventSource(_data);
         }
 
 

@@ -18,8 +18,7 @@ namespace Plugins
         Box dungeonVreContainer, roomVreContainer;
         ValueReferenceEditor dungeonVre, roomVre;
 
-        WeakEventWrapper<Dungeon, DungeonRoomChangedEventArgs> dungeonRoomChangedEventWrapper
-            = new WeakEventWrapper<Dungeon, DungeonRoomChangedEventArgs>();
+        NewEventWrapper<Dungeon> dungeonEventWrapper = new NewEventWrapper<Dungeon>();
 
 
         Project Project {
@@ -170,15 +169,15 @@ namespace Plugins
             DungeonChanged();
 
 
-            dungeonRoomChangedEventWrapper.Event += (sender, args) => RoomChanged();
-            w.Destroyed += (a, b) => dungeonRoomChangedEventWrapper.UnbindAll();
+            dungeonEventWrapper.Bind<DungeonRoomChangedEventArgs>("RoomChangedEvent",
+                    (sender, args) => RoomChanged());
+            w.Destroyed += (a, b) => dungeonEventWrapper.UnbindAll();
         }
 
         void DungeonChanged() {
             Dungeon dungeon = Project.GetIndexedDataType<Dungeon>(dungeonSpinButton.ValueAsInt);
 
-            dungeonRoomChangedEventWrapper.UnbindAll();
-            dungeonRoomChangedEventWrapper.Bind(dungeon, "RoomChangedEvent");
+            dungeonEventWrapper.ReplaceEventSource(dungeon);
 
             floorSpinButton.Adjustment.Upper = dungeon.NumFloors-1;
             if (floorSpinButton.ValueAsInt >= dungeon.NumFloors)
