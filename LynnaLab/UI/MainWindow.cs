@@ -54,6 +54,8 @@ public class MainWindow
 
     WeakEventWrapper<ValueReference, ValueModifiedEventArgs> roomTilesetModifiedEventWrapper
         = new WeakEventWrapper<ValueReference, ValueModifiedEventArgs>();
+    WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs> chestModifiedEventWrapper
+        = new WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs>();
     WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs> tilesetModifiedEventWrapper;
 
     // Variables
@@ -434,6 +436,8 @@ public class MainWindow
         // Watch for changes to this room's tileset
         roomTilesetModifiedEventWrapper.UnbindAll();
         roomTilesetModifiedEventWrapper.Bind(ActiveRoom.ValueReferenceGroup["Tileset"], "ModifiedEvent");
+
+        // Watch for changes to the chest
 
         UpdateChestData();
 

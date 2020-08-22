@@ -10,7 +10,7 @@ namespace LynnaLab
     }
 
     // This is a stub for now
-    public class ValueModifiedEventArgs {
+    public class ValueModifiedEventArgs : EventArgs {
     }
 
 

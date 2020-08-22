@@ -14,10 +14,6 @@ namespace LynnaLab
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 
-        public delegate void RoomModifiedHandler();
-        // Event invoked when the room's image is modified in any way
-        public event RoomModifiedHandler RoomModifiedEvent;
-
         // Actual width and height of room (note that width can differ from Stride, below)
         int width, height;
 
@@ -26,6 +22,15 @@ namespace LynnaLab
 
         Tileset loadedTileset;
         Bitmap cachedImage;
+
+
+        public delegate void RoomModifiedHandler();
+        // Event invoked when the room's image is modified in any way
+        public event RoomModifiedHandler RoomModifiedEvent;
+
+        // Event invoked upon adding a chest. For removing a chest, use the event in the Chest
+        // class.
+        public event EventHandler<EventArgs> ChestAddedEvent;
 
 
         internal Room(Project p, int i) : base(p,i) {
@@ -312,6 +317,8 @@ namespace LynnaLab
             chestFileParser.InsertComponentBefore(chestGroupData, newData);
 
             InitializeChest();
+
+            ChestAddedEvent?.Invoke(this, null);
         }
 
         public void DeleteChest() {

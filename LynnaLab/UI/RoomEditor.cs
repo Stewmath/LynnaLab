@@ -2,6 +2,7 @@ using System;
 using Bitmap = System.Drawing.Bitmap;
 using System.Collections.Generic;
 using Gtk;
+using Util;
 
 namespace LynnaLab
 {
@@ -22,6 +23,13 @@ namespace LynnaLab
         ObjectGroupEditor _objectEditor;
         WarpEditor _warpEditor;
         Warp _editingWarpDestination;
+
+        WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs> chestModifiedEventWrapper
+            = new WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs>();
+        WeakEventWrapper<Room, EventArgs> chestAddedEventWrapper = new WeakEventWrapper<Room, EventArgs>();
+        WeakEventWrapper<Chest, EventArgs> chestDeletedEventWrapper = new WeakEventWrapper<Chest, EventArgs>();
+        WeakEventWrapper<Chest, ValueModifiedEventArgs> treasureModifiedEventWrapper
+            = new WeakEventWrapper<Chest, ValueModifiedEventArgs>();
 
         List<RoomComponent> roomComponents = new List<RoomComponent>();
 
@@ -75,6 +83,11 @@ namespace LynnaLab
                 if (gdkState.HasFlag(Gdk.ModifierType.Button1Mask))
                     OnDragged(mouseX, mouseY, args.Event);
             };
+
+            chestAddedEventWrapper.Event += OnChestAdded;
+            chestDeletedEventWrapper.Event += OnChestDeleted;
+            chestModifiedEventWrapper.Event += OnChestModified;
+            treasureModifiedEventWrapper.Event += OnTreasureModified;
         }
 
 
@@ -102,7 +115,6 @@ namespace LynnaLab
             set {
                 _viewObjects = value;
                 GenerateRoomComponents();
-                QueueDraw();
             }
         }
 
@@ -111,7 +123,6 @@ namespace LynnaLab
             set {
                 _viewWarps = value;
                 GenerateRoomComponents();
-                QueueDraw();
             }
         }
 
@@ -122,7 +133,6 @@ namespace LynnaLab
             set {
                 _viewChests = value;
                 GenerateRoomComponents();
-                QueueDraw();
             }
         }
 
@@ -178,6 +188,11 @@ namespace LynnaLab
             get { return room.Project; }
         }
 
+        // Refers to the (one and only) chest in the room, or null.
+        Chest Chest {
+            get; set;
+        }
+
         // Should we draw the room components (objects, warps)?
         bool DrawRoomComponents {
             get { return ViewObjects || ViewWarps || ViewChests || EditingWarpDestination != null; }
@@ -224,6 +239,10 @@ namespace LynnaLab
 
             if (EditingWarpDestination != null)
                 EditingWarpDestination.DestRoom = r;
+
+            chestAddedEventWrapper.UnbindAll();
+            chestAddedEventWrapper.Bind(room, "ChestAddedEvent");
+            UpdateChestEvents();
 
             RoomChangedEvent?.Invoke(this,
                     new RoomChangedEventArgs { room = r, fromFollowWarp = changedFromWarpFollow });
@@ -273,7 +292,6 @@ namespace LynnaLab
         // Called when the ObjectGroup is modified
         void OnObjectModified(object sender, EventArgs args) {
             GenerateRoomComponents();
-            QueueDraw();
         }
 
         // Called when the "EditingWarpDestination" is modified
@@ -282,14 +300,40 @@ namespace LynnaLab
                 SetRoom(EditingWarpDestination.DestRoom);
             else {
                 GenerateRoomComponents();
-                QueueDraw();
             }
         }
 
         // Called when the WarpGroup is modified (not the warp destination if in that mode)
         void OnWarpModified(object sender, EventArgs args) {
             GenerateRoomComponents();
+        }
+
+        void OnChestAdded(object sender, EventArgs args) {
+            UpdateChestEvents();
+            GenerateRoomComponents();
+        }
+        void OnChestDeleted(object sender, EventArgs args) {
+            UpdateChestEvents();
+            GenerateRoomComponents();
+        }
+        // Chest variables modified (NOT contents of treasure itself)
+        void OnChestModified(object sender, ValueModifiedEventArgs args) {
             QueueDraw();
+        }
+        // Treasure contents modified
+        void OnTreasureModified(object sender, ValueModifiedEventArgs args) {
+            QueueDraw();
+        }
+
+        void UpdateChestEvents() {
+            chestModifiedEventWrapper.UnbindAll();
+            chestDeletedEventWrapper.UnbindAll();
+            treasureModifiedEventWrapper.UnbindAll();
+            if (room.Chest != null) {
+                chestModifiedEventWrapper.Bind(room.Chest.ValueReferenceGroup, "ModifiedEvent");
+                chestDeletedEventWrapper.Bind(room.Chest, "DeletedEvent");
+                treasureModifiedEventWrapper.Bind(room.Chest, "TreasureModifiedEvent");
+            }
         }
 
         void UpdateMouse(int x, int y) {
@@ -541,6 +585,8 @@ addedAllComponents:
             }
 
             selectedComponent = newSelectedComponent;
+
+            QueueDraw();
         }
 
         protected override void OnSizeAllocated(Gdk.Rectangle allocation)
@@ -843,20 +889,9 @@ addedAllComponents:
         /// Draggable chest
         class ChestRoomComponent : RoomComponent {
             Chest chest;
-            Treasure treasure;
-            ValueReferenceGroup chestVrg;
 
             public ChestRoomComponent(Chest chest) {
                 this.chest = chest;
-                chestVrg = chest.ValueReferenceGroup;
-
-                try {
-                    int index = chest.TreasureIndex;
-                    treasure = chest.Treasure;
-                }
-                catch (InvalidTreasureException) {
-                    treasure = null;
-                }
             }
 
             Project Project { get { return chest.Project; } }
@@ -867,21 +902,21 @@ addedAllComponents:
             public override bool HasXY { get { return true; } }
             public override bool HasShortenedXY { get { return true; } }
             public override int X {
-                get { return chestVrg.GetIntValue("X") * 16 + 8; }
-                set { chestVrg.SetValue("X", value / 16); }
+                get { return chest.ValueReferenceGroup.GetIntValue("X") * 16 + 8; }
+                set { chest.ValueReferenceGroup.SetValue("X", value / 16); }
             }
             public override int Y {
-                get { return chestVrg.GetIntValue("Y") * 16 + 8; }
-                set { chestVrg.SetValue("Y", value / 16); }
+                get { return chest.ValueReferenceGroup.GetIntValue("Y") * 16 + 8; }
+                set { chest.ValueReferenceGroup.SetValue("Y", value / 16); }
             }
             public override int BoxWidth { get { return 18; } }
             public override int BoxHeight { get { return 18; } }
 
             public override void Draw(Cairo.Context cr) {
-                if (treasure == null)
+                if (chest.Treasure == null)
                     return;
                 GameObject obj = Project.GetIndexedDataType<InteractionObject>(
-                        Project.EvalToInt("INTERACID_TREASURE") * 256 + treasure.Graphics);
+                        Project.EvalToInt("INTERACID_TREASURE") * 256 + chest.Treasure.Graphics);
                 try {
                     obj.DefaultAnimation.GetFrame(0).Draw(cr, X, Y);
                 }
@@ -898,7 +933,7 @@ addedAllComponents:
             }
 
             public override void Delete() {
-                // TODO
+                chest.Delete();
             }
         }
     }

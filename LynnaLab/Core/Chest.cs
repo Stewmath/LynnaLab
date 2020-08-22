@@ -9,12 +9,25 @@ namespace LynnaLab
     /// Represents the 4 bytes defining a chest. There should only be one of these per room.
     public class Chest {
         Data dataStart;
+        WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs> treasureModifiedEventWrapper
+            = new WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs>();
+
 
         public event EventHandler<EventArgs> DeletedEvent;
+
+        /// This is a convenience event that always tracks changes to the underlying treasure, even
+        /// when the treasure index is changed.
+        public event EventHandler<ValueModifiedEventArgs> TreasureModifiedEvent;
+
 
         internal Chest(Data dataStart) {
             this.dataStart = dataStart;
             GenerateValueReferenceGroup();
+
+            treasureModifiedEventWrapper.Event += (sender, args) => TreasureModifiedEvent?.Invoke(sender, args);
+
+            ValueReferenceGroup.ModifiedEvent += (sender, args) => UpdateTreasureEvents();
+            UpdateTreasureEvents();
         }
 
 
@@ -88,6 +101,12 @@ namespace LynnaLab
             };
 
             ValueReferenceGroup = new ValueReferenceGroup(list);
+        }
+
+        void UpdateTreasureEvents() {
+            treasureModifiedEventWrapper.UnbindAll();
+            if (Treasure != null)
+                treasureModifiedEventWrapper.Bind(Treasure.ValueReferenceGroup, "ModifiedEvent");
         }
     }
 }
