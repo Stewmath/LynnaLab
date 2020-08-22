@@ -11,13 +11,7 @@ namespace LynnaLab
 
 
         public ValueReferenceGroup(IList<ValueReference> refs) {
-            valueReferences = new List<ValueReference>();
-            foreach (var vref in refs) {
-                ValueReference copy = vref.Clone();
-                valueReferences.Add(copy);
-
-                copy.AddValueModifiedHandler((sender, args) => ModifiedEvent?.Invoke(sender, args));
-            }
+            SetValueReferences(refs);
         }
 
 
@@ -141,7 +135,16 @@ namespace LynnaLab
         // Protected
 
         protected void SetValueReferences(IList<ValueReference> refs) {
-            valueReferences = refs;
+            if (valueReferences != null)
+                throw new Exception();
+
+            valueReferences = new List<ValueReference>();
+            foreach (var vref in refs) {
+                ValueReference copy = vref.Clone();
+                valueReferences.Add(copy);
+
+                copy.AddValueModifiedHandler((sender, args) => ModifiedEvent?.Invoke(sender, args));
+            }
         }
     }
 }

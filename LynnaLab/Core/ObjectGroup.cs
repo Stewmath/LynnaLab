@@ -109,7 +109,7 @@ namespace LynnaLab
                     st.data = obj;
                     objectList.Add(st);
 
-                    st.def.AddValueModifiedHandler(ModifiedHandler);
+                    st.def.ModifiedEvent += ModifiedHandler;
                 }
             }
 
@@ -434,8 +434,7 @@ namespace LynnaLab
         }
 
         void ModifiedHandler(object sender, ValueModifiedEventArgs args) {
-            if (modifiedEvent != null)
-                modifiedEvent(this, null);
+            modifiedEvent?.Invoke(this, null);
             foreach (var parent in parents)
                 parent.ModifiedHandler(sender, args);
         }
