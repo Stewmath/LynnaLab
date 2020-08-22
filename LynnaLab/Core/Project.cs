@@ -25,6 +25,8 @@ namespace LynnaLab
         public readonly ConstantsMapping SpecialObjectMapping;
         public readonly ConstantsMapping ItemDropMapping;
         public readonly ConstantsMapping TreasureMapping;
+        public readonly ConstantsMapping TreasureSpawnModeMapping;
+        public readonly ConstantsMapping TreasureGrabModeMapping;
 
         log4net.Appender.RollingFileAppender logAppender;
 
@@ -138,6 +140,12 @@ namespace LynnaLab
                     GetFileParser("constants/treasure.s"),
                     "TREASURE_",
                     maxValue: 256);
+            TreasureSpawnModeMapping = new ConstantsMapping(
+                    GetFileParser("constants/treasureSpawnModes.s"),
+                    "TREASURE_SPAWN_MODE_");
+            TreasureGrabModeMapping = new ConstantsMapping(
+                    GetFileParser("constants/treasureSpawnModes.s"),
+                    "TREASURE_COLLECT_MODE_");
 
             // Parse everything in data/
             // A few files need to be loaded before others through
