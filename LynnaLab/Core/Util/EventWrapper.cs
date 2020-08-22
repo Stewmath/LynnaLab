@@ -100,7 +100,9 @@ namespace Util {
     /// In a nutshell: allows use of events using "weak pointers", ie. installing an event callback
     /// does not prevent the object with the handler from being garbage collected.
     ///
-    /// Simply creating a new instance of the object will tie the event to the handler.
+    /// Simply creating a new instance of the object will tie the event to the handler. It shouldn't
+    /// be necessary to explicitly maintain a reference to this object, since the event in the
+    /// TEventSource object maintains a strong event link to this class.
     ///
     /// NOTE NOTE NOTE CAVEAT CAVEAT CAVEAT: Calls to the "AddHandler" function MUST be done with an
     /// object of type "EventHandler<TEventArgs>", NOT with "FunctionName". It seems like in the
@@ -129,7 +131,7 @@ namespace Util {
         }
 
 
-        void AddHandler(TEventSource source) {
+        void AddHandler(TEventSource tangibleSource) {
             // Create intermediate callback
             intermediateHandler = (sender, args) => {
                 EventHandler<TEventArgs> h;
@@ -141,7 +143,7 @@ namespace Util {
                     RemoveHandler();
             };
 
-            eventInfo.GetAddMethod().Invoke(source, new object[] { intermediateHandler });
+            eventInfo.GetAddMethod().Invoke(tangibleSource, new object[] { intermediateHandler });
         }
 
 
@@ -149,6 +151,73 @@ namespace Util {
             TEventSource s;
             if (source.TryGetTarget(out s))
                 eventInfo.GetRemoveMethod().Invoke(s, new object[] { intermediateHandler });
+        }
+    }
+
+
+    /// TODO: better name
+    ///
+    /// Allows one to create weak event handlers for a specific class. The instance of the class may
+    /// be replaced at any time, and the events will be updated accordingly to fire on the new
+    /// instance.
+    ///
+    /// NOTE: When this object is freed, the events may cease to fire (garbage collection kicks in
+    /// due to weak references). Must maintain a reference to it as long as the events are relevant.
+    public class NewEventWrapper<TEventSource> where TEventSource : class {
+        List<EventStruct> eventList = new List<EventStruct>();
+        TEventSource eventSource;
+
+        public NewEventWrapper(TEventSource eventSource = null) {
+            this.eventSource = eventSource;
+        }
+
+
+        /// Pass an event name and the handler for the event.
+        public void Bind<TEventArgs>(string eventName, EventHandler<TEventArgs> handler) {
+            EventStruct ev = new EventStruct();
+
+            Action addHandlerMethod = () => {
+                var signaller = new WeakEventBinder<TEventSource, TEventArgs>(eventSource, ev.eventName, handler);
+                ev.removeHandlerMethod = signaller.RemoveHandler;
+            };
+
+            ev.eventName = eventName;
+            ev.addHandlerMethod = addHandlerMethod;
+
+            if (eventSource != null)
+                addHandlerMethod();
+
+            eventList.Add(ev);
+        }
+
+        public void ReplaceEventSource(TEventSource source) {
+            foreach (var ev in eventList) {
+                ev.removeHandlerMethod?.Invoke();
+                ev.removeHandlerMethod = null;
+            }
+
+            this.eventSource = source;
+
+            if (source != null) {
+                foreach (var ev in eventList) {
+                    ev.addHandlerMethod();
+                }
+            }
+        }
+
+        /// Unsubscribe from all events.
+        public void UnbindAll() {
+            foreach (var ep in eventList)
+                ep.removeHandlerMethod?.Invoke();
+            eventList.Clear();
+        }
+
+
+
+        class EventStruct {
+            public string eventName;
+            public Action addHandlerMethod;
+            public Action removeHandlerMethod;
         }
     }
 }

@@ -52,11 +52,11 @@ public class MainWindow
     WarpEditor warpEditor = null;
     PriorityStatusbar statusbar1;
 
-    WeakEventWrapper<ValueReference, ValueModifiedEventArgs> roomTilesetModifiedEventWrapper
-        = new WeakEventWrapper<ValueReference, ValueModifiedEventArgs>();
+    NewEventWrapper<ValueReference> roomTilesetModifiedEventWrapper = new NewEventWrapper<ValueReference>();
     WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs> chestModifiedEventWrapper
         = new WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs>();
     WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs> tilesetModifiedEventWrapper;
+    NewEventWrapper<Chest> chestEventWrapper = new NewEventWrapper<Chest>();
 
     // Variables
     uint animationTimerID = 0;
@@ -195,6 +195,9 @@ public class MainWindow
 
         eventGroup.Lock();
 
+
+        // Event handlers from widgets
+
         roomSpinButton.ValueChanged += eventGroup.Add(OnRoomSpinButtonValueChanged);
 
         worldSpinButton.ValueChanged += eventGroup.Add(OnWorldSpinButtonValueChanged);
@@ -252,8 +255,16 @@ public class MainWindow
 
         OnDarkenDungeonRoomsCheckboxToggled(null, null);
 
-        pluginCore = new PluginCore(this);
 
+        // Event handlers from underlying data
+
+        chestEventWrapper.Bind<ValueModifiedEventArgs>("ModifiedEvent", (sender, args) => UpdateChestData());
+        chestEventWrapper.Bind<EventArgs>("DeletedEvent", (sender, args) => UpdateChestData());
+
+
+        // Load "plugins"
+
+        pluginCore = new PluginCore(this);
         LoadPlugins();
 
         mainWindow.ShowAll();
@@ -426,16 +437,18 @@ public class MainWindow
             roomVreHolder.Add(roomVre);
             roomVre.ShowAll();
 
-            roomTilesetModifiedEventWrapper.Event
-                += (sender, args) => SetTileset((sender as ValueReference).GetIntValue());
+            roomTilesetModifiedEventWrapper.Bind<ValueModifiedEventArgs>("ModifiedEvent",
+                    (sender, args) => {
+                        SetTileset((sender as ValueReference).GetIntValue());
+                        Console.WriteLine("Tileset changed");
+                    });
         }
         else {
             roomVre.ReplaceValueReferenceGroup(ActiveRoom.ValueReferenceGroup);
         }
 
         // Watch for changes to this room's tileset
-        roomTilesetModifiedEventWrapper.UnbindAll();
-        roomTilesetModifiedEventWrapper.Bind(ActiveRoom.ValueReferenceGroup["Tileset"], "ModifiedEvent");
+        roomTilesetModifiedEventWrapper.ReplaceEventSource(ActiveRoom.ValueReferenceGroup["Tileset"]);
 
         // Watch for changes to the chest
 
@@ -488,6 +501,8 @@ public class MainWindow
             chestEditorBox.ShowAll();
             chestAddHolder.Hide();
         }
+
+        chestEventWrapper.ReplaceEventSource(chest);
     }
 
     public void UpdateMinimapFromRoom(bool changeWorldDungeonTab) {
@@ -743,7 +758,7 @@ public class MainWindow
 
     protected void OnRemoveChestButtonClicked(object sender, EventArgs e) {
         ActiveRoom.DeleteChest();
-        UpdateChestData();
+        // Chest's deleted handler will invoke UpdateChestData()
     }
 
     void OnWindowClosed(object sender, DeleteEventArgs e) {

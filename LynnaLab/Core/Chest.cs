@@ -13,6 +13,7 @@ namespace LynnaLab
             = new WeakEventWrapper<ValueReferenceGroup, ValueModifiedEventArgs>();
 
 
+        public event EventHandler<ValueModifiedEventArgs> ModifiedEvent;
         public event EventHandler<EventArgs> DeletedEvent;
 
         /// This is a convenience event that always tracks changes to the underlying treasure, even
@@ -23,6 +24,8 @@ namespace LynnaLab
         internal Chest(Data dataStart) {
             this.dataStart = dataStart;
             GenerateValueReferenceGroup();
+
+            ValueReferenceGroup.ModifiedEvent += (sender, args) => ModifiedEvent?.Invoke(sender, args);
 
             treasureModifiedEventWrapper.Event += (sender, args) => TreasureModifiedEvent?.Invoke(sender, args);
 
@@ -44,7 +47,14 @@ namespace LynnaLab
             get { return TreasureID * 256 + TreasureSubID; }
         }
         public Treasure Treasure {
-            get { return Project.GetIndexedDataType<Treasure>(TreasureIndex); }
+            get {
+                try {
+                    return Project.GetIndexedDataType<Treasure>(TreasureIndex);
+                }
+                catch (InvalidTreasureException) {
+                    return null;
+                }
+            }
         }
 
         public Project Project { get { return dataStart.Project; } }
