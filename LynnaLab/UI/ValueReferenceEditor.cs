@@ -77,6 +77,10 @@ namespace LynnaLab {
                     ComboBoxFromConstants comboBox = new ComboBoxFromConstants(false);
                     comboBox.SetConstantsMapping(valueReferenceGroup[i].ConstantsMapping);
 
+                    // Must put this before the "Changed" handler below to avoid
+                    // it being fired (for some reason?)
+                    setSpinButtonLimits(comboBox.SpinButton);
+
                     comboBox.Changed += delegate(object sender, EventArgs e) {
                         valueReferenceGroup[i].SetValue(comboBox.ActiveValue);
                         OnDataModifiedInternal();
@@ -85,8 +89,6 @@ namespace LynnaLab {
                     dataModifiedExternalEvent += delegate() {
                         comboBox.ActiveValue = valueReferenceGroup[i].GetIntValue ();
                     };
-
-                    setSpinButtonLimits(comboBox.SpinButton);
 
                     widgetList[0] = new Gtk.Label(valueReferenceGroup[i].Name);
                     widgetList[1] = comboBox;
