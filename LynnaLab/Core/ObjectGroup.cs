@@ -164,7 +164,7 @@ namespace LynnaLab
 
         // Gets all non-pointer objects in this group. This is a shallow operation (does not check
         // pointers).
-        public IList<ObjectDefinition> GetObjects() {
+        public IReadOnlyList<ObjectDefinition> GetObjects() {
             if (IsStub())
                 return new List<ObjectDefinition>();
             return new List<ObjectDefinition>(objectList.Select((ObjectStruct o) => o.def));
@@ -193,7 +193,7 @@ namespace LynnaLab
         // Returns a list of ObjectGroups representing each main group (Main, Enemy, BeforeEvent,
         // AfterEvent) plus "Shared" groups if they exist. This should only be called on the "Main"
         // type.
-        public IList<ObjectGroup> GetAllGroups() {
+        public IReadOnlyList<ObjectGroup> GetAllGroups() {
             return children;
         }
 
