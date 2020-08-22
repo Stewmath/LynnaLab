@@ -52,9 +52,9 @@ public class MainWindow
     WarpEditor warpEditor = null;
     PriorityStatusbar statusbar1;
 
-    NewEventWrapper<ValueReference> roomTilesetModifiedEventWrapper = new NewEventWrapper<ValueReference>();
-    NewEventWrapper<ValueReferenceGroup> tilesetModifiedEventWrapper;
-    NewEventWrapper<Chest> chestEventWrapper = new NewEventWrapper<Chest>();
+    WeakEventWrapper<ValueReference> roomTilesetModifiedEventWrapper = new WeakEventWrapper<ValueReference>();
+    WeakEventWrapper<ValueReferenceGroup> tilesetModifiedEventWrapper;
+    WeakEventWrapper<Chest> chestEventWrapper = new WeakEventWrapper<Chest>();
 
     // Variables
     uint animationTimerID = 0;
@@ -390,7 +390,7 @@ public class MainWindow
         ActiveRoom.Tileset = tileset;
 
         if (tilesetModifiedEventWrapper == null) {
-            tilesetModifiedEventWrapper = new NewEventWrapper<ValueReferenceGroup>();
+            tilesetModifiedEventWrapper = new WeakEventWrapper<ValueReferenceGroup>();
             tilesetModifiedEventWrapper.Bind<ValueModifiedEventArgs>("ModifiedEvent",
                     (sender, args) => { UpdateLayoutGroupWarning(); Console.WriteLine("YO"); });
         }

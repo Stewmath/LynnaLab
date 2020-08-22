@@ -24,8 +24,8 @@ namespace LynnaLab
         WarpEditor _warpEditor;
         Warp _editingWarpDestination;
 
-        NewEventWrapper<Room> roomEventWrapper = new NewEventWrapper<Room>();
-        NewEventWrapper<Chest> chestEventWrapper = new NewEventWrapper<Chest>();
+        WeakEventWrapper<Room> roomEventWrapper = new WeakEventWrapper<Room>();
+        WeakEventWrapper<Chest> chestEventWrapper = new WeakEventWrapper<Chest>();
 
         List<RoomComponent> roomComponents = new List<RoomComponent>();
 

@@ -9,8 +9,8 @@ namespace LynnaLab
     /// Represents the 4 bytes defining a chest. There should only be one of these per room.
     public class Chest {
         Data dataStart;
-        NewEventWrapper<ValueReferenceGroup> treasureModifiedEventWrapper
-            = new NewEventWrapper<ValueReferenceGroup>();
+        WeakEventWrapper<ValueReferenceGroup> treasureModifiedEventWrapper
+            = new WeakEventWrapper<ValueReferenceGroup>();
 
 
         public event EventHandler<ValueModifiedEventArgs> ModifiedEvent;

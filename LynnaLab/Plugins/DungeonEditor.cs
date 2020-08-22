@@ -18,7 +18,7 @@ namespace Plugins
         Box dungeonVreContainer, roomVreContainer;
         ValueReferenceEditor dungeonVre, roomVre;
 
-        NewEventWrapper<Dungeon> dungeonEventWrapper = new NewEventWrapper<Dungeon>();
+        WeakEventWrapper<Dungeon> dungeonEventWrapper = new WeakEventWrapper<Dungeon>();
 
 
         Project Project {

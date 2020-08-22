@@ -3,94 +3,71 @@ using System.Collections.Generic;
 using System.Reflection;
 
 namespace Util {
-    /** An EventWrapper is an intermediary between an object which triggers an event and an event
-     * handler. The main motivation is to make it easier to unbind event handlers from objects we
-     * don't care about anymore (ie. it's difficult (impossible?) if the handler is a lambda).
-     *
-     * This can subscribe to events of type "EventHandler<T>".
-     */
-    public class EventWrapper<TEventSource, TEventArgs> {
+    /// Allows one to create weak event handlers for a specific class. Weak events don't prevent the
+    /// object receiving the event callback from being garbage collected.
+    ///
+    /// The instance of the "event source" class may be replaced at any time, and the events will be
+    /// updated accordingly to fire on the new instance.
+    ///
+    /// NOTE: When this object is freed, the events may cease to fire (garbage collection kicks in
+    /// due to weak references). Must maintain a reference to it as long as the events are relevant.
+    public class WeakEventWrapper<TEventSource> where TEventSource : class {
+        List<EventStruct> eventList = new List<EventStruct>();
+        TEventSource eventSource;
 
-        List<Tuple<TEventSource, EventInfo>> signallers = new List<Tuple<TEventSource, EventInfo>>();
-        Delegate signalledDelegate;
-
-
-        public EventWrapper() {
-            // Get delegate to Signalled method
-            MethodInfo miHandler = typeof(EventWrapper<TEventSource, TEventArgs>).GetMethod("Signalled", BindingFlags.NonPublic | BindingFlags.Instance);
-            var tDelegate = typeof(EventHandler<TEventArgs>);
-            signalledDelegate = Delegate.CreateDelegate(tDelegate, this, miHandler);
+        public WeakEventWrapper(TEventSource eventSource = null) {
+            this.eventSource = eventSource;
         }
 
 
-        /// Add handlers using "eventWrapper.Event += <handler>"
-        public event EventHandler<TEventArgs> Event;
+        /// Pass an event name that's in "TEventSource" and the handler for the event.
+        public void Bind<TEventArgs>(string eventName, EventHandler<TEventArgs> handler) {
+            EventStruct ev = new EventStruct();
 
+            Action addHandlerMethod = () => {
+                var signaller = new WeakEventBinder<TEventSource, TEventArgs>(eventSource, ev.eventName, handler);
+                ev.removeHandlerMethod = signaller.RemoveHandler;
+            };
 
-        /// Pass an object along with the name of the event to subscribe to.
-        public void Bind(TEventSource obj, string eventName) {
-            EventInfo ev = obj.GetType().GetEvent(eventName, BindingFlags.Public | BindingFlags.Instance);
+            ev.eventName = eventName;
+            ev.addHandlerMethod = addHandlerMethod;
 
-            if (ev == null)
-                throw new ArgumentException("EventBinder: Couldn't locate event \"" + eventName + "\".");
+            if (eventSource != null)
+                addHandlerMethod();
 
-            ev.GetAddMethod().Invoke(obj, new object[] { signalledDelegate });
-
-            signallers.Add(new Tuple<TEventSource, EventInfo>(obj, ev));
+            eventList.Add(ev);
         }
 
-        /// Unsubscribe from all events.
-        public void UnbindAll() {
-            foreach (var pair in signallers)
-                pair.Item2.GetRemoveMethod().Invoke(pair.Item1, new object[] { signalledDelegate });
-            signallers.Clear();
-        }
+        public void ReplaceEventSource(TEventSource source) {
+            foreach (var ev in eventList) {
+                ev.removeHandlerMethod?.Invoke();
+                ev.removeHandlerMethod = null;
+            }
 
-        void Signalled(object sender, TEventArgs args) {
-            if (Event != null)
-                Event(sender, args);
-        }
-    }
+            this.eventSource = source;
 
-    /// Like EventWrapper but events are "weak" (does not prevent GC from cleaning up the handler's
-    /// instance).
-    public class WeakEventWrapper<TEventSource, TEventArgs> where TEventSource : class {
-
-        List<WeakEventBinder<TEventSource, TEventArgs>> signallers = new List<WeakEventBinder<TEventSource, TEventArgs>>();
-
-        // Need a reference to the Signalled function that's always the same object? (for
-        // WeakEventManager)
-        readonly EventHandler<TEventArgs> signalled;
-
-        public WeakEventWrapper() {
-            signalled = Signalled;
-        }
-
-
-        /// Add handlers using "eventWrapper.Event += <handler>"
-        public event EventHandler<TEventArgs> Event;
-
-
-        /// Pass an object along with the name of the event to subscribe to.
-        public void Bind(TEventSource obj, string eventName) {
-            var e = new WeakEventBinder<TEventSource, TEventArgs>(obj, eventName, signalled);
-            signallers.Add(e);
+            if (source != null) {
+                foreach (var ev in eventList) {
+                    ev.addHandlerMethod();
+                }
+            }
         }
 
         /// Unsubscribe from all events.
         public void UnbindAll() {
-            foreach (var e in signallers)
-                e.RemoveHandler();
-            signallers.Clear();
+            foreach (var ep in eventList)
+                ep.removeHandlerMethod?.Invoke();
+            eventList.Clear();
         }
 
-        void Signalled(object sender, TEventArgs args) {
-            if (Event != null)
-                Event(sender, args);
+
+
+        class EventStruct {
+            public string eventName;
+            public Action addHandlerMethod;
+            public Action removeHandlerMethod;
         }
     }
-
-
     /// This is sort of a substitute for .NET's WeakEventManager class. Seems to not be available in
     /// Mono.
     ///
@@ -151,73 +128,6 @@ namespace Util {
             TEventSource s;
             if (source.TryGetTarget(out s))
                 eventInfo.GetRemoveMethod().Invoke(s, new object[] { intermediateHandler });
-        }
-    }
-
-
-    /// TODO: better name
-    ///
-    /// Allows one to create weak event handlers for a specific class. The instance of the class may
-    /// be replaced at any time, and the events will be updated accordingly to fire on the new
-    /// instance.
-    ///
-    /// NOTE: When this object is freed, the events may cease to fire (garbage collection kicks in
-    /// due to weak references). Must maintain a reference to it as long as the events are relevant.
-    public class NewEventWrapper<TEventSource> where TEventSource : class {
-        List<EventStruct> eventList = new List<EventStruct>();
-        TEventSource eventSource;
-
-        public NewEventWrapper(TEventSource eventSource = null) {
-            this.eventSource = eventSource;
-        }
-
-
-        /// Pass an event name that's in "TEventSource" and the handler for the event.
-        public void Bind<TEventArgs>(string eventName, EventHandler<TEventArgs> handler) {
-            EventStruct ev = new EventStruct();
-
-            Action addHandlerMethod = () => {
-                var signaller = new WeakEventBinder<TEventSource, TEventArgs>(eventSource, ev.eventName, handler);
-                ev.removeHandlerMethod = signaller.RemoveHandler;
-            };
-
-            ev.eventName = eventName;
-            ev.addHandlerMethod = addHandlerMethod;
-
-            if (eventSource != null)
-                addHandlerMethod();
-
-            eventList.Add(ev);
-        }
-
-        public void ReplaceEventSource(TEventSource source) {
-            foreach (var ev in eventList) {
-                ev.removeHandlerMethod?.Invoke();
-                ev.removeHandlerMethod = null;
-            }
-
-            this.eventSource = source;
-
-            if (source != null) {
-                foreach (var ev in eventList) {
-                    ev.addHandlerMethod();
-                }
-            }
-        }
-
-        /// Unsubscribe from all events.
-        public void UnbindAll() {
-            foreach (var ep in eventList)
-                ep.removeHandlerMethod?.Invoke();
-            eventList.Clear();
-        }
-
-
-
-        class EventStruct {
-            public string eventName;
-            public Action addHandlerMethod;
-            public Action removeHandlerMethod;
         }
     }
 }

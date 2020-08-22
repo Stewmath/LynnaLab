@@ -14,7 +14,7 @@ namespace LynnaLab
         int offset;
         int startBit, endBit;
 
-        NewEventWrapper<MemoryFileStream> streamEventWrapper = new NewEventWrapper<MemoryFileStream>();
+        WeakEventWrapper<MemoryFileStream> streamEventWrapper = new WeakEventWrapper<MemoryFileStream>();
 
         // Standard constructor
         public StreamValueReference(Project project, MemoryFileStream stream, string name, int offset, DataValueType type, int startBit=0, int endBit=0, bool editable=true, string constantsMappingString=null, string tooltip=null)

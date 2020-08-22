@@ -66,7 +66,7 @@ namespace LynnaLab
         Data _data;
         bool useConstantAlias; // If true, save value as ConstantsMapping string instead of as int
 
-        NewEventWrapper<Data> dataEventWrapper = new NewEventWrapper<Data>();
+        WeakEventWrapper<Data> dataEventWrapper = new WeakEventWrapper<Data>();
 
 
         // Properties
