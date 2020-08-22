@@ -392,7 +392,7 @@ public class MainWindow
         if (tilesetModifiedEventWrapper == null) {
             tilesetModifiedEventWrapper = new WeakEventWrapper<ValueReferenceGroup>();
             tilesetModifiedEventWrapper.Bind<ValueModifiedEventArgs>("ModifiedEvent",
-                    (sender, args) => { UpdateLayoutGroupWarning(); Console.WriteLine("YO"); });
+                    (sender, args) => UpdateLayoutGroupWarning());
         }
         tilesetModifiedEventWrapper.ReplaceEventSource(tileset.GetValueReferenceGroup());
 
@@ -530,7 +530,6 @@ public class MainWindow
             ActiveMinimap.SelectedIndex = r.Index & 0xff;
         }
 
-        OnMapChanged();
         eventGroup.UnlockAndClear();
     }
 
