@@ -59,6 +59,19 @@ namespace LynnaLab {
 
                 widgetPositions[i] = new Tuple<uint,uint>(x,y);
 
+                Action<Gtk.SpinButton> setSpinButtonLimits = (spinButton) => {
+                    if (valueReferenceGroup[i].MaxValue < 0x10)
+                        spinButton.Digits = 1;
+                    else if (valueReferenceGroup[i].MaxValue < 0x100)
+                        spinButton.Digits = 2;
+                    else if (valueReferenceGroup[i].MaxValue < 0x1000)
+                        spinButton.Digits = 3;
+                    else
+                        spinButton.Digits = 4;
+                    spinButton.Adjustment.Lower = valueReferenceGroup[i].MinValue;
+                    spinButton.Adjustment.Upper = valueReferenceGroup[i].MaxValue;
+                };
+
                 // If it has a ConstantsMapping, use a combobox instead of anything else
                 if (valueReferenceGroup[i].ConstantsMapping != null) {
                     ComboBoxFromConstants comboBox = new ComboBoxFromConstants(false);
@@ -72,6 +85,8 @@ namespace LynnaLab {
                     dataModifiedExternalEvent += delegate() {
                         comboBox.ActiveValue = valueReferenceGroup[i].GetIntValue ();
                     };
+
+                    setSpinButtonLimits(comboBox.SpinButton);
 
                     widgetList[0] = new Gtk.Label(valueReferenceGroup[i].Name);
                     widgetList[1] = comboBox;
@@ -104,16 +119,7 @@ namespace LynnaLab {
                             new SpinButtonHexadecimal(valueReferenceGroup[i].MinValue, valueReferenceGroup[i].MaxValue);
                         if (!valueReferenceGroup[i].Editable)
                             spinButton.Sensitive = false;
-                        if (valueReferenceGroup[i].MaxValue < 0x10)
-                            spinButton.Digits = 1;
-                        else if (valueReferenceGroup[i].MaxValue < 0x100)
-                            spinButton.Digits = 2;
-                        else if (valueReferenceGroup[i].MaxValue < 0x1000)
-                            spinButton.Digits = 3;
-                        else
-                            spinButton.Digits = 4;
-                        spinButton.Adjustment.Lower = valueReferenceGroup[i].MinValue;
-                        spinButton.Adjustment.Upper = valueReferenceGroup[i].MaxValue;
+                        setSpinButtonLimits(spinButton);
                         spinButton.ValueChanged += delegate(object sender, EventArgs e) {
                             Gtk.SpinButton button = sender as Gtk.SpinButton;
                             if (maxBounds[i] == 0 || button.ValueAsInt <= maxBounds[i]) {

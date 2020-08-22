@@ -54,6 +54,9 @@ namespace LynnaLab
                 }
             }
         }
+        public SpinButtonHexadecimal SpinButton {
+            get { return spinButton; }
+        }
         public Documentation DefaultDocumentation {
             get {
                 return mapping.OverallDocumentation;
