@@ -20,6 +20,8 @@ namespace LynnaLab
         bool scaleSetInConstructor;
         int _floor;
 
+        WeakEventWrapper<Dungeon> dungeonEventWrapper = new WeakEventWrapper<Dungeon>();
+
         Dictionary<Room,Cairo.Surface> cachedImageDict = new Dictionary<Room,Cairo.Surface>();
 
         public Project Project {
@@ -51,6 +53,9 @@ namespace LynnaLab
         public Minimap() {
             Selectable = true;
             SelectedIndex = 0;
+
+            dungeonEventWrapper.Bind<DungeonRoomChangedEventArgs>("RoomChangedEvent", OnDungeonRoomChanged);
+            dungeonEventWrapper.Bind<EventArgs>("FloorsChangedEvent", OnDungeonFloorsChanged);
         }
 
         public Minimap(double scale) : this() {
@@ -60,13 +65,10 @@ namespace LynnaLab
 
         public void SetMap(Map m, int index = -1) {
             if (_map != m) {
-                if (_map is Dungeon)
-                    (_map as Dungeon).RoomChangedEvent -= DungeonRoomChanged;
-                if (m is Dungeon)
-                    (m as Dungeon).RoomChangedEvent += DungeonRoomChanged;
-
                 _map = m;
                 _floor = 0;
+
+                dungeonEventWrapper.ReplaceEventSource(_map as Dungeon); // May be null, that's fine
 
                 if (!scaleSetInConstructor) {
                     if (m.MapWidth >= 16 && m.RoomWidth >= 15)
@@ -173,11 +175,18 @@ namespace LynnaLab
             return tileSurface;
         }
 
-        void DungeonRoomChanged(object sender, DungeonRoomChangedEventArgs args) {
+        void OnDungeonRoomChanged(object sender, DungeonRoomChangedEventArgs args) {
             if (args.all)
                 QueueDraw();
             else if (args.floor == Floor)
                 QueueDrawTile(args.x, args.y);
+        }
+
+        void OnDungeonFloorsChanged(object sender, EventArgs args) {
+            Dungeon d = _map as Dungeon;
+            if (_floor >= d.NumFloors)
+                _floor = d.NumFloors - 1;
+            QueueDraw();
         }
     }
 }

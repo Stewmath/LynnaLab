@@ -46,8 +46,11 @@ namespace LynnaLab
         }
 
 
-        // Event invoked when a room number changes
+        // Event invoked when a room number changes (not including things that trigger FloorChangedEvent)
         public event EventHandler<DungeonRoomChangedEventArgs> RoomChangedEvent;
+
+        // Event invoked when a floor is added or removed
+        public event EventHandler<EventArgs> FloorsChangedEvent;
 
 
         public ValueReferenceGroup ValueReferenceGroup { get; private set; }
@@ -111,8 +114,7 @@ namespace LynnaLab
             d.SetByteValue(0, (byte)room);
             roomsUsed[(byte)room]++;
 
-            if (RoomChangedEvent != null)
-                RoomChangedEvent(this, new DungeonRoomChangedEventArgs {x = x, y = y, floor = floor});
+            RoomChangedEvent?.Invoke(this, new DungeonRoomChangedEventArgs {x = x, y = y, floor = floor});
         }
 
         public bool RoomUsed(int roomIndex) {
@@ -171,7 +173,6 @@ namespace LynnaLab
 
         /// Insert a floor below "floorIndex". If "floorIndex == NumFloors" then the floor is
         /// inserted at the top.
-        /// TODO: should invoke RoomChangedEvent (along with RemoveFloor)
         public void InsertFloor(int floorIndex) {
             if (floorIndex < 0 || floorIndex > NumFloors)
                 throw new ArgumentException("Can't insert floor " + floorIndex + ".");
@@ -201,6 +202,8 @@ namespace LynnaLab
 
             NumFloors++;
             DetermineRoomsUsed();
+
+            FloorsChangedEvent?.Invoke(this, null);
         }
 
         public void RemoveFloor(int floorIndex) {
@@ -225,6 +228,8 @@ namespace LynnaLab
 
             NumFloors--;
             DetermineRoomsUsed();
+
+            FloorsChangedEvent?.Invoke(this, null);
         }
 
 
@@ -292,8 +297,7 @@ namespace LynnaLab
                 throw new ArgumentException("Invalid group '" + g + "' for dungeon.");
             dataStart.SetValue(0, ">wGroup" + g.ToString() + "Flags");
 
-            if (RoomChangedEvent != null)
-                RoomChangedEvent(this, new DungeonRoomChangedEventArgs {all = true});
+            RoomChangedEvent?.Invoke(this, new DungeonRoomChangedEventArgs {all = true});
         }
     }
 }

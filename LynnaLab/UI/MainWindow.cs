@@ -669,7 +669,10 @@ public class MainWindow
     protected void OnFloorSpinButtonValueChanged(object sender, EventArgs e) {
         if (Project == null)
             return;
-        dungeonMinimap.Floor = (sender as Gtk.SpinButton).ValueAsInt;
+        int floor = (sender as Gtk.SpinButton).ValueAsInt;
+        if (ActiveMap is Dungeon && floor >= (ActiveMap as Dungeon).NumFloors)
+            return;
+        dungeonMinimap.Floor = floor;
         OnMapChanged();
     }
 
