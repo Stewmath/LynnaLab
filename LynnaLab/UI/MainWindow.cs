@@ -541,6 +541,8 @@ public class MainWindow
             ActiveMinimap.SelectedIndex = r.Index & 0xff;
         }
 
+        UpdateMapSpinButtons();
+
         eventGroup.UnlockAndClear();
     }
 
@@ -548,12 +550,7 @@ public class MainWindow
         ActiveRoom = ActiveMinimap.GetRoom();
     }
 
-    void OnMapChanged() {
-        if (ActiveMap == null)
-            return;
-
-        eventGroup.Lock();
-
+    void UpdateMapSpinButtons() {
         if (ActiveMap is Dungeon) {
             Dungeon dungeon = ActiveMap as Dungeon;
             dungeonSpinButton.Value = dungeon.Index;
@@ -562,7 +559,14 @@ public class MainWindow
         else {
             worldSpinButton.Value = ActiveMap.Index;
         }
+    }
 
+    void OnMapChanged() {
+        if (ActiveMap == null)
+            return;
+
+        eventGroup.Lock();
+        UpdateMapSpinButtons();
         eventGroup.UnlockAndClear();
 
         ActiveRoom = ActiveMinimap.GetRoom();
