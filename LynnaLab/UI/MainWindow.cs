@@ -39,6 +39,7 @@ public class MainWindow
     Gtk.SpinButton floorSpinButton;
     LynnaLab.Minimap dungeonMinimap;
     Gtk.Box roomVreHolder, chestAddHolder, chestEditorBox, chestVreHolder, treasureVreHolder;
+    Gtk.Box nonExistentTreasureHolder;
     Gtk.Widget treasureDataFrame;
     Gtk.Label treasureDataLabel;
 
@@ -159,6 +160,7 @@ public class MainWindow
         chestEditorBox = (Gtk.Box)builder.GetObject("chestEditorBox");
         chestVreHolder = (Gtk.Box)builder.GetObject("chestVreHolder");
         treasureVreHolder = (Gtk.Box)builder.GetObject("treasureVreHolder");
+        nonExistentTreasureHolder = (Gtk.Box)builder.GetObject("nonExistentTreasureHolder");
         treasureDataFrame = (Gtk.Widget)builder.GetObject("treasureDataFrame");
         treasureDataLabel = (Gtk.Label)builder.GetObject("treasureDataLabel");
 
@@ -467,9 +469,21 @@ public class MainWindow
                 chestVre.ReplaceValueReferenceGroup(vrg);
             }
 
-            try {
-                int index = chest.TreasureIndex;
-                Treasure treasure = Project.GetIndexedDataType<Treasure>(index);
+            TreasureObject treasure = chest.Treasure;
+
+            if (treasure == null) {
+                nonExistentTreasureHolder.ShowAll();
+                treasureVreHolder.Hide();
+
+                if (chest.TreasureID >= Project.NumTreasures)
+                    treasureDataFrame.Hide();
+                else
+                    treasureDataFrame.Show();
+            }
+            else {
+                nonExistentTreasureHolder.Hide();
+                treasureDataFrame.Show();
+                treasureVreHolder.Show();
 
                 if (treasureVre == null) {
                     treasureVre = new ValueReferenceEditor(Project, treasure.ValueReferenceGroup);
@@ -478,13 +492,10 @@ public class MainWindow
                 else {
                     treasureVre.ReplaceValueReferenceGroup(treasure.ValueReferenceGroup);
                 }
-                treasureDataFrame.ShowAll();
-                treasureDataLabel.Text = string.Format("Treasure ${0:X2} Subid ${1:X2} Data",
-                        vrg.GetIntValue("ID"), vrg.GetIntValue("SubID"));
             }
-            catch (InvalidTreasureException) {
-                treasureDataFrame.Hide();
-            }
+
+            treasureDataLabel.Text = string.Format("Treasure ${0:X2} Subid ${1:X2} Data",
+                    vrg.GetIntValue("ID"), vrg.GetIntValue("SubID"));
         }
 
         if (chest == null) {
@@ -746,13 +757,21 @@ public class MainWindow
     }
 
     protected void OnAddChestButtonClicked(object sender, EventArgs e) {
-        ActiveRoom.AddChest();
+        ActiveRoom?.AddChest();
         UpdateChestData();
     }
 
     protected void OnRemoveChestButtonClicked(object sender, EventArgs e) {
-        ActiveRoom.DeleteChest();
+        ActiveRoom?.DeleteChest();
         // Chest's deleted handler will invoke UpdateChestData()
+    }
+
+    protected void OnCreateTreasureButtonClicked(object sender, EventArgs e) {
+        if (ActiveRoom?.Chest == null)
+            return;
+        TreasureObject t = ActiveRoom.Chest.TreasureGroup.AddTreasureObjectSubid();
+        if (t != null)
+            ActiveRoom.Chest.Treasure = t;
     }
 
     void OnWindowClosed(object sender, DeleteEventArgs e) {

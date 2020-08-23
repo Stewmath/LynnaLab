@@ -241,6 +241,12 @@ namespace LynnaLab
             }
         }
 
+        public int NumTreasures {
+            get {
+                return EvalToInt("NUM_TREASURES");
+            }
+        }
+
 
         // Methods
 

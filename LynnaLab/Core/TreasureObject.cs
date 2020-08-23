@@ -1,46 +1,27 @@
 using System;
-using System.Drawing;
 using System.Collections.Generic;
-using System.IO;
 using Util;
 
 namespace LynnaLab
 {
-    /// Represents an instance of INTERACID_TREASURE.
-    /// Index is the ID (upper byte) and the subID (lower byte) corresponding to a chest. When
-    /// spawning INTERACID_TREASURE, the ID becomes the subID and the subID is written to "var03".
-    public class Treasure : ProjectIndexedDataType {
-        Data baseData;
+    /// Represents a "treasure object", which is a treasure with additional properties including
+    /// graphics, text, etc. (see "data/{game}/treasureObjectData.s".)
+    /// Has an "ID" (the treasure index) and an additional "subID" representing a "variant" of the
+    /// treasure.
+    public class TreasureObject {
+        TreasureGroup treasureGroup;
         ValueReferenceGroup vrg;
-        bool usesPointer;
+        Data baseData;
 
-        internal Treasure(Project p, int i) : base(p, i) {
-            // TODO: Check if Index is too high, handle it somehow
-            Data data = Project.GetData("treasureObjectData", ID * 4);
+        internal TreasureObject(TreasureGroup treasureGroup, int subid, Data baseData) {
+            this.treasureGroup = treasureGroup;
+            this.SubID = subid;
 
-            if ((data.GetIntValue(0) & 0x80) != 0)
-                usesPointer = true;
-            if (SubID != 0 && !usesPointer)
-                InvalidSubidException();
+            // Check if index is too high
+            if (ID >= Project.NumTreasures)
+                throw new InvalidTreasureException(string.Format("ID {0:X2} for treasure was too high!", ID));
 
-            if (usesPointer) {
-                data = Project.GetData(data.NextData.GetValue(0)); // Follow pointer
-                int count = SubID;
-                while (count > 0) {
-                    FileComponent com = data;
-                    for (int j=0; j<4;) {
-                        com = com.Next;
-                        if (com is Data)
-                            j++;
-                        else if (com is Label || com == null)
-                            InvalidSubidException();
-                    }
-                    data = com as Data;
-                    count--;
-                }
-            }
-
-            baseData = data;
+            this.baseData = baseData;
             GenerateValueReferenceGroup();
         }
 
@@ -55,12 +36,15 @@ namespace LynnaLab
             get { return vrg.GetIntValue("Graphics"); }
         }
 
-        int ID {
-            get { return Index >> 8; }
+        public int ID {
+            get { return treasureGroup.Index; }
         }
-        int SubID {
-            get { return Index & 0xff; }
+        public int SubID {
+            get; private set;
         }
+
+
+        Project Project { get { return treasureGroup.Project; } }
 
 
         // Private methods
@@ -101,10 +85,6 @@ namespace LynnaLab
                         name: "Graphics",
                         type: DataValueType.Byte),
             });
-        }
-
-        void InvalidSubidException() {
-            throw new InvalidTreasureException(string.Format("SubID {0:X2} for treasure {1:X2} was invalid!", SubID, ID));
         }
     }
 }

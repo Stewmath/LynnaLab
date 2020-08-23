@@ -39,22 +39,46 @@ namespace LynnaLab
 
         public ValueReferenceGroup ValueReferenceGroup { get; private set; }
         public int TreasureID {
-            get { return ValueReferenceGroup.GetIntValue("ID"); }
+            get {
+                return ValueReferenceGroup.GetIntValue("ID");
+            }
+            set {
+                ValueReferenceGroup.SetValue("ID", value);
+            }
         }
         public int TreasureSubID {
-            get { return ValueReferenceGroup.GetIntValue("SubID"); }
+            get {
+                return ValueReferenceGroup.GetIntValue("SubID");
+            }
+            set {
+                ValueReferenceGroup.SetValue("SubID", value);
+            }
         }
         public int TreasureIndex {
-            get { return TreasureID * 256 + TreasureSubID; }
+            get {
+                return TreasureID * 256 + TreasureSubID;
+            }
+            set {
+                ValueReferenceGroup.BeginAtomicOperation();
+                TreasureID = value >> 8;
+                TreasureSubID = value & 0xff;
+                ValueReferenceGroup.EndAtomicOperation();
+            }
         }
-        public Treasure Treasure {
+        public TreasureGroup TreasureGroup {
+            get { return Project.GetIndexedDataType<TreasureGroup>(TreasureID); }
+        }
+        public TreasureObject Treasure {
             get {
                 try {
-                    return Project.GetIndexedDataType<Treasure>(TreasureIndex);
+                    return TreasureGroup.GetTreasureObject(TreasureSubID);
                 }
                 catch (InvalidTreasureException) {
                     return null;
                 }
+            }
+            set {
+                TreasureIndex = (value.ID << 8) | value.SubID;
             }
         }
 

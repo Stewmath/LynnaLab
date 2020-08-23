@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Collections.Generic;
+using Util;
 
 namespace LynnaLab
 {
@@ -8,10 +9,12 @@ namespace LynnaLab
     // or set them.
     public class ValueReferenceGroup {
         IList<ValueReference> valueReferences;
+        LockableEvent<ValueModifiedEventArgs> lockableModifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
 
 
         public ValueReferenceGroup(IList<ValueReference> refs) {
             SetValueReferences(refs);
+            lockableModifiedEvent += (sender, args) => ModifiedEvent?.Invoke(sender, args);
         }
 
 
@@ -131,6 +134,16 @@ namespace LynnaLab
             ModifiedEvent -= handler;
         }
 
+        /// Call this to prevent events from firing until EndAtomicOperation is called.
+        public void BeginAtomicOperation() {
+            lockableModifiedEvent.Lock();
+            // TODO: Would be ideal if this also locked events for the ValueReferences themselves
+        }
+
+        public void EndAtomicOperation() {
+            lockableModifiedEvent.Unlock();
+        }
+
 
         // Protected
 
@@ -143,7 +156,7 @@ namespace LynnaLab
                 ValueReference copy = vref.Clone();
                 valueReferences.Add(copy);
 
-                copy.AddValueModifiedHandler((sender, args) => ModifiedEvent?.Invoke(sender, args));
+                copy.AddValueModifiedHandler((sender, args) => lockableModifiedEvent?.Invoke(sender, args));
             }
         }
     }

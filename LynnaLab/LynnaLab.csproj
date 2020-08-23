@@ -163,8 +163,9 @@
     <Compile Include="Core\Util\EventWrapper.cs" />
     <Compile Include="Widgets\PriorityStatusbar.cs" />
     <Compile Include="Core\Chest.cs" />
-    <Compile Include="Core\Treasure.cs" />
+    <Compile Include="Core\TreasureObject.cs" />
     <Compile Include="Core\Util\Misc.cs" />
+    <Compile Include="Core\TreasureGroup.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
