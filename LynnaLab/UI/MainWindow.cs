@@ -777,8 +777,13 @@ public class MainWindow
         if (ActiveRoom?.Chest == null)
             return;
         TreasureObject t = ActiveRoom.Chest.TreasureGroup.AddTreasureObjectSubid();
-        if (t != null)
+        if (t != null) {
             ActiveRoom.Chest.Treasure = t;
+            // Must call this explicitly since it normally only gets invoked when the chest's
+            // treasure index changes. In this case the treasure index may stay the same even if
+            // that index was only just created now.
+            UpdateChestData();
+        }
     }
 
     void OnWindowClosed(object sender, DeleteEventArgs e) {
