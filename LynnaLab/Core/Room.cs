@@ -458,7 +458,7 @@ namespace LynnaLab
         }
 
         // Tileset modified
-        void ModifiedTilesetCallback(int tile) {
+        void ModifiedTilesetCallback(object sender, int tile) {
             Graphics g = null;
             if (cachedImage != null)
                 g = Graphics.FromImage(cachedImage);

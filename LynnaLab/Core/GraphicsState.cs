@@ -174,28 +174,17 @@ namespace LynnaLab
             }
         }
         void LoadPaletteHeaderGroup(PaletteHeaderGroup group) {
-            PaletteHeaderData header = group.FirstPaletteHeader;
-            bool next = true;
-            while (next) {
-                RgbData data = header.Data;
-                for (int i=header.FirstPalette; i<header.FirstPalette+header.NumPalettes; i++) {
-                    for (int j=0; j<4; j++) {
-                        paletteBuffer[(int)header.PaletteType][i][j] = data.Color;
-                        data = data.NextData as RgbData;
+            group.Foreach((header) => {
+                if (header.IsResolvable) {
+                    RgbData data = header.Data;
+                    for (int i=header.FirstPalette; i<header.FirstPalette+header.NumPalettes; i++) {
+                        for (int j=0; j<4; j++) {
+                            paletteBuffer[(int)header.PaletteType][i][j] = data.Color;
+                            data = data.NextData as RgbData;
+                        }
                     }
                 }
-
-                next = false;
-
-				if (header.ShouldHaveNext()) {
-                    PaletteHeaderData nextHeader = header.NextData as PaletteHeaderData;
-                    if (nextHeader != null) {
-						header = nextHeader;
-						next = true;
-					}
-					// Might wanna print a warning if no next value is found
-				}
-            }
+            });
         }
 
         void RegenerateBuffers() {

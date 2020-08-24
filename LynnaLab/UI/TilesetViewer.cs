@@ -42,10 +42,9 @@ namespace LynnaLab
         }
 
         public void SetTileset(Tileset t) {
-            Tileset.TileModifiedHandler handler = new Tileset.TileModifiedHandler(ModifiedTileCallback);
             if (tileset != null)
-                tileset.TileModifiedEvent -= handler;
-            t.TileModifiedEvent += handler;
+                tileset.TileModifiedEvent -= ModifiedTileCallback;
+            t.TileModifiedEvent += ModifiedTileCallback;
 
             tileset = t;
 
@@ -55,7 +54,7 @@ namespace LynnaLab
             this.QueueDraw();
         }
 
-        void ModifiedTileCallback(int tile) {
+        void ModifiedTileCallback(object sender, int tile) {
             QueueDraw();
         }
 

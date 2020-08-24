@@ -33,7 +33,7 @@ namespace LynnaLab
         LockableEvent<DataModifiedEventArgs> dataModifiedEvent = new LockableEvent<DataModifiedEventArgs>();
 
         // TODO: replace above with this
-        public event EventHandler<DataModifiedEventArgs> DataModifiedEvent;
+        public event EventHandler<DataModifiedEventArgs> ModifiedEvent;
 
 
         // Properties
@@ -95,7 +95,7 @@ namespace LynnaLab
 
             PrintCommand = true;
 
-            dataModifiedEvent += (sender, args) => { if (DataModifiedEvent != null) DataModifiedEvent(sender, args); };
+            dataModifiedEvent += (sender, args) => ModifiedEvent?.Invoke(sender, args);
         }
 
 
@@ -222,6 +222,11 @@ namespace LynnaLab
                         Project.EvalToInt(GetValue(0))*8,
                         Project.EvalToInt(GetValue(1))*8,
                         Project.EvalToInt(GetValue(2))*8);
+            }
+            set {
+                SetByteValue(0, (byte)(value.R >> 3));
+                SetByteValue(1, (byte)(value.G >> 3));
+                SetByteValue(2, (byte)(value.B >> 3));
             }
         }
 

@@ -165,6 +165,7 @@
     <Compile Include="Core\TreasureObject.cs" />
     <Compile Include="Core\Util\Misc.cs" />
     <Compile Include="Core\TreasureGroup.cs" />
+    <Compile Include="UI\PaletteEditor.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

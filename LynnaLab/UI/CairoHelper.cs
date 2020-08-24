@@ -7,7 +7,7 @@ using Bitmap = System.Drawing.Bitmap;
 // separation. Should probably move the relevant Core code into the UI folder.
 namespace LynnaLab
 {
-    public class CairoHelper
+    public static class CairoHelper
     {
         /// <summary>
         ///  Makes a copy of a bitmap as a Cairo.ImageSurface. No need to unlock the bitmap later.
@@ -95,6 +95,19 @@ namespace LynnaLab
 
             return r1 > rect2.X && r2 > rect1.X
                 && b1 > rect2.Y && b2 > rect1.Y;
+        }
+
+
+        // Extension methods
+
+        /// Convert Cairo.Color to Gdk.Color
+        public static Gdk.RGBA ToRGBA(this Cairo.Color self) {
+            return new Gdk.RGBA { Red = self.R, Green = self.G, Blue = self.B, Alpha = self.A };
+        }
+
+        /// Convert Gdk.Color to System.Drawing.Color
+        public static System.Drawing.Color ToDrawingColor(this Gdk.RGBA color) {
+            return System.Drawing.Color.FromArgb((byte)(color.Red * 256), (byte)(color.Green * 256), (byte)(color.Blue * 256));
         }
     }
 

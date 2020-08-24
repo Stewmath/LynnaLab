@@ -22,14 +22,19 @@ namespace LynnaLab
 
         SubTileEditor subTileEditor;
         GfxViewer subTileGfxViewer;
+        PaletteEditor paletteEditor;
 
 
         SpinButtonHexadecimal tilesetSpinButton = new SpinButtonHexadecimal();
         Gtk.Box tilesetSpinButtonContainer;
         Gtk.Box tilesetVreContainer, tilesetViewerContainer, subTileContainer, subTileGfxContainer;
+        Gtk.Box paletteEditorContainer;
+        Gtk.Label paletteFrameLabel;
         ValueReferenceEditor tilesetVre;
 
         TilesetViewer tilesetviewer1;
+
+        WeakEventWrapper<Tileset> tilesetEventWrapper = new WeakEventWrapper<Tileset>();
 
         public TilesetEditor(Tileset t)
         {
@@ -42,6 +47,8 @@ namespace LynnaLab
             tilesetViewerContainer = (Gtk.Box)builder.GetObject("tilesetViewerContainer");
             subTileContainer = (Gtk.Box)builder.GetObject("subTileContainer");
             subTileGfxContainer = (Gtk.Box)builder.GetObject("subTileGfxContainer");
+            paletteEditorContainer = (Gtk.Box)builder.GetObject("paletteEditorContainer");
+            paletteFrameLabel = (Gtk.Label)builder.GetObject("paletteFrameLabel");
 
             base.Child = (Gtk.Widget)builder.GetObject("TilesetEditor");
 
@@ -63,33 +70,44 @@ namespace LynnaLab
             subTileEditor = new SubTileEditor(this);
             subTileContainer.Add(subTileEditor);
 
+            paletteEditor = new PaletteEditor();
+            paletteEditorContainer.Add(paletteEditor);
+
             tilesetSpinButton = new SpinButtonHexadecimal();
             tilesetSpinButtonContainer.Add(tilesetSpinButton);
 
             SetTileset(t);
 
             tilesetSpinButton.ValueChanged += TilesetSpinButtonChanged;
+
+            tilesetEventWrapper.Bind<int>("TileModifiedEvent", OnTileModified);
+            tilesetEventWrapper.Bind<EventArgs>("PaletteHeaderGroupModifiedEvent", OnPalettesChanged);
         }
 
         void TilesetSpinButtonChanged(object sender, EventArgs args) {
             SetTileset(Project.GetIndexedDataType<Tileset>(tilesetSpinButton.ValueAsInt));
         }
 
-        void TileModifiedHandler(int tile) {
+        void OnTileModified(object sender, int tile) {
             if (tile == subTileEditor.subTileViewer.TileIndex) {
                 subTileEditor.OnTileModified();
             }
             tilesetviewer1.QueueDraw();
         }
 
+        void OnPalettesChanged(object sender, EventArgs args) {
+            var group = tileset.PaletteHeaderGroup;
+            paletteEditor.PaletteHeaderGroup = group;
+            paletteFrameLabel.Text = group.LabelName + " (" + group.ConstantAliasName + ")";
+        }
+
         void SetTileset(Tileset t) {
             if (t == tileset)
                 return;
-            if (tileset != null)
-                tileset.TileModifiedEvent -= TileModifiedHandler;
-            t.TileModifiedEvent += TileModifiedHandler;
-
             tileset = t;
+
+            tilesetEventWrapper.ReplaceEventSource(tileset);
+
             subTileEditor.SetTileset(tileset);
             if (tileset != null) {
                 subTileGfxViewer.SetGraphicsState(tileset.GraphicsState, 0x2000, 0x3000);
@@ -104,6 +122,8 @@ namespace LynnaLab
             }
             else
                 tilesetVre.ReplaceValueReferenceGroup(vrg);
+
+            OnPalettesChanged(null, null);
 
             tilesetSpinButton.Value = tileset.Index;
             tilesetSpinButton.Adjustment.Upper = Project.NumTilesets - 1;

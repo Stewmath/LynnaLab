@@ -104,7 +104,7 @@ namespace LynnaLab
         }
 
         void BindEventHandler() {
-            dataEventWrapper.Bind<DataModifiedEventArgs>("DataModifiedEvent", OnDataModified);
+            dataEventWrapper.Bind<DataModifiedEventArgs>("ModifiedEvent", OnDataModified);
             dataEventWrapper.ReplaceEventSource(_data);
         }
 

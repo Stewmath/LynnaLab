@@ -22,14 +22,9 @@ namespace LynnaLab
         Bitmap fullCachedImage = new Bitmap(16*16,16*16);
         BitmapData fullCachedImageData;
 
+        WeakEventWrapper<PaletteHeaderGroup> paletteEventWrapper = new WeakEventWrapper<PaletteHeaderGroup>();
+
         bool constructorFinished = false;
-
-        public delegate void TileModifiedHandler(int tile);
-        public delegate void LayoutGroupModifiedHandler();
-        // Invoked whenever the image of a tile is modified
-        public event TileModifiedHandler TileModifiedEvent;
-
-        public event LayoutGroupModifiedHandler LayoutGroupModifiedEvent;
 
         // For dynamically showing an animation
         int[] animationPos = new int[4];
@@ -37,6 +32,19 @@ namespace LynnaLab
 
         List<byte>[] usedTileList = new List<byte>[256];
 
+
+        // Events
+
+        public delegate void LayoutGroupModifiedHandler();
+
+        // Invoked whenever the image of a tile is modified
+        public event EventHandler<int> TileModifiedEvent;
+
+        public event LayoutGroupModifiedHandler LayoutGroupModifiedEvent;
+        public event EventHandler<EventArgs> PaletteHeaderGroupModifiedEvent;
+
+
+        // Properties
 
         // The GraphicsState which contains the data as it will be loaded into
         // vram.
@@ -71,6 +79,11 @@ namespace LynnaLab
             }
             set {
                 vrg.SetValue("Palettes", value);
+            }
+        }
+        public PaletteHeaderGroup PaletteHeaderGroup {
+            get {
+                return Project.GetIndexedDataType<PaletteHeaderGroup>(PaletteHeader);
             }
         }
         public int TilesetLayoutIndex {
@@ -135,6 +148,8 @@ namespace LynnaLab
             LoadTilesetLayout();
             LoadAllGfxData();
             LoadPaletteHeader();
+
+            paletteEventWrapper.Bind<EventArgs>("ModifiedEvent", OnPaletteDataModified);
 
             constructorFinished = true;
         }
@@ -306,6 +321,8 @@ namespace LynnaLab
 
 
             vrg = new ValueReferenceGroup(list);
+
+            vrg["Palettes"].ModifiedEvent += (sender, args) => PaletteHeaderGroupModifiedEvent?.Invoke(this, null);
         }
 
 
@@ -336,8 +353,7 @@ namespace LynnaLab
                 if (tileImagesCache[tileUpdaterIndex] == null) {
                     numDrawnTiles++;
                     GetTileImage(tileUpdaterIndex); // Will generate the image if it's not cached
-                    if (TileModifiedEvent != null)
-                        TileModifiedEvent(tileUpdaterIndex);
+                    TileModifiedEvent?.Invoke(this, tileUpdaterIndex);
                 }
                 tileUpdaterIndex++;
             }
@@ -407,7 +423,7 @@ namespace LynnaLab
             GenerateUsedTileList();
             tileImagesCache[index] = null;
             GetTileImage(index); // Redraw tile image
-            TileModifiedEvent(index);
+            TileModifiedEvent?.Invoke(this, index);
         }
         public byte GetSubTileFlags(int index, int x, int y) {
             if (Project.Config.ExpandedTilesets) {
@@ -429,7 +445,7 @@ namespace LynnaLab
             }
             tileImagesCache[index] = null;
             GetTileImage(index); // Redraw tile image
-            TileModifiedEvent(index);
+            TileModifiedEvent?.Invoke(this, index);
         }
 
         // Get the "basic collision" of a subtile (whether or not that part is
@@ -526,8 +542,7 @@ namespace LynnaLab
                 tileImagesCache[t] = null;
                 GetTileImage(t);
 
-                if (TileModifiedEvent != null)
-                    TileModifiedEvent(t);
+                TileModifiedEvent?.Invoke(this, t);
             }
 
             return new List<byte>(changedTiles);
@@ -612,10 +627,9 @@ namespace LynnaLab
         }
 
         void LoadPaletteHeader() {
+            paletteEventWrapper.ReplaceEventSource(PaletteHeaderGroup);
             graphicsState.RemovePaletteGroupType(PaletteGroupType.Main);
-            var paletteHeaderGroup =
-                Project.GetIndexedDataType<PaletteHeaderGroup>(PaletteHeader);
-            graphicsState.AddPaletteHeaderGroup(paletteHeaderGroup, PaletteGroupType.Main);
+            graphicsState.AddPaletteHeaderGroup(PaletteHeaderGroup, PaletteGroupType.Main);
             InvalidateAllTiles();
         }
 
@@ -652,6 +666,12 @@ namespace LynnaLab
                 animationGroup = null;
 
             ResetAnimation();
+        }
+
+        void OnPaletteDataModified(object sender, EventArgs args) {
+            // TODO: This will cause a full redraw of all tiles. Can we do better? (ie. only signal
+            // that the tiles are invalidated and don't redraw them until they're requested)
+            LoadPaletteHeader();
         }
 
 
