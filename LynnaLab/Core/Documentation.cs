@@ -16,7 +16,7 @@ namespace LynnaLab {
 /// </summary>
 public class Documentation {
     Dictionary<string,string> _fieldDict;
-    HashSet<string> _fieldKeys; // Maintained separately from documentationParams to preserve original case
+    ISet<string> _fieldKeys; // Maintained separately from documentationParams to preserve original case
 
     public string Name { get; set; }
     public string Description { get; set; }
@@ -34,7 +34,7 @@ public class Documentation {
     public Documentation(string name, string desc, ICollection<Tuple<string,string>> _values) {
         Name = name;
         _fieldDict = new Dictionary<string,string>();
-        _fieldKeys = new HashSet<string>();
+        _fieldKeys = new SortedSet<string>();
 
         if (_values != null) {
             foreach (Tuple<string,string> tup in _values) {
@@ -57,13 +57,13 @@ public class Documentation {
                 _fieldDict[key.ToLower()] = fileComponent.GetField(key);
         }
 
-        _fieldKeys = new HashSet<string>(fileComponent.Keys);
+        _fieldKeys = new SortedSet<string>(fileComponent.Keys);
         _fieldKeys.Remove("desc");
     }
 
     public Documentation(Documentation d) {
         _fieldDict = new Dictionary<string,string>(d._fieldDict);
-        _fieldKeys = new HashSet<string>(d._fieldKeys);
+        _fieldKeys = new SortedSet<string>(d._fieldKeys);
         Description = d.Description;
         Name = d.Name;
     }
