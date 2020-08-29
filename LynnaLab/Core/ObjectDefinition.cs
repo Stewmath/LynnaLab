@@ -51,8 +51,9 @@ namespace LynnaLab {
             return IsTypeWithShortenedXY() || GetSubIDDocumentation()?.GetField("postype") == "short";
         }
 
+        /// Returns true if this type has X/Y variables, AND we don't have "postype == none".
         public bool HasXY() {
-            return HasValue("X") && HasValue("Y");
+            return HasValue("X") && HasValue("Y") && GetSubIDDocumentation()?.GetField("postype") != "none";
         }
 
         // Return the center x-coordinate of the object.
