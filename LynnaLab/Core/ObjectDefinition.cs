@@ -12,17 +12,22 @@ namespace LynnaLab {
 
         // Constructors
 
-        public ObjectDefinition(ObjectGroup group, ObjectData objectData, int index) {
+        public ObjectDefinition(ObjectGroup group, ObjectData od, int index) {
             this.objectGroup = group;
-            this.objectData = objectData;
+            this.objectData = od;
             this.Index = index;
 
             var valueReferences = new List<ValueReference>();
 
             foreach (var vref in objectData.ValueReferenceGroup.GetValueReferences()) {
                 string name = vref.Name;
+
+                // Create a new AbstractIntValueReference which INDIRECTLY reads from the old
+                // ValueReference. The underlying ValueReference may be changed; so it's important
+                // that the getter and setter functions are redefined in an indirect way.
                 var newVref = new AbstractIntValueReference(
                         vref,
+                        getter: () => objectData.ValueReferenceGroup.GetIntValue(name),
                         setter: (v) => OnValueSet(name, v));
                 valueReferences.Add(newVref);
             }
@@ -140,7 +145,6 @@ namespace LynnaLab {
 
         internal void SetObjectData(ObjectData data) {
             objectData = data;
-            base.SetValueReferences(data.ValueReferenceGroup.GetValueReferences());
         }
 
         internal void UpdateIndex() {
