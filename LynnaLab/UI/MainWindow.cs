@@ -786,6 +786,11 @@ public class MainWindow
         }
     }
 
+    protected void OnRedrawMinimapButtonClicked(object sender, EventArgs e) {
+        worldMinimap.InvalidateImageCache();
+        dungeonMinimap.InvalidateImageCache();
+    }
+
     void OnWindowClosed(object sender, DeleteEventArgs e) {
         AskQuit();
         e.RetVal = true; // Event is "handled". This prevents the window closure.
