@@ -32,10 +32,12 @@ public class InteractionObject : GameObject {
             b1 = (byte)objectData.GetIntValue(1);
             b2 = (byte)objectData.GetIntValue(2);
         }
-        catch(InvalidLookupException) {
+        catch(InvalidLookupException e) {
+            Console.WriteLine(e.ToString());
             objectData = null;
         }
-        catch(FormatException) {
+        catch(FormatException e) {
+            Console.WriteLine(e.ToString());
             objectData = null;
         }
     }
