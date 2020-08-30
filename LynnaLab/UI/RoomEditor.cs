@@ -254,6 +254,7 @@ namespace LynnaLab
         // Called when an object is selected in the ObjectGroupEditor
         public void OnObjectSelected() {
             if ((selectedComponent as ObjectRoomComponent)?.obj != ObjectGroupEditor.SelectedObject) {
+                selectedComponent = null;
                 foreach (RoomComponent com in roomComponents) {
                     if (!(com is ObjectRoomComponent))
                         continue;
