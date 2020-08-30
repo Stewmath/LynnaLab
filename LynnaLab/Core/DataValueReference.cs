@@ -75,7 +75,7 @@ namespace LynnaLab
         }
 
 
-        public DataValueReference(Data data, string name, int index, DataValueType type, int startBit=0, int endBit=0, bool editable=true, string constantsMappingString=null, bool useConstantAlias=false, string tooltip=null)
+        public DataValueReference(Data data, string name, int index, DataValueType type, int startBit=0, int endBit=0, int maxValue=-1, bool editable=true, string constantsMappingString=null, bool useConstantAlias=false, string tooltip=null)
         : base(name, GetValueType(type), editable, constantsMappingString) {
             this._data = data;
             this.dataType = type;
@@ -87,7 +87,10 @@ namespace LynnaLab
             base.Tooltip = tooltip;
             base.Project = _data.Project;
 
-            MaxValue = GetMaxValueForType(type, startBit, endBit);
+            if (maxValue == -1)
+                MaxValue = DataValueReference.GetMaxValueForType(type, startBit, endBit);
+            else
+                MaxValue = maxValue;
 
             BindEventHandler();
         }

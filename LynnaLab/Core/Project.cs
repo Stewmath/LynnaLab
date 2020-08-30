@@ -221,6 +221,16 @@ namespace LynnaLab
             }
         }
 
+        /// Number of groups in the "rooms" directory (ie. "room0500" is in layout group 5)
+        public int NumLayoutGroups {
+            get {
+                if (GameString == "ages")
+                    return 6;
+                else
+                    return 7;
+            }
+        }
+
         public int NumRooms {
             get {
                 if (GameString == "ages")

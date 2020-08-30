@@ -34,7 +34,6 @@ namespace LynnaLab
             else
                 MaxValue = maxValue;
 
-
             BindEventHandler();
         }
 
