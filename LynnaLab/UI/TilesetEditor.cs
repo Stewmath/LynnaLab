@@ -353,7 +353,6 @@ namespace LynnaLab
 
                 collisionSpinButton = new SpinButtonHexadecimal(0,255);
                 collisionSpinButton.Digits = 2;
-                collisionSpinButton.CanFocus = false;
                 collisionSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
                     Tileset.SetTileCollision(TileIndex, (byte)collisionSpinButton.ValueAsInt);
                     subTileCollisionEditor.QueueDraw();
@@ -373,12 +372,10 @@ namespace LynnaLab
                 table.RowSpacing = 6;
 
                 subTileSpinButton = new SpinButtonHexadecimal(0,255);
-                subTileSpinButton.CanFocus = false;
                 subTileSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
                     PushFlags();
                 };
                 paletteSpinButton = new SpinButton(0,7,1);
-                paletteSpinButton.CanFocus = false;
                 paletteSpinButton.ValueChanged += delegate(object sender, EventArgs e) {
                     PushFlags();
                 };
