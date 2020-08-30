@@ -44,7 +44,7 @@ namespace LynnaLab
 
 
         // Invoked when the group is modified in any way (including modifying objects themselves).
-        EventHandler<EventArgs> modifiedEvent;
+        event EventHandler<EventArgs> modifiedEvent;
 
 
         // NOTE: this list may not be complete at any given time

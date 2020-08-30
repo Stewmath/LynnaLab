@@ -12,17 +12,18 @@ namespace LynnaLab
         LockableEvent<ValueModifiedEventArgs> lockableModifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
 
 
-        public ValueReferenceGroup(IList<ValueReference> refs) {
-            SetValueReferences(refs);
+        /// Constructor to let subclasses set valueReferences manually
+        protected ValueReferenceGroup() {
             lockableModifiedEvent += (sender, args) => ModifiedEvent?.Invoke(sender, args);
+        }
+
+        public ValueReferenceGroup(IList<ValueReference> refs) : this() {
+            SetValueReferences(refs);
         }
 
 
         public event EventHandler<ValueModifiedEventArgs> ModifiedEvent;
 
-
-        // Let subclasses set valueReferences manually
-        protected ValueReferenceGroup() {}
 
 
         // Properties
