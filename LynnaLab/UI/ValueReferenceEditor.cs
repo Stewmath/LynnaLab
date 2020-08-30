@@ -7,13 +7,13 @@ namespace LynnaLab {
         ValueReferenceGroup valueReferenceGroup;
 
         IList<int> maxBounds;
-        // X/Y positions where the widgets are in the table
-        IList<Tuple<uint,uint>> widgetPositions;
+        // X/Y positions where the widgets are in the grid
+        IList<Tuple<int,int>> widgetPositions;
         // The widgets by index.
         IList<IList<Gtk.Widget>> widgetLists;
 
         // The main table which holds all the widgets.
-        Gtk.Table table;
+        Gtk.Grid grid;
 
         event System.Action dataModifiedExternalEvent;
         event System.Action dataModifiedInternalEvent;
@@ -37,11 +37,11 @@ namespace LynnaLab {
 
             valueReferenceGroup = vrg;
             maxBounds = new int[valueReferenceGroup.GetNumValueReferences()];
-            widgetPositions = new Tuple<uint,uint>[maxBounds.Count];
+            widgetPositions = new Tuple<int,int>[maxBounds.Count];
             widgetLists = new List<IList<Gtk.Widget>>();
 
-            table = new Gtk.Table(2, 2, false);
-            uint x=0,y=0;
+            grid = new Gtk.Grid();
+            int x=0,y=0;
 
             // Do not use "foreach" here. The "valueReferenceGroup" may be changed. So, whenever we
             // access a ValueReference from within an event handler, we must do so though the
@@ -54,10 +54,10 @@ namespace LynnaLab {
                     x += 3;
                 }
 
-                // Each ValueReference may use up to 3 widgets in the table row
+                // Each ValueReference may use up to 3 widgets in the grid row
                 Gtk.Widget[] widgetList = new Gtk.Widget[3];
 
-                widgetPositions[i] = new Tuple<uint,uint>(x,y);
+                widgetPositions[i] = new Tuple<int,int>(x,y);
 
                 Action<Gtk.SpinButton> setSpinButtonLimits = (spinButton) => {
                     if (valueReferenceGroup[i].MaxValue < 0x10)
@@ -72,9 +72,11 @@ namespace LynnaLab {
                     spinButton.Adjustment.Upper = valueReferenceGroup[i].MaxValue;
                 };
 
+                int entryWidgetWidth = 1;
+
                 // If it has a ConstantsMapping, use a combobox instead of anything else
                 if (valueReferenceGroup[i].ConstantsMapping != null) {
-                    ComboBoxFromConstants comboBox = new ComboBoxFromConstants(false);
+                    ComboBoxFromConstants comboBox = new ComboBoxFromConstants(showHelp:true, vertical:true);
                     comboBox.SetConstantsMapping(valueReferenceGroup[i].ConstantsMapping);
 
                     // Must put this before the "Changed" handler below to avoid
@@ -92,6 +94,8 @@ namespace LynnaLab {
 
                     widgetList[0] = new Gtk.Label(valueReferenceGroup[i].Name);
                     widgetList[1] = comboBox;
+
+                    entryWidgetWidth = 2;
 
                     goto loopEnd;
                 }
@@ -162,11 +166,12 @@ namespace LynnaLab {
                 }
 
 loopEnd:
-                table.Attach(widgetList[0], x+0,x+1, y, y+1);
-                table.Attach(widgetList[1], x+1,x+2, y, y+1);
+                grid.Attach(widgetList[0], x, y, 1, 1);
+                grid.Attach(widgetList[1], x+1, y, entryWidgetWidth, 1);
 
-                widgetList[2] = new Gtk.HBox(); // Container for help button
-                table.Attach(widgetList[2], x+2,x+3, y, y+1, 0, Gtk.AttachOptions.Fill, 0, 0);
+                widgetList[2] = new Gtk.Alignment(0, 0.5f, 0, 0); // Container for help button
+                widgetList[2].Hexpand = true; // Let this absorb any extra space
+                grid.Attach(widgetList[2], x+2, y, 1, 1);
 
                 widgetLists.Add(widgetList);
 
@@ -176,15 +181,15 @@ loopEnd:
                 y++;
             }
 
-            table.ColumnSpacing = 6;
+            grid.ColumnSpacing = 6;
 
             if (frameText != null) {
                 var frame = new Gtk.Frame(frameText);
-                frame.Add(table);
+                frame.Add(grid);
                 this.Add(frame);
             }
             else
-                this.Add(table);
+                this.Add(grid);
 
             this.ShowAll();
 
@@ -245,7 +250,7 @@ loopEnd:
             int i = GetValueIndex(name);
             widgetLists[i][1].Dispose();
             var pos = widgetPositions[i];
-            table.Attach(newWidget, pos.Item1+1, pos.Item1+2, pos.Item2, pos.Item2+1);
+            grid.Attach(newWidget, pos.Item1+1, pos.Item2, 1, 1);
             widgetLists[i][1] = newWidget;
         }
 
@@ -256,7 +261,7 @@ loopEnd:
             widgetLists[i][2].Dispose(); // Removes help button
             widgetLists[i][2] = widget;
             var pos = widgetPositions[i];
-            table.Attach(widget, pos.Item1+2, pos.Item1+3, pos.Item2, pos.Item2+1);
+            grid.Attach(widget, pos.Item1+2, pos.Item2, 1, 1);
         }
 
         int GetValueIndex(string name) {
@@ -302,6 +307,9 @@ loopEnd:
             IList<ValueReference> refs = valueReferenceGroup.GetValueReferences();
 
             for (int i=0; i<refs.Count; i++) {
+                if (widgetLists[i][1] is ComboBoxFromConstants) // These deal with documentation themselves
+                    continue;
+
                 Gtk.Container container = widgetLists[i][2] as Gtk.Container;
                 if (container == null)
                     continue;

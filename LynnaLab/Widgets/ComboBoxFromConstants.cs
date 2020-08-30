@@ -10,7 +10,7 @@ namespace LynnaLab
     {
         public event EventHandler Changed;
 
-        private Gtk.HBox hbox1;
+        private Gtk.Box box1;
         private LynnaLab.SpinButtonHexadecimal spinButton;
         private Gtk.ComboBoxText combobox1;
 
@@ -65,13 +65,19 @@ namespace LynnaLab
 
 
         // TODO: pass in a label which it will update with the name from the combobox?
-        public ComboBoxFromConstants(bool showHelp=true)
+        public ComboBoxFromConstants(bool showHelp=true, bool vertical=false)
         {
             this.Name = "LynnaLab.ComboBoxFromConstants";
+
+            Gtk.Box box2 = new Gtk.HBox();
+            box2.Spacing = 6;
+
             // Container child LynnaLab.ComboBoxFromConstants.Gtk.Container+ContainerChild
-            this.hbox1 = new Gtk.HBox();
-            this.hbox1.Name = "hbox1";
-            // Container child hbox1.Gtk.Box+BoxChild
+            if (vertical)
+                this.box1 = new Gtk.VBox();
+            else
+                this.box1 = new Gtk.HBox();
+            // Container child box1.Gtk.Box+BoxChild
             this.spinButton = new LynnaLab.SpinButtonHexadecimal();
             this.spinButton.CanFocus = true;
             this.spinButton.Name = "spinButton";
@@ -81,15 +87,15 @@ namespace LynnaLab
             this.spinButton.ClimbRate = 1D;
             this.spinButton.Digits = 2;
             this.spinButton.Numeric = true;
-            this.hbox1.Add(spinButton);
-            hbox1.SetChildPacking(spinButton, true, true, 0, Gtk.PackType.Start);
+            box2.Add(spinButton);
+            box2.SetChildPacking(spinButton, expand:false, fill:false, padding:0, pack_type:Gtk.PackType.Start);
+            box1.Add(box2);
 
-            // Container child hbox1.Gtk.Box+BoxChild
+            // Container child box1.Gtk.Box+BoxChild
             this.combobox1 = new Gtk.ComboBoxText();
             this.combobox1.Name = "combobox1";
-            this.hbox1.Add(this.combobox1);
-            hbox1.SetChildPacking(this.combobox1, false, false, 0, Gtk.PackType.Start);
-            this.Add(this.hbox1);
+            this.box1.Add(this.combobox1);
+            box1.SetChildPacking(this.combobox1, false, false, 0, Gtk.PackType.Start);
 
             this.spinButton.ValueChanged += new System.EventHandler(this.OnSpinButtonValueChanged);
             this.combobox1.Changed += new System.EventHandler(this.OnCombobox1Changed);
@@ -108,8 +114,12 @@ namespace LynnaLab
                     d.Dispose();
                 };
 
-                hbox1.PackStart(helpButton, false, false, 0);
+                box2.PackStart(helpButton, false, false, 0);
             }
+
+            Gtk.Frame frame = new Gtk.Frame();
+            frame.Add(box1);
+            this.Add(frame);
         }
 
         public void SetConstantsMapping(ConstantsMapping mapping) {
