@@ -169,6 +169,7 @@ namespace LynnaLab
                 if (_editingWarpDestination != null)
                     _editingWarpDestination.AddModifiedHandler(OnDestinationWarpModified);
 
+                GenerateRoomComponents();
                 WarpDestEditModeChangedEvent?.Invoke(this, _editingWarpDestination != null);
             }
         }
