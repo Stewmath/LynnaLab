@@ -120,16 +120,20 @@ namespace LynnaLab
                     "TRANSITION_DEST_");
             InteractionMapping = new ConstantsMapping(
                     GetFileParser("constants/interactionTypes.s"),
-                    "INTERACID_");
+                    "INTERACID_",
+                    alphabetical: true);
             EnemyMapping = new ConstantsMapping(
                     GetFileParser("constants/enemyTypes.s"),
-                    "ENEMYID_");
+                    "ENEMYID_",
+                    alphabetical: true);
             PartMapping = new ConstantsMapping(
                     GetFileParser("constants/partTypes.s"),
-                    "PARTID_");
+                    "PARTID_",
+                    alphabetical: true);
             ItemMapping = new ConstantsMapping(
                     GetFileParser("constants/itemTypes.s"),
-                    "ITEMID_");
+                    "ITEMID_",
+                    alphabetical: true);
             SpecialObjectMapping = new ConstantsMapping(
                     GetFileParser("constants/specialObjectTypes.s"),
                     "SPECIALOBJECTID_");

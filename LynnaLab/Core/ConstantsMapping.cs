@@ -59,10 +59,10 @@ public class ConstantsMapping
 
     /// If the optional "maxValue" parameter is passed, any constants with this value or above is
     /// ignored when generating the mapping.
-    public ConstantsMapping(FileParser parser, string prefix, int maxValue = -1)
-        : this(parser, new string[] { prefix }, maxValue) {}
+    public ConstantsMapping(FileParser parser, string prefix, int maxValue = -1, bool alphabetical = false)
+        : this(parser, new string[] { prefix }, maxValue, alphabetical) {}
 
-    public ConstantsMapping(FileParser _parser, string[] _prefixes, int maxValue = -1)
+    public ConstantsMapping(FileParser _parser, string[] _prefixes, int maxValue = -1, bool alphabetical = false)
     {
         this.parser = _parser;
         this.prefixes = _prefixes;
@@ -107,6 +107,9 @@ public class ConstantsMapping
                     catch (FormatException) {}
                 }
             }
+
+            if (alphabetical)
+                stringList.Sort();
         }
     }
 
