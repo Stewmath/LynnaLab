@@ -78,6 +78,7 @@ namespace LynnaLab
                 if (_selectable == value)
                     return;
                 _selectable = value;
+                CanFocus = value;
                 if (value)
                     AddMouseAction(MouseButton.Any, MouseModifier.Any, GridAction.Select);
                 else
@@ -145,7 +146,7 @@ namespace LynnaLab
         }
 
         public int MaxIndex {
-            get { return Math.Min(_maxIndex, Width * Height); }
+            get { return Math.Min(_maxIndex, Width * Height - 1); }
             set {
                 _maxIndex = value;
                 hoveringIndex = Math.Min(hoveringIndex, MaxIndex);
@@ -180,6 +181,7 @@ namespace LynnaLab
         int hoveringIndex = -1, selectedIndex = -1;
         int _maxIndex = int.MaxValue;
         bool _selectable = false, _hoverable = true;
+        bool keyDown = false;
 
         IList<TileGridAction> actionList = new List<TileGridAction>();
         TileGridAction activeAction = null;
@@ -192,8 +194,22 @@ namespace LynnaLab
             this.ButtonReleaseEvent += new ButtonReleaseEventHandler(OnButtonReleaseEvent);
             this.MotionNotifyEvent += new MotionNotifyEventHandler(OnMoveMouse);
             this.LeaveNotifyEvent += new LeaveNotifyEventHandler(OnMouseLeave);
+            this.KeyPressEvent += new KeyPressEventHandler(OnKeyPressEvent);
+            this.KeyReleaseEvent += new KeyReleaseEventHandler(OnKeyReleaseEvent);
             this.Events = Gdk.EventMask.PointerMotionMask | Gdk.EventMask.LeaveNotifyMask |
-                Gdk.EventMask.ButtonPressMask | Gdk.EventMask.ButtonReleaseMask;
+                Gdk.EventMask.ButtonPressMask | Gdk.EventMask.ButtonReleaseMask
+                | Gdk.EventMask.KeyPressMask | Gdk.EventMask.KeyReleaseMask;
+
+            // This doesn't work by itself?
+            //base.FocusOnClick = true;
+
+            // Really stupid hack to prevent focus from being lost when arrow keys are used.
+            // This isn't ideal because it will still attempt to focus on other widgets, with
+            // visible effects (ie. spin button contents are highlighted).
+            this.FocusOutEvent += (a, b) => {
+                if (keyDown)
+                    GrabFocus();
+            };
 
             Scale = 1;
         }
@@ -289,6 +305,9 @@ namespace LynnaLab
                             activeAction = act;
                     }
                 }
+
+                if (Selectable)
+                    GrabFocus();
             }
         }
 
@@ -351,6 +370,35 @@ namespace LynnaLab
                 HoverChangedEvent(this, hoveringIndex);
 
             // Don't check for drag actions because we'll ignore out-of-bounds events?
+        }
+
+        protected void OnKeyPressEvent(object o, KeyPressEventArgs args) {
+            if (Selectable) {
+                int newIndex = -1;
+                if (args.Event.Key == Gdk.Key.Up) {
+                    newIndex = SelectedIndex - Width;
+                }
+                else if (args.Event.Key == Gdk.Key.Down) {
+                    newIndex = SelectedIndex + Width;
+                }
+                else if (args.Event.Key == Gdk.Key.Left) {
+                    newIndex = SelectedIndex - 1;
+                }
+                else if (args.Event.Key == Gdk.Key.Right) {
+                    newIndex = SelectedIndex + 1;
+                }
+
+                if (newIndex >= 0 && newIndex <= MaxIndex)
+                    SelectedIndex = newIndex;
+
+            }
+
+            if (args.Event.Key != Gdk.Key.Tab)
+                keyDown = true;
+        }
+
+        protected void OnKeyReleaseEvent(object o, KeyReleaseEventArgs args) {
+            keyDown = false;
         }
 
         void HandleTileGridAction(TileGridAction act, int index) {

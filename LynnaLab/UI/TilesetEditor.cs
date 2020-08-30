@@ -197,6 +197,12 @@ namespace LynnaLab
                 Selectable = true;
                 SelectedIndex = 0;
 
+                // Better to allow only one thing (between the subtile viewer & the spinbuttons
+                // controlling it) to be selectable. This way, you can select the "palette"
+                // spinbutton and use the arrow keys to modify it, while using the mouse to select
+                // other tiles quickly, without having to move the mouse back and forth.
+                CanFocus = false;
+
                 base.AddTileSelectedHandler(delegate(object sender, int index) {
                     SubTileChangedEvent();
                 });
@@ -380,22 +386,18 @@ namespace LynnaLab
                     PushFlags();
                 };
                 flipXCheckButton = new Gtk.CheckButton();
-                flipXCheckButton.CanFocus = false;
                 flipXCheckButton.Toggled += delegate(object sender, EventArgs e) {
                     PushFlags();
                 };
                 flipYCheckButton = new Gtk.CheckButton();
-                flipYCheckButton.CanFocus = false;
                 flipYCheckButton.Toggled += delegate(object sender, EventArgs e) {
                     PushFlags();
                 };
                 priorityCheckButton = new Gtk.CheckButton();
-                priorityCheckButton.CanFocus = false;
                 priorityCheckButton.Toggled += delegate(object sender, EventArgs e) {
                     PushFlags();
                 };
                 bankCheckButton = new Gtk.CheckButton();
-                bankCheckButton.CanFocus = false;
                 bankCheckButton.Toggled += delegate(object sender, EventArgs e) {
                     PushFlags();
                 };
