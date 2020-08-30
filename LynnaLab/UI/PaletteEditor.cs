@@ -38,9 +38,11 @@ namespace LynnaLab
 
             this.Spacing = 6;
 
-            PaletteHeaderGroup.Foreach((paletteHeader) => {
-                Add(GenerateButtonsForData(paletteHeader));
-            });
+            if (PaletteHeaderGroup != null) {
+                PaletteHeaderGroup.Foreach((paletteHeader) => {
+                    Add(GenerateButtonsForData(paletteHeader));
+                });
+            }
             ShowAll();
         }
 

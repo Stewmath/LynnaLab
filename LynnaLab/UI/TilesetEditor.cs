@@ -98,7 +98,8 @@ namespace LynnaLab
         void OnPalettesChanged(object sender, EventArgs args) {
             var group = tileset.PaletteHeaderGroup;
             paletteEditor.PaletteHeaderGroup = group;
-            paletteFrameLabel.Text = group.LabelName + " (" + group.ConstantAliasName + ")";
+            if (group != null)
+                paletteFrameLabel.Text = group.LabelName + " (" + group.ConstantAliasName + ")";
         }
 
         void SetTileset(Tileset t) {

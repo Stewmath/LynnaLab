@@ -28,15 +28,20 @@ namespace LynnaLab
 
         PaletteHeaderGroup(Project project, int index) : base(project, index)
         {
-            FileParser palettePointerFile = project.GetFileWithLabel("paletteHeaderTable");
-            Data headerPointerData = palettePointerFile.GetData("paletteHeaderTable", index*2);
-            LabelName = headerPointerData.GetValue(0);
-            FileParser paletteHeaderFile = project.GetFileWithLabel(LabelName);
-            Data headerData = paletteHeaderFile.GetData(headerPointerData.GetValue(0));
+            try {
+                FileParser palettePointerFile = project.GetFileWithLabel("paletteHeaderTable");
+                Data headerPointerData = palettePointerFile.GetData("paletteHeaderTable", index*2);
+                LabelName = headerPointerData.GetValue(0);
+                FileParser paletteHeaderFile = project.GetFileWithLabel(LabelName);
+                Data headerData = paletteHeaderFile.GetData(headerPointerData.GetValue(0));
 
-            if (!(headerData is PaletteHeaderData))
-                throw new Exception("Expected palette header group " + index.ToString("X") + " to start with palette header data");
-            firstPaletteHeader = (PaletteHeaderData)headerData;
+                if (!(headerData is PaletteHeaderData))
+                    throw new InvalidPaletteHeaderGroupException("Expected palette header group " + index.ToString("X") + " to start with palette header data");
+                firstPaletteHeader = (PaletteHeaderData)headerData;
+            }
+            catch (InvalidLookupException e) {
+                throw new InvalidPaletteHeaderGroupException(e.Message);
+            }
             InstallEventHandlers();
         }
 

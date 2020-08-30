@@ -44,18 +44,25 @@ public class InvalidImageException : ProjectErrorException {
     public InvalidImageException(Exception e) : base(e.Message) {}
 }
 
-// Used by ObjectAnimation.cs and ObjectAnimationFrame.cs.
-public class InvalidAnimationException : ProjectErrorException {
-    public InvalidAnimationException() : base() {}
-    public InvalidAnimationException(string s) : base(s) {}
-    public InvalidAnimationException(Exception e) : base(e.Message) {}
-}
-
 // Used by Treasure class when you try to instantiate one that doesn't exist
 public class InvalidTreasureException : ProjectErrorException {
     public InvalidTreasureException() : base() {}
     public InvalidTreasureException(string s) : base(s) {}
     public InvalidTreasureException(Exception e) : base(e.Message) {}
+}
+
+// Used by PaletteHeaderGroup class when you try to instantiate one that doesn't exist
+public class InvalidPaletteHeaderGroupException : ProjectErrorException {
+    public InvalidPaletteHeaderGroupException() : base() {}
+    public InvalidPaletteHeaderGroupException(string s) : base(s) {}
+    public InvalidPaletteHeaderGroupException(Exception e) : base(e.Message) {}
+}
+
+// Used by ObjectAnimation.cs and ObjectAnimationFrame.cs.
+public class InvalidAnimationException : ProjectErrorException {
+    public InvalidAnimationException() : base() {}
+    public InvalidAnimationException(string s) : base(s) {}
+    public InvalidAnimationException(Exception e) : base(e.Message) {}
 }
 
 // This is different from "InvalidAnimationException" because it's not really an error; the

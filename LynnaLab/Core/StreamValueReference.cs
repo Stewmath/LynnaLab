@@ -17,7 +17,7 @@ namespace LynnaLab
         WeakEventWrapper<MemoryFileStream> streamEventWrapper = new WeakEventWrapper<MemoryFileStream>();
 
         // Standard constructor
-        public StreamValueReference(Project project, MemoryFileStream stream, string name, int offset, DataValueType type, int startBit=0, int endBit=0, bool editable=true, string constantsMappingString=null, string tooltip=null)
+        public StreamValueReference(Project project, MemoryFileStream stream, string name, int offset, DataValueType type, int startBit=0, int endBit=0, int maxValue=-1, bool editable=true, string constantsMappingString=null, string tooltip=null)
             : base(name, DataValueReference.GetValueType(type), editable, constantsMappingString)
         {
             base.Tooltip = tooltip;
@@ -29,7 +29,11 @@ namespace LynnaLab
             this.startBit = startBit;
             this.endBit = endBit;
 
-            MaxValue = DataValueReference.GetMaxValueForType(type, startBit, endBit);
+            if (maxValue == -1)
+                MaxValue = DataValueReference.GetMaxValueForType(type, startBit, endBit);
+            else
+                MaxValue = maxValue;
+
 
             BindEventHandler();
         }

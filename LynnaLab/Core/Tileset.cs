@@ -83,7 +83,12 @@ namespace LynnaLab
         }
         public PaletteHeaderGroup PaletteHeaderGroup {
             get {
-                return Project.GetIndexedDataType<PaletteHeaderGroup>(PaletteHeader);
+                try {
+                    return Project.GetIndexedDataType<PaletteHeaderGroup>(PaletteHeader);
+                }
+                catch (InvalidPaletteHeaderGroupException) {
+                    return null;
+                }
             }
         }
         public int TilesetLayoutIndex {
@@ -629,7 +634,8 @@ namespace LynnaLab
         void LoadPaletteHeader() {
             paletteEventWrapper.ReplaceEventSource(PaletteHeaderGroup);
             graphicsState.RemovePaletteGroupType(PaletteGroupType.Main);
-            graphicsState.AddPaletteHeaderGroup(PaletteHeaderGroup, PaletteGroupType.Main);
+            if (PaletteHeaderGroup != null)
+                graphicsState.AddPaletteHeaderGroup(PaletteHeaderGroup, PaletteGroupType.Main);
             InvalidateAllTiles();
         }
 

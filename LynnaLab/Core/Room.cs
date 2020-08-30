@@ -533,6 +533,7 @@ namespace LynnaLab
                         name: "Tileset",
                         offset: Index & 0xff,
                         type: DataValueType.ByteBits,
+                        maxValue: Project.NumTilesets-1,
                         startBit: 0,
                         endBit: 6),
                 roomPackVr,
