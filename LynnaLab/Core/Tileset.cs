@@ -667,7 +667,7 @@ namespace LynnaLab
         }
 
         void LoadAnimation() {
-            if (AnimationIndex != 0xff)
+            if (AnimationIndex < Project.NumAnimations)
                 animationGroup = Project.GetIndexedDataType<AnimationGroup>(AnimationIndex);
             else
                 animationGroup = null;

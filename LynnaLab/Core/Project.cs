@@ -251,6 +251,12 @@ namespace LynnaLab
             }
         }
 
+        public int NumAnimations {
+            get {
+                return EvalToInt("NUM_ANIMATION_GROUPS");
+            }
+        }
+
         public int NumTreasures {
             get {
                 return EvalToInt("NUM_TREASURES");
