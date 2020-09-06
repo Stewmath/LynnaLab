@@ -1,47 +1,38 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<OutputType>WinExe</OutputType>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
-	</PropertyGroup>
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	  <PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	  <PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
 
-	<ItemGroup>
-		<None Remove="**\*.glade" />
-		<EmbeddedResource Include="**\*.glade">
-			<LogicalName>%(Filename)%(Extension)</LogicalName>
-		</EmbeddedResource>
-	</ItemGroup>
+  <ItemGroup>
+    <None Remove="Glade\*.ui" />
+  </ItemGroup>
 
-	<ItemGroup>
-	  <None Remove="Glade\MainWindow.ui" />
-	  <None Remove="Glade\ObjectGroupEditor.ui" />
-	  <None Remove="Glade\TilesetEditor.ui" />
-	  <None Remove="Glade\WarpEditor.ui" />
-	</ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Glade\*.ui" />
+    <EmbeddedResource Include="Resources\*" />
+  </ItemGroup>
 
-	<ItemGroup>
-	  <EmbeddedResource Include="Glade\MainWindow.ui" />
-	  <EmbeddedResource Include="Glade\ObjectGroupEditor.ui" />
-	  <EmbeddedResource Include="Glade\TilesetEditor.ui" />
-	  <EmbeddedResource Include="Glade\WarpEditor.ui" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="GtkSharp" Version="3.22.25.*" />
+    <PackageReference Include="log4net" Version="2.0.9" />
+    <PackageReference Include="NUnit" Version="3.12.0" />
+    <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
+    <PackageReference Include="YamlDotNet" Version="8.1.2" />
 
-	<ItemGroup>
-		<PackageReference Include="GtkSharp" Version="3.22.25.*" />
-		<PackageReference Include="log4net" Version="2.0.9" />
-		<PackageReference Include="NUnit" Version="3.12.0" />
-		<PackageReference Include="System.Drawing.Common" Version="4.7.0" />
-		<PackageReference Include="YamlDotNet" Version="8.1.2" />
-	</ItemGroup>
+      <!-- This fixes a package downgrade warning -->
+    <PackageReference Include="System.Net.Sockets" Version="4.3.0" />
+  </ItemGroup>
 
 </Project>

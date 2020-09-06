@@ -193,6 +193,7 @@ public class MainWindow
         roomeditor1.ObjectGroupEditor = objectgroupeditor1;
         roomeditor1.WarpEditor = warpEditor;
 
+        mainWindow.Icon = new Gdk.Pixbuf(Helper.GetResourceStream("LynnaLab.Resources.icon.png"));
 
         eventGroup.Lock();
 
