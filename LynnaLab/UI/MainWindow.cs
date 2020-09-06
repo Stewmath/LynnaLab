@@ -138,6 +138,8 @@ public class MainWindow
     {
         log.Debug("Beginning Program");
 
+        Gtk.Window.DefaultIcon = new Gdk.Pixbuf(Helper.GetResourceStream("LynnaLab.icon.ico"));
+
         Gtk.Builder builder = new Builder();
         builder.AddFromString(Helper.ReadResourceFile("LynnaLab.Glade.MainWindow.ui"));
         builder.Autoconnect(this);
@@ -192,8 +194,6 @@ public class MainWindow
         roomeditor1.TilesetViewer = tilesetViewer1;
         roomeditor1.ObjectGroupEditor = objectgroupeditor1;
         roomeditor1.WarpEditor = warpEditor;
-
-        mainWindow.Icon = new Gdk.Pixbuf(Helper.GetResourceStream("LynnaLab.icon.ico"));
 
         eventGroup.Lock();
 
