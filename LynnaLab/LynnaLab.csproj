@@ -27,6 +27,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="log4net.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="GtkSharp" Version="3.22.25.*" />
     <PackageReference Include="log4net" Version="2.0.9" />
     <PackageReference Include="NUnit" Version="3.12.0" />
@@ -36,5 +42,4 @@
       <!-- This fixes a package downgrade warning -->
     <PackageReference Include="System.Net.Sockets" Version="4.3.0" />
   </ItemGroup>
-
 </Project>
