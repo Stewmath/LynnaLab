@@ -23,6 +23,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Glade\*.ui" />
     <EmbeddedResource Include="Resources\*" />
+    <EmbeddedResource Include="icon.ico" />
   </ItemGroup>
 
   <ItemGroup>
