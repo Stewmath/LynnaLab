@@ -1,0 +1,208 @@
+﻿<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\NUnit.3.12.0\build\NUnit.props" Condition="Exists('packages\NUnit.3.12.0\build\NUnit.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{21072A00-C7C0-41FF-8103-4186BB75056E}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>LynnaLab</RootNamespace>
+    <AssemblyName>LynnaLab</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <PlatformTarget>x86</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>6</LangVersion>
+    <IntermediateOutputPath>
+    </IntermediateOutputPath>
+    <NoWarn>
+    </NoWarn>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <WarningsNotAsErrors>
+    </WarningsNotAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <PlatformTarget>x86</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>6</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AtkSharp, Version=3.22.25.128, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AtkSharp.3.22.25.128\lib\netstandard2.0\AtkSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="CairoSharp, Version=3.22.25.128, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CairoSharp.3.22.25.128\lib\netstandard2.0\CairoSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="GdkSharp, Version=3.22.25.128, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\GdkSharp.3.22.25.128\lib\netstandard2.0\GdkSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="GioSharp, Version=3.22.25.128, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\GioSharp.3.22.25.128\lib\netstandard2.0\GioSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="GLibSharp, Version=3.22.25.128, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\GLibSharp.3.22.25.128\lib\netstandard2.0\GLibSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="GtkSharp, Version=3.22.25.128, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\GtkSharp.3.22.25.128\lib\netstandard2.0\GtkSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net, Version=2.0.9.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.9\lib\net45\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="PangoSharp, Version=3.22.25.128, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\PangoSharp.3.22.25.128\lib\netstandard2.0\PangoSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="Mono.Posix" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="nunit.framework">
+      <HintPath>..\packages\NUnit.3.12.0\lib\net45\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="YamlDotNet, Version=8.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
+      <HintPath>..\packages\YamlDotNet.8.1.2\lib\net45\YamlDotNet.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Core\Project.cs" />
+    <Compile Include="Core\ConstantsMapping.cs" />
+    <Compile Include="Core\Tileset.cs" />
+    <Compile Include="Core\GraphicsState.cs" />
+    <Compile Include="UI\TilesetViewer.cs" />
+    <Compile Include="Core\PaletteHeaderData.cs" />
+    <Compile Include="Core\TilesetLayoutHeaderData.cs" />
+    <Compile Include="Core\TilesetHeaderGroup.cs" />
+    <Compile Include="Core\GbGraphics.cs" />
+    <Compile Include="UI\MainWindow.cs" />
+    <Compile Include="UI\RoomEditor.cs" />
+    <Compile Include="Core\Room.cs" />
+    <Compile Include="Core\ProjectDataType.cs" />
+    <Compile Include="UI\Minimap.cs" />
+    <Compile Include="Core\Dungeon.cs" />
+    <Compile Include="Core\Animation.cs" />
+    <Compile Include="Core\AnimationGroup.cs" />
+    <Compile Include="UI\TilesetEditor.cs" />
+    <Compile Include="Wla.cs" />
+    <Compile Include="UI\TileGridViewer.cs" />
+    <Compile Include="Widgets\SpinButtonHexadecimal.cs" />
+    <Compile Include="Widgets\ComboBoxFromConstants.cs" />
+    <Compile Include="UI\GfxViewer.cs" />
+    <Compile Include="Core\Exceptions.cs" />
+    <Compile Include="Core\DataValueReference.cs" />
+    <Compile Include="UI\ValueReferenceEditor.cs" />
+    <Compile Include="Core\WarpSourceData.cs" />
+    <Compile Include="Core\WarpGroup.cs" />
+    <Compile Include="UI\WarpEditor.cs" />
+    <Compile Include="Core\WarpDestGroup.cs" />
+    <Compile Include="Core\WarpDestData.cs" />
+    <Compile Include="PluginCore\PluginCore.cs" />
+    <Compile Include="PluginCore\PluginManager.cs" />
+    <Compile Include="PluginInterfaces\Plugin.cs" />
+    <Compile Include="Core\WorldMap.cs" />
+    <Compile Include="Core\Map.cs" />
+    <Compile Include="Core\PaletteHeaderGroup.cs" />
+    <Compile Include="LogHelper.cs" />
+    <Compile Include="Core\ValueReferenceGroup.cs" />
+    <Compile Include="UI\HighlightingMinimap.cs" />
+    <Compile Include="UI\ObjectGroupEditor.cs" />
+    <Compile Include="Core\RawObjectGroup.cs" />
+    <Compile Include="Core\ObjectData.cs" />
+    <Compile Include="UI\AddObjectDialog.cs" />
+    <Compile Include="Core\Documentation.cs" />
+    <Compile Include="UI\DocumentationDialog.cs" />
+    <Compile Include="Core/IGfxHeader.cs" />
+    <Compile Include="Core/ObjectGfxHeaderData.cs" />
+    <Compile Include="Core/ObjectAnimation.cs" />
+    <Compile Include="Core/ObjectAnimationFrame.cs" />
+    <Compile Include="Core/GameObject.cs" />
+    <Compile Include="Core/InteractionObject.cs" />
+    <Compile Include="Tests\NUnitTestClass.cs" />
+    <Compile Include="Core\EnemyObject.cs" />
+    <Compile Include="Core\PartObject.cs" />
+    <Compile Include="Core\Util\Helper.cs" />
+    <Compile Include="Core\Data.cs" />
+    <Compile Include="Core\DocumentationFileComponent.cs" />
+    <Compile Include="Core\FileComponent.cs" />
+    <Compile Include="Core\FileParser.cs" />
+    <Compile Include="Core\GfxHeaderData.cs" />
+    <Compile Include="Core\Util\MemoryFileStream.cs" />
+    <Compile Include="Core\Util\SubStream.cs" />
+    <Compile Include="Core\ProjectConfig.cs" />
+    <Compile Include="UI\CairoHelper.cs" />
+    <Compile Include="Widgets\InfoBar.cs" />
+    <Compile Include="Core\AbstractIntValueReference.cs" />
+    <Compile Include="Core\ValueReference.cs" />
+    <Compile Include="Plugins\AutoSmoother.cs" />
+    <Compile Include="Plugins\DungeonEditor.cs" />
+    <Compile Include="Plugins\MapleEditor.cs" />
+    <Compile Include="Core\StreamValueReference.cs" />
+    <Compile Include="UI\ObjectBox.cs" />
+    <Compile Include="Core\ObjectGroup.cs" />
+    <Compile Include="Core\ObjectDefinition.cs" />
+    <Compile Include="Core\Util\LockableEvent.cs" />
+    <Compile Include="Core\Util\DictionaryLinkedList.cs" />
+    <Compile Include="UI\SelectionBox.cs" />
+    <Compile Include="Core\Util\LockableEventGroup.cs" />
+    <Compile Include="Core\Warp.cs" />
+    <Compile Include="Core\PngGfxStream.cs" />
+    <Compile Include="Core\AbstractBoolValueReference.cs" />
+    <Compile Include="Core\Util\EventWrapper.cs" />
+    <Compile Include="Widgets\PriorityStatusbar.cs" />
+    <Compile Include="Core\Chest.cs" />
+    <Compile Include="Core\TreasureObject.cs" />
+    <Compile Include="Core\Util\Misc.cs" />
+    <Compile Include="Core\TreasureGroup.cs" />
+    <Compile Include="UI\PaletteEditor.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="gtk-gui\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="packages.config" />
+    <None Include="ZeldaOracles.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources/AutoSmoother.xml">
+    </EmbeddedResource>
+    <EmbeddedResource Include="Glade/WarpEditor.ui">
+    </EmbeddedResource>
+    <EmbeddedResource Include="Glade/MainWindow.ui">
+    </EmbeddedResource>
+    <EmbeddedResource Include="Glade/ObjectGroupEditor.ui">
+    </EmbeddedResource>
+    <EmbeddedResource Include="Glade/TilesetEditor.ui">
+    </EmbeddedResource>
+  </ItemGroup>
+  <!--<Import Project="..\packages\GtkSharp.3.22.25.128\build\GtkSharp.targets" Condition="Exists('..\packages\GtkSharp.3.22.25.128\build\GtkSharp.targets')" />-->
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\GtkSharp.3.22.25.128\build\GtkSharp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\GtkSharp.3.22.25.128\build\GtkSharp.targets'))" />
+  </Target>
+</Project>

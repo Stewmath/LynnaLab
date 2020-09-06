@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30413.136
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LynnaLab", "LynnaLab\LynnaLab.csproj", "{21072A00-C7C0-41FF-8103-4186BB75056E}"
 EndProject
 Global
@@ -9,14 +11,16 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{21072A00-C7C0-41FF-8103-4186BB75056E}.Debug|x86.ActiveCfg = Debug|x86
-		{21072A00-C7C0-41FF-8103-4186BB75056E}.Debug|x86.Build.0 = Debug|x86
-		{21072A00-C7C0-41FF-8103-4186BB75056E}.Release|x86.ActiveCfg = Release|x86
-		{21072A00-C7C0-41FF-8103-4186BB75056E}.Release|x86.Build.0 = Release|x86
-		{6F9D3CD8-0679-4475-B95D-8E37028D90DC}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{6F9D3CD8-0679-4475-B95D-8E37028D90DC}.Debug|x86.Build.0 = Debug|Any CPU
-		{6F9D3CD8-0679-4475-B95D-8E37028D90DC}.Release|x86.ActiveCfg = Release|Any CPU
-		{6F9D3CD8-0679-4475-B95D-8E37028D90DC}.Release|x86.Build.0 = Release|Any CPU
+		{21072A00-C7C0-41FF-8103-4186BB75056E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{21072A00-C7C0-41FF-8103-4186BB75056E}.Debug|x86.Build.0 = Debug|Any CPU
+		{21072A00-C7C0-41FF-8103-4186BB75056E}.Release|x86.ActiveCfg = Release|Any CPU
+		{21072A00-C7C0-41FF-8103-4186BB75056E}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {32A6158D-AB9A-4428-A4B6-A997AA0CC551}
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		Policies = $0
