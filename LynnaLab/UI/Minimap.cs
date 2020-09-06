@@ -70,17 +70,19 @@ namespace LynnaLab
 
                 dungeonEventWrapper.ReplaceEventSource(_map as Dungeon); // May be null, that's fine
 
-                if (!scaleSetInConstructor) {
-                    if (m.MapWidth >= 16 && m.RoomWidth >= 15)
-                        _scale = 1.0/12; // Draw large indoor groups smaller
-                    else
-                        _scale = 1.0/8;
-                }
+                if (_map != null) {
+                    if (!scaleSetInConstructor) {
+                        if (m.MapWidth >= 16 && m.RoomWidth >= 15)
+                            _scale = 1.0/12; // Draw large indoor groups smaller
+                        else
+                            _scale = 1.0/8;
+                    }
 
-                Width = Map.MapWidth;
-                Height = Map.MapHeight;
-                TileWidth = (int)(_map.RoomWidth*16*_scale);
-                TileHeight = (int)(_map.RoomHeight*16*_scale);
+                    Width = Map.MapWidth;
+                    Height = Map.MapHeight;
+                    TileWidth = (int)(_map.RoomWidth*16*_scale);
+                    TileHeight = (int)(_map.RoomHeight*16*_scale);
+                }
 
                 base.UpdateSizeRequest();
                 QueueDraw();

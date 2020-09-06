@@ -39,7 +39,7 @@ public class MainWindow
     Gtk.SpinButton floorSpinButton;
     LynnaLab.Minimap dungeonMinimap;
     Gtk.Box roomVreHolder, chestAddHolder, chestEditorBox, chestVreHolder, treasureVreHolder;
-    Gtk.Box nonExistentTreasureHolder;
+    Gtk.Box nonExistentTreasureHolder, overallEditingContainer;
     Gtk.Widget treasureDataFrame;
     Gtk.Label treasureDataLabel;
 
@@ -161,6 +161,7 @@ public class MainWindow
         chestVreHolder = (Gtk.Box)builder.GetObject("chestVreHolder");
         treasureVreHolder = (Gtk.Box)builder.GetObject("treasureVreHolder");
         nonExistentTreasureHolder = (Gtk.Box)builder.GetObject("nonExistentTreasureHolder");
+        overallEditingContainer = (Gtk.Box)builder.GetObject("overallEditingContainer");
         treasureDataFrame = (Gtk.Widget)builder.GetObject("treasureDataFrame");
         treasureDataLabel = (Gtk.Label)builder.GetObject("treasureDataLabel");
 
@@ -271,6 +272,9 @@ public class MainWindow
 
         eventGroup.UnlockAndClear();
 
+
+        overallEditingContainer.Sensitive = false;
+
         if (directory != "")
             OpenProject(directory);
     }
@@ -377,6 +381,8 @@ public class MainWindow
             eventGroup.UnlockAndClear();
 
             SetWorld(0);
+
+            overallEditingContainer.Sensitive = true;
         }
     }
 
@@ -424,6 +430,9 @@ public class MainWindow
     }
 
     void OnRoomChanged() {
+        if (ActiveRoom == null)
+            return;
+
         eventGroup.Lock();
 
         roomSpinButton.Value = ActiveRoom.Index;
@@ -646,6 +655,15 @@ public class MainWindow
     protected void OnSaveActionActivated(object sender, EventArgs e) {
         if (Project != null)
             Project.Save();
+    }
+
+    protected void OnCloseActionActivated(object sender, EventArgs e) {
+        if (AskSave("Save project before closing it") != ResponseType.Cancel) {
+            Project.Close();
+            Project = null;
+            ActiveRoom = null;
+            overallEditingContainer.Sensitive = false;
+        }
     }
 
     protected void OnAnimationsActionActivated(object sender, EventArgs e) {

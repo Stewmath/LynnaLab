@@ -222,15 +222,22 @@ namespace LynnaLab
                 room.GetObjectGroup().RemoveModifiedHandler(OnObjectModified);
                 room.GetWarpGroup().RemoveModifiedHandler(OnWarpModified);
             }
-            r.RoomModifiedEvent += OnRoomModified;
-            r.GetObjectGroup().AddModifiedHandler(OnObjectModified);
-            r.GetWarpGroup().AddModifiedHandler(OnWarpModified);
 
             room = r;
-            Width = room.Width;
-            Height = room.Height;
 
-            ObjectGroupEditor.SetObjectGroup(room.GetObjectGroup());
+            if (room != null) {
+                room.RoomModifiedEvent += OnRoomModified;
+                room.GetObjectGroup().AddModifiedHandler(OnObjectModified);
+                room.GetWarpGroup().AddModifiedHandler(OnWarpModified);
+
+                Width = room.Width;
+                Height = room.Height;
+
+                ObjectGroupEditor.SetObjectGroup(room.GetObjectGroup());
+            }
+
+            if (r == null)
+                EditingWarpDestination = null;
 
             GenerateRoomComponents();
             selectedComponent = null;
@@ -324,7 +331,7 @@ namespace LynnaLab
         }
 
         void UpdateChestEvents() {
-            chestEventWrapper.ReplaceEventSource(room.Chest);
+            chestEventWrapper.ReplaceEventSource(room?.Chest);
         }
 
         void UpdateMouse(int x, int y) {

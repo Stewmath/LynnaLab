@@ -57,6 +57,15 @@
                       </object>
                     </child>
                     <child>
+                      <object class="GtkImageMenuItem">
+                        <property name="label">gtk-close</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_stock">True</property>
+                        <signal name="activate" handler="OnCloseActionActivated" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -194,7 +203,7 @@
           <placeholder/>
         </child>
         <child>
-          <object class="GtkBox">
+          <object class="GtkBox" id="overallEditingContainer">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="hexpand">True</property>
