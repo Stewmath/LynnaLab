@@ -353,6 +353,7 @@ public class MainWindow
                 Project.Close();
                 Project = null;
             }
+            Project = new Project(dir);
 
             eventGroup.Lock();
 
