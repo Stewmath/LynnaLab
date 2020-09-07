@@ -623,6 +623,7 @@ public class MainWindow
                 FileChooserAction.SelectFolder,
                 "Cancel", ResponseType.Cancel,
                 "Select Folder", ResponseType.Accept);
+        dialog.LocalOnly = false;
         ResponseType response = (ResponseType)dialog.Run();
 
         if (response == ResponseType.Accept) {
