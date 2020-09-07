@@ -39,3 +39,6 @@ Thumbs.db
 
 #dotCover
 *.dotCover
+
+# Misc
+LynnaLab/version.txt

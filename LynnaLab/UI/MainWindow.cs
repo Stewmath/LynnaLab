@@ -190,6 +190,8 @@ public class MainWindow
         ((Gtk.Box)builder.GetObject("warpEditorHolder")).Add(warpEditor);
         ((Gtk.Box)builder.GetObject("statusbarHolder")).Add(statusbar1);
 
+        mainWindow.Title = "LynnaLab " + Helper.ReadResourceFile("LynnaLab.version.txt");
+
         roomeditor1.Scale = 2;
         roomeditor1.TilesetViewer = tilesetViewer1;
         roomeditor1.ObjectGroupEditor = objectgroupeditor1;

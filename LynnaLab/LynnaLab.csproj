@@ -16,6 +16,10 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PreBuildEvent>git describe --dirty --always &gt; "$(MSBuildProjectDirectory)/version.txt"</PreBuildEvent>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Remove="Glade\*.ui" />
   </ItemGroup>
@@ -24,6 +28,7 @@
     <EmbeddedResource Include="Glade\*.ui" />
     <EmbeddedResource Include="Resources\*" />
     <EmbeddedResource Include="icon.ico" />
+    <EmbeddedResource Include="version.txt" />
   </ItemGroup>
 
   <ItemGroup>
