@@ -40,5 +40,8 @@ Thumbs.db
 #dotCover
 *.dotCover
 
-# Misc
+#Visual Studio
+.vs/
+
+#Misc
 LynnaLab/version.txt
