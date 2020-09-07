@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PreBuildEvent>git describe --dirty --always &gt; "$(MSBuildProjectDirectory)/version.txt"</PreBuildEvent>
+    <PreBuildEvent>git describe --always &gt; "$(MSBuildProjectDirectory)/version.txt"</PreBuildEvent>
   </PropertyGroup>
 
   <ItemGroup>
