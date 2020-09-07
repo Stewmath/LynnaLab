@@ -353,25 +353,6 @@ public class MainWindow
                 Project.Close();
                 Project = null;
             }
-            Project = new Project(dir);
-
-            /*
-            try {
-                Project = new Project(dir);
-            }
-            catch (Exception ex) {
-                string outputString = "The following error was encountered while opening the Project:\n\n";
-                outputString += ex.Message;
-
-                Gtk.MessageDialog d = new MessageDialog(this,
-                                         DialogFlags.DestroyWithParent,
-                                         MessageType.Error,
-                                         ButtonsType.Ok,
-                                         outputString);
-                d.Run();
-                d.Dispose();
-            }
-    */
 
             eventGroup.Lock();
 
