@@ -157,6 +157,7 @@ namespace LynnaLab
         }
 
         protected override void OnDestroyed() {
+            base.OnDestroyed();
             Dispose();
         }
 

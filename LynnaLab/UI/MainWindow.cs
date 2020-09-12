@@ -283,10 +283,13 @@ public class MainWindow
     }
 
     void LoadPlugins() {
-        // TEMPORARY: Hide "Action" and "Debug" menus for now (AutoSmoother will be hidden until
-        // it's more fleshed out)
+        // TEMPORARY: Hide "Action" menu for now (AutoSmoother will be hidden until it's more
+        // fleshed out)
         menubar1.Remove(actionMenuItem);
+
+#if (!DEBUG)
         menubar1.Remove(debugMenuItem);
+#endif
 
         pluginCore.ReloadPlugins();
 
@@ -306,7 +309,7 @@ public class MainWindow
             var item = new MenuItem(plugin.Name);
             item.Activated += ((a, b) =>
                     {
-                        plugin.Clicked();
+                        plugin.SpawnWindow();
                     });
             pluginSubMenu.Append(item);
         }

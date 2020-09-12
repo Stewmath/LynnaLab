@@ -4,6 +4,8 @@ namespace LynnaLab
 {
     public abstract class Plugin
     {
+        // Properties
+
         public abstract String Name {
             get;
         }
@@ -17,9 +19,24 @@ namespace LynnaLab
             get;
         }
 
+        protected virtual Gtk.Widget Widget {
+            get { throw new NotImplementedException(); }
+        }
+
+
+        // Methods
+
         public abstract void Init(PluginManager manager);
-        public abstract void Exit();
-        public abstract void Clicked();
+
+        public virtual void Exit() { throw new NotImplementedException(); }
+        public virtual void Activate() { throw new NotImplementedException(); }
+        public virtual Gtk.Widget Instantiate() { throw new NotImplementedException(); }
+
+        public void SpawnWindow() {
+            Gtk.Window w = new Gtk.Window(Name);
+            w.Add(Instantiate());
+            w.ShowAll();
+        }
     }
 }
 

@@ -32,7 +32,7 @@ namespace Plugins
         public override void Exit() {
         }
 
-        public override void Clicked() {
+        public override void Activate() {
             Room room = manager.GetActiveRoom();
             int tileset = room.Tileset.Index;
 

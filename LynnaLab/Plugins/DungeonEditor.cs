@@ -11,22 +11,6 @@ namespace Plugins
     {
         PluginManager manager;
 
-        Minimap minimap = null;
-        SpinButton dungeonSpinButton, floorSpinButton;
-        SpinButtonHexadecimal roomSpinButton;
-
-        Box dungeonVreContainer, roomVreContainer;
-        ValueReferenceEditor dungeonVre, roomVre;
-
-        WeakEventWrapper<Dungeon> dungeonEventWrapper = new WeakEventWrapper<Dungeon>();
-
-
-        Project Project {
-            get {
-                return manager.Project;
-            }
-        }
-
         public override String Name { get { return "Dungeon Editor"; } }
         public override String Tooltip { get { return "Edit dungeon layout and minimap"; } }
         public override bool IsDockable { get { return false; } }
@@ -38,7 +22,26 @@ namespace Plugins
         public override void Exit() {
         }
 
-        public override void Clicked() {
+        public override Gtk.Widget Instantiate() {
+            return new DungeonEditorImplementation(manager);
+        }
+    }
+
+    class DungeonEditorImplementation : Gtk.Bin {
+        PluginManager manager;
+
+        Minimap minimap = null;
+        SpinButton dungeonSpinButton, floorSpinButton;
+        SpinButtonHexadecimal roomSpinButton;
+
+        Box dungeonVreContainer, roomVreContainer;
+        ValueReferenceEditor dungeonVre, roomVre;
+
+        WeakEventWrapper<Dungeon> dungeonEventWrapper = new WeakEventWrapper<Dungeon>();
+
+        public DungeonEditorImplementation(PluginManager manager) {
+            this.manager = manager;
+
             Box tmpBox, tmpBox2;
             Alignment tmpAlign;
             Box vbox = new Gtk.VBox();
@@ -158,10 +161,6 @@ namespace Plugins
 
 
 
-            Window w = new Window(null);
-            w.Add(frame);
-            w.ShowAll();
-
             Map map = manager.GetActiveMap();
             if (map is Dungeon)
                 dungeonSpinButton.Value = map.Index;
@@ -171,8 +170,19 @@ namespace Plugins
 
             dungeonEventWrapper.Bind<DungeonRoomChangedEventArgs>("RoomChangedEvent",
                     (sender, args) => RoomChanged());
-            w.Destroyed += (a, b) => dungeonEventWrapper.UnbindAll();
+            vbox.Destroyed += (a, b) => dungeonEventWrapper.UnbindAll();
+
+            this.Add(frame);
+            ShowAll();
         }
+
+
+        Project Project {
+            get {
+                return manager.Project;
+            }
+        }
+
 
         void DungeonChanged() {
             Dungeon dungeon = Project.GetIndexedDataType<Dungeon>(dungeonSpinButton.ValueAsInt);

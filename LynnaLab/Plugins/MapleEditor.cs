@@ -10,7 +10,6 @@ namespace Plugins
     public class MapleEditor : Plugin
     {
         PluginManager manager;
-        MyMinimap minimap;
 
         Project Project {
             get {
@@ -26,11 +25,19 @@ namespace Plugins
         public override void Init(PluginManager manager) {
             this.manager = manager;
         }
-        public override void Exit() {
-        }
 
-        public override void Clicked() {
-            Gtk.Window w = new Gtk.Window("Maple Appearance Locations");
+        public override Gtk.Widget Instantiate() {
+            return new MapleEditorImplementation(manager);
+        }
+    }
+
+    class MapleEditorImplementation : Gtk.Bin {
+        PluginManager manager;
+        MyMinimap minimap;
+
+        public MapleEditorImplementation(PluginManager manager) {
+            this.manager = manager;
+
             minimap = new MyMinimap();
 
             var minimapContainer = new Gtk.Alignment(1.0f,1.0f,1.0f,1.0f);
@@ -77,9 +84,14 @@ namespace Plugins
             vbox.Add(comboBox);
             vbox.Add(minimapContainer);
 
-            w.Add(vbox);
-            w.ShowAll();
+            this.Add(vbox);
+            ShowAll();
         }
+
+        Project Project {
+            get { return manager.Project; }
+        }
+
 
         class MyMinimap : Minimap {
             Data bitData;
