@@ -156,6 +156,10 @@ namespace LynnaLab
             return tileSurface;
         }
 
+        protected override void OnDestroyed() {
+            Dispose();
+        }
+
         protected override void Dispose(bool disposeAll) {
             base.Dispose(disposeAll);
             foreach (var img in cachedImageDict.Values)

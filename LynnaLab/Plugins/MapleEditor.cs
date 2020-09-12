@@ -10,6 +10,7 @@ namespace Plugins
     public class MapleEditor : Plugin
     {
         PluginManager manager;
+        MyMinimap minimap;
 
         Project Project {
             get {
@@ -30,6 +31,7 @@ namespace Plugins
 
         public override void Clicked() {
             Gtk.Window w = new Gtk.Window("Maple Appearance Locations");
+            minimap = new MyMinimap();
 
             var minimapContainer = new Gtk.Alignment(1.0f,1.0f,1.0f,1.0f);
 
@@ -55,14 +57,14 @@ namespace Plugins
                     map = Project.GetIndexedDataType<WorldMap>(0);
                 }
 
-                var minimap = new MyMinimap(data);
                 minimap.Width = map.MapWidth;
                 minimap.Height = map.MapHeight;
 
+                minimap.SetData(data);
                 minimap.SetMap(map);
                 minimap.Selectable = false;
 
-                minimapContainer.Remove(minimapContainer.Child);
+                minimapContainer.Foreach((c) => minimapContainer.Remove(c));
                 minimapContainer.Add(minimap);
                 minimapContainer.ShowAll();
             };
@@ -83,9 +85,7 @@ namespace Plugins
             Data bitData;
             bool dragSet;
 
-            public MyMinimap(Data d) : base(1.0/4) {
-                bitData = d;
-
+            public MyMinimap() : base(1.0/4) {
                 base.HoverColor = new Cairo.Color(1.0, 1.0, 1.0);
 
                 Action<int,int> OnDragged = (x, y) => {
@@ -118,6 +118,10 @@ namespace Plugins
                             OnDragged(x, y);
                     }
                 };
+            }
+
+            public void SetData(Data d) {
+                bitData = d;
             }
 
             bool GetSelected(int x, int y) {
