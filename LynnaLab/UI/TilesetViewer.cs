@@ -50,6 +50,8 @@ namespace LynnaLab
 
             tileset = t;
 
+            tileset.LazyTileRedraw((f) => GLib.Idle.Add(new GLib.IdleHandler(f)));
+
             tileset.ResetAnimation();
             tileset.DrawAllTiles();
 
