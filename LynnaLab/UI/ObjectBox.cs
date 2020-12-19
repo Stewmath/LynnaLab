@@ -87,8 +87,9 @@ namespace LynnaLab {
         void DrawObject(ObjectDefinition obj, Cairo.Context cr, double x, double y) {
             if (obj.GetGameObject() != null) {
                 try {
+                    CairoTileDrawer drawer = new CairoTileDrawer(cr, (int)x, (int)y);
                     ObjectAnimationFrame o = obj.GetGameObject().DefaultAnimation.GetFrame(0);
-                    o.Draw(cr, (int)x, (int)y);
+                    o.Draw(drawer);
                 }
                 catch(NoAnimationException) {
                     // No animation defined

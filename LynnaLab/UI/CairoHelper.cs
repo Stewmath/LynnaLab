@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Drawing.Imaging;
 using Bitmap = System.Drawing.Bitmap;
 
-// NOTE: Classes in this file are used by "Core/ObjectAnimationFrame.cs" which breaks the Core/UI
-// separation. Should probably move the relevant Core code into the UI folder.
 namespace LynnaLab
 {
     public static class CairoHelper
@@ -188,6 +186,28 @@ namespace LynnaLab
                 throw new Exception("Tried to lock an already locked bitmap!");
             surfaceDict[bitmap] = new BitmapSurface(bitmap);
             return surfaceDict[bitmap];
+        }
+    }
+
+    // Implementation of Core.TileDrawer class
+    public class CairoTileDrawer : TileDrawer {
+        Cairo.Context cr;
+        int xOffset, yOffset;
+
+        public CairoTileDrawer(Cairo.Context cr, int xOffset = 0, int yOffset = 0) {
+            this.cr = cr;
+            this.xOffset = xOffset;
+            this.yOffset = yOffset;
+        }
+
+        public override void Draw(Bitmap bitmap, int x, int y) {
+            using (Cairo.Surface s = new BitmapSurface(bitmap)) {
+                cr.SetSourceSurface(s, x + xOffset, y + yOffset);
+                using (Cairo.SurfacePattern pattern = (Cairo.SurfacePattern)cr.GetSource()) {
+                    pattern.Filter = Cairo.Filter.Nearest;
+                }
+                cr.Paint();
+            }
         }
     }
 

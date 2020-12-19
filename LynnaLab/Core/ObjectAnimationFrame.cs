@@ -93,9 +93,8 @@ public class ObjectAnimationFrame {
 
     /// <summary>
     ///  Will throw InvalidAnimationException if initialization failed earlier...
-    ///  TODO: does drawing code really belong here?
     /// </summary>
-    public void Draw(Cairo.Context cr, int xPos, int yPos) {
+    public void Draw(TileDrawer drawer) {
         if (bitmaps == null)
             throw new InvalidAnimationException();
 
@@ -105,16 +104,10 @@ public class ObjectAnimationFrame {
         for (int i=_numSprites-1; i>=0; i--) {
             Tuple<Bitmap,int,int> tup = bitmaps[i];
             Bitmap bitmap = tup.Item1;
-            int x = tup.Item2 + xPos;
-            int y = tup.Item3 + yPos;
+            int x = tup.Item2;
+            int y = tup.Item3;
 
-            using (Cairo.Surface s = new BitmapSurface(bitmap)) {
-                cr.SetSourceSurface(s,x,y);
-                using (Cairo.SurfacePattern pattern = (Cairo.SurfacePattern)cr.GetSource()) {
-                    pattern.Filter = Cairo.Filter.Nearest;
-                }
-                cr.Paint();
-            }
+            drawer.Draw(bitmap, x, y);
         }
     }
 
@@ -124,6 +117,12 @@ public class ObjectAnimationFrame {
     public ObjectAnimationFrame GetNextFrame() {
         throw new NotImplementedException();
     }
+}
+
+// Implement this class to define how to draw a bitmap somewhere. This only exists for the sake of
+// preventing a Cairo import in LynnaLib.
+public abstract class TileDrawer {
+    public abstract void Draw(Bitmap bitmap, int x, int y);
 }
 
 }

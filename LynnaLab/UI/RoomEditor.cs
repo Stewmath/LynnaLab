@@ -687,7 +687,8 @@ addedAllComponents:
                 if (obj.GetGameObject() != null) {
                     try {
                         ObjectAnimationFrame o = obj.GetGameObject().DefaultAnimation.GetFrame(0);
-                        o.Draw(cr, x, y);
+                        TileDrawer drawer = new CairoTileDrawer(cr, x, y);
+                        o.Draw(drawer);
                     }
                     catch(NoAnimationException) {
                         // No animation defined
@@ -916,7 +917,8 @@ addedAllComponents:
                 GameObject obj = Project.GetIndexedDataType<InteractionObject>(
                         Project.EvalToInt("INTERACID_TREASURE") * 256 + chest.Treasure.Graphics);
                 try {
-                    obj.DefaultAnimation.GetFrame(0).Draw(cr, X, Y);
+                    TileDrawer drawer = new CairoTileDrawer(cr, X, Y);
+                    obj.DefaultAnimation.GetFrame(0).Draw(drawer);
                 }
                 catch (InvalidAnimationException) {
                 }
