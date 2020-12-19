@@ -1,3 +1,6 @@
 [submodule "oracles-disasm"]
 	path = oracles-disasm
 	url = https://github.com/Drenn1/oracles-disasm.git
+[submodule "LynnaLib"]
+	path = LynnaLib
+	url = https://github.com/Drenn1/LynnaLib.git
