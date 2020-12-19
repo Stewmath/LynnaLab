@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace LynnaLab {
+namespace LynnaLib {
     /// Public interface over the ObjectData class.
     public class ObjectDefinition : ValueReferenceGroup
     {

@@ -1,4 +1,6 @@
 using System;
+
+using LynnaLib;
 using Util;
 
 namespace LynnaLab

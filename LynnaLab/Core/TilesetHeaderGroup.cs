@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace LynnaLab {
+namespace LynnaLib {
 
     // This class is only used when "ExpandedTilesets" is false in config.yaml.
     public class TilesetHeaderGroup : ProjectIndexedDataType {

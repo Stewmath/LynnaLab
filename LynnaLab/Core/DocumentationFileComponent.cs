@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LynnaLab
+namespace LynnaLib
 {
 /// <summary>
 ///  This class represents a block of doxygen-like comments in a file. Read-only. Fields are

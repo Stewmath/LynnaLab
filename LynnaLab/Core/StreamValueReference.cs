@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Collections.Generic;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // A ValueReference that references a Stream instead of a Data object.
     public class StreamValueReference : ValueReference

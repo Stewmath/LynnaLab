@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Drawing.Imaging;
 using Bitmap = System.Drawing.Bitmap;
 
+using LynnaLib;
+
 namespace LynnaLab
 {
     public static class CairoHelper

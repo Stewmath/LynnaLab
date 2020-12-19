@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     /// Provides an interface for modifying layout and keeping track of changes
     /// to the image.

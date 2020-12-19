@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     public enum PaletteType {
         Background=0,

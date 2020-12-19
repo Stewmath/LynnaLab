@@ -2,6 +2,8 @@ using System;
 using System.Drawing;
 using Gtk;
 
+using LynnaLib;
+
 namespace LynnaLab
 {
     public partial class GfxViewer : TileGridViewer {

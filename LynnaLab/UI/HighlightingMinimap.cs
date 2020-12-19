@@ -4,6 +4,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.ComponentModel;
 
+using LynnaLib;
+
 namespace LynnaLab
 {
     // An extension of Minimap that darkens rooms which are visible through

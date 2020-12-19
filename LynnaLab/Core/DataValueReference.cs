@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Util;
 using System.Windows;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // Enum of types of values that can be had.
     public enum DataValueType {

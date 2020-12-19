@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // Similar to AbstractIntValueReference
     public class AbstractBoolValueReference : AbstractIntValueReference {

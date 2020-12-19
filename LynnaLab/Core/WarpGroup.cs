@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // Reads/writes warp source data per room. Searches through all of a group's warp data to get
     // only data for a particular room index (a list of "WarpSourceData" instances).

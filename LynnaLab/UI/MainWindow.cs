@@ -5,8 +5,10 @@ using System.Drawing;
 using System.Reflection;
 using System.Linq;
 using Gtk;
-using Util;
+
 using LynnaLab;
+using LynnaLib;
+using Util;
 
 // Doesn't extend the Gtk.Window class because the actual window is defined in Glade
 // (Glade/MainWindow.ui).

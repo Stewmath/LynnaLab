@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     /// Represents a "treasure object", which is a treasure with additional properties including
     /// graphics, text, etc. (see "data/{game}/treasureObjectData.s".)

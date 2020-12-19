@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     public abstract class ProjectDataType {
         Project project;

@@ -1,6 +1,6 @@
 using System;
 
-namespace LynnaLab
+namespace LynnaLib
 {
 
 /// <summary>

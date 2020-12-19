@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Collections.Generic;
 using Gtk;
 
+using LynnaLib;
+
 namespace LynnaLab
 {
     [System.ComponentModel.ToolboxItem(true)]

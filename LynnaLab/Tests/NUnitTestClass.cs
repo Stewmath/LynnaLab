@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 
+using LynnaLib;
+
 namespace LynnaLab
 {
     public class NUnitTestClass

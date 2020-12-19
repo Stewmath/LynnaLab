@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Collections.Generic;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     /// <summary>
     ///  This usually corresponds to a line in a file, but it can generally also be a logical unit

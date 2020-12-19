@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     public class Animation : ProjectDataType
     {

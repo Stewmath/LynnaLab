@@ -3,7 +3,7 @@ using System.IO;
 using log4net;
 using System.Reflection;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     public class LogHelper
     {

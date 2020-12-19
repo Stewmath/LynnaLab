@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Collections.Generic;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // The lower the value, the lower the priority
     public enum GfxHeaderType {

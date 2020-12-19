@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+
+using LynnaLib;
+
 namespace LynnaLab
 {
     public partial class DocumentationDialog : Gtk.Dialog

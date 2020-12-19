@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Drawing;
+
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     public class Project
     {
@@ -180,7 +181,7 @@ namespace LynnaLab
             foreach (string f in Helper.GetSortedFiles(baseDirectory + "objects/" + GameString + "/")) {
 
                 string basename = f.Substring(f.LastIndexOf('/') + 1);
-                if (basename == "macros.s") continue; // LynnaLab doesn't understand macros
+                if (basename == "macros.s") continue; // LynnaLib doesn't understand macros
 
                 if (f.Substring(f.LastIndexOf('.')) == ".s") {
                     string filename = "objects/" + GameString + "/" + basename;

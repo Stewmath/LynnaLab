@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // A ValueReference which isn't directly tied to any data; instead it takes getter and setter
     // functions for data modifications.

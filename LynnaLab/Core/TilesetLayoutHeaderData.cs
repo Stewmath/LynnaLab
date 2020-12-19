@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace LynnaLab {
+namespace LynnaLib {
     // Data macro "m_TilesetLayoutHeader"
     public class TilesetLayoutHeaderData : Data {
 

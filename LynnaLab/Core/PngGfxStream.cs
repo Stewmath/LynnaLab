@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Bitmap = System.Drawing.Bitmap;
 using YamlDotNet.Serialization;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     public class PngGfxStream : Stream {
         private byte[] data;

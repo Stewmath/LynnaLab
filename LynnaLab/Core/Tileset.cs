@@ -5,7 +5,7 @@ using System.IO;
 using System.Collections.Generic;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     public class Tileset : ProjectIndexedDataType
     {

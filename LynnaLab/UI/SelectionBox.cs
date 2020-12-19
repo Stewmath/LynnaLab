@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Bitmap = System.Drawing.Bitmap;
 
+using LynnaLib;
+
 namespace LynnaLab {
 
     // A "box" allowing one to select items in it, drag them to change ordering, and right-click to

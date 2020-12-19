@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 
-namespace LynnaLab {
+namespace LynnaLib {
 
 /// <summary>
 ///  This will throw an "InvalidAnimationException" whenever something unexpected happens (which

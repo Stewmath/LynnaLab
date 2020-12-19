@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     /// Represents the 4 bytes defining a chest. There should only be one of these per room.
     public class Chest {

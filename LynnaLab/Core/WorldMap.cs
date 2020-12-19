@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.IO;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     public class WorldMap : Map
     {

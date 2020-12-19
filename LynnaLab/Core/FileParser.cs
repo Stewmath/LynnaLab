@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     public class FileParser
     {

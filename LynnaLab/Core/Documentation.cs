@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LynnaLab {
+namespace LynnaLib {
 
 /// <summary>
 ///  This provides an interface that the ValueReferenceEditor can use to create infoboxes.

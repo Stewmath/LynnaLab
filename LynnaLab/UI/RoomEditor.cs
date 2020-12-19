@@ -2,7 +2,9 @@ using System;
 using Bitmap = System.Drawing.Bitmap;
 using System.Collections.Generic;
 using Gtk;
+
 using Util;
+using LynnaLib;
 
 namespace LynnaLab
 {

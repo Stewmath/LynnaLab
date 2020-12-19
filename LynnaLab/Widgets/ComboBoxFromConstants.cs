@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Gtk;
 
+using LynnaLib;
+
 namespace LynnaLab
 {
     // Combination of SpinButtonHexadecimal + ComboBox components.

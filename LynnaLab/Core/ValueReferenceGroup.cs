@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Collections.Generic;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // This class contains a list of ValueReferences and allows you to look them up by name to get
     // or set them.

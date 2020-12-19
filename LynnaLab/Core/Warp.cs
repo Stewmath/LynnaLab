@@ -3,7 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // This class is an abstraction of WarpSourceData and WarpDestData, managed by the WarpGroup
     // class. It hides annoying details such as managing warp destination indices manually.

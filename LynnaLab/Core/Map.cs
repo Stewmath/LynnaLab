@@ -4,7 +4,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Collections.Generic;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // Represents a "Map", or layout of rooms. Subclass "WorldMap" represents a group of 256 rooms
     // laid out in a square, while the "Dungeon" subclass represents an 8x8 dungeon with a tweakable

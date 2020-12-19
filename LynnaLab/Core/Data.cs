@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // Args passed by the "AddModifiedEventHandler" function.
     public class DataModifiedEventArgs {

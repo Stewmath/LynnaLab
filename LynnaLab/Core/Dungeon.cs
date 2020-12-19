@@ -4,7 +4,7 @@ using System.IO;
 using System.Collections.Generic;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // Invoked when something changes the layout of rooms in a dungeon.
     public class DungeonRoomChangedEventArgs {

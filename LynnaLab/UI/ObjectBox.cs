@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Bitmap = System.Drawing.Bitmap;
 
+using LynnaLib;
+
 namespace LynnaLab {
 
     public class ObjectBox : SelectionBox {

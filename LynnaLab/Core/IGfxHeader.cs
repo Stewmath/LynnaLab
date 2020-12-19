@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace LynnaLab {
+namespace LynnaLib {
 
 /// <summary>
 ///  Represents a "Gfx Header"; a reference to some gfx data as well as where that data should be

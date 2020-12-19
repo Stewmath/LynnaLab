@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // Class represents macro:
     // m_GfxHeader filename destAddress size/continue [startOffset]

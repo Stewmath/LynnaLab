@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using YamlDotNet.Serialization;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     public class ProjectConfig {
         public static ProjectConfig Load(string s) {

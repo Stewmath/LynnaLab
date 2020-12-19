@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using Cairo;
 using Gtk;
+
+using LynnaLib;
 using Util;
 
 namespace LynnaLab

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Util;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     /// Represents an "INTERACID_TREASURE" value (1 byte). This can be used to lookup
     /// a "TreasureObject" which has an additional subID.

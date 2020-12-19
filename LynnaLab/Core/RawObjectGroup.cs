@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     // This class provides an interface to edit an "object group" (list of object data ending with
     // "obj_End" or "obj_EndPointer"). For most cases it's recommended to use the "ObjectGroup"

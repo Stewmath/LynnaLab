@@ -1,7 +1,7 @@
 using System;
 using System.Drawing;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     /// This basically consists of a list of "PaletteHeaderData"s. Keep in mind that some
     /// PaletteHeaderGroups are identical (reference the same data).

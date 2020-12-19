@@ -1,6 +1,6 @@
 using System;
 
-namespace LynnaLab {
+namespace LynnaLib {
 
 // An exception resulting from some kind of unexpected thing in the disassembly (possibly caused by
 // the user).

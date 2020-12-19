@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
 
-namespace LynnaLab
+namespace LynnaLib
 {
 	public class GbGraphics {
         // Black & white palette; use when no other palette makes sense.

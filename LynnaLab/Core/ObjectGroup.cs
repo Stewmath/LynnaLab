@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     public enum ObjectGroupType {
         Main,        // Top-level (has its own objects and also holds other ObjectGroups as children)
@@ -25,9 +25,9 @@ namespace LynnaLab
     //   - All "EnemyData" and "Before/AfterEvent" references are named uniquely based on
     //     their room number. This is almost always true. There is one case in Seasons
     //     ("group5Map10EnemyData"; fairy fountains) which cannot follow this rule because multiple
-    //     rooms use the same "obj_Pointer" opcode. As a result, LynnaLab cannot separate the data
+    //     rooms use the same "obj_Pointer" opcode. As a result, LynnaLib cannot separate the data
     //     properly between rooms. I am planning to fix this by changing the disassembly rather than
-    //     LynnaLab to accomodate this.
+    //     LynnaLib to accomodate this.
     //
     // Other notes:
     //   - This class makes no guarantees about the ordering of pointers. This probably isn't very

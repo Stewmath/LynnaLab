@@ -1,6 +1,6 @@
 using System.Drawing;
 
-namespace LynnaLab
+namespace LynnaLib
 {
 
 /// <summary>

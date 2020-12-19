@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Gtk;
+
+using LynnaLib;
 using Util;
 
 namespace LynnaLab

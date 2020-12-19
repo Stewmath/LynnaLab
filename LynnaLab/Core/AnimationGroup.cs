@@ -3,7 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Collections.Generic;
 
-namespace LynnaLab
+namespace LynnaLib
 {
     public class AnimationGroup : ProjectIndexedDataType
     {

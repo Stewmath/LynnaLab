@@ -9,6 +9,8 @@ using Microsoft.CSharp;
 
 using Gtk;
 
+using LynnaLib;
+
 namespace LynnaLab
 {
     public class PluginCore

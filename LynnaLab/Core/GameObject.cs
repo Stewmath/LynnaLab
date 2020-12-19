@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using Util;
 
-namespace LynnaLab {
+namespace LynnaLib {
 
 /// <summary>
 ///  An interface for "data/interactionData.s", "enemyData.s", "itemData.s", "partData.s". Mostly
