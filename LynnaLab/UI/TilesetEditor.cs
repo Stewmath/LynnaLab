@@ -87,7 +87,8 @@ namespace LynnaLab
         }
 
         void TilesetSpinButtonChanged(object sender, EventArgs args) {
-            SetTileset(Project.GetIndexedDataType<Tileset>(tilesetSpinButton.ValueAsInt));
+            // TODO: A proper way to choose the season
+            SetTileset(Project.GetTileset(tilesetSpinButton.ValueAsInt, tileset.Season));
         }
 
         void OnTileModified(object sender, int tile) {

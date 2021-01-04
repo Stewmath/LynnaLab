@@ -67,7 +67,7 @@ namespace LynnaLab
 
 
         // TODO: pass in a label which it will update with the name from the combobox?
-        public ComboBoxFromConstants(bool showHelp=true, bool vertical=false)
+        public ComboBoxFromConstants(bool showHelp=true, bool vertical=false, bool showSpin=true)
         {
             this.Name = "LynnaLab.ComboBoxFromConstants";
 
@@ -89,9 +89,11 @@ namespace LynnaLab
             this.spinButton.ClimbRate = 1D;
             this.spinButton.Digits = 2;
             this.spinButton.Numeric = true;
-            box2.Add(spinButton);
-            box2.SetChildPacking(spinButton, expand:false, fill:false, padding:0, pack_type:Gtk.PackType.Start);
-            box1.Add(box2);
+            if (showSpin) {
+                box2.Add(spinButton);
+                box2.SetChildPacking(spinButton, expand:false, fill:false, padding:0, pack_type:Gtk.PackType.Start);
+                box1.Add(box2);
+            }
 
             // Container child box1.Gtk.Box+BoxChild
             this.combobox1 = new Gtk.ComboBoxText();

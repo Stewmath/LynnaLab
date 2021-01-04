@@ -40,9 +40,12 @@ public class MainWindow
     Gtk.SpinButton dungeonSpinButton;
     Gtk.SpinButton floorSpinButton;
     LynnaLab.Minimap dungeonMinimap;
+    ComboBoxFromConstants seasonComboBox;
+
     Gtk.Box roomVreHolder, chestAddHolder, chestEditorBox, chestVreHolder, treasureVreHolder;
     Gtk.Box nonExistentTreasureHolder, overallEditingContainer;
     Gtk.Widget treasureDataFrame;
+
     Gtk.Label treasureDataLabel;
 
     LynnaLab.SpinButtonHexadecimal roomSpinButton;
@@ -76,12 +79,18 @@ public class MainWindow
         get {
             return roomeditor1.Room;
         }
-        set {
-            if (roomeditor1.Room != value) {
-                roomeditor1.SetRoom(value);
-                // roomeditor1's changed event handler will fire, which in turn invokes
-                // "OnRoomChanged", so don't call that here.
-            }
+    }
+    public RoomLayout ActiveRoomLayout {
+        get {
+            if (Project.Game == Game.Seasons && ActiveRoom?.Group == 0)
+                return ActiveRoom?.GetLayout(ActiveSeason);
+            else
+                return ActiveRoom?.GetLayout(-1);
+        }
+    }
+    public int ActiveSeason {
+        get {
+            return ActiveMap.Season;
         }
     }
     public Map ActiveMap {
@@ -169,12 +178,11 @@ public class MainWindow
         treasureDataFrame = (Gtk.Widget)builder.GetObject("treasureDataFrame");
         treasureDataLabel = (Gtk.Label)builder.GetObject("treasureDataLabel");
 
-        roomSpinButton = new SpinButtonHexadecimal();
-        roomSpinButton.Digits = 3;
-
         editTilesetButton = new Gtk.Button("Edit");
         editTilesetButton.Clicked += OnTilesetEditorButtonClicked;
 
+        roomSpinButton = new SpinButtonHexadecimal();
+        roomSpinButton.Digits = 3;
         objectgroupeditor1 = new ObjectGroupEditor();
         tilesetViewer1 = new TilesetViewer();
         roomeditor1 = new RoomEditor();
@@ -182,6 +190,8 @@ public class MainWindow
         dungeonMinimap = new Minimap();
         warpEditor = new WarpEditor(this);
         statusbar1 = new PriorityStatusbar();
+        seasonComboBox = new ComboBoxFromConstants(showHelp:false);
+        seasonComboBox.SpinButton.Adjustment.Upper = 3;
 
         ((Gtk.Box)builder.GetObject("roomSpinButtonHolder")).Add(roomSpinButton);
         ((Gtk.Box)builder.GetObject("objectGroupEditorHolder")).Add(objectgroupeditor1);
@@ -191,6 +201,7 @@ public class MainWindow
         ((Gtk.Box)builder.GetObject("dungeonMinimapHolder")).Add(dungeonMinimap);
         ((Gtk.Box)builder.GetObject("warpEditorHolder")).Add(warpEditor);
         ((Gtk.Box)builder.GetObject("statusbarHolder")).Add(statusbar1);
+        ((Gtk.Box)builder.GetObject("seasonComboBoxHolder")).Add(seasonComboBox);
 
         mainWindow.Title = "LynnaLab " + Helper.ReadResourceFile("LynnaLab.version.txt");
 
@@ -209,6 +220,7 @@ public class MainWindow
         worldSpinButton.ValueChanged += eventGroup.Add(OnWorldSpinButtonValueChanged);
         dungeonSpinButton.ValueChanged += eventGroup.Add(OnDungeonSpinButtonValueChanged);
         floorSpinButton.ValueChanged += eventGroup.Add(OnFloorSpinButtonValueChanged);
+        seasonComboBox.Changed += eventGroup.Add(OnSeasonComboBoxChanged);
         minimapNotebook.SwitchPage += new SwitchPageHandler(eventGroup.Add<SwitchPageArgs>(OnMinimapNotebookSwitchPage));
         contextNotebook.SwitchPage += new SwitchPageHandler(eventGroup.Add<SwitchPageArgs>(OnContextNotebookSwitchPage));
 
@@ -367,10 +379,17 @@ public class MainWindow
             worldSpinButton.Adjustment = new Adjustment(0, 0, Project.NumGroups-1, 1, 4, 0);
             dungeonSpinButton.Adjustment = new Adjustment(0, 0, Project.NumDungeons-1, 1, 1, 0);
             roomSpinButton.Adjustment = new Adjustment(0, 0, Project.NumRooms-1, 1, 16, 0);
+            seasonComboBox.SetConstantsMapping(Project.SeasonMapping);
+            seasonComboBox.ActiveValue = 0;
+
+            if (Project.Game == Game.Ages)
+                seasonComboBox.Hide();
+            else
+                seasonComboBox.Show();
 
             eventGroup.UnlockAndClear();
 
-            SetWorld(0);
+            SetWorld(0, 0);
 
             overallEditingContainer.Sensitive = true;
         }
@@ -385,7 +404,7 @@ public class MainWindow
         eventGroup.Lock();
 
         tilesetViewer1.SetTileset(tileset);
-        ActiveRoom.Tileset = tileset;
+        ActiveRoom.TilesetIndex = tileset.Index;
 
         if (tilesetModifiedEventWrapper == null) {
             tilesetModifiedEventWrapper = new WeakEventWrapper<ValueReferenceGroup>();
@@ -398,11 +417,11 @@ public class MainWindow
 
         UpdateLayoutGroupWarning();
     }
-    void SetTileset(int index) {
+    void SetTileset(int index, int season) {
         if (Project == null)
             return;
 
-        SetTileset(Project.GetIndexedDataType<Tileset>(index));
+        SetTileset(Project.GetTileset(index, season));
     }
 
     void UpdateLayoutGroupWarning() {
@@ -419,6 +438,7 @@ public class MainWindow
             statusbar1.RemoveAll((uint)StatusbarMessage.WrongLayoutGroup);
     }
 
+    // Called when room index (or season) is changed
     void OnRoomChanged() {
         if (ActiveRoom == null)
             return;
@@ -427,7 +447,7 @@ public class MainWindow
 
         roomSpinButton.Value = ActiveRoom.Index;
         warpEditor.SetMap(ActiveRoom.Index>>8, ActiveRoom.Index&0xff);
-        SetTileset(ActiveRoom.Tileset);
+        SetTileset(ActiveRoomLayout.Tileset);
 
         if (roomVre == null) {
             // This only runs once
@@ -437,7 +457,7 @@ public class MainWindow
             roomVre.ShowAll();
 
             roomTilesetModifiedEventWrapper.Bind<ValueModifiedEventArgs>("ModifiedEvent",
-                    (sender, args) => SetTileset((sender as ValueReference).GetIntValue()));
+                    (sender, args) => SetTileset((sender as ValueReference).GetIntValue(), ActiveSeason));
         }
         else {
             roomVre.ReplaceValueReferenceGroup(ActiveRoom.ValueReferenceGroup);
@@ -535,7 +555,7 @@ public class MainWindow
         }
         else {
             Room r = ActiveRoom;
-            Map map = Project.GetIndexedDataType<WorldMap>(ActiveRoom.Group);
+            Map map = Project.GetWorldMap(ActiveRoom.Group, ActiveSeason);
             ActiveMap = map;
             ActiveMinimap.SelectedIndex = r.Index & 0xff;
         }
@@ -545,8 +565,14 @@ public class MainWindow
         eventGroup.UnlockAndClear();
     }
 
+    void SetRoom(Room room, int season) {
+        roomeditor1.SetRoom(room, ActiveSeason);
+        // roomeditor1's changed event handler will fire, which in turn invokes "OnRoomChanged", so
+        // don't call that here.
+    }
+
     void OnMinimapTileSelected(object sender, int index) {
-        ActiveRoom = ActiveMinimap.GetRoom();
+        SetRoom(ActiveMinimap.GetRoom(), ActiveSeason);
     }
 
     void UpdateMapSpinButtons() {
@@ -556,7 +582,7 @@ public class MainWindow
             floorSpinButton.Adjustment = new Adjustment(ActiveMinimap.Floor, 0, dungeon.NumFloors-1, 1, 0, 0);
         }
         else {
-            worldSpinButton.Value = ActiveMap.Index;
+            worldSpinButton.Value = ActiveMap.MainGroup;
         }
     }
 
@@ -568,7 +594,7 @@ public class MainWindow
         UpdateMapSpinButtons();
         eventGroup.UnlockAndClear();
 
-        ActiveRoom = ActiveMinimap.GetRoom();
+        SetRoom(ActiveMinimap.GetRoom(), ActiveMap.Season);
     }
 
     void SetWorld(WorldMap map) {
@@ -576,10 +602,10 @@ public class MainWindow
             return;
         ActiveMap = map;
     }
-    void SetWorld(int index) {
+    void SetWorld(int index, int season) {
         if (Project == null)
             return;
-        SetWorld(Project.GetIndexedDataType<WorldMap>(index));
+        SetWorld(Project.GetWorldMap(index, season));
     }
 
     // This returns ResponseType.Yes, No, or Cancel
@@ -652,7 +678,7 @@ public class MainWindow
         if (AskSave("Save project before closing it") != ResponseType.Cancel) {
             Project.Close();
             Project = null;
-            ActiveRoom = null;
+            SetRoom(null, 0);
             overallEditingContainer.Sensitive = false;
         }
     }
@@ -671,7 +697,7 @@ public class MainWindow
     protected void OnDungeonSpinButtonValueChanged(object sender, EventArgs e) {
         if (Project == null)
             return;
-        dungeonMinimap.SetMap(Project.GetIndexedDataType<Dungeon>(dungeonSpinButton.ValueAsInt));
+        dungeonMinimap.SetMap(Project.GetDungeon(dungeonSpinButton.ValueAsInt));
         OnMapChanged();
     }
 
@@ -686,9 +712,18 @@ public class MainWindow
     }
 
     protected void OnWorldSpinButtonValueChanged(object sender, EventArgs e) {
+        UpdateWorld();
+    }
+
+    protected void OnSeasonComboBoxChanged(object sender, EventArgs e) {
+        UpdateWorld();
+    }
+
+    void UpdateWorld() {
         if (Project == null)
             return;
-        WorldMap world = Project.GetIndexedDataType<WorldMap>(worldSpinButton.ValueAsInt);
+        int season = (worldSpinButton.ValueAsInt == 0 ? seasonComboBox.ActiveValue : -1);
+        WorldMap world = Project.GetWorldMap(worldSpinButton.ValueAsInt, season);
         if (ActiveMap != world)
             SetWorld(world);
     }
@@ -698,9 +733,9 @@ public class MainWindow
             return;
         Notebook nb = minimapNotebook;
         if (nb.Page == 0)
-            ActiveMinimap.SetMap(Project.GetIndexedDataType<WorldMap>(worldSpinButton.ValueAsInt));
+            ActiveMinimap.SetMap(Project.GetWorldMap(worldSpinButton.ValueAsInt, ActiveSeason));
         else if (nb.Page == 1)
-            ActiveMinimap.SetMap(Project.GetIndexedDataType<Dungeon>(dungeonSpinButton.ValueAsInt));
+            ActiveMinimap.SetMap(Project.GetDungeon(dungeonSpinButton.ValueAsInt));
         OnMapChanged();
     }
 
@@ -743,7 +778,7 @@ public class MainWindow
 
         Room r = Project.GetIndexedDataType<Room>(button.ValueAsInt);
         if (r != ActiveRoom) {
-            ActiveRoom = r;
+            SetRoom(r, ActiveSeason);
             UpdateMinimapFromRoom(false);
         }
     }

@@ -22,6 +22,8 @@ namespace LynnaLab
         // Variables
 
         Room room;
+        int season;
+
         ObjectGroupEditor _objectEditor;
         WarpEditor _warpEditor;
         Warp _editingWarpDestination;
@@ -95,6 +97,17 @@ namespace LynnaLab
         public Room Room
         {
             get { return room; }
+        }
+        public int Season {
+            get { return season; }
+        }
+        public RoomLayout RoomLayout {
+            get {
+                if (room.HasSeasons)
+                    return room.GetLayout(season);
+                else
+                    return room.GetLayout(-1);
+            }
         }
 
         public bool EnableTileEditing {
@@ -178,9 +191,7 @@ namespace LynnaLab
 
         protected override Bitmap Image {
             get {
-                if (room == null)
-                    return null;
-                return room.GetImage();
+                return RoomLayout?.GetImage();
             }
         }
 
@@ -215,20 +226,21 @@ namespace LynnaLab
 
         // Methods
 
-        public void SetRoom(Room r, bool changedFromWarpFollow = false) {
-            if (r == Room)
+        public void SetRoom(Room r, int season, bool changedFromWarpFollow = false) {
+            if (r == Room && this.season == season)
                 return;
 
             if (room != null) {
-                room.RoomModifiedEvent -= OnRoomModified;
+                RoomLayout.LayoutModifiedEvent -= OnLayoutModified;
                 room.GetObjectGroup().RemoveModifiedHandler(OnObjectModified);
                 room.GetWarpGroup().RemoveModifiedHandler(OnWarpModified);
             }
 
             room = r;
+            this.season = season;
 
             if (room != null) {
-                room.RoomModifiedEvent += OnRoomModified;
+                RoomLayout.LayoutModifiedEvent += OnLayoutModified;
                 room.GetObjectGroup().AddModifiedHandler(OnObjectModified);
                 room.GetWarpGroup().AddModifiedHandler(OnWarpModified);
 
@@ -256,7 +268,7 @@ namespace LynnaLab
             QueueDraw();
         }
 
-        public void OnRoomModified() {
+        public void OnLayoutModified() {
             QueueDraw();
         }
 
@@ -304,7 +316,7 @@ namespace LynnaLab
         // Called when the "EditingWarpDestination" is modified
         void OnDestinationWarpModified(object sender, EventArgs args) {
             if (EditingWarpDestination.DestRoom != Room)
-                SetRoom(EditingWarpDestination.DestRoom);
+                SetRoom(EditingWarpDestination.DestRoom, season);
             else {
                 GenerateRoomComponents();
             }
@@ -354,11 +366,11 @@ namespace LynnaLab
                 if (!IsInBounds(posX, posY, scale:false, offset:false))
                     return;
                 if (button == 1) { // Left-click
-                    room.SetTile(p.X, p.Y, TilesetViewer.SelectedIndex);
+                    RoomLayout.SetTile(p.X, p.Y, TilesetViewer.SelectedIndex);
                     draggingTile = true;
                 }
                 else if (button == 3) { // Right-click
-                    TilesetViewer.SelectedIndex = room.GetTile(p.X, p.Y);
+                    TilesetViewer.SelectedIndex = RoomLayout.GetTile(p.X, p.Y);
                 }
             }
             if (DrawRoomComponents) {
@@ -402,7 +414,7 @@ namespace LynnaLab
             if (EnableTileEditing && draggingTile) {
                 if (IsInBounds(x, y, scale:false, offset:false)) {
                     Cairo.Point p = GetGridPosition(x, y, scale:false, offset:false);
-                    room.SetTile(p.X, p.Y, TilesetViewer.SelectedIndex);
+                    RoomLayout.SetTile(p.X, p.Y, TilesetViewer.SelectedIndex);
                 }
             }
             if (DrawRoomComponents && draggingObject) {
@@ -782,7 +794,7 @@ addedAllComponents:
                 {
                     Gtk.MenuItem followButton = new Gtk.MenuItem("Follow");
                     followButton.Activated += (sender, args) => {
-                        parent.SetRoom(warp.DestRoom, true);
+                        parent.SetRoom(warp.DestRoom, parent.season, true);
                     };
                     list.Add(followButton);
                 }
@@ -790,7 +802,7 @@ addedAllComponents:
                     Gtk.MenuItem setDestButton = new Gtk.MenuItem("Edit Destination");
                     setDestButton.Activated += (sender, args) => {
                         parent.EditingWarpDestination = warp;
-                        parent.SetRoom(warp.DestRoom, true);
+                        parent.SetRoom(warp.DestRoom, parent.season, true);
                         parent.WarpEditor.SetSelectedWarp(warp);
                     };
                     list.Add(setDestButton);
@@ -869,7 +881,7 @@ addedAllComponents:
                     Gtk.MenuItem doneButton = new Gtk.MenuItem("Done");
                     doneButton.Activated += (sender, args) => {
                         parent.EditingWarpDestination = null;
-                        parent.SetRoom(warp.SourceRoom, true);
+                        parent.SetRoom(warp.SourceRoom, parent.season, true);
                     };
                     list.Add(doneButton);
                 }

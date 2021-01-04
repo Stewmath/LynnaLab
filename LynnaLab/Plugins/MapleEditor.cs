@@ -45,13 +45,15 @@ namespace Plugins
 
             var minimapContainer = new Gtk.Alignment(1.0f,1.0f,1.0f,1.0f);
 
-            Gtk.ComboBox comboBox = new Gtk.ComboBox(
-                    new string[] {
-                    "Present (Ricky)",
-                    "Present (Dimitri)",
-                    "Present (Moosh)",
-                    "Past"
-                    });
+            var list = new List<string>( new string[] {
+                "Present (Ricky)",
+                "Present (Dimitri)",
+                "Present (Moosh)"
+            });
+            if (Project.Game == Game.Ages)
+                list.Add("Past");
+
+            Gtk.ComboBox comboBox = new Gtk.ComboBox(list.ToArray());
 
             comboBox.Changed += (a,b) => {
                 int i = comboBox.Active;
@@ -60,11 +62,11 @@ namespace Plugins
 
                 if (i == 3) {
                     data = Project.GetData("maplePastLocations");
-                    map = Project.GetIndexedDataType<WorldMap>(1);
+                    map = Project.GetWorldMap(1, manager.GetActiveRoomLayout().Season);
                 }
                 else {
                     data = Project.GetData(Project.GetData("maplePresentLocationsTable", i*2).GetValue(0));
-                    map = Project.GetIndexedDataType<WorldMap>(0);
+                    map = Project.GetWorldMap(0, manager.GetActiveRoomLayout().Season);
                 }
 
                 minimap.Width = map.MapWidth;

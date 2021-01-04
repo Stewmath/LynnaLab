@@ -35,7 +35,7 @@ namespace Plugins
         }
 
         public override void Activate() {
-            Room room = manager.GetActiveRoom();
+            RoomLayout room = manager.GetActiveRoomLayout();
             int tileset = room.Tileset.Index;
 
             var reader = new XmlTextReader(Helper.GetResourceStream("LynnaLab.Resources.AutoSmoother.xml"));
@@ -189,7 +189,7 @@ namespace Plugins
 
             AssembleTiles();
 
-            Room room = manager.GetActiveRoom();
+            RoomLayout room = manager.GetActiveRoomLayout();
             for (int y=0; y<room.Height; y++) {
                 for (int x=0; x<room.Width; x++) {
                     int t = GetTile(x, y, manager);
@@ -200,7 +200,7 @@ namespace Plugins
         }
 
         public virtual int GetTile(int x, int y, PluginManager manager) {
-            Room room = manager.GetActiveRoom();
+            RoomLayout room = manager.GetActiveRoomLayout();
             int t = room.GetTile(x,y);
             if (!tiles.Contains(t) || ignoreTiles.Contains(t))
                 return t;
@@ -246,7 +246,7 @@ namespace Plugins
                     roomY++;
                     b -= map.RoomHeight;
                 }
-                return map.GetRoom(roomX,roomY,floor).GetTile(a,b);
+                return map.GetRoomLayout(roomX,roomY,floor).GetTile(a,b);
             };
 
             Func<int,bool> fx = (a) => checker(g(a,y));

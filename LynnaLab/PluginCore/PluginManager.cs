@@ -35,6 +35,9 @@ namespace LynnaLab
         public Room GetActiveRoom() {
             return MainWindow.ActiveRoom;
         }
+        public RoomLayout GetActiveRoomLayout() {
+            return MainWindow.ActiveRoomLayout;
+        }
 
         public Map GetActiveMap() {
             return MainWindow.ActiveMap;

@@ -24,7 +24,8 @@ namespace LynnaLab
 
         WeakEventWrapper<Dungeon> dungeonEventWrapper = new WeakEventWrapper<Dungeon>();
 
-        Dictionary<Room,Cairo.Surface> cachedImageDict = new Dictionary<Room,Cairo.Surface>();
+        Dictionary<Tuple<Room,int>,Cairo.Surface> cachedImageDict
+            = new Dictionary<Tuple<Room,int>,Cairo.Surface>();
 
         public Project Project {
             get {
@@ -96,12 +97,13 @@ namespace LynnaLab
         }
 
         public Room GetRoom(int x, int y) {
-            if (_map != null)
-                return _map.GetRoom(x, y, Floor);
-            return null;
+            return _map?.GetRoom(x, y, Floor);
         }
         public Room GetRoom() {
             return GetRoom(SelectedX, SelectedY);
+        }
+        public RoomLayout GetRoomLayout(int x, int y) {
+            return _map?.GetRoomLayout(x, y, Floor);
         }
 
         public void InvalidateImageCache() {
@@ -138,15 +140,15 @@ namespace LynnaLab
         // Child classes could choose override "TileDrawer" instead. The advantage of overriding
         // this function is that the image will be cached.
         protected virtual Cairo.Surface GenerateTileImage(int x, int y) {
-            Room room = GetRoom(x, y);
+            RoomLayout layout = GetRoomLayout(x, y);
             var tileSurface = this.Window.CreateSimilarSurface(Cairo.Content.Color,
-                    (int)(room.Width * 16 * _scale), (int)(room.Height * 16 * _scale));
+                    (int)(layout.Width * 16 * _scale), (int)(layout.Height * 16 * _scale));
 
             // The below line works fine, but doesn't look as good on hidpi monitors
             //_surface = new Cairo.ImageSurface(Cairo.Format.Rgb24,
-            //        (int)(room.Width * 16 * _scale), (int)(room.Height * 16 * _scale));
+            //        (int)(layout.Width * 16 * _scale), (int)(layout.Height * 16 * _scale));
 
-            Bitmap img = room.GetImage();
+            Bitmap img = layout.GetImage();
 
             using (var cr = new Cairo.Context(tileSurface))
             using (var source = new BitmapSurface(img)) {
@@ -174,13 +176,13 @@ namespace LynnaLab
         // Private methods
 
         Cairo.Surface GetTileImage(int x, int y) {
-            Room room = GetRoom(x, y);
+            var key = new Tuple<Room, int>(GetRoom(x, y), _map.Season);
 
-            if (cachedImageDict.ContainsKey(room))
-                return cachedImageDict[room];
+            if (cachedImageDict.ContainsKey(key))
+                return cachedImageDict[key];
 
             var tileSurface = GenerateTileImage(x, y);
-            cachedImageDict[room] = tileSurface;
+            cachedImageDict[key] = tileSurface;
             return tileSurface;
         }
 

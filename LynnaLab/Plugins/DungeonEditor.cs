@@ -165,7 +165,7 @@ namespace Plugins
 
             Map map = manager.GetActiveMap();
             if (map is Dungeon)
-                dungeonSpinButton.Value = map.Index;
+                dungeonSpinButton.Value = (map as Dungeon).Index;
 
             DungeonChanged();
 
@@ -187,7 +187,7 @@ namespace Plugins
 
 
         void DungeonChanged() {
-            Dungeon dungeon = Project.GetIndexedDataType<Dungeon>(dungeonSpinButton.ValueAsInt);
+            Dungeon dungeon = Project.GetDungeon(dungeonSpinButton.ValueAsInt);
 
             dungeonEventWrapper.ReplaceEventSource(dungeon);
 
