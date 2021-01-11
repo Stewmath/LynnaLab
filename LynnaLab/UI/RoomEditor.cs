@@ -237,7 +237,8 @@ namespace LynnaLab
             }
 
             room = r;
-            this.season = season;
+            if (season != -1)
+                this.season = season;
 
             if (room != null) {
                 RoomLayout.LayoutModifiedEvent += OnLayoutModified;

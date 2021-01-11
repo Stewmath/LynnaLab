@@ -90,7 +90,7 @@ public class MainWindow
     }
     public int ActiveSeason {
         get {
-            return ActiveMap.Season;
+            return seasonComboBox.ActiveValue;
         }
     }
     public Map ActiveMap {
@@ -566,7 +566,8 @@ public class MainWindow
     }
 
     void SetRoom(Room room, int season) {
-        roomeditor1.SetRoom(room, ActiveSeason);
+        roomeditor1.SetRoom(room, season);
+
         // roomeditor1's changed event handler will fire, which in turn invokes "OnRoomChanged", so
         // don't call that here.
     }
@@ -722,8 +723,8 @@ public class MainWindow
     void UpdateWorld() {
         if (Project == null)
             return;
-        int season = (worldSpinButton.ValueAsInt == 0 ? seasonComboBox.ActiveValue : -1);
-        WorldMap world = Project.GetWorldMap(worldSpinButton.ValueAsInt, season);
+        int index = worldSpinButton.ValueAsInt;
+        WorldMap world = Project.GetWorldMap(index, ActiveSeason);
         if (ActiveMap != world)
             SetWorld(world);
     }
@@ -732,8 +733,10 @@ public class MainWindow
         if (Project == null)
             return;
         Notebook nb = minimapNotebook;
-        if (nb.Page == 0)
-            ActiveMinimap.SetMap(Project.GetWorldMap(worldSpinButton.ValueAsInt, ActiveSeason));
+        if (nb.Page == 0) {
+            int world = worldSpinButton.ValueAsInt;
+            ActiveMinimap.SetMap(Project.GetWorldMap(world, ActiveSeason));
+        }
         else if (nb.Page == 1)
             ActiveMinimap.SetMap(Project.GetDungeon(dungeonSpinButton.ValueAsInt));
         OnMapChanged();
