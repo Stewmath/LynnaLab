@@ -1,5 +1,5 @@
 ﻿using NUnit.Framework;
-using System;
+using NUnit.Framework.Legacy;
 using System.Collections.Generic;
 
 using LynnaLib;
@@ -49,8 +49,8 @@ namespace LynnaLab
             List<string> actualTokens = tup.Item1;
             List<string> actualSpacing = tup.Item2;
 
-            Assert.AreEqual (tokens, actualTokens);
-            Assert.AreEqual (spacing, actualSpacing);
+            ClassicAssert.AreEqual (tokens, actualTokens);
+            ClassicAssert.AreEqual (spacing, actualSpacing);
         }
 
         void TestDocumentation() {
