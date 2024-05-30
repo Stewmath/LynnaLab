@@ -49,7 +49,7 @@ namespace Plugins
 
             minimap = new MyMinimap();
 
-            var minimapContainer = new Gtk.Alignment(1.0f, 1.0f, 1.0f, 1.0f);
+            var minimapContainer = new Gtk.Box(Gtk.Orientation.Horizontal, 0);
 
             var list = new List<string>(new string[] {
                 "Present (Ricky)",

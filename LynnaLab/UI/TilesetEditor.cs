@@ -338,7 +338,7 @@ namespace LynnaLab
             }
         }
 
-        class SubTileEditor : Gtk.Alignment
+        class SubTileEditor : Gtk.Bin
         {
 
             // Which tile is being edited
@@ -379,7 +379,7 @@ namespace LynnaLab
             CheckButton priorityCheckButton;
             CheckButton bankCheckButton;
 
-            public SubTileEditor(TilesetEditor tilesetEditor) : base(0, 0, 0, 0)
+            public SubTileEditor(TilesetEditor tilesetEditor)
             {
                 this.tilesetEditor = tilesetEditor;
 
@@ -404,13 +404,11 @@ namespace LynnaLab
                     PullEverything();
                 };
 
-                Alignment hAlign = new Alignment(0.5f, 0, 0, 0);
                 Gtk.Box hbox = new Gtk.Box(Gtk.Orientation.Horizontal, 2);
+                hbox.Halign = Gtk.Align.Center;
                 hbox.Add(subTileViewer);
                 hbox.Add(subTileCollisionEditor);
-                hAlign.Add(hbox);
-
-                vbox.Add(hAlign);
+                vbox.Add(hbox);
 
                 // Next row: collision value
 

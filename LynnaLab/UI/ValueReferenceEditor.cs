@@ -5,7 +5,7 @@ using LynnaLib;
 
 namespace LynnaLab
 {
-    public class ValueReferenceEditor : Gtk.Alignment
+    public class ValueReferenceEditor : Gtk.Bin
     {
         ValueReferenceGroup valueReferenceGroup;
 
@@ -34,8 +34,10 @@ namespace LynnaLab
         }
 
         public ValueReferenceEditor(Project p, ValueReferenceGroup vrg, int rows, string frameText = null)
-            : base(1.0F, 1.0F, 1.0F, 1.0F)
         {
+            this.Halign = Gtk.Align.Fill;
+            this.Valign = Gtk.Align.Fill;
+
             Project = p;
 
             valueReferenceGroup = vrg;
@@ -205,7 +207,8 @@ namespace LynnaLab
                 grid.Attach(widgetList[0], x, y, 1, 1);
                 grid.Attach(widgetList[1], x + 1, y, entryWidgetWidth, 1);
 
-                widgetList[2] = new Gtk.Alignment(0, 0.5f, 0, 0); // Container for help button
+                widgetList[2] = new Gtk.Grid(); // Container for help button
+                widgetList[2].Halign = Gtk.Align.Start;
                 widgetList[2].Hexpand = true; // Let this absorb any extra space
                 grid.Attach(widgetList[2], x + 2, y, 1, 1);
 

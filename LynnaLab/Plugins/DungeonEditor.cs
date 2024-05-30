@@ -50,7 +50,6 @@ namespace Plugins
             this.manager = manager;
 
             Box tmpBox, tmpBox2;
-            Alignment tmpAlign;
             Box vbox = new Gtk.Box(Gtk.Orientation.Vertical, 0);
             vbox.Spacing = 3;
             Box hbox = new Gtk.Box(Gtk.Orientation.Horizontal, 0);
@@ -61,7 +60,7 @@ namespace Plugins
             dungeonVre = null;
             roomVre = null;
 
-            Alignment frame = new Alignment(0, 0, 0, 0);
+            Gtk.Container frame = new Gtk.Grid();
             dungeonSpinButton = new SpinButton(0, 15, 1);
             floorSpinButton = new SpinButton(0, 15, 1);
             roomSpinButton = new SpinButtonHexadecimal(0, 255, 1);
@@ -77,10 +76,8 @@ namespace Plugins
             tmpBox.Add(dungeonSpinButton);
             tmpBox.Add(new Gtk.Label("Floor "));
             tmpBox.Add(floorSpinButton);
-            tmpAlign = new Alignment(0, 0, 0, 0);
-            tmpAlign.Add(tmpBox);
 
-            vbox.Add(tmpAlign);
+            vbox.Add(tmpBox);
             vbox.Add(hbox);
 
             // Leftmost column
@@ -97,9 +94,8 @@ namespace Plugins
                 DungeonChanged();
                 floorSpinButton.Value = floorIndex;
             };
-            tmpAlign = new Gtk.Alignment(0.5f, 0, 0, 0);
-            tmpAlign.Add(addFloorAboveButton);
-            tmpBox.Add(tmpAlign);
+            addFloorAboveButton.Halign = Gtk.Align.Center;
+            tmpBox.Add(addFloorAboveButton);
 
             var addFloorBelowButton = new Button("Add Floor Below");
             addFloorBelowButton.Image = new Gtk.Image(Gtk.Stock.Add, Gtk.IconSize.Button);
@@ -109,9 +105,8 @@ namespace Plugins
                 (minimap.Map as Dungeon).InsertFloor(floorIndex);
                 DungeonChanged();
             };
-            tmpAlign = new Gtk.Alignment(0.5f, 0, 0, 0);
-            tmpAlign.Add(addFloorBelowButton);
-            tmpBox.Add(tmpAlign);
+            addFloorBelowButton.Halign = Gtk.Align.Center;
+            tmpBox.Add(addFloorBelowButton);
 
             var removeFloorButton = new Button("Remove Floor");
             removeFloorButton.Image = new Gtk.Image(Gtk.Stock.Remove, Gtk.IconSize.Button);
@@ -136,9 +131,8 @@ namespace Plugins
                     DungeonChanged();
                 }
             };
-            tmpAlign = new Gtk.Alignment(0.5f, 0, 0, 0);
-            tmpAlign.Add(removeFloorButton);
-            tmpBox.Add(tmpAlign);
+            removeFloorButton.Halign = Gtk.Align.Center;
+            tmpBox.Add(removeFloorButton);
 
             hbox.Add(tmpBox);
 
@@ -154,9 +148,6 @@ namespace Plugins
 
             // Rightmost column
 
-            tmpAlign = new Alignment(0, 0, 0, 0);
-            tmpAlign.Add(roomVreContainer);
-
             tmpBox2 = new Gtk.Box(Gtk.Orientation.Horizontal, 0);
             tmpBox2.Add(new Gtk.Label("Room "));
             roomSpinButton.ValueChanged += (a, b) =>
@@ -168,7 +159,7 @@ namespace Plugins
 
             tmpBox = new Gtk.Box(Gtk.Orientation.Vertical, 0);
             tmpBox.Add(tmpBox2);
-            tmpBox.Add(tmpAlign);
+            tmpBox.Add(roomVreContainer);
 
             hbox.Add(tmpBox);
 
