@@ -178,7 +178,11 @@ namespace LynnaLab
 
         void ReloadObjectBoxes() {
             objectBoxDict.Clear();
-            objectBoxContainer.Foreach((c) => c.Dispose());
+            objectBoxContainer.Foreach((c) =>
+            {
+                objectBoxContainer.Remove(c);
+                c.Dispose();
+            });
 
             Gtk.Grid grid = new Gtk.Grid();
             grid.ColumnSpacing = 6;

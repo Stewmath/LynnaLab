@@ -267,6 +267,7 @@ loopEnd:
         // Substitute the widget for a value (index "i") with the new widget. (Currently unused)
         public void ReplaceWidget(string name, Gtk.Widget newWidget) {
             int i = GetValueIndex(name);
+            widgetGrids[i].Remove(widgetLists[i][1]);
             widgetLists[i][1].Dispose();
             var pos = widgetPositions[i];
             widgetGrids[i].Attach(newWidget, pos.Item1+1, pos.Item2, 1, 1);
@@ -277,6 +278,7 @@ loopEnd:
         // there it could get overwritten with a help button again.
         public void AddWidgetToRight(string name, Gtk.Widget widget) {
             int i = GetValueIndex(name);
+            widgetGrids[i].Remove(widgetLists[i][2]);
             widgetLists[i][2].Dispose(); // Removes help button
             widgetLists[i][2] = widget;
             var pos = widgetPositions[i];

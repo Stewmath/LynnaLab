@@ -36,7 +36,10 @@ namespace LynnaLab
         // Methods
 
         void UpdateButtons() {
-            base.Foreach((c) => c.Dispose());
+            base.Foreach((c) => {
+                base.Remove(c);
+                c.Dispose();
+            });
 
             this.Spacing = 6;
 

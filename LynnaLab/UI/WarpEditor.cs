@@ -81,8 +81,10 @@ namespace LynnaLab
                 if (_warpGroup != value) {
                     _warpGroup = value;
 
-                    if (warpSourceBox != null)
+                    if (warpSourceBox != null) {
+                        warpSourceBoxContainer.Remove(warpSourceBox);
                         warpSourceBox.Dispose();
+                    }
                     warpSourceBox = new WarpSourceBox(_warpGroup);
                     warpSourceBox.AddTileSelectedHandler((sender, index) => {
                         SelectedIndex = index;
@@ -128,7 +130,10 @@ namespace LynnaLab
                 return;
             _selectedWarp = warp;
 
-            valueEditorContainer.Foreach((c) => c.Dispose());
+            valueEditorContainer.Foreach((c) => {
+                valueEditorContainer.Remove(c);
+                c.Dispose();
+            });
 
             if (warp == null) {
                 warpSourceFrame.Hide();
