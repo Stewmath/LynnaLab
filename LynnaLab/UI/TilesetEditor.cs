@@ -429,7 +429,7 @@ namespace LynnaLab
 
                 // Next rows: subtile properties
 
-                var table = new Table(2, 2, false);
+                var table = new Gtk.Grid();
                 table.ColumnSpacing = 6;
                 table.RowSpacing = 6;
 
@@ -481,25 +481,25 @@ namespace LynnaLab
                 bankLabel.TooltipText = "This should always be checked.";
                 bankCheckButton.TooltipText = "This should always be checked.";
 
-                uint y = 0;
+                int y = 0;
 
-                table.Attach(subTileLabel, 0, 1, y, y + 1);
-                table.Attach(subTileSpinButton, 1, 2, y, y + 1);
+                table.Attach(subTileLabel, 0, y, 1, 1);
+                table.Attach(subTileSpinButton, 1, y, 1, 1);
                 y++;
-                table.Attach(paletteLabel, 0, 1, y, y + 1);
-                table.Attach(paletteSpinButton, 1, 2, y, y + 1);
+                table.Attach(paletteLabel, 0, y, 1, 1);
+                table.Attach(paletteSpinButton, 1, y, 1, 1);
                 y++;
-                table.Attach(flipXLabel, 0, 1, y, y + 1);
-                table.Attach(flipXCheckButton, 1, 2, y, y + 1);
+                table.Attach(flipXLabel, 0, y, 1, 1);
+                table.Attach(flipXCheckButton, 1, y, 1, 1);
                 y++;
-                table.Attach(flipYLabel, 0, 1, y, y + 1);
-                table.Attach(flipYCheckButton, 1, 2, y, y + 1);
+                table.Attach(flipYLabel, 0, y, 1, 1);
+                table.Attach(flipYCheckButton, 1, y, 1, 1);
                 y++;
-                table.Attach(priorityLabel, 0, 1, y, y + 1);
-                table.Attach(priorityCheckButton, 1, 2, y, y + 1);
+                table.Attach(priorityLabel, 0, y, 1, 1);
+                table.Attach(priorityCheckButton, 1, y, 1, 1);
                 y++;
-                table.Attach(bankLabel, 0, 1, y, y + 1);
-                table.Attach(bankCheckButton, 1, 2, y, y + 1);
+                table.Attach(bankLabel, 0, y, 1, 1);
+                table.Attach(bankCheckButton, 1, y, 1, 1);
                 y++;
 
                 vbox.Add(table);

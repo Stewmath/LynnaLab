@@ -331,7 +331,7 @@ namespace LynnaLab
         {
             int x, y;
             Gdk.ModifierType state;
-            args.Event.Window.GetPointer(out x, out y, out state);
+            args.Event.Window.GetDevicePosition(args.Event.Device, out x, out y, out state);
 
             if (activeAction == null && IsInBounds(x, y))
             {
@@ -355,7 +355,7 @@ namespace LynnaLab
         {
             int x, y;
             Gdk.ModifierType state;
-            args.Event.Window.GetPointer(out x, out y, out state);
+            args.Event.Window.GetDevicePosition(args.Event.Device, out x, out y, out state);
 
             if (activeAction != null && !activeAction.ButtonMatchesState(state))
             {
@@ -371,7 +371,7 @@ namespace LynnaLab
         {
             int x, y;
             Gdk.ModifierType state;
-            args.Event.Window.GetPointer(out x, out y, out state);
+            args.Event.Window.GetDevicePosition(args.Event.Device, out x, out y, out state);
 
             int nextHoveringIndex;
             if (IsInBounds(x, y))

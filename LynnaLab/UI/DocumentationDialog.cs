@@ -47,10 +47,10 @@ namespace LynnaLab
                 valuesLabel.Xalign = 0;
                 VBox.PackStart(valuesLabel, false, false, 0);
 
-                Gtk.Table subidTable = new Gtk.Table(2, (uint)subidEntries.Count * 2, false);
+                Gtk.Grid subidTable = new Gtk.Grid();
 
-                uint subidX = 0;
-                uint subidY = 0;
+                int subidX = 0;
+                int subidY = 0;
 
                 foreach (string key in subidEntries)
                 {
@@ -58,6 +58,7 @@ namespace LynnaLab
 
                     Gtk.Label l1 = new Gtk.Label(key);
                     l1.UseUnderline = false;
+                    l1.Hexpand = false;
                     l1.Xalign = 0;
                     l1.Yalign = 0;
 
@@ -66,33 +67,36 @@ namespace LynnaLab
                     l2.Wrap = true;
                     l2.Xalign = 0;
                     l2.Yalign = 0;
+                    l2.Hexpand = true;
                     l2.WidthChars = 50;
                     l2.MaxWidthChars = 50;
 
-                    subidTable.Attach(l1, subidX + 0, subidX + 1, subidY, subidY + 1, Gtk.AttachOptions.Fill, Gtk.AttachOptions.Fill, 4, 0);
-                    subidTable.Attach(l2, subidX + 2, subidX + 3, subidY, subidY + 1);
+                    subidTable.Attach(l1, subidX + 0, subidY, 1, 1);
+                    subidTable.Attach(l2, subidX + 2, subidY, 1, 1);
 
                     subidY++;
-                    subidTable.Attach(new Gtk.HSeparator(), subidX + 0, subidX + 3, subidY, subidY + 1, Gtk.AttachOptions.Fill, 0, 0, 0);
+                    subidTable.Attach(new Gtk.Separator(Gtk.Orientation.Horizontal),
+                                      subidX + 0,
+                                      subidY,
+                                      3,
+                                      1);
                     subidY++;
                 }
-                subidTable.Attach(new Gtk.VSeparator(), subidX + 1, subidX + 2, 0, subidTable.NRows, 0, Gtk.AttachOptions.Fill, 4, 0);
+                subidTable.Attach(new Gtk.Separator(Gtk.Orientation.Vertical),
+                                  subidX + 1,
+                                  0,
+                                  1,
+                                  subidEntries.Count * 2);
 
                 Gtk.ScrolledWindow scrolledWindow = new Gtk.ScrolledWindow();
-                scrolledWindow.AddWithViewport(subidTable);
+                scrolledWindow.Add(subidTable);
                 scrolledWindow.ShadowType = Gtk.ShadowType.EtchedIn;
                 scrolledWindow.SetPolicy(Gtk.PolicyType.Never, Gtk.PolicyType.Automatic);
                 subidTable.ShowAll();
 
-                // Determine width/height to request on scrolledWindow
-                Gtk.Requisition subidTableRequest = subidTable.SizeRequest();
-                int width = Math.Min(subidTableRequest.Width + 20, 700);
-                width = Math.Max(width, 400);
-                int height = Math.Min(subidTableRequest.Height + 5, 400);
-                height = Math.Max(height, 200);
-                scrolledWindow.SetSizeRequest(width, height);
-
                 VBox.PackStart(scrolledWindow, true, true, 0);
+
+                this.SetDefaultSize(700, 600);
             }
 
             AddActionWidget(new Gtk.Button("gtk-ok"), 0);

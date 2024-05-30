@@ -128,7 +128,7 @@ namespace Plugins
                 {
                     int x, y;
                     Gdk.ModifierType state;
-                    args.Event.Window.GetPointer(out x, out y, out state);
+                    args.Event.Window.GetDevicePosition(args.Event.Device, out x, out y, out state);
                     if (IsInBounds(x, y))
                     {
                         if (state.HasFlag(Gdk.ModifierType.Button1Mask))
@@ -147,7 +147,7 @@ namespace Plugins
                 {
                     int x, y;
                     Gdk.ModifierType state;
-                    args.Event.Window.GetPointer(out x, out y, out state);
+                    args.Event.Window.GetDevicePosition(args.Event.Device, out x, out y, out state);
                     if (IsInBounds(x, y))
                     {
                         if (state.HasFlag(Gdk.ModifierType.Button1Mask) || state.HasFlag(Gdk.ModifierType.Button3Mask))

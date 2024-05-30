@@ -128,7 +128,7 @@ namespace LynnaLib
             {
                 return Project.EvalToInt(GetValue(i));
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 throw;
             }

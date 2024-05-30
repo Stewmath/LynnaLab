@@ -13,9 +13,9 @@ namespace LynnaLab
         ///  Makes a copy of a bitmap as a Cairo.ImageSurface. No need to unlock the bitmap later.
         ///  I don't know why, but this seems to have caused segfaults, so don't use it I guess...
         /// </summary>
+        /*
         public static Cairo.Surface CopyBitmap(System.Drawing.Bitmap bitmap)
         {
-            throw new Exception("This function caused segfaults, don't use it...");
             byte[] data;
             using (Cairo.ImageSurface surface = new BitmapSurface(bitmap))
             {
@@ -24,6 +24,7 @@ namespace LynnaLab
                 return new Cairo.ImageSurface(data, surface.Format, surface.Width, surface.Height, surface.Stride);
             }
         }
+        */
 
 
         public static Cairo.Color ConvertColor(System.Drawing.Color color)

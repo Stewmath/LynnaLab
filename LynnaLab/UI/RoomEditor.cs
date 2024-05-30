@@ -66,7 +66,7 @@ namespace LynnaLab
                 if (TilesetViewer == null)
                     return;
                 int x, y;
-                args.Event.Window.GetPointer(out x, out y, out gdkState);
+                args.Event.Window.GetDevicePosition(args.Event.Device, out x, out y, out gdkState);
                 UpdateMouse(x, y);
                 OnClicked(mouseX, mouseY, args.Event, args.Event.Button);
             };
@@ -83,7 +83,7 @@ namespace LynnaLab
                 if (TilesetViewer == null)
                     return;
                 int x, y;
-                args.Event.Window.GetPointer(out x, out y, out gdkState);
+                args.Event.Window.GetDevicePosition(args.Event.Device, out x, out y, out gdkState);
                 UpdateMouse(x, y);
                 if (gdkState.HasFlag(Gdk.ModifierType.Button1Mask))
                     OnDragged(mouseX, mouseY, args.Event);
