@@ -8,7 +8,7 @@ namespace LynnaLab
     /// Provides an interface for editing palettes. Unfortunately this doesn't do very much about
     /// redundant data; the user will need to deal with that themselves, perhaps by de-duplicating
     /// the data in a text editor.
-    public class PaletteEditor : Gtk.VBox
+    public class PaletteEditor : Gtk.Box
     {
         // Variables
 
@@ -17,7 +17,7 @@ namespace LynnaLab
 
         // Constuctors
 
-        public PaletteEditor()
+        public PaletteEditor() : base(Gtk.Orientation.Vertical, 0)
         {
         }
 
@@ -75,7 +75,7 @@ namespace LynnaLab
 
                 for (int i = 0; i < data.NumPalettes; i++)
                 {
-                    Gtk.Box box = new Gtk.VBox();
+                    Gtk.Box box = new Gtk.Box(Gtk.Orientation.Vertical, 0);
 
                     for (int j = 0; j < 4; j++)
                     {

@@ -385,7 +385,7 @@ namespace LynnaLab
 
                 Gtk.Box tmpBox;
 
-                Gtk.VBox vbox = new VBox(false, 2);
+                Gtk.Box vbox = new Box(Gtk.Orientation.Vertical, 2);
                 vbox.Spacing = 10;
 
                 // Top row: 2 images of the tile, one for selecting, one to show
@@ -405,7 +405,7 @@ namespace LynnaLab
                 };
 
                 Alignment hAlign = new Alignment(0.5f, 0, 0, 0);
-                Gtk.HBox hbox = new HBox(false, 2);
+                Gtk.Box hbox = new Gtk.Box(Gtk.Orientation.Horizontal, 2);
                 hbox.Add(subTileViewer);
                 hbox.Add(subTileCollisionEditor);
                 hAlign.Add(hbox);
@@ -424,7 +424,7 @@ namespace LynnaLab
 
                 Gtk.Label collisionLabel = new Gtk.Label("Collisions");
 
-                tmpBox = new Gtk.HBox(false, 2);
+                tmpBox = new Gtk.Box(Gtk.Orientation.Horizontal, 2);
                 tmpBox.Add(collisionLabel);
                 tmpBox.Add(collisionSpinButton);
                 vbox.Add(tmpBox);

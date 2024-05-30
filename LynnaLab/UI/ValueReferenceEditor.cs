@@ -44,7 +44,7 @@ namespace LynnaLab
             widgetPositions = new Tuple<int, int>[maxBounds.Count];
             widgetLists = new List<IList<Gtk.Widget>>();
 
-            Gtk.Box hbox = new Gtk.HBox();
+            Gtk.Box hbox = new Gtk.Box(Gtk.Orientation.Horizontal, 0);
             hbox.Spacing = 6;
 
             Func<Gtk.Grid> newGrid = () =>

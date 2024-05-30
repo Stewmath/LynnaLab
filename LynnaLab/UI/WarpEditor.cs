@@ -159,7 +159,7 @@ namespace LynnaLab
             int index = GetWarpIndex(warp);
             warpSourceBox.SelectedIndex = index;
 
-            Gtk.HBox hbox = new Gtk.HBox();
+            Gtk.Box hbox = new Gtk.Box(Gtk.Orientation.Horizontal, 0);
 
             if (warp.WarpSourceType == WarpSourceType.Pointed)
                 warpSourceTypeLabel.Text = "<b>Type</b>: Position Warp";

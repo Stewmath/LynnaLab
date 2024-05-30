@@ -9,7 +9,7 @@ namespace LynnaLab
     {
         Documentation documentation;
 
-        Gtk.VBox VBox = new Gtk.VBox();
+        Gtk.Box VBox = new Gtk.Box(Gtk.Orientation.Vertical, 0);
 
         public DocumentationDialog(Documentation _doc)
         {

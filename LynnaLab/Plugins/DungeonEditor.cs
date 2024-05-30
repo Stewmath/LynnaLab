@@ -51,13 +51,13 @@ namespace Plugins
 
             Box tmpBox, tmpBox2;
             Alignment tmpAlign;
-            Box vbox = new Gtk.VBox();
+            Box vbox = new Gtk.Box(Gtk.Orientation.Vertical, 0);
             vbox.Spacing = 3;
-            Box hbox = new Gtk.HBox();
+            Box hbox = new Gtk.Box(Gtk.Orientation.Horizontal, 0);
             hbox.Spacing = 3;
 
-            dungeonVreContainer = new Gtk.VBox();
-            roomVreContainer = new Gtk.VBox();
+            dungeonVreContainer = new Gtk.Box(Gtk.Orientation.Vertical, 0);
+            roomVreContainer = new Gtk.Box(Gtk.Orientation.Vertical, 0);
             dungeonVre = null;
             roomVre = null;
 
@@ -72,7 +72,7 @@ namespace Plugins
 
             frame.Add(vbox);
 
-            tmpBox = new Gtk.HBox();
+            tmpBox = new Gtk.Box(Gtk.Orientation.Horizontal, 0);
             tmpBox.Add(new Gtk.Label("Dungeon "));
             tmpBox.Add(dungeonSpinButton);
             tmpBox.Add(new Gtk.Label("Floor "));
@@ -85,7 +85,7 @@ namespace Plugins
 
             // Leftmost column
 
-            tmpBox = new VBox();
+            tmpBox = new Gtk.Box(Gtk.Orientation.Vertical, 0);
             tmpBox.Add(dungeonVreContainer);
 
             var addFloorAboveButton = new Button("Add Floor Above");
@@ -157,7 +157,7 @@ namespace Plugins
             tmpAlign = new Alignment(0, 0, 0, 0);
             tmpAlign.Add(roomVreContainer);
 
-            tmpBox2 = new HBox();
+            tmpBox2 = new Gtk.Box(Gtk.Orientation.Horizontal, 0);
             tmpBox2.Add(new Gtk.Label("Room "));
             roomSpinButton.ValueChanged += (a, b) =>
             {
@@ -166,7 +166,7 @@ namespace Plugins
             };
             tmpBox2.Add(roomSpinButton);
 
-            tmpBox = new VBox();
+            tmpBox = new Gtk.Box(Gtk.Orientation.Vertical, 0);
             tmpBox.Add(tmpBox2);
             tmpBox.Add(tmpAlign);
 

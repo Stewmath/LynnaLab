@@ -6,14 +6,14 @@ using System.Collections.Generic;
 /// a "priority" number. Higher numbers are always displayed (lower numbers can't displace them).
 namespace LynnaLab
 {
-    public class PriorityStatusbar : Gtk.HBox
+    public class PriorityStatusbar : Gtk.Box
     {
 
         Gtk.Statusbar child = new Gtk.Statusbar();
         Dictionary<uint, List<string>> messages = new Dictionary<uint, List<string>>();
 
 
-        public PriorityStatusbar()
+        public PriorityStatusbar() : base(Gtk.Orientation.Horizontal, 0)
         {
             Add(child);
         }

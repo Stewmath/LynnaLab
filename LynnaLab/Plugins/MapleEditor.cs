@@ -94,7 +94,7 @@ namespace Plugins
             else
                 comboBox.Active = 0;
 
-            Gtk.VBox vbox = new Gtk.VBox();
+            Gtk.Box vbox = new Gtk.Box(Gtk.Orientation.Vertical, 0);
             vbox.Add(comboBox);
             vbox.Add(minimapContainer);
 

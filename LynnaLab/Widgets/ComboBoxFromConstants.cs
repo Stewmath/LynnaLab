@@ -82,14 +82,14 @@ namespace LynnaLab
         {
             this.Name = "LynnaLab.ComboBoxFromConstants";
 
-            Gtk.Box box2 = new Gtk.HBox();
+            Gtk.Box box2 = new Gtk.Box(Gtk.Orientation.Horizontal, 0);
             box2.Spacing = 6;
 
             // Container child LynnaLab.ComboBoxFromConstants.Gtk.Container+ContainerChild
             if (vertical)
-                this.box1 = new Gtk.VBox();
+                this.box1 = new Gtk.Box(Gtk.Orientation.Vertical, 0);
             else
-                this.box1 = new Gtk.HBox();
+                this.box1 = new Gtk.Box(Gtk.Orientation.Horizontal, 0);
             // Container child box1.Gtk.Box+BoxChild
             this.spinButton = new LynnaLab.SpinButtonHexadecimal();
             this.spinButton.CanFocus = true;

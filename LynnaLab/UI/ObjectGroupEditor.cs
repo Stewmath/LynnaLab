@@ -213,7 +213,7 @@ namespace LynnaLab
             {
                 var objectBox = new ObjectBox(group);
 
-                Gtk.Box box = new Gtk.HBox();
+                Gtk.Box box = new Gtk.Box(Gtk.Orientation.Horizontal, 0);
 
                 objectBox.AddTileSelectedHandler(delegate (object sender, int index)
                 {
