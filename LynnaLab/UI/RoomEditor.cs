@@ -103,6 +103,8 @@ namespace LynnaLab
         }
         public RoomLayout RoomLayout {
             get {
+                if (room == null)
+                    return null;
                 if (room.HasSeasons)
                     return room.GetLayout(season);
                 else
