@@ -16,29 +16,39 @@ namespace LynnaLib
 
 
         // Map properties
-        public override int MainGroup {
-            get {
+        public override int MainGroup
+        {
+            get
+            {
                 return group;
             }
         }
 
-        public override int MapWidth {
-            get {
+        public override int MapWidth
+        {
+            get
+            {
                 return 16;
             }
         }
-        public override int MapHeight {
-            get {
+        public override int MapHeight
+        {
+            get
+            {
                 return 16;
             }
         }
-        public override int RoomWidth {
-            get {
+        public override int RoomWidth
+        {
+            get
+            {
                 return GetRoom(0, 0).Width;
             }
         }
-        public override int RoomHeight {
-            get {
+        public override int RoomHeight
+        {
+            get
+            {
                 return GetRoom(0, 0).Height;
             }
         }
@@ -47,19 +57,22 @@ namespace LynnaLib
 
         // Map methods
 
-        public override Room GetRoom(int x, int y, int floor=0) {
-            return Project.GetIndexedDataType<Room>(group*0x100+x+y*16);
+        public override Room GetRoom(int x, int y, int floor = 0)
+        {
+            return Project.GetIndexedDataType<Room>(group * 0x100 + x + y * 16);
         }
-        public override bool GetRoomPosition(Room room, out int x, out int y, out int floor) {
-            if (room.Index/0x100 != group) {
+        public override bool GetRoomPosition(Room room, out int x, out int y, out int floor)
+        {
+            if (room.Index / 0x100 != group)
+            {
                 // Not in this group
                 x = -1;
                 y = -1;
                 floor = -1;
                 return false;
             }
-            x = room.Index%16;
-            y = (room.Index%0x100)/16;
+            x = room.Index % 16;
+            y = (room.Index % 0x100) / 16;
             floor = 0;
             return true;
         }

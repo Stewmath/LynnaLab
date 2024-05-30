@@ -12,7 +12,8 @@ namespace LynnaLib
         public event EventHandler<EventArgs> ModifiedEvent;
 
 
-        public PaletteHeaderData FirstPaletteHeader {
+        public PaletteHeaderData FirstPaletteHeader
+        {
             get { return firstPaletteHeader; }
         }
 
@@ -20,17 +21,20 @@ namespace LynnaLib
         public string LabelName { get; private set; }
 
         /// Name of the constant alias (ie. PALH_40)
-        public string ConstantAliasName {
-            get {
+        public string ConstantAliasName
+        {
+            get
+            {
                 return Project.PaletteHeaderMapping.ByteToString(Index);
             }
         }
 
         PaletteHeaderGroup(Project project, int index) : base(project, index)
         {
-            try {
+            try
+            {
                 FileParser palettePointerFile = project.GetFileWithLabel("paletteHeaderTable");
-                Data headerPointerData = palettePointerFile.GetData("paletteHeaderTable", index*2);
+                Data headerPointerData = palettePointerFile.GetData("paletteHeaderTable", index * 2);
                 LabelName = headerPointerData.GetValue(0);
                 FileParser paletteHeaderFile = project.GetFileWithLabel(LabelName);
                 Data headerData = paletteHeaderFile.GetData(headerPointerData.GetValue(0));
@@ -39,30 +43,37 @@ namespace LynnaLib
                     throw new InvalidPaletteHeaderGroupException("Expected palette header group " + index.ToString("X") + " to start with palette header data");
                 firstPaletteHeader = (PaletteHeaderData)headerData;
             }
-            catch (InvalidLookupException e) {
+            catch (InvalidLookupException e)
+            {
                 throw new InvalidPaletteHeaderGroupException(e.Message);
             }
             InstallEventHandlers();
         }
 
         // TODO: error handling
-        public Color[][] GetObjPalettes() {
+        public Color[][] GetObjPalettes()
+        {
             Color[][] ret = new Color[8][];
 
-            Foreach((palette) => {
+            Foreach((palette) =>
+            {
                 Color[][] palettes = palette.GetPalettes();
-                if (palette.PaletteType == PaletteType.Sprite) {
-                    for (int i=0; i<palette.NumPalettes; i++) {
-                        ret[i+palette.FirstPalette] = palettes[i];
+                if (palette.PaletteType == PaletteType.Sprite)
+                {
+                    for (int i = 0; i < palette.NumPalettes; i++)
+                    {
+                        ret[i + palette.FirstPalette] = palettes[i];
                     }
                 }
             });
             return ret;
         }
 
-        public void Foreach(Action<PaletteHeaderData> action) {
+        public void Foreach(Action<PaletteHeaderData> action)
+        {
             PaletteHeaderData palette = firstPaletteHeader;
-            while (true) {
+            while (true)
+            {
                 action(palette);
                 if (!palette.ShouldHaveNext())
                     break;
@@ -71,9 +82,12 @@ namespace LynnaLib
         }
 
 
-        void InstallEventHandlers() {
-            Foreach((palette) => {
-                palette.PaletteDataModifiedEvent += (sender, args) => {
+        void InstallEventHandlers()
+        {
+            Foreach((palette) =>
+            {
+                palette.PaletteDataModifiedEvent += (sender, args) =>
+                {
                     ModifiedEvent?.Invoke(this, null);
                 };
             });

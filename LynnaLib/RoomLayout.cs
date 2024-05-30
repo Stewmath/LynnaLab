@@ -8,7 +8,8 @@ namespace LynnaLib
 {
     /// Represents a possible tileset/layout combination of a room. Currently, the only reason this
     /// is distinct from the "Room" class is to handle different seasons.
-    public class RoomLayout {
+    public class RoomLayout
+    {
         private static readonly log4net.ILog log = LogHelper.GetLogger();
 
         // Actual width and height of room (note that width can differ from Stride, below)
@@ -24,7 +25,8 @@ namespace LynnaLib
         public event LayoutModifiedHandler LayoutModifiedEvent;
 
 
-        internal RoomLayout(Room room, int season) {
+        internal RoomLayout(Room room, int season)
+        {
             Room = room;
             Season = season;
             UpdateTileset();
@@ -50,7 +52,8 @@ namespace LynnaLib
         }
         public Tileset Tileset
         {
-            get {
+            get
+            {
                 return Room.GetTileset(Season);
             }
         }
@@ -58,20 +61,24 @@ namespace LynnaLib
 
         /// # of bytes per row (including unused bytes; this means it has a value of 16 for large
         /// rooms, which is 1 higher than the width, which is 15).
-        int Stride {
+        int Stride
+        {
             get { return width == 10 ? 10 : 16; }
         }
 
-        public Bitmap GetImage() {
+        public Bitmap GetImage()
+        {
             if (cachedImage != null)
                 return cachedImage;
 
-            cachedImage = new Bitmap(width*16, height*16);
+            cachedImage = new Bitmap(width * 16, height * 16);
             Graphics g = Graphics.FromImage(cachedImage);
 
-            for (int x=0; x<width; x++) {
-                for (int y=0; y<height; y++) {
-                    g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x,y)), x*16, y*16);
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
                 }
             }
 
@@ -80,22 +87,28 @@ namespace LynnaLib
             return cachedImage;
         }
 
-        public int GetTile(int x, int y) {
-            tileDataFile.Position = y*Stride+x;
+        public int GetTile(int x, int y)
+        {
+            tileDataFile.Position = y * Stride + x;
             return tileDataFile.ReadByte();
         }
-        public void SetTile(int x, int y, int value) {
-            if (GetTile(x,y) != value) {
-                tileDataFile.Position = y*Stride+x;
+        public void SetTile(int x, int y, int value)
+        {
+            if (GetTile(x, y) != value)
+            {
+                tileDataFile.Position = y * Stride + x;
                 tileDataFile.WriteByte((byte)value);
                 // Modifying the data will trigger the callback to the TileDataModified function
             }
         }
 
 
-        internal void UpdateTileset() {
-            if (loadedTileset != Tileset) {
-                if (loadedTileset != null) {
+        internal void UpdateTileset()
+        {
+            if (loadedTileset != Tileset)
+            {
+                if (loadedTileset != null)
+                {
                     loadedTileset.TileModifiedEvent -= ModifiedTilesetCallback;
                     loadedTileset.LayoutGroupModifiedEvent -= ModifiedLayoutGroupCallback;
                 }
@@ -114,41 +127,50 @@ namespace LynnaLib
 
         // Private methods
 
-        void UpdateRoomData() {
-            if (tileDataFile != null) {
+        void UpdateRoomData()
+        {
+            if (tileDataFile != null)
+            {
                 tileDataFile.RemoveModifiedEventHandler(TileDataModified);
                 tileDataFile = null;
             }
             // Get the tileDataFile
             int layoutGroup = Tileset.LayoutGroup;
-            string label = "room" + ((layoutGroup<<8)+(Room.Index&0xff)).ToString("X4").ToLower();
+            string label = "room" + ((layoutGroup << 8) + (Room.Index & 0xff)).ToString("X4").ToLower();
             FileParser parserFile = Project.GetFileWithLabel(label);
             Data data = parserFile.GetData(label);
-            if (data.CommandLowerCase != "m_roomlayoutdata") {
+            if (data.CommandLowerCase != "m_roomlayoutdata")
+            {
                 throw new AssemblyErrorException("Expected label \"" + label + "\" to be followed by the m_RoomLayoutData macro.");
             }
             string roomString = data.GetValue(0) + ".bin";
-            try {
+            try
+            {
                 tileDataFile = Project.GetBinaryFile(
                         "rooms/" + Project.GameString + "/small/" + roomString);
             }
-            catch (FileNotFoundException) {
-                try {
+            catch (FileNotFoundException)
+            {
+                try
+                {
                     tileDataFile = Project.GetBinaryFile(
                             "rooms/" + Project.GameString + "/large/" + roomString);
                 }
-                catch (FileNotFoundException) {
+                catch (FileNotFoundException)
+                {
                     throw new AssemblyErrorException("Couldn't find \"" + roomString + "\" in \"rooms/small\" or \"rooms/large\".");
                 }
             }
 
             tileDataFile.AddModifiedEventHandler(TileDataModified);
 
-            if (tileDataFile.Length == 80) { // Small map
+            if (tileDataFile.Length == 80)
+            { // Small map
                 width = 10;
                 height = 8;
             }
-            else if (tileDataFile.Length == 176) { // Large map
+            else if (tileDataFile.Length == 176)
+            { // Large map
                 width = 0xf;
                 height = 0xb;
             }
@@ -157,16 +179,19 @@ namespace LynnaLib
         }
 
         // Room layout modified
-        void TileDataModified(object sender, MemoryFileStream.ModifiedEventArgs args) {
-            if (cachedImage != null) {
+        void TileDataModified(object sender, MemoryFileStream.ModifiedEventArgs args)
+        {
+            if (cachedImage != null)
+            {
                 Graphics g = Graphics.FromImage(cachedImage);
 
-                for (long i=args.modifiedRangeStart; i<args.modifiedRangeEnd; i++) {
+                for (long i = args.modifiedRangeStart; i < args.modifiedRangeEnd; i++)
+                {
                     int x = (int)(i % Stride);
                     int y = (int)(i / Stride);
                     if (x >= Width)
                         continue;
-                    g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x, y)), x*16, y*16);
+                    g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
                 }
                 g.Dispose();
             }
@@ -175,17 +200,21 @@ namespace LynnaLib
         }
 
         // Tileset data modified
-        void ModifiedTilesetCallback(object sender, int tile) {
+        void ModifiedTilesetCallback(object sender, int tile)
+        {
             Graphics g = null;
             if (cachedImage != null)
                 g = Graphics.FromImage(cachedImage);
 
             bool changed = false;
-            for (int x=0; x<Width; x++) {
-                for (int y=0; y<Height; y++) {
-                    if (GetTile(x, y) == tile) {
+            for (int x = 0; x < Width; x++)
+            {
+                for (int y = 0; y < Height; y++)
+                {
+                    if (GetTile(x, y) == tile)
+                    {
                         if (cachedImage != null)
-                            g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x,y)), x*16, y*16);
+                            g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
                         changed = true;
                     }
                 }
@@ -198,7 +227,8 @@ namespace LynnaLib
                 LayoutModifiedEvent();
         }
 
-        void ModifiedLayoutGroupCallback() {
+        void ModifiedLayoutGroupCallback()
+        {
             UpdateRoomData();
             cachedImage = null;
             if (LayoutModifiedEvent != null)

@@ -23,18 +23,22 @@ namespace LynnaLab
         string[] keyText;
 
         // Index of the entry in the combobox
-        public int Active {
+        public int Active
+        {
             get { return combobox1.Active; }
-            set {
+            set
+            {
                 combobox1.Active = value;
                 if (mapping != null && Active != -1)
                     spinButton.Value = mapping.GetIndexByte(combobox1.Active);
             }
         }
         // Byte value of the entry in the combobox
-        public int ActiveValue {
+        public int ActiveValue
+        {
             get { return spinButton.ValueAsInt; }
-            set {
+            set
+            {
                 if (mapping != null && mapping.HasValue(value))
                     combobox1.Active = mapping.IndexOf(value);
                 spinButton.Value = value;
@@ -42,32 +46,39 @@ namespace LynnaLab
         }
         // String value of the entry in the combobox (formerly "ActiveText" in
         // gtk2)
-        public string ActiveId {
-            get {
+        public string ActiveId
+        {
+            get
+            {
                 if (combobox1.Active == -1)
                     return "";
                 return keyText[combobox1.Active];
             }
-            set {
-                if (mapping != null) {
+            set
+            {
+                if (mapping != null)
+                {
                     Active = mapping.IndexOf(value);
                     if (Active != -1)
                         spinButton.Value = mapping.GetIndexByte(combobox1.Active);
                 }
             }
         }
-        public SpinButtonHexadecimal SpinButton {
+        public SpinButtonHexadecimal SpinButton
+        {
             get { return spinButton; }
         }
-        public Documentation DefaultDocumentation {
-            get {
+        public Documentation DefaultDocumentation
+        {
+            get
+            {
                 return mapping.OverallDocumentation;
             }
         }
 
 
         // TODO: pass in a label which it will update with the name from the combobox?
-        public ComboBoxFromConstants(bool showHelp=true, bool vertical=false, bool showSpin=true)
+        public ComboBoxFromConstants(bool showHelp = true, bool vertical = false, bool showSpin = true)
         {
             this.Name = "LynnaLab.ComboBoxFromConstants";
 
@@ -89,9 +100,10 @@ namespace LynnaLab
             this.spinButton.ClimbRate = 1D;
             this.spinButton.Digits = 2;
             this.spinButton.Numeric = true;
-            if (showSpin) {
+            if (showSpin)
+            {
                 box2.Add(spinButton);
-                box2.SetChildPacking(spinButton, expand:false, fill:false, padding:0, pack_type:Gtk.PackType.Start);
+                box2.SetChildPacking(spinButton, expand: false, fill: false, padding: 0, pack_type: Gtk.PackType.Start);
                 box1.Add(box2);
             }
 
@@ -104,12 +116,14 @@ namespace LynnaLab
             this.spinButton.ValueChanged += new System.EventHandler(this.OnSpinButtonValueChanged);
             this.combobox1.Changed += new System.EventHandler(this.OnCombobox1Changed);
 
-            if (showHelp) {
+            if (showHelp)
+            {
                 // When clicking the "help" button, create a popup with documentation for
                 // possible values. (It checks for a "@values" field in the documentation.)
                 Gtk.Button helpButton = new Gtk.Button("?");
                 helpButton.CanFocus = false;
-                helpButton.Clicked += delegate(object sender, EventArgs e) {
+                helpButton.Clicked += delegate (object sender, EventArgs e)
+                {
                     if (DefaultDocumentation == null)
                         return;
 
@@ -126,12 +140,14 @@ namespace LynnaLab
             this.Add(frame);
         }
 
-        public void SetConstantsMapping(ConstantsMapping mapping) {
+        public void SetConstantsMapping(ConstantsMapping mapping)
+        {
             this.mapping = mapping;
             keyText = new string[mapping.GetAllStrings().Count];
 
-            int i=0;
-            foreach (string key in mapping.GetAllStrings()) {
+            int i = 0;
+            foreach (string key in mapping.GetAllStrings())
+            {
                 string text = mapping.RemovePrefix(key);
                 int value = mapping.StringToByte(key);
                 combobox1.AppendText(text);

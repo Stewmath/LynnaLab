@@ -8,7 +8,8 @@ namespace LynnaLib
 {
     /// Represents the 4 bytes defining a chest. There should only be one of these per room.
     /// TODO: Forbid chests from having Y/X value "$ff"?
-    public class Chest {
+    public class Chest
+    {
         Data dataStart;
         WeakEventWrapper<ValueReferenceGroup> treasureModifiedEventWrapper
             = new WeakEventWrapper<ValueReferenceGroup>();
@@ -25,7 +26,8 @@ namespace LynnaLib
         public event EventHandler<ValueModifiedEventArgs> TreasureModifiedEvent;
 
 
-        internal Chest(Data dataStart) {
+        internal Chest(Data dataStart)
+        {
             this.dataStart = dataStart;
             GenerateValueReferenceGroup();
 
@@ -39,7 +41,8 @@ namespace LynnaLib
 
             // When we create a new treasure subid, the treasure name used in the chest data may not
             // be updated, so make sure to update it at the last second.
-            dataStart.ResolveEvent += (sender, args) => {
+            dataStart.ResolveEvent += (sender, args) =>
+            {
                 if (dataStart.Modified)
                     UpdateTreasureName();
             };
@@ -49,46 +52,61 @@ namespace LynnaLib
         // Properties
 
         public ValueReferenceGroup ValueReferenceGroup { get; private set; }
-        public int TreasureID {
-            get {
+        public int TreasureID
+        {
+            get
+            {
                 return ValueReferenceGroup.GetIntValue("ID");
             }
-            set {
+            set
+            {
                 ValueReferenceGroup.SetValue("ID", value);
             }
         }
-        public int TreasureSubID {
-            get {
+        public int TreasureSubID
+        {
+            get
+            {
                 return ValueReferenceGroup.GetIntValue("SubID");
             }
-            set {
+            set
+            {
                 ValueReferenceGroup.SetValue("SubID", value);
             }
         }
-        public int TreasureIndex {
-            get {
+        public int TreasureIndex
+        {
+            get
+            {
                 return TreasureID * 256 + TreasureSubID;
             }
-            set {
+            set
+            {
                 ValueReferenceGroup.BeginAtomicOperation();
                 TreasureID = value >> 8;
                 TreasureSubID = value & 0xff;
                 ValueReferenceGroup.EndAtomicOperation();
             }
         }
-        public TreasureGroup TreasureGroup {
+        public TreasureGroup TreasureGroup
+        {
             get { return Project.GetIndexedDataType<TreasureGroup>(TreasureID); }
         }
-        public TreasureObject Treasure {
-            get {
-                try {
+        public TreasureObject Treasure
+        {
+            get
+            {
+                try
+                {
                     return TreasureGroup.GetTreasureObject(TreasureSubID);
                 }
-                catch (InvalidTreasureException) {
+                catch (InvalidTreasureException)
+                {
                     return null;
                 }
             }
-            set {
+            set
+            {
                 TreasureIndex = (value.ID << 8) | value.SubID;
             }
         }
@@ -98,14 +116,16 @@ namespace LynnaLib
 
         // Methods
 
-        public void Delete() {
+        public void Delete()
+        {
             dataStart.Detach();
             dataStart = null;
             DeletedEvent?.Invoke(this, null);
         }
 
 
-        void GenerateValueReferenceGroup() {
+        void GenerateValueReferenceGroup()
+        {
             var v1 = new DataValueReference(dataStart,
                     name: "Y",
                     index: 0,
@@ -126,7 +146,8 @@ namespace LynnaLib
             var v4 = new AbstractIntValueReference(Project,
                     name: "ID",
                     getter: () => { return Project.EvalToInt(dataStart.GetValue(2)) >> 8; },
-                    setter: (v) => {
+                    setter: (v) =>
+                    {
                         UpdateTreasureName(v, -1);
                     },
                     maxValue: 255,
@@ -134,7 +155,8 @@ namespace LynnaLib
             var v5 = new AbstractIntValueReference(Project,
                     name: "SubID",
                     getter: () => { return Project.EvalToInt(dataStart.GetValue(2)) & 0xff; },
-                    setter: (v) => {
+                    setter: (v) =>
+                    {
                         UpdateTreasureName(-1, v);
                     },
                     maxValue: 255);
@@ -146,7 +168,8 @@ namespace LynnaLib
             ValueReferenceGroup = new ValueReferenceGroup(list);
         }
 
-        void UpdateTreasureName(int id = -1, int subid = -1) {
+        void UpdateTreasureName(int id = -1, int subid = -1)
+        {
             if (id == -1)
                 id = TreasureID;
             if (subid == -1)
@@ -161,7 +184,8 @@ namespace LynnaLib
             dataStart.SetValue(2, val);
         }
 
-        void UpdateTreasureEvents() {
+        void UpdateTreasureEvents()
+        {
             treasureModifiedEventWrapper.ReplaceEventSource(Treasure?.ValueReferenceGroup);
         }
     }

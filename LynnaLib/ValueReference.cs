@@ -3,20 +3,23 @@ using System.Collections.Generic;
 
 namespace LynnaLib
 {
-    public enum ValueReferenceType {
+    public enum ValueReferenceType
+    {
         String = 0,
         Int,
         Bool
     }
 
     // This is a stub for now
-    public class ValueModifiedEventArgs : EventArgs {
+    public class ValueModifiedEventArgs : EventArgs
+    {
     }
 
 
     // This class provides a way of accessing Data values of various different
     // formats.
-    public abstract class ValueReference {
+    public abstract class ValueReference
+    {
 
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -29,11 +32,14 @@ namespace LynnaLib
 
         // To be set by the subclasses
 
-        public Project Project {
+        public Project Project
+        {
             get { return _project; }
-            protected set {
+            protected set
+            {
                 _project = value;
-                if (_project != null && ConstantsMappingString != null) {
+                if (_project != null && ConstantsMappingString != null)
+                {
                     constantsMapping = (ConstantsMapping)typeof(Project).GetField(ConstantsMappingString)
                         .GetValue(Project);
                     Documentation = constantsMapping.OverallDocumentation;
@@ -53,7 +59,8 @@ namespace LynnaLib
         public string Tooltip { get; set; }
 
         public string ConstantsMappingString { get; private set; }
-        public ConstantsMapping ConstantsMapping {
+        public ConstantsMapping ConstantsMapping
+        {
             get { return constantsMapping; }
         }
 
@@ -67,14 +74,16 @@ namespace LynnaLib
         // Constructors
 
         // Standard constructor for most ValueReferenceTypes
-        public ValueReference(string name, ValueReferenceType type, bool editable, string constantsMappingString) {
+        public ValueReference(string name, ValueReferenceType type, bool editable, string constantsMappingString)
+        {
             ValueType = type;
             Name = name;
             Editable = editable;
             this.ConstantsMappingString = constantsMappingString;
         }
 
-        public ValueReference(ValueReference r) {
+        public ValueReference(ValueReference r)
+        {
             _project = r._project;
             MaxValue = r.MaxValue;
             MinValue = r.MinValue;
@@ -97,15 +106,18 @@ namespace LynnaLib
         public abstract void SetValue(int i);
 
         // TODO: Remove these functions in favor of just using the Modified event
-        public void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
+        public void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler)
+        {
             ModifiedEvent += handler;
         }
-        public void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler) {
+        public void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler)
+        {
             ModifiedEvent -= handler;
         }
 
         // Subclasses must call this to raise the event
-        protected void RaiseModifiedEvent(ValueModifiedEventArgs args) {
+        protected void RaiseModifiedEvent(ValueModifiedEventArgs args)
+        {
             ModifiedEvent?.Invoke(this, args);
         }
 
@@ -117,7 +129,8 @@ namespace LynnaLib
         /// <summary>
         ///  Returns a field from documentation (ie. "@desc{An interaction}").
         /// </summary>
-        public string GetDocumentationField(string name) {
+        public string GetDocumentationField(string name)
+        {
             if (Documentation == null)
                 return null;
             return Documentation.GetField(name);

@@ -25,19 +25,22 @@ namespace LynnaLib
         public abstract int RoomHeight { get; }
         public abstract int Season { get; }
 
-        internal Map(Project p) {
+        internal Map(Project p)
+        {
             Project = p;
         }
 
-        public abstract Room GetRoom(int x, int y, int floor=0);
+        public abstract Room GetRoom(int x, int y, int floor = 0);
         public abstract bool GetRoomPosition(Room room, out int x, out int y, out int floor);
 
-        public bool GetRoomPosition(Room room, out int x, out int y) {
+        public bool GetRoomPosition(Room room, out int x, out int y)
+        {
             int f;
             return GetRoomPosition(room, out x, out y, out f);
         }
 
-        public RoomLayout GetRoomLayout(int x, int y, int floor=0) {
+        public RoomLayout GetRoomLayout(int x, int y, int floor = 0)
+        {
             return GetRoom(x, y, floor).GetLayout(Season);
         }
     }

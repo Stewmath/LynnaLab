@@ -3,9 +3,11 @@ using System.Collections.Generic;
 
 using Util;
 
-namespace LynnaLib {
-    public enum ObjectType {
-        Condition=0, // TODO: rename
+namespace LynnaLib
+{
+    public enum ObjectType
+    {
+        Condition = 0, // TODO: rename
         Interaction,
         Pointer,
         BeforeEvent,
@@ -27,7 +29,8 @@ namespace LynnaLib {
     /// parameters. For example, "obj_Interaction $01 $00" has only the ID ($01) and subID ($00)
     /// bytes set; but the parameters which would come after that (Y, X, and var03) are implicitly
     /// "0", and this value will be returned if one attempts to access them.
-    public class ObjectData : Data {
+    public class ObjectData : Data
+    {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         public static string[] ObjectCommands = {
@@ -61,38 +64,40 @@ namespace LynnaLib {
 
 
 
-        private static IList<ValueReference> GetObjectValueReferences(ObjectType type, Data data) {
+        private static IList<ValueReference> GetObjectValueReferences(ObjectType type, Data data)
+        {
             // Interaction, Part, SpecificEnemyA, and ItemDrop objects have a variable number of
             // parameters. In the constructor, the data is set to always have the maximum number of
             // parameters so that all of these ValueReferences are valid. The extra parameters are
             // removed when it is time to save.
-            switch (type) {
-            case ObjectType.Condition:
-                return new List<ValueReference> { // Condition
+            switch (type)
+            {
+                case ObjectType.Condition:
+                    return new List<ValueReference> { // Condition
                     new DataValueReference(data,"Condition",0,DataValueType.Byte),
                 };
-            case ObjectType.Interaction:
-                return new List<ValueReference> { // Interaction
+                case ObjectType.Interaction:
+                    return new List<ValueReference> { // Interaction
                     new DataValueReference(data,"ID",0,DataValueType.Byte,constantsMappingString:"InteractionMapping"),
                     new DataValueReference(data,"SubID",1,DataValueType.Byte),
                     new DataValueReference(data,"Y",2,DataValueType.Byte),
                     new DataValueReference(data,"X",3,DataValueType.Byte),
                     new DataValueReference(data,"Var03",4,DataValueType.Byte),
                 };
-            case ObjectType.Pointer:
-                return new List<ValueReference> { // Pointer
+                case ObjectType.Pointer:
+                    return new List<ValueReference> { // Pointer
                     new DataValueReference(data,"Pointer",0,DataValueType.String),
                 };
-            case ObjectType.BeforeEvent:
-                return new List<ValueReference> { // BeforeEvent
+                case ObjectType.BeforeEvent:
+                    return new List<ValueReference> { // BeforeEvent
                     new DataValueReference(data,"Pointer",0,DataValueType.String),
                 };
-            case ObjectType.AfterEvent:
-                return new List<ValueReference> { // AfterEvent
+                case ObjectType.AfterEvent:
+                    return new List<ValueReference> { // AfterEvent
                     new DataValueReference(data,"Pointer",0,DataValueType.String),
                 };
-            case ObjectType.RandomEnemy:
-                return new List<ValueReference> { // Random Enemy
+                case ObjectType.RandomEnemy:
+                    return new List<ValueReference> { // Random Enemy
                     new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
                     new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0,
                             tooltip: "Always respawn when you re-enter the room"),
@@ -103,8 +108,8 @@ namespace LynnaLib {
                     new DataValueReference(data,"ID",1,DataValueType.Byte,constantsMappingString:"EnemyMapping"),
                     new DataValueReference(data,"SubID",2,DataValueType.Byte),
                 };
-            case ObjectType.SpecificEnemyA:
-                return new List<ValueReference> { // Specific Enemy A
+                case ObjectType.SpecificEnemyA:
+                    return new List<ValueReference> { // Specific Enemy A
                     new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
                     new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0,
                             tooltip: "Always respawn when you re-enter the room"),
@@ -115,24 +120,24 @@ namespace LynnaLib {
                     new DataValueReference(data,"Y",3,DataValueType.Byte),
                     new DataValueReference(data,"X",4,DataValueType.Byte),
                 };
-            case ObjectType.SpecificEnemyB:
-                return new List<ValueReference> { // Specific Enemy B
+                case ObjectType.SpecificEnemyB:
+                    return new List<ValueReference> { // Specific Enemy B
                     new DataValueReference(data,"ID",0,DataValueType.Byte,constantsMappingString:"EnemyMapping"),
                     new DataValueReference(data,"SubID",1,DataValueType.Byte),
                     new DataValueReference(data,"Y",2,DataValueType.Byte),
                     new DataValueReference(data,"X",3,DataValueType.Byte),
                     new DataValueReference(data,"Var03",4,DataValueType.Byte),
                 };
-            case ObjectType.Part:
-                return new List<ValueReference> { // Part
+                case ObjectType.Part:
+                    return new List<ValueReference> { // Part
                     new DataValueReference(data,"ID",0,DataValueType.Byte,constantsMappingString:"PartMapping"),
                     new DataValueReference(data,"SubID",1,DataValueType.Byte),
                     new DataValueReference(data,"Y",2,DataValueType.Byte),
                     new DataValueReference(data,"X",3,DataValueType.Byte),
                     new DataValueReference(data,"Var03",4,DataValueType.Byte),
                 };
-            case ObjectType.ItemDrop:
-                return new List<ValueReference> { // Item Drop
+                case ObjectType.ItemDrop:
+                    return new List<ValueReference> { // Item Drop
                     new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
                     new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0,
                             tooltip: "Always respawn when you re-enter the room"),
@@ -140,15 +145,18 @@ namespace LynnaLib {
                     new DataValueReference(data,"Y",2,DataValueType.ByteBits,4,7),
                     new DataValueReference(data,"X",2,DataValueType.ByteBits,0,3),
                 };
-            case ObjectType.End:
-                return new List<ValueReference> { // InteracEnd
-                };
-            case ObjectType.EndPointer:
-                return new List<ValueReference> { // InteracEndPointer
-                };
-            case ObjectType.Garbage:
-                return new List<ValueReference> { // Garbage
-                };
+                case ObjectType.End:
+                    return new List<ValueReference>
+                    { // InteracEnd
+                    };
+                case ObjectType.EndPointer:
+                    return new List<ValueReference>
+                    { // InteracEndPointer
+                    };
+                case ObjectType.Garbage:
+                    return new List<ValueReference>
+                    { // Garbage
+                    };
             }
             return null;
         }
@@ -159,15 +167,17 @@ namespace LynnaLib {
 
 
         // Properties
-        public ValueReferenceGroup ValueReferenceGroup {
+        public ValueReferenceGroup ValueReferenceGroup
+        {
             get { return vrg; }
         }
 
-        
+
         // Constructors
 
         public ObjectData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int objType, ObjectData last)
-            : base(p, command, values, -1, parser, spacing) {
+            : base(p, command, values, -1, parser, spacing)
+        {
 
             this.objectType = (ObjectType)objType;
             InitializeValueReferenceGroup();
@@ -183,7 +193,8 @@ namespace LynnaLib {
         // Unlike above, this initialized based on the "ObjectType" enum instead of
         // "ObjectDefinitionType".
         public ObjectData(Project p, FileParser parser, ObjectType type)
-            : base(p, "", null, -1, parser, new string[]{"\t"}) {
+            : base(p, "", null, -1, parser, new string[] { "\t" })
+        {
             this.objectType = type;
 
             Command = ObjectCommands[(int)objectType];
@@ -201,33 +212,37 @@ namespace LynnaLib {
 
         // Copy constructor
         public ObjectData(ObjectData o)
-            : base(o.Project, "", null, -1, null, new string[]{"\t"})
+            : base(o.Project, "", null, -1, null, new string[] { "\t" })
         {
             this.Command = o.Command;
             this.objectType = o.objectType;
 
             base.SetNumValues(o.GetNumValues(), "$00");
-            for (int i=0; i<o.GetNumValues(); i++)
+            for (int i = 0; i < o.GetNumValues(); i++)
                 SetValue(i, o.GetValue(i));
 
             InitializeValueReferenceGroup();
         }
 
         // Common code for constructors
-        void InitializeValueReferenceGroup() {
+        void InitializeValueReferenceGroup()
+        {
             vrg = new ValueReferenceGroup(GetObjectValueReferences(objectType, this));
         }
 
-        public ObjectType GetObjectType() {
+        public ObjectType GetObjectType()
+        {
             return objectType;
         }
 
-        public bool IsPointerType() {
+        public bool IsPointerType()
+        {
             ObjectType type = GetObjectType();
             return type == ObjectType.Pointer || type == ObjectType.BeforeEvent || type == ObjectType.AfterEvent;
         }
 
-        public override string GetString() {
+        public override string GetString()
+        {
             // "ContractParameters" puts this into an invalid state, so we need to prevent callbacks
             base.LockModifiedEvents();
 
@@ -245,7 +260,8 @@ namespace LynnaLib {
         // Private methods
 
         // Returns true if this object reuses a byte from the last one
-        bool IsShortened() {
+        bool IsShortened()
+        {
             return ((GetObjectType() == ObjectType.SpecificEnemyA && base.GetNumValues() < 5) ||
                     (GetObjectType() == ObjectType.ItemDrop && base.GetNumValues() < 3));
         }
@@ -253,22 +269,27 @@ namespace LynnaLib {
         // For types which take a variable number of parameters, this sets the number of values to
         // the maximum, inserting placeholders where necessary. This is done as soon as the data is
         // loaded, and is only undone temporarily while saving.
-        void ExpandParameters(ObjectData last) {
+        void ExpandParameters(ObjectData last)
+        {
             // For types which can reuse the first type, get and remember that value.
-            if (IsShortened()) {
+            if (IsShortened())
+            {
                 if (last == null || (last.GetObjectType() != GetObjectType()))
                     this.ThrowException(new AssemblyErrorException("Malformatted object"));
                 base.SetSpacing(1, " ");
                 base.InsertValue(0, last.GetValue(0));
             }
-            else if (objectType == ObjectType.Interaction) {
+            else if (objectType == ObjectType.Interaction)
+            {
                 if (base.GetNumValues() < 5)
                     base.SetNumValues(5, "$00");
             }
-            else if (objectType == ObjectType.Part) {
+            else if (objectType == ObjectType.Part)
+            {
                 if (base.GetNumValues() != 3 && base.GetNumValues() != 5)
                     log.Warn("Part object has an unexpected number of parameters: " + base.GetString());
-                if (base.GetNumValues() < 5) {
+                if (base.GetNumValues() < 5)
+                {
                     int y = (base.GetIntValue(2) & 0xf0) + 8;
                     int x = ((base.GetIntValue(2) & 0x0f) << 4) + 8;
                     base.SetNumValues(5, "$00");
@@ -279,24 +300,30 @@ namespace LynnaLib {
         }
 
         // The opposite of ExpandParameters; called while saving.
-        void ContractParameters(ObjectData last) {
+        void ContractParameters(ObjectData last)
+        {
             // For types which can reuse the first type, get and remember that value.
-            if (GetObjectType() == ObjectType.SpecificEnemyA || GetObjectType() == ObjectType.ItemDrop) {
+            if (GetObjectType() == ObjectType.SpecificEnemyA || GetObjectType() == ObjectType.ItemDrop)
+            {
                 if (last != null && last.GetObjectType() == this.GetObjectType()
-                        && last.GetIntValue(0) == this.GetIntValue(0)) {
+                        && last.GetIntValue(0) == this.GetIntValue(0))
+                {
                     base.RemoveValue(0);
                     base.SetSpacing(1, "     ");
                 }
             }
-            else if (objectType == ObjectType.Interaction) {
-                if (base.GetIntValue(4) == 0) { // Check var03
+            else if (objectType == ObjectType.Interaction)
+            {
+                if (base.GetIntValue(4) == 0)
+                { // Check var03
                     if (base.GetIntValue(2) == 0 && base.GetIntValue(3) == 0) // Check Y, X
                         base.SetNumValues(2, "$00");
                     else
                         base.SetNumValues(4, "$00");
                 }
             }
-            else if (objectType == ObjectType.Part) {
+            else if (objectType == ObjectType.Part)
+            {
                 bool expanded = false;
 
                 if (base.GetIntValue(4) != 0) // Check var03
@@ -304,7 +331,8 @@ namespace LynnaLib {
                 else if ((base.GetIntValue(2) - 8) % 16 != 0 || (base.GetIntValue(3) - 8) % 16 != 0) // Check Y, X
                     expanded = true;
 
-                if (!expanded) {
+                if (!expanded)
+                {
                     int yx = (((base.GetIntValue(2) - 8) / 16) << 4) | ((base.GetIntValue(3) - 8) / 16);
                     base.SetNumValues(3, "$00");
                     base.SetValue(2, Wla.ToHex(yx, 2));
@@ -316,10 +344,12 @@ namespace LynnaLib {
         // this ObjectData and the last one, this returns null. This is necessary because, for
         // object data types which reuse values, they must not reuse a value from an ObjectData that
         // came before a label.
-        ObjectData GetLastObjectData() {
+        ObjectData GetLastObjectData()
+        {
             FileComponent last = Prev;
 
-            while (last != null) {
+            while (last != null)
+            {
                 if (last is Label)
                     return null;
                 if (last is Data)

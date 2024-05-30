@@ -11,13 +11,13 @@ namespace LynnaLab
 
         Gtk.VBox VBox = new Gtk.VBox();
 
-        public DocumentationDialog (Documentation _doc)
+        public DocumentationDialog(Documentation _doc)
         {
             ContentArea.PackStart(VBox, true, true, 0);
 
             documentation = _doc;
 
-            Gtk.Label nameLabel = new Gtk.Label("<b>"+documentation.Name+"</b>");
+            Gtk.Label nameLabel = new Gtk.Label("<b>" + documentation.Name + "</b>");
             nameLabel.Wrap = true;
             nameLabel.UseUnderline = false;
             nameLabel.UseMarkup = true;
@@ -40,18 +40,20 @@ namespace LynnaLab
 
 
             // Create SubID table
-            if (subidEntries.Count > 0) {
+            if (subidEntries.Count > 0)
+            {
                 Gtk.Label valuesLabel = new Gtk.Label("\nValues:");
                 valuesLabel.UseUnderline = false;
                 valuesLabel.Xalign = 0;
                 VBox.PackStart(valuesLabel, false, false, 0);
 
-                Gtk.Table subidTable = new Gtk.Table(2,(uint)subidEntries.Count*2,false);
+                Gtk.Table subidTable = new Gtk.Table(2, (uint)subidEntries.Count * 2, false);
 
-                uint subidX=0;
-                uint subidY=0;
+                uint subidX = 0;
+                uint subidY = 0;
 
-                foreach (string key in subidEntries) {
+                foreach (string key in subidEntries)
+                {
                     string value = documentation.GetField(key);
 
                     Gtk.Label l1 = new Gtk.Label(key);
@@ -67,14 +69,14 @@ namespace LynnaLab
                     l2.WidthChars = 50;
                     l2.MaxWidthChars = 50;
 
-                    subidTable.Attach(l1, subidX+0,subidX+1, subidY,subidY+1, Gtk.AttachOptions.Fill, Gtk.AttachOptions.Fill, 4, 0);
-                    subidTable.Attach(l2, subidX+2,subidX+3, subidY,subidY+1);
+                    subidTable.Attach(l1, subidX + 0, subidX + 1, subidY, subidY + 1, Gtk.AttachOptions.Fill, Gtk.AttachOptions.Fill, 4, 0);
+                    subidTable.Attach(l2, subidX + 2, subidX + 3, subidY, subidY + 1);
 
                     subidY++;
-                    subidTable.Attach(new Gtk.HSeparator(), subidX+0,subidX+3, subidY,subidY+1, Gtk.AttachOptions.Fill, 0, 0, 0);
+                    subidTable.Attach(new Gtk.HSeparator(), subidX + 0, subidX + 3, subidY, subidY + 1, Gtk.AttachOptions.Fill, 0, 0, 0);
                     subidY++;
                 }
-                subidTable.Attach(new Gtk.VSeparator(), subidX+1,subidX+2, 0,subidTable.NRows, 0, Gtk.AttachOptions.Fill, 4, 0);
+                subidTable.Attach(new Gtk.VSeparator(), subidX + 1, subidX + 2, 0, subidTable.NRows, 0, Gtk.AttachOptions.Fill, 4, 0);
 
                 Gtk.ScrolledWindow scrolledWindow = new Gtk.ScrolledWindow();
                 scrolledWindow.AddWithViewport(subidTable);
@@ -84,9 +86,9 @@ namespace LynnaLab
 
                 // Determine width/height to request on scrolledWindow
                 Gtk.Requisition subidTableRequest = subidTable.SizeRequest();
-                int width = Math.Min(subidTableRequest.Width+20, 700);
+                int width = Math.Min(subidTableRequest.Width + 20, 700);
                 width = Math.Max(width, 400);
-                int height = Math.Min(subidTableRequest.Height+5, 400);
+                int height = Math.Min(subidTableRequest.Height + 5, 400);
                 height = Math.Max(height, 200);
                 scrolledWindow.SetSizeRequest(width, height);
 
@@ -98,11 +100,13 @@ namespace LynnaLab
             ShowAll();
         }
 
-        protected override void OnResponse(Gtk.ResponseType response_id) {
+        protected override void OnResponse(Gtk.ResponseType response_id)
+        {
             this.Dispose();
         }
 
-        void AddGenericField(string field) {
+        void AddGenericField(string field)
+        {
             string value = documentation.GetField(field);
             if (value == null)
                 return;

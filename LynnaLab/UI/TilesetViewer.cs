@@ -10,8 +10,10 @@ namespace LynnaLab
     [System.ComponentModel.ToolboxItem(true)]
     public class TilesetViewer : TileGridViewer
     {
-        public Project Project {
-            get {
+        public Project Project
+        {
+            get
+            {
                 if (tileset == null)
                     return null;
                 return tileset.Project;
@@ -23,8 +25,10 @@ namespace LynnaLab
             get { return tileset; }
         }
 
-        protected override Bitmap Image {
-            get {
+        protected override Bitmap Image
+        {
+            get
+            {
                 if (Tileset == null)
                     return null;
                 return Tileset.GetFullCachedImage();
@@ -43,7 +47,8 @@ namespace LynnaLab
             SelectedIndex = 0;
         }
 
-        public void SetTileset(Tileset t) {
+        public void SetTileset(Tileset t)
+        {
             if (tileset != null)
                 tileset.TileModifiedEvent -= ModifiedTileCallback;
             t.TileModifiedEvent += ModifiedTileCallback;
@@ -58,7 +63,8 @@ namespace LynnaLab
             this.QueueDraw();
         }
 
-        void ModifiedTileCallback(object sender, int tile) {
+        void ModifiedTileCallback(object sender, int tile)
+        {
             QueueDraw();
         }
 

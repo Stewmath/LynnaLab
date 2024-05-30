@@ -15,7 +15,8 @@ namespace LynnaLib
 
 
         // Constructors
-        internal Warp(WarpGroup group, WarpSourceData data) {
+        internal Warp(WarpGroup group, WarpSourceData data)
+        {
             SourceGroup = group;
             SourceData = data;
 
@@ -32,132 +33,176 @@ namespace LynnaLib
 
         // Properties from warp source
 
-        public Project Project {
+        public Project Project
+        {
             get { return SourceData.Project; }
         }
-        public WarpSourceType WarpSourceType {
+        public WarpSourceType WarpSourceType
+        {
             get { return SourceData.WarpSourceType; }
         }
-        public ValueReferenceGroup ValueReferenceGroup {
+        public ValueReferenceGroup ValueReferenceGroup
+        {
             get { return vrg; }
         }
 
-        public bool TopLeft {
-            get {
+        public bool TopLeft
+        {
+            get
+            {
                 return vrg.GetIntValue("Top-Left") != 0;
             }
-            set {
+            set
+            {
                 vrg.SetValue("Top-Left", value ? 1 : 0);
             }
         }
-        public bool TopRight {
-            get {
+        public bool TopRight
+        {
+            get
+            {
                 return vrg.GetIntValue("Top-Right") != 0;
             }
-            set {
+            set
+            {
                 vrg.SetValue("Top-Right", value ? 1 : 0);
             }
         }
-        public bool BottomLeft {
-            get {
+        public bool BottomLeft
+        {
+            get
+            {
                 return vrg.GetIntValue("Bottom-Left") != 0;
             }
-            set {
+            set
+            {
                 vrg.SetValue("Bottom-Left", value ? 1 : 0);
             }
         }
-        public bool BottomRight {
-            get {
+        public bool BottomRight
+        {
+            get
+            {
                 return vrg.GetIntValue("Bottom-Right") != 0;
             }
-            set {
+            set
+            {
                 vrg.SetValue("Bottom-Right", value ? 1 : 0);
             }
         }
-        public int SourceTransition {
-            get {
+        public int SourceTransition
+        {
+            get
+            {
                 return vrg.GetIntValue("Source Transition");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Source Transition", value);
             }
         }
-        public int SourceX {
-            get {
+        public int SourceX
+        {
+            get
+            {
                 return vrg.GetIntValue("Source X");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Source X", value);
             }
         }
-        public int SourceY {
-            get {
+        public int SourceY
+        {
+            get
+            {
                 return vrg.GetIntValue("Source Y");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Source Y", value);
             }
         }
 
-        public Room SourceRoom {
-            get {
+        public Room SourceRoom
+        {
+            get
+            {
                 return SourceGroup.Room;
             }
         }
 
-        public bool HasEdgeWarp {
+        public bool HasEdgeWarp
+        {
             get { return (Opcode & 0x0f) != 0; }
         }
 
-        int Opcode {
+        int Opcode
+        {
             get { return SourceData.Opcode; }
         }
 
         // Propreties from warp destination
 
-        public int DestRoomIndex {
-            get {
+        public int DestRoomIndex
+        {
+            get
+            {
                 return vrg.GetIntValue("Dest Room");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Dest Room", value);
             }
         }
 
-        public Room DestRoom {
+        public Room DestRoom
+        {
             get { return Project.GetIndexedDataType<Room>(DestRoomIndex); }
             set { DestRoomIndex = value.Index; }
         }
 
-        public int DestY {
-            get {
+        public int DestY
+        {
+            get
+            {
                 return vrg.GetIntValue("Dest Y");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Dest Y", value);
             }
         }
-        public int DestX {
-            get {
+        public int DestX
+        {
+            get
+            {
                 return vrg.GetIntValue("Dest X");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Dest X", value);
             }
         }
-        public int DestParameter {
-            get {
+        public int DestParameter
+        {
+            get
+            {
                 return vrg.GetIntValue("Dest Parameter");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Dest Parameter", value);
             }
         }
-        public int DestTransition {
-            get {
+        public int DestTransition
+        {
+            get
+            {
                 return vrg.GetIntValue("Dest Transition");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Dest Transition", value);
             }
         }
@@ -178,15 +223,18 @@ namespace LynnaLib
         ValueReferenceGroup DestVrg { get { return DestData.ValueReferenceGroup; } }
 
 
-        public void Remove() {
+        public void Remove()
+        {
             SourceGroup.RemoveWarp(this);
         }
 
-        public void AddModifiedHandler(EventHandler<EventArgs> handler) {
+        public void AddModifiedHandler(EventHandler<EventArgs> handler)
+        {
             ModifiedEvent += handler;
         }
 
-        public void RemoveModifiedHandler(EventHandler<EventArgs> handler) {
+        public void RemoveModifiedHandler(EventHandler<EventArgs> handler)
+        {
             ModifiedEvent -= handler;
         }
 
@@ -194,7 +242,8 @@ namespace LynnaLib
         // ValueReferenceGroup for simpler editing based on a few named parameters.
         // All modifications to the underlying data should be done through the ValueReferenceGroup
         // when possible, so that its "value changed" event handlers are properly invoked.
-        void ConstructValueReferenceGroup() {
+        void ConstructValueReferenceGroup()
+        {
             var valueReferences = new List<ValueReference>();
 
             ValueReference vref;
@@ -202,12 +251,13 @@ namespace LynnaLib
             vref = new AbstractIntValueReference(Project,
                     name: "Opcode",
                     getter: () => SourceData.Opcode,
-                    setter: (value) => {},
+                    setter: (value) => { },
                     maxValue: 255);
             vref.Editable = false;
             valueReferences.Add(vref);
 
-            if (WarpSourceType == WarpSourceType.Standard) {
+            if (WarpSourceType == WarpSourceType.Standard)
+            {
                 vref = new AbstractBoolValueReference(Project,
                         name: "Top-Left",
                         getter: () => SourceData.TopLeft,
@@ -232,7 +282,8 @@ namespace LynnaLib
                         setter: (value) => SourceData.BottomRight = value);
                 valueReferences.Add(vref);
             }
-            else if (WarpSourceType == WarpSourceType.Pointed) {
+            else if (WarpSourceType == WarpSourceType.Pointed)
+            {
                 vref = new AbstractIntValueReference(Project,
                         name: "Source Y",
                         getter: () => SourceData.Y,
@@ -261,9 +312,12 @@ namespace LynnaLib
             vref = new AbstractIntValueReference(Project,
                     name: "Dest Room",
                     getter: () => (SourceData.DestGroupIndex << 8) | DestData.Map,
-                    setter: (value) => {
-                        if (DestRoomIndex != value) {
-                            if (SourceData.DestGroupIndex != value >> 8) { // Group changed
+                    setter: (value) =>
+                    {
+                        if (DestRoomIndex != value)
+                        {
+                            if (SourceData.DestGroupIndex != value >> 8)
+                            { // Group changed
                                 IsolateDestData(value >> 8);
                             }
                             else
@@ -271,14 +325,16 @@ namespace LynnaLib
                             DestData.Map = value & 0xff;
                         }
                     },
-                    maxValue: Project.NumRooms-1); // TODO: seasons has some "gap" rooms
+                    maxValue: Project.NumRooms - 1); // TODO: seasons has some "gap" rooms
             valueReferences.Add(vref);
 
             vref = new AbstractIntValueReference(Project,
                     name: "Dest Y",
                     getter: () => DestData.Y,
-                    setter: (value) => {
-                        if (DestData.Y != value) {
+                    setter: (value) =>
+                    {
+                        if (DestData.Y != value)
+                        {
                             IsolateDestData();
                             DestData.Y = value;
                         }
@@ -289,8 +345,10 @@ namespace LynnaLib
             vref = new AbstractIntValueReference(Project,
                     name: "Dest X",
                     getter: () => DestData.X,
-                    setter: (value) => {
-                        if (DestData.X != value) {
+                    setter: (value) =>
+                    {
+                        if (DestData.X != value)
+                        {
                             IsolateDestData();
                             DestData.X = value;
                         }
@@ -301,8 +359,10 @@ namespace LynnaLib
             vref = new AbstractIntValueReference(Project,
                     name: "Dest Parameter",
                     getter: () => DestData.Parameter,
-                    setter: (value) => {
-                        if (DestData.Parameter != value) {
+                    setter: (value) =>
+                    {
+                        if (DestData.Parameter != value)
+                        {
                             IsolateDestData();
                             DestData.Parameter = value;
                         }
@@ -313,8 +373,10 @@ namespace LynnaLib
             vref = new AbstractIntValueReference(Project,
                     name: "Dest Transition",
                     getter: () => DestData.Transition,
-                    setter: (value) => {
-                        if (DestData.Transition != value) {
+                    setter: (value) =>
+                    {
+                        if (DestData.Transition != value)
+                        {
                             IsolateDestData();
                             DestData.Transition = value;
                         }
@@ -330,24 +392,29 @@ namespace LynnaLib
 
         // Call this to ensure that the destination data this warp uses is not also used by anything
         // else. If it is, we find unused dest data or create new data.
-        void IsolateDestData(int newGroup = -1) {
+        void IsolateDestData(int newGroup = -1)
+        {
             if (newGroup == -1)
                 newGroup = SourceData.DestGroupIndex;
 
             WarpDestData oldDest = DestData;
-            if (newGroup != SourceData.DestGroupIndex) {
+            if (newGroup != SourceData.DestGroupIndex)
+            {
                 if (newGroup >= Project.NumGroups)
                     throw new Exception(string.Format("Group {0} is too high for warp destination.", newGroup));
                 var destGroup = Project.GetIndexedDataType<WarpDestGroup>(newGroup);
                 SetDestData(destGroup.GetNewOrUnusedDestData());
             }
-            else {
-                if (DestData.GetNumReferences() != 1) { // Used by another warp source
+            else
+            {
+                if (DestData.GetNumReferences() != 1)
+                { // Used by another warp source
                     SetDestData(SourceData.DestGroup.GetNewOrUnusedDestData());
                 }
             }
 
-            if (oldDest != DestData) {
+            if (oldDest != DestData)
+            {
                 DestData.Map = oldDest.Map;
                 DestData.Y = oldDest.Y;
                 DestData.X = oldDest.X;
@@ -363,12 +430,14 @@ namespace LynnaLib
         // Used to always use this function so that I could add and remove modified hooks on the
         // underlying "dest data". But all modifications should be done through the "Warp" class
         // anyway, not the "WarpDestData" class, so that's not necessary.
-        void SetDestData(WarpDestData newDestData) {
+        void SetDestData(WarpDestData newDestData)
+        {
             SourceData.SetDestData(newDestData);
         }
 
 
-        void OnDataModified(object sender, DataModifiedEventArgs args) {
+        void OnDataModified(object sender, DataModifiedEventArgs args)
+        {
             ModifiedEvent.Invoke(this, null);
         }
     }

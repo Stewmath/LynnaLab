@@ -24,28 +24,34 @@ namespace LynnaLab
 
         WeakEventWrapper<Dungeon> dungeonEventWrapper = new WeakEventWrapper<Dungeon>();
 
-        Dictionary<Tuple<Room,int>,Cairo.Surface> cachedImageDict
-            = new Dictionary<Tuple<Room,int>,Cairo.Surface>();
+        Dictionary<Tuple<Room, int>, Cairo.Surface> cachedImageDict
+            = new Dictionary<Tuple<Room, int>, Cairo.Surface>();
 
-        public Project Project {
-            get {
+        public Project Project
+        {
+            get
+            {
                 if (_map == null)
                     return null;
                 return _map.Project;
             }
         }
-        public new Map Map {
-            get {
+        public new Map Map
+        {
+            get
+            {
                 return _map;
             }
         }
 
         public int Floor
         {
-            get {
+            get
+            {
                 return _floor;
             }
-            set {
+            set
+            {
                 if (value >= (_map as Dungeon).NumFloors)
                     throw new ArgumentException(string.Format("Floor {0} too high.", value));
                 _floor = value;
@@ -53,7 +59,8 @@ namespace LynnaLab
             }
         }
 
-        public Minimap() {
+        public Minimap()
+        {
             Selectable = true;
             SelectedIndex = 0;
 
@@ -61,52 +68,62 @@ namespace LynnaLab
             dungeonEventWrapper.Bind<EventArgs>("FloorsChangedEvent", OnDungeonFloorsChanged);
         }
 
-        public Minimap(double scale) : this() {
+        public Minimap(double scale) : this()
+        {
             this._scale = scale;
             scaleSetInConstructor = true;
         }
 
-        public void SetMap(Map m, int index = -1) {
-            if (_map != m) {
+        public void SetMap(Map m, int index = -1)
+        {
+            if (_map != m)
+            {
                 _map = m;
                 _floor = 0;
 
                 dungeonEventWrapper.ReplaceEventSource(_map as Dungeon); // May be null, that's fine
 
-                if (_map != null) {
-                    if (!scaleSetInConstructor) {
+                if (_map != null)
+                {
+                    if (!scaleSetInConstructor)
+                    {
                         if (m.MapWidth >= 16 && m.RoomWidth >= 15)
-                            _scale = 1.0/12; // Draw large indoor groups smaller
+                            _scale = 1.0 / 12; // Draw large indoor groups smaller
                         else
-                            _scale = 1.0/8;
+                            _scale = 1.0 / 8;
                     }
 
                     Width = Map.MapWidth;
                     Height = Map.MapHeight;
-                    TileWidth = (int)(_map.RoomWidth*16*_scale);
-                    TileHeight = (int)(_map.RoomHeight*16*_scale);
+                    TileWidth = (int)(_map.RoomWidth * 16 * _scale);
+                    TileHeight = (int)(_map.RoomHeight * 16 * _scale);
                 }
 
                 base.UpdateSizeRequest();
                 QueueDraw();
             }
 
-            if (index != -1) {
+            if (index != -1)
+            {
                 SelectedIndex = index;
             }
         }
 
-        public Room GetRoom(int x, int y) {
+        public Room GetRoom(int x, int y)
+        {
             return _map?.GetRoom(x, y, Floor);
         }
-        public Room GetRoom() {
+        public Room GetRoom()
+        {
             return GetRoom(SelectedX, SelectedY);
         }
-        public RoomLayout GetRoomLayout(int x, int y) {
+        public RoomLayout GetRoomLayout(int x, int y)
+        {
             return _map?.GetRoomLayout(x, y, Floor);
         }
 
-        public void InvalidateImageCache() {
+        public void InvalidateImageCache()
+        {
             foreach (var s in cachedImageDict.Values)
                 s.Dispose();
             cachedImageDict.Clear();
@@ -127,7 +144,8 @@ namespace LynnaLab
         }
 
         // TileGridViewer override
-        protected override void TileDrawer(int index, Cairo.Context cr) {
+        protected override void TileDrawer(int index, Cairo.Context cr)
+        {
             int x = index % _map.MapWidth;
             int y = index / _map.MapWidth;
             var source = GetTileImage(x, y);
@@ -139,7 +157,8 @@ namespace LynnaLab
         // Overridable function which generates the image for a tile on the map.
         // Child classes could choose override "TileDrawer" instead. The advantage of overriding
         // this function is that the image will be cached.
-        protected virtual Cairo.Surface GenerateTileImage(int x, int y) {
+        protected virtual Cairo.Surface GenerateTileImage(int x, int y)
+        {
             RoomLayout layout = GetRoomLayout(x, y);
             var tileSurface = this.Window.CreateSimilarSurface(Cairo.Content.Color,
                     (int)(layout.Width * 16 * _scale), (int)(layout.Height * 16 * _scale));
@@ -151,7 +170,8 @@ namespace LynnaLab
             Bitmap img = layout.GetImage();
 
             using (var cr = new Cairo.Context(tileSurface))
-            using (var source = new BitmapSurface(img)) {
+            using (var source = new BitmapSurface(img))
+            {
                 cr.Scale(_scale, _scale);
                 cr.SetSource(source, 0, 0);
                 cr.Paint();
@@ -160,12 +180,14 @@ namespace LynnaLab
             return tileSurface;
         }
 
-        protected override void OnDestroyed() {
+        protected override void OnDestroyed()
+        {
             base.OnDestroyed();
             Dispose();
         }
 
-        protected override void Dispose(bool disposeAll) {
+        protected override void Dispose(bool disposeAll)
+        {
             base.Dispose(disposeAll);
             foreach (var img in cachedImageDict.Values)
                 img.Dispose();
@@ -175,7 +197,8 @@ namespace LynnaLab
 
         // Private methods
 
-        Cairo.Surface GetTileImage(int x, int y) {
+        Cairo.Surface GetTileImage(int x, int y)
+        {
             var key = new Tuple<Room, int>(GetRoom(x, y), _map.Season);
 
             if (cachedImageDict.ContainsKey(key))
@@ -186,14 +209,16 @@ namespace LynnaLab
             return tileSurface;
         }
 
-        void OnDungeonRoomChanged(object sender, DungeonRoomChangedEventArgs args) {
+        void OnDungeonRoomChanged(object sender, DungeonRoomChangedEventArgs args)
+        {
             if (args.all)
                 QueueDraw();
             else if (args.floor == Floor)
                 QueueDrawTile(args.x, args.y);
         }
 
-        void OnDungeonFloorsChanged(object sender, EventArgs args) {
+        void OnDungeonFloorsChanged(object sender, EventArgs args)
+        {
             Dungeon d = _map as Dungeon;
             if (_floor >= d.NumFloors)
                 _floor = d.NumFloors - 1;

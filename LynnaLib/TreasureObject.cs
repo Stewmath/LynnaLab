@@ -8,12 +8,14 @@ namespace LynnaLib
     /// graphics, text, etc. (see "data/{game}/treasureObjectData.s".)
     /// Has an "ID" (the treasure index) and an additional "subID" representing a "variant" of the
     /// treasure.
-    public class TreasureObject {
+    public class TreasureObject
+    {
         TreasureGroup treasureGroup;
         ValueReferenceGroup vrg;
         Data baseData;
 
-        internal TreasureObject(TreasureGroup treasureGroup, int subid, Data baseData) {
+        internal TreasureObject(TreasureGroup treasureGroup, int subid, Data baseData)
+        {
             this.treasureGroup = treasureGroup;
             this.SubID = subid;
 
@@ -33,32 +35,40 @@ namespace LynnaLib
 
         // Properties
 
-        public ValueReferenceGroup ValueReferenceGroup {
+        public ValueReferenceGroup ValueReferenceGroup
+        {
             get { return vrg; }
         }
 
-        public int Graphics {
+        public int Graphics
+        {
             get { return vrg.GetIntValue("Graphics"); }
         }
 
-        public int ID {
+        public int ID
+        {
             get { return treasureGroup.Index; }
         }
-        public int SubID {
+        public int SubID
+        {
             get; private set;
         }
 
-        public string Name {
+        public string Name
+        {
             get { return baseData.GetValue(4); }
         }
 
         // Allows one to get/set the raw value of the 1st byte directly (spawn mode, grab mode, "set
         // item obtained" bit) instead of using the ValueReferenceGroup.
-        public byte CollectByte {
-            get {
+        public byte CollectByte
+        {
+            get
+            {
                 return (byte)baseData.GetIntValue(0);
             }
-            set {
+            set
+            {
                 // Bypassing the ValueReferenceGroup shouldn't cause any problems with its modified
                 // handler since we're not using AbstractIntValueReference.
                 baseData.SetByteValue(0, value);
@@ -71,7 +81,8 @@ namespace LynnaLib
 
         // Private methods
 
-        void GenerateValueReferenceGroup() {
+        void GenerateValueReferenceGroup()
+        {
             vrg = new ValueReferenceGroup(new ValueReference[] {
                 new DataValueReference(baseData,
                         index: 0,

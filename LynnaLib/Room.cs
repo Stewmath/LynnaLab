@@ -8,7 +8,8 @@ namespace LynnaLib
 {
     /// Provides an interface for accessing various room properties, or to get related classes, ie.
     /// relating to room layout variants, warps or objects.
-    public partial class Room : ProjectIndexedDataType {
+    public partial class Room : ProjectIndexedDataType
+    {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 
@@ -23,7 +24,8 @@ namespace LynnaLib
         public event EventHandler<EventArgs> ChestAddedEvent;
 
 
-        internal Room(Project p, int index) : base(p, index) {
+        internal Room(Project p, int index) : base(p, index)
+        {
             // Get dungeon flag file
             Data data = Project.GetData("dungeonRoomPropertiesGroupTable", (Group % 2) * 2);
             data = Project.GetData(data.GetValue(0));
@@ -33,8 +35,10 @@ namespace LynnaLib
             InitializeChest();
 
             layouts = new List<RoomLayout>();
-            if (Project.Game == Game.Seasons && Group == 0) {
-                for (int i = 0; i < 4; i++) {
+            if (Project.Game == Game.Seasons && Group == 0)
+            {
+                for (int i = 0; i < 4; i++)
+                {
                     layouts.Add(new RoomLayout(this, i));
                 }
             }
@@ -54,11 +58,14 @@ namespace LynnaLib
         /// group number for the version of the room that's expected to be used.
         public int ExpectedGroup
         {
-            get {
-                if (Project.GameString == "ages") {
+            get
+            {
+                if (Project.GameString == "ages")
+                {
                     if (Group < 4)
                         return Group;
-                    else if (Group < 8) {
+                    else if (Group < 8)
+                    {
                         int g = 4 + (Group % 2);
                         if (GetTileset(0).SidescrollFlag)
                             return g + 2;
@@ -68,12 +75,14 @@ namespace LynnaLib
                     else
                         throw new Exception("Group number too high?");
                 }
-                else { // Seasons
+                else
+                { // Seasons
                     if (Group == 0)
                         return Group;
                     else if (Group < 4)
                         return Group; // TODO: subrosia, maku tree, and indoor rooms have different values
-                    else if (Group < 8) {
+                    else if (Group < 8)
+                    {
                         int g = 4 + (Group % 2);
                         if (GetTileset(0).SidescrollFlag)
                             return g + 2;
@@ -95,7 +104,8 @@ namespace LynnaLib
         public int Width { get { return GetLayout(0).Width; } }
         public int Height { get { return GetLayout(0).Height; } }
 
-        public bool HasSeasons {
+        public bool HasSeasons
+        {
             get { return layouts.Count == 4; }
         }
 
@@ -103,29 +113,37 @@ namespace LynnaLib
 
         /// If true, tileset graphics are loaded after the screen transition instead of before.
         /// Often used in "buffer" rooms to transition between 2 tilesets.
-        public bool GfxLoadAfterTransition {
-            get {
+        public bool GfxLoadAfterTransition
+        {
+            get
+            {
                 return (GetTilesetByte() & 0x80) != 0;
             }
         }
 
-        public int TilesetIndex {
-            get {
+        public int TilesetIndex
+        {
+            get
+            {
                 return ValueReferenceGroup.GetIntValue("Tileset");
             }
-            set {
+            set
+            {
                 ValueReferenceGroup.SetValue("Tileset", value);
             }
         }
 
-        public byte DungeonFlags {
-            get {
+        public byte DungeonFlags
+        {
+            get
+            {
                 if (!(Group >= 4 && Group < 8))
                     throw new Exception(string.Format("Room {0:X3} is not in a dungeon group, doesn't have dungeon flags.", Index));
                 dungeonFlagStream.Seek(Index & 0xff, SeekOrigin.Begin);
                 return (byte)dungeonFlagStream.ReadByte();
             }
-            set {
+            set
+            {
                 if (!(Group >= 4 && Group < 8))
                     throw new Exception(string.Format("Room {0:X3} is not in a dungeon group, doesn't have dungeon flags.", Index));
                 dungeonFlagStream.Seek(Index & 0xff, SeekOrigin.Begin);
@@ -134,67 +152,91 @@ namespace LynnaLib
         }
 
         // Dungeon flag individual bits
-        public bool DungeonFlagUp {
-            get {
+        public bool DungeonFlagUp
+        {
+            get
+            {
                 return GetDungeonFlagBit(0);
             }
-            set {
+            set
+            {
                 SetDungeonFlagBit(0, value);
             }
         }
-        public bool DungeonFlagRight {
-            get {
+        public bool DungeonFlagRight
+        {
+            get
+            {
                 return GetDungeonFlagBit(1);
             }
-            set {
+            set
+            {
                 SetDungeonFlagBit(1, value);
             }
         }
-        public bool DungeonFlagDown {
-            get {
+        public bool DungeonFlagDown
+        {
+            get
+            {
                 return GetDungeonFlagBit(2);
             }
-            set {
+            set
+            {
                 SetDungeonFlagBit(2, value);
             }
         }
-        public bool DungeonFlagLeft {
-            get {
+        public bool DungeonFlagLeft
+        {
+            get
+            {
                 return GetDungeonFlagBit(3);
             }
-            set {
+            set
+            {
                 SetDungeonFlagBit(3, value);
             }
         }
-        public bool DungeonFlagKey {
-            get {
+        public bool DungeonFlagKey
+        {
+            get
+            {
                 return GetDungeonFlagBit(4);
             }
-            set {
+            set
+            {
                 SetDungeonFlagBit(4, value);
             }
         }
-        public bool DungeonFlagChest {
-            get {
+        public bool DungeonFlagChest
+        {
+            get
+            {
                 return GetDungeonFlagBit(5);
             }
-            set {
+            set
+            {
                 SetDungeonFlagBit(5, value);
             }
         }
-        public bool DungeonFlagBoss {
-            get {
+        public bool DungeonFlagBoss
+        {
+            get
+            {
                 return GetDungeonFlagBit(6);
             }
-            set {
+            set
+            {
                 SetDungeonFlagBit(6, value);
             }
         }
-        public bool DungeonFlagDark {
-            get {
+        public bool DungeonFlagDark
+        {
+            get
+            {
                 return GetDungeonFlagBit(7);
             }
-            set {
+            set
+            {
                 SetDungeonFlagBit(7, value);
             }
         }
@@ -203,8 +245,10 @@ namespace LynnaLib
         public ValueReferenceGroup ValueReferenceGroup { get; private set; }
 
         /// Whether a room pack value exists or not (only exists for the main overworld groups)
-        bool HasRoomPack {
-            get {
+        bool HasRoomPack
+        {
+            get
+            {
                 return GetRoomPackFile() != null;
             }
         }
@@ -212,8 +256,10 @@ namespace LynnaLib
 
         /// Gets a RoomLayout object corresponding to the season. Pass -1 if seasons are not
         /// expected to exist.
-        public RoomLayout GetLayout(int season) {
-            if (season == -1) {
+        public RoomLayout GetLayout(int season)
+        {
+            if (season == -1)
+            {
                 if (layouts.Count != 1)
                     throw new ProjectErrorException(string.Format(
                                 "Room {0:x3} wasn't expected to have seasons.", Index));
@@ -222,8 +268,10 @@ namespace LynnaLib
             return layouts[season];
         }
 
-        public Tileset GetTileset(int season) {
-            if (season == -1) {
+        public Tileset GetTileset(int season)
+        {
+            if (season == -1)
+            {
                 if (layouts.Count != 1)
                     throw new ProjectErrorException(string.Format(
                                 "Room {0:x3} wasn't expected to have seasons.", Index));
@@ -234,43 +282,49 @@ namespace LynnaLib
 
         // These 2 functions may be deprecated later if I switch to using
         // constant definitions
-        public int GetMusicID() {
+        public int GetMusicID()
+        {
             Stream file = GetMusicFile();
-            file.Position = Index&0xff;
+            file.Position = Index & 0xff;
             return file.ReadByte();
         }
-        public void SetMusicID(int id) {
+        public void SetMusicID(int id)
+        {
             Stream file = GetMusicFile();
-            file.Position = Index&0xff;
+            file.Position = Index & 0xff;
             file.WriteByte((byte)id);
         }
 
-        public ObjectGroup GetObjectGroup() {
-            string tableLabel = Project.GetData("objectDataGroupTable", 2*(Index>>8)).GetValue(0);
-            string label = Project.GetData(tableLabel, 2*(Index&0xff)).GetValue(0);
+        public ObjectGroup GetObjectGroup()
+        {
+            string tableLabel = Project.GetData("objectDataGroupTable", 2 * (Index >> 8)).GetValue(0);
+            string label = Project.GetData(tableLabel, 2 * (Index & 0xff)).GetValue(0);
             return Project.GetObjectGroup(label, ObjectGroupType.Main);
         }
 
-        public WarpGroup GetWarpGroup() {
+        public WarpGroup GetWarpGroup()
+        {
             return Project.GetIndexedDataType<WarpGroup>(Index);
         }
 
 
         // Chest-related stuff
 
-        public void AddChest() {
-            if (Chest != null) {
+        public void AddChest()
+        {
+            if (Chest != null)
+            {
                 log.Warn(string.Format("Tried to add chest data to room {0:x3} which already has chest data.", Index));
                 return;
             }
 
             int room = Index;
 
-            int group = room>>8;
+            int group = room >> 8;
             room &= 0xff;
 
             FileParser chestFileParser = Project.GetFileWithLabel("chestDataGroupTable");
-            Data chestPointer = chestFileParser.GetData("chestDataGroupTable", group*2);
+            Data chestPointer = chestFileParser.GetData("chestDataGroupTable", group * 2);
             string pointerString = chestPointer.GetValue(0);
             Data chestGroupData = Project.GetData(pointerString);
 
@@ -283,8 +337,10 @@ namespace LynnaLib
             ChestAddedEvent?.Invoke(this, null);
         }
 
-        public void DeleteChest() {
-            if (Chest == null) {
+        public void DeleteChest()
+        {
+            if (Chest == null)
+            {
                 log.Warn(string.Format("Tried to remove chest data to room {0:x3} which doesn't have chest data.", Index));
                 return;
             }
@@ -297,44 +353,51 @@ namespace LynnaLib
 
         // Private methods
 
-        void UpdateTileset() {
+        void UpdateTileset()
+        {
             foreach (var layout in layouts)
                 layout.UpdateTileset();
         }
 
         // Returns a stream for the tileset mapping file (256 bytes, one byte per room)
-        MemoryFileStream GetTilesetMappingFile() {
-            Data data = Project.GetData("roomTilesetsGroupTable", 2*(Index>>8));
+        MemoryFileStream GetTilesetMappingFile()
+        {
+            Data data = Project.GetData("roomTilesetsGroupTable", 2 * (Index >> 8));
             data = Project.GetData(data.GetValue(0)); // Follow .dw pointer
 
             string path = data.GetValue(0);
-            path = path.Substring(1, path.Length-2); // Remove quotes
+            path = path.Substring(1, path.Length - 2); // Remove quotes
 
             return Project.GetBinaryFile(path);
         }
 
-        byte GetTilesetByte() {
+        byte GetTilesetByte()
+        {
             return (byte)GetTilesetMappingFile().GetByte(Index & 0xff);
         }
 
-        MemoryFileStream GetMusicFile() {
-            Data data = Project.GetData("musicAssignmentGroupTable", 2*(Index>>8));
+        MemoryFileStream GetMusicFile()
+        {
+            Data data = Project.GetData("musicAssignmentGroupTable", 2 * (Index >> 8));
             data = Project.GetData(data.GetValue(0)); // Follow .dw pointer
 
             string path = data.GetValue(0);
-            path = path.Substring(1, path.Length-2); // Remove quotes
+            path = path.Substring(1, path.Length - 2); // Remove quotes
 
             return Project.GetBinaryFile(path);
         }
 
-        MemoryFileStream GetRoomPackFile() {
+        MemoryFileStream GetRoomPackFile()
+        {
             string s;
-            if (Project.GameString == "seasons") {
+            if (Project.GameString == "seasons")
+            {
                 if (Group != 0)
                     return null;
                 s = "rooms/seasons/roomPacks.bin";
             }
-            else { // ages
+            else
+            { // ages
                 if (Group == 0)
                     s = "rooms/ages/roomPacksPresent.bin";
                 else if (Group == 1)
@@ -345,31 +408,36 @@ namespace LynnaLib
             return Project.GetBinaryFile(s);
         }
 
-        bool GetDungeonFlagBit(int bit) {
+        bool GetDungeonFlagBit(int bit)
+        {
             return (DungeonFlags & (1 << bit)) != 0;
         }
 
-        void SetDungeonFlagBit(int bit, bool value) {
+        void SetDungeonFlagBit(int bit, bool value)
+        {
             DungeonFlags &= (byte)~(1 << bit);
             if (value)
                 DungeonFlags |= (byte)(1 << bit);
         }
 
-        void GenerateValueReferenceGroup() {
+        void GenerateValueReferenceGroup()
+        {
             ValueReference roomPackVr;
-            if (HasRoomPack) {
+            if (HasRoomPack)
+            {
                 roomPackVr = new StreamValueReference(Project,
                         stream: GetRoomPackFile(),
                         name: "Room Pack",
                         offset: Index & 0xff,
                         type: DataValueType.Byte);
             }
-            else {
+            else
+            {
                 // Placeholder (need to keep elements the same at all times to make the UI simpler)
                 roomPackVr = new AbstractIntValueReference(Project,
                         name: "Room Pack",
                         getter: () => 0,
-                        setter: (v) => {},
+                        setter: (v) => { },
                         maxValue: 255,
                         editable: false);
             }
@@ -405,24 +473,27 @@ namespace LynnaLib
 
             ValueReferenceGroup = new ValueReferenceGroup(vrs);
 
-            ValueReferenceGroup["Tileset"].AddValueModifiedHandler((sender, args) => {
+            ValueReferenceGroup["Tileset"].AddValueModifiedHandler((sender, args) =>
+            {
                 UpdateTileset();
             });
         }
 
         // Find the data corresponding to the chest for this room, or "null" if it doesn't exist.
-        Data GetChestData() {
+        Data GetChestData()
+        {
             int room = Index;
 
-            int group = room>>8;
+            int group = room >> 8;
             room &= 0xff;
 
             FileParser chestFileParser = Project.GetFileWithLabel("chestDataGroupTable");
-            Data chestPointer = chestFileParser.GetData("chestDataGroupTable", group*2);
+            Data chestPointer = chestFileParser.GetData("chestDataGroupTable", group * 2);
             string pointerString = chestPointer.GetValue(0);
             Data chestGroupData = Project.GetData(pointerString);
 
-            while (chestGroupData.Command == "m_ChestData") {
+            while (chestGroupData.Command == "m_ChestData")
+            {
                 if (chestGroupData.GetIntValue(1) == room)
                     return chestGroupData;
                 chestGroupData = chestGroupData.NextData;
@@ -431,7 +502,8 @@ namespace LynnaLib
             return null;
         }
 
-        void InitializeChest() {
+        void InitializeChest()
+        {
             if (Chest != null)
                 throw new Exception("Internal error");
             Data d = GetChestData();

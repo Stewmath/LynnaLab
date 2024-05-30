@@ -46,47 +46,56 @@ namespace LynnaLab
 
         Dictionary<ObjectGroup, ObjectBox> objectBoxDict = new Dictionary<ObjectGroup, ObjectBox>();
 
-		private Gtk.Container objectDataContainer, objectBoxContainer;
-		private Gtk.Label frameLabel;
+        private Gtk.Container objectDataContainer, objectBoxContainer;
+        private Gtk.Label frameLabel;
 
         bool disableBoxCallback = false;
 
 
-        Project Project {
-            get {
+        Project Project
+        {
+            get
+            {
                 return TopObjectGroup?.Project;
             }
         }
 
         // The TOP-LEVEL object group for this room.
-        public ObjectGroup TopObjectGroup {
+        public ObjectGroup TopObjectGroup
+        {
             get { return topObjectGroup; }
         }
 
         // The object group containing the current selected object.
-        public ObjectGroup SelectedObjectGroup {
+        public ObjectGroup SelectedObjectGroup
+        {
             get { return selectedObjectGroup; }
         }
         // The index of the selected object within SelectedObjectGroup.
-        public int SelectedIndex {
+        public int SelectedIndex
+        {
             get { return selectedIndex; }
         }
 
-        public ObjectDefinition SelectedObject {
-            get {
+        public ObjectDefinition SelectedObject
+        {
+            get
+            {
                 if (SelectedIndex == -1)
                     return null;
                 return SelectedObjectGroup.GetObject(SelectedIndex);
             }
         }
 
-        public RoomEditor RoomEditor {
+        public RoomEditor RoomEditor
+        {
             get { return roomEditor; }
             set { roomEditor = value; }
         }
 
 
-        public ObjectGroupEditor() {
+        public ObjectGroupEditor()
+        {
             Gtk.Builder builder = new Builder();
             builder.AddFromString(Helper.ReadResourceFile("LynnaLab.Glade.ObjectGroupEditor.ui"));
             builder.Autoconnect(this);
@@ -99,7 +108,8 @@ namespace LynnaLab
             this.ShowAll();
         }
 
-        public void SetObjectGroup(ObjectGroup topObjectGroup) {
+        public void SetObjectGroup(ObjectGroup topObjectGroup)
+        {
             if (this.topObjectGroup != null)
                 this.topObjectGroup.RemoveModifiedHandler(ObjectGroupModifiedHandler);
             this.topObjectGroup = topObjectGroup;
@@ -108,18 +118,20 @@ namespace LynnaLab
             ReloadObjectBoxes();
         }
 
-        public void SelectObject(ObjectGroup group, int index) {
+        public void SelectObject(ObjectGroup group, int index)
+        {
             if (!topObjectGroup.GetAllGroups().Contains(group))
                 throw new Exception("Tried to select from an invalid object group.");
 
-            index = Math.Min(index, group.GetNumObjects()-1);
+            index = Math.Min(index, group.GetNumObjects() - 1);
 
             selectedObjectGroup = group;
             selectedIndex = index;
 
             disableBoxCallback = true;
 
-            foreach (ObjectGroup g2 in topObjectGroup.GetAllGroups()) {
+            foreach (ObjectGroup g2 in topObjectGroup.GetAllGroups())
+            {
                 if (g2 == selectedObjectGroup)
                     objectBoxDict[g2].SetSelectedIndex(index);
                 else
@@ -135,21 +147,25 @@ namespace LynnaLab
         }
 
 
-        void SelectObject(ObjectGroup group, ObjectDefinition obj) {
+        void SelectObject(ObjectGroup group, ObjectDefinition obj)
+        {
             int index = group.GetObjects().IndexOf(obj);
             SelectObject(group, index);
         }
 
-        void SetObject(ObjectDefinition obj) {
+        void SetObject(ObjectDefinition obj)
+        {
             if (activeObject == obj)
                 return;
             activeObject = obj;
 
-            foreach (Gtk.Widget widget in objectDataContainer.Children) {
+            foreach (Gtk.Widget widget in objectDataContainer.Children)
+            {
                 objectDataContainer.Remove(widget);
                 widget.Dispose();
             }
-            if (ObjectDataEditor != null) {
+            if (ObjectDataEditor != null)
+            {
                 ObjectDataEditor.RemoveDataModifiedHandler(OnObjectDataModified);
                 ObjectDataEditor = null;
             }
@@ -157,7 +173,8 @@ namespace LynnaLab
             if (RoomEditor != null)
                 RoomEditor.OnObjectSelected();
 
-            if (obj == null) {
+            if (obj == null)
+            {
                 frameLabel.Text = "";
                 return;
             }
@@ -172,11 +189,13 @@ namespace LynnaLab
             UpdateDocumentation();
         }
 
-        void OnObjectDataModified() {
+        void OnObjectDataModified()
+        {
             UpdateDocumentation();
         }
 
-        void ReloadObjectBoxes() {
+        void ReloadObjectBoxes()
+        {
             objectBoxDict.Clear();
             objectBoxContainer.Foreach((c) =>
             {
@@ -190,12 +209,14 @@ namespace LynnaLab
 
             int left = 0, top = 0;
 
-            foreach (ObjectGroup group in topObjectGroup.GetAllGroups()) {
+            foreach (ObjectGroup group in topObjectGroup.GetAllGroups())
+            {
                 var objectBox = new ObjectBox(group);
 
                 Gtk.Box box = new Gtk.HBox();
 
-                objectBox.AddTileSelectedHandler(delegate(object sender, int index) {
+                objectBox.AddTileSelectedHandler(delegate (object sender, int index)
+                {
                     if (!disableBoxCallback)
                         SelectObject(objectBox.ObjectGroup, index);
                 });
@@ -208,14 +229,17 @@ namespace LynnaLab
                 frame.Halign = Gtk.Align.Center;
                 frame.Add(objectBox);
 
-                if (group.GetGroupType() == ObjectGroupType.Shared) {
+                if (group.GetGroupType() == ObjectGroupType.Shared)
+                {
                     box.Add(frame);
                     Gtk.Button button = new Button(new Gtk.Image(Stock.Remove, IconSize.Button));
                     button.Halign = Gtk.Align.Center;
                     button.Valign = Gtk.Align.Center;
 
-                    button.Clicked += (sender, args) => {
-                        if (selectedObjectGroup == group) {
+                    button.Clicked += (sender, args) =>
+                    {
+                        if (selectedObjectGroup == group)
+                        {
                             selectedObjectGroup = null;
                             activeObject = null;
                             selectedIndex = -1;
@@ -226,12 +250,14 @@ namespace LynnaLab
 
                     box.Add(button);
                 }
-                else {
+                else
+                {
                     box.Add(frame);
                 }
                 grid.Attach(box, left, top, 1, 1);
                 left++;
-                if (left == 2) {
+                if (left == 2)
+                {
                     left = 0;
                     top++;
                 }
@@ -242,12 +268,14 @@ namespace LynnaLab
             this.ShowAll();
         }
 
-        void ObjectGroupModifiedHandler(object sender, EventArgs args) {
+        void ObjectGroupModifiedHandler(object sender, EventArgs args)
+        {
             if (selectedObjectGroup != null && activeObject != null)
                 SelectObject(selectedObjectGroup, activeObject);
         }
 
-        void UpdateDocumentation() {
+        void UpdateDocumentation()
+        {
             // Update tooltips in case ID has changed
             if (activeObject == null)
                 return;
@@ -257,17 +285,22 @@ namespace LynnaLab
                 return;
 
             ValueReference r;
-            try {
+            try
+            {
                 r = activeObject.GetValueReference("ID");
             }
-            catch(InvalidLookupException) {
+            catch (InvalidLookupException)
+            {
                 return;
             }
 
-            if (r != null) {
+            if (r != null)
+            {
                 activeObject.GetValueReference("SubID").Documentation = null; // Set it to null now, might replace it below
-                if (r.ConstantsMapping != null) {
-                    try {
+                if (r.ConstantsMapping != null)
+                {
+                    try
+                    {
                         // Set tooltip based on ID field documentation
                         string objectName = r.ConstantsMapping.ByteToString((byte)r.GetIntValue());
                         string tooltip = objectName + "\n\n";
@@ -277,7 +310,8 @@ namespace LynnaLab
                         Documentation doc = activeObject.GetIDDocumentation();
                         activeObject.GetValueReference("SubID").Documentation = doc;
                     }
-                    catch(KeyNotFoundException) {
+                    catch (KeyNotFoundException)
+                    {
                     }
                 }
             }
@@ -288,38 +322,40 @@ namespace LynnaLab
         // Static methods
 
         // Objects colors match ZOLE mostly
-		public static Cairo.Color GetObjectColor(ObjectType type)
-		{
-			switch (type)
-			{
-				case ObjectType.Condition:          return CairoHelper.ConvertColor(System.Drawing.Color.Black);
-				case ObjectType.Interaction:        return CairoHelper.ConvertColor(System.Drawing.Color.DarkOrange);
-				case ObjectType.Pointer:            return CairoHelper.ConvertColor(System.Drawing.Color.Yellow);
-				case ObjectType.BeforeEvent:        return CairoHelper.ConvertColor(System.Drawing.Color.Green);
-				case ObjectType.AfterEvent:         return CairoHelper.ConvertColor(System.Drawing.Color.Blue);
-				case ObjectType.RandomEnemy:        return CairoHelper.ConvertColor(System.Drawing.Color.Purple);
-				case ObjectType.SpecificEnemyA:     return new Cairo.Color(128/256.0, 64/256.0, 0/256.0);
-				case ObjectType.SpecificEnemyB:     return new Cairo.Color(128/256.0, 64/256.0, 0/256.0);
-				case ObjectType.Part:               return CairoHelper.ConvertColor(System.Drawing.Color.Gray);
-				case ObjectType.ItemDrop:           return CairoHelper.ConvertColor(System.Drawing.Color.Lime);
-			}
+        public static Cairo.Color GetObjectColor(ObjectType type)
+        {
+            switch (type)
+            {
+                case ObjectType.Condition: return CairoHelper.ConvertColor(System.Drawing.Color.Black);
+                case ObjectType.Interaction: return CairoHelper.ConvertColor(System.Drawing.Color.DarkOrange);
+                case ObjectType.Pointer: return CairoHelper.ConvertColor(System.Drawing.Color.Yellow);
+                case ObjectType.BeforeEvent: return CairoHelper.ConvertColor(System.Drawing.Color.Green);
+                case ObjectType.AfterEvent: return CairoHelper.ConvertColor(System.Drawing.Color.Blue);
+                case ObjectType.RandomEnemy: return CairoHelper.ConvertColor(System.Drawing.Color.Purple);
+                case ObjectType.SpecificEnemyA: return new Cairo.Color(128 / 256.0, 64 / 256.0, 0 / 256.0);
+                case ObjectType.SpecificEnemyB: return new Cairo.Color(128 / 256.0, 64 / 256.0, 0 / 256.0);
+                case ObjectType.Part: return CairoHelper.ConvertColor(System.Drawing.Color.Gray);
+                case ObjectType.ItemDrop: return CairoHelper.ConvertColor(System.Drawing.Color.Lime);
+            }
             return new Cairo.Color(1.0, 1.0, 1.0); // End, EndPointer, Garbage types should never be drawn
-		}
+        }
 
-        static String GetGroupName(ObjectGroup group) {
+        static String GetGroupName(ObjectGroup group)
+        {
             ObjectGroupType type = group.GetGroupType();
 
-            switch (type) {
-            case ObjectGroupType.Main:
-                return "Main objects";
-            case ObjectGroupType.Enemy:
-                return "Enemy objects";
-            case ObjectGroupType.BeforeEvent:
-                return "(Enemy) objects before event";
-            case ObjectGroupType.AfterEvent:
-                return "(Enemy) objects after event";
-            case ObjectGroupType.Shared:
-                return "[SHARED] " + group.Identifier;
+            switch (type)
+            {
+                case ObjectGroupType.Main:
+                    return "Main objects";
+                case ObjectGroupType.Enemy:
+                    return "Enemy objects";
+                case ObjectGroupType.BeforeEvent:
+                    return "(Enemy) objects before event";
+                case ObjectGroupType.AfterEvent:
+                    return "(Enemy) objects after event";
+                case ObjectGroupType.Shared:
+                    return "[SHARED] " + group.Identifier;
             }
 
             throw new Exception("Unexpected thing happened");

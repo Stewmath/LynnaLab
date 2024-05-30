@@ -7,12 +7,14 @@ namespace LynnaLib
 {
     /// Represents an "INTERACID_TREASURE" value (1 byte). This can be used to lookup
     /// a "TreasureObject" which has an additional subID.
-    public class TreasureGroup : ProjectIndexedDataType {
+    public class TreasureGroup : ProjectIndexedDataType
+    {
         TreasureObject[] treasureObjectCache = new TreasureObject[256];
         Data dataStart;
 
 
-        internal TreasureGroup(Project p, int index) : base(p, index) {
+        internal TreasureGroup(Project p, int index) : base(p, index)
+        {
             if (Index >= Project.NumTreasures)
                 throw new InvalidTreasureException(
                         string.Format("Treasure {0:X2} doesn't exist!", Index));
@@ -22,30 +24,37 @@ namespace LynnaLib
 
         // Properties
 
-        public int NumTreasureObjectSubids {
-            get {
+        public int NumTreasureObjectSubids
+        {
+            get
+            {
                 Data data = dataStart;
                 if (!UsesPointer)
                     return 1;
-                try {
+                try
+                {
                     data = Project.GetData(data.GetValue(0));
                 }
-                catch (InvalidLookupException) {
+                catch (InvalidLookupException)
+                {
                     return 0;
                 }
                 return TraverseSubidData(ref data, 256);
             }
         }
 
-        bool UsesPointer {
+        bool UsesPointer
+        {
             get { return dataStart.CommandLowerCase == "m_treasurepointer"; }
         }
 
 
         // Methods
 
-        public TreasureObject GetTreasureObject(int subid) {
-            if (treasureObjectCache[subid] == null) {
+        public TreasureObject GetTreasureObject(int subid)
+        {
+            if (treasureObjectCache[subid] == null)
+            {
                 Data data = GetSubidBaseData(subid);
                 if (data == null)
                     return null;
@@ -54,11 +63,13 @@ namespace LynnaLib
             return treasureObjectCache[subid];
         }
 
-        public TreasureObject AddTreasureObjectSubid() {
+        public TreasureObject AddTreasureObjectSubid()
+        {
             if (NumTreasureObjectSubids >= 256)
                 return null;
 
-            Func<int, bool, string> ConstructTreasureSubidString = (subid, inSubidTable) => {
+            Func<int, bool, string> ConstructTreasureSubidString = (subid, inSubidTable) =>
+            {
                 string prefix = string.Format("/* ${0:x2} */ ", Index);
                 string body = string.Format("$00, $00, $ff, $00, TREASURE_OBJECT_{0}_{1:x2}",
                         Project.TreasureMapping.ByteToString(Index).Substring(9),
@@ -69,7 +80,8 @@ namespace LynnaLib
                     return "\t" + prefix + "m_TreasureSubid   " + body;
             };
 
-            if (NumTreasureObjectSubids == 0) {
+            if (NumTreasureObjectSubids == 0)
+            {
                 // This should only happen when the treasure is using "m_treasurepointer", but has
                 // a null pointer. So rewrite that line with a blank treasure.
                 dataStart.FileParser.InsertParseableTextAfter(dataStart, new string[] {
@@ -83,7 +95,8 @@ namespace LynnaLib
                 return GetTreasureObject(0);
             }
 
-            if (!UsesPointer) {
+            if (!UsesPointer)
+            {
                 // We need to create a pointer for the subid list and move the old data to the start
                 // of the list. Be careful to ensure that the old data objects are moved, and not
                 // deleted, so that we don't break the TreasureObject's that were built on them.
@@ -135,10 +148,12 @@ namespace LynnaLib
         }
 
 
-        Data GetSubidBaseData(int subid) {
+        Data GetSubidBaseData(int subid)
+        {
             Data data = dataStart;
 
-            if (!UsesPointer) {
+            if (!UsesPointer)
+            {
                 if (subid == 0)
                     return data;
                 else
@@ -147,14 +162,16 @@ namespace LynnaLib
 
             // Uses pointer
 
-            try {
+            try
+            {
                 data = Project.GetData(data.GetValue(0)); // Follow pointer
             }
-            catch (InvalidLookupException) {
+            catch (InvalidLookupException)
+            {
                 // Sometimes there is no pointer even when the "pointer" bit is set.
                 return null;
             }
-            if (TraverseSubidData(ref data, subid) != subid+1)
+            if (TraverseSubidData(ref data, subid) != subid + 1)
                 return null;
 
             return data;
@@ -163,11 +180,14 @@ namespace LynnaLib
         /// Traverses subid data up to "subid", returns the total number of subids actually
         /// traversed (there may be less than requested).
         /// Labels are considered to end a sequence of subid data.
-        int TraverseSubidData(ref Data data, int subid, Action<FileComponent> action = null) {
+        int TraverseSubidData(ref Data data, int subid, Action<FileComponent> action = null)
+        {
             int count = 0;
             FileComponent com = data;
-            while (count <= subid) {
-                while (!(com is Data)) {
+            while (count <= subid)
+            {
+                while (!(com is Data))
+                {
                     if (com is Label || com == null)
                         return count;
                     com = com.Next;
@@ -181,7 +201,8 @@ namespace LynnaLib
             return count;
         }
 
-        void DetermineDataStart() {
+        void DetermineDataStart()
+        {
             dataStart = Project.GetData("treasureObjectData", Index * 4);
         }
     }

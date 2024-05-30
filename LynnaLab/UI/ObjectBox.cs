@@ -4,15 +4,18 @@ using Bitmap = System.Drawing.Bitmap;
 
 using LynnaLib;
 
-namespace LynnaLab {
+namespace LynnaLab
+{
 
-    public class ObjectBox : SelectionBox {
+    public class ObjectBox : SelectionBox
+    {
         public ObjectGroup ObjectGroup { get; private set; }
 
 
         // Constructors
 
-        public ObjectBox(ObjectGroup group) : base() {
+        public ObjectBox(ObjectGroup group) : base()
+        {
             this.ObjectGroup = group;
 
             base.MaxIndex = ObjectGroup.GetNumObjects() - 1;
@@ -21,13 +24,15 @@ namespace LynnaLab {
         }
 
 
-        protected override void OnDestroyed() {
+        protected override void OnDestroyed()
+        {
             ObjectGroup.RemoveModifiedHandler(OnObjectGroupModified);
             base.OnDestroyed();
         }
 
 
-        void OnObjectGroupModified(object sender, EventArgs args) {
+        void OnObjectGroupModified(object sender, EventArgs args)
+        {
             MaxIndex = ObjectGroup.GetNumObjects() - 1;
             QueueDraw();
         }
@@ -35,13 +40,16 @@ namespace LynnaLab {
 
         // SelectionBox overrides
 
-        protected override void OnMoveSelection(int oldIndex, int newIndex) {
+        protected override void OnMoveSelection(int oldIndex, int newIndex)
+        {
             ObjectGroup.MoveObject(oldIndex, newIndex);
         }
 
-        protected override void ShowPopupMenu(Gdk.Event ev) {
+        protected override void ShowPopupMenu(Gdk.Event ev)
+        {
             Gtk.Menu menu = new Gtk.Menu();
-            for (int i=0; i<ObjectGroupEditor.ObjectNames.Length; i++) {
+            for (int i = 0; i < ObjectGroupEditor.ObjectNames.Length; i++)
+            {
                 if (i >= 2 && i <= 4) // Skip "Pointer" objects
                     continue;
                 Gtk.MenuItem item = new Gtk.MenuItem("Add " + ObjectGroupEditor.ObjectNames[i]);
@@ -49,16 +57,19 @@ namespace LynnaLab {
 
                 int index = i;
 
-                item.Activated += (sender, args) => {
+                item.Activated += (sender, args) =>
+                {
                     SetSelectedIndex(ObjectGroup.AddObject((ObjectType)index));
                 };
             }
 
-            if (HoveringIndex != -1) {
+            if (HoveringIndex != -1)
+            {
                 menu.Append(new Gtk.SeparatorMenuItem());
 
                 Gtk.MenuItem deleteItem = new Gtk.MenuItem("Delete");
-                deleteItem.Activated += (sender, args) => {
+                deleteItem.Activated += (sender, args) =>
+                {
                     if (SelectedIndex != -1)
                         ObjectGroup.RemoveObject(SelectedIndex);
                 };
@@ -70,7 +81,8 @@ namespace LynnaLab {
             menu.PopupAtPointer(ev);
         }
 
-        protected override void TileDrawer(int index, Cairo.Context cr) {
+        protected override void TileDrawer(int index, Cairo.Context cr)
+        {
             if (index >= ObjectGroup.GetNumObjects())
                 return;
 
@@ -86,27 +98,32 @@ namespace LynnaLab {
 
         // Private methods
 
-        void DrawObject(ObjectDefinition obj, Cairo.Context cr, double x, double y) {
-            if (obj.GetGameObject() != null) {
-                try {
+        void DrawObject(ObjectDefinition obj, Cairo.Context cr, double x, double y)
+        {
+            if (obj.GetGameObject() != null)
+            {
+                try
+                {
                     CairoTileDrawer drawer = new CairoTileDrawer(cr, (int)x, (int)y);
                     ObjectAnimationFrame o = obj.GetGameObject().DefaultAnimation.GetFrame(0);
                     o.Draw(drawer);
                 }
-                catch(NoAnimationException) {
+                catch (NoAnimationException)
+                {
                     // No animation defined
                 }
-                catch(InvalidAnimationException) {
+                catch (InvalidAnimationException)
+                {
                     // Error parsing an animation; draw a blue X to indicate the error
                     int width = 16;
-                    double xPos = x-width/2 + 0.5;
-                    double yPos = y-width/2 + 0.5;
+                    double xPos = x - width / 2 + 0.5;
+                    double yPos = y - width / 2 + 0.5;
 
                     cr.SetSourceColor(CairoHelper.ConvertColor(System.Drawing.Color.Blue));
                     cr.MoveTo(xPos, yPos);
-                    cr.LineTo(xPos+width-1, yPos+width-1);
-                    cr.MoveTo(xPos+width-1, yPos);
-                    cr.LineTo(xPos, yPos+width-1);
+                    cr.LineTo(xPos + width - 1, yPos + width - 1);
+                    cr.MoveTo(xPos + width - 1, yPos);
+                    cr.LineTo(xPos, yPos + width - 1);
                     cr.Stroke();
                 }
             }

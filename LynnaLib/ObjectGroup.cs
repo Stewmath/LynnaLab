@@ -6,7 +6,8 @@ using System.Diagnostics;
 
 namespace LynnaLib
 {
-    public enum ObjectGroupType {
+    public enum ObjectGroupType
+    {
         Main,        // Top-level (has its own objects and also holds other ObjectGroups as children)
         Enemy,       // "obj_Pointer" referring to data named "enemyObjectData[...]".
         BeforeEvent, // "obj_BeforeEvent" pointer
@@ -59,7 +60,8 @@ namespace LynnaLib
 
         // Constructors
 
-        internal ObjectGroup(Project p, String id, ObjectGroupType type) : base(p, id) {
+        internal ObjectGroup(Project p, String id, ObjectGroupType type) : base(p, id)
+        {
             children = new List<ObjectGroup>();
             children.Add(this);
 
@@ -74,10 +76,12 @@ namespace LynnaLib
 
             objectList = new List<ObjectStruct>();
 
-            for (int i=0; i<rawObjectGroup.GetNumObjects(); i++) {
+            for (int i = 0; i < rawObjectGroup.GetNumObjects(); i++)
+            {
                 ObjectData obj = rawObjectGroup.GetObjectData(i);
                 ObjectType objectType = obj.GetObjectType();
-                if (obj.IsPointerType()) {
+                if (obj.IsPointerType())
+                {
                     string label = obj.GetValue(0);
 
                     ObjectGroupType t;
@@ -86,7 +90,8 @@ namespace LynnaLib
                         t = ObjectGroupType.BeforeEvent;
                     else if (objectType == ObjectType.AfterEvent)
                         t = ObjectGroupType.AfterEvent;
-                    else if (objectType == ObjectType.Pointer && label.Contains("EnemyObjectData")) {
+                    else if (objectType == ObjectType.Pointer && label.Contains("EnemyObjectData"))
+                    {
                         // TODO: Check the full name
                         t = ObjectGroupType.Enemy;
                         if (addedEnemyType)
@@ -102,7 +107,8 @@ namespace LynnaLib
                     children.Add(child);
                     child.AddParent(this);
                 }
-                else {
+                else
+                {
                     ObjectStruct st = new ObjectStruct();
                     st.rawIndex = i;
                     st.def = new ObjectDefinition(this, obj, objectList.Count);
@@ -113,33 +119,40 @@ namespace LynnaLib
                 }
             }
 
-            if (this.type == ObjectGroupType.Main) {
+            if (this.type == ObjectGroupType.Main)
+            {
                 // Get the room number based on the identifier name.
                 Regex rx = new Regex(@"group([0-9])Map([0-9a-f]{2})ObjectData",
                         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 MatchCollection matches = rx.Matches(Identifier);
 
-                if (matches.Count != 1) {
+                if (matches.Count != 1)
+                {
                     log.Error("ObjectGroup '" + Identifier + "' has an unexpected name. Can't get room number.");
                     this.type = ObjectGroupType.Shared;
                 }
-                else {
+                else
+                {
                     string groupString = matches[0].Groups[1].Value;
                     string roomString = matches[0].Groups[2].Value;
 
-                    System.Action<ObjectGroupType, string> AddGroupIfMissing = (t, basename) => {
-                        foreach (ObjectGroup group in children) {
+                    System.Action<ObjectGroupType, string> AddGroupIfMissing = (t, basename) =>
+                    {
+                        foreach (ObjectGroup group in children)
+                        {
                             if (group.type == t)
                                 return;
                         }
 
                         string childId = string.Format(basename, groupString, roomString);
 
-                        if (Project.HasLabel(childId)) {
+                        if (Project.HasLabel(childId))
+                        {
                             log.Error("Can't create object group '" + childId + "' because it exists already.");
                         }
-                        else {
+                        else
+                        {
                             ObjectGroup child = Project.GetObjectGroup(childId, t);
                             children.Add(child);
                             child.AddParent(this);
@@ -158,32 +171,38 @@ namespace LynnaLib
 
         // Public methods
 
-        public ObjectGroupType GetGroupType() {
+        public ObjectGroupType GetGroupType()
+        {
             return type;
         }
 
         // Gets all non-pointer objects in this group. This is a shallow operation (does not check
         // pointers).
-        public IReadOnlyList<ObjectDefinition> GetObjects() {
+        public IReadOnlyList<ObjectDefinition> GetObjects()
+        {
             if (IsStub())
                 return new List<ObjectDefinition>();
             return new List<ObjectDefinition>(objectList.Select((ObjectStruct o) => o.def));
         }
 
-        public int GetNumObjects() {
+        public int GetNumObjects()
+        {
             if (IsStub())
                 return 0;
             return objectList.Count;
         }
 
-        public ObjectDefinition GetObject(int index) {
+        public ObjectDefinition GetObject(int index)
+        {
             if (IsStub())
                 throw new IndexOutOfRangeException();
             return objectList[index].def;
         }
 
-        public int IndexOf(ObjectDefinition obj) {
-            for (int i=0; i<objectList.Count; i++) {
+        public int IndexOf(ObjectDefinition obj)
+        {
+            for (int i = 0; i < objectList.Count; i++)
+            {
                 if (objectList[i].def == obj)
                     return i;
             }
@@ -193,12 +212,15 @@ namespace LynnaLib
         // Returns a list of ObjectGroups representing each main group (Main, Enemy, BeforeEvent,
         // AfterEvent) plus "Shared" groups if they exist. This should only be called on the "Main"
         // type.
-        public IReadOnlyList<ObjectGroup> GetAllGroups() {
+        public IReadOnlyList<ObjectGroup> GetAllGroups()
+        {
             return children;
         }
 
-        public int AddObject(ObjectType type) {
-            if (IsStub()) {
+        public int AddObject(ObjectType type)
+        {
+            if (IsStub())
+            {
                 Debug.Assert(parents.Count == 1);
                 parents[0].UnstubChild(this);
             }
@@ -207,7 +229,7 @@ namespace LynnaLib
             rawObjectGroup.InsertObject(rawObjectGroup.GetNumObjects(), type);
 
             ObjectStruct st = new ObjectStruct();
-            st.rawIndex = rawObjectGroup.GetNumObjects()-1;
+            st.rawIndex = rawObjectGroup.GetNumObjects() - 1;
             st.data = rawObjectGroup.GetObjectData(st.rawIndex);
             st.def = new ObjectDefinition(this, st.data, objectList.Count);
             st.def.AddValueModifiedHandler(ModifiedHandler);
@@ -216,10 +238,11 @@ namespace LynnaLib
             UpdateRawIndices();
             ModifiedHandler(this, null);
 
-            return GetNumObjects()-1;
+            return GetNumObjects() - 1;
         }
 
-        public void RemoveObject(int index) {
+        public void RemoveObject(int index)
+        {
             if (IsStub() || index >= objectList.Count)
                 throw new ArgumentException("Argument index=" + index + " is too high.");
 
@@ -234,7 +257,8 @@ namespace LynnaLib
             ModifiedHandler(this, null);
         }
 
-        public void MoveObject(int oldIndex, int newIndex) {
+        public void MoveObject(int oldIndex, int newIndex)
+        {
             if (oldIndex == newIndex)
                 return;
 
@@ -257,15 +281,18 @@ namespace LynnaLib
             ModifiedHandler(this, null);
         }
 
-        public void RemoveGroup(ObjectGroup group) {
+        public void RemoveGroup(ObjectGroup group)
+        {
             if (!children.Contains(group) || group.type != ObjectGroupType.Shared)
                 throw new Exception("Tried to remove an invalid object group.");
 
             bool foundGroup = false;
 
-            for (int i=0; i<rawObjectGroup.GetNumObjects(); i++) {
+            for (int i = 0; i < rawObjectGroup.GetNumObjects(); i++)
+            {
                 ObjectData data = rawObjectGroup.GetObjectData(i);
-                if (data.IsPointerType() && data.GetValue(0) == group.Identifier) {
+                if (data.IsPointerType() && data.GetValue(0) == group.Identifier)
+                {
                     rawObjectGroup.RemoveObject(i);
                     foundGroup = true;
                     break;
@@ -283,11 +310,13 @@ namespace LynnaLib
             ModifiedHandler(this, null);
         }
 
-        public void AddModifiedHandler(EventHandler<EventArgs> handler) {
+        public void AddModifiedHandler(EventHandler<EventArgs> handler)
+        {
             modifiedEvent += handler;
         }
 
-        public void RemoveModifiedHandler(EventHandler<EventArgs> handler) {
+        public void RemoveModifiedHandler(EventHandler<EventArgs> handler)
+        {
             modifiedEvent -= handler;
         }
 
@@ -301,7 +330,8 @@ namespace LynnaLib
         // is called.
         private bool beganIsolate;
 
-        internal void Isolate() {
+        internal void Isolate()
+        {
             if (IsStub() || beganIsolate)
                 return;
             if (type == ObjectGroupType.Shared) // We don't try to make these unique
@@ -309,24 +339,28 @@ namespace LynnaLib
 
             beganIsolate = true;
 
-            foreach (var parent in parents) {
+            foreach (var parent in parents)
+            {
                 parent.Isolate();
             }
 
             FileComponent firstToDelete;
 
-            if (!IsIsolated(out firstToDelete)) {
+            if (!IsIsolated(out firstToDelete))
+            {
                 rawObjectGroup.Repoint();
 
                 // ObjectData has been cloned in the RawObjectGroup, so reload it
-                foreach (ObjectStruct st in objectList) {
+                foreach (ObjectStruct st in objectList)
+                {
                     st.data = rawObjectGroup.GetObjectData(st.rawIndex);
                     st.def.SetObjectData(st.data);
                 }
 
                 // Delete orphaned data
                 FileComponent d = firstToDelete;
-                while (d != null) {
+                while (d != null)
+                {
                     FileComponent next = d.Next;
 
                     if (d is Label)
@@ -339,7 +373,8 @@ namespace LynnaLib
                 ModifiedHandler(this, null);
             }
 
-            foreach (ObjectGroup child in GetAllGroups()) {
+            foreach (ObjectGroup child in GetAllGroups())
+            {
                 if (child == this)
                     continue;
                 child.Isolate();
@@ -351,17 +386,20 @@ namespace LynnaLib
 
         // Private methods
 
-        void AddParent(ObjectGroup group) {
+        void AddParent(ObjectGroup group)
+        {
             parents.Add(group);
         }
 
         // Call this whenever the ordering of objects in objectList changes
-        void UpdateRawIndices() {
-            Dictionary<ObjectData,int> dict = new Dictionary<ObjectData,int>();
-            for (int i=0; i<rawObjectGroup.GetNumObjects(); i++)
+        void UpdateRawIndices()
+        {
+            Dictionary<ObjectData, int> dict = new Dictionary<ObjectData, int>();
+            for (int i = 0; i < rawObjectGroup.GetNumObjects(); i++)
                 dict.Add(rawObjectGroup.GetObjectData(i), i);
 
-            foreach (ObjectStruct st in objectList) {
+            foreach (ObjectStruct st in objectList)
+            {
                 st.rawIndex = dict[st.data];
                 st.def.UpdateIndex();
             }
@@ -371,7 +409,8 @@ namespace LynnaLib
         // Also returns, as an out parameter, a FileComponent from which to start deleting until the
         // next Label is found, to prevent data from being orphaned. Returns null if this is not to
         // be done.
-        bool IsIsolated(out FileComponent firstToDelete) {
+        bool IsIsolated(out FileComponent firstToDelete)
+        {
             firstToDelete = null;
 
             FileComponent d = rawObjectGroup.GetObjectData(0);
@@ -382,7 +421,8 @@ namespace LynnaLib
             while (!(d is Label || d is Data))
                 d = d.Prev;
 
-            if (!(d is Label)) {
+            if (!(d is Label))
+            {
                 // This shouldn't happen. A RawObjectGroup is constructed based on a label, so
                 // a label must exist here.
                 throw new Exception("Unexpected thing happened");
@@ -390,17 +430,20 @@ namespace LynnaLib
 
             d = d.Prev;
 
-            while (true) {
+            while (true)
+            {
                 if (d == null) // Start of file
                     break;
                 else if (d is Label)
                     return false; // Something else references this
-                else if (d is ObjectData) {
+                else if (d is ObjectData)
+                {
                     ObjectType type = (d as ObjectData).GetObjectType();
                     if (type == ObjectType.End || type == ObjectType.EndPointer)
                         break;
                 }
-                else if (d is Data) {
+                else if (d is Data)
+                {
                     log.Warn("Unexpected Data found before label '" + Identifier + "'?");
                     return false;
                 }
@@ -412,17 +455,20 @@ namespace LynnaLib
             d = rawObjectGroup.GetObjectData(0);
             firstToDelete = d;
 
-            while (true) {
+            while (true)
+            {
                 if (d == null) // End of file
                     break;
                 else if (d is Label)
                     return false; // Something else references this
-                else if (d is ObjectData) {
+                else if (d is ObjectData)
+                {
                     ObjectType type = (d as ObjectData).GetObjectType();
                     if (type == ObjectType.End || type == ObjectType.EndPointer)
                         break;
                 }
-                else if (d is Data) {
+                else if (d is Data)
+                {
                     log.Warn("Unexpected Data found after label '" + Identifier + "'?");
                     return false;
                 }
@@ -433,25 +479,29 @@ namespace LynnaLib
             return true;
         }
 
-        void ModifiedHandler(object sender, ValueModifiedEventArgs args) {
+        void ModifiedHandler(object sender, ValueModifiedEventArgs args)
+        {
             modifiedEvent?.Invoke(this, null);
             foreach (var parent in parents)
                 parent.ModifiedHandler(sender, args);
         }
 
-        bool IsStub() {
+        bool IsStub()
+        {
             return rawObjectGroup == null;
         }
 
         // Create a new pointer to a child ObjectGroup and give it blank data.
-        void UnstubChild(ObjectGroup child) {
+        void UnstubChild(ObjectGroup child)
+        {
             Debug.Assert(children.Contains(child));
 
             Isolate();
 
             FileParser parentParser = rawObjectGroup.GetObjectData(0).FileParser;
             FileParser childParser = Project.GetDefaultEnemyObjectFile();
-            if (childParser == null) {
+            if (childParser == null)
+            {
                 log.Warn("Couldn't open the default enemy object file.");
                 childParser = parentParser;
             }
@@ -488,7 +538,8 @@ namespace LynnaLib
         }
 
 
-        class ObjectStruct {
+        class ObjectStruct
+        {
             public int rawIndex;
             public ObjectDefinition def;
             public ObjectData data;

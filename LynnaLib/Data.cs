@@ -7,11 +7,13 @@ using Util;
 namespace LynnaLib
 {
     // Args passed by the "AddModifiedEventHandler" function.
-    public class DataModifiedEventArgs {
+    public class DataModifiedEventArgs
+    {
         // The index of the value changed (starting at 0), or -1 if a size-changing operation occurred.
         public readonly int ValueIndex;
 
-        public DataModifiedEventArgs(int valueIndex) {
+        public DataModifiedEventArgs(int valueIndex)
+        {
             this.ValueIndex = valueIndex;
         }
     }
@@ -42,40 +44,49 @@ namespace LynnaLib
 
         // Properties
 
-        public string Command {
+        public string Command
+        {
             get { return command; }
             set { command = value; }
         }
-        public string CommandLowerCase {
+        public string CommandLowerCase
+        {
             get { return command.ToLower(); }
         }
-        public int Size {
+        public int Size
+        {
             get { return size; }
         }
 
-        public bool PrintCommand {get; set;} // If false, don't output the command, only the values
+        public bool PrintCommand { get; set; } // If false, don't output the command, only the values
 
-        public Data NextData {
-            get {
+        public Data NextData
+        {
+            get
+            {
                 if (parser == null)
                     return null;
                 FileComponent c = this;
-                do {
+                do
+                {
                     c = parser.GetNextFileComponent(c);
                     if (c is Data) return c as Data;
-                } while(c != null);
+                } while (c != null);
                 return c as Data;
             }
         }
-        public Data LastData {
-            get {
+        public Data LastData
+        {
+            get
+            {
                 if (parser == null)
                     return null;
                 FileComponent c = this;
-                do {
+                do
+                {
                     c = parser.GetPrevFileComponent(c);
                     if (c is Data) return c as Data;
-                } while(c != null);
+                } while (c != null);
                 return c as Data;
             }
         }
@@ -83,7 +94,8 @@ namespace LynnaLib
 
         // Constructor
 
-        public Data(Project p, string command, IEnumerable<string> values, int size, FileParser parser, IList<string> spacing) : base(parser, spacing) {
+        public Data(Project p, string command, IEnumerable<string> values, int size, FileParser parser, IList<string> spacing) : base(parser, spacing)
+        {
             base.SetProject(p);
             this.command = command;
             if (values == null)
@@ -94,7 +106,7 @@ namespace LynnaLib
 
             if (this.spacing == null)
                 this.spacing = new List<string>();
-            while (this.spacing.Count < this.values.Count+2)
+            while (this.spacing.Count < this.values.Count + 2)
                 this.spacing.Add("");
 
             PrintCommand = true;
@@ -103,75 +115,92 @@ namespace LynnaLib
         }
 
 
-        public virtual string GetValue(int i) {
+        public virtual string GetValue(int i)
+        {
             if (i >= GetNumValues())
                 throw new InvalidLookupException("Value " + i + " is out of range in Data object.");
             return values[i];
         }
-        public int GetIntValue(int i) {
+        public int GetIntValue(int i)
+        {
             // TODO: error handling
-            try {
+            try
+            {
                 return Project.EvalToInt(GetValue(i));
             }
-            catch (Exception e) {
-                throw e;
+            catch (Exception e)
+            {
+                throw;
             }
         }
 
-        public virtual int GetNumValues() {
+        public virtual int GetNumValues()
+        {
             return values.Count;
         }
 
 
-        public virtual void SetValue(int i, string value) {
-            if (values[i] != value) {
+        public virtual void SetValue(int i, string value)
+        {
+            if (values[i] != value)
+            {
                 values[i] = value;
                 Modified = true;
                 dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(i));
             }
         }
-        public void SetByteValue(int i, byte value) {
+        public void SetByteValue(int i, byte value)
+        {
             SetHexValue(i, value, 2);
         }
-        public void SetWordValue(int i, int value) {
+        public void SetWordValue(int i, int value)
+        {
             SetHexValue(i, value, 4);
         }
-        public void SetHexValue(int i, int value, int minDigits) {
+        public void SetHexValue(int i, int value, int minDigits)
+        {
             SetValue(i, Wla.ToHex(value, minDigits));
         }
 
 
-        public virtual void AddModifiedEventHandler(EventHandler<DataModifiedEventArgs> handler) {
+        public virtual void AddModifiedEventHandler(EventHandler<DataModifiedEventArgs> handler)
+        {
             dataModifiedEvent += handler;
         }
-        public virtual void RemoveModifiedEventHandler(EventHandler<DataModifiedEventArgs> handler) {
+        public virtual void RemoveModifiedEventHandler(EventHandler<DataModifiedEventArgs> handler)
+        {
             dataModifiedEvent -= handler;
         }
 
 
-        public void SetNumValues(int n, string defaultValue) {
-            while (values.Count < n) {
+        public void SetNumValues(int n, string defaultValue)
+        {
+            while (values.Count < n)
+            {
                 InsertValue(values.Count, defaultValue);
             }
             while (values.Count > n)
-                RemoveValue(values.Count-1);
+                RemoveValue(values.Count - 1);
         }
 
         // Removes a value, deletes the spacing prior to it
-        public void RemoveValue(int i) {
+        public void RemoveValue(int i)
+        {
             values.RemoveAt(i);
-            spacing.RemoveAt(i+1);
+            spacing.RemoveAt(i + 1);
             Modified = true;
             dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(-1));
         }
-        public void InsertValue(int i, string value, string priorSpaces=" ") {
+        public void InsertValue(int i, string value, string priorSpaces = " ")
+        {
             values.Insert(i, value);
-            spacing.Insert(i+1, priorSpaces);
+            spacing.Insert(i + 1, priorSpaces);
             Modified = true;
             dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(-1));
         }
 
-        public override string GetString() {
+        public override string GetString()
+        {
             ResolveEvent?.Invoke(this, null);
 
             string s = "";
@@ -179,7 +208,8 @@ namespace LynnaLib
                 s = GetSpacingIndex(0) + Command;
 
             int spacingIndex = 1;
-            for (int i=0; i<values.Count; i++) {
+            for (int i = 0; i < values.Count; i++)
+            {
                 s += GetSpacingIndex(spacingIndex++);
                 s += values[i];
             }
@@ -188,48 +218,58 @@ namespace LynnaLib
             return s;
         }
 
-        public void LockModifiedEvents() {
+        public void LockModifiedEvents()
+        {
             dataModifiedEvent.Lock();
         }
 
-        public void UnlockModifiedEvents() {
+        public void UnlockModifiedEvents()
+        {
             dataModifiedEvent.Unlock();
         }
 
-        public void ClearAndUnlockModifiedEvents() {
+        public void ClearAndUnlockModifiedEvents()
+        {
             dataModifiedEvent.Clear();
             dataModifiedEvent.Unlock();
         }
 
         // Returns data which comes "offset" bytes after this data.
         // Generally only works with ".db" and ".dw" data, otherwise there is no size defined.
-        public Data GetDataAtOffset(int offset) {
+        public Data GetDataAtOffset(int offset)
+        {
             return FileParser.GetData(this, offset);
         }
 
 
         // Helper function for GetString
-        string GetSpacingIndex(int i) {
+        string GetSpacingIndex(int i)
+        {
             string space = spacing[i];
-            if (space.Length == 0 && i != 0 && i != values.Count+1) space = " ";
+            if (space.Length == 0 && i != 0 && i != values.Count + 1) space = " ";
             return space;
         }
 
-        public void ThrowException(Exception e) {
+        public void ThrowException(Exception e)
+        {
             throw e;
         }
     }
 
-    public class RgbData : Data {
+    public class RgbData : Data
+    {
 
-        public Color Color {
-            get {
+        public Color Color
+        {
+            get
+            {
                 return Color.FromArgb(
-                        Project.EvalToInt(GetValue(0))*8,
-                        Project.EvalToInt(GetValue(1))*8,
-                        Project.EvalToInt(GetValue(2))*8);
+                        Project.EvalToInt(GetValue(0)) * 8,
+                        Project.EvalToInt(GetValue(1)) * 8,
+                        Project.EvalToInt(GetValue(2)) * 8);
             }
-            set {
+            set
+            {
                 SetByteValue(0, (byte)(value.R >> 3));
                 SetByteValue(1, (byte)(value.G >> 3));
                 SetByteValue(2, (byte)(value.B >> 3));

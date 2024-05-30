@@ -3,18 +3,18 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Gtk;
 
-[assembly: log4net.Config.XmlConfigurator(Watch=true)]
+[assembly: log4net.Config.XmlConfigurator(Watch = true)]
 
 namespace LynnaLab
 {
     class MainClass
     {
 
-        public static void Main (string[] args)
+        public static void Main(string[] args)
         {
-            NUnitTestClass.RunTests ();
+            NUnitTestClass.RunTests();
 
-            Application.Init ();
+            Application.Init();
 
 #if (!DEBUG)
             try {
@@ -22,12 +22,12 @@ namespace LynnaLab
                 GLib.ExceptionManager.UnhandledException += (args) => HandleException(args.ExceptionObject);
 #endif
 
-                MainWindow win;
-                if (args.Length >= 1)
-                    win = new MainWindow(args[0]);
-                else
-                    win = new MainWindow();
-                Application.Run();
+            MainWindow win;
+            if (args.Length >= 1)
+                win = new MainWindow(args[0]);
+            else
+                win = new MainWindow();
+            Application.Run();
 
 #if (!DEBUG)
             }
@@ -37,7 +37,8 @@ namespace LynnaLab
 #endif
         }
 
-        static void HandleException(object exception) {
+        static void HandleException(object exception)
+        {
             string outputString = "An unhandled exception occurred:\n\n";
 
             outputString += exception.ToString();

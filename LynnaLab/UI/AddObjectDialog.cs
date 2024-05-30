@@ -11,7 +11,8 @@ namespace LynnaLab
 
         ObjectType objectType = ObjectType.End;
 
-        public ObjectType ObjectTypeToAdd {
+        public ObjectType ObjectTypeToAdd
+        {
             get { return objectType; }
         }
 
@@ -24,7 +25,8 @@ namespace LynnaLab
             ContentArea.Add(descriptionLabel);
             AddButton("Add", Gtk.ResponseType.Ok);
 
-            foreach (string s in ObjectGroupEditor.ObjectNames) {
+            foreach (string s in ObjectGroupEditor.ObjectNames)
+            {
                 comboBox.AppendText(s);
             }
             comboBox.Active = 0;
@@ -35,7 +37,8 @@ namespace LynnaLab
             this.ShowAll();
         }
 
-        public void UpdateLabel() {
+        public void UpdateLabel()
+        {
             objectType = (ObjectType)comboBox.Active;
             //infoLabel.Text = ObjectGroupEditor.ObjectNames[(int)objectType];
             descriptionLabel.Text = ObjectGroupEditor.ObjectDescriptions[(int)objectType];

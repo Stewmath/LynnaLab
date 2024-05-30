@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Util {
+namespace Util
+{
     /// Allows one to create weak event handlers for a specific class. Weak events don't prevent the
     /// object receiving the event callback from being garbage collected.
     ///
@@ -11,20 +12,24 @@ namespace Util {
     ///
     /// NOTE: When this object is freed, the events may cease to fire (garbage collection kicks in
     /// due to weak references). Must maintain a reference to it as long as the events are relevant.
-    public class WeakEventWrapper<TEventSource> where TEventSource : class {
+    public class WeakEventWrapper<TEventSource> where TEventSource : class
+    {
         List<EventStruct> eventList = new List<EventStruct>();
         TEventSource eventSource;
 
-        public WeakEventWrapper(TEventSource eventSource = null) {
+        public WeakEventWrapper(TEventSource eventSource = null)
+        {
             this.eventSource = eventSource;
         }
 
 
         /// Pass an event name that's in "TEventSource" and the handler for the event.
-        public void Bind<TEventArgs>(string eventName, EventHandler<TEventArgs> handler) {
+        public void Bind<TEventArgs>(string eventName, EventHandler<TEventArgs> handler)
+        {
             EventStruct ev = new EventStruct();
 
-            Action addHandlerMethod = () => {
+            Action addHandlerMethod = () =>
+            {
                 var signaller = new WeakEventBinder<TEventSource, TEventArgs>(eventSource, ev.eventName, handler);
                 ev.removeHandlerMethod = signaller.RemoveHandler;
             };
@@ -38,23 +43,28 @@ namespace Util {
             eventList.Add(ev);
         }
 
-        public void ReplaceEventSource(TEventSource source) {
-            foreach (var ev in eventList) {
+        public void ReplaceEventSource(TEventSource source)
+        {
+            foreach (var ev in eventList)
+            {
                 ev.removeHandlerMethod?.Invoke();
                 ev.removeHandlerMethod = null;
             }
 
             this.eventSource = source;
 
-            if (source != null) {
-                foreach (var ev in eventList) {
+            if (source != null)
+            {
+                foreach (var ev in eventList)
+                {
                     ev.addHandlerMethod();
                 }
             }
         }
 
         /// Unsubscribe from all events.
-        public void UnbindAll() {
+        public void UnbindAll()
+        {
             foreach (var ep in eventList)
                 ep.removeHandlerMethod?.Invoke();
             eventList.Clear();
@@ -62,7 +72,8 @@ namespace Util {
 
 
 
-        class EventStruct {
+        class EventStruct
+        {
             public string eventName;
             public Action addHandlerMethod;
             public Action removeHandlerMethod;
@@ -85,7 +96,8 @@ namespace Util {
     /// object of type "EventHandler<TEventArgs>", NOT with "FunctionName". It seems like in the
     /// latter case, a temporary delegate is created, which is immediately deleted, and since this
     /// uses a weak reference, that ruins everything... or something like that.
-    class WeakEventBinder<TEventSource, TEventArgs> where TEventSource : class {
+    class WeakEventBinder<TEventSource, TEventArgs> where TEventSource : class
+    {
 
         EventHandler<TEventArgs> intermediateHandler = null;
 
@@ -93,7 +105,8 @@ namespace Util {
         WeakReference<EventHandler<TEventArgs>> handler;
         EventInfo eventInfo;
 
-        public WeakEventBinder(TEventSource source, string eventName, EventHandler<TEventArgs> handler) {
+        public WeakEventBinder(TEventSource source, string eventName, EventHandler<TEventArgs> handler)
+        {
             this.source = new WeakReference<TEventSource>(source);
             this.handler = new WeakReference<EventHandler<TEventArgs>>(handler);
 
@@ -108,9 +121,11 @@ namespace Util {
         }
 
 
-        void AddHandler(TEventSource tangibleSource) {
+        void AddHandler(TEventSource tangibleSource)
+        {
             // Create intermediate callback
-            intermediateHandler = (sender, args) => {
+            intermediateHandler = (sender, args) =>
+            {
                 EventHandler<TEventArgs> h;
                 handler.TryGetTarget(out h);
 
@@ -124,7 +139,8 @@ namespace Util {
         }
 
 
-        public void RemoveHandler() {
+        public void RemoveHandler()
+        {
             TEventSource s;
             if (source.TryGetTarget(out s))
                 eventInfo.GetRemoveMethod().Invoke(s, new object[] { intermediateHandler });

@@ -12,8 +12,10 @@ namespace LynnaLib
 
         // Properties
 
-        public int Group {
-            get {
+        public int Group
+        {
+            get
+            {
                 return Index;
             }
         }
@@ -21,9 +23,10 @@ namespace LynnaLib
 
         // Constructors
 
-        internal WarpDestGroup(Project p, int id) : base(p,id) {
+        internal WarpDestGroup(Project p, int id) : base(p, id)
+        {
             fileParser = Project.GetFileWithLabel("warpDestTable");
-            Data tmp = fileParser.GetData("warpDestTable", id*2);
+            Data tmp = fileParser.GetData("warpDestTable", id * 2);
 
             string label = tmp.GetValue(0);
 
@@ -31,19 +34,23 @@ namespace LynnaLib
 
             warpDestDataList = new List<WarpDestData>();
 
-            while (data != null) {
+            while (data != null)
+            {
                 data.DestGroup = this;
                 data.DestIndex = warpDestDataList.Count;
                 warpDestDataList.Add(data);
 
                 FileComponent component = data.Next;
                 data = null;
-                while (component != null) {
-                    if (component is Label) {
+                while (component != null)
+                {
+                    if (component is Label)
+                    {
                         data = null;
                         break;
                     }
-                    else if (component is Data) {
+                    else if (component is Data)
+                    {
                         data = component as WarpDestData;
                         break;
                     }
@@ -55,21 +62,24 @@ namespace LynnaLib
 
         // Methods
 
-        public int GetNumWarpDests() {
+        public int GetNumWarpDests()
+        {
             return warpDestDataList.Count;
         }
 
-        public WarpDestData GetWarpDest(int index) {
+        public WarpDestData GetWarpDest(int index)
+        {
             return warpDestDataList[index];
         }
 
         // Adds a new WarpDestData to the end of the group, returns the index
-        public WarpDestData AddDestData() {
+        public WarpDestData AddDestData()
+        {
             WarpDestData newData = new WarpDestData(Project,
                     WarpDestData.WarpCommand,
                     null,
                     fileParser,
-                    new List<string>{"\t"});
+                    new List<string> { "\t" });
 
             foreach (ValueReference vref in newData.ValueReferenceGroup.GetValueReferences())
                 vref.Initialize();
@@ -79,18 +89,21 @@ namespace LynnaLib
             newData.DestGroup = this;
             newData.DestIndex = warpDestDataList.Count;
 
-            fileParser.InsertComponentAfter(warpDestDataList[warpDestDataList.Count-1], newData);
+            fileParser.InsertComponentAfter(warpDestDataList[warpDestDataList.Count - 1], newData);
             warpDestDataList.Add(newData);
 
             return newData;
         }
 
         // Returns either an unused WarpDestData, or creates a new one if no unused ones exist.
-        public WarpDestData GetNewOrUnusedDestData() {
+        public WarpDestData GetNewOrUnusedDestData()
+        {
             // Check if there's unused destination data already
-            for (int i=0; i<GetNumWarpDests(); i++) {
+            for (int i = 0; i < GetNumWarpDests(); i++)
+            {
                 WarpDestData destData = GetWarpDest(i);
-                if (destData.GetNumReferences() == 0) {
+                if (destData.GetNumReferences() == 0)
+                {
                     return GetWarpDest(i);
                 }
             }

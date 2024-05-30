@@ -6,20 +6,25 @@ namespace LynnaLab
     {
         // Properties
 
-        public abstract String Name {
+        public abstract String Name
+        {
             get;
         }
-        public abstract String Tooltip {
+        public abstract String Tooltip
+        {
             get;
         }
-        public abstract bool IsDockable {
+        public abstract bool IsDockable
+        {
             get;
         }
-        public abstract string Category {
+        public abstract string Category
+        {
             get;
         }
 
-        protected virtual Gtk.Widget Widget {
+        protected virtual Gtk.Widget Widget
+        {
             get { throw new NotImplementedException(); }
         }
 
@@ -32,7 +37,8 @@ namespace LynnaLab
         public virtual void Activate() { throw new NotImplementedException(); }
         public virtual Gtk.Widget Instantiate() { throw new NotImplementedException(); }
 
-        public void SpawnWindow() {
+        public void SpawnWindow()
+        {
             Gtk.Window w = new Gtk.Window(Name);
             w.Add(Instantiate());
             w.ShowAll();

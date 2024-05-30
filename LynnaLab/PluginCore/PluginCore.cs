@@ -18,8 +18,10 @@ namespace LynnaLab
         MainWindow mainWindow;
         readonly List<PluginManager> pluginManagers = new List<PluginManager>();
 
-        public Project Project {
-            get {
+        public Project Project
+        {
+            get
+            {
                 return mainWindow.Project;
             }
         }
@@ -29,12 +31,16 @@ namespace LynnaLab
             mainWindow = window;
         }
 
-        public void ReloadPlugins() {
+        public void ReloadPlugins()
+        {
             pluginManagers.Clear();
 
-            foreach (Module module in Assembly.GetExecutingAssembly().GetModules()) {
-                foreach (Type type in module.GetTypes()) {
-                    if (type.BaseType == typeof(Plugin)) {
+            foreach (Module module in Assembly.GetExecutingAssembly().GetModules())
+            {
+                foreach (Type type in module.GetTypes())
+                {
+                    if (type.BaseType == typeof(Plugin))
+                    {
                         Console.WriteLine(type + " implements Plugin");
                         pluginManagers.Add(new PluginManager(this, mainWindow, type));
                     }
@@ -42,7 +48,8 @@ namespace LynnaLab
             }
         }
 
-        public IEnumerable<Plugin> GetPlugins() {
+        public IEnumerable<Plugin> GetPlugins()
+        {
             return pluginManagers.Select(m => m.Plugin);
         }
     }

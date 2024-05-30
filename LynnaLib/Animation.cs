@@ -5,7 +5,8 @@ namespace LynnaLib
 {
     public class Animation : ProjectDataType
     {
-        public int NumIndices {
+        public int NumIndices
+        {
             get { return gfxHeaderIndices.Count; }
         }
 
@@ -13,10 +14,12 @@ namespace LynnaLib
         List<int> gfxHeaderIndices = new List<int>();
         List<int> counters = new List<int>();
 
-        internal Animation(Project p, string label) : base(p, label) {
+        internal Animation(Project p, string label) : base(p, label)
+        {
             FileParser parser = Project.GetFileWithLabel(label);
             Data data = parser.GetData(label);
-            while (data != null && data.CommandLowerCase == ".db") {
+            while (data != null && data.CommandLowerCase == ".db")
+            {
                 counters.Add(Project.EvalToInt(data.GetValue(0)));
                 data = data.NextData;
                 if (data.CommandLowerCase != ".db")
@@ -26,14 +29,16 @@ namespace LynnaLib
             }
         }
 
-        public int GetCounter(int i) {
+        public int GetCounter(int i)
+        {
             return counters[i];
         }
-        public GfxHeaderData GetGfxHeader(int i) {
+        public GfxHeaderData GetGfxHeader(int i)
+        {
             int index = gfxHeaderIndices[i];
             FileParser parser = Project.GetFileWithLabel("animationGfxHeaders");
             var header = parser.GetData("animationGfxHeaders") as GfxHeaderData;
-            for (int j=0; j<index; j++)
+            for (int j = 0; j < index; j++)
                 header = header.NextData as GfxHeaderData;
             return header;
         }

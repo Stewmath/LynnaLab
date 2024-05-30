@@ -10,14 +10,16 @@ using Util;
 
 namespace LynnaLab
 {
-    public enum MouseButton {
+    public enum MouseButton
+    {
         Any,
         LeftClick,
         RightClick
     }
 
     [Flags]
-    public enum MouseModifier {
+    public enum MouseModifier
+    {
         // Exact combination of keys must be pressed, but "Any" allows any combination.
         Any = 1,
         None = 2,
@@ -27,7 +29,8 @@ namespace LynnaLab
         Drag = 16,
     }
 
-    public enum GridAction {
+    public enum GridAction
+    {
         Select,       // Set the selected tile (bound to button "Any" with modifier "None" by default)
         SelectRange,  // [PLANNED] Select a range of tiles
         Callback      // Invoke a callback whenever the tile is clicked, or the drag changes
@@ -37,7 +40,8 @@ namespace LynnaLab
     /* Represents any kind of tile-based grid. It can be hovered over with the mouse, and optionally
      * allows one to select tiles by clicking, or define actions to occur with other mouse buttons.
      */
-    public abstract class TileGridViewer : Gtk.DrawingArea {
+    public abstract class TileGridViewer : Gtk.DrawingArea
+    {
         public static readonly Cairo.Color DefaultHoverColor = new Cairo.Color(1.0, 0, 0);
         public static readonly Cairo.Color DefaultSelectionColor = new Cairo.Color(1.0, 1.0, 1.0);
 
@@ -63,10 +67,13 @@ namespace LynnaLab
         public int TilePaddingY { get; set; }
 
 
-        public bool Hoverable {
+        public bool Hoverable
+        {
             get { return _hoverable; }
-            set {
-                if (_hoverable != value && HoveringIndex != -1) {
+            set
+            {
+                if (_hoverable != value && HoveringIndex != -1)
+                {
                     Cairo.Rectangle rect = GetTileRectWithPadding(HoveringX, HoveringY);
                     QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
                 }
@@ -74,9 +81,11 @@ namespace LynnaLab
             }
         }
 
-        public bool Selectable {
+        public bool Selectable
+        {
             get { return _selectable; }
-            set {
+            set
+            {
                 if (_selectable == value)
                     return;
                 _selectable = value;
@@ -95,16 +104,18 @@ namespace LynnaLab
         }
         public int HoveringX
         {
-            get {
+            get
+            {
                 if (Width == 0) return 0;
-                return hoveringIndex%Width;
+                return hoveringIndex % Width;
             }
         }
         public int HoveringY
         {
-            get {
+            get
+            {
                 if (Height == 0) return 0;
-                return hoveringIndex/Width;
+                return hoveringIndex / Width;
             }
         }
 
@@ -112,8 +123,10 @@ namespace LynnaLab
         public int SelectedIndex
         {
             get { return selectedIndex; }
-            set {
-                if (selectedIndex != value) {
+            set
+            {
+                if (selectedIndex != value)
+                {
                     var rect = GetTileRectSansPadding(SelectedX, SelectedY);
                     QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
                     selectedIndex = value;
@@ -125,31 +138,37 @@ namespace LynnaLab
         }
         public int SelectedX
         {
-            get {
+            get
+            {
                 if (Width == 0) return 0;
-                return selectedIndex%Width;
+                return selectedIndex % Width;
             }
         }
         public int SelectedY
         {
-            get {
+            get
+            {
                 if (Height == 0) return 0;
-                return selectedIndex/Width;
+                return selectedIndex / Width;
             }
         }
 
 
         // Size of tile (not including spacing)
-        public int ScaledTileWidth {
-            get { return TileWidth*Scale; }
+        public int ScaledTileWidth
+        {
+            get { return TileWidth * Scale; }
         }
-        public int ScaledTileHeight {
-            get { return TileHeight*Scale; }
+        public int ScaledTileHeight
+        {
+            get { return TileHeight * Scale; }
         }
 
-        public int MaxIndex {
+        public int MaxIndex
+        {
             get { return Math.Min(_maxIndex, Width * Height - 1); }
-            set {
+            set
+            {
                 _maxIndex = value;
                 hoveringIndex = Math.Min(hoveringIndex, MaxIndex);
             }
@@ -191,7 +210,8 @@ namespace LynnaLab
 
         // Constructors
 
-        public TileGridViewer() : base() {
+        public TileGridViewer() : base()
+        {
             this.ButtonPressEvent += new ButtonPressEventHandler(OnButtonPressEvent);
             this.ButtonReleaseEvent += new ButtonReleaseEventHandler(OnButtonReleaseEvent);
             this.MotionNotifyEvent += new MotionNotifyEventHandler(OnMoveMouse);
@@ -208,7 +228,8 @@ namespace LynnaLab
             // Really stupid hack to prevent focus from being lost when arrow keys are used.
             // This isn't ideal because it will still attempt to focus on other widgets, with
             // visible effects (ie. spin button contents are highlighted).
-            this.FocusOutEvent += (a, b) => {
+            this.FocusOutEvent += (a, b) =>
+            {
                 if (keyDown)
                     GrabFocus();
             };
@@ -221,43 +242,50 @@ namespace LynnaLab
 
         // Check if the given "real" position (in pixels) is in bounds. This ALSO checks that the
         // index that it's hovering over does not exceed MaxIndex.
-        public bool IsInBounds(int x, int y, bool scale = true, bool offset = true) {
-            Cairo.Rectangle p = GetTotalBounds(scale:scale, offset:offset);
+        public bool IsInBounds(int x, int y, bool scale = true, bool offset = true)
+        {
+            Cairo.Rectangle p = GetTotalBounds(scale: scale, offset: offset);
             if (!(x >= p.X && y >= p.Y && x < p.X + p.Width && y < p.Y + p.Height))
                 return false;
             return GetGridIndex(x, y) <= MaxIndex;
         }
 
         // Convert a "real" position (in pixels) into a grid position (in tiles).
-        public Cairo.Point GetGridPosition(int x, int y, bool scale = true, bool offset = true) {
+        public Cairo.Point GetGridPosition(int x, int y, bool scale = true, bool offset = true)
+        {
             int s = Scale;
             int xoffset = XOffset;
             int yoffset = YOffset;
             if (!scale)
                 s = 1;
-            if (!offset) {
+            if (!offset)
+            {
                 xoffset = 0;
                 yoffset = 0;
             }
-            int x2 = (x - xoffset) / ((TileWidth  * s) + (TilePaddingX * s * 2));
+            int x2 = (x - xoffset) / ((TileWidth * s) + (TilePaddingX * s * 2));
             int y2 = (y - yoffset) / ((TileHeight * s) + (TilePaddingY * s * 2));
             return new Cairo.Point(x2, y2);
         }
 
         // Convert a "real" position (in pixels) to an index.
-        public int GetGridIndex(int x, int y) {
+        public int GetGridIndex(int x, int y)
+        {
             Cairo.Point p = GetGridPosition(x, y);
             return p.X + p.Y * Width;
         }
 
-        public void AddMouseAction(MouseButton button, MouseModifier mod, GridAction action, TileGridEventHandler callback = null) {
+        public void AddMouseAction(MouseButton button, MouseModifier mod, GridAction action, TileGridEventHandler callback = null)
+        {
             TileGridAction act;
-            if (action == GridAction.Callback) {
+            if (action == GridAction.Callback)
+            {
                 if (callback == null)
                     throw new Exception("Need to specify a callback.");
                 act = new TileGridAction(button, mod, action, callback);
             }
-            else {
+            else
+            {
                 if (callback != null)
                     throw new Exception("This action doesn't take a callback.");
                 act = new TileGridAction(button, mod, action);
@@ -266,41 +294,51 @@ namespace LynnaLab
             actionList.Add(act);
         }
 
-        public void RemoveMouseAction(MouseButton button, MouseModifier mod) {
-            for (int i=0; i<actionList.Count; i++) {
+        public void RemoveMouseAction(MouseButton button, MouseModifier mod)
+        {
+            for (int i = 0; i < actionList.Count; i++)
+            {
                 var act = actionList[i];
-                if (act.button == button && act.mod == mod) {
+                if (act.button == button && act.mod == mod)
+                {
                     actionList.Remove(act);
                     i--;
                 }
             }
         }
 
-        public void AddTileSelectedHandler(EventHandler<int> handler) {
+        public void AddTileSelectedHandler(EventHandler<int> handler)
+        {
             tileSelectedEvent += handler;
         }
 
-        public void RemoveTileSelectedHandler(EventHandler<int> handler) {
+        public void RemoveTileSelectedHandler(EventHandler<int> handler)
+        {
             tileSelectedEvent -= handler;
         }
 
         // May need to call this after updating Width, Height, TileWidth, TileHeight
-        public void UpdateSizeRequest() {
-            Cairo.Rectangle r = GetTotalBounds(scale:true, offset:false);
+        public void UpdateSizeRequest()
+        {
+            Cairo.Rectangle r = GetTotalBounds(scale: true, offset: false);
             SetSizeRequest((int)r.Width, (int)r.Height);
         }
 
 
         // Protected methods
 
-        protected void OnButtonPressEvent(object o, ButtonPressEventArgs args) {
-            int x,y;
+        protected void OnButtonPressEvent(object o, ButtonPressEventArgs args)
+        {
+            int x, y;
             Gdk.ModifierType state;
             args.Event.Window.GetPointer(out x, out y, out state);
 
-            if (activeAction == null && IsInBounds(x, y)) {
-                foreach (TileGridAction act in actionList) {
-                    if (act.MatchesState(state)) {
+            if (activeAction == null && IsInBounds(x, y))
+            {
+                foreach (TileGridAction act in actionList)
+                {
+                    if (act.MatchesState(state))
+                    {
                         HandleTileGridAction(act, GetGridIndex(x, y));
 
                         if (act.mod.HasFlag(MouseModifier.Drag))
@@ -313,34 +351,41 @@ namespace LynnaLab
             }
         }
 
-        protected void OnButtonReleaseEvent(object o, ButtonReleaseEventArgs args) {
-            int x,y;
+        protected void OnButtonReleaseEvent(object o, ButtonReleaseEventArgs args)
+        {
+            int x, y;
             Gdk.ModifierType state;
             args.Event.Window.GetPointer(out x, out y, out state);
 
-            if (activeAction != null && !activeAction.ButtonMatchesState(state)) {
-                if (activeAction.mod.HasFlag(MouseModifier.Drag)) {
+            if (activeAction != null && !activeAction.ButtonMatchesState(state))
+            {
+                if (activeAction.mod.HasFlag(MouseModifier.Drag))
+                {
                     // Probably will add a "button release" callback here later
                     activeAction = null;
                 }
             }
         }
 
-        protected void OnMoveMouse(object o, MotionNotifyEventArgs args) {
-            int x,y;
+        protected void OnMoveMouse(object o, MotionNotifyEventArgs args)
+        {
+            int x, y;
             Gdk.ModifierType state;
             args.Event.Window.GetPointer(out x, out y, out state);
 
             int nextHoveringIndex;
-            if (IsInBounds(x,y)) {
+            if (IsInBounds(x, y))
+            {
                 Cairo.Point p = GetGridPosition(x, y);
                 nextHoveringIndex = p.X + p.Y * Width;
             }
-            else {
+            else
+            {
                 nextHoveringIndex = -1;
             }
 
-            if (nextHoveringIndex != hoveringIndex) {
+            if (nextHoveringIndex != hoveringIndex)
+            {
                 // Update hovering cursor
                 Cairo.Rectangle rect = GetTileRectWithPadding(HoveringX, HoveringY);
                 this.QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
@@ -352,15 +397,18 @@ namespace LynnaLab
                     HoverChangedEvent(this, hoveringIndex);
 
                 // Drag actions
-                if (activeAction != null && activeAction.mod.HasFlag(MouseModifier.Drag) && IsInBounds(x, y)) {
+                if (activeAction != null && activeAction.mod.HasFlag(MouseModifier.Drag) && IsInBounds(x, y))
+                {
                     HandleTileGridAction(activeAction, nextHoveringIndex);
                 }
             }
         }
 
-        protected void OnMouseLeave(object o, LeaveNotifyEventArgs args) {
+        protected void OnMouseLeave(object o, LeaveNotifyEventArgs args)
+        {
             bool changed = false;
-            if (hoveringIndex != -1) {
+            if (hoveringIndex != -1)
+            {
                 Cairo.Rectangle rect = GetTileRectWithPadding(HoveringX, HoveringY);
                 this.QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
 
@@ -374,19 +422,25 @@ namespace LynnaLab
             // Don't check for drag actions because we'll ignore out-of-bounds events?
         }
 
-        protected void OnKeyPressEvent(object o, KeyPressEventArgs args) {
-            if (Selectable) {
+        protected void OnKeyPressEvent(object o, KeyPressEventArgs args)
+        {
+            if (Selectable)
+            {
                 int newIndex = -1;
-                if (args.Event.Key == Gdk.Key.Up) {
+                if (args.Event.Key == Gdk.Key.Up)
+                {
                     newIndex = SelectedIndex - Width;
                 }
-                else if (args.Event.Key == Gdk.Key.Down) {
+                else if (args.Event.Key == Gdk.Key.Down)
+                {
                     newIndex = SelectedIndex + Width;
                 }
-                else if (args.Event.Key == Gdk.Key.Left) {
+                else if (args.Event.Key == Gdk.Key.Left)
+                {
                     newIndex = SelectedIndex - 1;
                 }
-                else if (args.Event.Key == Gdk.Key.Right) {
+                else if (args.Event.Key == Gdk.Key.Right)
+                {
                     newIndex = SelectedIndex + 1;
                 }
 
@@ -399,21 +453,26 @@ namespace LynnaLab
                 keyDown = true;
         }
 
-        protected void OnKeyReleaseEvent(object o, KeyReleaseEventArgs args) {
+        protected void OnKeyReleaseEvent(object o, KeyReleaseEventArgs args)
+        {
             keyDown = false;
         }
 
-        void HandleTileGridAction(TileGridAction act, int index) {
-            if (act.action == GridAction.Select) {
+        void HandleTileGridAction(TileGridAction act, int index)
+        {
+            if (act.action == GridAction.Select)
+            {
                 SelectedIndex = index;
             }
-            else if (act.action == GridAction.Callback) {
+            else if (act.action == GridAction.Callback)
+            {
                 act.callback(this, index);
             }
         }
 
 
-        protected override void OnSizeAllocated(Gdk.Rectangle allocation) {
+        protected override void OnSizeAllocated(Gdk.Rectangle allocation)
+        {
             base.OnSizeAllocated(allocation);
 
             Cairo.Rectangle desiredRect = GetTotalBounds();
@@ -433,14 +492,16 @@ namespace LynnaLab
                 throw new NotImplementedException();
         }
 
-        protected override bool OnDrawn(Cairo.Context cr) {
+        protected override bool OnDrawn(Cairo.Context cr)
+        {
             DrawBackground(cr);
             DrawHoverAndSelection(cr);
 
             return true;
         }
 
-        protected void DrawBackground(Cairo.Context cr) {
+        protected void DrawBackground(Cairo.Context cr)
+        {
             var totalRect = GetTotalBounds();
             cr.SetSourceColor(BackgroundColor);
             cr.Rectangle(totalRect.X, totalRect.Y, totalRect.Width, totalRect.Height);
@@ -450,32 +511,39 @@ namespace LynnaLab
             cr.Translate(XOffset, YOffset);
             cr.Scale(Scale, Scale);
 
-            if (Surface != null) {
+            if (Surface != null)
+            {
                 cr.SetSource(Surface, 0, 0);
 
-                using (SurfacePattern pattern = (SurfacePattern)cr.GetSource()) {
+                using (SurfacePattern pattern = (SurfacePattern)cr.GetSource())
+                {
                     pattern.Filter = Filter.Nearest;
                 }
 
                 cr.Paint();
             }
-            else if (Image != null) {
-                using (Surface source = new BitmapSurface(Image)) {
+            else if (Image != null)
+            {
+                using (Surface source = new BitmapSurface(Image))
+                {
                     cr.SetSource(source, 0, 0);
 
-                    using (SurfacePattern pattern = (SurfacePattern)cr.GetSource()) {
+                    using (SurfacePattern pattern = (SurfacePattern)cr.GetSource())
+                    {
                         pattern.Filter = Filter.Nearest;
                     }
 
                     cr.Paint();
                 }
             }
-            else {
+            else
+            {
                 Cairo.Rectangle extents = cr.ClipExtents();
-                for (int i=0; i<Width*Height; i++) {
-                    int tileX = i%Width;
-                    int tileY = i/Width;
-                    Cairo.Rectangle rect = GetTileRectWithPadding(tileX, tileY, scale:false, offset:false);
+                for (int i = 0; i < Width * Height; i++)
+                {
+                    int tileX = i % Width;
+                    int tileY = i / Width;
+                    Cairo.Rectangle rect = GetTileRectWithPadding(tileX, tileY, scale: false, offset: false);
 
                     if (!CairoHelper.RectsOverlap(extents, rect))
                         continue;
@@ -492,29 +560,33 @@ namespace LynnaLab
             cr.Restore(); // Undo scale, offset
         }
 
-        protected void DrawHoverAndSelection(Cairo.Context cr) {
+        protected void DrawHoverAndSelection(Cairo.Context cr)
+        {
             cr.Save();
 
             cr.Translate(XOffset, YOffset);
             cr.Scale(Scale, Scale);
 
-            if (Hoverable && hoveringIndex != -1) {
-                Cairo.Rectangle rect = GetTileRectSansPadding(HoveringX, HoveringY, scale:false, offset:false);
+            if (Hoverable && hoveringIndex != -1)
+            {
+                Cairo.Rectangle rect = GetTileRectSansPadding(HoveringX, HoveringY, scale: false, offset: false);
                 cr.NewPath();
                 cr.SetSourceColor(HoverColor);
-                cr.Rectangle(new Cairo.Rectangle(rect.X + 0.5, rect.Y + 0.5, rect.Width-1, rect.Height-1));
+                cr.Rectangle(new Cairo.Rectangle(rect.X + 0.5, rect.Y + 0.5, rect.Width - 1, rect.Height - 1));
                 cr.LineWidth = 1;
                 cr.LineJoin = LineJoin.Bevel;
                 cr.Stroke();
             }
 
-            if (Selectable) {
-                var rect = GetTileRectSansPadding(SelectedX, SelectedY, scale:false, offset:false);
+            if (Selectable)
+            {
+                var rect = GetTileRectSansPadding(SelectedX, SelectedY, scale: false, offset: false);
 
-                if (IsInBounds((int)rect.X, (int)rect.Y, scale:false, offset:false)) {
+                if (IsInBounds((int)rect.X, (int)rect.Y, scale: false, offset: false))
+                {
                     cr.NewPath();
                     cr.SetSourceColor(SelectionColor);
-                    cr.Rectangle(rect.X + 0.5, rect.Y + 0.5, rect.Width-1, rect.Height-1);
+                    cr.Rectangle(rect.X + 0.5, rect.Y + 0.5, rect.Width - 1, rect.Height - 1);
                     cr.LineWidth = 1;
                     cr.Stroke();
                 }
@@ -523,79 +595,89 @@ namespace LynnaLab
             cr.Restore();
         }
 
-        protected override void OnGetPreferredWidth(out int minimum_width, out int natural_width) {
+        protected override void OnGetPreferredWidth(out int minimum_width, out int natural_width)
+        {
             var rect = GetTotalBounds();
             minimum_width = (int)rect.Width;
             natural_width = (int)rect.Width;
         }
-        protected override void OnGetPreferredHeight(out int minimum_height, out int natural_height) {
+        protected override void OnGetPreferredHeight(out int minimum_height, out int natural_height)
+        {
             var rect = GetTotalBounds();
             minimum_height = (int)rect.Height;
             natural_height = (int)rect.Height;
         }
 
-        protected Cairo.Rectangle GetTileRectWithPadding(int x, int y, bool scale = true, bool offset = true) {
+        protected Cairo.Rectangle GetTileRectWithPadding(int x, int y, bool scale = true, bool offset = true)
+        {
             int s = Scale;
             int xoffset = XOffset;
             int yoffset = YOffset;
             if (!scale)
                 s = 1;
-            if (!offset) {
+            if (!offset)
+            {
                 xoffset = 0;
                 yoffset = 0;
             }
             return new Cairo.Rectangle(
-                    xoffset + x * (TilePaddingX * 2 + TileWidth)  * s,
+                    xoffset + x * (TilePaddingX * 2 + TileWidth) * s,
                     yoffset + y * (TilePaddingY * 2 + TileHeight) * s,
-                    TileWidth  * s + TilePaddingX * s * 2,
+                    TileWidth * s + TilePaddingX * s * 2,
                     TileHeight * s + TilePaddingY * s * 2);
         }
 
-        protected Cairo.Rectangle GetTileRectSansPadding(int x, int y, bool scale = true, bool offset = true) {
+        protected Cairo.Rectangle GetTileRectSansPadding(int x, int y, bool scale = true, bool offset = true)
+        {
             int s = Scale;
             int xoffset = XOffset;
             int yoffset = YOffset;
             if (!scale)
                 s = 1;
-            if (!offset) {
+            if (!offset)
+            {
                 xoffset = 0;
                 yoffset = 0;
             }
             return new Cairo.Rectangle(
-                    xoffset + x * (TilePaddingX * 2 + TileWidth)  * s + TilePaddingX * s,
+                    xoffset + x * (TilePaddingX * 2 + TileWidth) * s + TilePaddingX * s,
                     yoffset + y * (TilePaddingY * 2 + TileHeight) * s + TilePaddingY * s,
-                    TileWidth  * s,
+                    TileWidth * s,
                     TileHeight * s);
         }
 
-        protected Cairo.Rectangle GetTotalBounds(bool scale = true, bool offset = true) {
+        protected Cairo.Rectangle GetTotalBounds(bool scale = true, bool offset = true)
+        {
             int s = Scale;
             int xoffset = XOffset;
             int yoffset = YOffset;
             if (!scale)
                 s = 1;
-            if (!offset) {
+            if (!offset)
+            {
                 xoffset = 0;
                 yoffset = 0;
             }
             return new Cairo.Rectangle(
                     xoffset,
                     yoffset,
-                    Width  * (TilePaddingX * 2 + TileWidth)  * s,
+                    Width * (TilePaddingX * 2 + TileWidth) * s,
                     Height * (TilePaddingY * 2 + TileHeight) * s);
         }
 
-        protected void QueueDrawTile(int x, int y) {
+        protected void QueueDrawTile(int x, int y)
+        {
             Cairo.Rectangle rect = GetTileRectSansPadding(x, y);
             QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
         }
 
-        protected virtual void TileDrawer(int index, Cairo.Context cr) {}
+        protected virtual void TileDrawer(int index, Cairo.Context cr) { }
 
 
         // Nested class
 
-        class TileGridAction {
+        class TileGridAction
+        {
             public readonly MouseButton button;
             public readonly MouseModifier mod;
             public readonly GridAction action;
@@ -603,18 +685,21 @@ namespace LynnaLab
 
             public int lastIndex = -1;
 
-            public TileGridAction(MouseButton button, MouseModifier mod, GridAction action, TileGridEventHandler callback=null) {
+            public TileGridAction(MouseButton button, MouseModifier mod, GridAction action, TileGridEventHandler callback = null)
+            {
                 this.button = button;
                 this.mod = mod;
                 this.action = action;
                 this.callback = callback;
             }
 
-            public bool MatchesState(Gdk.ModifierType state) {
+            public bool MatchesState(Gdk.ModifierType state)
+            {
                 return ButtonMatchesState(state) && ModifierMatchesState(state);
             }
 
-            public bool ButtonMatchesState(Gdk.ModifierType state) {
+            public bool ButtonMatchesState(Gdk.ModifierType state)
+            {
                 bool left = state.HasFlag(Gdk.ModifierType.Button1Mask);
                 bool right = state.HasFlag(Gdk.ModifierType.Button3Mask);
                 if (button == MouseButton.Any && (left || right))
@@ -626,7 +711,8 @@ namespace LynnaLab
                 return false;
             }
 
-            public bool ModifierMatchesState(Gdk.ModifierType state) {
+            public bool ModifierMatchesState(Gdk.ModifierType state)
+            {
                 if (mod.HasFlag(MouseModifier.Any))
                     return true;
                 MouseModifier flags = MouseModifier.None;

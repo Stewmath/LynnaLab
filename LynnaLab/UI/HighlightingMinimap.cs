@@ -15,12 +15,16 @@ namespace LynnaLab
     {
         bool _darkenUsedDungeonRooms = true;
 
-        public bool DarkenUsedDungeonRooms {
-            get {
+        public bool DarkenUsedDungeonRooms
+        {
+            get
+            {
                 return _darkenUsedDungeonRooms;
             }
-            set {
-                if (_darkenUsedDungeonRooms != value) {
+            set
+            {
+                if (_darkenUsedDungeonRooms != value)
+                {
                     _darkenUsedDungeonRooms = value;
                     QueueDraw();
                 }
@@ -31,12 +35,14 @@ namespace LynnaLab
         {
         }
 
-        protected override void TileDrawer(int index, Cairo.Context cr) {
+        protected override void TileDrawer(int index, Cairo.Context cr)
+        {
             int roomIndex = (Map.MainGroup << 8) | index;
 
             base.TileDrawer(index, cr);
 
-            if (DarkenUsedDungeonRooms && Project.RoomUsedInDungeon(roomIndex)) {
+            if (DarkenUsedDungeonRooms && Project.RoomUsedInDungeon(roomIndex))
+            {
                 cr.SetSourceRGB(0, 0, 0);
                 cr.PaintWithAlpha(0.8);
             }

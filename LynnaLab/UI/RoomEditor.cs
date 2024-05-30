@@ -8,7 +8,8 @@ using LynnaLib;
 
 namespace LynnaLab
 {
-    public class RoomChangedEventArgs {
+    public class RoomChangedEventArgs
+    {
         public Room room;
         public bool fromFollowWarp;
     }
@@ -33,7 +34,7 @@ namespace LynnaLab
 
         List<RoomComponent> roomComponents = new List<RoomComponent>();
 
-        int mouseX=-1,mouseY=-1;
+        int mouseX = -1, mouseY = -1;
 
         bool _enableTileEditing, _viewObjects, _viewWarps, _viewChests;
         bool draggingTile, draggingObject;
@@ -51,7 +52,8 @@ namespace LynnaLab
 
         // Constructors
 
-        public RoomEditor() {
+        public RoomEditor()
+        {
             base.TileWidth = 16;
             base.TileHeight = 16;
             base.Halign = Gtk.Align.Start;
@@ -59,27 +61,30 @@ namespace LynnaLab
 
             EnableTileEditing = true;
 
-            this.ButtonPressEvent += delegate(object o, ButtonPressEventArgs args)
+            this.ButtonPressEvent += delegate (object o, ButtonPressEventArgs args)
             {
                 if (TilesetViewer == null)
                     return;
-                int x,y;
+                int x, y;
                 args.Event.Window.GetPointer(out x, out y, out gdkState);
-                UpdateMouse(x,y);
+                UpdateMouse(x, y);
                 OnClicked(mouseX, mouseY, args.Event, args.Event.Button);
             };
-            this.ButtonReleaseEvent += delegate(object o, ButtonReleaseEventArgs args) {
-                if (args.Event.Button == 1) {
+            this.ButtonReleaseEvent += delegate (object o, ButtonReleaseEventArgs args)
+            {
+                if (args.Event.Button == 1)
+                {
                     draggingObject = false;
                     draggingTile = false;
                 }
             };
-            this.MotionNotifyEvent += delegate(object o, MotionNotifyEventArgs args) {
+            this.MotionNotifyEvent += delegate (object o, MotionNotifyEventArgs args)
+            {
                 if (TilesetViewer == null)
                     return;
-                int x,y;
+                int x, y;
                 args.Event.Window.GetPointer(out x, out y, out gdkState);
-                UpdateMouse(x,y);
+                UpdateMouse(x, y);
                 if (gdkState.HasFlag(Gdk.ModifierType.Button1Mask))
                     OnDragged(mouseX, mouseY, args.Event);
             };
@@ -98,11 +103,14 @@ namespace LynnaLab
         {
             get { return room; }
         }
-        public int Season {
+        public int Season
+        {
             get { return season; }
         }
-        public RoomLayout RoomLayout {
-            get {
+        public RoomLayout RoomLayout
+        {
+            get
+            {
                 if (room == null)
                     return null;
                 if (room.HasSeasons)
@@ -112,39 +120,50 @@ namespace LynnaLab
             }
         }
 
-        public bool EnableTileEditing {
-            get {
+        public bool EnableTileEditing
+        {
+            get
+            {
                 return _enableTileEditing && EditingWarpDestination == null;
             }
-            set {
+            set
+            {
                 _enableTileEditing = value;
                 base.Hoverable = value;
             }
         }
 
-        public bool ViewObjects {
-            get {
+        public bool ViewObjects
+        {
+            get
+            {
                 return _viewObjects;
             }
-            set {
+            set
+            {
                 _viewObjects = value;
                 GenerateRoomComponents();
             }
         }
 
-        public bool ViewWarps {
+        public bool ViewWarps
+        {
             get { return _viewWarps; }
-            set {
+            set
+            {
                 _viewWarps = value;
                 GenerateRoomComponents();
             }
         }
 
-        public bool ViewChests {
-            get {
+        public bool ViewChests
+        {
+            get
+            {
                 return _viewChests;
             }
-            set {
+            set
+            {
                 _viewChests = value;
                 GenerateRoomComponents();
             }
@@ -152,19 +171,24 @@ namespace LynnaLab
 
         public TileGridViewer TilesetViewer { get; set; }
 
-        public ObjectGroupEditor ObjectGroupEditor {
+        public ObjectGroupEditor ObjectGroupEditor
+        {
             get { return _objectEditor; }
-            set {
-                if (_objectEditor != value) {
+            set
+            {
+                if (_objectEditor != value)
+                {
                     _objectEditor = value;
                     _objectEditor.RoomEditor = this;
                 }
             }
         }
 
-        public WarpEditor WarpEditor {
+        public WarpEditor WarpEditor
+        {
             get { return _warpEditor; }
-            set {
+            set
+            {
                 if (_warpEditor != null)
                     _warpEditor.SelectedWarpEvent -= OnWarpSelected;
                 _warpEditor = value;
@@ -173,11 +197,14 @@ namespace LynnaLab
         }
 
         // This is set to a warp when we're in "warp destination editing mode".
-        public Warp EditingWarpDestination {
-            get {
+        public Warp EditingWarpDestination
+        {
+            get
+            {
                 return _editingWarpDestination;
             }
-            private set {
+            private set
+            {
                 if (_editingWarpDestination != null)
                     _editingWarpDestination.RemoveModifiedHandler(OnDestinationWarpModified);
 
@@ -191,36 +218,44 @@ namespace LynnaLab
             }
         }
 
-        protected override Bitmap Image {
-            get {
+        protected override Bitmap Image
+        {
+            get
+            {
                 return RoomLayout?.GetImage();
             }
         }
 
-        Project Project {
+        Project Project
+        {
             get { return room.Project; }
         }
 
         // Refers to the (one and only) chest in the room, or null.
-        Chest Chest {
+        Chest Chest
+        {
             get; set;
         }
 
         // Should we draw the room components (objects, warps)?
-        bool DrawRoomComponents {
+        bool DrawRoomComponents
+        {
             get { return ViewObjects || ViewWarps || ViewChests || EditingWarpDestination != null; }
         }
 
         // Should we be able to select & drag the room components?
-        bool SelectRoomComponents {
+        bool SelectRoomComponents
+        {
             get { return DrawRoomComponents; }
         }
 
-        bool DrawTileHover {
+        bool DrawTileHover
+        {
             get { return EnableTileEditing && (draggingTile || (hoveringComponent == null && !draggingObject)); }
         }
 
-        bool DrawRoomComponentHover {
+        bool DrawRoomComponentHover
+        {
             get { return DrawRoomComponents && !draggingObject && !draggingTile; }
         }
 
@@ -228,11 +263,13 @@ namespace LynnaLab
 
         // Methods
 
-        public void SetRoom(Room r, int season, bool changedFromWarpFollow = false) {
+        public void SetRoom(Room r, int season, bool changedFromWarpFollow = false)
+        {
             if (r == Room && this.season == season)
                 return;
 
-            if (room != null) {
+            if (room != null)
+            {
                 RoomLayout.LayoutModifiedEvent -= OnLayoutModified;
                 room.GetObjectGroup().RemoveModifiedHandler(OnObjectModified);
                 room.GetWarpGroup().RemoveModifiedHandler(OnWarpModified);
@@ -242,7 +279,8 @@ namespace LynnaLab
             if (season != -1)
                 this.season = season;
 
-            if (room != null) {
+            if (room != null)
+            {
                 RoomLayout.LayoutModifiedEvent += OnLayoutModified;
                 room.GetObjectGroup().AddModifiedHandler(OnObjectModified);
                 room.GetWarpGroup().AddModifiedHandler(OnWarpModified);
@@ -271,20 +309,25 @@ namespace LynnaLab
             QueueDraw();
         }
 
-        public void OnLayoutModified() {
+        public void OnLayoutModified()
+        {
             QueueDraw();
         }
 
         // Called when an object is selected in the ObjectGroupEditor
-        public void OnObjectSelected() {
-            if ((selectedComponent as ObjectRoomComponent)?.obj != ObjectGroupEditor.SelectedObject) {
+        public void OnObjectSelected()
+        {
+            if ((selectedComponent as ObjectRoomComponent)?.obj != ObjectGroupEditor.SelectedObject)
+            {
                 selectedComponent = null;
-                foreach (RoomComponent com in roomComponents) {
+                foreach (RoomComponent com in roomComponents)
+                {
                     if (!(com is ObjectRoomComponent))
                         continue;
                     var objCom = com as ObjectRoomComponent;
                     if (objCom.obj.ObjectGroup == ObjectGroupEditor.SelectedObjectGroup
-                            && objCom.obj.Index == ObjectGroupEditor.SelectedIndex) {
+                            && objCom.obj.Index == ObjectGroupEditor.SelectedIndex)
+                    {
                         selectedComponent = objCom;
                         break;
                     }
@@ -294,8 +337,10 @@ namespace LynnaLab
         }
 
         // Called when a warp is selected from the WarpEditor
-        void OnWarpSelected(object sender, EventArgs args) {
-            foreach (RoomComponent com in roomComponents) {
+        void OnWarpSelected(object sender, EventArgs args)
+        {
+            foreach (RoomComponent com in roomComponents)
+            {
                 Warp warp;
                 if (com is WarpSourceRoomComponent)
                     warp = (com as WarpSourceRoomComponent).warp;
@@ -303,7 +348,8 @@ namespace LynnaLab
                     warp = (com as WarpDestRoomComponent).warp;
                 else
                     continue;
-                if (WarpEditor.SelectedWarp == warp) {
+                if (WarpEditor.SelectedWarp == warp)
+                {
                     selectedComponent = com;
                     break;
                 }
@@ -312,49 +358,60 @@ namespace LynnaLab
         }
 
         // Called when the ObjectGroup is modified
-        void OnObjectModified(object sender, EventArgs args) {
+        void OnObjectModified(object sender, EventArgs args)
+        {
             GenerateRoomComponents();
         }
 
         // Called when the "EditingWarpDestination" is modified
-        void OnDestinationWarpModified(object sender, EventArgs args) {
+        void OnDestinationWarpModified(object sender, EventArgs args)
+        {
             if (EditingWarpDestination.DestRoom != Room)
                 SetRoom(EditingWarpDestination.DestRoom, season);
-            else {
+            else
+            {
                 GenerateRoomComponents();
             }
         }
 
         // Called when the WarpGroup is modified (not the warp destination if in that mode)
-        void OnWarpModified(object sender, EventArgs args) {
+        void OnWarpModified(object sender, EventArgs args)
+        {
             GenerateRoomComponents();
         }
 
-        void OnChestAdded(object sender, EventArgs args) {
+        void OnChestAdded(object sender, EventArgs args)
+        {
             UpdateChestEvents();
             GenerateRoomComponents();
         }
-        void OnChestDeleted(object sender, EventArgs args) {
+        void OnChestDeleted(object sender, EventArgs args)
+        {
             UpdateChestEvents();
             GenerateRoomComponents();
         }
         // Chest variables modified (NOT contents of treasure itself)
-        void OnChestModified(object sender, ValueModifiedEventArgs args) {
+        void OnChestModified(object sender, ValueModifiedEventArgs args)
+        {
             QueueDraw();
         }
         // Treasure contents modified
-        void OnTreasureModified(object sender, ValueModifiedEventArgs args) {
+        void OnTreasureModified(object sender, ValueModifiedEventArgs args)
+        {
             QueueDraw();
         }
 
-        void UpdateChestEvents() {
+        void UpdateChestEvents()
+        {
             chestEventWrapper.ReplaceEventSource(room?.Chest);
         }
 
-        void UpdateMouse(int x, int y) {
+        void UpdateMouse(int x, int y)
+        {
             int newX = (x - XOffset) / Scale;
             int newY = (y - YOffset) / Scale;
-            if (mouseX != newX || mouseY != newY) {
+            if (mouseX != newX || mouseY != newY)
+            {
                 mouseX = newX;
                 mouseY = newY;
 
@@ -363,42 +420,53 @@ namespace LynnaLab
             }
         }
 
-        void OnClicked(int posX, int posY, Gdk.Event triggerEvent, uint button) {
-            Cairo.Point p = GetGridPosition(posX, posY, scale:false, offset:false);
-            if (EnableTileEditing && hoveringComponent == null) {
-                if (!IsInBounds(posX, posY, scale:false, offset:false))
+        void OnClicked(int posX, int posY, Gdk.Event triggerEvent, uint button)
+        {
+            Cairo.Point p = GetGridPosition(posX, posY, scale: false, offset: false);
+            if (EnableTileEditing && hoveringComponent == null)
+            {
+                if (!IsInBounds(posX, posY, scale: false, offset: false))
                     return;
-                if (button == 1) { // Left-click
+                if (button == 1)
+                { // Left-click
                     RoomLayout.SetTile(p.X, p.Y, TilesetViewer.SelectedIndex);
                     draggingTile = true;
                 }
-                else if (button == 3) { // Right-click
+                else if (button == 3)
+                { // Right-click
                     TilesetViewer.SelectedIndex = RoomLayout.GetTile(p.X, p.Y);
                 }
             }
-            if (DrawRoomComponents) {
-                if (hoveringComponent != null) {
+            if (DrawRoomComponents)
+            {
+                if (hoveringComponent != null)
+                {
                     selectedComponent = hoveringComponent;
                     hoveringComponent.Select();
 
-                    if (button == 1) { // Left click
+                    if (button == 1)
+                    { // Left click
                         draggingObject = true;
                     }
-                    else if (button == 3) { // Right click
+                    else if (button == 3)
+                    { // Right click
                         Gtk.Menu menu = new Gtk.Menu();
 
-                        foreach (Gtk.MenuItem item in selectedComponent.GetRightClickMenuItems()) {
+                        foreach (Gtk.MenuItem item in selectedComponent.GetRightClickMenuItems())
+                        {
                             menu.Add(item);
                         }
 
                         RoomComponent comp = selectedComponent;
 
-                        if (comp.Deletable) {
+                        if (comp.Deletable)
+                        {
                             if (menu.Children.Length != 0)
                                 menu.Add(new Gtk.SeparatorMenuItem());
 
                             var deleteButton = new Gtk.MenuItem("Delete");
-                            deleteButton.Activated += (sender, args) => {
+                            deleteButton.Activated += (sender, args) =>
+                            {
                                 comp.Delete();
                             };
                             menu.Add(deleteButton);
@@ -413,37 +481,45 @@ namespace LynnaLab
             QueueDraw();
         }
 
-        void OnDragged(int x, int y, Gdk.Event triggerEvent) {
-            if (EnableTileEditing && draggingTile) {
-                if (IsInBounds(x, y, scale:false, offset:false)) {
-                    Cairo.Point p = GetGridPosition(x, y, scale:false, offset:false);
+        void OnDragged(int x, int y, Gdk.Event triggerEvent)
+        {
+            if (EnableTileEditing && draggingTile)
+            {
+                if (IsInBounds(x, y, scale: false, offset: false))
+                {
+                    Cairo.Point p = GetGridPosition(x, y, scale: false, offset: false);
                     RoomLayout.SetTile(p.X, p.Y, TilesetViewer.SelectedIndex);
                 }
             }
-            if (DrawRoomComponents && draggingObject) {
+            if (DrawRoomComponents && draggingObject)
+            {
                 RoomComponent com = selectedComponent;
-                if (com != null && com.HasXY) {
-                    int newX,newY;
-                    if (gdkState.HasFlag(Gdk.ModifierType.ControlMask) || com.HasShortenedXY) {
+                if (com != null && com.HasXY)
+                {
+                    int newX, newY;
+                    if (gdkState.HasFlag(Gdk.ModifierType.ControlMask) || com.HasShortenedXY)
+                    {
                         newX = x;
                         newY = y;
                     }
-                    else {
+                    else
+                    {
                         // Move comects in increments of 8 pixels
                         int unit = 8;
                         int unitLog = (int)Math.Log(unit, 2);
 
-                        int dataX = com.X+unit/2;
-                        int dataY = com.Y+unit/2;
-                        int alignX = (dataX)%unit;
-                        int alignY = (dataY)%unit;
-                        newX = (x-alignX)>>unitLog;
-                        newY = (y-alignY)>>unitLog;
-                        newX = newX*unit+alignX+unit/2;
-                        newY = newY*unit+alignY+unit/2;
+                        int dataX = com.X + unit / 2;
+                        int dataY = com.Y + unit / 2;
+                        int alignX = (dataX) % unit;
+                        int alignY = (dataY) % unit;
+                        newX = (x - alignX) >> unitLog;
+                        newY = (y - alignY) >> unitLog;
+                        newX = newX * unit + alignX + unit / 2;
+                        newY = newY * unit + alignY + unit / 2;
                     }
 
-                    if (newX >= 0 && newX < 256 && newY >= 0 && newY < 256) {
+                    if (newX >= 0 && newX < 256 && newY >= 0 && newY < 256)
+                    {
                         com.X = (byte)newX;
                         com.Y = (byte)newY;
                     }
@@ -459,7 +535,8 @@ namespace LynnaLab
             return base.OnButtonPressEvent(ev);
         }
 
-        protected override bool OnDrawn(Cairo.Context cr) {
+        protected override bool OnDrawn(Cairo.Context cr)
+        {
             base.DrawBackground(cr);
 
             cr.Save();
@@ -469,28 +546,34 @@ namespace LynnaLab
 
             hoveringComponent = null;
 
-            foreach (RoomComponent com in roomComponents) {
+            foreach (RoomComponent com in roomComponents)
+            {
                 cr.SetSourceColor(com.BoxColor);
                 cr.Rectangle(com.BoxRectangle);
                 cr.Fill();
                 com.Draw(cr);
 
-                if (DrawRoomComponentHover) {
-                    if (CairoHelper.PointInRect(mouseX, mouseY, com.BoxRectangle)) {
+                if (DrawRoomComponentHover)
+                {
+                    if (CairoHelper.PointInRect(mouseX, mouseY, com.BoxRectangle))
+                    {
                         hoveringComponent = com;
                     }
                 }
             }
 
-            if (SelectRoomComponents) {
+            if (SelectRoomComponents)
+            {
                 // Object hovering over
-                if (hoveringComponent != null) {
+                if (hoveringComponent != null)
+                {
                     cr.SetSourceColor(ObjectHoverColor);
                     CairoHelper.DrawRectOutline(cr, 1, hoveringComponent.BoxRectangle);
 
                 }
                 // Object selected
-                if (selectedComponent != null) {
+                if (selectedComponent != null)
+                {
                     cr.SetSourceColor(TileGridViewer.DefaultSelectionColor);
                     CairoHelper.DrawRectOutline(cr, 1, selectedComponent.BoxRectangle);
                 }
@@ -504,7 +587,8 @@ namespace LynnaLab
             return true;
         }
 
-        void GenerateRoomComponents() {
+        void GenerateRoomComponents()
+        {
             if (Room == null)
                 return;
 
@@ -512,23 +596,29 @@ namespace LynnaLab
             hoveringComponent = null;
 
             // We only draw the 1 component if we're editing a warp destination
-            if (EditingWarpDestination != null) {
+            if (EditingWarpDestination != null)
+            {
                 WarpDestRoomComponent com = new WarpDestRoomComponent(this, EditingWarpDestination);
-                com.SelectedEvent += (sender, args) => {
+                com.SelectedEvent += (sender, args) =>
+                {
                     WarpEditor.SetSelectedWarp(com.warp);
                 };
                 roomComponents.Add(com);
                 goto addedAllComponents; // I love being evil
             }
 
-            if (ViewObjects && ObjectGroupEditor.TopObjectGroup != null) {
-                foreach (ObjectGroup group in ObjectGroupEditor.TopObjectGroup.GetAllGroups()) {
-                    for (int i=0; i<group.GetNumObjects(); i++) {
+            if (ViewObjects && ObjectGroupEditor.TopObjectGroup != null)
+            {
+                foreach (ObjectGroup group in ObjectGroupEditor.TopObjectGroup.GetAllGroups())
+                {
+                    for (int i = 0; i < group.GetNumObjects(); i++)
+                    {
                         ObjectDefinition obj = group.GetObject(i);
                         if (!obj.HasXY())
                             continue;
                         ObjectRoomComponent com = new ObjectRoomComponent(obj);
-                        com.SelectedEvent += (sender, args) => {
+                        com.SelectedEvent += (sender, args) =>
+                        {
                             ObjectGroupEditor.SelectObject(obj.ObjectGroup, obj.Index);
                         };
                         roomComponents.Add(com);
@@ -536,21 +626,26 @@ namespace LynnaLab
                 }
             }
 
-            if (ViewWarps) {
+            if (ViewWarps)
+            {
                 int index = 0;
                 WarpGroup group = room.GetWarpGroup();
 
-                foreach (Warp warp in group.GetWarps()) {
-                    Action<int,int,int,int> addWarpComponent = (x, y, width, height) => {
+                foreach (Warp warp in group.GetWarps())
+                {
+                    Action<int, int, int, int> addWarpComponent = (x, y, width, height) =>
+                    {
                         var rect = new Cairo.Rectangle(x, y, width, height);
                         var com = new WarpSourceRoomComponent(this, warp, index, rect);
-                        com.SelectedEvent += (sender, args) => {
+                        com.SelectedEvent += (sender, args) =>
+                        {
                             WarpEditor.SetWarpIndex(com.index);
                         };
                         roomComponents.Add(com);
                     };
 
-                    if (warp.WarpSourceType == WarpSourceType.Standard) {
+                    if (warp.WarpSourceType == WarpSourceType.Standard)
+                    {
                         int middle;
                         if (Room.Width == 15) // Large room
                             middle = ((Room.Width + 1) / 2) * 16;
@@ -568,32 +663,38 @@ namespace LynnaLab
                         if (warp.BottomRight)
                             addWarpComponent(middle, bottom, right - middle, 16);
 
-                        if (!warp.TopLeft && !warp.TopRight && !warp.BottomLeft && !warp.BottomRight) {
+                        if (!warp.TopLeft && !warp.TopRight && !warp.BottomLeft && !warp.BottomRight)
+                        {
                             addWarpComponent(0, 16 * 13, Room.Width * 16, 32);
                         }
                     }
-                    else if (warp.WarpSourceType == WarpSourceType.Pointed) {
+                    else if (warp.WarpSourceType == WarpSourceType.Pointed)
+                    {
                         addWarpComponent(warp.SourceX * TileWidth, warp.SourceY * TileHeight, TileWidth, TileHeight);
                     }
                     index++;
                 }
             }
 
-            if (ViewChests) {
-                if (Room.Chest != null) {
+            if (ViewChests)
+            {
+                if (Room.Chest != null)
+                {
                     ChestRoomComponent com = new ChestRoomComponent(Room.Chest);
                     roomComponents.Add(com);
                 }
             }
 
 
-addedAllComponents:
+        addedAllComponents:
             // The "selectedComponent" now refers to an old object. Look for the corresponding new
             // object.
             RoomComponent newSelectedComponent = null;
 
-            foreach (RoomComponent com in roomComponents) {
-                if (com.Compare(selectedComponent)) {
+            foreach (RoomComponent com in roomComponents)
+            {
+                if (com.Compare(selectedComponent))
+                {
                     newSelectedComponent = com;
                     break;
                 }
@@ -615,20 +716,23 @@ addedAllComponents:
 
         // Override preferred width/height so that objects can be drawn even outside normal room
         // boundaries.
-        protected override void OnGetPreferredHeight(out int minimum_height, out int natural_height) {
-            minimum_height = 17*16*Scale;
+        protected override void OnGetPreferredHeight(out int minimum_height, out int natural_height)
+        {
+            minimum_height = 17 * 16 * Scale;
             natural_height = minimum_height;
-        }        
-        protected override void OnGetPreferredWidth(out int minimum_width, out int natural_width) {
-            minimum_width = 17*16*Scale;
+        }
+        protected override void OnGetPreferredWidth(out int minimum_width, out int natural_width)
+        {
+            minimum_width = 17 * 16 * Scale;
             natural_width = minimum_width;
-        }        
+        }
 
 
         // "Room Component" classes: things drawn on top of the room (like objects and warps) which
         // can be selected and moved around.
 
-        abstract class RoomComponent {
+        abstract class RoomComponent
+        {
             public event EventHandler<EventArgs> SelectedEvent;
 
             public abstract Cairo.Color BoxColor { get; }
@@ -641,18 +745,21 @@ addedAllComponents:
             public abstract int BoxWidth { get; }
             public abstract int BoxHeight { get; }
 
-            public virtual Cairo.Rectangle BoxRectangle {
+            public virtual Cairo.Rectangle BoxRectangle
+            {
                 get { return new Cairo.Rectangle(X - BoxWidth / 2.0, Y - BoxHeight / 2.0, BoxWidth, BoxHeight); }
             }
 
             public abstract void Draw(Cairo.Context cr);
 
-            public virtual void Select() {
+            public virtual void Select()
+            {
                 if (SelectedEvent != null)
                     SelectedEvent(this, null);
             }
 
-            public virtual IList<Gtk.MenuItem> GetRightClickMenuItems() {
+            public virtual IList<Gtk.MenuItem> GetRightClickMenuItems()
+            {
                 return new List<Gtk.MenuItem>();
             }
 
@@ -660,36 +767,45 @@ addedAllComponents:
             public abstract void Delete(); // Right-click, select "delete", or press "Delete" key while selected
         }
 
-        class ObjectRoomComponent : RoomComponent {
+        class ObjectRoomComponent : RoomComponent
+        {
             public ObjectDefinition obj;
 
 
-            public ObjectRoomComponent(ObjectDefinition obj) {
+            public ObjectRoomComponent(ObjectDefinition obj)
+            {
                 this.obj = obj;
             }
 
 
-            public override Cairo.Color BoxColor {
-                get {
+            public override Cairo.Color BoxColor
+            {
+                get
+                {
                     Cairo.Color color = ObjectGroupEditor.GetObjectColor(obj.GetObjectType());
                     return new Cairo.Color(color.R, color.G, color.B, 0.75);
                 }
             }
 
-            public override bool Deletable {
+            public override bool Deletable
+            {
                 get { return true; }
             }
-            public override bool HasXY {
+            public override bool HasXY
+            {
                 get { return obj.HasXY(); }
             }
-            public override bool HasShortenedXY {
+            public override bool HasShortenedXY
+            {
                 get { return obj.HasShortenedXY(); }
             }
-            public override int X {
+            public override int X
+            {
                 get { return obj.GetX(); }
                 set { obj.SetX((byte)value); }
             }
-            public override int Y {
+            public override int Y
+            {
                 get { return obj.GetY(); }
                 set { obj.SetY((byte)value); }
             }
@@ -697,20 +813,25 @@ addedAllComponents:
             public override int BoxHeight { get { return 16; } }
 
 
-            public override void Draw(Cairo.Context cr) {
+            public override void Draw(Cairo.Context cr)
+            {
                 int x = X;
                 int y = Y;
 
-                if (obj.GetGameObject() != null) {
-                    try {
+                if (obj.GetGameObject() != null)
+                {
+                    try
+                    {
                         ObjectAnimationFrame o = obj.GetGameObject().DefaultAnimation.GetFrame(0);
                         TileDrawer drawer = new CairoTileDrawer(cr, x, y);
                         o.Draw(drawer);
                     }
-                    catch(NoAnimationException) {
+                    catch (NoAnimationException)
+                    {
                         // No animation defined
                     }
-                    catch(InvalidAnimationException) {
+                    catch (InvalidAnimationException)
+                    {
                         // Error parsing an animation; draw a blue X to indicate the error
                         double xPos = x - BoxHeight / 2 + 0.5;
                         double yPos = y - BoxHeight / 2 + 0.5;
@@ -725,16 +846,19 @@ addedAllComponents:
                 }
             }
 
-            public override bool Compare(RoomComponent com) {
+            public override bool Compare(RoomComponent com)
+            {
                 return obj == (com as ObjectRoomComponent)?.obj;
             }
 
-            public override void Delete() {
+            public override void Delete()
+            {
                 obj.Remove();
             }
         }
 
-        class WarpSourceRoomComponent : RoomComponent {
+        class WarpSourceRoomComponent : RoomComponent
+        {
             RoomEditor parent;
             public Warp warp;
             public int index;
@@ -742,7 +866,8 @@ addedAllComponents:
             Cairo.Rectangle rect;
 
 
-            public WarpSourceRoomComponent(RoomEditor parent, Warp warp, int index, Cairo.Rectangle rect) {
+            public WarpSourceRoomComponent(RoomEditor parent, Warp warp, int index, Cairo.Rectangle rect)
+            {
                 this.parent = parent;
                 this.warp = warp;
                 this.index = index;
@@ -750,31 +875,40 @@ addedAllComponents:
             }
 
 
-            public override Cairo.Color BoxColor {
-                get {
+            public override Cairo.Color BoxColor
+            {
+                get
+                {
                     return WarpEditor.WarpSourceColor;
                 }
             }
 
-            public override bool Deletable {
+            public override bool Deletable
+            {
                 get { return true; }
             }
-            public override bool HasXY {
+            public override bool HasXY
+            {
                 get { return warp.WarpSourceType == WarpSourceType.Pointed; }
             }
-            public override bool HasShortenedXY {
+            public override bool HasShortenedXY
+            {
                 get { return true; }
             }
-            public override int X {
+            public override int X
+            {
                 get { return warp.SourceX * 16 + 8; }
-                set {
+                set
+                {
                     warp.SourceX = value / 16;
                     UpdateRect();
                 }
             }
-            public override int Y {
+            public override int Y
+            {
                 get { return warp.SourceY * 16 + 8; }
-                set {
+                set
+                {
                     warp.SourceY = value / 16;
                     UpdateRect();
                 }
@@ -786,24 +920,28 @@ addedAllComponents:
             public override Cairo.Rectangle BoxRectangle { get { return rect; } }
 
 
-            public override void Draw(Cairo.Context cr) {
+            public override void Draw(Cairo.Context cr)
+            {
                 cr.SetSourceColor(new Cairo.Color(1, 1, 1));
                 CairoHelper.DrawText(cr, index.ToString("X"), 9, BoxRectangle);
             }
 
-            public override IList<Gtk.MenuItem> GetRightClickMenuItems() {
+            public override IList<Gtk.MenuItem> GetRightClickMenuItems()
+            {
                 var list = new List<Gtk.MenuItem>();
 
                 {
                     Gtk.MenuItem followButton = new Gtk.MenuItem("Follow");
-                    followButton.Activated += (sender, args) => {
+                    followButton.Activated += (sender, args) =>
+                    {
                         parent.SetRoom(warp.DestRoom, parent.season, true);
                     };
                     list.Add(followButton);
                 }
                 {
                     Gtk.MenuItem setDestButton = new Gtk.MenuItem("Edit Destination");
-                    setDestButton.Activated += (sender, args) => {
+                    setDestButton.Activated += (sender, args) =>
+                    {
                         parent.EditingWarpDestination = warp;
                         parent.SetRoom(warp.DestRoom, parent.season, true);
                         parent.WarpEditor.SetSelectedWarp(warp);
@@ -814,56 +952,70 @@ addedAllComponents:
                 return list;
             }
 
-            public override bool Compare(RoomComponent com) {
+            public override bool Compare(RoomComponent com)
+            {
                 return warp == (com as WarpSourceRoomComponent)?.warp;
             }
 
-            public override void Delete() {
+            public override void Delete()
+            {
                 warp.Remove();
             }
 
 
-            void UpdateRect() {
+            void UpdateRect()
+            {
                 rect = new Cairo.Rectangle(X - rect.Width / 2.0, Y - rect.Height / 2.0, rect.Width, rect.Height);
             }
         }
 
         /// The singular room component that's drawn when editing a warp destination.
-        class WarpDestRoomComponent : RoomComponent {
+        class WarpDestRoomComponent : RoomComponent
+        {
             RoomEditor parent;
             public Warp warp;
 
 
-            public WarpDestRoomComponent(RoomEditor parent, Warp warp) {
+            public WarpDestRoomComponent(RoomEditor parent, Warp warp)
+            {
                 this.parent = parent;
                 this.warp = warp;
             }
 
 
-            public override Cairo.Color BoxColor {
-                get {
+            public override Cairo.Color BoxColor
+            {
+                get
+                {
                     return WarpEditor.WarpSourceColor;
                 }
             }
 
-            public override bool Deletable {
+            public override bool Deletable
+            {
                 get { return false; }
             }
-            public override bool HasXY {
+            public override bool HasXY
+            {
                 get { return true; }
             }
-            public override bool HasShortenedXY {
+            public override bool HasShortenedXY
+            {
                 get { return true; }
             }
-            public override int X {
+            public override int X
+            {
                 get { return warp.DestX * 16 + 8; }
-                set {
+                set
+                {
                     warp.DestX = value / 16;
                 }
             }
-            public override int Y {
+            public override int Y
+            {
                 get { return warp.DestY * 16 + 8; }
-                set {
+                set
+                {
                     warp.DestY = value / 16;
                 }
             }
@@ -872,17 +1024,20 @@ addedAllComponents:
             public override int BoxHeight { get { return 16; } }
 
 
-            public override void Draw(Cairo.Context cr) {
+            public override void Draw(Cairo.Context cr)
+            {
                 cr.SetSourceColor(new Cairo.Color(1, 1, 1));
                 CairoHelper.DrawText(cr, "W", 9, BoxRectangle);
             }
 
-            public override IList<Gtk.MenuItem> GetRightClickMenuItems() {
+            public override IList<Gtk.MenuItem> GetRightClickMenuItems()
+            {
                 var list = new List<Gtk.MenuItem>();
 
                 {
                     Gtk.MenuItem doneButton = new Gtk.MenuItem("Done");
-                    doneButton.Activated += (sender, args) => {
+                    doneButton.Activated += (sender, args) =>
+                    {
                         parent.EditingWarpDestination = null;
                         parent.SetRoom(warp.SourceRoom, parent.season, true);
                     };
@@ -892,21 +1047,25 @@ addedAllComponents:
                 return list;
             }
 
-            public override bool Compare(RoomComponent com) {
+            public override bool Compare(RoomComponent com)
+            {
                 return warp == (com as WarpDestRoomComponent)?.warp;
             }
 
             // TODO
-            public override void Delete() {
+            public override void Delete()
+            {
                 throw new NotImplementedException();
             }
         }
 
         /// Draggable chest
-        class ChestRoomComponent : RoomComponent {
+        class ChestRoomComponent : RoomComponent
+        {
             Chest chest;
 
-            public ChestRoomComponent(Chest chest) {
+            public ChestRoomComponent(Chest chest)
+            {
                 this.chest = chest;
             }
 
@@ -917,39 +1076,47 @@ addedAllComponents:
             public override bool Deletable { get { return true; } }
             public override bool HasXY { get { return true; } }
             public override bool HasShortenedXY { get { return true; } }
-            public override int X {
+            public override int X
+            {
                 get { return chest.ValueReferenceGroup.GetIntValue("X") * 16 + 8; }
                 set { chest.ValueReferenceGroup.SetValue("X", value / 16); }
             }
-            public override int Y {
+            public override int Y
+            {
                 get { return chest.ValueReferenceGroup.GetIntValue("Y") * 16 + 8; }
                 set { chest.ValueReferenceGroup.SetValue("Y", value / 16); }
             }
             public override int BoxWidth { get { return 18; } }
             public override int BoxHeight { get { return 18; } }
 
-            public override void Draw(Cairo.Context cr) {
+            public override void Draw(Cairo.Context cr)
+            {
                 if (chest.Treasure == null)
                     return;
                 GameObject obj = Project.GetIndexedDataType<InteractionObject>(
                         Project.EvalToInt("INTERACID_TREASURE") * 256 + chest.Treasure.Graphics);
-                try {
+                try
+                {
                     TileDrawer drawer = new CairoTileDrawer(cr, X, Y);
                     obj.DefaultAnimation.GetFrame(0).Draw(drawer);
                 }
-                catch (InvalidAnimationException) {
+                catch (InvalidAnimationException)
+                {
                 }
             }
 
-            public override void Select() {
+            public override void Select()
+            {
                 base.Select();
             }
 
-            public override bool Compare(RoomComponent com) {
+            public override bool Compare(RoomComponent com)
+            {
                 return chest == (com as ChestRoomComponent)?.chest;
             }
 
-            public override void Delete() {
+            public override void Delete()
+            {
                 chest.Delete();
             }
         }

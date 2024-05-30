@@ -42,7 +42,8 @@ namespace LynnaLab
 
         // Constructor
 
-        public WarpEditor(MainWindow main) {
+        public WarpEditor(MainWindow main)
+        {
             mainWindow = main;
 
             Gtk.Builder builder = new Builder();
@@ -68,25 +69,32 @@ namespace LynnaLab
 
         // Properties
 
-        public int SelectedIndex {
+        public int SelectedIndex
+        {
             get { return GetWarpIndex(SelectedWarp); }
-            set {
+            set
+            {
                 SetWarpIndex(value);
             }
         }
 
-        public WarpGroup WarpGroup {
+        public WarpGroup WarpGroup
+        {
             get { return _warpGroup; }
-            set {
-                if (_warpGroup != value) {
+            set
+            {
+                if (_warpGroup != value)
+                {
                     _warpGroup = value;
 
-                    if (warpSourceBox != null) {
+                    if (warpSourceBox != null)
+                    {
                         warpSourceBoxContainer.Remove(warpSourceBox);
                         warpSourceBox.Dispose();
                     }
                     warpSourceBox = new WarpSourceBox(_warpGroup);
-                    warpSourceBox.AddTileSelectedHandler((sender, index) => {
+                    warpSourceBox.AddTileSelectedHandler((sender, index) =>
+                    {
                         SelectedIndex = index;
                     });
                     warpSourceBoxContainer.Add(warpSourceBox);
@@ -95,19 +103,22 @@ namespace LynnaLab
             }
         }
 
-        public Warp SelectedWarp {
+        public Warp SelectedWarp
+        {
             get { return _selectedWarp; }
         }
 
-        Project Project {
+        Project Project
+        {
             get { return mainWindow.Project; }
         }
 
 
         // Methods
 
-        public void SetMap(int group, int map) {
-            WarpGroup = Project.GetIndexedDataType<WarpGroup>((group<<8) | map);
+        public void SetMap(int group, int map)
+        {
+            WarpGroup = Project.GetIndexedDataType<WarpGroup>((group << 8) | map);
 
             this.map = map;
 
@@ -115,27 +126,32 @@ namespace LynnaLab
         }
 
         // Load the i'th warp in the current map.
-        public void SetWarpIndex(int i) {
-            if (i >= WarpGroup.Count) {
-                log.Warn(string.Format("Tried to select warp index {0} (highest is {1})", i, WarpGroup.Count-1));
-                i = WarpGroup.Count-1;
+        public void SetWarpIndex(int i)
+        {
+            if (i >= WarpGroup.Count)
+            {
+                log.Warn(string.Format("Tried to select warp index {0} (highest is {1})", i, WarpGroup.Count - 1));
+                i = WarpGroup.Count - 1;
             }
 
             SetSelectedWarp(GetWarpIndex(i));
         }
 
         // This can be a warp that isn't in the warp list (as when editing a warp destination).
-        public void SetSelectedWarp(Warp warp) {
+        public void SetSelectedWarp(Warp warp)
+        {
             if (_selectedWarp == warp)
                 return;
             _selectedWarp = warp;
 
-            valueEditorContainer.Foreach((c) => {
+            valueEditorContainer.Foreach((c) =>
+            {
                 valueEditorContainer.Remove(c);
                 c.Dispose();
             });
 
-            if (warp == null) {
+            if (warp == null)
+            {
                 warpSourceFrame.Hide();
                 return;
             }
@@ -162,19 +178,23 @@ namespace LynnaLab
         }
 
         // Gets the index corresponding to a spin button value.
-        Warp GetWarpIndex(int i) {
+        Warp GetWarpIndex(int i)
+        {
             if (i == -1)
                 return null;
             return WarpGroup.GetWarp(i);
         }
 
-        int GetWarpIndex(Warp warp) {
+        int GetWarpIndex(Warp warp)
+        {
             return WarpGroup.IndexOf(warp);
         }
 
 
-        class WarpSourceBox : SelectionBox {
-            public WarpSourceBox(WarpGroup warpGroup) {
+        class WarpSourceBox : SelectionBox
+        {
+            public WarpSourceBox(WarpGroup warpGroup)
+            {
                 this.WarpGroup = warpGroup;
                 WarpGroup.AddModifiedHandler(OnWarpGroupModified);
                 OnWarpGroupModified(null, null);
@@ -185,12 +205,14 @@ namespace LynnaLab
 
 
 
-            protected override void OnDestroyed() {
+            protected override void OnDestroyed()
+            {
                 WarpGroup.RemoveModifiedHandler(OnWarpGroupModified);
                 base.OnDestroyed();
             }
 
-            void OnWarpGroupModified(object sender, EventArgs args) {
+            void OnWarpGroupModified(object sender, EventArgs args)
+            {
                 MaxIndex = WarpGroup.Count - 1;
                 QueueDraw();
             }
@@ -198,17 +220,20 @@ namespace LynnaLab
 
             // SelectionBox overrides
 
-            protected override void OnMoveSelection(int oldIndex, int newIndex) {
+            protected override void OnMoveSelection(int oldIndex, int newIndex)
+            {
                 // Can't be moved; do nothing
             }
 
-            protected override void ShowPopupMenu(Gdk.Event ev) {
+            protected override void ShowPopupMenu(Gdk.Event ev)
+            {
                 Gtk.Menu menu = new Gtk.Menu();
                 {
                     Gtk.MenuItem item = new Gtk.MenuItem("Add standard warp");
                     menu.Append(item);
 
-                    item.Activated += (sender, args) => {
+                    item.Activated += (sender, args) =>
+                    {
                         SelectedIndex = WarpGroup.AddWarp(WarpSourceType.Standard);
                     };
                 }
@@ -217,16 +242,19 @@ namespace LynnaLab
                     Gtk.MenuItem item = new Gtk.MenuItem("Add specific-position warp");
                     menu.Append(item);
 
-                    item.Activated += (sender, args) => {
+                    item.Activated += (sender, args) =>
+                    {
                         SelectedIndex = WarpGroup.AddWarp(WarpSourceType.Pointed);
                     };
                 }
 
-                if (HoveringIndex != -1) {
+                if (HoveringIndex != -1)
+                {
                     menu.Append(new Gtk.SeparatorMenuItem());
 
                     Gtk.MenuItem deleteItem = new Gtk.MenuItem("Delete");
-                    deleteItem.Activated += (sender, args) => {
+                    deleteItem.Activated += (sender, args) =>
+                    {
                         if (SelectedIndex != -1)
                             WarpGroup.RemoveWarp(SelectedIndex);
                     };
@@ -238,7 +266,8 @@ namespace LynnaLab
                 menu.PopupAtPointer(ev);
             }
 
-            protected override void TileDrawer(int index, Cairo.Context cr) {
+            protected override void TileDrawer(int index, Cairo.Context cr)
+            {
                 if (index > MaxIndex)
                     return;
                 cr.SetSourceColor(WarpSourceColor);

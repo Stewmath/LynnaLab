@@ -9,7 +9,8 @@ namespace LynnaLib
         public static string WarpCommand = "m_WarpDest";
 
 
-        private static List<ValueReference> GetWarpValueReferences(Data data) {
+        private static List<ValueReference> GetWarpValueReferences(Data data)
+        {
             return new List<ValueReference> {
                 new DataValueReference(data,"Map",0,DataValueType.Byte),
                 new DataValueReference(data,"Y",1,DataValueType.ByteBits,4,7),
@@ -29,58 +30,75 @@ namespace LynnaLib
 
         // Properties
 
-        public int Map {
-            get {
+        public int Map
+        {
+            get
+            {
                 return vrg.GetIntValue("Map");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Map", value);
             }
         }
-        public int Y {
-            get {
+        public int Y
+        {
+            get
+            {
                 return vrg.GetIntValue("Y");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Y", value);
             }
         }
-        public int X {
-            get {
+        public int X
+        {
+            get
+            {
                 return vrg.GetIntValue("X");
             }
-            set {
+            set
+            {
                 vrg.SetValue("X", value);
             }
         }
-        public int Parameter {
-            get {
+        public int Parameter
+        {
+            get
+            {
                 return vrg.GetIntValue("Parameter");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Parameter", value);
             }
         }
-        public int Transition {
-            get {
+        public int Transition
+        {
+            get
+            {
                 return vrg.GetIntValue("Transition");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Transition", value);
             }
         }
 
-        public ValueReferenceGroup ValueReferenceGroup {
+        public ValueReferenceGroup ValueReferenceGroup
+        {
             get { return vrg; }
         }
 
-        public int Group {
+        public int Group
+        {
             get { return DestGroup.Index; }
         }
 
         // Don't edit these properties outside of the WarpDestGroup class (TODO: review this)
-        internal WarpDestGroup DestGroup {get; set;}
-        internal int DestIndex {get; set;}
+        internal WarpDestGroup DestGroup { get; set; }
+        internal int DestIndex { get; set; }
 
 
         public WarpDestData(Project p, string command, IEnumerable<string> values,
@@ -95,15 +113,18 @@ namespace LynnaLib
             DestIndex = -1;
         }
 
-        public void AddReference(WarpSourceData data) {
+        public void AddReference(WarpSourceData data)
+        {
             referenceSet.Add(data);
         }
 
-        public void RemoveReference(WarpSourceData data) {
+        public void RemoveReference(WarpSourceData data)
+        {
             referenceSet.Remove(data);
         }
 
-        public int GetNumReferences() {
+        public int GetNumReferences()
+        {
             return referenceSet.Count;
         }
     }

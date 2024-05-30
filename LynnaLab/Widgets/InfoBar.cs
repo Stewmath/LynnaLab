@@ -4,7 +4,8 @@ using Gtk;
 
 namespace LynnaLab
 {
-    public enum InfoLevel {
+    public enum InfoLevel
+    {
         Info = 0,
         Warning = 1,
         Error = 2
@@ -23,12 +24,14 @@ namespace LynnaLab
         List<Gtk.Widget> itemList = new List<Gtk.Widget>();
 
 
-        public InfoBar() : base(Orientation.Vertical, 6) {
+        public InfoBar() : base(Orientation.Vertical, 6)
+        {
             Gtk.Separator separator = new Gtk.Separator(Orientation.Horizontal);
             base.Add(separator);
         }
 
-        public void Push(InfoLevel level, string text) {
+        public void Push(InfoLevel level, string text)
+        {
             Gtk.Box hbox = new Gtk.Box(Orientation.Horizontal, 6);
 
             Gtk.Image image = new Gtk.Image(imageNames[(int)level], Gtk.IconSize.SmallToolbar);
@@ -41,8 +44,10 @@ namespace LynnaLab
             this.ShowAll();
         }
 
-        public void RemoveAll() {
-            foreach (Gtk.Widget widget in itemList) {
+        public void RemoveAll()
+        {
+            foreach (Gtk.Widget widget in itemList)
+            {
                 base.Remove(widget);
             }
             itemList = new List<Gtk.Widget>();

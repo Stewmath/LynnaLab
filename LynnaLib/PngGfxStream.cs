@@ -6,14 +6,16 @@ using YamlDotNet.Serialization;
 
 namespace LynnaLib
 {
-    public class PngGfxStream : Stream {
+    public class PngGfxStream : Stream
+    {
         private byte[] data;
         int _length;
 
         PngProperties properties;
 
 
-        public PngGfxStream(string filename) {
+        public PngGfxStream(string filename)
+        {
             Bitmap bitmap = new Bitmap(filename);
 
             string propertiesFilename = Path.GetDirectoryName(filename) + "/" +
@@ -25,7 +27,8 @@ namespace LynnaLib
 
             data = new byte[Length * 8];
 
-            Func<int,int,int> lookupPixel = (x, y) => {
+            Func<int, int, int> lookupPixel = (x, y) =>
+            {
                 System.Drawing.Color color = bitmap.GetPixel(x, y);
                 if (color.R != color.G || color.R != color.B || color.G != color.B)
                     throw new InvalidImageException(filename + " isn't a greyscale image.");
@@ -37,20 +40,24 @@ namespace LynnaLib
                     0xff
                 };
 
-                for (int i=0; i<4; i++) {
-                    if (color.R == colors[i]) {
+                for (int i = 0; i < 4; i++)
+                {
+                    if (color.R == colors[i])
+                    {
                         if (properties.invert)
                             return i;
                         else
-                            return 3-i;
+                            return 3 - i;
                     }
                 }
 
                 throw new InvalidImageException("Invalid color in " + filename + ".");
             };
 
-            for (int y=0; y<bitmap.Height; y++) {
-                for (int x=0; x<bitmap.Width; x++) {
+            for (int y = 0; y < bitmap.Height; y++)
+            {
+                for (int x = 0; x < bitmap.Width; x++)
+                {
                     int val = lookupPixel(x, y);
 
                     int x2 = x % 8;
@@ -58,7 +65,8 @@ namespace LynnaLib
 
                     int tile;
 
-                    if (properties.interleave) {
+                    if (properties.interleave)
+                    {
                         tile = (y / 16) * bitmap.Width / 8 * 2;
                         tile += x / 8 * 2;
                         if ((y / 8) % 2 == 1)
@@ -67,8 +75,8 @@ namespace LynnaLib
                     else
                         tile = (y / 8) * bitmap.Width / 8 + (x / 8);
 
-                    data[tile * 16 + y2 * 2 + 0] |= (byte)((val&1) << (7-x2));
-                    data[tile * 16 + y2 * 2 + 1] |= (byte)((val>>1) << (7-x2));
+                    data[tile * 16 + y2 * 2 + 0] |= (byte)((val & 1) << (7 - x2));
+                    data[tile * 16 + y2 * 2 + 1] |= (byte)((val >> 1) << (7 - x2));
                 }
             }
         }
@@ -76,20 +84,26 @@ namespace LynnaLib
 
         // Properties
 
-        public override bool CanRead {
+        public override bool CanRead
+        {
             get { return true; }
         }
-        public override bool CanSeek {
+        public override bool CanSeek
+        {
             get { return true; }
         }
-        public override bool CanTimeout {
+        public override bool CanTimeout
+        {
             get { return false; }
         }
-        public override bool CanWrite {
+        public override bool CanWrite
+        {
             get { return false; }
         }
-        public override long Length {
-            get {
+        public override long Length
+        {
+            get
+            {
                 return _length;
             }
         }
@@ -98,63 +112,74 @@ namespace LynnaLib
 
         // Methods
 
-        public override void Flush() {
+        public override void Flush()
+        {
             throw new NotImplementedException();
         }
 
-        public override void SetLength(long len) {
+        public override void SetLength(long len)
+        {
             throw new NotImplementedException();
         }
 
-        public override long Seek(long dest, SeekOrigin origin) {
-            switch (origin) {
-            case SeekOrigin.End:
-                Position = Length - dest;
-                break;
-            case SeekOrigin.Begin:
-                Position = dest;
-                break;
-            case SeekOrigin.Current:
-                Position += dest;
-                break;
+        public override long Seek(long dest, SeekOrigin origin)
+        {
+            switch (origin)
+            {
+                case SeekOrigin.End:
+                    Position = Length - dest;
+                    break;
+                case SeekOrigin.Begin:
+                    Position = dest;
+                    break;
+                case SeekOrigin.Current:
+                    Position += dest;
+                    break;
             }
             return Position;
         }
 
-        public override int Read(byte[] buffer, int offset, int count) {
+        public override int Read(byte[] buffer, int offset, int count)
+        {
             int size = count;
             if (Position + count > Length)
-                size = (int)(Length-Position);
+                size = (int)(Length - Position);
             Array.Copy(data, Position, buffer, offset, size);
             Position = Position + size;
             return size;
         }
-        public override void Write(byte[] buffer, int offset, int count) {
+        public override void Write(byte[] buffer, int offset, int count)
+        {
             throw new NotImplementedException();
         }
 
-        public override int ReadByte() {
+        public override int ReadByte()
+        {
             int ret = data[Position];
             Position++;
             return ret;
         }
-        public override void WriteByte(byte value) {
+        public override void WriteByte(byte value)
+        {
             throw new NotImplementedException();
         }
 
 
         // Static methods
 
-        static PngProperties LoadProperties(string s) {
+        static PngProperties LoadProperties(string s)
+        {
             PngProperties properties = new PngProperties();
 
             string baseFilename = Path.GetFileName(s);
-            if (baseFilename.StartsWith("spr_")) {
+            if (baseFilename.StartsWith("spr_"))
+            {
                 properties.invert = true;
                 properties.interleave = true;
             }
 
-            if (File.Exists(s)) {
+            if (File.Exists(s))
+            {
                 var deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
 
                 var dict = deserializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(s));
@@ -174,7 +199,8 @@ namespace LynnaLib
 
 
         // Representation of ".properties" file
-        class PngProperties {
+        class PngProperties
+        {
             public int width;
             public int tile_padding;
             public bool invert;

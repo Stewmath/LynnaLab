@@ -4,15 +4,18 @@ using Bitmap = System.Drawing.Bitmap;
 
 using LynnaLib;
 
-namespace LynnaLab {
+namespace LynnaLab
+{
 
     // A "box" allowing one to select items in it, drag them to change ordering, and right-click to
     // bring up a menu.
-    public abstract class SelectionBox : TileGridViewer {
+    public abstract class SelectionBox : TileGridViewer
+    {
 
         // Constructors
 
-        public SelectionBox() : base() {
+        public SelectionBox() : base()
+        {
             base.Width = 8;
             base.Height = 2;
             base.TileWidth = 18;
@@ -24,8 +27,10 @@ namespace LynnaLab {
             base.BackgroundColor = new Cairo.Color(0.8, 0.8, 0.8);
             base.HoverColor = RoomEditor.ObjectHoverColor;
 
-            TileGridEventHandler dragCallback = (sender, index) => {
-                if (index != SelectedIndex) {
+            TileGridEventHandler dragCallback = (sender, index) =>
+            {
+                if (index != SelectedIndex)
+                {
                     OnMoveSelection(SelectedIndex, index);
                     SelectedIndex = index;
                 }
@@ -35,8 +40,10 @@ namespace LynnaLab {
                     GridAction.Callback, dragCallback);
 
 
-            this.ButtonPressEvent += (sender, args) => {
-                if (args.Event.Button == 3) {
+            this.ButtonPressEvent += (sender, args) =>
+            {
+                if (args.Event.Button == 3)
+                {
                     if (HoveringIndex != -1)
                         SelectedIndex = HoveringIndex;
                     ShowPopupMenu(args.Event);
@@ -47,7 +54,8 @@ namespace LynnaLab {
 
         // Public methods
 
-        public void SetSelectedIndex(int index) {
+        public void SetSelectedIndex(int index)
+        {
             SelectedIndex = index;
         }
 

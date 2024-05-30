@@ -4,8 +4,9 @@ using System.Collections.Generic;
 
 namespace LynnaLib
 {
-    public enum WarpSourceType {
-        Standard=0,
+    public enum WarpSourceType
+    {
+        Standard = 0,
         Pointed, // An m_StandardWarp referenced by a PointerWarp
         Pointer,
         End,
@@ -44,10 +45,12 @@ namespace LynnaLib
             }
         };
 
-        private static List<ValueReference> GetWarpValueReferences(WarpSourceType type, Data data) {
-            switch (type) {
-            case WarpSourceType.Standard:
-                return new List<ValueReference> { // StandardWarp
+        private static List<ValueReference> GetWarpValueReferences(WarpSourceType type, Data data)
+        {
+            switch (type)
+            {
+                case WarpSourceType.Standard:
+                    return new List<ValueReference> { // StandardWarp
                     new DataValueReference(data,"Opcode",0,DataValueType.Byte, editable:false),
                     new DataValueReference(data,"Top-Left",0,DataValueType.ByteBit,0,0),
                     new DataValueReference(data,"Top-Right",0,DataValueType.ByteBit,1,1),
@@ -59,8 +62,8 @@ namespace LynnaLib
                     new DataValueReference(data,"Transition",4,DataValueType.HalfByte,
                         constantsMappingString:"SourceTransitionMapping"),
                 };
-            case WarpSourceType.Pointed:
-                return new List<ValueReference> { // PointedWarp
+                case WarpSourceType.Pointed:
+                    return new List<ValueReference> { // PointedWarp
                     new DataValueReference(data,"Opcode",0,DataValueType.Byte, editable:false),
 
                     // For "pointed" warp sources, "map" is instead a position
@@ -72,8 +75,8 @@ namespace LynnaLib
                     new DataValueReference(data,"Transition",4,DataValueType.HalfByte,
                         constantsMappingString:"SourceTransitionMapping"),
                 };
-            case WarpSourceType.Pointer:
-                return new List<ValueReference> { // PointerWarp
+                case WarpSourceType.Pointer:
+                    return new List<ValueReference> { // PointerWarp
                     new DataValueReference(data,"Opcode",0,DataValueType.Byte, editable:false),
                     new DataValueReference(data,"Map",1,DataValueType.Byte, editable:false),
 
@@ -81,9 +84,10 @@ namespace LynnaLib
                     // Group/Entrance/Dest Index.
                     new DataValueReference(data,"Pointer", 2, DataValueType.String, editable:false),
                 };
-            case WarpSourceType.End:
-                return new List<ValueReference> { // WarpSourcesEnd
-                };
+                case WarpSourceType.End:
+                    return new List<ValueReference>
+                    { // WarpSourcesEnd
+                    };
             }
 
             return null;
@@ -101,116 +105,155 @@ namespace LynnaLib
 
         // Properties
 
-        public WarpSourceType WarpSourceType {
+        public WarpSourceType WarpSourceType
+        {
             get { return _type; }
         }
-        public ValueReferenceGroup ValueReferenceGroup {
+        public ValueReferenceGroup ValueReferenceGroup
+        {
             get { return vrg; }
         }
 
-        public int Opcode {
-            get {
+        public int Opcode
+        {
+            get
+            {
                 return vrg.GetIntValue("Opcode");
             }
-            set {
-                vrg.SetValue("Opcode",value);
+            set
+            {
+                vrg.SetValue("Opcode", value);
             }
         }
-        public bool TopLeft {
-            get {
+        public bool TopLeft
+        {
+            get
+            {
                 return vrg.GetIntValue("Top-Left") != 0;
             }
-            set {
+            set
+            {
                 vrg.SetValue("Top-Left", value ? 1 : 0);
             }
         }
-        public bool TopRight {
-            get {
+        public bool TopRight
+        {
+            get
+            {
                 return vrg.GetIntValue("Top-Right") != 0;
             }
-            set {
+            set
+            {
                 vrg.SetValue("Top-Right", value ? 1 : 0);
             }
         }
-        public bool BottomLeft {
-            get {
+        public bool BottomLeft
+        {
+            get
+            {
                 return vrg.GetIntValue("Bottom-Left") != 0;
             }
-            set {
+            set
+            {
                 vrg.SetValue("Bottom-Left", value ? 1 : 0);
             }
         }
-        public bool BottomRight {
-            get {
+        public bool BottomRight
+        {
+            get
+            {
                 return vrg.GetIntValue("Bottom-Right") != 0;
             }
-            set {
+            set
+            {
                 vrg.SetValue("Bottom-Right", value ? 1 : 0);
             }
         }
-        public int Map {
-            get {
+        public int Map
+        {
+            get
+            {
                 return vrg.GetIntValue("Map");
             }
-            set {
+            set
+            {
                 vrg.SetValue("Map", value);
             }
         }
-        public int DestIndex {
-            get {
+        public int DestIndex
+        {
+            get
+            {
                 return vrg.GetIntValue("Dest Index");
             }
-            private set {
-                vrg.SetValue("Dest Index",value);
+            private set
+            {
+                vrg.SetValue("Dest Index", value);
             }
         }
-        public int DestGroupIndex {
-            get {
+        public int DestGroupIndex
+        {
+            get
+            {
                 return vrg.GetIntValue("Dest Group");
             }
-            private set {
+            private set
+            {
                 // HACKY WORKAROUND: Set "DestIndex" to 0 first. This will prevent "index out of
                 // bounds" errors if you set the group to one which has fewer indices than the
                 // previous one.
                 // Always set the "dest group" first, then the "dest index".
                 DestIndex = 0;
 
-                vrg.SetValue("Dest Group",value);
+                vrg.SetValue("Dest Group", value);
             }
         }
-        public WarpDestGroup DestGroup {
+        public WarpDestGroup DestGroup
+        {
             get { return Project.GetIndexedDataType<WarpDestGroup>(DestGroupIndex); }
         }
-        public int Transition {
-            get {
+        public int Transition
+        {
+            get
+            {
                 return vrg.GetIntValue("Transition");
             }
-            set {
-                vrg.SetValue("Transition",value);
+            set
+            {
+                vrg.SetValue("Transition", value);
             }
         }
-        public int X {
-            get {
+        public int X
+        {
+            get
+            {
                 return vrg.GetIntValue("X");
             }
-            set {
-                vrg.SetValue("X",value);
+            set
+            {
+                vrg.SetValue("X", value);
             }
         }
-        public int Y {
-            get {
+        public int Y
+        {
+            get
+            {
                 return vrg.GetIntValue("Y");
             }
-            set {
-                vrg.SetValue("Y",value);
+            set
+            {
+                vrg.SetValue("Y", value);
             }
         }
-        public string PointerString {
-            get {
+        public string PointerString
+        {
+            get
+            {
                 return vrg.GetValue("Pointer");
             }
-            set {
-                vrg.SetValue("Pointer",value);
+            set
+            {
+                vrg.SetValue("Pointer", value);
             }
         }
 
@@ -220,9 +263,11 @@ namespace LynnaLib
             : base(p, command, values, -1, parser, spacing)
         {
             // Find type
-            for (int i=0; i<WarpCommands.Length; i++) {
+            for (int i = 0; i < WarpCommands.Length; i++)
+            {
                 string s = WarpCommands[i];
-                if (this.CommandLowerCase == s.ToLower()) {
+                if (this.CommandLowerCase == s.ToLower())
+                {
                     _type = (WarpSourceType)i;
                     break;
                 }
@@ -237,9 +282,11 @@ namespace LynnaLib
             this.AddModifiedEventHandler((sender, args) => Sanitize());
             Sanitize();
 
-            this.AddModifiedEventHandler(delegate(object sender, DataModifiedEventArgs args) {
+            this.AddModifiedEventHandler(delegate (object sender, DataModifiedEventArgs args)
+            {
                 WarpDestData newDestData = GetReferencedDestData();
-                if (newDestData != referencedDestData) {
+                if (newDestData != referencedDestData)
+                {
                     // Update DestData reference
                     if (referencedDestData != null)
                         referencedDestData.RemoveReference(this);
@@ -252,7 +299,8 @@ namespace LynnaLib
 
         // If this is the kind of warp which points to another warp, return the
         // pointed warp, otherwise return null
-        public WarpSourceData GetPointedWarp() {
+        public WarpSourceData GetPointedWarp()
+        {
             if (WarpSourceType != WarpSourceType.Pointer)
                 throw new ArgumentException("Invalid warp type for 'GetPointedWarp' call.");
 
@@ -262,7 +310,8 @@ namespace LynnaLib
 
         // If this is a WarpSourceData which is pointed to from another one,
         // return the next in the sequence, or null if the sequence is over.
-        public WarpSourceData GetNextWarp() {
+        public WarpSourceData GetNextWarp()
+        {
             if (WarpSourceType != WarpSourceType.Pointed)
                 throw new ArgumentException("Invalid warp type for 'GetNextWarp' call.");
 
@@ -270,7 +319,8 @@ namespace LynnaLib
             if ((Opcode & 0x80) != 0) return null;
 
             FileComponent next = Next;
-            while (next != null) {
+            while (next != null)
+            {
                 // This condition is a bit weird, but the game doesn't always
                 // end with a 0x80 opcode, so I need another way to discern the
                 // endpoint
@@ -290,7 +340,8 @@ namespace LynnaLib
         //
         // If called on a PointerWarp, it returns the corresponding value for
         // its PointedWarp.
-        public int GetPointedChainLength() {
+        public int GetPointedChainLength()
+        {
             if (WarpSourceType == WarpSourceType.Pointer)
                 return GetPointedWarp().GetPointedChainLength();
             else if (WarpSourceType != WarpSourceType.Pointed)
@@ -299,12 +350,13 @@ namespace LynnaLib
             WarpSourceData next = GetNextWarp();
             if (next == null) return 1;
 
-            return 1+next.GetPointedChainLength();
+            return 1 + next.GetPointedChainLength();
         }
 
         // Returns the WarpSourceData object that's "index" entries after this one.
         // (Assumes this is a PointedWarp or PointerWarp..)
-        public WarpSourceData TraversePointedChain(int count) {
+        public WarpSourceData TraversePointedChain(int count)
+        {
             if (WarpSourceType == WarpSourceType.Pointer)
                 return GetPointedWarp().TraversePointedChain(count);
             else if (WarpSourceType != WarpSourceType.Pointed)
@@ -312,22 +364,26 @@ namespace LynnaLib
 
             if (count == 0)
                 return this;
-            return GetNextWarp().TraversePointedChain(count-1);
+            return GetNextWarp().TraversePointedChain(count - 1);
         }
 
-        public WarpDestData GetReferencedDestData() {
+        public WarpDestData GetReferencedDestData()
+        {
             WarpDestGroup group = GetReferencedDestGroup();
             if (group == null) return null;
 
-            try {
+            try
+            {
                 return group.GetWarpDest(DestIndex);
             }
-            catch (ArgumentOutOfRangeException) {
+            catch (ArgumentOutOfRangeException)
+            {
                 return null;
             }
         }
 
-        public WarpDestGroup GetReferencedDestGroup() {
+        public WarpDestGroup GetReferencedDestGroup()
+        {
             if (_type == WarpSourceType.Pointer ||
                     _type == WarpSourceType.End)
                 return null;
@@ -336,7 +392,8 @@ namespace LynnaLib
 
         // Set the WarpDestData associated with this source, setting DestIndex
         // and DestGroup appropriately
-        public void SetDestData(WarpDestData data) {
+        public void SetDestData(WarpDestData data)
+        {
             DestGroupIndex = data.DestGroup.Index;
             DestIndex = data.DestIndex;
             // The handler defined in the constructor will update the
@@ -344,16 +401,20 @@ namespace LynnaLib
         }
 
         // This hides the annoyance of the "DestData" intermediate layer
-        public Room GetDestRoom() {
+        public Room GetDestRoom()
+        {
             WarpDestData destData = GetReferencedDestData();
-            return Project.GetIndexedDataType<Room>((destData.Group<<8) + destData.Map);
+            return Project.GetIndexedDataType<Room>((destData.Group << 8) + destData.Map);
         }
 
 
         // Make sure there are no surprises
-        void Sanitize() {
-            if (WarpSourceType == WarpSourceType.Standard || WarpSourceType == WarpSourceType.Pointed) {
-                if (DestGroupIndex >= Project.NumGroups) {
+        void Sanitize()
+        {
+            if (WarpSourceType == WarpSourceType.Standard || WarpSourceType == WarpSourceType.Pointed)
+            {
+                if (DestGroupIndex >= Project.NumGroups)
+                {
                     throw new AssemblyErrorException("Dest group for warp too high: \"" + GetString().Trim() + "\".");
                 }
                 if (DestIndex >= DestGroup.GetNumWarpDests())

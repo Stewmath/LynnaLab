@@ -9,7 +9,8 @@ namespace LynnaLib
     // A caveat about using this: if this is used as a layer on top of actual Data values, then if
     // those Data values are changed, the event handlers installed by "AddValueModifiedHandler"
     // won't trigger. They will only trigger if modifications are made through this class.
-    public class AbstractIntValueReference : ValueReference {
+    public class AbstractIntValueReference : ValueReference
+    {
 
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -22,8 +23,9 @@ namespace LynnaLib
 
         // Constructors
 
-        public AbstractIntValueReference(Project project, string name, Func<int> getter, Action<int> setter, int maxValue, int minValue=0, ValueReferenceType type=ValueReferenceType.Int, bool editable=true, string constantsMappingString=null, string tooltip=null)
-        : base(name, type, editable, constantsMappingString) {
+        public AbstractIntValueReference(Project project, string name, Func<int> getter, Action<int> setter, int maxValue, int minValue = 0, ValueReferenceType type = ValueReferenceType.Int, bool editable = true, string constantsMappingString = null, string tooltip = null)
+        : base(name, type, editable, constantsMappingString)
+        {
             base.Project = project;
             this.getter = getter;
             this.setter = setter;
@@ -35,13 +37,15 @@ namespace LynnaLib
         }
 
         public AbstractIntValueReference(AbstractIntValueReference r)
-        : base(r) {
+        : base(r)
+        {
             this.getter = r.getter;
             this.setter = r.setter;
         }
 
         public AbstractIntValueReference(ValueReference r, Func<int> getter = null, Action<int> setter = null)
-        : base(r) {
+        : base(r)
+        {
             this.getter = getter;
             this.setter = setter;
 
@@ -54,17 +58,22 @@ namespace LynnaLib
 
         // Methods
 
-        public override string GetStringValue() {
+        public override string GetStringValue()
+        {
             return Wla.ToHex(GetIntValue(), 2);
         }
-        public override int GetIntValue() {
+        public override int GetIntValue()
+        {
             return getter();
         }
-        public override void SetValue(string s) {
+        public override void SetValue(string s)
+        {
             SetValue(Project.EvalToInt(s));
         }
-        public override void SetValue(int i) {
-            if (i > MaxValue) {
+        public override void SetValue(int i)
+        {
+            if (i > MaxValue)
+            {
                 log.Warn(string.Format("Tried to set \"{0}\" to {1} (max value is {2})", Name, i, MaxValue));
                 i = MaxValue;
             }
@@ -74,11 +83,13 @@ namespace LynnaLib
             RaiseModifiedEvent(null);
         }
 
-        public override void Initialize() {
+        public override void Initialize()
+        {
             throw new NotImplementedException();
         }
 
-        public override ValueReference Clone() {
+        public override ValueReference Clone()
+        {
             return new AbstractIntValueReference(this);
         }
     }

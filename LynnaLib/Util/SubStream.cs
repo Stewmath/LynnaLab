@@ -1,24 +1,32 @@
 using System;
 using System.IO;
 
-namespace Util {
-    public class SubStream : Stream {
-        public override bool CanRead {
+namespace Util
+{
+    public class SubStream : Stream
+    {
+        public override bool CanRead
+        {
             get { return stream.CanRead; }
         }
-        public override bool CanSeek {
+        public override bool CanSeek
+        {
             get { return stream.CanSeek; }
         }
-        public override bool CanTimeout {
+        public override bool CanTimeout
+        {
             get { return stream.CanTimeout; }
         }
-        public override bool CanWrite {
+        public override bool CanWrite
+        {
             get { return stream.CanWrite; }
         }
-        public override long Length {
+        public override long Length
+        {
             get { return _length; }
         }
-        public override long Position {
+        public override long Position
+        {
             get { return _position; }
             set { _position = value; }
         }
@@ -29,23 +37,28 @@ namespace Util {
         Stream stream;
         int streamOffset;
 
-        public SubStream(Stream stream, int offset, int size) {
+        public SubStream(Stream stream, int offset, int size)
+        {
             this.stream = stream;
             this.streamOffset = offset;
-            
+
             _length = size;
         }
 
-        public override void Flush() {
+        public override void Flush()
+        {
             stream.Flush();
         }
 
-        public override void SetLength(long len) {
+        public override void SetLength(long len)
+        {
             throw new NotImplementedException();
         }
 
-        public override long Seek(long dest, SeekOrigin origin) {
-            switch (origin) {
+        public override long Seek(long dest, SeekOrigin origin)
+        {
+            switch (origin)
+            {
                 case SeekOrigin.End:
                     Position = Length - dest;
                     break;
@@ -59,16 +72,18 @@ namespace Util {
             return Position;
         }
 
-        public override int Read(byte[] buffer, int offset, int count) {
+        public override int Read(byte[] buffer, int offset, int count)
+        {
             int size = count;
             if (Position + size > Length)
-                size = (int)(Length-Position);
+                size = (int)(Length - Position);
             stream.Position = Position + streamOffset;
             stream.Read(buffer, offset, size);
             Position = Position + size;
             return size;
         }
-        public override void Write(byte[] buffer, int offset, int count) {
+        public override void Write(byte[] buffer, int offset, int count)
+        {
             if (Position + count > Length)
                 throw new Exception("Write operation passes end of stream");
             stream.Position = Position + streamOffset;
@@ -78,13 +93,15 @@ namespace Util {
                 Position = Length;
         }
 
-        public override int ReadByte() {
+        public override int ReadByte()
+        {
             stream.Position = Position + streamOffset;
             int ret = stream.ReadByte();
             Position++;
             return ret;
         }
-        public override void WriteByte(byte value) {
+        public override void WriteByte(byte value)
+        {
             stream.Position = Position + streamOffset;
             stream.WriteByte(value);
             Position++;

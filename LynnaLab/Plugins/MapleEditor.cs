@@ -14,8 +14,10 @@ namespace Plugins
     {
         PluginManager manager;
 
-        Project Project {
-            get {
+        Project Project
+        {
+            get
+            {
                 return manager.Project;
             }
         }
@@ -25,27 +27,31 @@ namespace Plugins
         public override bool IsDockable { get { return false; } }
         public override string Category { get { return "Window"; } }
 
-        public override void Init(PluginManager manager) {
+        public override void Init(PluginManager manager)
+        {
             this.manager = manager;
         }
 
-        public override Gtk.Widget Instantiate() {
+        public override Gtk.Widget Instantiate()
+        {
             return new MapleEditorImplementation(manager);
         }
     }
 
-    class MapleEditorImplementation : Gtk.Bin {
+    class MapleEditorImplementation : Gtk.Bin
+    {
         PluginManager manager;
         MyMinimap minimap;
 
-        public MapleEditorImplementation(PluginManager manager) {
+        public MapleEditorImplementation(PluginManager manager)
+        {
             this.manager = manager;
 
             minimap = new MyMinimap();
 
-            var minimapContainer = new Gtk.Alignment(1.0f,1.0f,1.0f,1.0f);
+            var minimapContainer = new Gtk.Alignment(1.0f, 1.0f, 1.0f, 1.0f);
 
-            var list = new List<string>( new string[] {
+            var list = new List<string>(new string[] {
                 "Present (Ricky)",
                 "Present (Dimitri)",
                 "Present (Moosh)"
@@ -55,17 +61,20 @@ namespace Plugins
 
             Gtk.ComboBox comboBox = new Gtk.ComboBox(list.ToArray());
 
-            comboBox.Changed += (a,b) => {
+            comboBox.Changed += (a, b) =>
+            {
                 int i = comboBox.Active;
                 Data data;
                 Map map;
 
-                if (i == 3) {
+                if (i == 3)
+                {
                     data = Project.GetData("maplePastLocations");
                     map = Project.GetWorldMap(1, manager.GetActiveRoomLayout().Season);
                 }
-                else {
-                    data = Project.GetData(Project.GetData("maplePresentLocationsTable", i*2).GetValue(0));
+                else
+                {
+                    data = Project.GetData(Project.GetData("maplePresentLocationsTable", i * 2).GetValue(0));
                     map = Project.GetWorldMap(0, manager.GetActiveRoomLayout().Season);
                 }
 
@@ -93,86 +102,103 @@ namespace Plugins
             ShowAll();
         }
 
-        Project Project {
+        Project Project
+        {
             get { return manager.Project; }
         }
 
 
-        class MyMinimap : Minimap {
+        class MyMinimap : Minimap
+        {
             Data bitData;
             bool dragSet;
 
-            public MyMinimap() : base(1.0/4) {
+            public MyMinimap() : base(1.0 / 4)
+            {
                 base.HoverColor = new Cairo.Color(1.0, 1.0, 1.0);
 
-                Action<int,int> OnDragged = (x, y) => {
+                Action<int, int> OnDragged = (x, y) =>
+                {
                     x /= TileWidth;
                     y /= TileHeight;
                     SetSelected(x, y, dragSet);
                 };
 
-                this.ButtonPressEvent += delegate(object o, Gtk.ButtonPressEventArgs args) {
-                    int x,y;
+                this.ButtonPressEvent += delegate (object o, Gtk.ButtonPressEventArgs args)
+                {
+                    int x, y;
                     Gdk.ModifierType state;
                     args.Event.Window.GetPointer(out x, out y, out state);
-                    if (IsInBounds(x, y)) {
-                        if (state.HasFlag(Gdk.ModifierType.Button1Mask)) {
+                    if (IsInBounds(x, y))
+                    {
+                        if (state.HasFlag(Gdk.ModifierType.Button1Mask))
+                        {
                             dragSet = true;
-                            OnDragged(x,y);
+                            OnDragged(x, y);
                         }
-                        else if (state.HasFlag(Gdk.ModifierType.Button3Mask)) {
+                        else if (state.HasFlag(Gdk.ModifierType.Button3Mask))
+                        {
                             dragSet = false;
-                            OnDragged(x,y);
+                            OnDragged(x, y);
                         }
                     }
                 };
-                this.MotionNotifyEvent += delegate(object o, Gtk.MotionNotifyEventArgs args) {
-                    int x,y;
+                this.MotionNotifyEvent += delegate (object o, Gtk.MotionNotifyEventArgs args)
+                {
+                    int x, y;
                     Gdk.ModifierType state;
                     args.Event.Window.GetPointer(out x, out y, out state);
-                    if (IsInBounds(x, y)) {
+                    if (IsInBounds(x, y))
+                    {
                         if (state.HasFlag(Gdk.ModifierType.Button1Mask) || state.HasFlag(Gdk.ModifierType.Button3Mask))
                             OnDragged(x, y);
                     }
                 };
             }
 
-            public void SetData(Data d) {
+            public void SetData(Data d)
+            {
                 bitData = d;
             }
 
-            bool GetSelected(int x, int y) {
+            bool GetSelected(int x, int y)
+            {
                 Data data = bitData;
-                int i = y*Width+x;
-                while (i >= 8) {
+                int i = y * Width + x;
+                while (i >= 8)
+                {
                     data = data.NextData;
-                    i-=8;
+                    i -= 8;
                 }
-                return (data.GetIntValue(0) & (0x80>>i)) != 0;
+                return (data.GetIntValue(0) & (0x80 >> i)) != 0;
             }
-            void SetSelected(int x, int y, bool val) {
+            void SetSelected(int x, int y, bool val)
+            {
                 Data data = bitData;
-                int i = y*Width+x;
-                while (i >= 8) {
+                int i = y * Width + x;
+                while (i >= 8)
+                {
                     data = data.NextData;
-                    i-=8;
+                    i -= 8;
                 }
-                int bit = (0x80>>i);
+                int bit = (0x80 >> i);
                 if (val)
                     data.SetValue(0, Wla.ToBinary(data.GetIntValue(0) | bit));
                 else
                     data.SetValue(0, Wla.ToBinary(data.GetIntValue(0) & ~bit));
-                QueueDrawArea(x*TileWidth, y*TileHeight, TileWidth, TileHeight);
+                QueueDrawArea(x * TileWidth, y * TileHeight, TileWidth, TileHeight);
             }
 
-            protected override void TileDrawer(int index, Cairo.Context cr) {
+            protected override void TileDrawer(int index, Cairo.Context cr)
+            {
                 base.TileDrawer(index, cr);
 
                 int x = index % Width;
                 int y = index / Width;
 
                 cr.Save();
-                if (GetSelected(x,y)) {
+                if (GetSelected(x, y))
+                {
                     cr.SetSourceRGB(1.0, 0, 0);
                     //cr.Rectangle(0, 0, TileWidth, TileHeight);
                     cr.PaintWithAlpha(0.4);

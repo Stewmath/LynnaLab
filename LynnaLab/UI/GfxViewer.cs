@@ -6,9 +6,11 @@ using LynnaLib;
 
 namespace LynnaLab
 {
-    public partial class GfxViewer : TileGridViewer {
+    public partial class GfxViewer : TileGridViewer
+    {
 
-        override protected Bitmap Image {
+        override protected Bitmap Image
+        {
             get { return image; }
         }
 
@@ -17,7 +19,8 @@ namespace LynnaLab
         GraphicsState graphicsState;
         int offsetStart, offsetEnd;
 
-        public GfxViewer() : base() {
+        public GfxViewer() : base()
+        {
             TileWidth = 8;
             TileHeight = 8;
             Width = 0;
@@ -27,14 +30,14 @@ namespace LynnaLab
             SelectedIndex = 0;
         }
 
-        public void SetGraphicsState(GraphicsState state, int offsetStart, int offsetEnd, int width=-1, int scale=2)
+        public void SetGraphicsState(GraphicsState state, int offsetStart, int offsetEnd, int width = -1, int scale = 2)
         {
-            GraphicsState.TileModifiedHandler tileModifiedHandler = delegate(int bank, int tile)
+            GraphicsState.TileModifiedHandler tileModifiedHandler = delegate (int bank, int tile)
             {
                 if (bank == -1 && tile == -1) // Full invalidation
                     redrawAll();
                 else
-                    draw(tile+bank*0x180);
+                    draw(tile + bank * 0x180);
             };
 
             if (graphicsState != null)
@@ -44,10 +47,10 @@ namespace LynnaLab
 
             graphicsState = state;
 
-            int size = (offsetEnd-offsetStart)/16;
+            int size = (offsetEnd - offsetStart) / 16;
             if (width == -1)
                 width = (int)Math.Sqrt(size);
-            int height = size/width;
+            int height = size / width;
 
             this.offsetStart = offsetStart;
             this.offsetEnd = offsetEnd;
@@ -58,27 +61,30 @@ namespace LynnaLab
             TileHeight = 8;
             Scale = scale;
 
-            image = new Bitmap(Width*TileWidth,Height*TileHeight);
+            image = new Bitmap(Width * TileWidth, Height * TileHeight);
 
             redrawAll();
         }
 
-        void redrawAll() {
-            for (int i=offsetStart/16; i<offsetEnd/16; i++)
+        void redrawAll()
+        {
+            for (int i = offsetStart / 16; i < offsetEnd / 16; i++)
                 draw(i);
         }
 
-        void draw(int tile) {
-            int offset = tile*16;
+        void draw(int tile)
+        {
+            int offset = tile * 16;
 
             if (!(offset >= offsetStart && offset < offsetEnd))
                 return;
 
-            int x = ((offset-offsetStart)/16)%Width;
-            int y = ((offset-offsetStart)/16)/Width;
+            int x = ((offset - offsetStart) / 16) % Width;
+            int y = ((offset - offsetStart) / 16) / Width;
 
-            int bank=0;
-            if (offset >= 0x1800) {
+            int bank = 0;
+            if (offset >= 0x1800)
+            {
                 offset -= 0x1800;
                 bank = 1;
             }
@@ -86,7 +92,7 @@ namespace LynnaLab
             Array.Copy(graphicsState.VramBuffer[bank], offset, data, 0, 16);
             Bitmap subImage = GbGraphics.TileToBitmap(data);
             Graphics g = Graphics.FromImage(image);
-            g.DrawImage(subImage, x*8, y*8);
+            g.DrawImage(subImage, x * 8, y * 8);
 
             QueueDraw();
         }

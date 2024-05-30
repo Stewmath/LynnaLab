@@ -18,18 +18,22 @@ namespace Plugins
         public override bool IsDockable { get { return false; } }
         public override string Category { get { return "Window"; } }
 
-        public override void Init(PluginManager manager) {
+        public override void Init(PluginManager manager)
+        {
             this.manager = manager;
         }
-        public override void Exit() {
+        public override void Exit()
+        {
         }
 
-        public override Gtk.Widget Instantiate() {
+        public override Gtk.Widget Instantiate()
+        {
             return new DungeonEditorImplementation(manager);
         }
     }
 
-    class DungeonEditorImplementation : Gtk.Bin {
+    class DungeonEditorImplementation : Gtk.Bin
+    {
         PluginManager manager;
 
         Minimap minimap = null;
@@ -41,7 +45,8 @@ namespace Plugins
 
         WeakEventWrapper<Dungeon> dungeonEventWrapper = new WeakEventWrapper<Dungeon>();
 
-        public DungeonEditorImplementation(PluginManager manager) {
+        public DungeonEditorImplementation(PluginManager manager)
+        {
             this.manager = manager;
 
             Box tmpBox, tmpBox2;
@@ -56,14 +61,14 @@ namespace Plugins
             dungeonVre = null;
             roomVre = null;
 
-            Alignment frame = new Alignment(0,0,0,0);
-            dungeonSpinButton = new SpinButton(0,15,1);
-            floorSpinButton = new SpinButton(0,15,1);
-            roomSpinButton = new SpinButtonHexadecimal(0,255,1);
+            Alignment frame = new Alignment(0, 0, 0, 0);
+            dungeonSpinButton = new SpinButton(0, 15, 1);
+            floorSpinButton = new SpinButton(0, 15, 1);
+            roomSpinButton = new SpinButtonHexadecimal(0, 255, 1);
             roomSpinButton.Digits = 2;
 
-            dungeonSpinButton.ValueChanged += (a,b) => { DungeonChanged(); };
-            floorSpinButton.ValueChanged += (a,b) => { DungeonChanged(); };
+            dungeonSpinButton.ValueChanged += (a, b) => { DungeonChanged(); };
+            floorSpinButton.ValueChanged += (a, b) => { DungeonChanged(); };
 
             frame.Add(vbox);
 
@@ -72,7 +77,7 @@ namespace Plugins
             tmpBox.Add(dungeonSpinButton);
             tmpBox.Add(new Gtk.Label("Floor "));
             tmpBox.Add(floorSpinButton);
-            tmpAlign = new Alignment(0,0,0,0);
+            tmpAlign = new Alignment(0, 0, 0, 0);
             tmpAlign.Add(tmpBox);
 
             vbox.Add(tmpAlign);
@@ -85,30 +90,33 @@ namespace Plugins
 
             var addFloorAboveButton = new Button("Add Floor Above");
             addFloorAboveButton.Image = new Gtk.Image(Gtk.Stock.Add, Gtk.IconSize.Button);
-            addFloorAboveButton.Clicked += (a,b) => {
+            addFloorAboveButton.Clicked += (a, b) =>
+            {
                 int floorIndex = floorSpinButton.ValueAsInt + 1;
                 (minimap.Map as Dungeon).InsertFloor(floorIndex);
                 DungeonChanged();
                 floorSpinButton.Value = floorIndex;
             };
-            tmpAlign = new Gtk.Alignment(0.5f,0,0,0);
+            tmpAlign = new Gtk.Alignment(0.5f, 0, 0, 0);
             tmpAlign.Add(addFloorAboveButton);
             tmpBox.Add(tmpAlign);
 
             var addFloorBelowButton = new Button("Add Floor Below");
             addFloorBelowButton.Image = new Gtk.Image(Gtk.Stock.Add, Gtk.IconSize.Button);
-            addFloorBelowButton.Clicked += (a,b) => {
+            addFloorBelowButton.Clicked += (a, b) =>
+            {
                 int floorIndex = floorSpinButton.ValueAsInt;
                 (minimap.Map as Dungeon).InsertFloor(floorIndex);
                 DungeonChanged();
             };
-            tmpAlign = new Gtk.Alignment(0.5f,0,0,0);
+            tmpAlign = new Gtk.Alignment(0.5f, 0, 0, 0);
             tmpAlign.Add(addFloorBelowButton);
             tmpBox.Add(tmpAlign);
 
             var removeFloorButton = new Button("Remove Floor");
             removeFloorButton.Image = new Gtk.Image(Gtk.Stock.Remove, Gtk.IconSize.Button);
-            removeFloorButton.Clicked += (a,b) => {
+            removeFloorButton.Clicked += (a, b) =>
+            {
                 Dungeon dungeon = minimap.Map as Dungeon;
 
                 if (dungeon.NumFloors <= 1)
@@ -122,12 +130,13 @@ namespace Plugins
                 var response = (ResponseType)d.Run();
                 d.Dispose();
 
-                if (response == Gtk.ResponseType.Yes) {
+                if (response == Gtk.ResponseType.Yes)
+                {
                     dungeon.RemoveFloor(floorSpinButton.ValueAsInt);
                     DungeonChanged();
                 }
             };
-            tmpAlign = new Gtk.Alignment(0.5f,0,0,0);
+            tmpAlign = new Gtk.Alignment(0.5f, 0, 0, 0);
             tmpAlign.Add(removeFloorButton);
             tmpBox.Add(tmpAlign);
 
@@ -136,7 +145,8 @@ namespace Plugins
             // Middle column (minimap)
 
             minimap = new Minimap();
-            minimap.AddTileSelectedHandler((sender, index) => {
+            minimap.AddTileSelectedHandler((sender, index) =>
+            {
                 RoomChanged();
             });
 
@@ -144,12 +154,13 @@ namespace Plugins
 
             // Rightmost column
 
-            tmpAlign = new Alignment(0,0,0,0);
+            tmpAlign = new Alignment(0, 0, 0, 0);
             tmpAlign.Add(roomVreContainer);
 
             tmpBox2 = new HBox();
             tmpBox2.Add(new Gtk.Label("Room "));
-            roomSpinButton.ValueChanged += (a,b) => {
+            roomSpinButton.ValueChanged += (a, b) =>
+            {
                 (minimap.Map as Dungeon).SetRoom(minimap.SelectedX, minimap.SelectedY,
                         minimap.Floor, roomSpinButton.ValueAsInt);
             };
@@ -179,27 +190,31 @@ namespace Plugins
         }
 
 
-        Project Project {
-            get {
+        Project Project
+        {
+            get
+            {
                 return manager.Project;
             }
         }
 
 
-        void DungeonChanged() {
+        void DungeonChanged()
+        {
             Dungeon dungeon = Project.GetDungeon(dungeonSpinButton.ValueAsInt);
 
             dungeonEventWrapper.ReplaceEventSource(dungeon);
 
-            floorSpinButton.Adjustment.Upper = dungeon.NumFloors-1;
+            floorSpinButton.Adjustment.Upper = dungeon.NumFloors - 1;
             if (floorSpinButton.ValueAsInt >= dungeon.NumFloors)
-                floorSpinButton.Value = dungeon.NumFloors-1;
+                floorSpinButton.Value = dungeon.NumFloors - 1;
 
             var vrg = dungeon.ValueReferenceGroup;
 
             if (dungeonVre != null)
                 dungeonVre.ReplaceValueReferenceGroup(vrg);
-            else {
+            else
+            {
                 dungeonVre = new ValueReferenceEditor(Project, vrg, "Base Data");
                 dungeonVre.ShowAll();
                 dungeonVreContainer.Add(dungeonVre);
@@ -211,11 +226,12 @@ namespace Plugins
             RoomChanged();
         }
 
-        void RoomChanged() {
+        void RoomChanged()
+        {
             Dungeon dungeon = minimap.Map as Dungeon;
             Room room = minimap.GetRoom();
 
-            roomSpinButton.Value = room.Index&0xff;
+            roomSpinButton.Value = room.Index & 0xff;
 
             // This could go in the constructor I guess
             // TODO: Not tied to underlying event handlers, should generate this in Room.cs instead
@@ -260,7 +276,8 @@ namespace Plugins
 
             if (roomVre != null)
                 roomVre.ReplaceValueReferenceGroup(vrg);
-            else {
+            else
+            {
                 roomVre = new ValueReferenceEditor(Project, vrg, 4, "Minimap Data");
                 roomVreContainer.Add(roomVre);
             }

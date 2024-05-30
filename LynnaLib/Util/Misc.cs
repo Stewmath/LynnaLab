@@ -1,7 +1,8 @@
 using Collections = System.Collections.Generic;
 
 
-public static class Extensions {
+public static class Extensions
+{
     // For SOME REASON the "IReadOnlyList" class is missing some methods that "List" has. Add them
     // here.
     public static int IndexOf<T>(this Collections.IReadOnlyList<T> self, T elementToFind)

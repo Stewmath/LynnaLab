@@ -8,7 +8,8 @@ namespace LynnaLab
     /// Provides an interface for editing palettes. Unfortunately this doesn't do very much about
     /// redundant data; the user will need to deal with that themselves, perhaps by de-duplicating
     /// the data in a text editor.
-    public class PaletteEditor : Gtk.VBox {
+    public class PaletteEditor : Gtk.VBox
+    {
         // Variables
 
         PaletteHeaderGroup _paletteHeaderGroup;
@@ -16,17 +17,21 @@ namespace LynnaLab
 
         // Constuctors
 
-        public PaletteEditor() {
+        public PaletteEditor()
+        {
         }
 
 
         // Properties
 
-        public PaletteHeaderGroup PaletteHeaderGroup {
-            get {
+        public PaletteHeaderGroup PaletteHeaderGroup
+        {
+            get
+            {
                 return _paletteHeaderGroup;
             }
-            set {
+            set
+            {
                 _paletteHeaderGroup = value;
                 UpdateButtons();
             }
@@ -35,26 +40,32 @@ namespace LynnaLab
 
         // Methods
 
-        void UpdateButtons() {
-            base.Foreach((c) => {
+        void UpdateButtons()
+        {
+            base.Foreach((c) =>
+            {
                 base.Remove(c);
                 c.Dispose();
             });
 
             this.Spacing = 6;
 
-            if (PaletteHeaderGroup != null) {
-                PaletteHeaderGroup.Foreach((paletteHeader) => {
+            if (PaletteHeaderGroup != null)
+            {
+                PaletteHeaderGroup.Foreach((paletteHeader) =>
+                {
                     Add(GenerateButtonsForData(paletteHeader));
                 });
             }
             ShowAll();
         }
 
-        Gtk.Widget GenerateButtonsForData(PaletteHeaderData data) {
+        Gtk.Widget GenerateButtonsForData(PaletteHeaderData data)
+        {
             Gtk.Grid grid = new Gtk.Grid();
 
-            if (data.IsResolvable) {
+            if (data.IsResolvable)
+            {
                 System.Drawing.Color[][] colors = data.GetPalettes();
 
                 int row = 0;
@@ -62,16 +73,19 @@ namespace LynnaLab
 
                 int numCols = 8; // Reduce this to sort colors into separate rows
 
-                for (int i=0; i<data.NumPalettes; i++) {
+                for (int i = 0; i < data.NumPalettes; i++)
+                {
                     Gtk.Box box = new Gtk.VBox();
 
-                    for (int j=0; j<4; j++) {
+                    for (int j = 0; j < 4; j++)
+                    {
                         int paletteIndex = i;
                         int colorIndex = j;
 
                         Cairo.Color color = CairoHelper.ConvertColor(colors[i][j]);
                         Gtk.ColorButton button = new Gtk.ColorButton(color.ToRGBA());
-                        button.ColorSet += (sender, args) => {
+                        button.ColorSet += (sender, args) =>
+                        {
                             data.SetColor(paletteIndex, colorIndex, button.Rgba.ToDrawingColor());
                         };
                         box.Add(button);
@@ -83,7 +97,8 @@ namespace LynnaLab
                     frame.Add(box);
                     grid.Attach(frame, col, row, 1, 1);
                     col++;
-                    if (col == numCols) {
+                    if (col == numCols)
+                    {
                         col = 0;
                         row++;
                     }

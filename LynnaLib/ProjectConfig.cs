@@ -4,10 +4,12 @@ using YamlDotNet.Serialization;
 
 namespace LynnaLib
 {
-    public class ProjectConfig {
-        public static ProjectConfig Load(string s) {
+    public class ProjectConfig
+    {
+        public static ProjectConfig Load(string s)
+        {
             var input = new StringReader(s);
-			var deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
+            var deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
             return deserializer.Deserialize<ProjectConfig>(input);
         }
 
