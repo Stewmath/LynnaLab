@@ -388,8 +388,10 @@ namespace LynnaLib
         // from the constructor), which is costly.
         public void InvalidateAllTiles()
         {
-            for (int i = 0; i < 256; i++)
+            for (int i = 0; i < 256; i++) {
+                tileImagesCache[i]?.Dispose();
                 tileImagesCache[i] = null;
+            }
             if (constructorFinished)
                 DrawAllTiles();
         }
@@ -504,6 +506,7 @@ namespace LynnaLib
                 tilesetHeaderGroup.SetMappingsData(index * 8 + y * 2 + x, value);
 
             GenerateUsedTileList();
+            tileImagesCache[index]?.Dispose();
             tileImagesCache[index] = null;
             GetTileImage(index); // Redraw tile image
             TileModifiedEvent?.Invoke(this, index);
@@ -531,6 +534,7 @@ namespace LynnaLib
             {
                 tilesetHeaderGroup.SetMappingsData(index * 8 + y * 2 + x + 4, value);
             }
+            tileImagesCache[index]?.Dispose();
             tileImagesCache[index] = null;
             GetTileImage(index); // Redraw tile image
             TileModifiedEvent?.Invoke(this, index);
@@ -637,6 +641,7 @@ namespace LynnaLib
             foreach (int t in changedTiles)
             {
                 // Refresh the image of each animated metatile
+                tileImagesCache[t]?.Dispose();
                 tileImagesCache[t] = null;
                 GetTileImage(t);
 

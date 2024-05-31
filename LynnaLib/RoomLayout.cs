@@ -115,6 +115,7 @@ namespace LynnaLib
                 Tileset.TileModifiedEvent += ModifiedTilesetCallback;
                 Tileset.LayoutGroupModifiedEvent += ModifiedLayoutGroupCallback;
 
+                cachedImage?.Dispose();
                 cachedImage = null;
                 loadedTileset = Tileset;
 
@@ -231,6 +232,7 @@ namespace LynnaLib
         void ModifiedLayoutGroupCallback()
         {
             UpdateRoomData();
+            cachedImage?.Dispose();
             cachedImage = null;
             if (LayoutModifiedEvent != null)
                 LayoutModifiedEvent();

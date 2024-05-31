@@ -15,67 +15,68 @@ namespace LynnaLib
 
         public PngGfxStream(string filename)
         {
-            var bitmap = new Bitmap(filename);
-
-            string propertiesFilename = Path.GetDirectoryName(filename) + "/" +
-                Path.GetFileNameWithoutExtension(filename) + ".properties";
-
-            properties = LoadProperties(propertiesFilename);
-
-            _length = bitmap.Width * bitmap.Height * 2 / 8;
-
-            data = new byte[Length * 8];
-
-            Func<int, int, int> lookupPixel = (x, y) =>
+            using (var bitmap = new Bitmap(filename))
             {
-                var color = bitmap.GetPixel(x, y);
-                if (color.R != color.G || color.R != color.B || color.G != color.B)
-                    throw new InvalidImageException(filename + " isn't a greyscale image.");
+                string propertiesFilename = Path.GetDirectoryName(filename) + "/" +
+                    Path.GetFileNameWithoutExtension(filename) + ".properties";
 
-                int[] colors = {
+                properties = LoadProperties(propertiesFilename);
+
+                _length = bitmap.Width * bitmap.Height * 2 / 8;
+
+                data = new byte[Length * 8];
+
+                Func<int, int, int> lookupPixel = (x, y) =>
+                {
+                    var color = bitmap.GetPixel(x, y);
+                    if (color.R != color.G || color.R != color.B || color.G != color.B)
+                        throw new InvalidImageException(filename + " isn't a greyscale image.");
+
+                    int[] colors = {
                     0x00,
                     0x55,
                     0xaa,
                     0xff
+                    };
+
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (color.R == colors[i])
+                        {
+                            if (properties.invert)
+                                return i;
+                            else
+                                return 3 - i;
+                        }
+                    }
+
+                    throw new InvalidImageException("Invalid color in " + filename + ".");
                 };
 
-                for (int i = 0; i < 4; i++)
+                for (int y = 0; y < bitmap.Height; y++)
                 {
-                    if (color.R == colors[i])
+                    for (int x = 0; x < bitmap.Width; x++)
                     {
-                        if (properties.invert)
-                            return i;
+                        int val = lookupPixel(x, y);
+
+                        int x2 = x % 8;
+                        int y2 = y % 8;
+
+                        int tile;
+
+                        if (properties.interleave)
+                        {
+                            tile = (y / 16) * bitmap.Width / 8 * 2;
+                            tile += x / 8 * 2;
+                            if ((y / 8) % 2 == 1)
+                                tile++;
+                        }
                         else
-                            return 3 - i;
+                            tile = (y / 8) * bitmap.Width / 8 + (x / 8);
+
+                        data[tile * 16 + y2 * 2 + 0] |= (byte)((val & 1) << (7 - x2));
+                        data[tile * 16 + y2 * 2 + 1] |= (byte)((val >> 1) << (7 - x2));
                     }
-                }
-
-                throw new InvalidImageException("Invalid color in " + filename + ".");
-            };
-
-            for (int y = 0; y < bitmap.Height; y++)
-            {
-                for (int x = 0; x < bitmap.Width; x++)
-                {
-                    int val = lookupPixel(x, y);
-
-                    int x2 = x % 8;
-                    int y2 = y % 8;
-
-                    int tile;
-
-                    if (properties.interleave)
-                    {
-                        tile = (y / 16) * bitmap.Width / 8 * 2;
-                        tile += x / 8 * 2;
-                        if ((y / 8) % 2 == 1)
-                            tile++;
-                    }
-                    else
-                        tile = (y / 8) * bitmap.Width / 8 + (x / 8);
-
-                    data[tile * 16 + y2 * 2 + 0] |= (byte)((val & 1) << (7 - x2));
-                    data[tile * 16 + y2 * 2 + 1] |= (byte)((val >> 1) << (7 - x2));
                 }
             }
         }

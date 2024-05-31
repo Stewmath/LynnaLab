@@ -509,18 +509,7 @@ namespace LynnaLab
             cr.Translate(XOffset, YOffset);
             cr.Scale(Scale, Scale);
 
-            if (Surface != null)
-            {
-                cr.SetSource(Surface, 0, 0);
-
-                using (Cairo.SurfacePattern pattern = (Cairo.SurfacePattern)cr.GetSource())
-                {
-                    pattern.Filter = Cairo.Filter.Nearest;
-                }
-
-                cr.Paint();
-            }
-            else if (Image != null)
+            if (Image != null)
             {
                 cr.SetSource(Image, 0, 0);
 
