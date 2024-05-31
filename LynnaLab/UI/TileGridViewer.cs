@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
 using System.Collections.Generic;
-using Cairo;
 using Gtk;
 
 using LynnaLib;
@@ -41,12 +40,12 @@ namespace LynnaLab
      */
     public abstract class TileGridViewer : Gtk.DrawingArea
     {
-        public static readonly Cairo.Color DefaultHoverColor = new Cairo.Color(1.0, 0, 0);
-        public static readonly Cairo.Color DefaultSelectionColor = new Cairo.Color(1.0, 1.0, 1.0);
+        public static readonly Color DefaultHoverColor = Color.Red;
+        public static readonly Color DefaultSelectionColor = Color.White;
 
 
-        public Cairo.Color HoverColor { get; set; } = DefaultHoverColor;
-        public Cairo.Color SelectionColor { get; set; } = DefaultSelectionColor;
+        public Color HoverColor { get; set; } = DefaultHoverColor;
+        public Color SelectionColor { get; set; } = DefaultSelectionColor;
 
         public int Width { get; set; }
         public int Height { get; set; }
@@ -181,7 +180,7 @@ namespace LynnaLab
         // TODO: Replace "Image" property above in favor of this
         protected virtual Cairo.Surface Surface { get { return null; } }
 
-        public Cairo.Color BackgroundColor { get; set; }
+        public Color BackgroundColor { get; set; } = Color.Black;
 
 
         // Event triggered when the hovering tile changes
@@ -514,9 +513,9 @@ namespace LynnaLab
             {
                 cr.SetSource(Surface, 0, 0);
 
-                using (SurfacePattern pattern = (SurfacePattern)cr.GetSource())
+                using (Cairo.SurfacePattern pattern = (Cairo.SurfacePattern)cr.GetSource())
                 {
-                    pattern.Filter = Filter.Nearest;
+                    pattern.Filter = Cairo.Filter.Nearest;
                 }
 
                 cr.Paint();
@@ -525,9 +524,9 @@ namespace LynnaLab
             {
                 cr.SetSource(Image, 0, 0);
 
-                using (SurfacePattern pattern = (SurfacePattern)cr.GetSource())
+                using (Cairo.SurfacePattern pattern = (Cairo.SurfacePattern)cr.GetSource())
                 {
-                    pattern.Filter = Filter.Nearest;
+                    pattern.Filter = Cairo.Filter.Nearest;
                 }
 
                 cr.Paint();
@@ -570,7 +569,7 @@ namespace LynnaLab
                 cr.SetSourceColor(HoverColor);
                 cr.Rectangle(new Cairo.Rectangle(rect.X + 0.5, rect.Y + 0.5, rect.Width - 1, rect.Height - 1));
                 cr.LineWidth = 1;
-                cr.LineJoin = LineJoin.Bevel;
+                cr.LineJoin = Cairo.LineJoin.Bevel;
                 cr.Stroke();
             }
 

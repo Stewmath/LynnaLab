@@ -39,6 +39,26 @@ namespace LynnaLib
             return c;
         }
 
+        public static Color FromRgbDbl(double r, double g, double b)
+        {
+            return FromRgbaDbl(r, g, b, 1.0);
+        }
+
+        public static Color FromRgbaDbl(double r, double g, double b, double a)
+        {
+            Color c = new Color();
+            c.r = (int)(r * 255);
+            c.g = (int)(g * 255);
+            c.b = (int)(b * 255);
+            c.a = (int)(a * 255);
+            return c;
+        }
+
+        public static Color FromCairo(Cairo.Color c)
+        {
+            return FromRgbaDbl(c.R, c.G, c.B, c.A);
+        }
+
         public static implicit operator Cairo.Color(Color c)
         {
             return new Cairo.Color(c.r / 255.0, c.g / 255.0, c.b / 255.0, c.a / 255.0);
@@ -53,7 +73,9 @@ namespace LynnaLib
         public static readonly Color Gray = FromRgb(0x80, 0x80, 0x80);
         public static readonly Color Green = FromRgb(0x00, 0x80, 0x00);
         public static readonly Color Lime = FromRgb(0x00, 0xff, 0x00);
+        public static readonly Color Red = FromRgb(0xff, 0x00, 0x00);
         public static readonly Color Purple = FromRgb(0x80, 0x00, 0x80);
+        public static readonly Color White = FromRgb(0xff, 0xff, 0xff);
         public static readonly Color Yellow = FromRgb(0xff, 0xff, 0x00);
     }
 }

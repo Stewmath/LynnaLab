@@ -18,13 +18,13 @@ namespace LynnaLib
         ///  Convert a single tile to an image. (Supports 8x8 or 8x16 tiles; 8x16 are treated as
         ///  sprites.)
         /// </summary>
-		public static Bitmap TileToBitmap(IList<byte> data, IList<Color> palette = null, int flags = 0)
+        public static Bitmap TileToBitmap(IList<byte> data, IList<Color> palette = null, int flags = 0)
         {
             if (palette == null)
                 palette = GrayPalette;
 
             // Use this as transparent color for sprites
-            Color transparentColor = Color.FromRgb(255, 255, 255);
+            Color transparentColor = Color.FromRgba(255, 255, 255, 0);
 
             bool sprite = (data.Count == 32);
             int height = (sprite ? 16 : 8);
@@ -66,11 +66,11 @@ namespace LynnaLib
                     pixels[row + realX * bytesPerPixel + 0] = (byte)c.B;
                     pixels[row + realX * bytesPerPixel + 1] = (byte)c.G;
                     pixels[row + realX * bytesPerPixel + 2] = (byte)c.R;
-                    pixels[row + realX * bytesPerPixel + 3] = (byte)(transparent ? 0 : 255);
+                    pixels[row + realX * bytesPerPixel + 3] = (byte)c.A;
                 }
             }
 
-            return new Bitmap(new Cairo.ImageSurface(pixels, Cairo.Format.ARGB32, 8, height, 32));
+            return new Bitmap(new Cairo.ImageSurface(pixels, Cairo.Format.ARGB32, 8, height, stride));
         }
     }
 }

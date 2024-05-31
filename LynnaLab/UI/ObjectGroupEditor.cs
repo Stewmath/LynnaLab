@@ -322,7 +322,7 @@ namespace LynnaLab
         // Static methods
 
         // Objects colors match ZOLE mostly
-        public static Cairo.Color GetObjectColor(ObjectType type)
+        public static Color GetObjectColor(ObjectType type)
         {
             switch (type)
             {
@@ -347,7 +347,7 @@ namespace LynnaLab
                 case ObjectType.ItemDrop:
                     return Color.Lime;
             }
-            return new Cairo.Color(1.0, 1.0, 1.0); // End, EndPointer, Garbage types should never be drawn
+            return Color.White; // End, EndPointer, Garbage types should never be drawn
         }
 
         static String GetGroupName(ObjectGroup group)

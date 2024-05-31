@@ -286,7 +286,7 @@ namespace LynnaLab
                             {
                                 if (GetBasicCollision(TileIndex, x, y))
                                 {
-                                    Cairo.Color c = new Cairo.Color(0.5, 1.0, 0.0);
+                                    Color c = Color.FromRgbDbl(0.5, 1.0, 0.0);
                                     cr.SetSourceColor(c);
                                     cr.Rectangle(x * 8, y * 8, 8, 8);
                                     cr.Fill();

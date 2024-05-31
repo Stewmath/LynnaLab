@@ -114,7 +114,7 @@ namespace Plugins
 
             public MyMinimap() : base(1.0 / 4)
             {
-                base.HoverColor = new Cairo.Color(1.0, 1.0, 1.0);
+                base.HoverColor = Color.White;
 
                 Action<int, int> OnDragged = (x, y) =>
                 {

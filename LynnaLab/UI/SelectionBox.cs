@@ -23,7 +23,7 @@ namespace LynnaLab
             base.TilePaddingY = 2;
 
             base.Selectable = true;
-            base.BackgroundColor = new Cairo.Color(0.8, 0.8, 0.8);
+            base.BackgroundColor = Color.FromRgbDbl(0.8, 0.8, 0.8);
             base.HoverColor = RoomEditor.ObjectHoverColor;
 
             TileGridEventHandler dragCallback = (sender, index) =>

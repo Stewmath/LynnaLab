@@ -16,7 +16,7 @@ namespace LynnaLab
     [System.ComponentModel.ToolboxItem(true)]
     public class RoomEditor : TileGridViewer
     {
-        public static readonly Cairo.Color ObjectHoverColor = new Cairo.Color(0.0, 1.0, 1.0);
+        public static readonly Color ObjectHoverColor = Color.Cyan;
 
 
         // Variables
@@ -734,7 +734,7 @@ namespace LynnaLab
         {
             public event EventHandler<EventArgs> SelectedEvent;
 
-            public abstract Cairo.Color BoxColor { get; }
+            public abstract Color BoxColor { get; }
 
             public abstract bool Deletable { get; }
             public abstract bool HasXY { get; }
@@ -777,12 +777,12 @@ namespace LynnaLab
             }
 
 
-            public override Cairo.Color BoxColor
+            public override Color BoxColor
             {
                 get
                 {
-                    Cairo.Color color = ObjectGroupEditor.GetObjectColor(obj.GetObjectType());
-                    return new Cairo.Color(color.R, color.G, color.B, 0.75);
+                    Color color = ObjectGroupEditor.GetObjectColor(obj.GetObjectType());
+                    return Color.FromRgba(color.R, color.G, color.B, (int)(0.75 * 255));
                 }
             }
 
@@ -835,7 +835,7 @@ namespace LynnaLab
                         double xPos = x - BoxHeight / 2 + 0.5;
                         double yPos = y - BoxHeight / 2 + 0.5;
 
-                        cr.SetSourceColor(new Cairo.Color(1.0, 0, 0));
+                        cr.SetSourceColor(Color.Red);
                         cr.MoveTo(xPos, yPos);
                         cr.LineTo(xPos + BoxWidth - 1, yPos + BoxHeight - 1);
                         cr.MoveTo(xPos + BoxWidth - 1, yPos);
@@ -874,7 +874,7 @@ namespace LynnaLab
             }
 
 
-            public override Cairo.Color BoxColor
+            public override Color BoxColor
             {
                 get
                 {
@@ -921,7 +921,7 @@ namespace LynnaLab
 
             public override void Draw(Cairo.Context cr)
             {
-                cr.SetSourceColor(new Cairo.Color(1, 1, 1));
+                cr.SetSourceColor(Color.White);
                 CairoHelper.DrawText(cr, index.ToString("X"), 9, BoxRectangle);
             }
 
@@ -982,7 +982,7 @@ namespace LynnaLab
             }
 
 
-            public override Cairo.Color BoxColor
+            public override Color BoxColor
             {
                 get
                 {
@@ -1025,7 +1025,7 @@ namespace LynnaLab
 
             public override void Draw(Cairo.Context cr)
             {
-                cr.SetSourceColor(new Cairo.Color(1, 1, 1));
+                cr.SetSourceColor(Color.White);
                 CairoHelper.DrawText(cr, "W", 9, BoxRectangle);
             }
 
@@ -1070,7 +1070,7 @@ namespace LynnaLab
 
             Project Project { get { return chest.Project; } }
 
-            public override Cairo.Color BoxColor { get {
+            public override Color BoxColor { get {
                     return Color.FromRgba(204, 51, 153, 0xc0);
                 }
             }

@@ -274,7 +274,7 @@ namespace LynnaLab
                 cr.Rectangle(0, 0, TileWidth, TileHeight);
                 cr.Fill();
 
-                cr.SetSourceColor(new Cairo.Color(1.0, 1.0, 1.0));
+                cr.SetSourceColor(Color.White);
                 CairoHelper.DrawText(cr, index.ToString("X"), 12, 0, 0, TileWidth, TileHeight);
             }
         }
