@@ -91,7 +91,7 @@ namespace LynnaLab
             Array.Copy(graphicsState.VramBuffer[bank], offset, data, 0, 16);
 
             using (var subImage = GbGraphics.TileToBitmap(data))
-            using (var cr = subImage.CreateContext())
+            using (var cr = image.CreateContext())
             {
                 cr.SetSource(subImage, x * 8, y * 8);
                 cr.Paint();
