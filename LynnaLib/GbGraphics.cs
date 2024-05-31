@@ -24,7 +24,7 @@ namespace LynnaLib
                 palette = GrayPalette;
 
             // Use this as transparent color for sprites
-            Cairo.Color transparentColor = new Cairo.Color(1, 1, 1);
+            Color transparentColor = Color.FromRgb(255, 255, 255);
 
             bool sprite = (data.Count == 32);
             int height = (sprite ? 16 : 8);
@@ -61,11 +61,11 @@ namespace LynnaLib
                         realX = 7 - x;
 
                     bool transparent = sprite && color == 0;
-                    Cairo.Color c = (transparent ? transparentColor : palette[color]);
+                    Color c = (transparent ? transparentColor : palette[color]);
 
-                    pixels[row + realX * bytesPerPixel + 0] = c.ByteColor().B;
-                    pixels[row + realX * bytesPerPixel + 1] = c.ByteColor().G;
-                    pixels[row + realX * bytesPerPixel + 2] = c.ByteColor().R;
+                    pixels[row + realX * bytesPerPixel + 0] = (byte)c.B;
+                    pixels[row + realX * bytesPerPixel + 1] = (byte)c.G;
+                    pixels[row + realX * bytesPerPixel + 2] = (byte)c.R;
                     pixels[row + realX * bytesPerPixel + 3] = (byte)(transparent ? 0 : 255);
                 }
             }

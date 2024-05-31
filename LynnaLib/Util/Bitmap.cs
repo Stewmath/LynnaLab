@@ -43,7 +43,7 @@ namespace LynnaLib
             return new Cairo.Context(surface);
         }
 
-        public Cairo.Color GetPixel(int x, int y)
+        public Color GetPixel(int x, int y)
         {
             // Ensure the coordinates are within the surface bounds
             if (x < 0 || x >= surface.Width || y < 0 || y >= surface.Height)
@@ -65,8 +65,8 @@ namespace LynnaLib
             byte r = System.Runtime.InteropServices.Marshal.ReadByte(dataPtr, offset + 2);
             byte a = System.Runtime.InteropServices.Marshal.ReadByte(dataPtr, offset + 3);
 
-            // Convert to Cairo.Color (normalized to 0.0 - 1.0)
-            return new Cairo.Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0);
+            // Convert to Color
+            return Color.FromRgba(r, g, b, a);
         }
 
         public void Dispose()

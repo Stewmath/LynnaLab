@@ -28,7 +28,7 @@ namespace LynnaLib
 
             Func<int, int, int> lookupPixel = (x, y) =>
             {
-                var color = bitmap.GetPixel(x, y).ByteColor();
+                var color = bitmap.GetPixel(x, y);
                 if (color.R != color.G || color.R != color.B || color.G != color.B)
                     throw new InvalidImageException(filename + " isn't a greyscale image.");
 

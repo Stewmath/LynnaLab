@@ -3,34 +3,7 @@ using System.Collections.Generic;
 
 namespace LynnaLib
 {
-    public static class CairoHelper1
-    {
-        public readonly struct CairoByteColor {
-            public readonly byte R;
-            public readonly byte G;
-            public readonly byte B;
-            public readonly byte A;
-
-            public CairoByteColor(byte R, byte G, byte B, byte A)
-            {
-                this.R = R;
-                this.G = G;
-                this.B = B;
-                this.A = A;
-            }
-        }
-
-        /// Get a Cairo.Color's components as bytes
-        public static CairoByteColor ByteColor(this Cairo.Color c) {
-            return new CairoByteColor(
-                (byte)(c.R * 255),
-                (byte)(c.G * 255),
-                (byte)(c.B * 255),
-                (byte)(c.A * 255));
-        }
-    }
-
-    // Implementation of Core.TileDrawer class
+    // Implementation of Core.TileDrawer class (TODO: Delete this)
     public class CairoTileDrawer : TileDrawer
     {
         Cairo.Context cr;
