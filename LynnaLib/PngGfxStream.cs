@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using Bitmap = System.Drawing.Bitmap;
 using YamlDotNet.Serialization;
 
 namespace LynnaLib
@@ -16,7 +15,7 @@ namespace LynnaLib
 
         public PngGfxStream(string filename)
         {
-            Bitmap bitmap = new Bitmap(filename);
+            var bitmap = new MyBitmap(filename);
 
             string propertiesFilename = Path.GetDirectoryName(filename) + "/" +
                 Path.GetFileNameWithoutExtension(filename) + ".properties";
@@ -29,7 +28,7 @@ namespace LynnaLib
 
             Func<int, int, int> lookupPixel = (x, y) =>
             {
-                System.Drawing.Color color = bitmap.GetPixel(x, y);
+                var color = bitmap.GetPixel(x, y).ByteColor();
                 if (color.R != color.G || color.R != color.B || color.G != color.B)
                     throw new InvalidImageException(filename + " isn't a greyscale image.");
 

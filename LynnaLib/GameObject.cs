@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Drawing;
 using Util;
 
 namespace LynnaLib
@@ -80,7 +79,7 @@ namespace LynnaLib
         }
 
 
-        public Color[][] GetCustomPalettes()
+        public MyColor[][] GetCustomPalettes()
         {
             string field = GetSubIDDocumentation()?.GetField("palette");
             if (field == null)

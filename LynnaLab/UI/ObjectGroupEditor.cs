@@ -326,16 +326,26 @@ namespace LynnaLab
         {
             switch (type)
             {
-                case ObjectType.Condition: return CairoHelper.ConvertColor(System.Drawing.Color.Black);
-                case ObjectType.Interaction: return CairoHelper.ConvertColor(System.Drawing.Color.DarkOrange);
-                case ObjectType.Pointer: return CairoHelper.ConvertColor(System.Drawing.Color.Yellow);
-                case ObjectType.BeforeEvent: return CairoHelper.ConvertColor(System.Drawing.Color.Green);
-                case ObjectType.AfterEvent: return CairoHelper.ConvertColor(System.Drawing.Color.Blue);
-                case ObjectType.RandomEnemy: return CairoHelper.ConvertColor(System.Drawing.Color.Purple);
-                case ObjectType.SpecificEnemyA: return new Cairo.Color(128 / 256.0, 64 / 256.0, 0 / 256.0);
-                case ObjectType.SpecificEnemyB: return new Cairo.Color(128 / 256.0, 64 / 256.0, 0 / 256.0);
-                case ObjectType.Part: return CairoHelper.ConvertColor(System.Drawing.Color.Gray);
-                case ObjectType.ItemDrop: return CairoHelper.ConvertColor(System.Drawing.Color.Lime);
+                case ObjectType.Condition:
+                    return MyColor.Black;
+                case ObjectType.Interaction:
+                    return MyColor.DarkOrange;
+                case ObjectType.Pointer:
+                    return MyColor.Yellow;
+                case ObjectType.BeforeEvent:
+                    return MyColor.Green;
+                case ObjectType.AfterEvent:
+                    return MyColor.Blue;
+                case ObjectType.RandomEnemy:
+                    return MyColor.Purple;
+                case ObjectType.SpecificEnemyA:
+                    return MyColor.FromRgb(128, 64, 0);
+                case ObjectType.SpecificEnemyB:
+                    return MyColor.FromRgb(128, 64, 0);
+                case ObjectType.Part:
+                    return MyColor.Gray;
+                case ObjectType.ItemDrop:
+                    return MyColor.Lime;
             }
             return new Cairo.Color(1.0, 1.0, 1.0); // End, EndPointer, Garbage types should never be drawn
         }

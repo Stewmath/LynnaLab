@@ -1,5 +1,3 @@
-using System.Drawing;
-
 namespace LynnaLib
 {
 
@@ -100,11 +98,11 @@ namespace LynnaLib
         ///
         ///  If a particular palette is undefined, it will be null (ie. palette[i] == null)
         /// </summary>
-        public Color[][] GetPalettes()
+        public MyColor[][] GetPalettes()
         {
-            Color[][] palettes = new Color[8][];
-            Color[][] standardPal = Project.GetStandardSpritePalettes();
-            Color[][] customPal = _gameObject.GetCustomPalettes();
+            MyColor[][] palettes = new MyColor[8][];
+            MyColor[][] standardPal = Project.GetStandardSpritePalettes();
+            MyColor[][] customPal = _gameObject.GetCustomPalettes();
 
             for (int i = 0; i < 6; i++)
             {

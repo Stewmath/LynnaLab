@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
 using Util;
@@ -259,11 +258,11 @@ namespace LynnaLib
     public class RgbData : Data
     {
 
-        public Color Color
+        public MyColor Color
         {
             get
             {
-                return Color.FromArgb(
+                return MyColor.FromRgb(
                         Project.EvalToInt(GetValue(0)) * 8,
                         Project.EvalToInt(GetValue(1)) * 8,
                         Project.EvalToInt(GetValue(2)) * 8);

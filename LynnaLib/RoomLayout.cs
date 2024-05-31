@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 using System.Collections.Generic;
 using System.IO;
 using Util;
@@ -17,7 +16,7 @@ namespace LynnaLib
 
         MemoryFileStream tileDataFile;
         Tileset loadedTileset;
-        Bitmap cachedImage;
+        MyBitmap cachedImage;
 
 
         public delegate void LayoutModifiedHandler();
@@ -66,23 +65,24 @@ namespace LynnaLib
             get { return width == 10 ? 10 : 16; }
         }
 
-        public Bitmap GetImage()
+        public MyBitmap GetImage()
         {
             if (cachedImage != null)
                 return cachedImage;
 
-            cachedImage = new Bitmap(width * 16, height * 16);
-            Graphics g = Graphics.FromImage(cachedImage);
+            cachedImage = new MyBitmap(width * 16, height * 16);
 
-            for (int x = 0; x < width; x++)
+            using (var cr = cachedImage.CreateContext())
             {
-                for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
                 {
-                    g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
+                    for (int y = 0; y < height; y++)
+                    {
+                        cr.SetSource(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
+                        cr.Paint();
+                    }
                 }
             }
-
-            g.Dispose();
 
             return cachedImage;
         }
@@ -183,17 +183,19 @@ namespace LynnaLib
         {
             if (cachedImage != null)
             {
-                Graphics g = Graphics.FromImage(cachedImage);
-
-                for (long i = args.modifiedRangeStart; i < args.modifiedRangeEnd; i++)
+                using (var cr = cachedImage.CreateContext())
                 {
-                    int x = (int)(i % Stride);
-                    int y = (int)(i / Stride);
-                    if (x >= Width)
-                        continue;
-                    g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
+
+                    for (long i = args.modifiedRangeStart; i < args.modifiedRangeEnd; i++)
+                    {
+                        int x = (int)(i % Stride);
+                        int y = (int)(i / Stride);
+                        if (x >= Width)
+                            continue;
+                        cr.SetSource(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
+                        cr.Paint();
+                    }
                 }
-                g.Dispose();
             }
             if (LayoutModifiedEvent != null)
                 LayoutModifiedEvent();
@@ -202,9 +204,7 @@ namespace LynnaLib
         // Tileset data modified
         void ModifiedTilesetCallback(object sender, int tile)
         {
-            Graphics g = null;
-            if (cachedImage != null)
-                g = Graphics.FromImage(cachedImage);
+            Cairo.Context cr = cachedImage?.CreateContext();
 
             bool changed = false;
             for (int x = 0; x < Width; x++)
@@ -213,15 +213,16 @@ namespace LynnaLib
                 {
                     if (GetTile(x, y) == tile)
                     {
-                        if (cachedImage != null)
-                            g.DrawImageUnscaled(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
+                        if (cachedImage != null) {
+                            cr.SetSource(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
+                            cr.Paint();
+                        }
                         changed = true;
                     }
                 }
             }
 
-            if (g != null)
-                g.Dispose();
+            cr?.Dispose();
 
             if (changed && LayoutModifiedEvent != null)
                 LayoutModifiedEvent();

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 using Gtk;
 
 using LynnaLib;
@@ -66,7 +65,7 @@ namespace LynnaLab
             tilesetViewerContainer.Add(tilesetviewer1);
 
             subTileGfxViewer = new GfxViewer();
-            subTileGfxViewer.SelectionColor = CairoHelper.ConvertColor(0, 256, 0);
+            subTileGfxViewer.SelectionColor = MyColor.FromRgb(0, 256, 0);
             subTileGfxViewer.AddTileSelectedHandler(delegate (object sender, int index)
             {
                 if (subTileEditor != null)
@@ -207,7 +206,7 @@ namespace LynnaLab
                 }
             }
 
-            override protected Bitmap Image
+            override protected MyBitmap Image
             {
                 get
                 {
@@ -267,31 +266,34 @@ namespace LynnaLab
                 }
             }
 
-            override protected Bitmap Image
+            override protected MyBitmap Image
             {
+                // TODO: optimize? Image isn't being disposed...
                 get
                 {
                     if (tileset == null)
                         return null;
-                    Bitmap image = new Bitmap(tileset.GetTileImage(TileIndex));
-                    Graphics g = Graphics.FromImage(image);
+                    MyBitmap image = new MyBitmap(tileset.GetTileImage(TileIndex));
 
-                    // Made solid tiles red
-                    for (int i = 0; i < 4; i++)
+                    using (var cr = image.CreateContext())
                     {
-                        int x = i % 2;
-                        int y = i / 2;
-                        if ((tileset.GetTileCollision(TileIndex) & 0xf0) == 0)
+                        // Made solid tiles red
+                        for (int i = 0; i < 4; i++)
                         {
-                            if (GetBasicCollision(TileIndex, x, y))
+                            int x = i % 2;
+                            int y = i / 2;
+                            if ((tileset.GetTileCollision(TileIndex) & 0xf0) == 0)
                             {
-                                Color c = Color.FromArgb(0x80, 255, 0, 0);
-                                g.FillRectangle(new SolidBrush(c), x * 8, y * 8, 8, 8);
+                                if (GetBasicCollision(TileIndex, x, y))
+                                {
+                                    Cairo.Color c = new Cairo.Color(0.5, 1.0, 0.0);
+                                    cr.SetSourceColor(c);
+                                    cr.Rectangle(x * 8, y * 8, 8, 8);
+                                    cr.Fill();
+                                }
                             }
                         }
                     }
-
-                    g.Dispose();
 
                     return image;
                 }

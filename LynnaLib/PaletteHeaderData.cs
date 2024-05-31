@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 
 namespace LynnaLib
 {
@@ -92,15 +91,15 @@ namespace LynnaLib
             }
         }
 
-        public Color[][] GetPalettes()
+        public MyColor[][] GetPalettes()
         {
-            Color[][] ret = new Color[NumPalettes][];
+            MyColor[][] ret = new MyColor[NumPalettes][];
 
             RgbData data = Data;
 
             for (int i = 0; i < NumPalettes; i++)
             {
-                ret[i] = new Color[4];
+                ret[i] = new MyColor[4];
                 for (int j = 0; j < 4; j++)
                 {
                     ret[i][j] = data.Color;
@@ -111,7 +110,7 @@ namespace LynnaLib
             return ret;
         }
 
-        public void SetColor(int palette, int colorIndex, System.Drawing.Color color)
+        public void SetColor(int palette, int colorIndex, MyColor color)
         {
             RgbData data = GetRgbData(palette, colorIndex);
             data.Color = color;

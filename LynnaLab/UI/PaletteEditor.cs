@@ -66,7 +66,7 @@ namespace LynnaLab
 
             if (data.IsResolvable)
             {
-                System.Drawing.Color[][] colors = data.GetPalettes();
+                MyColor[][] colors = data.GetPalettes();
 
                 int row = 0;
                 int col = 0;
@@ -82,11 +82,11 @@ namespace LynnaLab
                         int paletteIndex = i;
                         int colorIndex = j;
 
-                        Cairo.Color color = CairoHelper.ConvertColor(colors[i][j]);
-                        Gtk.ColorButton button = new Gtk.ColorButton(color.ToRGBA());
+                        var color = colors[i][j];
+                        Gtk.ColorButton button = new Gtk.ColorButton(color.ToGdk());
                         button.ColorSet += (sender, args) =>
                         {
-                            data.SetColor(paletteIndex, colorIndex, button.Rgba.ToDrawingColor());
+                            data.SetColor(paletteIndex, colorIndex, button.Rgba.FromGdk());
                         };
                         box.Add(button);
                     }

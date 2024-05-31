@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 using System.Collections.Generic;
 
 using LynnaLib;
@@ -167,13 +166,12 @@ namespace LynnaLab
             //_surface = new Cairo.ImageSurface(Cairo.Format.Rgb24,
             //        (int)(layout.Width * 16 * _scale), (int)(layout.Height * 16 * _scale));
 
-            Bitmap img = layout.GetImage();
+            MyBitmap img = layout.GetImage();
 
             using (var cr = new Cairo.Context(tileSurface))
-            using (var source = new BitmapSurface(img))
             {
                 cr.Scale(_scale, _scale);
-                cr.SetSource(source, 0, 0);
+                cr.SetSource(img, 0, 0);
                 cr.Paint();
             }
 

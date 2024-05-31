@@ -1,5 +1,4 @@
 using System;
-using Bitmap = System.Drawing.Bitmap;
 using System.ComponentModel;
 using System.Collections.Generic;
 using Cairo;
@@ -177,7 +176,7 @@ namespace LynnaLab
 
         // Subclasses can either override "Image" to set the image, or override the "TileDrawer" property
         // to set the image using a per-tile draw function.
-        protected virtual Bitmap Image { get { return null; } }
+        protected virtual MyBitmap Image { get { return null; } }
 
         // TODO: Replace "Image" property above in favor of this
         protected virtual Cairo.Surface Surface { get { return null; } }
@@ -524,17 +523,14 @@ namespace LynnaLab
             }
             else if (Image != null)
             {
-                using (Surface source = new BitmapSurface(Image))
+                cr.SetSource(Image, 0, 0);
+
+                using (SurfacePattern pattern = (SurfacePattern)cr.GetSource())
                 {
-                    cr.SetSource(source, 0, 0);
-
-                    using (SurfacePattern pattern = (SurfacePattern)cr.GetSource())
-                    {
-                        pattern.Filter = Filter.Nearest;
-                    }
-
-                    cr.Paint();
+                    pattern.Filter = Filter.Nearest;
                 }
+
+                cr.Paint();
             }
             else
             {

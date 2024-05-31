@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Drawing;
 
 using Util;
 
@@ -52,7 +51,7 @@ namespace LynnaLib
 
 
         // See "GetStandardSpritePalettes"
-        Color[][] _standardSpritePalettes;
+        MyColor[][] _standardSpritePalettes;
 
         ProjectConfig config;
 
@@ -773,18 +772,18 @@ namespace LynnaLib
         /// <summary>
         ///  Returns the standard sprite palettes (first 6 palettes used by most sprites).
         /// </summary>
-        public Color[][] GetStandardSpritePalettes()
+        public MyColor[][] GetStandardSpritePalettes()
         {
             if (_standardSpritePalettes != null)
                 return _standardSpritePalettes;
 
-            _standardSpritePalettes = new Color[6][];
+            _standardSpritePalettes = new MyColor[6][];
 
             RgbData data = GetData("standardSpritePaletteData") as RgbData;
 
             for (int i = 0; i < 6; i++)
             {
-                _standardSpritePalettes[i] = new Color[4];
+                _standardSpritePalettes[i] = new MyColor[4];
                 for (int j = 0; j < 4; j++)
                 {
                     _standardSpritePalettes[i][j] = data.Color;

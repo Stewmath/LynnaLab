@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Collections.Generic;
 using Util;
@@ -18,9 +16,8 @@ namespace LynnaLib
 
         GraphicsState graphicsState;
 
-        Bitmap[] tileImagesCache = new Bitmap[256];
-        Bitmap fullCachedImage = new Bitmap(16 * 16, 16 * 16);
-        BitmapData fullCachedImageData;
+        MyBitmap[] tileImagesCache = new MyBitmap[256];
+        MyBitmap fullCachedImage = new MyBitmap(16 * 16, 16 * 16);
 
         WeakEventWrapper<PaletteHeaderGroup> paletteEventWrapper = new WeakEventWrapper<PaletteHeaderGroup>();
 
@@ -437,41 +434,45 @@ namespace LynnaLib
 
         // This returns an image for the specified tile index, and also updates the "master" tileset
         // image if said tile has been changed.
-        public Bitmap GetTileImage(int index)
+        public MyBitmap GetTileImage(int index)
         {
             if (tileImagesCache[index] != null)
                 return tileImagesCache[index];
 
-            Bitmap image = new Bitmap(16, 16);
+            var image = new MyBitmap(16, 16);
 
-            Graphics g = Graphics.FromImage(image);
-
-            for (int y = 0; y < 2; y++)
+            // Draw the tile
+            using (Cairo.Context cr = image.CreateContext())
             {
-                for (int x = 0; x < 2; x++)
+                for (int y = 0; y < 2; y++)
                 {
-                    int tileIndex = GetSubTileIndex(index, x, y);
-                    int flags = GetSubTileFlags(index, x, y);
+                    for (int x = 0; x < 2; x++)
+                    {
+                        int tileIndex = GetSubTileIndex(index, x, y);
+                        int flags = GetSubTileFlags(index, x, y);
 
-                    int tileOffset = 0x1000 + ((sbyte)tileIndex) * 16;
+                        int tileOffset = 0x1000 + ((sbyte)tileIndex) * 16;
 
-                    byte[] src = new byte[16];
-                    Array.Copy(graphicsState.VramBuffer[1], tileOffset, src, 0, 16);
-                    Bitmap subImage = GbGraphics.TileToBitmap(src, GraphicsState.GetBackgroundPalettes()[flags & 7], flags);
-
-                    g.DrawImageUnscaled(subImage, x * 8, y * 8);
+                        byte[] src = new byte[16];
+                        Array.Copy(graphicsState.VramBuffer[1], tileOffset, src, 0, 16);
+                        using (var subImage = GbGraphics.TileToBitmap(
+                            src,
+                            GraphicsState.GetBackgroundPalettes()[flags & 7],
+                            flags))
+                        {
+                            cr.SetSourceSurface(subImage, x * 8, y * 8);
+                            cr.Paint();
+                        }
+                    }
                 }
             }
-            g.Dispose();
 
-            //             if (fullCachedImageData == null)
-            //                 fullCachedImageData = fullCachedImage.LockBits(
-            //                         new Rectangle(0, 0, fullCachedImage.Width, fullCachedImage.Height),
-            //                         ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            //             GbGraphics.QuickDraw(fullCachedImageData, image, (index%16)*16, (index/16)*16);
-            g = Graphics.FromImage(fullCachedImage);
-            g.DrawImageUnscaled(image, (index % 16) * 16, (index / 16) * 16);
-            g.Dispose();
+            // Update the full tileset image
+            using (Cairo.Context cr = fullCachedImage.CreateContext())
+            {
+                cr.SetSourceSurface(image, (index % 16) * 16, (index / 16) * 16);
+                cr.Paint();
+            }
 
             tileImagesCache[index] = image;
 
@@ -584,13 +585,8 @@ namespace LynnaLib
         // The full image is not drawn after initialization, but it IS updated properly when any
         // properties of the tileset are modified. This is because it is inefficient to draw the
         // full tileset image for every single tileset when drawing the minimap.
-        public Bitmap GetFullCachedImage()
+        public MyBitmap GetFullCachedImage()
         {
-            if (fullCachedImageData != null)
-            {
-                fullCachedImage.UnlockBits(fullCachedImageData);
-                fullCachedImageData = null;
-            }
             return fullCachedImage;
         }
 

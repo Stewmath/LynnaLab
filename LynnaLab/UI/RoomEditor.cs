@@ -1,5 +1,4 @@
 using System;
-using Bitmap = System.Drawing.Bitmap;
 using System.Collections.Generic;
 using Gtk;
 
@@ -218,7 +217,7 @@ namespace LynnaLab
             }
         }
 
-        protected override Bitmap Image
+        protected override MyBitmap Image
         {
             get
             {
@@ -1071,7 +1070,10 @@ namespace LynnaLab
 
             Project Project { get { return chest.Project; } }
 
-            public override Cairo.Color BoxColor { get { return CairoHelper.ConvertColor(204, 51, 153, 0xc0); } }
+            public override Cairo.Color BoxColor { get {
+                    return MyColor.FromRgba(204, 51, 153, 0xc0);
+                }
+            }
 
             public override bool Deletable { get { return true; } }
             public override bool HasXY { get { return true; } }

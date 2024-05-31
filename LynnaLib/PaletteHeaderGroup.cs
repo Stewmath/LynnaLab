@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 
 namespace LynnaLib
 {
@@ -51,13 +50,13 @@ namespace LynnaLib
         }
 
         // TODO: error handling
-        public Color[][] GetObjPalettes()
+        public MyColor[][] GetObjPalettes()
         {
-            Color[][] ret = new Color[8][];
+            MyColor[][] ret = new MyColor[8][];
 
             Foreach((palette) =>
             {
-                Color[][] palettes = palette.GetPalettes();
+                MyColor[][] palettes = palette.GetPalettes();
                 if (palette.PaletteType == PaletteType.Sprite)
                 {
                     for (int i = 0; i < palette.NumPalettes; i++)

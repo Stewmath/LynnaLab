@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 using System.Collections.Generic;
 using Gtk;
 
@@ -25,7 +24,7 @@ namespace LynnaLab
             get { return tileset; }
         }
 
-        protected override Bitmap Image
+        protected override MyBitmap Image
         {
             get
             {

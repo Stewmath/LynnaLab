@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Bitmap = System.Drawing.Bitmap;
 
 using LynnaLib;
 
@@ -119,7 +118,7 @@ namespace LynnaLab
                     double xPos = x - width / 2 + 0.5;
                     double yPos = y - width / 2 + 0.5;
 
-                    cr.SetSourceColor(CairoHelper.ConvertColor(System.Drawing.Color.Blue));
+                    cr.SetSourceColor(MyColor.Blue);
                     cr.MoveTo(xPos, yPos);
                     cr.LineTo(xPos + width - 1, yPos + width - 1);
                     cr.MoveTo(xPos + width - 1, yPos);

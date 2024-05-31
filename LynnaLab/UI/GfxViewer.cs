@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 using Gtk;
 
 using LynnaLib;
@@ -9,12 +8,12 @@ namespace LynnaLab
     public partial class GfxViewer : TileGridViewer
     {
 
-        override protected Bitmap Image
+        override protected MyBitmap Image
         {
             get { return image; }
         }
 
-        Bitmap image;
+        MyBitmap image;
 
         GraphicsState graphicsState;
         int offsetStart, offsetEnd;
@@ -61,7 +60,7 @@ namespace LynnaLab
             TileHeight = 8;
             Scale = scale;
 
-            image = new Bitmap(Width * TileWidth, Height * TileHeight);
+            image = new MyBitmap(Width * TileWidth, Height * TileHeight);
 
             redrawAll();
         }
@@ -90,9 +89,13 @@ namespace LynnaLab
             }
             byte[] data = new byte[16];
             Array.Copy(graphicsState.VramBuffer[bank], offset, data, 0, 16);
-            Bitmap subImage = GbGraphics.TileToBitmap(data);
-            Graphics g = Graphics.FromImage(image);
-            g.DrawImage(subImage, x * 8, y * 8);
+
+            using (var subImage = GbGraphics.TileToBitmap(data))
+            using (var cr = subImage.CreateContext())
+            {
+                cr.SetSource(subImage, x * 8, y * 8);
+                cr.Paint();
+            }
 
             QueueDraw();
         }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 
 namespace LynnaLib
@@ -21,7 +20,7 @@ namespace LynnaLib
             get { return _animation.Project; }
         }
 
-        List<Tuple<Bitmap, int, int>> bitmaps = new List<Tuple<Bitmap, int, int>>();
+        List<Tuple<MyBitmap, int, int>> bitmaps = new List<Tuple<MyBitmap, int, int>>();
 
         // Number of frames this lasts
         public byte Length
@@ -34,7 +33,7 @@ namespace LynnaLib
             _animation = anim;
             _animData = animData;
 
-            Color[][] palettes = anim.GetPalettes();
+            MyColor[][] palettes = anim.GetPalettes();
 
             try
             {
@@ -86,8 +85,8 @@ namespace LynnaLib
                     byte[] gfxData = new byte[0x20];
                     gfxStream.Read(gfxData, 0, 0x20);
 
-                    Bitmap bitmap = GbGraphics.TileToBitmap(gfxData, palettes[flags & 7], flags);
-                    bitmaps.Add(new Tuple<Bitmap, int, int>(bitmap, x, y));
+                    MyBitmap bitmap = GbGraphics.TileToBitmap(gfxData, palettes[flags & 7], flags);
+                    bitmaps.Add(new Tuple<MyBitmap, int, int>(bitmap, x, y));
                 }
             }
             catch (InvalidLookupException e)
@@ -115,8 +114,8 @@ namespace LynnaLib
             // Draw sprites in backwards order to respect priority properly
             for (int i = _numSprites - 1; i >= 0; i--)
             {
-                Tuple<Bitmap, int, int> tup = bitmaps[i];
-                Bitmap bitmap = tup.Item1;
+                Tuple<MyBitmap, int, int> tup = bitmaps[i];
+                MyBitmap bitmap = tup.Item1;
                 int x = tup.Item2;
                 int y = tup.Item3;
 
@@ -137,7 +136,7 @@ namespace LynnaLib
     // preventing a Cairo import in LynnaLib.
     public abstract class TileDrawer
     {
-        public abstract void Draw(Bitmap bitmap, int x, int y);
+        public abstract void Draw(MyBitmap bitmap, int x, int y);
     }
 
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Bitmap = System.Drawing.Bitmap;
 
 using LynnaLib;
 
