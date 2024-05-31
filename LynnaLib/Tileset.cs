@@ -16,8 +16,8 @@ namespace LynnaLib
 
         GraphicsState graphicsState;
 
-        MyBitmap[] tileImagesCache = new MyBitmap[256];
-        MyBitmap fullCachedImage = new MyBitmap(16 * 16, 16 * 16);
+        Bitmap[] tileImagesCache = new Bitmap[256];
+        Bitmap fullCachedImage = new Bitmap(16 * 16, 16 * 16);
 
         WeakEventWrapper<PaletteHeaderGroup> paletteEventWrapper = new WeakEventWrapper<PaletteHeaderGroup>();
 
@@ -434,12 +434,12 @@ namespace LynnaLib
 
         // This returns an image for the specified tile index, and also updates the "master" tileset
         // image if said tile has been changed.
-        public MyBitmap GetTileImage(int index)
+        public Bitmap GetTileImage(int index)
         {
             if (tileImagesCache[index] != null)
                 return tileImagesCache[index];
 
-            var image = new MyBitmap(16, 16);
+            var image = new Bitmap(16, 16);
 
             // Draw the tile
             using (Cairo.Context cr = image.CreateContext())
@@ -585,7 +585,7 @@ namespace LynnaLib
         // The full image is not drawn after initialization, but it IS updated properly when any
         // properties of the tileset are modified. This is because it is inefficient to draw the
         // full tileset image for every single tileset when drawing the minimap.
-        public MyBitmap GetFullCachedImage()
+        public Bitmap GetFullCachedImage()
         {
             return fullCachedImage;
         }

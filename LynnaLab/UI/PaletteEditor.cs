@@ -66,7 +66,7 @@ namespace LynnaLab
 
             if (data.IsResolvable)
             {
-                MyColor[][] colors = data.GetPalettes();
+                Color[][] colors = data.GetPalettes();
 
                 int row = 0;
                 int col = 0;

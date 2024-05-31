@@ -8,12 +8,12 @@ namespace LynnaLab
     public partial class GfxViewer : TileGridViewer
     {
 
-        override protected MyBitmap Image
+        override protected Bitmap Image
         {
             get { return image; }
         }
 
-        MyBitmap image;
+        Bitmap image;
 
         GraphicsState graphicsState;
         int offsetStart, offsetEnd;
@@ -60,7 +60,7 @@ namespace LynnaLab
             TileHeight = 8;
             Scale = scale;
 
-            image = new MyBitmap(Width * TileWidth, Height * TileHeight);
+            image = new Bitmap(Width * TileWidth, Height * TileHeight);
 
             redrawAll();
         }

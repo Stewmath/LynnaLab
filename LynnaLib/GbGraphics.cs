@@ -7,18 +7,18 @@ namespace LynnaLib
     public class GbGraphics
     {
         // Black & white palette; use when no other palette makes sense.
-        public static readonly MyColor[] GrayPalette = {
-            MyColor.FromRgb(255, 255, 255),
-            MyColor.FromRgb(198, 198, 198),
-            MyColor.FromRgb(100, 100, 100),
-            MyColor.FromRgb(0, 0, 0)
+        public static readonly Color[] GrayPalette = {
+            Color.FromRgb(255, 255, 255),
+            Color.FromRgb(198, 198, 198),
+            Color.FromRgb(100, 100, 100),
+            Color.FromRgb(0, 0, 0)
         };
 
         /// <summary>
         ///  Convert a single tile to an image. (Supports 8x8 or 8x16 tiles; 8x16 are treated as
         ///  sprites.)
         /// </summary>
-		public static MyBitmap TileToBitmap(IList<byte> data, IList<MyColor> palette = null, int flags = 0)
+		public static Bitmap TileToBitmap(IList<byte> data, IList<Color> palette = null, int flags = 0)
         {
             if (palette == null)
                 palette = GrayPalette;
@@ -70,7 +70,7 @@ namespace LynnaLib
                 }
             }
 
-            return new MyBitmap(new Cairo.ImageSurface(pixels, Cairo.Format.ARGB32, 8, height, 32));
+            return new Bitmap(new Cairo.ImageSurface(pixels, Cairo.Format.ARGB32, 8, height, 32));
         }
     }
 }

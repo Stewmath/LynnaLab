@@ -79,7 +79,7 @@ namespace LynnaLib
         }
 
 
-        public MyColor[][] GetCustomPalettes()
+        public Color[][] GetCustomPalettes()
         {
             string field = GetSubIDDocumentation()?.GetField("palette");
             if (field == null)

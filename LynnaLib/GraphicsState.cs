@@ -26,7 +26,7 @@ namespace LynnaLib
 
         byte[][] vramBuffer;
         byte[][] wramBuffer;
-        MyColor[][][] paletteBuffer;
+        Color[][][] paletteBuffer;
 
         // TODO: this is a hack, "raw data" should be dealt with in a similar way as "gfx headers"
         // (managed by category, "GfxHeaderType" enum).
@@ -82,18 +82,18 @@ namespace LynnaLib
             RegenerateBuffers();
         }
 
-        public MyColor[][] GetPalettes(PaletteType type)
+        public Color[][] GetPalettes(PaletteType type)
         {
             if (palettesModified)
                 RegeneratePalettes();
             return paletteBuffer[(int)type];
         }
 
-        public MyColor[][] GetBackgroundPalettes()
+        public Color[][] GetBackgroundPalettes()
         {
             return GetPalettes(PaletteType.Background);
         }
-        public MyColor[][] GetSpritePalettes()
+        public Color[][] GetSpritePalettes()
         {
             return GetPalettes(PaletteType.Sprite);
         }
@@ -250,15 +250,15 @@ namespace LynnaLib
         }
         void RegeneratePalettes()
         {
-            paletteBuffer = new MyColor[2][][];
+            paletteBuffer = new Color[2][][];
             for (int i = 0; i < 2; i++)
             {
-                paletteBuffer[i] = new MyColor[8][];
+                paletteBuffer[i] = new Color[8][];
                 for (int j = 0; j < 8; j++)
                 {
-                    paletteBuffer[i][j] = new MyColor[4];
+                    paletteBuffer[i][j] = new Color[4];
                     for (int k = 0; k < 4; k++)
-                        paletteBuffer[i][j][k] = MyColor.FromRgb(0, 0, 0);
+                        paletteBuffer[i][j][k] = Color.FromRgb(0, 0, 0);
                 }
             }
 

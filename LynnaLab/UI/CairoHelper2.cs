@@ -85,7 +85,7 @@ namespace LynnaLab
         // Extension methods
 
         /// Convert MyColor to Gdk.Color
-        public static Gdk.RGBA ToGdk(this MyColor self)
+        public static Gdk.RGBA ToGdk(this Color self)
         {
             return new Gdk.RGBA {
                     Red = self.R / 255.0,
@@ -95,9 +95,9 @@ namespace LynnaLab
                 };
         }
         /// Convert Gdk.Color to MyColor
-        public static MyColor FromGdk(this Gdk.RGBA self)
+        public static Color FromGdk(this Gdk.RGBA self)
         {
-            return MyColor.FromRgba(
+            return Color.FromRgba(
                 (int)(self.Red * 255),
                 (int)(self.Green * 255),
                 (int)(self.Blue * 255),

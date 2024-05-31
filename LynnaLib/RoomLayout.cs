@@ -16,7 +16,7 @@ namespace LynnaLib
 
         MemoryFileStream tileDataFile;
         Tileset loadedTileset;
-        MyBitmap cachedImage;
+        Bitmap cachedImage;
 
 
         public delegate void LayoutModifiedHandler();
@@ -65,12 +65,12 @@ namespace LynnaLib
             get { return width == 10 ? 10 : 16; }
         }
 
-        public MyBitmap GetImage()
+        public Bitmap GetImage()
         {
             if (cachedImage != null)
                 return cachedImage;
 
-            cachedImage = new MyBitmap(width * 16, height * 16);
+            cachedImage = new Bitmap(width * 16, height * 16);
 
             using (var cr = cachedImage.CreateContext())
             {

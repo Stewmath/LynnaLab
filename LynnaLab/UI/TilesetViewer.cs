@@ -24,7 +24,7 @@ namespace LynnaLab
             get { return tileset; }
         }
 
-        protected override MyBitmap Image
+        protected override Bitmap Image
         {
             get
             {

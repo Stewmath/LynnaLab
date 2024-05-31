@@ -217,7 +217,7 @@ namespace LynnaLab
             }
         }
 
-        protected override MyBitmap Image
+        protected override Bitmap Image
         {
             get
             {
@@ -1071,7 +1071,7 @@ namespace LynnaLab
             Project Project { get { return chest.Project; } }
 
             public override Cairo.Color BoxColor { get {
-                    return MyColor.FromRgba(204, 51, 153, 0xc0);
+                    return Color.FromRgba(204, 51, 153, 0xc0);
                 }
             }
 

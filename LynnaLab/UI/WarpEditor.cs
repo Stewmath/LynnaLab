@@ -12,7 +12,7 @@ namespace LynnaLab
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 
-        public static readonly MyColor WarpSourceColor = MyColor.FromRgba(186, 8, 206, 0xc0);
+        public static readonly Color WarpSourceColor = Color.FromRgba(186, 8, 206, 0xc0);
 
         // Events
         public event EventHandler<EventArgs> SelectedWarpEvent;

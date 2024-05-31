@@ -2,24 +2,26 @@ using System;
 
 namespace LynnaLib
 {
-    public class MyBitmap : System.IDisposable
+    /// Thin wrapper over Cairo.ImageSurface. Called "Bitmap" due to baggage
+    /// from using the deprecated System.Drawing.Common.Bitmap.
+    public class Bitmap : System.IDisposable
     {
         Cairo.ImageSurface surface;
 
         /// Constructor for blank surface
-        public MyBitmap(int width, int height)
+        public Bitmap(int width, int height)
         {
             surface = new Cairo.ImageSurface(Cairo.Format.RGB24, width, height);
         }
 
         /// Constructor from ImageSurface
-        public MyBitmap(Cairo.ImageSurface surface)
+        public Bitmap(Cairo.ImageSurface surface)
         {
             this.surface = surface;
         }
 
         /// Constructor from file
-        public MyBitmap(string filename)
+        public Bitmap(string filename)
         {
             this.surface = new Cairo.ImageSurface(filename);
         }
@@ -67,11 +69,6 @@ namespace LynnaLib
             return new Cairo.Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0);
         }
 
-        public Cairo.Surface AsSurface()
-        {
-            return surface;
-        }
-
         public void Dispose()
         {
             if (surface != null)
@@ -81,7 +78,7 @@ namespace LynnaLib
         }
 
         /// Implicit conversion to Cairo.ImageSurface, should be seamless
-        public static implicit operator Cairo.ImageSurface(MyBitmap b)
+        public static implicit operator Cairo.ImageSurface(Bitmap b)
         {
             return b.surface;
         }

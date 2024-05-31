@@ -258,11 +258,11 @@ namespace LynnaLib
     public class RgbData : Data
     {
 
-        public MyColor Color
+        public Color Color
         {
             get
             {
-                return MyColor.FromRgb(
+                return Color.FromRgb(
                         Project.EvalToInt(GetValue(0)) * 8,
                         Project.EvalToInt(GetValue(1)) * 8,
                         Project.EvalToInt(GetValue(2)) * 8);

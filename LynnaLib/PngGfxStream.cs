@@ -15,7 +15,7 @@ namespace LynnaLib
 
         public PngGfxStream(string filename)
         {
-            var bitmap = new MyBitmap(filename);
+            var bitmap = new Bitmap(filename);
 
             string propertiesFilename = Path.GetDirectoryName(filename) + "/" +
                 Path.GetFileNameWithoutExtension(filename) + ".properties";

@@ -166,7 +166,7 @@ namespace LynnaLab
             //_surface = new Cairo.ImageSurface(Cairo.Format.Rgb24,
             //        (int)(layout.Width * 16 * _scale), (int)(layout.Height * 16 * _scale));
 
-            MyBitmap img = layout.GetImage();
+            Bitmap img = layout.GetImage();
 
             using (var cr = new Cairo.Context(tileSurface))
             {

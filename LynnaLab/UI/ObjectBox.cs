@@ -118,7 +118,7 @@ namespace LynnaLab
                     double xPos = x - width / 2 + 0.5;
                     double yPos = y - width / 2 + 0.5;
 
-                    cr.SetSourceColor(MyColor.Blue);
+                    cr.SetSourceColor(Color.Blue);
                     cr.MoveTo(xPos, yPos);
                     cr.LineTo(xPos + width - 1, yPos + width - 1);
                     cr.MoveTo(xPos + width - 1, yPos);

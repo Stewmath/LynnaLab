@@ -65,7 +65,7 @@ namespace LynnaLab
             tilesetViewerContainer.Add(tilesetviewer1);
 
             subTileGfxViewer = new GfxViewer();
-            subTileGfxViewer.SelectionColor = MyColor.FromRgb(0, 256, 0);
+            subTileGfxViewer.SelectionColor = Color.FromRgb(0, 256, 0);
             subTileGfxViewer.AddTileSelectedHandler(delegate (object sender, int index)
             {
                 if (subTileEditor != null)
@@ -206,7 +206,7 @@ namespace LynnaLab
                 }
             }
 
-            override protected MyBitmap Image
+            override protected Bitmap Image
             {
                 get
                 {
@@ -266,14 +266,14 @@ namespace LynnaLab
                 }
             }
 
-            override protected MyBitmap Image
+            override protected Bitmap Image
             {
                 // TODO: optimize? Image isn't being disposed...
                 get
                 {
                     if (tileset == null)
                         return null;
-                    MyBitmap image = new MyBitmap(tileset.GetTileImage(TileIndex));
+                    Bitmap image = new Bitmap(tileset.GetTileImage(TileIndex));
 
                     using (var cr = image.CreateContext())
                     {

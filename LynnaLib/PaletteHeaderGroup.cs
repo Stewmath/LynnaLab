@@ -50,13 +50,13 @@ namespace LynnaLib
         }
 
         // TODO: error handling
-        public MyColor[][] GetObjPalettes()
+        public Color[][] GetObjPalettes()
         {
-            MyColor[][] ret = new MyColor[8][];
+            Color[][] ret = new Color[8][];
 
             Foreach((palette) =>
             {
-                MyColor[][] palettes = palette.GetPalettes();
+                Color[][] palettes = palette.GetPalettes();
                 if (palette.PaletteType == PaletteType.Sprite)
                 {
                     for (int i = 0; i < palette.NumPalettes; i++)

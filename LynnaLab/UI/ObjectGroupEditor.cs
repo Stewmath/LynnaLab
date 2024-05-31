@@ -327,25 +327,25 @@ namespace LynnaLab
             switch (type)
             {
                 case ObjectType.Condition:
-                    return MyColor.Black;
+                    return Color.Black;
                 case ObjectType.Interaction:
-                    return MyColor.DarkOrange;
+                    return Color.DarkOrange;
                 case ObjectType.Pointer:
-                    return MyColor.Yellow;
+                    return Color.Yellow;
                 case ObjectType.BeforeEvent:
-                    return MyColor.Green;
+                    return Color.Green;
                 case ObjectType.AfterEvent:
-                    return MyColor.Blue;
+                    return Color.Blue;
                 case ObjectType.RandomEnemy:
-                    return MyColor.Purple;
+                    return Color.Purple;
                 case ObjectType.SpecificEnemyA:
-                    return MyColor.FromRgb(128, 64, 0);
+                    return Color.FromRgb(128, 64, 0);
                 case ObjectType.SpecificEnemyB:
-                    return MyColor.FromRgb(128, 64, 0);
+                    return Color.FromRgb(128, 64, 0);
                 case ObjectType.Part:
-                    return MyColor.Gray;
+                    return Color.Gray;
                 case ObjectType.ItemDrop:
-                    return MyColor.Lime;
+                    return Color.Lime;
             }
             return new Cairo.Color(1.0, 1.0, 1.0); // End, EndPointer, Garbage types should never be drawn
         }

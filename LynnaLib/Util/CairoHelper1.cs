@@ -43,7 +43,7 @@ namespace LynnaLib
             this.yOffset = yOffset;
         }
 
-        public override void Draw(MyBitmap bitmap, int x, int y)
+        public override void Draw(Bitmap bitmap, int x, int y)
         {
             cr.SetSourceSurface(bitmap, x + xOffset, y + yOffset);
             using (Cairo.SurfacePattern pattern = (Cairo.SurfacePattern)cr.GetSource())

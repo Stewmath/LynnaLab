@@ -91,15 +91,15 @@ namespace LynnaLib
             }
         }
 
-        public MyColor[][] GetPalettes()
+        public Color[][] GetPalettes()
         {
-            MyColor[][] ret = new MyColor[NumPalettes][];
+            Color[][] ret = new Color[NumPalettes][];
 
             RgbData data = Data;
 
             for (int i = 0; i < NumPalettes; i++)
             {
-                ret[i] = new MyColor[4];
+                ret[i] = new Color[4];
                 for (int j = 0; j < 4; j++)
                 {
                     ret[i][j] = data.Color;
@@ -110,7 +110,7 @@ namespace LynnaLib
             return ret;
         }
 
-        public void SetColor(int palette, int colorIndex, MyColor color)
+        public void SetColor(int palette, int colorIndex, Color color)
         {
             RgbData data = GetRgbData(palette, colorIndex);
             data.Color = color;
