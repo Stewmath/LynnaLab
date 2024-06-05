@@ -67,15 +67,6 @@ namespace LynnaLab
                 adjustment.Value = adjustment.Upper - adjustment.PageSize;
             };
 
-            // Tags for text coloring
-            var tagTable = processView.Buffer.TagTable;
-            var redTag = new Gtk.TextTag("red");
-            var greenTag = new Gtk.TextTag("green");
-            redTag.Foreground = "red";
-            greenTag.Foreground = "green";
-            tagTable.Add(redTag);
-            tagTable.Add(greenTag);
-
             closeCheckBox = new Gtk.CheckButton("Close dialog with emulator");
             closeCheckBox.Active = mainWindow.GlobalConfig.CloseRunDialogWithEmulator;
 
@@ -93,31 +84,15 @@ namespace LynnaLab
             this.ShowAll();
         }
 
-        /// Append text to processView text buffer
-        void AppendText(string text, string tag = null)
-        {
-            text += '\n';
-            var buffer = processView.Buffer;
-            processView.Buffer.Text += text;
-
-            if (tag != null)
-            {
-                var startIter = buffer.EndIter;
-                var endIter = buffer.EndIter;
-                endIter.BackwardChars(text.Length);
-                buffer.ApplyTag(tag, startIter, endIter);
-            }
-        }
-
         void OnMakeExited()
         {
             if (makeProcess.ExitCode != 0)
             {
-                AppendText($"\nError: make exited with code {makeProcess.ExitCode}", "red");
+                processView.AppendText($"\nError: make exited with code {makeProcess.ExitCode}", "red");
                 return;
             }
 
-            AppendText("\nBuild completed successfuly!\n", "green");
+            processView.AppendText("\nBuild completed successfuly!\n", "green");
 
             string runCommand = mainWindow.GlobalConfig.EmulatorCommand;
 
@@ -125,15 +100,15 @@ namespace LynnaLab
             {
                 if ((runCommand = mainWindow.PromptForEmulator(true)) == null)
                 {
-                    AppendText($"Emulator not configured, couldn't run {Project.GameString}.gbc.", "red");
+                    processView.AppendText($"Emulator not configured, couldn't run {Project.GameString}.gbc.", "red");
                     return;
                 }
             }
 
             string fullCommand = runCommand + $" {Project.GameString}.gbc";
 
-            AppendText("Attempting to run with the following command (reconfigure with File -> Select Emulator)...");
-            AppendText(fullCommand + '\n');
+            processView.AppendText("Attempting to run with the following command (reconfigure with File -> Select Emulator)...");
+            processView.AppendText(fullCommand + '\n');
 
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
@@ -153,13 +128,13 @@ namespace LynnaLab
             {
                 if (!processView.AttachAndStartProcess(emulatorProcess))
                 {
-                    AppendText("Error: Emulator process could not be started.", "red");
+                    processView.AppendText("Error: Emulator process could not be started.", "red");
                     return;
                 }
             }
             catch (Win32Exception)
             {
-                AppendText("Error: Emulator process could not be started.", "red");
+                processView.AppendText("Error: Emulator process could not be started.", "red");
                 return;
             }
 
@@ -176,8 +151,11 @@ namespace LynnaLab
 
         void OnEmulatorExited()
         {
-            mainWindow.GlobalConfig.CloseRunDialogWithEmulator = closeCheckBox.Active;
-            mainWindow.GlobalConfig.Save();
+            if (mainWindow.GlobalConfig.CloseRunDialogWithEmulator != closeCheckBox.Active)
+            {
+                mainWindow.GlobalConfig.CloseRunDialogWithEmulator = closeCheckBox.Active;
+                mainWindow.GlobalConfig.Save();
+            }
 
             if (closeCheckBox.Active)
             {
