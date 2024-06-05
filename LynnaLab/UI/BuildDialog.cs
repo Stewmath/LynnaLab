@@ -47,7 +47,7 @@ namespace LynnaLab
                 mainWindow.GlobalConfig.MakeCommand = makeCommand;
             }
 
-            makeCommand = makeCommand.Replace("{GAME}", Project.GameString);
+            makeCommand = SubstituteString(makeCommand);
 
             var startInfo = new ProcessStartInfo
             {
@@ -144,10 +144,10 @@ namespace LynnaLab
                     processView.AppendText($"Emulator not configured, couldn't run {Project.GameString}.gbc.", "error");
                     return;
                 }
-                runCommand = emulatorPrompt + " {GAME}";
+                runCommand = emulatorPrompt + " {GAME}.gbc";
             }
 
-            string fullCommand = runCommand.Replace("{GAME}", Project.GameString + ".gbc");
+            string fullCommand = SubstituteString(runCommand);
 
             processView.AppendText("Attempting to run with the following command (reconfigure with File -> Select Emulator)...");
             processView.AppendText(fullCommand + '\n', "code");
@@ -186,6 +186,11 @@ namespace LynnaLab
 
             // Kill existing emulator process if it exists
             mainWindow.RegisterEmulatorProcess(emulatorProcess);
+        }
+
+        string SubstituteString(string s)
+        {
+            return s.Replace("{GAME}", Project.GameString);
         }
 
         void OnEmulatorExited()
