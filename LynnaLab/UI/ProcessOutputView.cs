@@ -15,12 +15,22 @@ namespace LynnaLab
 
             // Tags for text coloring
             var tagTable = Buffer.TagTable;
-            var redTag = new Gtk.TextTag("red");
-            var greenTag = new Gtk.TextTag("green");
-            redTag.Foreground = "red";
-            greenTag.Foreground = "green";
-            tagTable.Add(redTag);
-            tagTable.Add(greenTag);
+            var errorTag = new Gtk.TextTag("error");
+            var successTag = new Gtk.TextTag("success");
+            var systemTag = new Gtk.TextTag("system");
+            var codeTag = new Gtk.TextTag("code");
+
+            errorTag.Foreground = "red";
+            errorTag.Weight = Pango.Weight.Bold;
+            successTag.Foreground = "green";
+            successTag.Weight = Pango.Weight.Bold;
+            systemTag.Foreground = "darkslategrey";
+            codeTag.Family = "Monospace";
+
+            tagTable.Add(errorTag);
+            tagTable.Add(successTag);
+            tagTable.Add(systemTag);
+            tagTable.Add(codeTag);
         }
 
         /// Old process will not be closed when calling this, caller must manage
@@ -46,7 +56,7 @@ namespace LynnaLab
             return true;
         }
 
-        public void AppendText(string text, string tag = null)
+        public void AppendText(string text, string tag = "system")
         {
             if (text == null)
                 return;
@@ -59,7 +69,7 @@ namespace LynnaLab
             {
                 var startIter = Buffer.EndIter;
                 var endIter = Buffer.EndIter;
-                endIter.BackwardChars(text.Length);
+                startIter.BackwardChars(text.Length);
                 Buffer.ApplyTag(tag, startIter, endIter);
             }
         }
@@ -69,7 +79,7 @@ namespace LynnaLab
             // This is called outside the GUI thread, must use Invoke method
             Gtk.Application.Invoke((e, a) =>
             {
-                AppendText(args.Data);
+                AppendText(args.Data, "code");
             });
         }
 

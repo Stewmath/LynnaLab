@@ -88,11 +88,11 @@ namespace LynnaLab
         {
             if (makeProcess.ExitCode != 0)
             {
-                processView.AppendText($"\nError: make exited with code {makeProcess.ExitCode}", "red");
+                processView.AppendText($"\nError: make exited with code {makeProcess.ExitCode}", "error");
                 return;
             }
 
-            processView.AppendText("\nBuild completed successfuly!\n", "green");
+            processView.AppendText("\nBuild completed successfully!\n", "success");
 
             string runCommand = mainWindow.GlobalConfig.EmulatorCommand;
 
@@ -100,7 +100,7 @@ namespace LynnaLab
             {
                 if ((runCommand = mainWindow.PromptForEmulator(true)) == null)
                 {
-                    processView.AppendText($"Emulator not configured, couldn't run {Project.GameString}.gbc.", "red");
+                    processView.AppendText($"Emulator not configured, couldn't run {Project.GameString}.gbc.", "error");
                     return;
                 }
             }
@@ -108,7 +108,7 @@ namespace LynnaLab
             string fullCommand = runCommand + $" {Project.GameString}.gbc";
 
             processView.AppendText("Attempting to run with the following command (reconfigure with File -> Select Emulator)...");
-            processView.AppendText(fullCommand + '\n');
+            processView.AppendText(fullCommand + '\n', "code");
 
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
@@ -128,13 +128,13 @@ namespace LynnaLab
             {
                 if (!processView.AttachAndStartProcess(emulatorProcess))
                 {
-                    processView.AppendText("Error: Emulator process could not be started.", "red");
+                    processView.AppendText("Error: Emulator process could not be started.", "error");
                     return;
                 }
             }
             catch (Win32Exception)
             {
-                processView.AppendText("Error: Emulator process could not be started.", "red");
+                processView.AppendText("Error: Emulator process could not be started.", "error");
                 return;
             }
 
