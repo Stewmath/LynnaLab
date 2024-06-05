@@ -8,6 +8,9 @@ using Gtk;
 using LynnaLab;
 using LynnaLib;
 using Util;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.ComponentModel;
 
 // Doesn't extend the Gtk.Window class because the actual window is defined in Glade
 // (Glade/MainWindow.ui).
@@ -65,6 +68,8 @@ public class MainWindow
     // Variables
     uint animationTimerID = 0;
     PluginCore pluginCore;
+    GlobalConfig globalConfig;
+    Process emulatorProcess;
 
     // Certain "update" events are called indirectly through this. Certain updates are delayed until
     // it is "unlocked", because we sometimes don't want updates to certain widget properties to be
@@ -73,6 +78,22 @@ public class MainWindow
 
 
     // Properties
+
+    public Gtk.Window Window
+    {
+        get
+        {
+            return mainWindow;
+        }
+    }
+
+    public GlobalConfig GlobalConfig
+    {
+        get
+        {
+            return globalConfig;
+        }
+    }
 
     public Project Project { get; set; }
     public Room ActiveRoom
@@ -171,6 +192,22 @@ public class MainWindow
     {
         log.Debug("Beginning Program");
 
+        if (GlobalConfig.Exists())
+            globalConfig = GlobalConfig.Load();
+        else
+        {
+            globalConfig = new GlobalConfig();
+            globalConfig.Save();
+        }
+
+        GuiSetup();
+
+        if (directory != "")
+            OpenProject(directory);
+    }
+
+    void GuiSetup()
+    {
         Gtk.Window.DefaultIcon = new Gdk.Pixbuf(Helper.GetResourceStream("LynnaLab.icon.ico"));
 
         Gtk.Builder builder = new Builder();
@@ -318,11 +355,7 @@ public class MainWindow
 
         eventGroup.UnlockAndClear();
 
-
         overallEditingContainer.Sensitive = false;
-
-        if (directory != "")
-            OpenProject(directory);
     }
 
     void LoadPlugins()
@@ -395,11 +428,12 @@ public class MainWindow
         string mainFile = "ages.s";
         if (!File.Exists(dir + "/" + mainFile))
         {
-            Gtk.MessageDialog d = new MessageDialog(mainWindow,
-                    DialogFlags.DestroyWithParent,
-                    MessageType.Warning,
-                    ButtonsType.YesNo,
-                    "The folder you selected does not have a " + mainFile + " file. This probably indicates the folder does not contain the oracles disassembly. Attempt to continue anyway?");
+            Gtk.MessageDialog d = new MessageDialog(
+                mainWindow,
+                DialogFlags.DestroyWithParent,
+                MessageType.Warning,
+                ButtonsType.YesNo,
+                $"The folder you selected does not have a {mainFile} file. This probably indicates the folder does not contain the oracles disassembly. Attempt to continue anyway?");
             response = (ResponseType)d.Run();
             d.Dispose();
         }
@@ -752,6 +786,26 @@ public class MainWindow
             Project.Save();
     }
 
+    /// Create a dialog box which shows the build output, then runs the emulator
+    protected void OnRunActionActivated(object sender, EventArgs e)
+    {
+        if (Project == null)
+            return;
+
+        var dialog = new BuildDialog(this);
+        dialog.ShowAll();
+    }
+
+    protected void OnPromptForEmulatorActionActivated(object sender, EventArgs e)
+    {
+        var cmd = PromptForEmulator();
+        if (cmd != null)
+        {
+            globalConfig.EmulatorCommand = cmd;
+            globalConfig.Save();
+        }
+    }
+
     protected void OnCloseActionActivated(object sender, EventArgs e)
     {
         if (AskSave("Save project before closing it") != ResponseType.Cancel)
@@ -947,5 +1001,65 @@ public class MainWindow
     {
         AskQuit();
         e.RetVal = true; // Event is "handled". This prevents the window closure.
+    }
+
+
+    // Public methods
+
+    /// Returns file selected, or null if nothing selected
+    public string PromptForEmulator(bool infoPrompt = false)
+    {
+        if (infoPrompt)
+        {
+            var d = new Gtk.MessageDialog(
+                mainWindow,
+                DialogFlags.DestroyWithParent,
+                MessageType.Info,
+                ButtonsType.OkCancel,
+                $"Your gameboy emulator path has not been configured. Select your emulator executable file now to run {Project.GameString}.gbc.");
+            var response = (ResponseType)d.Run();
+            d.Dispose();
+
+            if (response != Gtk.ResponseType.Ok)
+                return null;
+        }
+
+        using (var fileDialog = new Gtk.FileChooserDialog(
+            "Select your emulator executable file",
+            mainWindow,
+            FileChooserAction.Open,
+            "Cancel", ResponseType.Cancel,
+            "Select File", ResponseType.Accept))
+        {
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var exeFilter = new Gtk.FileFilter();
+                var allFilter = new Gtk.FileFilter();
+                exeFilter.Name = "Executable files (*.exe)";
+                allFilter.Name = "All files";
+                exeFilter.AddPattern("*.exe");
+                allFilter.AddPattern("*");
+                fileDialog.AddFilter(exeFilter);
+                fileDialog.AddFilter(allFilter);
+            }
+            var response = (ResponseType)fileDialog.Run();
+
+            if (response == ResponseType.Accept)
+            {
+                return fileDialog.Filename;
+            }
+        }
+
+        return null;
+    }
+
+    public void RegisterEmulatorProcess(Process process)
+    {
+        // Kill existing emulator process if it exists.
+        // Could use CloseMainWindow() instead to ask more nicely, but not guaranteed to work.
+        emulatorProcess?.Kill();
+        emulatorProcess?.Close();
+        emulatorProcess = process;
     }
 }
