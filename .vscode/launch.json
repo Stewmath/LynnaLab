@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "LynnaLab (Debug)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-debug",
+            "program": "${workspaceFolder}/LynnaLab/bin/Debug/net8.0/LynnaLab.dll",
+            "args": ["oracles-disasm"],
+        },
+        {
+            "name": "LynnaLab (Release)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-release",
+            "program": "${workspaceFolder}/LynnaLab/bin/Release/net8.0/LynnaLab.dll",
+            "args": ["oracles-disasm"],
+        }
+    ]
+}

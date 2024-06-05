@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.30413.136
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LynnaLab", "LynnaLab\LynnaLab.csproj", "{21072A00-C7C0-41FF-8103-4186BB75056E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LynnaLib", "LynnaLib\LynnaLib.csproj", "{C57A460A-90D5-4B50-AA96-1D11CA6D6801}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
