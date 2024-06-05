@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using LynnaLib;
 
 namespace LynnaLab
@@ -15,6 +16,7 @@ namespace LynnaLab
         Process emulatorProcess;
 
         Gtk.CheckButton closeCheckBox;
+        bool makeLaunchFailed;
 
         public Project Project
         {
@@ -29,10 +31,20 @@ namespace LynnaLab
         {
             this.mainWindow = parent;
 
+            string makeCommand;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                makeCommand = $"C:/msys64/msys2_shell.cmd -here -no-start -defterm -ucrt64 -shell bash -c \"make {Project.GameString}\"";
+            }
+            else
+            {
+                makeCommand = "/usr/bin/make ${Project.GameString}";
+            }
+
             var startInfo = new ProcessStartInfo
             {
-                FileName = "/usr/bin/make",
-                Arguments = Project.GameString,
+                FileName = makeCommand.Split()[0],
+                Arguments = string.Join(" ", makeCommand.Split().Skip(1)),
                 WorkingDirectory = Project.BaseDirectory,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -46,7 +58,6 @@ namespace LynnaLab
 
             processView = new ProcessOutputView();
             processView.MarginBottom = 6;
-            processView.AttachAndStartProcess(makeProcess);
 
             var topLabel = new Gtk.Label("Building oracles-disasm. The first time will take several minutes.");
             topLabel.Halign = Gtk.Align.Start;
@@ -74,14 +85,35 @@ namespace LynnaLab
             this.ContentArea.Add(topLabel);
             this.ContentArea.Add(scrolledWindow);
             this.ContentArea.Add(closeCheckBox);
+            this.ShowAll();
 
             this.Response += (o, a) =>
             {
+                if (!makeLaunchFailed)
+                    makeProcess.Kill();
                 makeProcess.Close();
                 this.Destroy();
             };
 
-            this.ShowAll();
+            // Attempt to build disassembly
+            processView.AppendText("Building with command:");
+            processView.AppendText(makeCommand, "code");
+            try
+            {
+                makeLaunchFailed = !processView.AttachAndStartProcess(makeProcess);
+            }
+            catch (Win32Exception)
+            {
+                makeLaunchFailed = true;
+            }
+
+            if (makeLaunchFailed)
+            {
+                processView.AppendText("Failed to launch make process with command:", "red");
+                processView.AppendText(makeCommand);
+                processView.AppendText("\nIf you're on Windows, MSYS2 must be installed.");
+                return;
+            }
         }
 
         void OnMakeExited()
