@@ -764,6 +764,7 @@ public class MainWindow
     {
         if (Project != null)
             Project.Close();
+        globalConfig.Save();
         Application.Quit();
     }
 
