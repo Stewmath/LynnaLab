@@ -808,6 +808,7 @@ public class MainWindow
         if (Project == null)
             return;
 
+        Project.Save();
         var dialog = new BuildDialog(this);
         dialog.ShowAll();
     }
