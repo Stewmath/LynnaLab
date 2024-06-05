@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Gtk;
 
@@ -26,7 +27,15 @@ namespace LynnaLab
             if (args.Length >= 1)
                 win = new MainWindow(args[0]);
             else
-                win = new MainWindow();
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    string path = $"C:\\msys64\\home\\{Environment.UserName}\\oracles-disasm";
+                    win = new MainWindow(path);
+                }
+                else
+                    win = new MainWindow();
+            }
             Application.Run();
 
 #if (!DEBUG)

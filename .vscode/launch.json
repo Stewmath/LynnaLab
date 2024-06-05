@@ -16,6 +16,14 @@
             "preLaunchTask": "build-release",
             "program": "${workspaceFolder}/LynnaLab/bin/Release/net8.0/LynnaLab.dll",
             "args": ["oracles-disasm"],
+        },
+        {
+            "name": "LynnaLab (Release, no args)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-release",
+            "program": "${workspaceFolder}/LynnaLab/bin/Release/net8.0/LynnaLab.dll",
+            "args": [],
         }
     ]
 }

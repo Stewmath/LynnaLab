@@ -203,7 +203,22 @@ public class MainWindow
         GuiSetup();
 
         if (directory != "")
-            OpenProject(directory);
+        {
+            if (!Directory.Exists(directory))
+            {
+                using (var d = new Gtk.MessageDialog(
+                    mainWindow,
+                    DialogFlags.DestroyWithParent,
+                    MessageType.Warning,
+                    ButtonsType.Ok,
+                    $"The folder {directory} does not exist. If you're on Windows, try running windows-setup.bat first."))
+                {
+                    d.Run();
+                }
+            }
+            else
+                OpenProject(directory);
+        }
     }
 
     void GuiSetup()
