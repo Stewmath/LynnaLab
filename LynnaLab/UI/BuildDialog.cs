@@ -31,15 +31,23 @@ namespace LynnaLab
         {
             this.mainWindow = parent;
 
-            string makeCommand;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            string makeCommand = mainWindow.GlobalConfig.MakeCommand;
+
+            if (makeCommand == null)
             {
-                makeCommand = $"C:/msys64/msys2_shell.cmd -here -no-start -defterm -ucrt64 -shell bash -c \"make {Project.GameString}\"";
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    makeCommand = "C:/msys64/msys2_shell.cmd -here -no-start -defterm -ucrt64 -shell bash -c \"make {GAME}\"";
+                }
+                else
+                {
+                    makeCommand = "/usr/bin/make {GAME}";
+                }
+
+                mainWindow.GlobalConfig.MakeCommand = makeCommand;
             }
-            else
-            {
-                makeCommand = "/usr/bin/make ${Project.GameString}";
-            }
+
+            makeCommand = makeCommand.Replace("{GAME}", Project.GameString);
 
             var startInfo = new ProcessStartInfo
             {
@@ -130,14 +138,16 @@ namespace LynnaLab
 
             if (runCommand == null)
             {
-                if ((runCommand = mainWindow.PromptForEmulator(true)) == null)
+                string emulatorPrompt = null;
+                if ((emulatorPrompt = mainWindow.PromptForEmulator(true)) == null)
                 {
                     processView.AppendText($"Emulator not configured, couldn't run {Project.GameString}.gbc.", "error");
                     return;
                 }
+                runCommand = emulatorPrompt + " {GAME}";
             }
 
-            string fullCommand = runCommand + $" {Project.GameString}.gbc";
+            string fullCommand = runCommand.Replace("{GAME}", Project.GameString + ".gbc");
 
             processView.AppendText("Attempting to run with the following command (reconfigure with File -> Select Emulator)...");
             processView.AppendText(fullCommand + '\n', "code");
@@ -171,11 +181,8 @@ namespace LynnaLab
             }
 
             // No apparent error, update global config with the run command
-            if (mainWindow.GlobalConfig.EmulatorCommand != runCommand)
-            {
-                mainWindow.GlobalConfig.EmulatorCommand = runCommand;
-                mainWindow.GlobalConfig.Save();
-            }
+            mainWindow.GlobalConfig.EmulatorCommand = runCommand;
+            mainWindow.GlobalConfig.Save();
 
             // Kill existing emulator process if it exists
             mainWindow.RegisterEmulatorProcess(emulatorProcess);
@@ -183,11 +190,8 @@ namespace LynnaLab
 
         void OnEmulatorExited()
         {
-            if (mainWindow.GlobalConfig.CloseRunDialogWithEmulator != closeCheckBox.Active)
-            {
-                mainWindow.GlobalConfig.CloseRunDialogWithEmulator = closeCheckBox.Active;
-                mainWindow.GlobalConfig.Save();
-            }
+            mainWindow.GlobalConfig.CloseRunDialogWithEmulator = closeCheckBox.Active;
+            mainWindow.GlobalConfig.Save();
 
             if (closeCheckBox.Active)
             {
