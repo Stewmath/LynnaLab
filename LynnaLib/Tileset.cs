@@ -8,7 +8,13 @@ namespace LynnaLib
     public class Tileset
     {
         FileParser tilesetFile;
+
+        // These two Data's are the same unless it's a seasonal tileset.
+        // In that case, parentData points to the table of seasonal tilesets.
+        // (m_SeasonalTileset)
+        Data parentData;
         Data tilesetData;
+
         ValueReferenceGroup vrg;
 
         TilesetHeaderGroup tilesetHeaderGroup;
@@ -51,12 +57,36 @@ namespace LynnaLib
         public Project Project { get; private set; }
         public int Index { get; private set; }
         public int Season { get; private set; } // Tilesets with the same index but different season differ
+        public string SeasonName
+        {
+            get
+            {
+                switch (Season)
+                {
+                    case 0:
+                        return "spring";
+                    case 1:
+                        return "summer";
+                    case 2:
+                        return "autumn";
+                    case 3:
+                        return "winter";
+                    default:
+                        throw new ProjectErrorException("Invalid season: " + Season);
+                }
+            }
+        }
 
         // The GraphicsState which contains the data as it will be loaded into
         // vram.
         public GraphicsState GraphicsState
         {
             get { return graphicsState; }
+        }
+
+        public bool IsSeasonal
+        {
+            get { return parentData.CommandLowerCase == "m_seasonaltileset"; }
         }
 
         // Following properties correspond to the 8 bytes defining the tileset.
@@ -166,14 +196,15 @@ namespace LynnaLib
 
             tilesetFile = Project.GetFileWithLabel("tilesetData");
 
-            tilesetData = tilesetFile.GetData("tilesetData", Index * 8);
+            parentData = tilesetFile.GetData("tilesetData", Index * 8);
+            tilesetData = parentData;
 
 
             // If this is Seasons, it's possible that tilesetData does not point to 8 bytes as
             // expected, but instead to an "m_SeasonalData" macro.
-            if (tilesetData.CommandLowerCase == "m_seasonaltileset")
+            if (IsSeasonal)
             {
-                tilesetData = Project.GetData(tilesetData.GetValue(0), season * 8);
+                tilesetData = Project.GetData(parentData.GetValue(0), season * 8);
             }
 
             ConstructValueReferenceGroup();
@@ -213,7 +244,11 @@ namespace LynnaLib
 
             if (Project.Config.ExpandedTilesets)
             {
-                string name = String.Format("gfx_tileset{1:x2}", Project.GameString, Index);
+                string name = null;
+                if (IsSeasonal)
+                    name = String.Format("gfx_tileset{0:x2}_{1}", Index, SeasonName);
+                else
+                    name = String.Format("gfx_tileset{0:x2}", Index);
                 Stream stream = Project.LoadGfx(name);
                 if (stream == null)
                     throw new ProjectErrorException("Couldn't find \"" + name + "\" in project.");
@@ -830,14 +865,34 @@ namespace LynnaLib
 
         MemoryFileStream GetExpandedMappingsFile()
         {
-            return Project.GetBinaryFile(
-                    String.Format("tileset_layouts/{0}/tilesetMappings{1:x2}.bin", Project.GameString, Index));
+            if (IsSeasonal)
+            {
+                return Project.GetBinaryFile(
+                    String.Format("tileset_layouts_expanded/{0}/tilesetMappings{1:x2}_{2}.bin",
+                                  Project.GameString, Index, SeasonName));
+            }
+            else
+            {
+                return Project.GetBinaryFile(
+                String.Format("tileset_layouts_expanded/{0}/tilesetMappings{1:x2}.bin",
+                              Project.GameString, Index));
+            }
         }
 
         MemoryFileStream GetExpandedCollisionsFile()
         {
-            return Project.GetBinaryFile(
-                    String.Format("tileset_layouts/{0}/tilesetCollisions{1:x2}.bin", Project.GameString, Index));
+            if (IsSeasonal)
+            {
+                return Project.GetBinaryFile(
+                    String.Format("tileset_layouts_expanded/{0}/tilesetCollisions{1:x2}_{2}.bin",
+                                  Project.GameString, Index, SeasonName));
+            }
+            else
+            {
+                return Project.GetBinaryFile(
+                    String.Format("tileset_layouts_expanded/{0}/tilesetCollisions{1:x2}.bin",
+                                  Project.GameString, Index));
+            }
         }
     }
 }

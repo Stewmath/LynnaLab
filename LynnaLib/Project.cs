@@ -420,9 +420,13 @@ namespace LynnaLib
             }
             // If an exception occurs during reflection, it always throws
             // a TargetInvocationException. So we unpack that and throw the "real" exception.
-            catch (System.Reflection.TargetInvocationException ex)
+            // NOTE: Undid this for now by using "throw;" to preserve the stack
+            // trace. Unfortunately this means we lose the actual exception
+            // type. Might affect "catch"es (need to test this).
+            catch (System.Reflection.TargetInvocationException)
             {
-                throw ex.InnerException;
+                throw;
+                //throw ex.InnerException;
             }
 
             AddDataType(o);
