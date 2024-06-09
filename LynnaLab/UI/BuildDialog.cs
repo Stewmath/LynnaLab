@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -59,6 +60,35 @@ namespace LynnaLab
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
+
+            // When using quickstart, the environment variable EXTRA_DEFINES is
+            // passed to the assembler by the makefile to set the position
+            if (mainWindow.QuickstartData.enabled)
+            {
+                string definitions = "";
+                var q = mainWindow.QuickstartData;
+                var definitionList = new Dictionary<string, byte>
+                {
+                    { "QUICKSTART_ENABLE", 1 },
+                    { "QUICKSTART_GROUP", q.group },
+                    { "QUICKSTART_ROOM", q.room },
+                    { "QUICKSTART_SEASON", q.season },
+                    { "QUICKSTART_Y", q.y },
+                    { "QUICKSTART_X", q.x },
+                };
+
+                foreach (var (f, v) in definitionList)
+                {
+                    definitions += $"-D {f}={v} ";
+                }
+
+                startInfo.EnvironmentVariables["ORACLE_EXTRA_DEFINES"] = definitions;
+            }
+
+            // Force the assembler to run each time, mainly to ensure the
+            // quickstart defines get updated
+            startInfo.EnvironmentVariables["ORACLE_FORCE_REBUILD"] = "1";
+
 
             makeProcess = new Process { StartInfo = startInfo };
             makeProcess.EnableRaisingEvents = true;

@@ -96,6 +96,12 @@ public class MainWindow
     }
 
     public Project Project { get; set; }
+
+    public QuickstartData QuickstartData
+    {
+        get { return roomeditor1.QuickstartData; }
+    }
+
     public Room ActiveRoom
     {
         get
@@ -980,6 +986,32 @@ public class MainWindow
     {
         worldMinimap.DarkenUsedDungeonRooms = darkenDungeonRoomsCheckbox.Active;
     }
+
+    protected void OnQuickstartToggled(object sender, EventArgs e)
+    {
+        if (Project == null)
+            return;
+
+        var button = sender as Gtk.ToggleToolButton;
+
+        QuickstartStateChanged(button.Active);
+    }
+
+    void QuickstartStateChanged(bool active)
+    {
+        QuickstartData.enabled = active;
+        if (active)
+        {
+            QuickstartData.group = (byte)ActiveRoom.Group;
+            QuickstartData.room = (byte)(ActiveRoom.Index & 0xff);
+            QuickstartData.season = (byte)ActiveSeason;
+            QuickstartData.x = 0x48;
+            QuickstartData.y = 0x48;
+        }
+
+        roomeditor1.OnQuickstartModified();
+    }
+
 
     protected void OnAddChestButtonClicked(object sender, EventArgs e)
     {

@@ -227,6 +227,21 @@
                 <property name="homogeneous">True</property>
               </packing>
             </child>
+            <child>
+              <object class="GtkToggleToolButton">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="tooltip-text" translatable="yes">Toggle quickspawn mode</property>
+                <property name="label" translatable="yes">Quickspawn</property>
+                <property name="use-underline">True</property>
+                <property name="icon-name">emblem-favorite</property>
+                <signal name="toggled" handler="OnQuickstartToggled" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">False</property>

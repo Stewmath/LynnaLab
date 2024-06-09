@@ -119,6 +119,8 @@ namespace LynnaLab
             }
         }
 
+        public QuickstartData QuickstartData { get; } = new QuickstartData();
+
         public bool EnableTileEditing
         {
             get
@@ -239,7 +241,14 @@ namespace LynnaLab
         // Should we draw the room components (objects, warps)?
         bool DrawRoomComponents
         {
-            get { return ViewObjects || ViewWarps || ViewChests || EditingWarpDestination != null; }
+            get
+            {
+                return ViewObjects
+                    || ViewWarps
+                    || ViewChests
+                    || EditingWarpDestination != null
+                    || QuickstartInCurrentRoom;
+            }
         }
 
         // Should we be able to select & drag the room components?
@@ -256,6 +265,16 @@ namespace LynnaLab
         bool DrawRoomComponentHover
         {
             get { return DrawRoomComponents && !draggingObject && !draggingTile; }
+        }
+
+        bool QuickstartInCurrentRoom
+        {
+            get
+            {
+                return QuickstartData.enabled
+                    && Room.Group == QuickstartData.group
+                    && (Room.Index & 0xff) == QuickstartData.room;
+            }
         }
 
 
@@ -276,7 +295,11 @@ namespace LynnaLab
 
             room = r;
             if (season != -1)
+            {
                 this.season = season;
+                if (QuickstartInCurrentRoom)
+                    QuickstartData.season = (byte)season;
+            }
 
             if (room != null)
             {
@@ -333,6 +356,11 @@ namespace LynnaLab
                 }
                 QueueDraw();
             }
+        }
+
+        public void OnQuickstartModified()
+        {
+            GenerateRoomComponents();
         }
 
         // Called when a warp is selected from the WarpEditor
@@ -684,6 +712,12 @@ namespace LynnaLab
                 }
             }
 
+            if (QuickstartInCurrentRoom)
+            {
+                QuickstartRoomComponent com = new QuickstartRoomComponent(QuickstartData);
+                roomComponents.Add(com);
+            }
+
 
         addedAllComponents:
             // The "selectedComponent" now refers to an old object. Look for the corresponding new
@@ -762,8 +796,65 @@ namespace LynnaLab
                 return new List<Gtk.MenuItem>();
             }
 
-            public abstract bool Compare(RoomComponent com); // Returns true if the underlying data is the same
-            public abstract void Delete(); // Right-click, select "delete", or press "Delete" key while selected
+            /// Returns true if the underlying data is the same
+            public abstract bool Compare(RoomComponent com);
+
+            /// Right-click, select "delete", or press "Delete" key while selected
+            public abstract void Delete();
+        }
+
+        class QuickstartRoomComponent : RoomComponent
+        {
+            QuickstartData quickstart;
+
+            public QuickstartRoomComponent(QuickstartData data)
+            {
+                quickstart = data;
+            }
+
+            public override Color BoxColor
+            {
+                get { return Color.Green; }
+            }
+
+            public override bool Deletable
+            {
+                get { return true; }
+            }
+            public override bool HasXY
+            {
+                get { return true; }
+            }
+            public override bool HasShortenedXY
+            {
+                get { return false; }
+            }
+            public override int X
+            {
+                get { return quickstart.x; }
+                set { quickstart.x = (byte)value; }
+            }
+            public override int Y
+            {
+                get { return quickstart.y; }
+                set { quickstart.y = (byte)value; }
+            }
+            public override int BoxWidth { get { return 16; } }
+            public override int BoxHeight { get { return 16; } }
+
+            public override void Draw(Cairo.Context cr)
+            {
+            }
+
+            public override bool Compare(RoomComponent com)
+            {
+                return quickstart == (com as QuickstartRoomComponent)?.quickstart;
+            }
+
+            public override void Delete()
+            {
+                throw new NotImplementedException();
+            }
         }
 
         class ObjectRoomComponent : RoomComponent
