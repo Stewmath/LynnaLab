@@ -963,11 +963,21 @@ public class MainWindow
     {
         if (Project == null)
             return;
-        Window win = new Window(WindowType.Toplevel);
+
+        var tilesetEditorWindow = new Gtk.Window(Gtk.WindowType.Toplevel);
+        tilesetEditorWindow.Title = "Tileset Editor";
         TilesetEditor a = new TilesetEditor(tilesetViewer1.Tileset);
-        win.Add(a);
-        win.Title = "Edit Tileset";
-        win.ShowAll();
+        tilesetEditorWindow.Add(a);
+
+        // I get weird errors and crashes when this Destroyed handler is not
+        // present. In theory the garbage collector should be able to handle
+        // this, but in practice it seems like Gtk gets very unhappy when a
+        // closed window is not Dispose'd immediately.
+        tilesetEditorWindow.Destroyed += (sender, e) => {
+            (sender as Gtk.Window).Dispose();
+        };
+
+        tilesetEditorWindow.ShowAll();
     }
 
     protected void OnViewObjectsCheckBoxToggled(object sender, EventArgs e)
