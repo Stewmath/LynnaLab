@@ -101,15 +101,18 @@ namespace LynnaLib
             // Parse everything in constants/
             LoadFilesRecursively("constants/");
 
+            // Must load this before constants mapping initialization
+            GetFileParser("data/" + GameString + "/paletteData.s");
+
             // Initialize constantsMappings
             UniqueGfxMapping = new ConstantsMapping(
-                    GetFileParser("constants/uniqueGfxHeaders.s"),
-                    "UNIQGFXH_");
+                    GetFileParser($"data/{GameString}/uniqueGfxHeaders.s"),
+                    "UNIQUE_GFXH_");
             MainGfxMapping = new ConstantsMapping(
-                    GetFileParser("constants/gfxHeaders.s"),
+                    GetFileParser($"data/{GameString}/gfxHeaders.s"),
                     "GFXH_");
             PaletteHeaderMapping = new ConstantsMapping(
-                    GetFileParser("constants/paletteHeaders.s"),
+                    GetFileParser($"data/{GameString}/paletteHeaders.s"),
                     "PALH_");
             MusicMapping = new ConstantsMapping(
                     GetFileParser("constants/music.s"),
@@ -164,7 +167,6 @@ namespace LynnaLib
                 GetFileParser("data/" + GameString + "/tilesetCollisions.s");
                 GetFileParser("data/" + GameString + "/tilesetHeaders.s");
             }
-            GetFileParser("data/" + GameString + "/paletteData.s");
             LoadFilesRecursively("data/");
 
             // Parse wram.s
@@ -634,7 +636,7 @@ namespace LynnaLib
             return attempt;
         }
 
-        // Throws a NotFoundException when the data doesn't exist.
+        /// Throws a NotFoundException when the data doesn't exist.
         public Data GetData(string label, int offset = 0)
         {
             return GetFileWithLabel(label).GetData(label, offset);

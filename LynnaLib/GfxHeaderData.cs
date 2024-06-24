@@ -6,8 +6,8 @@ using Util;
 namespace LynnaLib
 {
     // Class represents macro:
-    // m_GfxHeader filename destAddress size/continue [startOffset]
-    //              0           1           2           3
+    // m_GfxHeader filename destAddress [size] [startOffset]
+    //                0           1        2           3
     // Other types of gfx headers not supported here.
     public class GfxHeaderData : Data, IGfxHeader
     {
@@ -17,11 +17,11 @@ namespace LynnaLib
 
         public int DestAddr
         {
-            get { return Project.EvalToInt(GetValue(1)) & 0xfff0; }
+            get { return GetIntValue(1) & 0xfff0; }
         }
         public int DestBank
         {
-            get { return Project.EvalToInt(GetValue(1)) & 0x000f; }
+            get { return GetIntValue(1) & 0x000f; }
         }
 
         // Properties from IGfxHeader
@@ -39,13 +39,12 @@ namespace LynnaLib
         // The number of blocks (16 bytes each) to be read.
         public int BlockCount
         {
-            get { return (Project.EvalToInt(GetValue(2)) & 0x7f) + 1; }
-        }
-
-        // True if the bit indicating that there is a next value is set.
-        public bool ShouldHaveNext
-        {
-            get { return (Project.EvalToInt(GetValue(2)) & 0x80) == 0x80; }
+            get {
+                if (GetNumValues() >= 3)
+                    return Project.EvalToInt(GetValue(2));
+                else
+                    return (int)gfxStream.Length / 16;
+            }
         }
 
         public GfxHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
@@ -60,10 +59,13 @@ namespace LynnaLib
                 throw new Exception("Could not find graphics file " + filename + ".");
             }
 
-            if (GetNumValues() > 3)
+            // Adjust the gfx stream if we're supposed to omit part of it
+            if (GetNumValues() >= 3)
             {
-                // Skip into part of gfx data
-                gfxStream = new SubStream(gfxStream, p.EvalToInt(GetValue(3)), BlockCount * 16);
+                int start = 0;
+                if (GetNumValues() >= 4)
+                    start = GetIntValue(3);
+                gfxStream = new SubStream(gfxStream, start, BlockCount * 16);
             }
         }
     }

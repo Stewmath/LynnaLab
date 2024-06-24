@@ -5,8 +5,8 @@ using System.IO;
 namespace LynnaLib
 {
     // Class represents macro:
-    // m_GfxHeader filename destAddress size/continue [startOffset]
-    //              0           1           2           3
+    // m_ObjectGfxHeader filename [continue]
+    //                    0        1
     // Other types of gfx headers not supported here.
     public class ObjectGfxHeaderData : Data, IGfxHeader
     {
@@ -34,7 +34,7 @@ namespace LynnaLib
         // True if the bit indicating that there is a next value is set.
         public bool ShouldHaveNext
         {
-            get { return (GetIntValue(1) & 0x80) == 0; }
+            get { return GetNumValues() >= 2 && (GetIntValue(1)) != 0; }
         }
 
         // Should only request this if the "ShouldHaveNext" property is true.

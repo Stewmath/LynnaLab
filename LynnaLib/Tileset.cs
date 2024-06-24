@@ -743,26 +743,23 @@ namespace LynnaLib
 
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Main);
 
-            FileParser gfxHeaderFile = Project.GetFileWithLabel("gfxHeaderTable");
-            Data pointerData = gfxHeaderFile.GetData("gfxHeaderTable", MainGfx * 2);
-            GfxHeaderData header = gfxHeaderFile.GetData(pointerData.GetValue(0))
-                as GfxHeaderData;
+            GfxHeaderData header = Project.GetData($"gfxHeader{MainGfx:x2}") as GfxHeaderData;
             if (header != null)
             {
-                bool next = true;
-                while (next)
+                while (true)
                 {
                     graphicsState.AddGfxHeader(header, GfxHeaderType.Main);
-                    next = false;
-                    if (header.ShouldHaveNext)
+                    Data next = header.NextData;
+                    if (next.CommandLowerCase == "m_gfxheaderend")
+                        break;
+                    GfxHeaderData nextHeader = next as GfxHeaderData;
+                    if (nextHeader != null)
                     {
-                        GfxHeaderData nextHeader = header.NextData as GfxHeaderData;
-                        if (nextHeader != null)
-                        {
-                            header = nextHeader;
-                            next = true;
-                        }
-                        // Might wanna print a warning if no next value is found
+                        header = nextHeader;
+                    }
+                    else
+                    {
+                        throw new ProjectErrorException($"Malformed GFX header 0x{MainGfx:x2}?");
                     }
                 }
             }
@@ -777,26 +774,24 @@ namespace LynnaLib
             graphicsState.RemoveGfxHeaderType(GfxHeaderType.Unique);
             if (UniqueGfx != 0)
             {
-                FileParser uniqueGfxHeaderFile = Project.GetFileWithLabel("uniqueGfxHeadersStart");
-                GfxHeaderData header
-                    = uniqueGfxHeaderFile.GetData("uniqueGfxHeader" + UniqueGfx.ToString("x2"))
-                    as GfxHeaderData;
+                GfxHeaderData header =
+                    Project.GetData($"uniqueGfxHeader{UniqueGfx:x2}") as GfxHeaderData;
                 if (header != null)
                 {
-                    bool next = true;
-                    while (next)
+                    while (true)
                     {
                         graphicsState.AddGfxHeader(header, GfxHeaderType.Unique);
-                        next = false;
-                        if (header.ShouldHaveNext)
+                        Data next = header.NextData;
+                        if (next.CommandLowerCase == "m_gfxheaderend")
+                            break;
+                        GfxHeaderData nextHeader = header.NextData as GfxHeaderData;
+                        if (nextHeader != null)
                         {
-                            GfxHeaderData nextHeader = header.NextData as GfxHeaderData;
-                            if (nextHeader != null)
-                            {
-                                header = nextHeader;
-                                next = true;
-                            }
-                            // Might wanna print a warning if no next value is found
+                            header = nextHeader;
+                        }
+                        else
+                        {
+                            throw new ProjectErrorException($"Malformed unique GFX header 0x{UniqueGfx:x2}?");
                         }
                     }
                 }

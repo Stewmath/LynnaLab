@@ -18,8 +18,5 @@ namespace LynnaLib
 
         // The number of blocks (16 bytes each) to be read.
         int BlockCount { get; }
-
-        // True if the bit indicating that there is a next value is set.
-        bool ShouldHaveNext { get; }
     }
 }

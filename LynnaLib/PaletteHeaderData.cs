@@ -10,8 +10,8 @@ namespace LynnaLib
     };
 
     // Class represents macro:
-    // m_PaletteHeader[Bg|Spr] startIndex numPalettes address continue
-    //                          0           1           2       3
+    // m_PaletteHeader[Bg|Spr] startIndex numPalettes address
+    //                          0           1           2
     public class PaletteHeaderData : Data
     {
         FileParser paletteDataFile;
@@ -114,11 +114,6 @@ namespace LynnaLib
         {
             RgbData data = GetRgbData(palette, colorIndex);
             data.Color = color;
-        }
-
-        public bool ShouldHaveNext()
-        {
-            return (Project.EvalToInt(GetValue(3)) & 0x80) == 0x80;
         }
 
         RgbData GetRgbData(int palette, int colorIndex)

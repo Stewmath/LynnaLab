@@ -188,6 +188,7 @@ namespace LynnaLib
             Func<IList<string>, IList<string>, bool> ParseData = (fTokens, fSpacing) =>
             {
                 List<string> standardValues = new List<string>();
+                string commandLower = fTokens[0].ToLower();
 
                 // Variables used for some of the goto's
                 int size = -1;
@@ -195,7 +196,7 @@ namespace LynnaLib
                 for (int j = 1; j < fTokens.Count; j++)
                     standardValues.Add(fTokens[j]);
 
-                switch (fTokens[0].ToLower())
+                switch (commandLower)
                 {
                     case ".incbin":
                         {
@@ -299,10 +300,11 @@ namespace LynnaLib
                             break;
                         }
                     case "m_gfxheader":
+                    case "m_gfxheaderanim":
                     case "m_gfxheaderforcemode":
-                        if (fTokens.Count < 4 || fTokens.Count > 5)
+                        if (fTokens.Count < 3 || fTokens.Count > 5)
                         {
-                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 3-4 parameters");
+                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 2-4 parameters");
                             break;
                         }
                         {
@@ -313,28 +315,89 @@ namespace LynnaLib
                         }
                     case "m_objectgfxheader":
                         {
-                            if (!(fTokens.Count >= 3 && fTokens.Count <= 4))
+                            if (!(fTokens.Count >= 2 && fTokens.Count <= 4))
                             {
-                                log.Warn(warningString + "Expected " + fTokens[0] + " to take 2-3 parameters");
+                                log.Warn(warningString + "Expected " + fTokens[0] + " to take 1-3 parameters");
                                 break;
                             }
                             Data d = new ObjectGfxHeaderData(Project, fTokens[0], standardValues, this, fSpacing);
                             AddDataAndPopFileStructure(d);
                             break;
                         }
+                    case "m_gfxheaderstart":
+                    case "m_uniquegfxheaderstart":
+                        if (fTokens.Count != 3)
+                        {
+                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 2 parameters");
+                        }
+                        else
+                        {
+                            AddDefinitionWhileParsing(fTokens[2], fTokens[1]);
+
+                            // Label is defined in the macro, so we need to handle that manually
+                            int index = Project.EvalToInt(fTokens[2]);
+                            string labelName;
+                            if (commandLower == "m_gfxheaderstart")
+                                labelName = "gfxHeader";
+                            else
+                                labelName = "uniqueGfxHeader";
+                            labelName += index.ToString("x2");
+                            Label l = new Label(this, labelName);
+                            AddDataAndPopFileStructure(l);
+                        }
+                        break;
+                    case "m_gfxheaderend":
+                        if (!(fTokens.Count >= 1 && fTokens.Count <= 2))
+                        {
+                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 0-1 parameters");
+                        }
+                        else
+                        {
+                            Data d = new Data(Project, fTokens[0], standardValues, 0, this, fSpacing);
+                            AddDataAndPopFileStructure(d);
+                        }
+                        break;
+                    case "m_paletteheaderstart":
+                        if (fTokens.Count != 3)
+                        {
+                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 2 parameters");
+                        }
+                        else
+                        {
+                            AddDefinitionWhileParsing(fTokens[2], fTokens[1]);
+
+                            // Label is defined in the macro, so we need to handle that manually
+                            int index = Project.EvalToInt(fTokens[2]);
+                            string labelName;
+                            labelName = "paletteHeader" + index.ToString("x2");
+                            Label l = new Label(this, labelName);
+                            AddDataAndPopFileStructure(l);
+                        }
+                        break;
+                    case "m_paletteheaderend":
+                        if (fTokens.Count != 1)
+                        {
+                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 0 parameters");
+                        }
+                        else
+                        {
+                            Data d = new Data(Project, fTokens[0], standardValues, 0, this, fSpacing);
+                            AddDataAndPopFileStructure(d);
+                        }
+                        break;
                     case "m_paletteheaderbg":
                     case "m_paletteheaderspr":
-                        if (fTokens.Count != 5)
+                        if (fTokens.Count != 4)
                         {
-                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 4 parameters");
-                            break;
+                            log.Warn(warningString + "Expected " + fTokens[0] + " to take 3 parameters");
                         }
+                        else
                         {
                             Data d = new PaletteHeaderData(Project, fTokens[0], standardValues,
                                     this, fSpacing);
                             AddDataAndPopFileStructure(d);
-                            break;
                         }
+                        break;
                     case "m_tilesetlayoutheader":
                         if (fTokens.Count != 6)
                         {

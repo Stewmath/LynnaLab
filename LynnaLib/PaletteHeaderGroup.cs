@@ -32,11 +32,8 @@ namespace LynnaLib
         {
             try
             {
-                FileParser palettePointerFile = project.GetFileWithLabel("paletteHeaderTable");
-                Data headerPointerData = palettePointerFile.GetData("paletteHeaderTable", index * 2);
-                LabelName = headerPointerData.GetValue(0);
-                FileParser paletteHeaderFile = project.GetFileWithLabel(LabelName);
-                Data headerData = paletteHeaderFile.GetData(headerPointerData.GetValue(0));
+                LabelName = "paletteHeader" + index.ToString("x2");
+                Data headerData = Project.GetData(LabelName);
 
                 if (!(headerData is PaletteHeaderData))
                     throw new InvalidPaletteHeaderGroupException("Expected palette header group " + index.ToString("X") + " to start with palette header data");
@@ -74,9 +71,20 @@ namespace LynnaLib
             while (true)
             {
                 action(palette);
-                if (!palette.ShouldHaveNext())
+                Data nextData = palette.NextData;
+                if (nextData is PaletteHeaderData)
+                {
+                    palette = palette.NextData as PaletteHeaderData;
+                    continue;
+                }
+                else if (nextData.CommandLowerCase == "m_paletteheaderend")
+                {
                     break;
-                palette = palette.NextData as PaletteHeaderData;
+                }
+                else
+                {
+                    throw new ProjectErrorException("Expected palette data to end with m_PaletteHeaderEnd");
+                }
             }
         }
 
