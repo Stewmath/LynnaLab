@@ -63,7 +63,19 @@ namespace LynnaLib
 
         public bool SidescrollFlag
         {
-            get { return vrg.GetIntValue("Sidescrolling") != 0 ? true : false; }
+            get { return vrg.GetIntValue("Sidescrolling") != 0; }
+        }
+        public bool MakuTreeFlag
+        {
+            get { return vrg.GetIntValue("Maku Tree") != 0; }
+        }
+        public bool SubrosiaFlag // Will only work in seasons of course
+        {
+            get { return vrg.GetIntValue("Subrosia") != 0; }
+        }
+        public bool SmallIndoorFlag // Will only work in seasons of course
+        {
+            get { return vrg.GetIntValue("Small Indoor Room") != 0; }
         }
         public int UniqueGfx
         {
@@ -290,7 +302,7 @@ namespace LynnaLib
                         type: DataValueType.ByteBit,
                         tooltip: "Set in small indoor rooms."),
                 new DataValueReference(GetDataIndex(1),
-                        name: "Maku tree",
+                        name: "Maku Tree",
                         index: 0,
                         startBit: 1,
                         type: DataValueType.ByteBit,
@@ -670,6 +682,23 @@ namespace LynnaLib
         public ValueReferenceGroup GetValueReferenceGroup()
         {
             return vrg;
+        }
+
+        public IList<Room> GetReferences()
+        {
+            var references = new List<Room>();
+            for (int g=0; g<Project.NumGroups; g++)
+            {
+                for (int r=0; r<0x100; r++)
+                {
+                    Room room = Project.GetIndexedDataType<Room>((g << 8) | r);
+                    if (room.Group != room.ExpectedGroup)
+                        continue;
+                    if (room.TilesetIndex == Index)
+                        references.Add(room);
+                }
+            }
+            return references;
         }
 
         void LoadMainGfx()

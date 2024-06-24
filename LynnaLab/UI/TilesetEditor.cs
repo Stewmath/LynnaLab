@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using Gtk;
 
 using LynnaLib;
@@ -34,6 +35,7 @@ namespace LynnaLab
         Gtk.Box tilesetVreContainer, tilesetViewerContainer, subTileContainer, subTileGfxContainer;
         Gtk.Box paletteEditorContainer;
         Gtk.Label paletteFrameLabel;
+        PriorityStatusbar statusbar1;
         ValueReferenceEditor tilesetVre;
 
         TilesetViewer tilesetviewer1;
@@ -81,6 +83,9 @@ namespace LynnaLab
 
             tilesetSpinButton = new SpinButtonHexadecimal();
             tilesetSpinButtonContainer.Add(tilesetSpinButton);
+
+            statusbar1 = new PriorityStatusbar();
+            ((Gtk.Box)builder.GetObject("statusbarHolder")).Add(statusbar1);
 
             SetTileset(t);
 
@@ -142,6 +147,25 @@ namespace LynnaLab
 
             tilesetSpinButton.Value = tileset.Index;
             tilesetSpinButton.Adjustment.Upper = Project.NumTilesets - 1;
+
+            // Statusbar text
+            var references = t.GetReferences();
+            if (references.Count == 0)
+            {
+                statusbar1.Set(0, $"Tileset {t.Index:x2} never used.");
+            }
+            else
+            {
+                var roomListAsString = new StringBuilder();
+                foreach (Room r in references)
+                {
+                    roomListAsString.Append(", " + r.Index.ToString("x3"));
+                }
+                roomListAsString.Remove(0, 2);
+                string statusbarString =
+                    $"Tileset {t.Index:x2}: Used in {references.Count} rooms ({roomListAsString})";
+                statusbar1.Set(0, statusbarString);
+            }
         }
 
         protected void OnOkButtonClicked(object sender, EventArgs e)

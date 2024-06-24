@@ -79,7 +79,16 @@ namespace LynnaLib
                     if (Group == 0)
                         return Group;
                     else if (Group < 4)
-                        return Group; // TODO: subrosia, maku tree, and indoor rooms have different values
+                    {
+                        if (GetTileset(0).SubrosiaFlag)
+                            return 1;
+                        else if (GetTileset(0).MakuTreeFlag)
+                            return 2;
+                        else if (GetTileset(0).SmallIndoorFlag)
+                            return 3;
+                        else
+                            return Group;
+                    }
                     else if (Group < 8)
                     {
                         int g = 4 + (Group % 2);
