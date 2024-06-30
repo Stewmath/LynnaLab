@@ -34,6 +34,8 @@ namespace LynnaLib
         // roomsUsed[i] = # of times room "i" is used in this dungeon
         int[] roomsUsed;
 
+        int _mainGroup;
+
 
         internal Dungeon(Project p, int i) : base(p)
         {
@@ -43,6 +45,8 @@ namespace LynnaLib
             Data pointerData = dungeonDataFile.GetData("dungeonDataTable", Index * 2);
             string label = pointerData.GetValue(0);
             dataStart = dungeonDataFile.GetData(label);
+
+            _mainGroup = GetDataIndex(0) - Project.EvalToInt(">wGroup4Flags") + 4;
 
             DetermineRoomsUsed();
             GenerateValueReferenceGroup();
@@ -76,7 +80,7 @@ namespace LynnaLib
         {
             get
             {
-                return GetDataIndex(0) - Project.EvalToInt(">wGroup4Flags") + 4;
+                return _mainGroup;
             }
         }
 
