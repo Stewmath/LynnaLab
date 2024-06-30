@@ -10,35 +10,21 @@ namespace LynnaLab
     [System.ComponentModel.ToolboxItem(true)]
     public class TilesetEditor : Gtk.Bin
     {
-        Project Project
-        {
-            get { return tileset.Project; }
-        }
-
-        public Tileset Tileset
-        {
-            get
-            {
-                return tileset;
-            }
-        }
-
         Tileset tileset;
 
         SubTileEditor subTileEditor;
         GfxViewer subTileGfxViewer;
         PaletteEditor paletteEditor;
-
+        TilesetViewer tilesetviewer1;
 
         SpinButtonHexadecimal tilesetSpinButton = new SpinButtonHexadecimal();
-        Gtk.Box tilesetSpinButtonContainer;
+        ComboBoxFromConstants seasonSelectionButton;
+        Gtk.Box tilesetSpinButtonContainer, seasonContainer, seasonComboBoxContainer;
         Gtk.Box tilesetVreContainer, tilesetViewerContainer, subTileContainer, subTileGfxContainer;
         Gtk.Box paletteEditorContainer;
         Gtk.Label paletteFrameLabel;
         PriorityStatusbar statusbar1;
         ValueReferenceEditor tilesetVre;
-
-        TilesetViewer tilesetviewer1;
 
         WeakEventWrapper<Tileset> tilesetEventWrapper = new WeakEventWrapper<Tileset>();
 
@@ -49,6 +35,8 @@ namespace LynnaLab
             builder.Autoconnect(this);
 
             tilesetSpinButtonContainer = (Gtk.Box)builder.GetObject("tilesetSpinButtonContainer");
+            seasonContainer = (Gtk.Box)builder.GetObject("seasonContainer");
+            seasonComboBoxContainer = (Gtk.Box)builder.GetObject("seasonComboBoxContainer");
             tilesetVreContainer = (Gtk.Box)builder.GetObject("tilesetVreContainer");
             tilesetViewerContainer = (Gtk.Box)builder.GetObject("tilesetViewerContainer");
             subTileContainer = (Gtk.Box)builder.GetObject("subTileContainer");
@@ -84,21 +72,51 @@ namespace LynnaLab
             tilesetSpinButton = new SpinButtonHexadecimal();
             tilesetSpinButtonContainer.Add(tilesetSpinButton);
 
+            seasonSelectionButton = new ComboBoxFromConstants(showHelp: false);
+            seasonSelectionButton.SetConstantsMapping(t.Project.SeasonMapping);
+            seasonSelectionButton.SpinButton.Adjustment.Upper = 3;
+            seasonSelectionButton.ActiveValue = t.Season;
+            seasonComboBoxContainer.Add(seasonSelectionButton);
+
             statusbar1 = new PriorityStatusbar();
             ((Gtk.Box)builder.GetObject("statusbarHolder")).Add(statusbar1);
 
             SetTileset(t);
 
-            tilesetSpinButton.ValueChanged += TilesetSpinButtonChanged;
+            tilesetSpinButton.ValueChanged += TilesetChanged;
+            seasonSelectionButton.Changed += TilesetChanged;
 
             tilesetEventWrapper.Bind<int>("TileModifiedEvent", OnTileModified);
             tilesetEventWrapper.Bind<EventArgs>("PaletteHeaderGroupModifiedEvent", OnPalettesChanged);
         }
 
-        void TilesetSpinButtonChanged(object sender, EventArgs args)
+
+        Project Project
         {
-            // TODO: A proper way to choose the season
-            SetTileset(Project.GetTileset(tilesetSpinButton.ValueAsInt, tileset.Season));
+            get { return tileset.Project; }
+        }
+
+        public Tileset Tileset
+        {
+            get
+            {
+                return tileset;
+            }
+        }
+
+        public int Season
+        {
+            get { return seasonSelectionButton.ActiveValue; }
+        }
+
+
+        void TilesetChanged(object sender, EventArgs args)
+        {
+            SetTileset(Project.GetTileset(tilesetSpinButton.ValueAsInt, Season));
+            if (Tileset.IsSeasonal)
+                seasonContainer.Sensitive = true;
+            else
+                seasonContainer.Sensitive = false;
         }
 
         void OnTileModified(object sender, int tile)
