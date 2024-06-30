@@ -70,7 +70,10 @@ namespace LynnaLib
                 }
             }
 
-            return new Bitmap(new Cairo.ImageSurface(pixels, Cairo.Format.ARGB32, 8, height, stride));
+            using (var surface = new Cairo.ImageSurface(pixels, Cairo.Format.Argb32, 8, height, stride))
+            {
+                return new Bitmap(surface);
+            }
         }
     }
 }

@@ -103,9 +103,8 @@ namespace LynnaLab
             {
                 try
                 {
-                    CairoTileDrawer drawer = new CairoTileDrawer(cr, (int)x, (int)y);
                     ObjectAnimationFrame o = obj.GetGameObject().DefaultAnimation.GetFrame(0);
-                    o.Draw(drawer);
+                    o.Draw(cr, (int)x, (int)y);
                 }
                 catch (NoAnimationException)
                 {

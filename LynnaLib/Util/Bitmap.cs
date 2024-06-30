@@ -15,9 +15,18 @@ namespace LynnaLib
         }
 
         /// Constructor from ImageSurface
+        /// Implicit type conversion also makes this work as a "Bitmap(Bitmap)" constructor
         public Bitmap(Cairo.ImageSurface surface)
         {
-            this.surface = surface;
+            // I ran into some bizarre corruption issues when this constructor used to just set
+            // this.surface to the parameter of this function. We need to make a copy of it to avoid
+            // issues for some reason. Caller must dispose the surface it passes in.
+            this.surface = new Cairo.ImageSurface(surface.Format, surface.Width, surface.Height);
+            using (Cairo.Context cr = new Cairo.Context(this.surface))
+            {
+                cr.SetSourceSurface(surface, 0, 0);
+                cr.Paint();
+            }
         }
 
         /// Constructor from file

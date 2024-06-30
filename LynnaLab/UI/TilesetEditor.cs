@@ -297,7 +297,7 @@ namespace LynnaLab
                 {
                     if (tileset == null)
                         return null;
-                    Bitmap image = new Bitmap(tileset.GetTileImage(TileIndex));
+                    Bitmap image = tileset.GetTileImage(TileIndex);
 
                     using (var cr = image.CreateContext())
                     {

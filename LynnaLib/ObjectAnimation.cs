@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace LynnaLib
 {
 
@@ -14,8 +17,9 @@ namespace LynnaLib
     {
         GameObject _gameObject;
         int _animationIndex;
-
         Data _animationData;
+
+        List<ObjectAnimationFrame> loadedFrames = new List<ObjectAnimationFrame>();
 
         public Project Project
         {
@@ -75,17 +79,28 @@ namespace LynnaLib
 
         public ObjectAnimationFrame GetFrame(int i)
         {
-            // TODO: cache
+            if (i < loadedFrames.Count)
+                return loadedFrames[i];
+
+            if (loadedFrames.Count == 0)
+                loadedFrames.Add(new ObjectAnimationFrame(this, _animationData));
+
             try
             {
-                Data data = _animationData;
-                for (int j = 0; j < i; j++)
+                Data data = loadedFrames.Last().AnimDataStart;
+
+                while (true)
                 {
+                    if (i < loadedFrames.Count)
+                        return loadedFrames[i];
+
                     data = data.NextData;
                     data = data.NextData;
                     data = data.NextData;
+
+                    var frame = new ObjectAnimationFrame(this, data);
+                    loadedFrames.Add(frame);
                 }
-                return new ObjectAnimationFrame(this, data);
             }
             catch (InvalidLookupException e)
             {

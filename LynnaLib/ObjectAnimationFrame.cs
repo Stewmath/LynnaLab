@@ -8,6 +8,9 @@ namespace LynnaLib
     /// <summary>
     ///  This will throw an "InvalidAnimationException" whenever something unexpected happens (which
     ///  seems common, particularly when animations are undefined for an object).
+    ///
+    ///  NOTE: An instance of this class does not necessarily uniquely point to the data in
+    ///  question, as multiple objects may point to the same data.
     /// </summary>
     public class ObjectAnimationFrame
     {
@@ -15,29 +18,21 @@ namespace LynnaLib
         Data _animData;
         Data _oamData;
 
-        public Project Project
-        {
-            get { return _animation.Project; }
-        }
-
-        List<Tuple<Bitmap, int, int>> bitmaps = new List<Tuple<Bitmap, int, int>>();
-
-        // Number of frames this lasts
-        public byte Length
-        {
-            get { return (byte)_animData.GetIntValue(0); }
-        }
-
         public ObjectAnimationFrame(ObjectAnimation anim, Data animData)
         {
             _animation = anim;
             _animData = animData;
 
-            Color[][] palettes = anim.GetPalettes();
+            GenerateBitmaps();
+        }
+
+        void GenerateBitmaps()
+        {
+            bitmaps = new List<Tuple<Bitmap, int, int>>();
+            Color[][] palettes = _animation.GetPalettes();
 
             try
             {
-
                 // Note: this "index" is more like index*2, since it's added directly to the offset
                 // without being multiplied first
                 int oamIndex = (byte)_animData.NextData.GetIntValue(0);
@@ -101,10 +96,30 @@ namespace LynnaLib
             }
         }
 
+
+        public Project Project
+        {
+            get { return _animation.Project; }
+        }
+
+        public Data AnimDataStart
+        {
+            get { return _animData; }
+        }
+
+        List<Tuple<Bitmap, int, int>> bitmaps;
+
+        // Number of frames this lasts
+        public byte Length
+        {
+            get { return (byte)_animData.GetIntValue(0); }
+        }
+
+
         /// <summary>
         ///  Will throw InvalidAnimationException if initialization failed earlier...
         /// </summary>
-        public void Draw(TileDrawer drawer)
+        public void Draw(Cairo.Context cr, int x, int y)
         {
             if (bitmaps == null)
                 throw new InvalidAnimationException();
@@ -116,10 +131,15 @@ namespace LynnaLib
             {
                 Tuple<Bitmap, int, int> tup = bitmaps[i];
                 Bitmap bitmap = tup.Item1;
-                int x = tup.Item2;
-                int y = tup.Item3;
+                int xOffset = tup.Item2;
+                int yOffset = tup.Item3;
 
-                drawer.Draw(bitmap, x, y);
+                cr.SetSourceSurface(bitmap, x + xOffset, y + yOffset);
+                using (Cairo.SurfacePattern pattern = (Cairo.SurfacePattern)cr.GetSource())
+                {
+                    pattern.Filter = Cairo.Filter.Nearest;
+                }
+                cr.Paint();
             }
         }
 
@@ -131,12 +151,4 @@ namespace LynnaLib
             throw new NotImplementedException();
         }
     }
-
-    // Implement this class to define how to draw a bitmap somewhere. This only exists for the sake of
-    // preventing a Cairo import in LynnaLib.
-    public abstract class TileDrawer
-    {
-        public abstract void Draw(Bitmap bitmap, int x, int y);
-    }
-
 }
