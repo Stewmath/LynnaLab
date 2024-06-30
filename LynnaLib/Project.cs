@@ -108,16 +108,20 @@ namespace LynnaLib
             // Initialize constantsMappings
             UniqueGfxMapping = new ConstantsMapping(
                     GetFileParser($"data/{GameString}/uniqueGfxHeaders.s"),
-                    "UNIQUE_GFXH_");
+                    "UNIQUE_GFXH_",
+                    alphabetical: true);
             MainGfxMapping = new ConstantsMapping(
                     GetFileParser($"data/{GameString}/gfxHeaders.s"),
-                    "GFXH_");
+                    "GFXH_",
+                    alphabetical: true);
             PaletteHeaderMapping = new ConstantsMapping(
                     GetFileParser($"data/{GameString}/paletteHeaders.s"),
-                    "PALH_");
+                    "PALH_",
+                    alphabetical: true);
             MusicMapping = new ConstantsMapping(
                     GetFileParser("constants/music.s"),
-                    new string[] { "MUS_", "SND_" });
+                    "MUS_",
+                    alphabetical: true);
             SourceTransitionMapping = new ConstantsMapping(
                     GetFileParser("constants/transitions.s"),
                     "TRANSITION_SRC_");
@@ -152,7 +156,8 @@ namespace LynnaLib
             TreasureMapping = new ConstantsMapping(
                     GetFileParser("constants/treasure.s"),
                     "TREASURE_",
-                    maxValue: 256);
+                    maxValue: 256,
+                    alphabetical: true);
             TreasureSpawnModeMapping = new ConstantsMapping(
                     GetFileParser("constants/treasureSpawnModes.s"),
                     "TREASURE_SPAWN_MODE_");

@@ -316,7 +316,8 @@ namespace LynnaLib
                             name: "Bit 6 (0x40)",
                             index: 0,
                             startBit: 6,
-                            type: DataValueType.ByteBit)
+                            type: DataValueType.ByteBit,
+                            tooltip: "Likely unused.")
                 });
             }
             list.AddRange(new ValueReference[] {
@@ -349,13 +350,13 @@ namespace LynnaLib
                         index: 0,
                         startBit: 1,
                         type: DataValueType.ByteBit,
-                        tooltip: "Hardcodes location on the minimap for maku tree screens. Ages only?"),
+                        tooltip: "In Ages, this hardcodes the location on the minimap for the maku tree screens, and prevents harp use. Not sure if this does anything in Seasons?"),
                 new DataValueReference(GetDataIndex(1),
                         name: "Outdoors",
                         index: 0,
                         startBit: 0,
                         type: DataValueType.ByteBit,
-                        tooltip: "Does various things. In Ages this must be checked for the minimap to update your position."),
+                        tooltip: "Affects whether you can use gale seeds, and other things. In Ages this must be checked for the minimap to update your position."),
             });
 
             list.AddRange(new ValueReference[] {
@@ -372,7 +373,10 @@ namespace LynnaLib
                         startBit: 4,
                         endBit: 6,
                         type: DataValueType.ByteBits,
-                        tooltip: "Determines most collision behaviour aside from solidity (ie. water, holes)")
+                        tooltip: ("Determines most collision behaviour aside from solidity (ie. water, holes). The meaning of the values differ between ages and seasons.\n\n"
+                                       + (Project.GameString == "Seasons"
+                                       ? "0: Overworld\n1: Indoors\n2: Maku Tree\n3: Indoors\n4: Dungeons\n5: Sidescrolling"
+                                       : "0: Overworld\n1: Indoors\n2: Dungeons\n3: Sidescrolling\n4: Underwater\n5: Unused?")))
             });
 
             // These fields do nothing with the expanded tilesets patch.

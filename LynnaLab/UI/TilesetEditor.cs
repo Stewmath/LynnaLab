@@ -72,11 +72,16 @@ namespace LynnaLab
             tilesetSpinButton = new SpinButtonHexadecimal();
             tilesetSpinButtonContainer.Add(tilesetSpinButton);
 
-            seasonSelectionButton = new ComboBoxFromConstants(showHelp: false);
-            seasonSelectionButton.SetConstantsMapping(t.Project.SeasonMapping);
-            seasonSelectionButton.SpinButton.Adjustment.Upper = 3;
-            seasonSelectionButton.ActiveValue = t.Season;
-            seasonComboBoxContainer.Add(seasonSelectionButton);
+            if (t.Project.Game == Game.Seasons)
+            {
+                seasonSelectionButton = new ComboBoxFromConstants(showHelp: false);
+                seasonSelectionButton.SetConstantsMapping(t.Project.SeasonMapping);
+                seasonSelectionButton.SpinButton.Adjustment.Upper = 3;
+                seasonSelectionButton.ActiveValue = t.Season;
+                seasonComboBoxContainer.Add(seasonSelectionButton);
+            }
+            else
+                seasonContainer.Destroy();
 
             statusbar1 = new PriorityStatusbar();
             ((Gtk.Box)builder.GetObject("statusbarHolder")).Add(statusbar1);
@@ -84,7 +89,8 @@ namespace LynnaLab
             SetTileset(t);
 
             tilesetSpinButton.ValueChanged += TilesetChanged;
-            seasonSelectionButton.Changed += TilesetChanged;
+            if (t.Project.Game == Game.Seasons)
+                seasonSelectionButton.Changed += TilesetChanged;
 
             tilesetEventWrapper.Bind<int>("TileModifiedEvent", OnTileModified);
             tilesetEventWrapper.Bind<EventArgs>("PaletteHeaderGroupModifiedEvent", OnPalettesChanged);
@@ -106,17 +112,18 @@ namespace LynnaLab
 
         public int Season
         {
-            get { return seasonSelectionButton.ActiveValue; }
+            get {
+                if (Project.Game == Game.Seasons && Tileset.IsSeasonal)
+                    return seasonSelectionButton.ActiveValue;
+                else
+                    return -1;
+            }
         }
 
 
         void TilesetChanged(object sender, EventArgs args)
         {
             SetTileset(Project.GetTileset(tilesetSpinButton.ValueAsInt, Season));
-            if (Tileset.IsSeasonal)
-                seasonContainer.Sensitive = true;
-            else
-                seasonContainer.Sensitive = false;
         }
 
         void OnTileModified(object sender, int tile)
@@ -133,7 +140,7 @@ namespace LynnaLab
             var group = tileset.PaletteHeaderGroup;
             paletteEditor.PaletteHeaderGroup = group;
             if (group != null)
-                paletteFrameLabel.Text = group.LabelName + " (" + group.ConstantAliasName + ")";
+                paletteFrameLabel.Text = group.ConstantAliasName;
         }
 
         void SetTileset(Tileset t)
@@ -174,15 +181,35 @@ namespace LynnaLab
             }
             else
             {
+                int numReferences = references.Count;
+                int maxRoomsToList = 15;
+                int truncated = 0;
+                if (references.Count > maxRoomsToList)
+                {
+                    truncated = references.Count - maxRoomsToList;
+                    while (references.Count > maxRoomsToList)
+                        references.RemoveAt(references.Count - 1);
+                }
                 var roomListAsString = new StringBuilder();
                 foreach (Room r in references)
                 {
                     roomListAsString.Append(", " + r.Index.ToString("x3"));
                 }
                 roomListAsString.Remove(0, 2);
+                if (truncated != 0)
+                    roomListAsString.Append($", {truncated} more");
                 string statusbarString =
-                    $"Tileset {t.Index:x2}: Used in {references.Count} rooms ({roomListAsString})";
+                    $"Tileset {t.Index:x2}: Used in {numReferences} rooms ({roomListAsString})";
                 statusbar1.Set(0, statusbarString);
+            }
+
+            // Enable/disable season selection
+            if (Project.Game != Game.Ages)
+            {
+                if (Tileset.IsSeasonal)
+                    seasonContainer.Sensitive = true;
+                else
+                    seasonContainer.Sensitive = false;
             }
         }
 
@@ -264,7 +291,7 @@ namespace LynnaLab
                 Height = 2;
                 TileWidth = 8;
                 TileHeight = 8;
-                Scale = 2;
+                Scale = 3;
                 Selectable = true;
                 SelectedIndex = 0;
 
@@ -319,7 +346,7 @@ namespace LynnaLab
                 Height = 2;
                 TileWidth = 8;
                 TileHeight = 8;
-                Scale = 2;
+                Scale = 3;
 
                 // On clicked...
                 TileGridEventHandler callback = delegate (object sender, int index)
