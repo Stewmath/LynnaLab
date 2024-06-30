@@ -199,12 +199,20 @@ namespace LynnaLib
             parentData = tilesetFile.GetData("tilesetData", Index * 8);
             tilesetData = parentData;
 
+            if (IsSeasonal && Season == -1)
+            {
+                throw new ProjectErrorException("Specified season for non-seasonal tileset");
+            }
+            else if (!IsSeasonal && Season != -1)
+            {
+                throw new ProjectErrorException("No season specified for seasonal tileset");
+            }
 
             // If this is Seasons, it's possible that tilesetData does not point to 8 bytes as
             // expected, but instead to an "m_SeasonalData" macro.
             if (IsSeasonal)
             {
-                tilesetData = Project.GetData(parentData.GetValue(0), season * 8);
+                tilesetData = Project.GetData(parentData.GetValue(0), Season * 8);
             }
 
             ConstructValueReferenceGroup();

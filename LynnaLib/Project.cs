@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 
@@ -471,13 +472,27 @@ namespace LynnaLib
 
 
         Dictionary<Tuple<int, int>, Tileset> tilesetCache = new Dictionary<Tuple<int, int>, Tileset>();
+        Dictionary<int, bool> tilesetSeasonalCache = new Dictionary<int, bool>();
         Dictionary<int, Dungeon> dungeonCache = new Dictionary<int, Dungeon>();
         Dictionary<Tuple<int, int>, WorldMap> worldMapCache = new Dictionary<Tuple<int, int>, WorldMap>();
 
+        /// Always load Tileset objects through this function. We do not want duplicate Tileset
+        /// objects referring to the same data.
         public Tileset GetTileset(int index, int season)
         {
-            if (season == -1) // No seasons expected
-                season = 0;
+            Debug.Assert(index >= 0 && index < NumTilesets);
+            Debug.Assert(season >= -1 && season <= 3);
+
+            if (TilesetIsSeasonal(index))
+            {
+                if (season == -1)
+                    season = 0;
+            }
+            else
+            {
+                season = -1;
+            }
+
             Tileset retval;
             tilesetCache.TryGetValue(new Tuple<int, int>(index, season), out retval);
             if (retval == null)
@@ -486,6 +501,27 @@ namespace LynnaLib
                 tilesetCache[new Tuple<int, int>(index, season)] = retval;
             }
             return retval;
+        }
+
+        /// This function checks if a tileset is seasonal without instantiating a Tileset object. We
+        /// do not want to call the constructor for Tileset objects with an invalid season
+        /// parameter.
+        public bool TilesetIsSeasonal(int index)
+        {
+            Debug.Assert(index >= 0 && index < NumTilesets);
+
+            // Though this seems trivial, we need to cache this for performance. Traversing
+            // FileParsers is expensive.
+            bool value;
+            if (tilesetSeasonalCache.TryGetValue(index, out value))
+            {
+                return value;
+            }
+
+            Data data = GetData("tilesetData", index * 8);
+            value = data.CommandLowerCase == "m_seasonaltileset";
+            tilesetSeasonalCache[index] = value;
+            return value;
         }
 
         public Dungeon GetDungeon(int index)
