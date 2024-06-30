@@ -173,12 +173,12 @@ namespace LynnaLab
         }
 
 
-        // Subclasses can either override "Image" to set the image, or override the "TileDrawer" property
-        // to set the image using a per-tile draw function.
+        // Subclasses can either override "Image" to set the image, or override the "TileDrawer"
+        // function to set the image using a per-tile draw function.
         protected virtual Bitmap Image { get { return null; } }
 
-        // TODO: Replace "Image" property above in favor of this
-        protected virtual Cairo.Surface Surface { get { return null; } }
+        // If true, call the TileDrawer function for each tile even if Image is non-null.
+        protected virtual bool UseTileDrawer { get; set; }
 
         public Color BackgroundColor { get; set; } = Color.Black;
 
@@ -520,7 +520,8 @@ namespace LynnaLab
 
                 cr.Paint();
             }
-            else
+
+            if (Image == null || UseTileDrawer)
             {
                 Cairo.Rectangle extents = cr.ClipExtents();
                 for (int i = 0; i < Width * Height; i++)

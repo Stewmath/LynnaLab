@@ -290,37 +290,9 @@ namespace LynnaLab
                 }
             }
 
-            override protected Bitmap Image
+            protected override Bitmap Image
             {
-                // TODO: optimize? Image isn't being disposed...
-                get
-                {
-                    if (tileset == null)
-                        return null;
-                    Bitmap image = tileset.GetTileImage(TileIndex);
-
-                    using (var cr = image.CreateContext())
-                    {
-                        // Made solid tiles red
-                        for (int i = 0; i < 4; i++)
-                        {
-                            int x = i % 2;
-                            int y = i / 2;
-                            if ((tileset.GetTileCollision(TileIndex) & 0xf0) == 0)
-                            {
-                                if (GetBasicCollision(TileIndex, x, y))
-                                {
-                                    Color c = Color.FromRgbDbl(0.5, 1.0, 0.0);
-                                    cr.SetSourceColor(c);
-                                    cr.Rectangle(x * 8, y * 8, 8, 8);
-                                    cr.Fill();
-                                }
-                            }
-                        }
-                    }
-
-                    return image;
-                }
+                get { return tileset?.GetTileImage(TileIndex); }
             }
 
             public SubTileCollisionEditor() : base()
@@ -344,6 +316,24 @@ namespace LynnaLab
                 };
 
                 base.AddMouseAction(MouseButton.Any, MouseModifier.Any | MouseModifier.Drag, GridAction.Callback, callback);
+
+                base.UseTileDrawer = true;
+            }
+
+            protected override void TileDrawer(int index, Cairo.Context cr)
+            {
+                int x = index % 2;
+                int y = index / 2;
+                if ((tileset.GetTileCollision(TileIndex) & 0xf0) == 0)
+                {
+                    if (GetBasicCollision(TileIndex, x, y))
+                    {
+                        Color c = Color.FromRgbaDbl(1.0, 0.0, 0.0, 0.5);
+                        cr.SetSourceColor(c);
+                        cr.Rectangle(0, 0, 8, 8);
+                        cr.Fill();
+                    }
+                }
             }
 
             bool GetBasicCollision(int subTile, int x, int y)
@@ -355,7 +345,9 @@ namespace LynnaLab
             {
                 tileset.SetSubTileBasicCollision(subTile, x, y, val);
                 if (CollisionsChangedHandler != null)
+                {
                     CollisionsChangedHandler();
+                }
             }
 
             public void SetTileset(Tileset t)
