@@ -66,6 +66,9 @@ namespace LynnaLib
             System.IO.Directory.CreateDirectory(configDirectory);
             System.IO.Directory.CreateDirectory(logDirectory);
 
+            // logAppender can be used to output logs to txt files, but I never actually use this,
+            // and it wasn't actually working at the time I commented it out.
+            /*
             logAppender = new log4net.Appender.RollingFileAppender();
             logAppender.AppendToFile = true;
             logAppender.Layout = new log4net.Layout.PatternLayout(
@@ -77,6 +80,7 @@ namespace LynnaLib
             logAppender.RollingStyle = log4net.Appender.RollingFileAppender.RollingMode.Composite;
             logAppender.ActivateOptions();
             LogHelper.AddAppenderToRootLogger(logAppender);
+            */
 
             log.Info("Opening project at \"" + baseDirectory + "\".");
 
@@ -405,8 +409,10 @@ namespace LynnaLib
             {
                 file.Close();
             }
-            logAppender.Close();
+            /*
             LogHelper.RemoveAppenderFromRootLogger(logAppender);
+            logAppender.Close();
+            */
         }
 
         public T GetIndexedDataType<T>(int identifier) where T : ProjectIndexedDataType
