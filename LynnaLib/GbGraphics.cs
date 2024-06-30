@@ -24,7 +24,7 @@ namespace LynnaLib
                 palette = GrayPalette;
 
             // Use this as transparent color for sprites
-            Color transparentColor = Color.FromRgba(255, 255, 255, 0);
+            Color transparentColor = Color.FromRgba(0, 0, 0, 0);
 
             bool sprite = (data.Count == 32);
             int height = (sprite ? 16 : 8);
@@ -70,7 +70,9 @@ namespace LynnaLib
                 }
             }
 
-            using (var surface = new Cairo.ImageSurface(pixels, Cairo.Format.Argb32, 8, height, stride))
+            var format = sprite ? Cairo.Format.Argb32 : Cairo.Format.Rgb24;
+
+            using (var surface = new Cairo.ImageSurface(pixels, format, 8, height, stride))
             {
                 return new Bitmap(surface);
             }
