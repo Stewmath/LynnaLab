@@ -37,16 +37,8 @@ namespace LynnaLab
             string text = Text.Trim();
             bool success = false;
             value = Value;
-            // Try a decimal
-            try
-            {
-                value = Convert.ToInt32(text);
-                success = true;
-            }
-            catch (Exception)
-            {
-            }
-            // Try a hex number
+
+            // Try a hex number prefixed with "$"
             try
             {
                 if (text.Length > 0 && text[0] == '$')
@@ -58,7 +50,8 @@ namespace LynnaLab
             catch (Exception)
             {
             }
-            // Try a negative hex number
+
+            // Try a negative hex number prefixed with "$"
             try
             {
                 if (text.Length > 1 && text[0] == '-' && text[1] == '$')
@@ -70,6 +63,17 @@ namespace LynnaLab
             catch (Exception)
             {
             }
+
+            // If no "$" sign is present, we still assume it will be hexadecimal
+            try
+            {
+                value = Convert.ToInt32(text, 16);
+                success = true;
+            }
+            catch (Exception)
+            {
+            }
+
             if (!success)
                 value = Value;
             return 1;
