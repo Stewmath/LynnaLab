@@ -372,21 +372,27 @@ namespace LynnaLib
             {
                 list.AddRange(new ValueReference[] {
                     new DataValueReference(GetDataIndex(2),
-                            name: "Unique Gfx",
-                            index: 0,
-                            type: DataValueType.Byte,
-                            constantsMappingString: "UniqueGfxMapping",
-                            useConstantAlias: true),
+                        name: "Unique Gfx",
+                        index: 0,
+                        type: DataValueType.Byte,
+                        constantsMappingString: "UniqueGfxMapping",
+                        useConstantAlias: true),
                     new DataValueReference(GetDataIndex(3),
-                            name: "Main Gfx",
-                            index: 0,
-                            type: DataValueType.Byte,
-                            constantsMappingString: "MainGfxMapping",
-                            useConstantAlias: true),
+                        name: "Main Gfx",
+                        index: 0,
+                        type: DataValueType.Byte,
+                        constantsMappingString: "MainGfxMapping",
+                        useConstantAlias: true),
                     new DataValueReference(GetDataIndex(5),
-                            name: "Layout",
-                            index: 0,
-                            type: DataValueType.Byte),
+                        name: "Layout",
+                        index: 0,
+                        type: DataValueType.Byte),
+                    new DataValueReference(GetDataIndex(6),
+                        name: "Layout Group",
+                        index: 0,
+                        type: DataValueType.Byte,
+                        maxValue: Project.NumLayoutGroups - 1,
+                        tooltip: "Determines where to read the room layout from (ie. for value '2', it reads from the file 'room02XX.bin', even if the group number is not 2). In general, to prevent confusion, all rooms in the same overworld (or group) should use tilesets which have the same value for this."),
                 });
             }
 
@@ -397,24 +403,19 @@ namespace LynnaLib
                         type: DataValueType.Byte,
                         constantsMappingString: "PaletteHeaderMapping",
                         useConstantAlias: true),
-                new DataValueReference(GetDataIndex(6),
-                        name: "Layout Group",
-                        index: 0,
-                        type: DataValueType.Byte,
-                        maxValue: Project.NumLayoutGroups - 1,
-                        tooltip: "Determines where to read the room layout from (ie. for value '2', it reads from the file 'room02XX.bin', even if the group number is not 2). In general, to prevent confusion, all rooms in the same overworld (or group) should use tilesets which have the same value for this."),
                 new DataValueReference(GetDataIndex(7),
                         name: "Animations",
                         index: 0,
                         type: DataValueType.Byte),
             });
-            list.AddRange(new ValueReference[] {
-                new DataValueReference(GetDataIndex(0),
-                        name: "Unused(?) Bit",
-                        index: 0,
-                        startBit: 7,
-                        type: DataValueType.ByteBit),
-            });
+
+            // list.AddRange(new ValueReference[] {
+            //     new DataValueReference(GetDataIndex(0),
+            //             name: "Unused(?) Bit",
+            //             index: 0,
+            //             startBit: 7,
+            //             type: DataValueType.ByteBit),
+            // });
 
 
             vrg = new ValueReferenceGroup(list);

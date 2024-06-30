@@ -135,8 +135,15 @@ namespace LynnaLib
                 tileDataFile.RemoveModifiedEventHandler(TileDataModified);
                 tileDataFile = null;
             }
+
+
+            int layoutGroup;
+            if (Project.Config.ExpandedTilesets)
+                layoutGroup = Project.GetCanonicalLayoutGroup(Group, Season);
+            else
+                layoutGroup = Tileset.LayoutGroup;
+
             // Get the tileDataFile
-            int layoutGroup = Tileset.LayoutGroup;
             string label = "room" + ((layoutGroup << 8) + (Room.Index & 0xff)).ToString("X4").ToLower();
             FileParser parserFile = Project.GetFileWithLabel(label);
             Data data = parserFile.GetData(label);

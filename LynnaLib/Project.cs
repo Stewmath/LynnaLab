@@ -828,9 +828,10 @@ namespace LynnaLib
         // a tileset value which determines where the room layout will be loaded from (room0XYY.bin,
         // where "X" is the layout group, and YY is the low byte of the room). This is a dumb and
         // confusing distinction, but it's the way things are.
-        // We can at least warn the user when a room is using a tileset with an unexpected layout
-        // group. This function gets the expected "layout group" for a given "group".
-        public int GetCanonicalLayoutGroup(int group)
+        // This function gets the expected "layout group" for a given "group". On the hack-base
+        // branch, which changes how things work, this actually determines which layout group will
+        // be used. On the master branch, a warning will be shown to a user if there's a mismatch.
+        public int GetCanonicalLayoutGroup(int group, int season)
         {
             if (GameString == "ages")
             {
@@ -848,7 +849,7 @@ namespace LynnaLib
             else if (GameString == "seasons")
             {
                 if (group == 0)
-                    return 0; // TODO: seasons use layout groups 0-3, how to handle?
+                    return season;
                 else if (group == 1 || group == 2 || group == 3)
                     return 4;
                 else if (group == 4 || group == 5)

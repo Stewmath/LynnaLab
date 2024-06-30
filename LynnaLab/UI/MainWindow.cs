@@ -521,17 +521,23 @@ public class MainWindow
         SetTileset(Project.GetTileset(index, season));
     }
 
+    /// Print warnings when tileset's layout group does not match expected value. Does nothing on
+    /// the hack-base branch as the tileset's layout group is ignored.
     void UpdateLayoutGroupWarning()
     {
+        if (Project.Config.ExpandedTilesets)
+            return;
+
         Tileset tileset = tilesetViewer1.Tileset;
 
-        if (tileset.LayoutGroup != Project.GetCanonicalLayoutGroup(ActiveRoom.Group))
+        int expectedGroup = Project.GetCanonicalLayoutGroup(ActiveRoom.Group, ActiveSeason);
+        if (tileset.LayoutGroup != expectedGroup)
         {
             statusbar1.Set((uint)StatusbarMessage.WrongLayoutGroup, string.Format(
                     "WARNING: Layout group of tileset ({0:X}) does not match expected value ({1:X})!"
                     + " This room's layout data might be shared with another's.",
                     tileset.LayoutGroup,
-                    Project.GetCanonicalLayoutGroup(ActiveRoom.Group)));
+                    expectedGroup));
         }
         else
             statusbar1.RemoveAll((uint)StatusbarMessage.WrongLayoutGroup);
