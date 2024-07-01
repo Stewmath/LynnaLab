@@ -168,7 +168,7 @@ namespace LynnaLab
 
             warpSourceTypeLabel.UseMarkup = true;
 
-            sourceEditor = new ValueReferenceEditor(Project, warp.ValueReferenceGroup);
+            sourceEditor = new ValueReferenceEditor(warp.ValueReferenceGroup);
 
             valueEditorContainer.Add(sourceEditor);
             warpSourceFrame.ShowAll();

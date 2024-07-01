@@ -17,30 +17,46 @@ namespace LynnaLab
         // The widgets by index.
         IList<IList<Gtk.Widget>> widgetLists;
 
+        int rows;
+        string frameText;
+
         event System.Action dataModifiedExternalEvent;
         event System.Action dataModifiedInternalEvent;
 
 
-        Project Project { get; set; }
+        Project Project { get { return valueReferenceGroup.Project; } }
 
         public ValueReferenceGroup ValueReferenceGroup
         {
             get { return valueReferenceGroup; }
         }
 
-        public ValueReferenceEditor(Project p, ValueReferenceGroup vrg, string frameText = null)
-            : this(p, vrg, 50, frameText)
+        public ValueReferenceEditor()
+            : this(null, null)
         {
         }
 
-        public ValueReferenceEditor(Project p, ValueReferenceGroup vrg, int rows, string frameText = null)
+        public ValueReferenceEditor(ValueReferenceGroup vrg, string frameText = null)
+            : this(vrg, 50, frameText)
         {
+        }
+
+        public ValueReferenceEditor(ValueReferenceGroup vrg, int rows, string frameText = null)
+        {
+            this.rows = rows;
+            this.frameText = frameText;
+
+            if (vrg != null)
+                Initialize(vrg);
+        }
+
+        void Initialize(ValueReferenceGroup vrg)
+        {
+            this.valueReferenceGroup = vrg;
+
             this.Halign = Gtk.Align.Fill;
             this.Valign = Gtk.Align.Fill;
 
-            Project = p;
-
-            valueReferenceGroup = vrg;
             maxBounds = new int[valueReferenceGroup.GetNumValueReferences()];
             widgetGrids = new List<Gtk.Grid>();
             widgetPositions = new Tuple<int, int>[maxBounds.Count];
@@ -263,8 +279,17 @@ namespace LynnaLab
         // old one. If there is any mismatch, a new ValueReferenceEditor should be created instead.
         // But when the structures do match exactly, this is preferred, so that we don't need to
         // recreate all of the necessary widgets again.
+        //
+        // The first time this is called, it will construct the widget lists; after that it only
+        // modifies the existing widgets.
         public void ReplaceValueReferenceGroup(ValueReferenceGroup vrg)
         {
+            if (valueReferenceGroup == null)
+            {
+                Initialize(vrg);
+                return;
+            }
+
             RemoveModifiedHandlers();
             this.valueReferenceGroup = vrg;
             AddModifiedHandlers();

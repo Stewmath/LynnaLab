@@ -162,7 +162,7 @@ namespace LynnaLab
             ValueReferenceGroup vrg = tileset.GetValueReferenceGroup();
             if (tilesetVre == null)
             {
-                tilesetVre = new ValueReferenceEditor(Project, vrg, 8);
+                tilesetVre = new ValueReferenceEditor(vrg, 8);
                 tilesetVreContainer.Add(tilesetVre);
             }
             else

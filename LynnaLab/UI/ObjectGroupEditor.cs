@@ -180,7 +180,7 @@ namespace LynnaLab
             }
             frameLabel.Text = ObjectNames[(int)activeObject.GetObjectType()];
 
-            ObjectDataEditor = new ValueReferenceEditor(Project, obj);
+            ObjectDataEditor = new ValueReferenceEditor(obj);
             ObjectDataEditor.AddDataModifiedHandler(OnObjectDataModified);
 
             objectDataContainer.Add(ObjectDataEditor);

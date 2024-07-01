@@ -206,7 +206,7 @@ namespace Plugins
                 dungeonVre.ReplaceValueReferenceGroup(vrg);
             else
             {
-                dungeonVre = new ValueReferenceEditor(Project, vrg, "Base Data");
+                dungeonVre = new ValueReferenceEditor(vrg, "Base Data");
                 dungeonVre.ShowAll();
                 dungeonVreContainer.Add(dungeonVre);
             }
@@ -269,7 +269,7 @@ namespace Plugins
                 roomVre.ReplaceValueReferenceGroup(vrg);
             else
             {
-                roomVre = new ValueReferenceEditor(Project, vrg, 4, "Minimap Data");
+                roomVre = new ValueReferenceEditor(vrg, 4, "Minimap Data");
                 roomVreContainer.Add(roomVre);
             }
         }

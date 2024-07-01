@@ -355,8 +355,10 @@ public class MainWindow
             else
                 statusbar1.RemoveAll((uint)StatusbarMessage.WarpDestEditMode);
         });
+        // Default status bar message
         statusbar1.Set((uint)StatusbarMessage.TileSelected, "Selected Tile: 0x00");
 
+        // Call this to initialize some state
         OnDarkenDungeonRoomsCheckboxToggled(null, null);
 
 
@@ -553,7 +555,7 @@ public class MainWindow
         if (roomVre == null)
         {
             // This only runs once
-            roomVre = new ValueReferenceEditor(Project, ActiveRoom.ValueReferenceGroup);
+            roomVre = new ValueReferenceEditor(ActiveRoom.ValueReferenceGroup);
             roomVre.AddWidgetToRight("Tileset", editTilesetButton);
             roomVreHolder.Add(roomVre);
             roomVre.ShowAll();
@@ -587,7 +589,7 @@ public class MainWindow
             ValueReferenceGroup vrg = ActiveRoom.Chest.ValueReferenceGroup;
             if (chestVre == null)
             {
-                chestVre = new ValueReferenceEditor(Project, vrg);
+                chestVre = new ValueReferenceEditor(vrg);
                 chestVreHolder.Add(chestVre);
             }
             else
@@ -615,7 +617,7 @@ public class MainWindow
 
                 if (treasureVre == null)
                 {
-                    treasureVre = new ValueReferenceEditor(Project, treasure.ValueReferenceGroup);
+                    treasureVre = new ValueReferenceEditor(treasure.ValueReferenceGroup);
                     treasureVreHolder.Add(treasureVre);
                 }
                 else
@@ -785,6 +787,13 @@ public class MainWindow
             Project = null;
 
             overallEditingContainer.Sensitive = false;
+
+            // Some more stuff that ought to be done here:
+            // - Close all popup windows (tileset editor, dungeon editor)
+            //
+            // Ultimately some dangling pointers to the old Project will probably remain until
+            // another project replaces it, which is no big deal, as long as nothing from the old
+            // state leaks into the UI when the new project is loaded.
         }
     }
 
@@ -868,20 +877,26 @@ public class MainWindow
     {
         if (Project == null)
             return;
-        string directory = Project.BaseDirectory;
-        string game = Project.GameString == "ages" ? "seasons" : "ages";
-        AskQuit();
-        OpenProject(directory, game);
+        if (AskSave("Save project before switching?") != ResponseType.Cancel)
+        {
+            string directory = Project.BaseDirectory;
+            string game = Project.GameString == "ages" ? "seasons" : "ages";
+            CloseProject();
+            OpenProject(directory, game);
+        }
     }
 
     protected void OnReloadActionActivated(object sender, EventArgs e)
     {
         if (Project == null)
             return;
-        string directory = Project.BaseDirectory;
-        string game = Project.GameString;
-        AskQuit();
-        OpenProject(directory, game);
+        if (AskSave("Save project before reloading?") != ResponseType.Cancel)
+        {
+            string directory = Project.BaseDirectory;
+            string game = Project.GameString;
+            CloseProject();
+            OpenProject(directory, game);
+        }
     }
 
     protected void OnDungeonSpinButtonValueChanged(object sender, EventArgs e)
