@@ -26,12 +26,13 @@ namespace LynnaLab
             base.BackgroundColor = Color.FromRgbDbl(0.8, 0.8, 0.8);
             base.HoverColor = RoomEditor.ObjectHoverColor;
 
-            TileGridEventHandler dragCallback = (sender, index) =>
+            TileGridEventHandler dragCallback = (sender, args) =>
             {
-                if (index != SelectedIndex)
+                if (args.selectedIndex != SelectedIndex)
                 {
-                    OnMoveSelection(SelectedIndex, index);
-                    SelectedIndex = index;
+                    if (args.mouseAction == "drag" && SelectedIndex != -1 && args.selectedIndex != -1)
+                        OnMoveSelection(SelectedIndex, args.selectedIndex);
+                    SelectedIndex = args.selectedIndex;
                 }
             };
 

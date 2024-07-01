@@ -349,7 +349,7 @@ namespace LynnaLab
                 Scale = 3;
 
                 // On clicked...
-                TileGridEventHandler callback = delegate (object sender, int index)
+                TileGridEventHandler callback = (sender, args) =>
                 {
                     // Toggle the collision of the subtile if it uses the
                     // "basic" collision mode (upper nibble is zero).

@@ -129,8 +129,15 @@ namespace LynnaLab
             }
             set
             {
-                _enableTileEditing = value;
-                base.Hoverable = value;
+                if (value != _enableTileEditing)
+                {
+                    _enableTileEditing = value;
+                    base.Hoverable = value;
+                    if (value)
+                        EnableDragFillAction();
+                    else
+                        DisableDragFillAction();
+                }
             }
         }
 
@@ -449,6 +456,9 @@ namespace LynnaLab
 
         void OnClicked(int posX, int posY, Gdk.Event triggerEvent, uint button)
         {
+            if (base.IsSelectingRange)
+                return;
+
             Cairo.Point p = GetGridPosition(posX, posY, scale: false, offset: false);
             if (EnableTileEditing && hoveringComponent == null)
             {
@@ -737,6 +747,30 @@ namespace LynnaLab
 
             QueueDraw();
         }
+
+        void EnableDragFillAction()
+        {
+            // Define Click & Drag action with Ctrl key
+            base.AddMouseAction(
+                MouseButton.LeftClick,
+                MouseModifier.Ctrl | MouseModifier.Drag,
+                GridAction.SelectRangeCallback,
+                (sender, args) =>
+                {
+                    args.Foreach((x, y) =>
+                    {
+                        RoomLayout.SetTile(x, y, TilesetViewer.SelectedIndex);
+                    });
+                });
+        }
+
+        void DisableDragFillAction()
+        {
+            base.RemoveMouseAction(
+                MouseButton.LeftClick,
+                MouseModifier.Ctrl | MouseModifier.Drag);
+        }
+
 
         protected override void OnSizeAllocated(Gdk.Rectangle allocation)
         {
