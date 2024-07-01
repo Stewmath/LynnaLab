@@ -1213,5 +1213,13 @@ namespace LynnaLib
             }
             throw new ProjectErrorException("SetDefinition: Constant \"" + constant + "\" didn't exist already.");
         }
+
+        // Shouldn't really need to do anything in particular here, since the file isn't kept open
+        public void Close()
+        {
+            labelDictionary = null;
+            definesDictionary = null;
+            fileStructure = null;
+        }
     }
 }

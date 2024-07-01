@@ -35,6 +35,9 @@ namespace LynnaLab
 
         protected override void TileDrawer(int index, Cairo.Context cr)
         {
+            if (Map == null)
+                return;
+
             int roomIndex = (Map.MainGroup << 8) | index;
 
             base.TileDrawer(index, cr);

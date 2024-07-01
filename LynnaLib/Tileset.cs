@@ -5,7 +5,7 @@ using Util;
 
 namespace LynnaLib
 {
-    public class Tileset
+    public class Tileset : IDisposable
     {
         FileParser tilesetFile;
 
@@ -748,6 +748,18 @@ namespace LynnaLib
             }
             return references;
         }
+
+        public void Dispose()
+        {
+            graphicsState = null;
+            foreach (Bitmap b in tileImagesCache)
+                b?.Dispose();
+            tileImagesCache = null;
+            fullCachedImage.Dispose();
+            fullCachedImage = null;
+            paletteEventWrapper.UnbindAll();
+        }
+
 
         void LoadMainGfx()
         {

@@ -145,6 +145,9 @@ namespace LynnaLab
         // TileGridViewer override
         protected override void TileDrawer(int index, Cairo.Context cr)
         {
+            if (_map == null)
+                return;
+
             int x = index % _map.MapWidth;
             int y = index / _map.MapWidth;
             var source = GetTileImage(x, y);

@@ -193,8 +193,7 @@ public class MainWindow
         get { return contextNotebook.Page == 3; }
     }
 
-    public MainWindow() : this("") { }
-    public MainWindow(string directory)
+    public MainWindow(string directory = null, string game = null)
     {
         log.Debug("Beginning Program");
 
@@ -208,7 +207,7 @@ public class MainWindow
 
         GuiSetup();
 
-        if (directory != "")
+        if (directory != null)
         {
             if (!Directory.Exists(directory))
             {
@@ -223,7 +222,7 @@ public class MainWindow
                 }
             }
             else
-                OpenProject(directory);
+                OpenProject(directory, game);
         }
     }
 
@@ -443,7 +442,7 @@ public class MainWindow
         return true;
     }
 
-    void OpenProject(string dir)
+    void OpenProject(string dir, string game = null)
     {
         ResponseType response = ResponseType.Yes;
         string mainFile = "ages.s";
@@ -461,12 +460,8 @@ public class MainWindow
 
         if (response == ResponseType.Yes)
         {
-            if (Project != null)
-            {
-                Project.Close();
-                Project = null;
-            }
-            Project = new Project(dir);
+            CloseProject();
+            Project = new Project(dir, game);
 
             eventGroup.Lock();
 
@@ -774,10 +769,23 @@ public class MainWindow
 
     void Quit()
     {
-        if (Project != null)
-            Project.Close();
+        CloseProject();
         globalConfig.Save();
         Application.Quit();
+    }
+
+    void CloseProject()
+    {
+        if (Project != null)
+        {
+            SetRoom(null, 0);
+            worldMinimap.SetMap(null);
+            dungeonMinimap.SetMap(null);
+            Project.Close();
+            Project = null;
+
+            overallEditingContainer.Sensitive = false;
+        }
     }
 
     protected void OnDeleteEvent(object sender, DeleteEventArgs a)
@@ -839,10 +847,7 @@ public class MainWindow
     {
         if (AskSave("Save project before closing it") != ResponseType.Cancel)
         {
-            Project.Close();
-            Project = null;
-            SetRoom(null, 0);
-            overallEditingContainer.Sensitive = false;
+            CloseProject();
         }
     }
 
@@ -857,6 +862,26 @@ public class MainWindow
     protected void OnQuitActionActivated(object sender, EventArgs e)
     {
         AskQuit();
+    }
+
+    protected void OnSwitchGameActionActivated(object sender, EventArgs e)
+    {
+        if (Project == null)
+            return;
+        string directory = Project.BaseDirectory;
+        string game = Project.GameString == "ages" ? "seasons" : "ages";
+        AskQuit();
+        OpenProject(directory, game);
+    }
+
+    protected void OnReloadActionActivated(object sender, EventArgs e)
+    {
+        if (Project == null)
+            return;
+        string directory = Project.BaseDirectory;
+        string game = Project.GameString;
+        AskQuit();
+        OpenProject(directory, game);
     }
 
     protected void OnDungeonSpinButtonValueChanged(object sender, EventArgs e)

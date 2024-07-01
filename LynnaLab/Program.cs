@@ -24,14 +24,16 @@ namespace LynnaLab
 #endif
 
             MainWindow win;
-            if (args.Length >= 1)
-                win = new MainWindow(args[0]);
+            if (args.Length >= 2)
+                win = new MainWindow(args[0], args[1]);
+            else if (args.Length >= 1)
+                win = new MainWindow(args[0], null);
             else
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     string path = $"C:\\msys64\\home\\{Environment.UserName}\\oracles-disasm";
-                    win = new MainWindow(path);
+                    win = new MainWindow(path, null);
                 }
                 else
                     win = new MainWindow();

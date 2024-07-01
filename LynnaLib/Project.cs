@@ -31,7 +31,7 @@ namespace LynnaLib
         public readonly ConstantsMapping TreasureGrabModeMapping;
         public readonly ConstantsMapping TreasureObjectMapping;
 
-        log4net.Appender.RollingFileAppender logAppender;
+        //log4net.Appender.RollingFileAppender logAppender;
 
         string baseDirectory, configDirectory, logDirectory;
 
@@ -46,6 +46,12 @@ namespace LynnaLib
         // Dictionary of .DEFINE's
         Dictionary<string, string> definesDictionary = new Dictionary<string, string>();
 
+        Dictionary<Tuple<int, int>, Tileset> tilesetCache = new Dictionary<Tuple<int, int>, Tileset>();
+        Dictionary<int, bool> tilesetSeasonalCache = new Dictionary<int, bool>();
+        Dictionary<int, Dungeon> dungeonCache = new Dictionary<int, Dungeon>();
+        Dictionary<Tuple<int, int>, WorldMap> worldMapCache = new Dictionary<Tuple<int, int>, WorldMap>();
+
+
         // Data structures which should be linked to a particular project
         Dictionary<string, ProjectDataType> dataStructDictionary = new Dictionary<string, ProjectDataType>();
         Dictionary<string, ObjectGroup> objectGroupDictionary = new Dictionary<string, ObjectGroup>();
@@ -57,8 +63,11 @@ namespace LynnaLib
         ProjectConfig config;
 
 
-        public Project(string d, string gameToLoad = "")
+        public Project(string d, string gameToLoad = null)
         {
+            if (gameToLoad == "")
+                gameToLoad = null;
+
             baseDirectory = d + '/';
             configDirectory = baseDirectory + "LynnaLab/";
             logDirectory = configDirectory + "Logs/";
@@ -95,7 +104,7 @@ namespace LynnaLib
                 config = new ProjectConfig();
             }
 
-            if (gameToLoad != "")
+            if (gameToLoad != null)
                 config.EditingGame = gameToLoad;
 
 
@@ -405,6 +414,31 @@ namespace LynnaLib
 
         public void Close()
         {
+            log.Info("Closing project");
+            foreach (var t in tilesetCache.Values)
+            {
+                t.Dispose();
+            }
+            foreach (var d in dungeonCache.Values)
+            {
+            }
+            foreach (var w in worldMapCache.Values)
+            {
+            }
+            foreach (var group in objectGroupDictionary.Values)
+            {
+            }
+            foreach (ProjectDataType data in dataStructDictionary.Values)
+            {
+            }
+            foreach (FileParser parser in fileParserDictionary.Values)
+            {
+                parser.Close();
+            }
+            foreach (PngGfxStream stream in pngGfxStreamDictionary.Values)
+            {
+                stream.Close();
+            }
             foreach (MemoryFileStream file in binaryFileDictionary.Values)
             {
                 file.Close();
@@ -481,11 +515,6 @@ namespace LynnaLib
             return o as T;
         }
 
-
-        Dictionary<Tuple<int, int>, Tileset> tilesetCache = new Dictionary<Tuple<int, int>, Tileset>();
-        Dictionary<int, bool> tilesetSeasonalCache = new Dictionary<int, bool>();
-        Dictionary<int, Dungeon> dungeonCache = new Dictionary<int, Dungeon>();
-        Dictionary<Tuple<int, int>, WorldMap> worldMapCache = new Dictionary<Tuple<int, int>, WorldMap>();
 
         /// Always load Tileset objects through this function. We do not want duplicate Tileset
         /// objects referring to the same data.
