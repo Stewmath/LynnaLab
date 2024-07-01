@@ -24,15 +24,34 @@ namespace LynnaLib
             _animData = animData;
 
             GenerateBitmaps();
+
+            var gfxStream = _animation.ObjectGfxHeaderData.GfxStream;
+            if (gfxStream is ReloadableStream)
+            {
+                (gfxStream as ReloadableStream).ExternallyModifiedEvent += (s, a) =>
+                {
+                    GenerateBitmaps();
+                };
+            }
         }
 
         void GenerateBitmaps()
         {
+            if (bitmaps != null)
+            {
+                foreach (var tup in bitmaps)
+                {
+                    tup.Item1.Dispose();
+                }
+            }
+
             bitmaps = new List<Tuple<Bitmap, int, int>>();
             Color[][] palettes = _animation.GetPalettes();
 
             try
             {
+                ObjectGfxHeaderData gfxHeader = _animation.ObjectGfxHeaderData;
+
                 // Note: this "index" is more like index*2, since it's added directly to the offset
                 // without being multiplied first
                 int oamIndex = (byte)_animData.NextData.GetIntValue(0);
@@ -56,7 +75,6 @@ namespace LynnaLib
                     byte flags = (byte)(data.GetIntValue(0) | _animation.OamFlagsBase);
                     data = data.NextData;
 
-                    ObjectGfxHeaderData gfxHeader = _animation.ObjectGfxHeaderData;
                     int origTileIndex = tileIndex;
 
                     while (tileIndex >= 0x20)

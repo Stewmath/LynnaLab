@@ -17,6 +17,11 @@ namespace LynnaLab
 
             Application.Init();
 
+            Util.Helper.mainThreadInvokeFunction = (action) =>
+            {
+                Gtk.Application.Invoke((e, a) => action());
+            };
+
 #if (!DEBUG)
             try {
                 AppDomain.CurrentDomain.UnhandledException += (sender, e) => HandleException(e.ExceptionObject);

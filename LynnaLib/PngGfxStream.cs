@@ -5,15 +5,122 @@ using YamlDotNet.Serialization;
 
 namespace LynnaLib
 {
-    public class PngGfxStream : Stream
+    /// This class loads a PNG file and converts it to a byte stream. Only works with greyscale PNGs
+    /// which can be properly converted to 2bpp format.
+    public class PngGfxStream : ReloadableStream
     {
         private byte[] data;
         int _length;
+        string filename;
 
         PngProperties properties;
 
 
         public PngGfxStream(string filename)
+            : base(filename)
+        {
+            this.filename = filename;
+            LoadFile();
+        }
+
+
+        // Stream Properties
+
+        public override bool CanRead
+        {
+            get { return true; }
+        }
+        public override bool CanSeek
+        {
+            get { return true; }
+        }
+        public override bool CanTimeout
+        {
+            get { return false; }
+        }
+        public override bool CanWrite
+        {
+            get { return false; }
+        }
+        public override long Length
+        {
+            get
+            {
+                return _length;
+            }
+        }
+        public override long Position { get; set; }
+
+
+        // Stream methods
+
+        public override void Flush()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SetLength(long len)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override long Seek(long dest, SeekOrigin origin)
+        {
+            switch (origin)
+            {
+                case SeekOrigin.End:
+                    Position = Length - dest;
+                    break;
+                case SeekOrigin.Begin:
+                    Position = dest;
+                    break;
+                case SeekOrigin.Current:
+                    Position += dest;
+                    break;
+            }
+            return Position;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int size = count;
+            if (Position + count > Length)
+                size = (int)(Length - Position);
+            Array.Copy(data, Position, buffer, offset, size);
+            Position = Position + size;
+            return size;
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override int ReadByte()
+        {
+            int ret = data[Position];
+            Position++;
+            return ret;
+        }
+
+        public override void WriteByte(byte value)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        // ReloadableStream methods
+
+        protected override void Reload()
+        {
+            LoadFile();
+            Position = 0;
+        }
+
+
+        // Private methods
+
+        void LoadFile()
         {
             using (var bitmap = new Bitmap(filename))
             {
@@ -79,89 +186,6 @@ namespace LynnaLib
                     }
                 }
             }
-        }
-
-
-        // Properties
-
-        public override bool CanRead
-        {
-            get { return true; }
-        }
-        public override bool CanSeek
-        {
-            get { return true; }
-        }
-        public override bool CanTimeout
-        {
-            get { return false; }
-        }
-        public override bool CanWrite
-        {
-            get { return false; }
-        }
-        public override long Length
-        {
-            get
-            {
-                return _length;
-            }
-        }
-        public override long Position { get; set; }
-
-
-        // Methods
-
-        public override void Flush()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void SetLength(long len)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override long Seek(long dest, SeekOrigin origin)
-        {
-            switch (origin)
-            {
-                case SeekOrigin.End:
-                    Position = Length - dest;
-                    break;
-                case SeekOrigin.Begin:
-                    Position = dest;
-                    break;
-                case SeekOrigin.Current:
-                    Position += dest;
-                    break;
-            }
-            return Position;
-        }
-
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            int size = count;
-            if (Position + count > Length)
-                size = (int)(Length - Position);
-            Array.Copy(data, Position, buffer, offset, size);
-            Position = Position + size;
-            return size;
-        }
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override int ReadByte()
-        {
-            int ret = data[Position];
-            Position++;
-            return ret;
-        }
-        public override void WriteByte(byte value)
-        {
-            throw new NotImplementedException();
         }
 
 

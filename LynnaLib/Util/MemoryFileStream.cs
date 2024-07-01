@@ -3,6 +3,7 @@ using System.IO;
 
 namespace Util
 {
+    /// Like a FileStream but it's buffered in memory. Can be written to and saved.
     public class MemoryFileStream : Stream
     {
         // Arguments for modification callback

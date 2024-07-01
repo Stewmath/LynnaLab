@@ -25,7 +25,10 @@ namespace LynnaLib
         Bitmap[] tileImagesCache = new Bitmap[256];
         Bitmap fullCachedImage = new Bitmap(16 * 16, 16 * 16);
 
-        WeakEventWrapper<PaletteHeaderGroup> paletteEventWrapper = new WeakEventWrapper<PaletteHeaderGroup>();
+        WeakEventWrapper<ReloadableStream> gfxStreamEventWrapper
+            = new WeakEventWrapper<ReloadableStream>();
+        WeakEventWrapper<PaletteHeaderGroup> paletteEventWrapper
+            = new WeakEventWrapper<PaletteHeaderGroup>();
 
         bool constructorFinished = false;
 
@@ -241,6 +244,11 @@ namespace LynnaLib
             LoadAllGfxData();
             LoadPaletteHeader();
 
+            gfxStreamEventWrapper.Bind<EventArgs>("ExternallyModifiedEvent", (o, a) =>
+            {
+                LoadAllGfxData();
+                InvalidateAllTiles();
+            });
             paletteEventWrapper.Bind<EventArgs>("ModifiedEvent", OnPaletteDataModified);
 
             constructorFinished = true;
@@ -263,6 +271,7 @@ namespace LynnaLib
                 byte[] gfx = new byte[0x1000];
                 stream.Read(gfx, 0, 0x1000);
                 graphicsState.AddRawVram(1, 0x800, gfx);
+                gfxStreamEventWrapper.ReplaceEventSource(stream as ReloadableStream);
             }
             else
             {

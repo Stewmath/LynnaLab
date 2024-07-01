@@ -10,6 +10,20 @@ namespace Util
     // Some static functions
     public class Helper
     {
+        public static Action<Action> mainThreadInvokeFunction;
+
+        // LynnaLib doesn't import Gtk, but to help with thread safety, we use this function to
+        // help ensure everything important runs on the main thread.
+        //
+        // Gtk breaks badly when you do stuff on other threads, which can happen when using certain
+        // library callbacks.
+        public static void MainThreadInvoke(Action action)
+        {
+            if (mainThreadInvokeFunction != null)
+                mainThreadInvokeFunction(action);
+            else
+                action();
+        }
 
         // Convert a string range into a list of ints.
         // Example: "13,15-18" => {13,15,16,17,18}
