@@ -112,6 +112,10 @@ namespace LynnaLab
         {
             return _map?.GetRoom(x, y, Floor);
         }
+        public Room GetRoom(int index)
+        {
+            return GetRoom(index % Width, index / Width);
+        }
         public Room GetRoom()
         {
             return GetRoom(SelectedX, SelectedY);

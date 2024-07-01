@@ -38,6 +38,7 @@ public class MainWindow
     Gtk.Notebook minimapNotebook, contextNotebook;
     Gtk.SpinButton worldSpinButton;
     Gtk.CheckButton viewObjectsCheckButton, viewWarpsCheckButton;
+    Gtk.CheckMenuItem autoAdjustGroupCheckButton;
     Gtk.CheckButton darkenDungeonRoomsCheckbox;
     LynnaLab.HighlightingMinimap worldMinimap;
     Gtk.SpinButton dungeonSpinButton;
@@ -64,6 +65,8 @@ public class MainWindow
     WeakEventWrapper<ValueReference> roomTilesetModifiedEventWrapper = new WeakEventWrapper<ValueReference>();
     WeakEventWrapper<ValueReferenceGroup> tilesetModifiedEventWrapper;
     WeakEventWrapper<Chest> chestEventWrapper = new WeakEventWrapper<Chest>();
+
+    bool changingWorld = false;
 
     // Variables
     uint animationTimerID = 0;
@@ -167,6 +170,9 @@ public class MainWindow
         }
     }
 
+
+    // Private properties
+
     Minimap ActiveMinimap
     {
         get
@@ -191,6 +197,11 @@ public class MainWindow
     bool ChestContextActive
     { // "Chests" tab
         get { return contextNotebook.Page == 3; }
+    }
+
+    bool AutoAdjustGroup
+    {
+        get { return !changingWorld && autoAdjustGroupCheckButton.Active; }
     }
 
     public MainWindow(string directory = null, string game = null)
@@ -244,6 +255,7 @@ public class MainWindow
         worldSpinButton = (Gtk.SpinButton)builder.GetObject("worldSpinButton");
         viewObjectsCheckButton = (Gtk.CheckButton)builder.GetObject("viewObjectsCheckButton");
         viewWarpsCheckButton = (Gtk.CheckButton)builder.GetObject("viewWarpsCheckButton");
+        autoAdjustGroupCheckButton = (Gtk.CheckMenuItem)builder.GetObject("autoAdjustGroupCheckButton");
         darkenDungeonRoomsCheckbox = (Gtk.CheckButton)builder.GetObject("darkenDungeonRoomsCheckbox");
         dungeonSpinButton = (Gtk.SpinButton)builder.GetObject("dungeonSpinButton");
         floorSpinButton = (Gtk.SpinButton)builder.GetObject("floorSpinButton");
@@ -974,7 +986,9 @@ public class MainWindow
 
     protected void OnWorldSpinButtonValueChanged(object sender, EventArgs e)
     {
+        changingWorld = true;
         UpdateWorld();
+        changingWorld = false;
     }
 
     protected void OnSeasonComboBoxChanged(object sender, EventArgs e)
@@ -1039,22 +1053,19 @@ public class MainWindow
             return;
         SpinButton button = sender as SpinButton;
 
-        // If in a dungeon, "correct" the room value by looking for the "expected" version of the
-        // room (sidescrolling rooms have duplicates, only one is the "correct" version).
-        if (ActiveMap is Dungeon)
+        Room room = Project.GetIndexedDataType<Room>(button.ValueAsInt);
+        if ((ActiveMap is Dungeon || AutoAdjustGroup) && room.ExpectedIndex != button.ValueAsInt)
         {
-            Room room = Project.GetIndexedDataType<Room>(button.ValueAsInt);
-            if (room.ExpectedIndex != button.ValueAsInt)
-            {
-                button.Value = room.ExpectedIndex;
-                return; // Callback will get invoked again
-            }
+            // "Correct" the room value by looking for the "expected" version of the room (ie.
+            // sidescrolling rooms have duplicates, only one is the "correct" version).
+            button.Value = room.ExpectedIndex;
+            return; // Callback will get invoked again
         }
 
-        Room r = Project.GetIndexedDataType<Room>(button.ValueAsInt);
-        if (r != ActiveRoom)
+        room = Project.GetIndexedDataType<Room>(button.ValueAsInt);
+        if (room != ActiveRoom)
         {
-            SetRoom(r, ActiveSeason);
+            SetRoom(room, ActiveSeason);
             UpdateMinimapFromRoom(false);
         }
     }

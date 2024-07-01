@@ -63,6 +63,22 @@
                     </child>
                     <child>
                       <object class="GtkImageMenuItem">
+                        <property name="label">gtk-close</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
+                        <signal name="activate" handler="OnCloseActionActivated" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem">
                         <property name="label" translatable="yes">Reload project</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
@@ -79,16 +95,6 @@
                         <property name="image">image3</property>
                         <property name="use-stock">False</property>
                         <signal name="activate" handler="OnSwitchGameActionActivated" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkImageMenuItem">
-                        <property name="label">gtk-close</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="use-underline">True</property>
-                        <property name="use-stock">True</property>
-                        <signal name="activate" handler="OnCloseActionActivated" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -184,6 +190,30 @@
                         <signal name="activate" handler="OnAnimationsActionActivated" swapped="no"/>
                         <signal name="toggled" handler="OnAnimationsActionActivated" swapped="no"/>
                         <accelerator key="a" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="miscMenuItem">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">_Misc</property>
+                <property name="use-underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <child>
+                      <object class="GtkCheckMenuItem" id="autoAdjustGroupCheckButton">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="tooltip-text" translatable="yes">The subrosia map &amp; dungeons have duplicates in the World tab. Check this box to auto-adjust the group number to its expected value when selecting these rooms.</property>
+                        <property name="label" translatable="yes">Auto adjust group number</property>
+                        <property name="use-underline">True</property>
+                        <property name="active">True</property>
                       </object>
                     </child>
                   </object>
@@ -850,7 +880,7 @@
                         </child>
                         <child>
                           <object class="GtkCheckButton" id="darkenDungeonRoomsCheckbox">
-                            <property name="label" translatable="yes">Darken used dungeon rooms</property>
+                            <property name="label" translatable="yes">Darken used dungeon rooms &amp; duplicates</property>
                             <property name="can-focus">False</property>
                             <property name="receives-default">False</property>
                             <property name="use-underline">True</property>

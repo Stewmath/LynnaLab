@@ -42,7 +42,8 @@ namespace LynnaLab
 
             base.TileDrawer(index, cr);
 
-            if (DarkenUsedDungeonRooms && Project.RoomUsedInDungeon(roomIndex))
+            if (DarkenUsedDungeonRooms &&
+                (Project.RoomUsedInDungeon(roomIndex) || roomIndex != GetRoom(index).ExpectedIndex))
             {
                 cr.SetSourceRGB(0, 0, 0);
                 cr.PaintWithAlpha(0.8);
