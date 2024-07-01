@@ -463,7 +463,33 @@ public class MainWindow
         if (response == ResponseType.Yes)
         {
             CloseProject();
-            Project = new Project(dir, game);
+
+            // Try to load project config
+            ProjectConfig config = ProjectConfig.Load(dir);
+
+            // If not passed on commandline, get game from project config or prompt user
+            if (game == null)
+            {
+                if (config.EditingGame != null && config.EditingGame != "")
+                    game = config.EditingGame;
+                else
+                {
+                    game = PromptForGame();
+                    if (game != null && game.EndsWith("!"))
+                    {
+                        // Save selected game to file
+                        game = game.Substring(0, game.Length-1);
+                        config.SetEditingGame(game);
+                    }
+                }
+
+                if (game == null)
+                    return;
+            }
+
+            Project = new Project(dir, game, config);
+
+            // Project has been loaded, update GUI stuff
 
             eventGroup.Lock();
 
@@ -484,6 +510,34 @@ public class MainWindow
 
             overallEditingContainer.Sensitive = true;
         }
+    }
+
+    /// Ask whether to open Ages or Seasons. Returns string "ages" or "seasons", with an exclamation
+    /// mark if "remember my choice" was checked.
+    string PromptForGame()
+    {
+        Gtk.Dialog d = new Gtk.Dialog("Choose Game", mainWindow, DialogFlags.Modal);
+        d.AddButton("Ages", ResponseType.Yes);
+        d.AddButton("Seasons", ResponseType.No);
+
+        var checkbox = new Gtk.CheckButton("Remember my choice");
+        d.ContentArea.Add(checkbox);
+
+        d.SetSizeRequest(250, 0);
+
+        d.ShowAll();
+        var response = (ResponseType)d.Run();
+        d.Dispose();
+
+        string retval;
+        if (response == ResponseType.Yes)
+            retval = "ages";
+        else if (response == ResponseType.No)
+            retval = "seasons";
+        else
+            return null;
+
+        return retval + (checkbox.Active ? "!" : "");
     }
 
     void SetTileset(Tileset tileset)
@@ -854,7 +908,7 @@ public class MainWindow
 
     protected void OnCloseActionActivated(object sender, EventArgs e)
     {
-        if (AskSave("Save project before closing it") != ResponseType.Cancel)
+        if (AskSave("Save project before closing?") != ResponseType.Cancel)
         {
             CloseProject();
         }

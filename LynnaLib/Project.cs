@@ -33,7 +33,7 @@ namespace LynnaLib
 
         //log4net.Appender.RollingFileAppender logAppender;
 
-        string baseDirectory, configDirectory, logDirectory;
+        string baseDirectory;
 
         Dictionary<string, FileParser> fileParserDictionary = new Dictionary<string, FileParser>();
 
@@ -63,21 +63,20 @@ namespace LynnaLib
         ProjectConfig config;
 
 
-        public Project(string d, string gameToLoad = null)
+        public Project(string d, string gameToLoad, ProjectConfig config)
         {
-            if (gameToLoad == "")
-                gameToLoad = null;
-
-            baseDirectory = d + '/';
-            configDirectory = baseDirectory + "LynnaLab/";
-            logDirectory = configDirectory + "Logs/";
-
-            System.IO.Directory.CreateDirectory(configDirectory);
-            System.IO.Directory.CreateDirectory(logDirectory);
+            GameString = gameToLoad;
+            baseDirectory = d;
+            if (!baseDirectory.EndsWith("/"))
+                baseDirectory += "/";
+            this.config = config;
 
             // logAppender can be used to output logs to txt files, but I never actually use this,
             // and it wasn't actually working at the time I commented it out.
             /*
+            logDirectory = configDirectory + "Logs/";
+            System.IO.Directory.CreateDirectory(logDirectory);
+
             logAppender = new log4net.Appender.RollingFileAppender();
             logAppender.AppendToFile = true;
             logAppender.Layout = new log4net.Layout.PatternLayout(
@@ -92,21 +91,6 @@ namespace LynnaLib
             */
 
             log.Info("Opening project at \"" + baseDirectory + "\".");
-
-            string configFile = configDirectory + "config.yaml";
-            try
-            {
-                config = ProjectConfig.Load(File.ReadAllText(configFile));
-            }
-            catch (FileNotFoundException)
-            {
-                log.Warn("Couldn't open config file '" + configFile + "'.");
-                config = new ProjectConfig();
-            }
-
-            if (gameToLoad != null)
-                config.EditingGame = gameToLoad;
-
 
             // Before parsing anything, create the "ROM_AGES" or "ROM_SEASONS" definition for ifdefs
             // to work
@@ -252,7 +236,7 @@ namespace LynnaLib
         // The string to use for navigating game-specific folders in the disassembly
         public string GameString
         {
-            get { return Config.EditingGame; }
+            get; private set;
         }
 
         public Game Game
