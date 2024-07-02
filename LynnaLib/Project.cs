@@ -96,6 +96,9 @@ namespace LynnaLib
             // to work
             definesDictionary.Add("ROM_" + GameString.ToUpper(), "");
 
+            // version.s contains some important defines that should be visible everywhere
+            GetFileParser("constants/" + GameString + "/version.s");
+
             // Parse everything in constants/
             LoadFilesRecursively("constants/");
 
