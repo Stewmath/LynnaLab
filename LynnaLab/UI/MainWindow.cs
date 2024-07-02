@@ -846,6 +846,7 @@ public class MainWindow
     {
         if (Project != null)
         {
+            QuickstartData.enabled = false;
             SetRoom(null, 0);
             worldMinimap.SetMap(null);
             dungeonMinimap.SetMap(null);

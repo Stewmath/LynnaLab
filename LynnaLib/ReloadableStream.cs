@@ -37,4 +37,11 @@ public abstract class ReloadableStream : Stream
 
     // Function which handles reloading the data
     protected abstract void Reload();
+
+
+    public override void Close()
+    {
+        watcher.Dispose();
+        base.Close();
+    }
 }
