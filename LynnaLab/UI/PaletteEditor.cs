@@ -105,11 +105,14 @@ namespace LynnaLab
                 }
             }
 
+            grid.Halign = Gtk.Align.Center;
+
             Gtk.Frame outsideFrame = new Gtk.Frame();
             outsideFrame.Add(grid);
             outsideFrame.Label = data.PointerName
                         + " [" + (data.PaletteType == PaletteType.Background ? "BG" : "OBJ") + "]";
             outsideFrame.LabelXalign = 0.5f;
+            outsideFrame.Halign = Gtk.Align.Center;
 
             return outsideFrame;
         }

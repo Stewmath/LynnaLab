@@ -371,10 +371,9 @@ namespace LynnaLab
                     {
                         HandleTileGridAction(act, GetGridIndex(x, y), "click");
 
-                        if (act.mod.HasFlag(MouseModifier.Drag))
+                        if (act.mod.HasFlag(MouseModifier.Drag) && activeAction == null)
                         {
                             activeAction = act;
-                            break; // Don't try to do more than one action
                         }
                     }
                 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Text;
-using Gtk;
 
 using LynnaLib;
 using Util;
@@ -23,6 +22,8 @@ namespace LynnaLab
         Gtk.Box tilesetVreContainer, tilesetViewerContainer, subTileContainer, subTileGfxContainer;
         Gtk.Box paletteEditorContainer;
         Gtk.Label paletteFrameLabel;
+        Gtk.ToggleButton paletteBrushModeButton;
+        Gtk.SpinButton paletteBrushSpinButton;
         PriorityStatusbar statusbar1;
         ValueReferenceEditor tilesetVre;
 
@@ -30,7 +31,7 @@ namespace LynnaLab
 
         public TilesetEditor(Tileset t)
         {
-            Gtk.Builder builder = new Builder();
+            var builder = new Gtk.Builder();
             builder.AddFromString(Helper.ReadResourceFile("LynnaLab.Glade.TilesetEditor.ui"));
             builder.Autoconnect(this);
 
@@ -43,15 +44,18 @@ namespace LynnaLab
             subTileGfxContainer = (Gtk.Box)builder.GetObject("subTileGfxContainer");
             paletteEditorContainer = (Gtk.Box)builder.GetObject("paletteEditorContainer");
             paletteFrameLabel = (Gtk.Label)builder.GetObject("paletteFrameLabel");
+            paletteBrushModeButton = (Gtk.ToggleButton)builder.GetObject("paletteBrushModeButton");
+            paletteBrushSpinButton = (Gtk.SpinButton)builder.GetObject("paletteBrushSpinButton");
 
             base.Child = (Gtk.Widget)builder.GetObject("TilesetEditor");
 
 
             tilesetviewer1 = new TilesetViewer();
-            tilesetviewer1.AddTileSelectedHandler(delegate (object sender, int index)
-            {
-                subTileEditor.SetTileIndex(index);
-            });
+            tilesetviewer1.Scale = 2;
+
+            SetupMouseHandlers();
+
+
             tilesetViewerContainer.Add(tilesetviewer1);
 
             subTileGfxViewer = new GfxViewer();
@@ -71,6 +75,9 @@ namespace LynnaLab
 
             tilesetSpinButton = new SpinButtonHexadecimal();
             tilesetSpinButtonContainer.Add(tilesetSpinButton);
+
+            paletteBrushSpinButton.Adjustment.Upper = 7;
+            paletteBrushSpinButton.Sensitive = false;
 
             if (t.Project.Game == Game.Seasons)
             {
@@ -121,6 +128,12 @@ namespace LynnaLab
         }
 
 
+        bool PaletteBrushMode
+        {
+            get { return paletteBrushModeButton.Active; }
+        }
+
+
         void TilesetChanged(object sender, EventArgs args)
         {
             SetTileset(Project.GetTileset(tilesetSpinButton.ValueAsInt, Season));
@@ -141,6 +154,32 @@ namespace LynnaLab
             paletteEditor.PaletteHeaderGroup = group;
             if (group != null)
                 paletteFrameLabel.Text = group.ConstantAliasName;
+        }
+
+        void OnPaletteBrushModeToggled(object sender, EventArgs args)
+        {
+            if (PaletteBrushMode)
+            {
+                // Hackish way to allow individual access to the subtiles. This only works because
+                // the TilesetViewer class does not draw each tile individually.
+                tilesetviewer1.TileWidth = 8;
+                tilesetviewer1.TileHeight = 8;
+                tilesetviewer1.Width = 32;
+                tilesetviewer1.Height = 32;
+
+                tilesetviewer1.Selectable = false;
+                paletteBrushSpinButton.Sensitive = true;
+            }
+            else
+            {
+                tilesetviewer1.TileWidth = 16;
+                tilesetviewer1.TileHeight = 16;
+                tilesetviewer1.Width = 16;
+                tilesetviewer1.Height = 16;
+
+                tilesetviewer1.Selectable = true;
+                paletteBrushSpinButton.Sensitive = false;
+            }
         }
 
         void SetTileset(Tileset t)
@@ -219,8 +258,85 @@ namespace LynnaLab
             Parent.Dispose();
         }
 
-        // Draws the tile with the ability to select the quadrant to change the
-        // properties.
+        void SetupMouseHandlers()
+        {
+            // Selected a tile
+            tilesetviewer1.AddTileSelectedHandler(delegate (object sender, int index)
+            {
+                if (!PaletteBrushMode)
+                {
+                    subTileEditor.SetTileIndex(index);
+                }
+            });
+
+            var convertSubtileCoordinate = (int x, int y) =>
+            {
+                // Assuming the x/y coordinates are measured in subtiles, so 32 per row/column
+                // instead of 16
+                int tileIndex = (y / 2 * 16) + (x / 2);
+                int subTileX = x % 2;
+                int subTileY = y % 2;
+                return (tileIndex, subTileX, subTileY);
+            };
+
+            var assignPalette = (int x, int y) =>
+            {
+                var (tileIndex, subTileX, subTileY) = convertSubtileCoordinate(x, y);
+
+                byte flags = Tileset.GetSubTileFlags(tileIndex, subTileX, subTileY);
+                flags = (byte)((flags & ~7) | (paletteBrushSpinButton.ValueAsInt & 7));
+                Tileset.SetSubTileFlags(tileIndex, subTileX, subTileY, flags);
+            };
+
+            // Clicked/dragged on a tile for PaletteBrushMode
+            tilesetviewer1.AddMouseAction(
+                MouseButton.LeftClick, MouseModifier.None | MouseModifier.Drag, GridAction.Callback,
+                (sender, args) =>
+                {
+                    if (!PaletteBrushMode)
+                        return;
+
+                    int x = args.selectedIndex % tilesetviewer1.Width;
+                    int y = args.selectedIndex / tilesetviewer1.Height;
+                    assignPalette(x, y);
+                });
+
+            // Palette copy with right click
+            tilesetviewer1.AddMouseAction(
+                MouseButton.RightClick, MouseModifier.Any, GridAction.Callback,
+                (sender, args) =>
+                {
+                    if (!PaletteBrushMode)
+                        return;
+
+                    int x = args.selectedIndex % tilesetviewer1.Width;
+                    int y = args.selectedIndex / tilesetviewer1.Height;
+                    var (tileIndex, subTileX, subTileY) = convertSubtileCoordinate(x, y);
+                    int palette = Tileset.GetSubTileFlags(tileIndex, subTileX, subTileY) & 7;
+                    paletteBrushSpinButton.Value = palette;
+                });
+
+            // Rectangle selection with ctrl+click
+            tilesetviewer1.AddMouseAction(
+                MouseButton.LeftClick,
+                MouseModifier.Ctrl | MouseModifier.Drag,
+                GridAction.SelectRangeCallback,
+                (sender, args) =>
+                {
+                    if (!PaletteBrushMode)
+                        return;
+
+                    args.Foreach((x, y) =>
+                    {
+                        assignPalette(x, y);
+                    });
+                });
+        }
+
+
+
+        /// Subclass: Draws the tile with the ability to select the quadrant to change the
+        /// properties.
         class SubTileViewer : TileGridViewer
         {
 
@@ -434,13 +550,13 @@ namespace LynnaLab
             SubTileCollisionEditor subTileCollisionEditor;
             TilesetEditor tilesetEditor;
 
-            SpinButton collisionSpinButton;
+            Gtk.SpinButton collisionSpinButton;
 
-            SpinButton subTileSpinButton;
-            SpinButton paletteSpinButton;
-            CheckButton flipXCheckButton, flipYCheckButton;
-            CheckButton priorityCheckButton;
-            CheckButton bankCheckButton;
+            Gtk.SpinButton subTileSpinButton;
+            Gtk.SpinButton paletteSpinButton;
+            Gtk.CheckButton flipXCheckButton, flipYCheckButton;
+            Gtk.CheckButton priorityCheckButton;
+            Gtk.CheckButton bankCheckButton;
 
             public SubTileEditor(TilesetEditor tilesetEditor)
             {
@@ -448,7 +564,7 @@ namespace LynnaLab
 
                 Gtk.Box tmpBox;
 
-                Gtk.Box vbox = new Box(Gtk.Orientation.Vertical, 2);
+                Gtk.Box vbox = new Gtk.Box(Gtk.Orientation.Vertical, 2);
                 vbox.Spacing = 10;
 
                 // Top row: 2 images of the tile, one for selecting, one to show
@@ -501,7 +617,7 @@ namespace LynnaLab
                 {
                     PushFlags();
                 };
-                paletteSpinButton = new SpinButton(0, 7, 1);
+                paletteSpinButton = new Gtk.SpinButton(0, 7, 1);
                 paletteSpinButton.ValueChanged += delegate (object sender, EventArgs e)
                 {
                     PushFlags();
