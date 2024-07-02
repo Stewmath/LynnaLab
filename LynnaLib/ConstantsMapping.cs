@@ -141,7 +141,7 @@ namespace LynnaLib
                 return;
             if (byteToString.ContainsKey(value))
             {
-                log.Warn(string.Format("ConstantsMapping already contained value ${0:x}", value));
+                log.Warn(string.Format($"Key {key} already existed in ConstantsMapping as {byteToString[value].str}."));
                 return;
             }
             if (stringToByte.ContainsKey(key))
