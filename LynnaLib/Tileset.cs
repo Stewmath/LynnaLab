@@ -383,7 +383,7 @@ namespace LynnaLib
                         endBit: 6,
                         type: DataValueType.ByteBits,
                         tooltip: ("Determines most collision behaviour aside from solidity (ie. water, holes). The meaning of the values differ between ages and seasons.\n\n"
-                                       + (Project.GameString == "Seasons"
+                                       + (Project.Game == Game.Seasons
                                        ? "0: Overworld\n1: Indoors\n2: Maku Tree\n3: Indoors\n4: Dungeons\n5: Sidescrolling"
                                        : "0: Overworld\n1: Indoors\n2: Dungeons\n3: Sidescrolling\n4: Underwater\n5: Unused?")))
             });
