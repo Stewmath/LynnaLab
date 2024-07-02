@@ -7,7 +7,7 @@ namespace LynnaLib
 {
     public enum ObjectType
     {
-        Condition = 0, // TODO: rename
+        Condition = 0,
         Interaction,
         Pointer,
         BeforeEvent,
@@ -74,7 +74,11 @@ namespace LynnaLib
             {
                 case ObjectType.Condition:
                     return new List<ValueReference> { // Condition
-                    new DataValueReference(data,"Condition",0,DataValueType.Byte),
+                    //new DataValueReference(data,"Condition",0,DataValueType.Byte,editable:false),
+                    new DataValueReference(data,"Spring",0,DataValueType.ByteBit,0,0),
+                    new DataValueReference(data,"Summer",0,DataValueType.ByteBit,1,1),
+                    new DataValueReference(data,"Autumn",0,DataValueType.ByteBit,2,2),
+                    new DataValueReference(data,"Winter",0,DataValueType.ByteBit,3,3),
                 };
                 case ObjectType.Interaction:
                     return new List<ValueReference> { // Interaction
@@ -98,7 +102,7 @@ namespace LynnaLib
                 };
                 case ObjectType.RandomEnemy:
                     return new List<ValueReference> { // Random Enemy
-                    new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
+                    //new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
                     new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0,
                             tooltip: "Always respawn when you re-enter the room"),
                     new DataValueReference(data,"Uncounted",0,DataValueType.ByteBit,1,1,
@@ -110,7 +114,7 @@ namespace LynnaLib
                 };
                 case ObjectType.SpecificEnemyA:
                     return new List<ValueReference> { // Specific Enemy A
-                    new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
+                    //new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
                     new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0,
                             tooltip: "Always respawn when you re-enter the room"),
                     new DataValueReference(data,"Uncounted",0,DataValueType.ByteBit,1,1,
@@ -138,7 +142,7 @@ namespace LynnaLib
                 };
                 case ObjectType.ItemDrop:
                     return new List<ValueReference> { // Item Drop
-                    new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
+                    //new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
                     new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0,
                             tooltip: "Always respawn when you re-enter the room"),
                     new DataValueReference(data,"Item",1,DataValueType.Byte,constantsMappingString:"ItemDropMapping"),
