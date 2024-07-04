@@ -27,8 +27,9 @@ namespace LynnaLib
     //     their room number. This is almost always true. There is one case in Seasons
     //     ("group5Map10EnemyData"; fairy fountains) which cannot follow this rule because multiple
     //     rooms use the same "obj_Pointer" opcode. As a result, LynnaLib cannot separate the data
-    //     properly between rooms. I am planning to fix this by changing the disassembly rather than
-    //     LynnaLib to accomodate this.
+    //     properly between rooms. The hack-base branch of the disassembly solves this by fully
+    //     separating the data; however, on the master branch, edits to the objects in one room will
+    //     affect others as well.
     //
     // Other notes:
     //   - This class makes no guarantees about the ordering of pointers. This probably isn't very
