@@ -130,26 +130,26 @@ namespace LynnaLib
                     "TRANSITION_DEST_");
             InteractionMapping = new ConstantsMapping(
                     GetFileParser("constants/interactionTypes.s"),
-                    "INTERACID_",
+                    "INTERAC_",
                     alphabetical: true);
             EnemyMapping = new ConstantsMapping(
                     GetFileParser("constants/enemyTypes.s"),
-                    "ENEMYID_",
+                    "ENEMY_",
                     alphabetical: true);
             PartMapping = new ConstantsMapping(
                     GetFileParser("constants/partTypes.s"),
-                    "PARTID_",
+                    "PART_",
                     alphabetical: true);
             ItemMapping = new ConstantsMapping(
                     GetFileParser("constants/itemTypes.s"),
-                    "ITEMID_",
+                    "ITEM_",
                     alphabetical: true);
             SeasonMapping = new ConstantsMapping(
                     GetFileParser("constants/seasons.s"),
                     "SEASON_");
             SpecialObjectMapping = new ConstantsMapping(
                     GetFileParser("constants/specialObjectTypes.s"),
-                    "SPECIALOBJECTID_");
+                    "SPECIALOBJECT_");
             ItemDropMapping = new ConstantsMapping(
                     GetFileParser("constants/itemDrops.s"),
                     "ITEM_DROP_");
