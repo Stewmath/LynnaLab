@@ -4,7 +4,7 @@ namespace LynnaLib
 {
 
     /// <summary>
-    ///  An interaction object. The "index" is the full ID (2 bytes, including subid).
+    ///  An enemy object. The "index" is the full ID (2 bytes, including subid).
     /// </summary>
     public class EnemyObject : GameObject
     {
@@ -20,6 +20,9 @@ namespace LynnaLib
         {
             try
             {
+                if ((i >> 8) >= 0x80)
+                    throw new ProjectErrorException($"Invalid enemy index {i:x2}");
+
                 objectData = p.GetData("enemyData", ID * 4);
 
                 _objectGfxHeaderIndex = (byte)objectData.GetIntValue(0);

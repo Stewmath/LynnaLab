@@ -131,18 +131,26 @@ namespace LynnaLib
 
         public GameObject GetGameObject()
         {
+            int id = GetIntValue("ID");
+            int subid = GetIntValue("SubID");
+
             if (GetObjectType() == ObjectType.Interaction)
             {
-                return Project.GetIndexedDataType<InteractionObject>((GetIntValue("ID") << 8) | GetIntValue("SubID"));
+                return Project.GetIndexedDataType<InteractionObject>((id << 8) | subid);
             }
-            else if (GetObjectType() == ObjectType.RandomEnemy || GetObjectType() == ObjectType.SpecificEnemyA
-                    || GetObjectType() == ObjectType.SpecificEnemyB)
+            else if (GetObjectType() == ObjectType.RandomEnemy
+                     || GetObjectType() == ObjectType.SpecificEnemyA
+                     || GetObjectType() == ObjectType.SpecificEnemyB)
             {
-                return Project.GetIndexedDataType<EnemyObject>((GetIntValue("ID") << 8) | GetIntValue("SubID"));
+                if (id >= 0x80)
+                    return null;
+                return Project.GetIndexedDataType<EnemyObject>((id << 8) | subid);
             }
             else if (GetObjectType() == ObjectType.Part)
             {
-                return Project.GetIndexedDataType<PartObject>((GetIntValue("ID") << 8) | GetIntValue("SubID"));
+                if (id >= 0x80)
+                    return null;
+                return Project.GetIndexedDataType<PartObject>((id << 8) | subid);
             }
             // TODO: other types
             return null;
