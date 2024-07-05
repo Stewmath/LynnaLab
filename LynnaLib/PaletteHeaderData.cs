@@ -72,14 +72,15 @@ namespace LynnaLib
                 dest = -1;
             }
 
-            if (dest != -1)
+            string labelName = GetValue(2);
+            if (dest != -1 || !Project.HasLabel(labelName))
                 IsResolvable = false;
             else
             {
                 IsResolvable = true;
-                paletteDataFile = Project.GetFileWithLabel(GetValue(2));
-                if (!(paletteDataFile.GetData(GetValue(2)) is RgbData))
-                    throw new Exception("Label \"" + GetValue(2) + "\" was expected to reference data defined with m_RGB16");
+                paletteDataFile = Project.GetFileWithLabel(labelName);
+                if (!(paletteDataFile.GetData(labelName) is RgbData))
+                    throw new Exception("Label \"" + labelName + "\" was expected to reference data defined with m_RGB16");
             }
 
             if (IsResolvable)

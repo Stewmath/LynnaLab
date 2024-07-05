@@ -725,6 +725,8 @@ namespace LynnaLib
         }
 
         // TODO: finish arithmetic parsing
+        //
+        // Throws FormatException on error.
         public int EvalToInt(string val)
         {
             val = Eval(val).Trim();
