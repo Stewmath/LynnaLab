@@ -42,7 +42,7 @@ namespace LynnaLab
             // Create SubID table
             if (subidEntries.Count > 0)
             {
-                Gtk.Label valuesLabel = new Gtk.Label("\nValues:");
+                Gtk.Label valuesLabel = new Gtk.Label("\nSubID Values:");
                 valuesLabel.UseUnderline = false;
                 valuesLabel.Xalign = 0;
                 VBox.PackStart(valuesLabel, false, false, 0);
