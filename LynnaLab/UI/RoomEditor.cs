@@ -705,7 +705,7 @@ namespace LynnaLab
                             addWarpComponent(0, 16 * 13, Room.Width * 16, 32);
                         }
                     }
-                    else if (warp.WarpSourceType == WarpSourceType.Pointed)
+                    else if (warp.WarpSourceType == WarpSourceType.Position)
                     {
                         addWarpComponent(warp.SourceX * TileWidth, warp.SourceY * TileHeight, TileWidth, TileHeight);
                     }
@@ -1012,7 +1012,7 @@ namespace LynnaLab
             }
             public override bool HasXY
             {
-                get { return warp.WarpSourceType == WarpSourceType.Pointed; }
+                get { return warp.WarpSourceType == WarpSourceType.Position; }
             }
             public override bool HasShortenedXY
             {
@@ -1220,7 +1220,7 @@ namespace LynnaLab
                 if (chest.Treasure == null)
                     return;
                 GameObject obj = Project.GetIndexedDataType<InteractionObject>(
-                        Project.EvalToInt("INTERACID_TREASURE") * 256 + chest.Treasure.Graphics);
+                        Project.EvalToInt("INTERAC_TREASURE") * 256 + chest.Treasure.Graphics);
                 try
                 {
                     obj.DefaultAnimation.GetFrame(0).Draw(cr, X, Y);

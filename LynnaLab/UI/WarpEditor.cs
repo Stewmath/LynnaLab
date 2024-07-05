@@ -161,7 +161,7 @@ namespace LynnaLab
 
             Gtk.Box hbox = new Gtk.Box(Gtk.Orientation.Horizontal, 0);
 
-            if (warp.WarpSourceType == WarpSourceType.Pointed)
+            if (warp.WarpSourceType == WarpSourceType.Position)
                 warpSourceTypeLabel.Text = "<b>Type</b>: Position Warp";
             else
                 warpSourceTypeLabel.Text = "<b>Type</b>: Screen Warp";
@@ -244,7 +244,7 @@ namespace LynnaLab
 
                     item.Activated += (sender, args) =>
                     {
-                        SelectedIndex = WarpGroup.AddWarp(WarpSourceType.Pointed);
+                        SelectedIndex = WarpGroup.AddWarp(WarpSourceType.Position);
                     };
                 }
 

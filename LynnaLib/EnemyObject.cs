@@ -40,14 +40,28 @@ namespace LynnaLib
                 {
                     Data subidData = Project.GetData(objectData.GetValue(2));
                     int count = SubID;
-                    while (count > 0 && (subidData.GetIntValue(0) & 0x80) == 0x80)
+
+                    // If this points to more data, follow the pointer
+                    while (count > 0)
                     {
-                        subidData = subidData.NextData;
-                        subidData = subidData.NextData;
                         count--;
+                        var next = subidData.NextData;
+                        if (next.CommandLowerCase == "m_enemysubiddata")
+                        {
+                            subidData = next;
+                            continue;
+                        }
+                        else if (next.CommandLowerCase == "m_enemysubiddataend")
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            throw new ProjectErrorException("Enemy Subid data ended unexpectedly");
+                        }
                     }
                     lookupIndex = (byte)subidData.GetIntValue(0);
-                    b3 = (byte)(subidData.NextData.GetIntValue(0));
+                    b3 = (byte)(subidData.GetIntValue(1));
                 }
 
                 _tileIndexBase = (byte)((b3 & 0xf) * 2);

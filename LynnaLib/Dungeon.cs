@@ -46,7 +46,7 @@ namespace LynnaLib
             string label = pointerData.GetValue(0);
             dataStart = dungeonDataFile.GetData(label);
 
-            _mainGroup = GetDataIndex(0) - Project.EvalToInt(">wGroup4Flags") + 4;
+            _mainGroup = GetDataIndex(0) - Project.EvalToInt(">wGroup4RoomFlags") + 4;
 
             DetermineRoomsUsed();
             GenerateValueReferenceGroup();

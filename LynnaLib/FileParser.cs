@@ -33,9 +33,15 @@ namespace LynnaLib
 
         // List of commands thas should be interpreted as "Data" instances (not all are listed here)
         readonly IReadOnlyList<Command> genericCommandList = new List<Command> {
+            new Command("m_chestdata", 3, size: 4),
+            new Command("m_continuebithelpersetlast", 0, size: 0),
+            new Command("m_continuebithelperunsetlast", 0, size: 0),
+            new Command("m_enemysubiddata", 2, size: 2),
+            new Command("m_enemysubiddataend", 0, size: 0),
+            new Command("m_interactionsubiddata", 3, size: 3),
+            new Command("m_interactionsubiddataend", 0, size: 0),
             new Command("m_treasurepointer", 1, size: 4),
             new Command("m_treasuresubid", 5, size: 4),
-            new Command("m_chestdata", 3, size: 4),
         };
 
         private Project _project;

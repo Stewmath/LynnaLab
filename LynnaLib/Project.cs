@@ -119,50 +119,50 @@ namespace LynnaLib
                     "PALH_",
                     alphabetical: true);
             MusicMapping = new ConstantsMapping(
-                    GetFileParser("constants/music.s"),
+                    GetFileParser("constants/common/music.s"),
                     "MUS_",
                     alphabetical: true);
             SourceTransitionMapping = new ConstantsMapping(
-                    GetFileParser("constants/transitions.s"),
+                    GetFileParser("constants/common/transitions.s"),
                     "TRANSITION_SRC_");
             DestTransitionMapping = new ConstantsMapping(
-                    GetFileParser("constants/transitions.s"),
+                    GetFileParser("constants/common/transitions.s"),
                     "TRANSITION_DEST_");
             InteractionMapping = new ConstantsMapping(
-                    GetFileParser("constants/interactionTypes.s"),
+                    this,
                     "INTERAC_",
                     alphabetical: true);
             EnemyMapping = new ConstantsMapping(
-                    GetFileParser("constants/enemyTypes.s"),
+                    this,
                     "ENEMY_",
                     alphabetical: true);
             PartMapping = new ConstantsMapping(
-                    GetFileParser("constants/partTypes.s"),
+                    this,
                     "PART_",
                     alphabetical: true);
             ItemMapping = new ConstantsMapping(
-                    GetFileParser("constants/itemTypes.s"),
+                    GetFileParser("constants/common/items.s"),
                     "ITEM_",
                     alphabetical: true);
             SeasonMapping = new ConstantsMapping(
-                    GetFileParser("constants/seasons.s"),
+                    GetFileParser("constants/seasons/seasons.s"),
                     "SEASON_");
             SpecialObjectMapping = new ConstantsMapping(
-                    GetFileParser("constants/specialObjectTypes.s"),
+                    GetFileParser("constants/common/specialObjects.s"),
                     "SPECIALOBJECT_");
             ItemDropMapping = new ConstantsMapping(
-                    GetFileParser("constants/itemDrops.s"),
+                    GetFileParser("constants/common/itemDrops.s"),
                     "ITEM_DROP_");
             TreasureMapping = new ConstantsMapping(
-                    GetFileParser("constants/treasure.s"),
+                    GetFileParser("constants/common/treasure.s"),
                     "TREASURE_",
                     maxValue: 256,
                     alphabetical: true);
             TreasureSpawnModeMapping = new ConstantsMapping(
-                    GetFileParser("constants/treasureSpawnModes.s"),
+                    GetFileParser("constants/common/treasureSpawnModes.s"),
                     "TREASURE_SPAWN_MODE_");
             TreasureGrabModeMapping = new ConstantsMapping(
-                    GetFileParser("constants/treasureSpawnModes.s"),
+                    GetFileParser("constants/common/treasureSpawnModes.s"),
                     "TREASURE_GRAB_MODE_");
 
             // Parse everything in data/
@@ -934,6 +934,11 @@ namespace LynnaLib
         {
             FileParser parser = fileParserDictionary[filename];
             parser.SetDefinition(constant, value);
+        }
+
+        public Dictionary<string, string> GetDefinesDictionary()
+        {
+            return definesDictionary;
         }
 
 

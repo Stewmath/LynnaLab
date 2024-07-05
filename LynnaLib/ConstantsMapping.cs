@@ -82,6 +82,14 @@ namespace LynnaLib
                     )
         { }
 
+        public ConstantsMapping(Project p, string prefix, int maxValue = -1, bool alphabetical=false)
+            : this(p,
+                   p.GetDefinesDictionary(),
+                   new string[] { prefix },
+                   maxValue,
+                   alphabetical)
+        { }
+
         public ConstantsMapping(Project p,
                 Dictionary<string, string> definesDictionary,
                 string[] _prefixes,

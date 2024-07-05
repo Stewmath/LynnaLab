@@ -12,10 +12,10 @@ namespace LynnaLib
     // Assertions:
     // - A full-screen warp is not used with "specific-position" warps. (Whichever comes first takes
     //   precedence.)
-    // - If a "PointerWarp" referencing "PointedWarps" is used, no warp data for the room is defined
+    // - If a "PointerWarp" referencing "PositionWarps" is used, no warp data for the room is defined
     //   after that point. (The game would not see it.)
     // - Each warp type is only used in its appropriate location (StandardWarp and PointerWarp at
-    //   the top level, PointedWarp only as the data pointed to by a PointerWarp).
+    //   the top level, PositionWarp only as the data pointed to by a PointerWarp).
     public class WarpGroup : ProjectIndexedDataType
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -49,7 +49,7 @@ namespace LynnaLib
             get { return Project.GetIndexedDataType<Room>(Index); }
         }
 
-        WarpSourceData EndWarp { get; set; } // "m_WarpDataEnd" (shouldn't be null)
+        WarpSourceData EndWarp { get; set; } // "m_WarpListEnd" opcode for top level data (shouldn't be null)
         WarpSourceData PointerWarp { get; set; } // "m_PointerWarp" (can be null but should be unique)
         WarpSourceData LastStandardWarp { get; set; } // New data added goes after this (can be null)
 
@@ -86,7 +86,7 @@ namespace LynnaLib
             PointerWarp = null;
             LastStandardWarp = null;
 
-            while (warpData != null && warpData.WarpSourceType != WarpSourceType.End)
+            while (warpData != null && !warpData.IsEndOpcode)
             {
                 if (Map == warpData.Map)
                 {
@@ -101,9 +101,9 @@ namespace LynnaLib
                         WarpSourceData pWarp = warpData.GetPointedWarp();
                         while (pWarp != null)
                         {
-                            if (pWarp.WarpSourceType == WarpSourceType.End)
+                            if (pWarp.IsEndOpcode)
                                 break;
-                            if (pWarp.WarpSourceType != WarpSourceType.Pointed)
+                            if (pWarp.WarpSourceType != WarpSourceType.Position)
                                 throw new AssemblyErrorException(string.Format(
                                             "Unexpected warp type '{0}' in {1}!",
                                             pWarp.WarpSourceType, warpData.PointerString));
@@ -168,7 +168,7 @@ namespace LynnaLib
 
         // Returns a new list of all the WarpSourceData objects for the given room.
         // This does not return "PointerWarp" types. It instead traverses them and returns the
-        // resulting PointedWarps.
+        // resulting PositionWarps.
         public ReadOnlyCollection<Warp> GetWarps()
         {
             return new ReadOnlyCollection<Warp>(warpList);
@@ -187,10 +187,10 @@ namespace LynnaLib
         // Adds the given data to the group and inserts the data into the FileParser.
         // If "data" is of type "WarpSourceType.StandardWarp", this gets inserted before any
         // "PointerWarp" if such a warp exists.
-        // If "data" is of type "WarpSourceType.PointedWarp", this gets inserted at the end of the
+        // If "data" is of type "WarpSourceType.PositionWarp", this gets inserted at the end of the
         // "PointerWarp" list; it automatically creates a "PointerWarp" if necessary.
         // For any other warp type, this throws an ArgumentException.
-        // The "room" argument is necessary for PointedWarps (which don't have a field for it).
+        // The "room" argument is necessary for PositionWarps (which don't have a field for it).
         // Returns the index at which the new warp was placed.
         public int AddWarp(WarpSourceType type)
         {
@@ -221,10 +221,8 @@ namespace LynnaLib
                 data.Map = Map;
                 InsertInMainList(data);
             }
-            else if (type == WarpSourceType.Pointed)
+            else if (type == WarpSourceType.Position)
             {
-                data.Opcode = 0x80; // Set this as the last pointed warp
-
                 FileComponent pointedDataInsertPosition;
                 if (PointerWarp == null)
                 {
@@ -235,7 +233,7 @@ namespace LynnaLib
                             spacing: new List<string> { "\t", "  " });
                     PointerWarp.Map = Map;
 
-                    // Create a unique pointer after m_WarpSourcesEnd
+                    // Create a unique pointer after top-level data end
                     string name = Project.GetUniqueLabelName(
                             String.Format("group{0}Room{1:x2}WarpSources", Index >> 8, Index & 0xff));
                     PointerWarp.PointerString = name;
@@ -243,15 +241,26 @@ namespace LynnaLib
 
                     InsertInMainList(PointerWarp);
 
-                    // Insert label after m_WarpSourcesEnd
+                    // Insert label after top-level data end
                     FileParser.InsertComponentAfter(EndWarp, newLabel);
+
+                    // Extra spacing
+                    FileParser.InsertParseableTextAfter(EndWarp, new string[] { "" });
+
+                    // Insert m_WarpListEndNoDefault opcode
+                    var endOpcode = new WarpSourceData(Project,
+                            command: WarpSourceData.WarpCommands[(int)WarpSourceType.EndNoDefault],
+                            values: WarpSourceData.DefaultValues[(int)WarpSourceType.EndNoDefault],
+                            parser: FileParser,
+                            spacing: new List<string> { "\t" });
+                    FileParser.InsertComponentAfter(newLabel, endOpcode);
+
                     pointedDataInsertPosition = newLabel;
                 }
                 else
                 { // Already exists, jump to the end of the pointed warp list
-                    var lastPointedWarp = PointerWarp.TraversePointedChain(PointerWarp.GetPointedChainLength() - 1);
-                    lastPointedWarp.Opcode &= 0x7f; // Unset the "stop pointer chain" bit
-                    pointedDataInsertPosition = lastPointedWarp;
+                    var lastPositionWarp = PointerWarp.TraversePointedChain(PointerWarp.GetNumPointedWarps() - 1);
+                    pointedDataInsertPosition = lastPositionWarp;
                 }
 
                 FileParser.InsertComponentAfter(pointedDataInsertPosition, data);
@@ -278,7 +287,7 @@ namespace LynnaLib
             return 0;
         }
 
-        // Similar to above, this only supports removing StandardWarps or PointedWarps (the rest is
+        // Similar to above, this only supports removing StandardWarps or PositionWarps (the rest is
         // handled automatically).
         public void RemoveWarp(Warp warp)
         {
@@ -289,20 +298,27 @@ namespace LynnaLib
             {
                 data.Detach();
             }
-            else if (data.WarpSourceType == WarpSourceType.Pointed)
+            else if (data.WarpSourceType == WarpSourceType.Position)
             {
                 if (PointerWarp == null)
                     throw new ArgumentException("WarpGroup doesn't contain the data to remove?");
 
-                if (PointerWarp.GetPointedChainLength() == 1)
+                // Is this the only PositionWarp that this PointerWarp is referencing? If so, delete
+                // all the data.
+                if (PointerWarp.GetNumPointedWarps() == 1)
                 {
-                    // Delete label & PointerWarp (do this before deleting its last PointedWarp,
-                    // otherwise it'll start reading subsequent data and get an incorrect count)
+                    // Delete label
                     fileParser.RemoveFileComponent(Project.GetLabel(PointerWarp.PointerString));
+                    // Delete PointerWarp (do this before deleting its last PositionWarp, otherwise
+                    // it'll start reading subsequent data and get an incorrect count)
                     PointerWarp.Detach();
+                    // Delete end opcode
+                    data.NextData.Detach();
                 }
 
+                // Delete PositionWarp
                 data.Detach();
+
                 PointerWarp = null;
             }
             else

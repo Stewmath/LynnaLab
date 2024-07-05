@@ -26,10 +26,24 @@ namespace LynnaLib
                     objectData = p.GetData(label);
 
                     int count = SubID;
-                    while (count > 0 && (objectData.GetIntValue(1) & 0x80) == 0)
+                    while (count > 0)
                     {
                         count--;
-                        objectData = objectData.NextData;
+                        var next = objectData.NextData;
+                        if (next.CommandLowerCase == "m_interactionsubiddata")
+                        {
+                            objectData = next;
+                            continue;
+                        }
+                        else if (next.CommandLowerCase == "m_interactionsubiddataend"
+                                 || next.CommandLowerCase == "m_continuebithelperunsetlast")
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            throw new ProjectErrorException("Interaction Subid data ended unexpectedly");
+                        }
                     }
                 }
 

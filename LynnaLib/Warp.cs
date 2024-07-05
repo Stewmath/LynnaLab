@@ -132,16 +132,6 @@ namespace LynnaLib
             }
         }
 
-        public bool HasEdgeWarp
-        {
-            get { return (Opcode & 0x0f) != 0; }
-        }
-
-        int Opcode
-        {
-            get { return SourceData.Opcode; }
-        }
-
         // Propreties from warp destination
 
         public int DestRoomIndex
@@ -248,14 +238,6 @@ namespace LynnaLib
 
             ValueReference vref;
 
-            vref = new AbstractIntValueReference(Project,
-                    name: "Opcode",
-                    getter: () => SourceData.Opcode,
-                    setter: (value) => { },
-                    maxValue: 255);
-            vref.Editable = false;
-            valueReferences.Add(vref);
-
             if (WarpSourceType == WarpSourceType.Standard)
             {
                 vref = new AbstractBoolValueReference(Project,
@@ -282,7 +264,7 @@ namespace LynnaLib
                         setter: (value) => SourceData.BottomRight = value);
                 valueReferences.Add(vref);
             }
-            else if (WarpSourceType == WarpSourceType.Pointed)
+            else if (WarpSourceType == WarpSourceType.Position)
             {
                 vref = new AbstractIntValueReference(Project,
                         name: "Source Y",
