@@ -206,6 +206,9 @@ namespace LynnaLib
                 for (int s = 0; s < g.NumTreasureObjectSubids; s++)
                     g.GetTreasureObject(s);
             }
+
+
+            LinkBitmap = LoadLinkBitmap();
         }
 
         void LoadFilesRecursively(string directory)
@@ -342,6 +345,8 @@ namespace LynnaLib
                 return EvalToInt("NUM_TREASURES");
             }
         }
+
+        public Bitmap LinkBitmap { get; private set; }
 
 
         // Methods
@@ -971,6 +976,29 @@ namespace LynnaLib
         bool FileExists(string filename)
         {
             return File.Exists(BaseDirectory + filename);
+        }
+
+        Bitmap LoadLinkBitmap()
+        {
+            var stream = LoadGfx("spr_link");
+            stream.Seek(32 * 16, SeekOrigin.Begin);
+            byte[] leftHalf = new byte[32];
+            byte[] rightHalf = new byte[32];
+            stream.Read(leftHalf, 0, 32);
+            stream.Read(rightHalf, 0, 32);
+            Bitmap leftBitmap = GbGraphics.TileToBitmap(leftHalf, GetStandardSpritePalettes()[0]);
+            Bitmap rightBitmap = GbGraphics.TileToBitmap(rightHalf, GetStandardSpritePalettes()[0]);
+            Bitmap fullBitmap = new Bitmap(16, 16, Cairo.Format.Argb32);
+            using (Cairo.Context cr = fullBitmap.CreateContext())
+            {
+                cr.SetSourceSurface(leftBitmap, 0, 0);
+                cr.Paint();
+                cr.SetSourceSurface(rightBitmap, 8, 0);
+                cr.Paint();
+            }
+            leftBitmap.Dispose();
+            rightBitmap.Dispose();
+            return fullBitmap;
         }
     }
 

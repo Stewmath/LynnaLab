@@ -472,6 +472,11 @@ namespace LynnaLab
                 else if (button == 3)
                 { // Right-click
                     TilesetViewer.SelectedIndex = RoomLayout.GetTile(p.X, p.Y);
+                    if (selectedComponent != null)
+                    {
+                        selectedComponent = null;
+                        GenerateRoomComponents();
+                    }
                 }
             }
             if (DrawRoomComponents)
@@ -585,9 +590,13 @@ namespace LynnaLab
 
             foreach (RoomComponent com in roomComponents)
             {
-                cr.SetSourceColor(com.BoxColor);
-                cr.Rectangle(com.BoxRectangle);
-                cr.Fill();
+                if (com.BoxColor != null)
+                {
+                    cr.SetSourceColor(com.BoxColor);
+                    cr.Rectangle(com.BoxRectangle);
+                    cr.Fill();
+                }
+
                 com.Draw(cr);
 
                 if (DrawRoomComponentHover)
@@ -724,7 +733,7 @@ namespace LynnaLab
 
             if (QuickstartInCurrentRoom)
             {
-                QuickstartRoomComponent com = new QuickstartRoomComponent(QuickstartData);
+                QuickstartRoomComponent com = new QuickstartRoomComponent(this, QuickstartData);
                 roomComponents.Add(com);
             }
 
@@ -834,26 +843,28 @@ namespace LynnaLab
             public abstract bool Compare(RoomComponent com);
 
             /// Right-click, select "delete", or press "Delete" key while selected
-            public abstract void Delete();
+            public virtual void Delete() {}
         }
 
         class QuickstartRoomComponent : RoomComponent
         {
             QuickstartData quickstart;
+            RoomEditor parent;
 
-            public QuickstartRoomComponent(QuickstartData data)
+            public QuickstartRoomComponent(RoomEditor parent, QuickstartData data)
             {
-                quickstart = data;
+                this.parent = parent;
+                this.quickstart = data;
             }
 
             public override Color BoxColor
             {
-                get { return Color.Green; }
+                get { return null; }
             }
 
             public override bool Deletable
             {
-                get { return true; }
+                get { return false; }
             }
             public override bool HasXY
             {
@@ -878,16 +889,17 @@ namespace LynnaLab
 
             public override void Draw(Cairo.Context cr)
             {
+                cr.SetSourceSurface(parent.Project.LinkBitmap, X - 8, Y - 8);
+                using (Cairo.SurfacePattern pattern = (Cairo.SurfacePattern)cr.GetSource())
+                {
+                    pattern.Filter = Cairo.Filter.Nearest;
+                }
+                cr.Paint();
             }
 
             public override bool Compare(RoomComponent com)
             {
                 return quickstart == (com as QuickstartRoomComponent)?.quickstart;
-            }
-
-            public override void Delete()
-            {
-                throw new NotImplementedException();
             }
         }
 
@@ -1173,12 +1185,6 @@ namespace LynnaLab
             public override bool Compare(RoomComponent com)
             {
                 return warp == (com as WarpDestRoomComponent)?.warp;
-            }
-
-            // TODO
-            public override void Delete()
-            {
-                throw new NotImplementedException();
             }
         }
 
