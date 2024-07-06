@@ -56,6 +56,10 @@ namespace LynnaLib
                 return Room.GetTileset(Season);
             }
         }
+        public bool IsSmall
+        {
+            get { return width == 10; }
+        }
 
 
         /// # of bytes per row (including unused bytes; this means it has a value of 16 for large

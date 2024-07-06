@@ -19,12 +19,18 @@ public class MainWindow
     private static readonly log4net.ILog log = LogHelper.GetLogger();
 
 
-    // Status bar message priority constants
+    // Status bar message priority constants.
+    // Last value has highest priority.
     enum StatusbarMessage
     {
         TileSelected,
         TileHovering,
         WrongLayoutGroup,
+        RoomNotInDungeon,
+        DungeonBitAndIndexMismatch,
+        DungeonIndexMismatch,
+        DungeonBitMismatch,
+        DungeonOutsideDungeon,
         WarpDestEditMode,
     }
 
@@ -179,6 +185,15 @@ public class MainWindow
         {
             return minimapNotebook.Page == 0 ? worldMinimap : dungeonMinimap;
         }
+    }
+
+    bool WorldContextActive
+    { // "World" tab
+        get { return ActiveMinimap == worldMinimap; }
+    }
+    bool DungeonContextActive
+    { // "Dungeon" tab
+        get { return ActiveMinimap == dungeonMinimap; }
     }
 
 
@@ -568,13 +583,13 @@ public class MainWindow
         {
             tilesetModifiedEventWrapper = new WeakEventWrapper<ValueReferenceGroup>();
             tilesetModifiedEventWrapper.Bind<ValueModifiedEventArgs>("ModifiedEvent",
-                    (sender, args) => UpdateLayoutGroupWarning());
+                    (sender, args) => UpdateStatusBarWarnings());
         }
         tilesetModifiedEventWrapper.ReplaceEventSource(tileset.GetValueReferenceGroup());
 
         eventGroup.Unlock();
 
-        UpdateLayoutGroupWarning();
+        UpdateStatusBarWarnings();
     }
     void SetTileset(int index, int season)
     {
@@ -584,26 +599,60 @@ public class MainWindow
         SetTileset(Project.GetTileset(index, season));
     }
 
-    /// Print warnings when tileset's layout group does not match expected value. Does nothing on
-    /// the hack-base branch as the tileset's layout group is ignored.
-    void UpdateLayoutGroupWarning()
+    void UpdateStatusBarWarnings()
     {
-        if (Project.Config.ExpandedTilesets)
-            return;
+        Action<StatusbarMessage, bool, string> setWarning = (type, active, message) =>
+        {
+            if (active)
+                statusbar1.Set((uint)type, "WARNING: " + message);
+            else
+                statusbar1.RemoveAll((uint)type);
+        };
 
         Tileset tileset = tilesetViewer1.Tileset;
 
-        int expectedGroup = Project.GetCanonicalLayoutGroup(ActiveRoom.Group, ActiveSeason);
-        if (tileset.LayoutGroup != expectedGroup)
+        // Print warnings when tileset's layout group does not match expected value. Does nothing on
+        // the hack-base branch as the tileset's layout group is ignored.
+        if (!Project.Config.ExpandedTilesets)
         {
-            statusbar1.Set((uint)StatusbarMessage.WrongLayoutGroup, string.Format(
-                    "WARNING: Layout group of tileset ({0:X}) does not match expected value ({1:X})!"
-                    + " This room's layout data might be shared with another's.",
-                    tileset.LayoutGroup,
-                    expectedGroup));
+            int expectedGroup = Project.GetCanonicalLayoutGroup(ActiveRoom.Group, ActiveSeason);
+            setWarning(StatusbarMessage.WrongLayoutGroup,
+                       tileset.LayoutGroup != expectedGroup,
+                       string.Format(
+                        "Layout group of tileset ({0:X}) does not match expected value ({1:X})!"
+                        + " This room's layout data might be shared with another's.",
+                        tileset.LayoutGroup,
+                        expectedGroup));
         }
-        else
-            statusbar1.RemoveAll((uint)StatusbarMessage.WrongLayoutGroup);
+
+        // Print warning if, on the dungeon tab, the tileset's dungeon index doesn't match the
+        // dungeon itself
+        setWarning(StatusbarMessage.DungeonIndexMismatch,
+                   DungeonContextActive && tileset.DungeonIndex != dungeonSpinButton.ValueAsInt,
+                   "Tileset's dungeon index doesn't match the dungeon");
+
+        // Print warning if on the dungeon tab but tileset not marked as a dungeon
+        setWarning(StatusbarMessage.DungeonBitMismatch,
+                   DungeonContextActive && !tileset.IsDungeon,
+                   "Tileset is not marked as a dungeon, but is used in a dungeon");
+
+        // Print warning if tileset dungeon bit is unset, but dungeon value is not $F.
+        // Only in Seasons, because Ages has better sanity checks for this.
+        setWarning(StatusbarMessage.DungeonBitAndIndexMismatch,
+                   Project.Game == Game.Seasons && !tileset.IsDungeon && tileset.DungeonIndex != 0x0f,
+                   "If tileset is not a dungeon, dungeon index should be $F");
+
+        // Print warning if tileset is a dungeon but used on an overworld
+        setWarning(StatusbarMessage.DungeonOutsideDungeon,
+                   WorldContextActive && tileset.IsDungeon && ActiveRoomLayout.IsSmall,
+                   "Dungeon tileset being used outside a dungeon");
+
+        // Warning for a room that's using a dungeon tileset but doesn't exist in that dungeon
+        setWarning(StatusbarMessage.RoomNotInDungeon,
+                   WorldContextActive && tileset.IsDungeon
+                   && tileset.DungeonIndex < Project.NumDungeons
+                   && !Project.GetDungeon(tileset.DungeonIndex).RoomUsed(ActiveRoom.Index),
+                   $"Tileset is for dungeon {tileset.DungeonIndex} but this room is not in that dungeon");
     }
 
     // Called when room index (or season) is changed
@@ -643,7 +692,7 @@ public class MainWindow
 
         eventGroup.Unlock();
 
-        UpdateLayoutGroupWarning();
+        UpdateStatusBarWarnings();
     }
 
     void UpdateChestData()

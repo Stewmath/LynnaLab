@@ -190,6 +190,20 @@ namespace LynnaLib
                 vrg.SetValue("Animations", value);
             }
         }
+        public int DungeonIndex
+        {
+            get
+            {
+                return vrg.GetIntValue("Dungeon Index");
+            }
+        }
+        public bool IsDungeon
+        {
+            get
+            {
+                return vrg.GetIntValue("Dungeon") != 0;
+            }
+        }
 
         internal Tileset(Project p, int i, int season)
         {
