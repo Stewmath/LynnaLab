@@ -96,6 +96,20 @@ namespace LynnaLib
             // to work
             definesDictionary.Add("ROM_" + GameString.ToUpper(), "");
 
+            // And other things from "version.s" (which LynnaLib can't parse right now). Most of
+            // these aren't really important, but I've been known to use the bugfix flags in data
+            // files, so LynnaLab should know about them.
+            definesDictionary.Add("REGION_US", "");
+            definesDictionary.Add("ENABLE_US_BUGFIXES", "");
+
+            // Hack-base only
+            if (Config.ExpandedTilesets)
+            {
+                definesDictionary.Add("ENABLE_EU_BUGFIXES", "");
+                definesDictionary.Add("ENABLE_BUGFIXES", "");
+                definesDictionary.Add("AGES_ENGINE", "");
+            }
+
             // version.s contains some important defines that should be visible everywhere
             GetFileParser("constants/" + GameString + "/version.s");
 
@@ -196,6 +210,13 @@ namespace LynnaLib
 
         void LoadFilesRecursively(string directory)
         {
+            // LynnaLib can't parse these yet, and generally shouldn't need to
+            var blacklist = new string[]
+            {
+                "macros.s",
+                "version.s",
+            };
+
             if (!directory.EndsWith("/"))
                 directory += "/";
             foreach (string f in Helper.GetSortedFiles(baseDirectory + directory))
@@ -203,7 +224,8 @@ namespace LynnaLib
                 if (f.Substring(f.LastIndexOf('.')) == ".s")
                 {
                     string basename = f.Substring(f.LastIndexOf('/') + 1);
-                    if (basename == "macros.s") continue; // LynnaLib doesn't understand macros
+                    if (blacklist.Contains(basename))
+                        continue;
 
                     string filename = directory + basename;
                     GetFileParser(filename);
