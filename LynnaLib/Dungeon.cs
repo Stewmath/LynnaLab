@@ -347,7 +347,10 @@ namespace LynnaLib
         {
             if (!(g == 4 || g == 5))
                 throw new ArgumentException("Invalid group '" + g + "' for dungeon.");
-            dataStart.SetValue(0, ">wGroup" + g.ToString() + "Flags");
+            dataStart.SetValue(0, ">wGroup" + g.ToString() + "RoomFlags");
+            _mainGroup = g;
+
+            DetermineRoomsUsed();
 
             RoomChangedEvent?.Invoke(this, new DungeonRoomChangedEventArgs { all = true });
         }
