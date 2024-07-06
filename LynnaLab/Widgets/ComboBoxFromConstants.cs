@@ -18,6 +18,8 @@ namespace LynnaLab
 
         ConstantsMapping mapping;
 
+        bool suppressCallback = false;
+
         // Array of actual text from ConstantsMapping (because the string is changed around
         // a little bit)
         string[] keyText;
@@ -142,6 +144,8 @@ namespace LynnaLab
 
         public void SetConstantsMapping(ConstantsMapping mapping)
         {
+            suppressCallback = true;
+
             this.mapping = mapping;
             keyText = new string[mapping.GetAllStrings().Count];
             combobox1.RemoveAll();
@@ -155,6 +159,8 @@ namespace LynnaLab
                 keyText[i] = key;
                 i++;
             }
+
+            suppressCallback = false;
         }
 
         bool fromCombo = false;
@@ -162,6 +168,9 @@ namespace LynnaLab
 
         protected void OnCombobox1Changed(object sender, EventArgs e)
         {
+            if (suppressCallback)
+                return;
+
             fromCombo = true;
 
             if (!(mapping == null || combobox1.Active == -1))
