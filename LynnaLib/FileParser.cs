@@ -626,7 +626,7 @@ namespace LynnaLib
                 // Check if we're currently skipping over stuff because of .ifdefs
                 if (ifdefCondition == false)
                 {
-                    if (tokens[0].ToLower() == ".ifdef")
+                    if (tokens[0].ToLower() == ".ifdef" || tokens[0].ToLower() == ".ifndef")
                     {
                         ifdefDepth++;
                     }
@@ -722,15 +722,41 @@ namespace LynnaLib
                         if (tokens.Count < 2)
                         {
                             log.Warn(warningString + "Expected .IFDEF to have a value.");
-                            break;
                         }
-                        ifdefDepth++;
-                        if (Project.GetDefinition(tokens[1]) != null)
-                            ifdefCondition = true;
                         else
                         {
-                            ifdefCondition = false;
-                            failedIfdefDepth = ifdefDepth - 1;
+                            ifdefDepth++;
+                            bool exists = Project.GetDefinition(tokens[1]) != null;
+                            if (exists)
+                            {
+                                ifdefCondition = true;
+                            }
+                            else
+                            {
+                                ifdefCondition = false;
+                                failedIfdefDepth = ifdefDepth - 1;
+                            }
+                        }
+                        break;
+
+                    case ".ifndef":
+                        if (tokens.Count < 2)
+                        {
+                            log.Warn(warningString + "Expected .IFNDEF to have a value.");
+                        }
+                        else
+                        {
+                            ifdefDepth++;
+                            bool exists = Project.GetDefinition(tokens[1]) != null;
+                            if (!exists)
+                            {
+                                ifdefCondition = true;
+                            }
+                            else
+                            {
+                                ifdefCondition = false;
+                                failedIfdefDepth = ifdefDepth - 1;
+                            }
                         }
                         break;
 
