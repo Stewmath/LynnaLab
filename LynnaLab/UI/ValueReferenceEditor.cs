@@ -299,8 +299,16 @@ namespace LynnaLab
             for (int i = 0; i < ValueReferenceGroup.Count; i++)
             {
                 Gtk.Widget w = widgetLists[i][1];
-                w.Sensitive = ValueReferenceGroup[i].Editable;
-                SetTooltip(i, ValueReferenceGroup[i].Tooltip);
+                var vr = ValueReferenceGroup[i];
+
+                w.Sensitive = vr.Editable;
+                SetTooltip(i, vr.Tooltip);
+
+                if (w is ComboBoxFromConstants)
+                {
+                    var cb = w as ComboBoxFromConstants;
+                    cb.SetConstantsMapping(vr.ConstantsMapping);
+                }
             }
 
             // Initial values
