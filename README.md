@@ -1,26 +1,87 @@
-An editor for Oracle of Ages (Seasons only partly supported).
-[See the wiki](https://wiki.zeldahacking.net/oracle/LynnaLab) for additional information.
+An editor for The Legend of Zelda: Oracle of Ages & Seasons, based on
+[oracles-disasm](https://github.com/stewmath/oracles-disasm).
 
-## Running it
+[](images/preview-general.png)
 
-Dependencies are:
+## Features
 
-* [.NET Core 3.1 Runtime](https://dotnet.microsoft.com/download/dotnet-core/3.1)
+### Edit all of the things
 
-* GTK (64-bit windows library comes bundled with releases)
+Room layouts, object placement, tilesets, dungeons, palettes - all of the
+essentials can be edited through LynnaLab.
 
-The releases are portable. On Windows you can simply run the ".exe" after installing .NET Core. On
-Mac or Linux, you need to install GTK in addition to .NET Core, then execute this command to run
-LynnaLab:
+### Quickstart & Run
+
+Press the quickstart icon to set where Link should spawn in, then click the Run
+button to launch your emulator. The game will immediately load into the
+specified room.
+
+[](images/preview-quickspawn-1.png)
+[](images/preview-quickspawn-2.png)
+
+Note: You must have save data in file slot 1 for this to work, otherwise Weird
+Things will happen.
+
+### Object sprite previews
+
+Sourced directly from the game's data files!
+
+[](images/preview-objects.png)
+
+### Convenient warp editing interface
+
+Right-click on a warp to follow it to its destination, or interactively edit its
+destination.
+
+[](images/preview-warps.png)
+
+### ...And much more
+
+LynnaLab is built on top of the
+[oracles disassembly](https://github.com/stewmath/oracles-disasm), making the
+entirety of the game's codebase available to modify as you please. Custom events
+can be created using the game's native scripting language paired with assembly
+code.
+
+## Setting it up
+
+### Windows
+
+The following steps are necessary to install not only LynnaLab, but also
+oracles-disasm and the dependencies necessary to build it.
+
+- Download and install [MSYS2](https://www.msys2.org/) with default settings.
+- Download the [latest release](https://github.com/Stewmath/LynnaLab/releases) of LynnaLab.
+- Extract the archive.
+- Double-click on the "windows-setup.bat" file.
+  - This will install some dependencies and download
+    [oracles-disasm](https://github.com/stewmath/oracles-disasm) to your MSYS
+    folder at C:\msys64\home\<username>\oracles-disasm.
+- Launch LynnaLab.exe. This should automatically attempt to open oracles-disasm
+  which was downloaded during the previous step.
+- Configure your emulator path at File -> Choose Emulator Executable to be able
+  to run the game.
+
+### Linux
+
+The dependencies on Linux are the .NET Core runtime and GTK3, in addition to the
+dependencies for [oracles-disasm](https://github.com/stewmath/oracles-disasm).
+You can run LynnaLab with the following command:
 
 ```
 dotnet LynnaLab.dll
 ```
 
-## Seasons support
+You may optionally specify the path to the disassembly and which game to edit:
 
-This isn't really tested or supported yet, but Seasons kinda works. There is no seasons selector and
-it only works on the disassembly's "master" branch, not the "hack-base" branch.
+```
+dotnet LynnaLab.dll ~/oracles-disasm seasons
+```
 
-To switch between editing Ages or Seasons, open the "LynnaLab/config.yaml" file in the
-oracles-disasm repository, and change the "EditingGame" field to "ages" or "seasons".
+## For more information
+
+- Join our [discord
+  server](https://discord.com/channels/231920467680821250/231921875565936643/833845828653154311)
+  to meet some cool people who are into Zelda Oracles hacking!
+- The [Zeldahacking wiki](https://wiki.zeldahacking.net/oracle/LynnaLab) has
+  additional information on LynnaLab and Zelda Oracles hacking in general.
