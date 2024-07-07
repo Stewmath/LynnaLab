@@ -1,7 +1,7 @@
 An editor for The Legend of Zelda: Oracle of Ages & Seasons, based on
 [oracles-disasm](https://github.com/stewmath/oracles-disasm).
 
-[](images/preview-general.png)
+![](images/preview-general.png)
 
 ## Features
 
@@ -16,8 +16,8 @@ Press the quickstart icon to set where Link should spawn in, then click the Run
 button to launch your emulator. The game will immediately load into the
 specified room.
 
-[](images/preview-quickspawn-1.png)
-[](images/preview-quickspawn-2.png)
+![](images/preview-quickspawn-1.png)
+![](images/preview-quickspawn-2.png)
 
 Note: You must have save data in file slot 1 for this to work, otherwise Weird
 Things will happen.
@@ -26,14 +26,14 @@ Things will happen.
 
 Sourced directly from the game's data files!
 
-[](images/preview-objects.png)
+![](images/preview-objects.png)
 
 ### Convenient warp editing interface
 
 Right-click on a warp to follow it to its destination, or interactively edit its
 destination.
 
-[](images/preview-warps.png)
+![](images/preview-warps.png)
 
 ### ...And much more
 
