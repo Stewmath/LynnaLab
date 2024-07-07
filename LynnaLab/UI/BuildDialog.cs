@@ -32,6 +32,13 @@ namespace LynnaLab
         {
             this.mainWindow = parent;
 
+            this.Destroyed += (s, e) =>
+            {
+                mainWindow.GlobalConfig.CloseRunDialogWithEmulator = closeCheckBox.Active;
+                mainWindow.GlobalConfig.Save();
+            };
+
+
             string makeCommand = mainWindow.GlobalConfig.MakeCommand;
 
             if (makeCommand == null)
