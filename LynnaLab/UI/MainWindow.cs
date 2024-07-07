@@ -283,6 +283,10 @@ public class MainWindow
         overallEditingContainer = (Gtk.Box)builder.GetObject("overallEditingContainer");
         treasureDataFrame = (Gtk.Widget)builder.GetObject("treasureDataFrame");
         treasureDataLabel = (Gtk.Label)builder.GetObject("treasureDataLabel");
+        var quickstartToggleButton = (Gtk.ToggleToolButton)builder.GetObject("quickstartToggleButton");
+
+        var linkImage = new Gdk.Pixbuf(Helper.GetResourceStream("LynnaLab.Resources.Link.png"));
+        quickstartToggleButton.IconWidget = new Gtk.Image(linkImage);
 
         editTilesetButton = new Gtk.Button("Edit");
         editTilesetButton.Clicked += OnTilesetEditorButtonClicked;
