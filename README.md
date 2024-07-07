@@ -56,7 +56,7 @@ oracles-disasm and the dependencies necessary to build it.
 - Double-click on the "windows-setup.bat" file.
   - This will install some dependencies and download
     [oracles-disasm](https://github.com/stewmath/oracles-disasm) to your MSYS
-    folder at C:\msys64\home\<username>\oracles-disasm.
+    folder at `C:\msys64\home\<username>\oracles-disasm.`
 - Launch LynnaLab.exe. This should automatically attempt to open oracles-disasm
   which was downloaded during the previous step.
 - Configure your emulator path at File -> Choose Emulator Executable to be able
