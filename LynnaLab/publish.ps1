@@ -3,11 +3,14 @@
 
 # WINDOWS
 #==========================================================================
-dotnet publish /p:PublishProfile=Properties\PublishProfiles\portable.pubxml
-
-$gtkdir="$env:LOCALAPPDATA\Gtk\3.24.20\"
+$gtkdir="$env:LOCALAPPDATA\Gtk\3.24.24\"
 $publishbasedir="bin\Release\Publish\"
-$publishdir="$publishbasedir\LynnaLab"
+$publishdir="$publishbasedir\LynnaLab-win64"
+
+rm -r $publishdir
+
+dotnet publish /p:PublishProfile=Properties\PublishProfiles\win-x64.pubxml
+
 $gitversion=cat version.txt
 
 # Copy over Windows GTK libraries. For other platforms (linux, mac) GTK must be pre-installed.
@@ -17,4 +20,15 @@ cp -Path @("$gtkdir\*.dll", "$gtkdir\etc", "$gtkdir\gtk3-runtime", "$gtkdir\lib"
    
 # Zip it
 echo "Compressing the archive..."
-Compress-Archive -LiteralPath $publishdir -DestinationPath $publishbasedir\LynnaLab-$gitversion.zip -Force
+Compress-Archive -LiteralPath $publishdir -DestinationPath $publishbasedir\LynnaLab-$gitversion-win64.zip -Force
+
+# LINUX/PORTABLE
+#==========================================================================
+$publishdir="$publishbasedir\LynnaLab-portable"
+
+rm -r $publishdir
+dotnet publish /p:PublishProfile=Properties\PublishProfiles\portable.pubxml
+
+# Zip it
+echo "Compressing the archive..."
+Compress-Archive -LiteralPath $publishdir -DestinationPath $publishbasedir\LynnaLab-$gitversion-portable.zip -Force
