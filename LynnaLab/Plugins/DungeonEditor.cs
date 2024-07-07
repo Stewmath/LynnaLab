@@ -138,7 +138,7 @@ namespace Plugins
 
             // Middle column (minimap)
 
-            minimap = new Minimap();
+            minimap = new Minimap(0.4f);
             minimap.AddTileSelectedHandler((sender, index) =>
             {
                 RoomChanged();
