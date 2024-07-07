@@ -144,14 +144,26 @@ namespace LynnaLib
                     "TRANSITION_DEST_");
             InteractionMapping = new ConstantsMapping(
                     this,
+                    new FileParser[] {
+                        GetFileParser("constants/common/interactions.s"),
+                        GetFileParser($"constants/{GameString}/interactions.s"),
+                    },
                     "INTERAC_",
                     alphabetical: true);
             EnemyMapping = new ConstantsMapping(
                     this,
+                    new FileParser[] {
+                        GetFileParser("constants/common/enemies.s"),
+                        GetFileParser($"constants/{GameString}/enemies.s"),
+                    },
                     "ENEMY_",
                     alphabetical: true);
             PartMapping = new ConstantsMapping(
                     this,
+                    new FileParser[] {
+                        GetFileParser("constants/common/parts.s"),
+                        GetFileParser($"constants/{GameString}/parts.s"),
+                    },
                     "PART_",
                     alphabetical: true);
             ItemMapping = new ConstantsMapping(

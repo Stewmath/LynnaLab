@@ -82,13 +82,28 @@ namespace LynnaLib
                     )
         { }
 
-        public ConstantsMapping(Project p, string prefix, int maxValue = -1, bool alphabetical=false)
-            : this(p,
-                   p.GetDefinesDictionary(),
-                   new string[] { prefix },
-                   maxValue,
-                   alphabetical)
-        { }
+        public ConstantsMapping(Project p,
+                                FileParser[] parsers,
+                                string prefix,
+                                int maxValue = -1,
+                                bool alphabetical = false)
+            : this(p, new string[] {prefix}, maxValue)
+        {
+            var defines = new Dictionary<string, string>();
+            var documentation = new Dictionary<string, DocumentationFileComponent>();
+
+            foreach (var parser in parsers)
+            {
+                foreach (var kp in parser.DefinesDictionary)
+                {
+                    defines.Add(kp.Key, kp.Value.Item1);
+                    documentation.Add(kp.Key, kp.Value.Item2);
+                }
+            }
+
+            InitializeDefines(defines, alphabetical, documentation);
+        }
+
 
         public ConstantsMapping(Project p,
                 Dictionary<string, string> definesDictionary,
@@ -97,6 +112,24 @@ namespace LynnaLib
                 bool alphabetical = false,
                 Dictionary<string, DocumentationFileComponent> documentationDictionary = null)
             : this(p, _prefixes, maxValue)
+        {
+            InitializeDefines(definesDictionary, alphabetical, documentationDictionary);
+        }
+
+        public ConstantsMapping(Project p, IList<string> prefixes, int maxValue = -1)
+        {
+            this.Project = p;
+            this.prefixes = prefixes;
+
+            if (maxValue == -1)
+                maxValue = Int32.MaxValue;
+            this.maxValue = maxValue;
+        }
+
+        void InitializeDefines(
+                Dictionary<string, string> definesDictionary,
+                bool alphabetical = false,
+                Dictionary<string, DocumentationFileComponent> documentationDictionary = null)
         {
             foreach (string key in definesDictionary.Keys)
             {
@@ -133,15 +166,6 @@ namespace LynnaLib
             }
         }
 
-        public ConstantsMapping(Project p, IList<string> prefixes, int maxValue = -1)
-        {
-            this.Project = p;
-            this.prefixes = prefixes;
-
-            if (maxValue == -1)
-                maxValue = Int32.MaxValue;
-            this.maxValue = maxValue;
-        }
 
         public void AddKeyValuePair(string key, int value, DocumentationFileComponent docComponent = null)
         {
