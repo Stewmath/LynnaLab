@@ -244,8 +244,9 @@ namespace LynnaLib
                     // Insert label after top-level data end
                     FileParser.InsertComponentAfter(EndWarp, newLabel);
 
-                    // Extra spacing
-                    FileParser.InsertParseableTextAfter(EndWarp, new string[] { "" });
+                    // Extra spacing (keeping this disabled for now as it causes the file size to
+                    // keep growing)
+                    //FileParser.InsertParseableTextAfter(EndWarp, new string[] { "" });
 
                     // Insert m_WarpListEndNoDefault opcode
                     var endOpcode = new WarpSourceData(Project,
@@ -294,6 +295,8 @@ namespace LynnaLib
             warp.RemoveModifiedHandler(OnDataModified);
 
             WarpSourceData data = warp.SourceData;
+            data.GetReferencedDestData().RemoveReference(data);
+
             if (data.WarpSourceType == WarpSourceType.Standard)
             {
                 data.Detach();

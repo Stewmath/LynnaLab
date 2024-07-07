@@ -31,7 +31,7 @@ namespace LynnaLib
 
         public static List<string>[] DefaultValues = {
             new List<string> { // StandardWarp
-                "$00",
+                "$0",
                 "$00",
                 "$00",
                 "$0",
@@ -40,12 +40,10 @@ namespace LynnaLib
             new List<string> { // PositionWarp
                 "$00",
                 "$00",
-                "$00",
                 "$0",
                 "$4", // Instant fade
             },
             new List<string> { // PointerWarp
-                "$40",
                 "$00",
                 "."
             },
