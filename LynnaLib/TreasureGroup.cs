@@ -68,10 +68,20 @@ namespace LynnaLib
             if (NumTreasureObjectSubids >= 256)
                 return null;
 
-            Func<int, bool, string> ConstructTreasureSubidString = (subid, inSubidTable) =>
+            Func<int, bool, TreasureObject, string> ConstructTreasureSubidString
+                = (subid, inSubidTable, lastTreasureObject) =>
             {
+                byte lastGfx = 0;
+                string lastText = "$ff";
+                if (lastTreasureObject != null)
+                {
+                    lastGfx = (byte)lastTreasureObject.Graphics;
+                    lastText = lastTreasureObject.ValueReferenceGroup.GetValue("Text Index");
+                }
                 string prefix = string.Format("/* ${0:x2} */ ", Index);
-                string body = string.Format("$00, $00, $ff, $00, TREASURE_OBJECT_{0}_{1:x2}",
+                string body = string.Format("$38, $00, {0}, ${1:x2}, TREASURE_OBJECT_{2}_{3:x2}",
+                        lastText,
+                        lastGfx,
                         Project.TreasureMapping.ByteToString(Index).Substring(9),
                         subid);
                 if (inSubidTable)
@@ -85,7 +95,7 @@ namespace LynnaLib
                 // This should only happen when the treasure is using "m_treasurepointer", but has
                 // a null pointer. So rewrite that line with a blank treasure.
                 dataStart.FileParser.InsertParseableTextAfter(dataStart, new string[] {
-                    ConstructTreasureSubidString(0, false)
+                    ConstructTreasureSubidString(0, false, null)
                 });
                 dataStart.Detach();
 
@@ -94,6 +104,9 @@ namespace LynnaLib
 
                 return GetTreasureObject(0);
             }
+
+            // Otherwise, a previous subid existed, so let's copy over some parameters from it
+            TreasureObject lastSubid = GetTreasureObject(NumTreasureObjectSubids - 1);
 
             if (!UsesPointer)
             {
@@ -143,7 +156,7 @@ namespace LynnaLib
             TraverseSubidData(ref lastSubidData, NumTreasureObjectSubids - 1);
 
             dataStart.FileParser.InsertParseableTextAfter(lastSubidData,
-                    new string[] { ConstructTreasureSubidString(NumTreasureObjectSubids, true) });
+                    new string[] { ConstructTreasureSubidString(NumTreasureObjectSubids, true, lastSubid) });
             return GetTreasureObject(NumTreasureObjectSubids - 1);
         }
 
