@@ -158,7 +158,7 @@ namespace LynnaLib
                     {
                         UpdateTreasureName(v, -1);
                     },
-                    maxValue: 255,
+                    maxValue: Project.NumTreasures - 1,
                     constantsMappingString: "TreasureMapping");
             var v5 = new AbstractIntValueReference(Project,
                     name: "SubID",
