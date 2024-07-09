@@ -581,6 +581,9 @@ namespace LynnaLab
         {
             base.DrawBackground(cr);
 
+            if (room == null)
+                return true;
+
             cr.Save();
 
             cr.Translate(XOffset, YOffset);
