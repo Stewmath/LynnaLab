@@ -80,8 +80,7 @@ dotnet LynnaLab.dll ~/oracles-disasm seasons
 
 ## For more information
 
-- Join our [discord
-  server](https://discord.com/channels/231920467680821250/231921875565936643/833845828653154311)
-  to meet some cool people who are into Zelda Oracles hacking!
+- Join our [discord server](https://discord.gg/wCpPPNZ) to meet some cool people
+  who are into Zelda Oracles hacking!
 - The [Zeldahacking wiki](https://wiki.zeldahacking.net/oracle/LynnaLab) has
   additional information on LynnaLab and Zelda Oracles hacking in general.
