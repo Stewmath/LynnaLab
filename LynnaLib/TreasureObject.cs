@@ -111,7 +111,7 @@ namespace LynnaLib
                 new DataValueReference(baseData,
                         index: 2,
                         name: "Text Index",
-                        type: DataValueType.Byte,
+                        type: DataValueType.String,
                         tooltip: "Will show text \"TX_00XX\" when you open the chest."),
                 new DataValueReference(baseData,
                         index: 3,
