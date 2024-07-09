@@ -337,7 +337,7 @@ namespace LynnaLib
             Data chestGroupData = Project.GetData(pointerString);
 
             chestFileParser.InsertParseableTextBefore(chestGroupData, new string[] {
-                string.Format("\tm_ChestData $00, ${0:x2}, $0000", Index)
+                string.Format("\tm_ChestData $00, ${0:x2}, $0000", Index & 0xff)
             });
 
             InitializeChest();
