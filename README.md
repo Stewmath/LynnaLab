@@ -78,6 +78,32 @@ You may optionally specify the path to the disassembly and which game to edit:
 dotnet LynnaLab.dll ~/oracles-disasm seasons
 ```
 
+## Version numbering scheme (tentative) & oracles-disasm compatibility
+
+LynnaLab modifies oracles-disasm, or more specifically the hack-base branch of
+oracles-disasm in most cases. As existing projects cannot grab the latest
+changes to the hack-base branch without a git merge operation (whose complexity
+depends on the specific changes that have been made), I am experimenting with a
+version numbering scheme to help keep track of which LynnaLab versions are
+compatible with which hack-base versions.
+
+LynnaLab has a 3-number versioning scheme: X.Y.Z (ie. 2.0.1).
+
+X: The major version. This number will be updated when incompatible changes to
+the disassembly's hack-base branch have occurred. Migrating projects between
+major versions will require major intervention involving a git merge operation.
+So, LynnaLab 1.0.0 projects will not be compatible with 2.0.0+ without manual
+intervention.
+
+Y: The minor version. New features may be added in these versions while
+remaining compatible with existing projects with the same major version.
+Projects may still benefit from updates to the hack-base branch, but this is
+optional.
+
+Z: The bugfix version. There shouldn't be any major changes to functionality in
+these versions. Obviously there should be no incompatibilities introduced
+either.
+
 ## For more information
 
 - Join our [discord server](https://discord.gg/wCpPPNZ) to meet some cool people
