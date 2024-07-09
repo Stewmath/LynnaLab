@@ -6,7 +6,6 @@ using Util;
 namespace LynnaLib
 {
     /// Represents the 4 bytes defining a chest. There should only be one of these per room.
-    /// TODO: Forbid chests from having Y/X value "$ff"?
     public class Chest
     {
         Data dataStart;
@@ -30,8 +29,18 @@ namespace LynnaLib
             this.dataStart = dataStart;
             GenerateValueReferenceGroup();
 
-            ValueReferenceGroup.ModifiedEvent += (sender, args) => ModifiedEvent?.Invoke(sender, args);
-            ValueReferenceGroup.ModifiedEvent += (sender, args) => UpdateTreasureEvents();
+            ValueReferenceGroup.ModifiedEvent += (sender, args) =>
+            {
+                // We cannot allow a chest to have a YX value of $ff, as this marks the end of the list.
+                if (dataStart.GetIntValue(0) == 0xff)
+                {
+                    dataStart.LockModifiedEvents();
+                    dataStart.SetByteValue(0, 0xfe);
+                    dataStart.ClearAndUnlockModifiedEvents();
+                }
+                UpdateTreasureEvents();
+                ModifiedEvent?.Invoke(sender, args);
+            };
 
             treasureModifiedEventWrapper.Bind<ValueModifiedEventArgs>("ModifiedEvent",
                     (sender, args) => TreasureModifiedEvent?.Invoke(sender, args));
