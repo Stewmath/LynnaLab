@@ -45,22 +45,22 @@ namespace LynnaLab
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    makeCommand = "C:/msys64/msys2_shell.cmd -here -no-start -defterm -ucrt64 -shell bash -c \"make {GAME}\"";
+                    makeCommand = "C:/msys64/msys2_shell.cmd | -here -no-start -defterm -ucrt64 -shell bash -c \"make {GAME}\"";
                 }
                 else
                 {
-                    makeCommand = "/usr/bin/make {GAME}";
+                    makeCommand = "/usr/bin/make | {GAME}";
                 }
 
                 mainWindow.GlobalConfig.MakeCommand = makeCommand;
             }
 
-            makeCommand = SubstituteString(makeCommand);
+            var (fileName, arguments) = SubstituteString(makeCommand);
 
             var startInfo = new ProcessStartInfo
             {
-                FileName = makeCommand.Split()[0],
-                Arguments = string.Join(" ", makeCommand.Split().Skip(1)),
+                FileName = fileName,
+                Arguments = arguments,
                 WorkingDirectory = Project.BaseDirectory,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -142,7 +142,7 @@ namespace LynnaLab
 
             // Attempt to build disassembly
             processView.AppendText("Building with command:");
-            processView.AppendText(makeCommand, "code");
+            processView.AppendText($"\"{fileName}\" {arguments}", "code");
             try
             {
                 makeLaunchFailed = !processView.AttachAndStartProcess(makeProcess);
@@ -181,18 +181,18 @@ namespace LynnaLab
                     processView.AppendText($"Emulator not configured, couldn't run {Project.GameString}.gbc.", "error");
                     return;
                 }
-                runCommand = emulatorPrompt + " {GAME}.gbc";
+                runCommand = emulatorPrompt;
             }
 
-            string fullCommand = SubstituteString(runCommand);
+            var (fileName, arguments) = SubstituteString(runCommand);
 
             processView.AppendText("Attempting to run with the following command (reconfigure with File -> Select Emulator)...");
-            processView.AppendText(fullCommand + '\n', "code");
+            processView.AppendText($"\"{fileName}\" " + arguments + '\n', "code");
 
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
-                FileName = fullCommand.Split()[0],
-                Arguments = string.Join(" ", fullCommand.Split().Skip(1)),
+                FileName = fileName,
+                Arguments = arguments,
                 WorkingDirectory = Project.BaseDirectory,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -225,9 +225,16 @@ namespace LynnaLab
             mainWindow.RegisterEmulatorProcess(emulatorProcess);
         }
 
-        string SubstituteString(string s)
+        (string, string) SubstituteString(string s)
         {
-            return s.Replace("{GAME}", Project.GameString);
+            s = s.Replace("{GAME}", Project.GameString);
+
+            // Old format: space separator
+            if (!s.Contains("|"))
+                return (s.Split()[0], string.Join(" ", s.Split().Skip(1)));
+
+            // New format: "|" symbol separates process name from arguments (supports space in path)
+            return (s.Split("|")[0].Trim(), s.Substring(s.IndexOf('|')+1).Trim());
         }
 
         void OnEmulatorExited()

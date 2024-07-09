@@ -223,9 +223,8 @@ public class MainWindow
     {
         log.Debug("Beginning Program");
 
-        if (GlobalConfig.Exists())
-            globalConfig = GlobalConfig.Load();
-        else
+        globalConfig = GlobalConfig.Load();
+        if (globalConfig == null)
         {
             globalConfig = new GlobalConfig();
             globalConfig.Save();
@@ -1271,7 +1270,7 @@ public class MainWindow
 
             if (response == ResponseType.Accept)
             {
-                return fileDialog.Filename;
+                return fileDialog.Filename + " | {GAME}.gbc";
             }
         }
 

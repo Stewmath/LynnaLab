@@ -18,19 +18,22 @@ namespace LynnaLab
 
         GlobalConfig oldValues;
 
-        public static bool Exists()
+        public static bool FileExists()
         {
             return File.Exists(ConfigFile);
         }
 
         public static GlobalConfig Load()
         {
+            if (!FileExists())
+                return null;
             var input = System.IO.File.ReadAllText(ConfigFile);
             var deserializer = new DeserializerBuilder()
                 .IgnoreUnmatchedProperties()
                 .Build();
             var retval = deserializer.Deserialize<GlobalConfig>(input);
-            retval.oldValues = new GlobalConfig(retval);
+            if (retval != null)
+                retval.oldValues = new GlobalConfig(retval);
             return retval;
         }
 
