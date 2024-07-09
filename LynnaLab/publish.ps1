@@ -31,4 +31,4 @@ dotnet publish /p:PublishProfile=Properties\PublishProfiles\portable.pubxml
 
 # Zip it
 echo "Compressing the archive..."
-Compress-Archive -LiteralPath $publishdir -DestinationPath $publishbasedir\LynnaLab-$gitversion-portable.zip -Force
+Compress-Archive -LiteralPath $publishdir -DestinationPath $publishbasedir\LynnaLab-$gitversion-mac-linux.zip -Force
