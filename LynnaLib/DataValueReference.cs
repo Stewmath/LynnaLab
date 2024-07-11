@@ -80,7 +80,14 @@ namespace LynnaLib
         }
 
 
-        public DataValueReference(Data data, string name, int index, DataValueType type, int startBit = 0, int endBit = 0, int maxValue = -1, bool editable = true, string constantsMappingString = null, bool useConstantAlias = false, string tooltip = null)
+        public DataValueReference(Data data, string name, int index, DataValueType type,
+            int startBit = 0,
+            int endBit = 0,
+            int maxValue = -1,
+            bool editable = true,
+            string constantsMappingString = null,
+            bool useConstantAlias = false,
+            string tooltip = null)
         : base(name, GetValueType(type), editable, constantsMappingString)
         {
             this._data = data;

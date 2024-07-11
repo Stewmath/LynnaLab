@@ -157,6 +157,16 @@ namespace LynnaLab
                             Gtk.Entry entry = new Gtk.Entry();
                             if (!valueReferenceGroup[i].Editable)
                                 entry.Sensitive = false;
+
+                            Action updateEntry = () =>
+                            {
+                                valueReferenceGroup[i].SetValue(entry.Text);
+                            };
+
+                            entry.Activated += (s, e) => updateEntry();
+                            entry.FocusOutEvent += (s, e) => updateEntry();
+                            entry.PreeditChanged += (s, e) => updateEntry();
+
                             dataModifiedExternalEvent += delegate ()
                             {
                                 entry.Text = valueReferenceGroup[i].GetStringValue();
