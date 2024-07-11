@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Util;
 
 /// Base class for Stream objects which can watch for changes to their respective files.
@@ -11,6 +12,12 @@ public abstract class ReloadableStream : Stream
 
     public ReloadableStream(string filename)
     {
+        // FileSystemWatcher doesn't work well on Linux. Creating hundreds or thousands of these
+        // uses up system resources in a way that causes the OS to complain.
+        // Automatic file reloading is disabled on Linux until a good workaround is found.
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            return;
+
         watcher = new FileSystemWatcher();
         watcher.Path = Path.GetDirectoryName(filename);
         watcher.Filter = Path.GetFileName(filename);
@@ -41,7 +48,7 @@ public abstract class ReloadableStream : Stream
 
     public override void Close()
     {
-        watcher.Dispose();
+        watcher?.Dispose();
         base.Close();
     }
 }
