@@ -80,6 +80,8 @@ namespace LynnaLib
         int failedIfdefDepth = 0; // The depth of the last ifdef that failed (if ifdefCondition is false)
         bool ifdefCondition = true; // If false, we're currently skipping over some ifdef code
 
+        int unionDepth = 0;
+
         string context = "";
         // Values for context:
         // - "RAMSECTION"
@@ -99,7 +101,7 @@ namespace LynnaLib
             this.fullFilename = Project.BaseDirectory + f;
 
 
-            log.Info("Began parsing \"" + Filename + "\".");
+            log.Debug("Began parsing \"" + Filename + "\".");
 
 
             string[] lines = File.ReadAllLines(FullFilename);
@@ -114,7 +116,7 @@ namespace LynnaLib
 
             Modified = false;
 
-            log.Info("Finished parsing \"" + Filename + "\".");
+            log.Debug("Finished parsing \"" + Filename + "\".");
         }
 
 
@@ -134,9 +136,9 @@ namespace LynnaLib
             get
             {
                 if (currentLine == -1) // Probably parsing a line given through code, not from the actual file
-                    return "WARNING inserting lines into \"" + Filename + "\": ";
+                    return "While inserting lines into \"" + Filename + "\": ";
                 else
-                    return "WARNING while parsing \"" + Filename + "\": Line " + currentLine + ": ";
+                    return $"{Filename}: Line {currentLine}: ";
             }
         }
         protected string FullFilename
@@ -284,6 +286,12 @@ namespace LynnaLib
                         if (context != "RAMSECTION" && context != "ENUM")
                             goto default;
                         address += Project.EvalToInt(fTokens[1]) * 2;
+                        break;
+
+                    case "instanceof":
+                        if (context != "RAMSECTION" && context != "ENUM")
+                            goto default;
+                        log.Info(warningString + "instanceof not yet supported.");
                         break;
 
                     case "m_animationloop":
@@ -622,7 +630,6 @@ namespace LynnaLib
 
             if (tokens.Count > 0)
             {
-
                 // Check if we're currently skipping over stuff because of .ifdefs
                 if (ifdefCondition == false)
                 {
@@ -643,6 +650,23 @@ namespace LynnaLib
 
                     return;
                 }
+
+                // ...Or if we're skipping over stuff for unions (which are not actually supported yet)
+                if (tokens[0].ToLower() == ".union")
+                {
+                    log.Info(warningString + ".union not yet supported");
+                    unionDepth++;
+                    return;
+                }
+                // ignoring .nextu for now
+                else if (tokens[0].ToLower() == ".endu")
+                {
+                    unionDepth--;
+                    return;
+                }
+
+                if (unionDepth > 0)
+                    return;
 
                 switch (tokens[0].ToLower())
                 {
@@ -794,7 +818,7 @@ namespace LynnaLib
 
                                 if (s[0] == '@')
                                 {
-                                    log.Warn("Ignoring label '" + s + "': child labels not supported.");
+                                    log.Info(warningString + "Ignoring label '" + s + "': child labels not supported.");
                                     break;
                                 }
 
