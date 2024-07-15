@@ -1,4 +1,4 @@
-# Publish a portable build which also includes Windows GTK dependencies.
+# Publish windows & portable builds. Windows build includes GTK libraries.
 # GTK libs should already be in the LocalAppData directory from GtkSharp's automated download.
 
 # WINDOWS
