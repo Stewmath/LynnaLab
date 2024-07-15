@@ -104,6 +104,11 @@ Z: The bugfix version. There shouldn't be any major changes to functionality in
 these versions. Obviously there should be no incompatibilities introduced
 either.
 
+## Other stuff to know
+
+* Logs are stored in the disassembly folder under the "LynnaLab\\Logs\\"
+  subdirectory.
+
 ## For more information
 
 - Join our [discord server](https://discord.gg/wCpPPNZ) to meet some cool people

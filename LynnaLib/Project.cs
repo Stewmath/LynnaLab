@@ -31,7 +31,7 @@ namespace LynnaLib
         public readonly ConstantsMapping TreasureGrabModeMapping;
         public readonly ConstantsMapping TreasureObjectMapping;
 
-        //log4net.Appender.RollingFileAppender logAppender;
+        log4net.Appender.RollingFileAppender logAppender;
 
         string baseDirectory;
 
@@ -66,21 +66,20 @@ namespace LynnaLib
         public Project(string d, string gameToLoad, ProjectConfig config)
         {
             GameString = gameToLoad;
-            baseDirectory = d;
+            baseDirectory = Path.GetFullPath(d);
             if (!baseDirectory.EndsWith("/"))
                 baseDirectory += "/";
             this.config = config;
 
-            // logAppender can be used to output logs to txt files, but I never actually use this,
-            // and it wasn't actually working at the time I commented it out.
-            /*
-            logDirectory = configDirectory + "Logs/";
+            // Write logs to disassembly folder at LynnaLab/Logs/
+            var configDirectory = baseDirectory + "LynnaLab/";
+            var logDirectory = configDirectory + "Logs/";
             System.IO.Directory.CreateDirectory(logDirectory);
 
             logAppender = new log4net.Appender.RollingFileAppender();
             logAppender.AppendToFile = true;
             logAppender.Layout = new log4net.Layout.PatternLayout(
-                    "%date{ABSOLUTE} [%logger] %level - %message%newline%exception");
+                "%date{ABSOLUTE} [%logger] %level - %message%newline%exception");
             logAppender.File = logDirectory + "Log.txt";
             logAppender.Threshold = log4net.Core.Level.All;
             logAppender.MaxFileSize = 2 * 1024 * 1024;
@@ -88,7 +87,6 @@ namespace LynnaLib
             logAppender.RollingStyle = log4net.Appender.RollingFileAppender.RollingMode.Composite;
             logAppender.ActivateOptions();
             LogHelper.AddAppenderToRootLogger(logAppender);
-            */
 
             log.Info("Opening project at \"" + baseDirectory + "\".");
 
@@ -469,10 +467,8 @@ namespace LynnaLib
             {
                 file.Close();
             }
-            /*
             LogHelper.RemoveAppenderFromRootLogger(logAppender);
             logAppender.Close();
-            */
         }
 
         public T GetIndexedDataType<T>(int identifier) where T : ProjectIndexedDataType
