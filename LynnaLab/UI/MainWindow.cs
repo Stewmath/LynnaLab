@@ -341,7 +341,10 @@ public class MainWindow
             // Only update minimap if the room editor did a "follow warp". Otherwise, we'll decide
             // whether to update the minimap from whatever code changed the room.
             if (args.fromFollowWarp)
+            {
                 UpdateMinimapFromRoom(args.fromFollowWarp);
+                UpdateStatusBarWarnings();
+            }
 
             eventGroup.Unlock();
         });
