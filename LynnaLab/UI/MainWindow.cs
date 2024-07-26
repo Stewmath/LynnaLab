@@ -1141,7 +1141,7 @@ public class MainWindow
         // this, but in practice it seems like Gtk gets very unhappy when a
         // closed window is not Dispose'd immediately.
         tilesetEditorWindow.Destroyed += (sender, e) => {
-            (sender as Gtk.Window).Dispose();
+            (sender as Gtk.Window)?.Dispose();
         };
 
         tilesetEditorWindow.ShowAll();
