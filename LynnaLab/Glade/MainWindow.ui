@@ -265,11 +265,12 @@
               <object class="GtkToolButton">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="tooltip-text" translatable="yes">Build &amp; run the game!</property>
+                <property name="tooltip-text" translatable="yes">Build &amp; run the game! (F5)</property>
                 <property name="label" translatable="yes">Run Button</property>
                 <property name="use-underline">True</property>
                 <property name="icon-name">media-playback-start</property>
                 <signal name="clicked" handler="OnRunActionActivated" swapped="no"/>
+                <accelerator key="F5" signal="clicked"/>
               </object>
               <packing>
                 <property name="expand">False</property>
