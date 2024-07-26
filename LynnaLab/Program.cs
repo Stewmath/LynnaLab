@@ -66,6 +66,7 @@ namespace LynnaLab
                                         MessageType.Error,
                                         ButtonsType.Ok,
                                         outputString);
+            d.UseMarkup = false;
             d.Run();
             d.Dispose();
             Environment.Exit(1);
