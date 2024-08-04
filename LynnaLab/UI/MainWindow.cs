@@ -67,6 +67,7 @@ public class MainWindow
     LynnaLab.RoomEditor roomeditor1;
     WarpEditor warpEditor = null;
     PriorityStatusbar statusbar1;
+    BuildDialog buildDialog;
 
     WeakEventWrapper<ValueReference> roomTilesetModifiedEventWrapper = new WeakEventWrapper<ValueReference>();
     WeakEventWrapper<ValueReferenceGroup> tilesetModifiedEventWrapper;
@@ -960,8 +961,14 @@ public class MainWindow
             return;
 
         Project.Save();
-        var dialog = new BuildDialog(this);
-        dialog.ShowAll();
+
+        if (buildDialog != null)
+        {
+            buildDialog.Destroy();
+        }
+
+        buildDialog = new BuildDialog(this);
+        buildDialog.ShowAll();
     }
 
     protected void OnPromptForEmulatorActionActivated(object sender, EventArgs e)
@@ -1284,8 +1291,11 @@ public class MainWindow
     {
         // Kill existing emulator process if it exists.
         // Could use CloseMainWindow() instead to ask more nicely, but not guaranteed to work.
-        emulatorProcess?.Kill();
-        emulatorProcess?.Close();
+        if (emulatorProcess != null)
+        {
+            emulatorProcess.Kill(true); // Pass true to kill whole process tree
+            emulatorProcess.Close();
+        }
         emulatorProcess = process;
     }
 }
