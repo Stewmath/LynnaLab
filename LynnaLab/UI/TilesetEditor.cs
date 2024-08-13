@@ -24,6 +24,7 @@ namespace LynnaLab
         Gtk.Label paletteFrameLabel;
         Gtk.ToggleButton paletteBrushModeButton;
         Gtk.SpinButton paletteBrushSpinButton;
+        Gtk.ToggleButton seasonLockButton;
         PriorityStatusbar statusbar1;
         ValueReferenceEditor tilesetVre;
 
@@ -46,6 +47,7 @@ namespace LynnaLab
             paletteFrameLabel = (Gtk.Label)builder.GetObject("paletteFrameLabel");
             paletteBrushModeButton = (Gtk.ToggleButton)builder.GetObject("paletteBrushModeButton");
             paletteBrushSpinButton = (Gtk.SpinButton)builder.GetObject("paletteBrushSpinButton");
+            seasonLockButton = (Gtk.ToggleButton)builder.GetObject("seasonLockButton");
 
             base.Child = (Gtk.Widget)builder.GetObject("TilesetEditor");
 
@@ -88,7 +90,14 @@ namespace LynnaLab
                 seasonComboBoxContainer.Add(seasonSelectionButton);
             }
             else
+            {
                 seasonContainer.Destroy();
+                seasonContainer.Dispose();
+                seasonContainer = null;
+                seasonLockButton.Destroy();
+                seasonLockButton.Dispose();
+                seasonLockButton = null;
+            }
 
             statusbar1 = new PriorityStatusbar();
             ((Gtk.Box)builder.GetObject("statusbarHolder")).Add(statusbar1);
@@ -131,6 +140,30 @@ namespace LynnaLab
         bool PaletteBrushMode
         {
             get { return paletteBrushModeButton.Active; }
+        }
+
+        bool SeasonLock
+        {
+            get { return seasonLockButton != null && seasonLockButton.Active && Tileset.IsSeasonal; }
+        }
+
+
+        // Perform an action on either the selected tileset, or all seasons for that tileset if the
+        // season lock toggle is enabled
+        public void ForeachTileset(Action<Tileset> act)
+        {
+            if (SeasonLock)
+            {
+                for (int s = 0; s < 4; s++)
+                {
+                    Tileset t = Project.GetTileset(Tileset.Index, s);
+                    act(t);
+                }
+            }
+            else
+            {
+                act(Tileset);
+            }
         }
 
 
@@ -269,6 +302,7 @@ namespace LynnaLab
                 }
             });
 
+            // Convert subtile position to tile index
             var convertSubtileCoordinate = (int x, int y) =>
             {
                 // Assuming the x/y coordinates are measured in subtiles, so 32 per row/column
@@ -279,13 +313,17 @@ namespace LynnaLab
                 return (tileIndex, subTileX, subTileY);
             };
 
+            // Set palette at x, y to selected value
             var assignPalette = (int x, int y) =>
             {
-                var (tileIndex, subTileX, subTileY) = convertSubtileCoordinate(x, y);
+                ForeachTileset((t) =>
+                {
+                    var (tileIndex, subTileX, subTileY) = convertSubtileCoordinate(x, y);
 
-                byte flags = Tileset.GetSubTileFlags(tileIndex, subTileX, subTileY);
-                flags = (byte)((flags & ~7) | (paletteBrushSpinButton.ValueAsInt & 7));
-                Tileset.SetSubTileFlags(tileIndex, subTileX, subTileY, flags);
+                    byte flags = t.GetSubTileFlags(tileIndex, subTileX, subTileY);
+                    flags = (byte)((flags & ~7) | (paletteBrushSpinButton.ValueAsInt & 7));
+                    t.SetSubTileFlags(tileIndex, subTileX, subTileY, flags);
+                });
             };
 
             // Clicked/dragged on a tile for PaletteBrushMode
@@ -367,12 +405,6 @@ namespace LynnaLab
                     if (tileset == null)
                         return 0;
                     return tileset.GetSubTileFlags(TileIndex, SelectedX, SelectedY);
-                }
-                set
-                {
-                    if (tileset == null)
-                        return;
-                    tileset.SetSubTileFlags(TileIndex, SelectedX, SelectedY, value);
                 }
             }
             public byte SubTileIndex
@@ -558,6 +590,10 @@ namespace LynnaLab
             Gtk.CheckButton priorityCheckButton;
             Gtk.CheckButton bankCheckButton;
 
+            // Set to nonzero when fields are being changed through a tileset or selected tile
+            // change, not due to any data actually changing
+            int changingTileset = 0;
+
             public SubTileEditor(TilesetEditor tilesetEditor)
             {
                 this.tilesetEditor = tilesetEditor;
@@ -595,7 +631,13 @@ namespace LynnaLab
                 collisionSpinButton.Digits = 2;
                 collisionSpinButton.ValueChanged += delegate (object sender, EventArgs e)
                 {
-                    Tileset.SetTileCollision(TileIndex, (byte)collisionSpinButton.ValueAsInt);
+                    if (changingTileset == 0)
+                    {
+                        tilesetEditor.ForeachTileset((t) =>
+                        {
+                            t.SetTileCollision(TileIndex, (byte)collisionSpinButton.ValueAsInt);
+                        });
+                    }
                     subTileCollisionEditor.QueueDraw();
                 };
 
@@ -615,7 +657,17 @@ namespace LynnaLab
                 subTileSpinButton = new SpinButtonHexadecimal(0, 255);
                 subTileSpinButton.ValueChanged += delegate (object sender, EventArgs e)
                 {
-                    PushFlags();
+                    if (changingTileset == 0)
+                    {
+                        tilesetEditor.ForeachTileset((t) =>
+                        {
+                            t.SetSubTileIndex(TileIndex,
+                                              subTileViewer.SelectedX,
+                                              subTileViewer.SelectedY,
+                                              (byte)subTileSpinButton.ValueAsInt);
+                        });
+                    }
+                    tilesetEditor.subTileGfxViewer.SelectedIndex = subTileViewer.SubTileIndex ^ 0x80;
                 };
                 paletteSpinButton = new Gtk.SpinButton(0, 7, 1);
                 paletteSpinButton.ValueChanged += delegate (object sender, EventArgs e)
@@ -691,16 +743,20 @@ namespace LynnaLab
 
             public void SetTileset(Tileset t)
             {
+                changingTileset++;
                 subTileViewer.SetTileset(t);
                 subTileCollisionEditor.SetTileset(t);
                 PullEverything();
+                changingTileset--;
             }
 
             public void SetTileIndex(int tile)
             {
+                changingTileset++;
                 subTileViewer.TileIndex = tile;
                 subTileCollisionEditor.TileIndex = tile;
                 PullEverything();
+                changingTileset--;
             }
 
             public void OnTileModified()
@@ -714,6 +770,7 @@ namespace LynnaLab
                 if (Tileset != null)
                 {
                     collisionSpinButton.Value = Tileset.GetTileCollision(TileIndex);
+                    subTileViewer.QueueDraw();
                     subTileCollisionEditor.QueueDraw();
                 }
 
@@ -731,6 +788,9 @@ namespace LynnaLab
 
             void PushFlags()
             {
+                if (changingTileset != 0)
+                    return;
+
                 byte flags = 0;
                 flags |= (byte)paletteSpinButton.ValueAsInt;
                 if (flipXCheckButton.Active)
@@ -742,9 +802,13 @@ namespace LynnaLab
                 if (bankCheckButton.Active)
                     flags |= 0x08;
 
-                subTileViewer.SubTileFlags = flags;
-                subTileViewer.SubTileIndex = (byte)(subTileSpinButton.ValueAsInt);
-                tilesetEditor.subTileGfxViewer.SelectedIndex = subTileViewer.SubTileIndex ^ 0x80;
+                tilesetEditor.ForeachTileset((t) =>
+                {
+                    t.SetSubTileFlags(TileIndex,
+                                      subTileViewer.SelectedX,
+                                      subTileViewer.SelectedY,
+                                      flags);
+                });
             }
         }
     }
