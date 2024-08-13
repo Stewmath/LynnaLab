@@ -91,6 +91,23 @@ namespace LynnaLib
             return cachedImage;
         }
 
+        public byte[] GetLayout()
+        {
+            tileDataFile.Position = 0;
+            byte[] output = new byte[Stride * Height];
+            tileDataFile.Read(output, 0, Stride * Height);
+            return output;
+        }
+
+        public void SetLayout(byte[] layout)
+        {
+            if (layout.Length != Stride * Height)
+                throw new Exception($"Tried to write a layout of invalid size to room {Room.Index:x3}");
+            tileDataFile.Position = 0;
+            tileDataFile.Write(layout, 0, Stride * Height);
+            // Modifying the data will trigger the callback to the TileDataModified function
+        }
+
         public int GetTile(int x, int y)
         {
             tileDataFile.Position = y * Stride + x;

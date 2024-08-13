@@ -139,6 +139,24 @@
                   <object class="GtkMenu">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">Copy room layout</property>
+                        <property name="use-underline">True</property>
+                        <signal name="activate" handler="OnCopyRoomLayoutActivated" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">Paste room layout</property>
+                        <property name="use-underline">True</property>
+                        <signal name="activate" handler="OnPasteRoomLayoutActivated" swapped="no"/>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>

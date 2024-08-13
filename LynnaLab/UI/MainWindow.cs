@@ -80,6 +80,8 @@ public class MainWindow
     PluginCore pluginCore;
     GlobalConfig globalConfig;
     Process emulatorProcess;
+    byte[] copiedLayoutData = null;
+    int copiedLayoutWidth;
 
     // Certain "update" events are called indirectly through this. Certain updates are delayed until
     // it is "unlocked", because we sometimes don't want updates to certain widget properties to be
@@ -1179,6 +1181,49 @@ public class MainWindow
         var button = sender as Gtk.ToggleToolButton;
 
         QuickstartStateChanged(button.Active);
+    }
+
+    protected void OnCopyRoomLayoutActivated(object sender, EventArgs e)
+    {
+        if (ActiveRoomLayout == null)
+            return;
+        copiedLayoutData = ActiveRoomLayout.GetLayout();
+        copiedLayoutWidth = ActiveRoomLayout.Width;
+    }
+
+    protected void OnPasteRoomLayoutActivated(object sender, EventArgs e)
+    {
+        if (copiedLayoutData == null || ActiveRoomLayout == null)
+            return;
+
+        if (copiedLayoutWidth != ActiveRoomLayout.Width)
+        {
+            using (var dialog = new Gtk.MessageDialog(
+                       mainWindow,
+                       DialogFlags.DestroyWithParent,
+                       MessageType.Error,
+                       ButtonsType.Ok,
+                       "Room size mismatch."
+                   ))
+            {
+                dialog.Run();
+            }
+            return;
+        }
+
+        var d = new Gtk.MessageDialog(
+            mainWindow,
+            DialogFlags.DestroyWithParent,
+            MessageType.Info,
+            ButtonsType.YesNo,
+            $"This will overwrite the contents of the current room. Proceed?");
+        var response = (ResponseType)d.Run();
+        d.Dispose();
+
+        if (response != Gtk.ResponseType.Yes)
+            return;
+
+        ActiveRoomLayout.SetLayout(copiedLayoutData);
     }
 
     void QuickstartStateChanged(bool active)
