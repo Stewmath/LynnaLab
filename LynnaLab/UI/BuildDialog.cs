@@ -36,6 +36,8 @@ namespace LynnaLab
             {
                 mainWindow.GlobalConfig.CloseRunDialogWithEmulator = closeCheckBox.Active;
                 mainWindow.GlobalConfig.Save();
+
+                this.Dispose();
             };
 
 
