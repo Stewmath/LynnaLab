@@ -44,6 +44,11 @@ namespace Plugins
 
         public MapleEditorImplementation(PluginManager manager)
         {
+            this.Destroyed += (s, a) =>
+            {
+                this.Dispose();
+            };
+
             this.manager = manager;
 
             minimap = new MyMinimap();

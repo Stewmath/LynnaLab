@@ -47,6 +47,11 @@ namespace Plugins
 
         public DungeonEditorImplementation(PluginManager manager)
         {
+            this.Destroyed += (s, a) =>
+            {
+                this.Dispose();
+            };
+
             this.manager = manager;
 
             Box tmpBox, tmpBox2;
