@@ -665,7 +665,7 @@ namespace LynnaLab
                         ObjectDefinition obj = group.GetObject(i);
                         if (!obj.HasXY())
                             continue;
-                        ObjectRoomComponent com = new ObjectRoomComponent(obj);
+                        ObjectRoomComponent com = new ObjectRoomComponent(this, obj);
                         com.SelectedEvent += (sender, args) =>
                         {
                             ObjectGroupEditor.SelectObject(obj.ObjectGroup, obj.Index);
@@ -910,9 +910,12 @@ namespace LynnaLab
         {
             public ObjectDefinition obj;
 
+            RoomEditor parent;
 
-            public ObjectRoomComponent(ObjectDefinition obj)
+
+            public ObjectRoomComponent(RoomEditor parent, ObjectDefinition obj)
             {
+                this.parent = parent;
                 this.obj = obj;
             }
 
@@ -982,6 +985,25 @@ namespace LynnaLab
                         cr.Stroke();
                     }
                 }
+            }
+
+            public override IList<Gtk.MenuItem> GetRightClickMenuItems()
+            {
+                var list = new List<Gtk.MenuItem>();
+
+                {
+                    Gtk.MenuItem cloneButton = new Gtk.MenuItem("Clone");
+                    cloneButton.Activated += (sender, args) =>
+                    {
+                        var group = obj.ObjectGroup;
+                        int n = group.AddObject(obj.GetObjectType());
+                        var newObj = group.GetObject(n);
+                        newObj.CopyFrom(obj);
+                    };
+                    list.Add(cloneButton);
+                }
+
+                return list;
             }
 
             public override bool Compare(RoomComponent com)

@@ -66,6 +66,20 @@ namespace LynnaLab
             {
                 menu.Append(new Gtk.SeparatorMenuItem());
 
+                Gtk.MenuItem cloneItem = new Gtk.MenuItem("Clone");
+                cloneItem.Activated += (sender, args) =>
+                {
+                    if (SelectedIndex != -1)
+                    {
+                        var obj = ObjectGroup.GetObject(SelectedIndex);
+                        var group = ObjectGroup;
+                        int n = group.AddObject(obj.GetObjectType());
+                        var newObj = group.GetObject(n);
+                        newObj.CopyFrom(obj);
+                    }
+                };
+                menu.Append(cloneItem);
+
                 Gtk.MenuItem deleteItem = new Gtk.MenuItem("Delete");
                 deleteItem.Activated += (sender, args) =>
                 {

@@ -176,6 +176,18 @@ namespace LynnaLib
             lockableModifiedEvent.Unlock();
         }
 
+        public void CopyFrom(ValueReferenceGroup vrg)
+        {
+            BeginAtomicOperation();
+
+            foreach (var vr in valueReferences)
+            {
+                vr.SetValue(vrg.GetValue(vr.Name));
+            }
+
+            EndAtomicOperation();
+        }
+
 
         // Protected
 
