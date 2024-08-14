@@ -42,6 +42,12 @@ namespace LynnaLab
             Gtk.Window w = new Gtk.Window(Name);
             w.Add(Instantiate());
             w.ShowAll();
+
+            w.Destroyed += (s, a) =>
+            {
+                (w as Gtk.Window).Dispose();
+            };
+
         }
     }
 }
