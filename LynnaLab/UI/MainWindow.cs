@@ -422,7 +422,15 @@ public class MainWindow
         // fleshed out)
         menubar1.Remove(actionMenuItem);
 
-#if (!DEBUG)
+#if (DEBUG)
+        Gtk.MenuItem gcMenuItem = new Gtk.MenuItem("Trigger GC");
+        gcMenuItem.Activated += (s, e) =>
+        {
+            System.GC.Collect();
+            Console.WriteLine("GC completed.");
+        };
+        (debugMenuItem.Submenu as Gtk.Menu).Append(gcMenuItem);
+#else
         menubar1.Remove(debugMenuItem);
 #endif
 
