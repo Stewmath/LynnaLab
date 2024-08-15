@@ -179,6 +179,12 @@ public class MainWindow
         }
     }
 
+    // Used by Tileset editor for copy/pasting colors from palettes
+    public Color CopiedColor
+    {
+        get; set;
+    }
+
 
     // Private properties
 
@@ -1150,7 +1156,7 @@ public class MainWindow
 
         var tilesetEditorWindow = new Gtk.Window(Gtk.WindowType.Toplevel);
         tilesetEditorWindow.Title = "Tileset Editor";
-        TilesetEditor a = new TilesetEditor(tilesetViewer1.Tileset);
+        TilesetEditor a = new TilesetEditor(this, tilesetViewer1.Tileset);
         tilesetEditorWindow.Add(a);
 
         // I get weird errors and crashes when this Destroyed handler is not

@@ -11,6 +11,7 @@ namespace LynnaLab
     {
         Tileset tileset;
 
+        MainWindow parent;
         SubTileEditor subTileEditor;
         GfxViewer subTileGfxViewer;
         PaletteEditor paletteEditor;
@@ -30,8 +31,10 @@ namespace LynnaLab
 
         WeakEventWrapper<Tileset> tilesetEventWrapper = new WeakEventWrapper<Tileset>();
 
-        public TilesetEditor(Tileset t)
+        public TilesetEditor(MainWindow parent, Tileset t)
         {
+            this.parent = parent;
+
             var builder = new Gtk.Builder();
             builder.AddFromString(Helper.ReadResourceFile("LynnaLab.Glade.TilesetEditor.ui"));
             builder.Autoconnect(this);
@@ -72,7 +75,7 @@ namespace LynnaLab
             subTileEditor = new SubTileEditor(this);
             subTileContainer.Add(subTileEditor);
 
-            paletteEditor = new PaletteEditor();
+            paletteEditor = new PaletteEditor(parent);
             paletteEditorContainer.Add(paletteEditor);
 
             tilesetSpinButton = new SpinButtonHexadecimal();

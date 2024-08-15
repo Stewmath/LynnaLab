@@ -17,8 +17,9 @@ namespace LynnaLab
 
         // Constuctors
 
-        public PaletteEditor() : base(Gtk.Orientation.Vertical, 0)
+        public PaletteEditor(MainWindow mainWindow) : base(Gtk.Orientation.Vertical, 0)
         {
+            MainWindow = mainWindow;
         }
 
 
@@ -35,6 +36,11 @@ namespace LynnaLab
                 _paletteHeaderGroup = value;
                 UpdateButtons();
             }
+        }
+
+        private MainWindow MainWindow
+        {
+            get; set;
         }
 
 
@@ -88,6 +94,37 @@ namespace LynnaLab
                         {
                             data.SetColor(paletteIndex, colorIndex, button.Rgba.FromGdk());
                         };
+
+                        var contextMenu = new Gtk.Menu();
+
+                        var copyItem = new Gtk.MenuItem("Copy");
+                        copyItem.Activated += (_, _) =>
+                        {
+                            MainWindow.CopiedColor = button.Rgba.FromGdk();
+                        };
+                        contextMenu.Append(copyItem);
+
+                        var pasteItem = new Gtk.MenuItem("Paste");
+                        pasteItem.Activated += (_, _) =>
+                        {
+                            if (MainWindow.CopiedColor != null)
+                            {
+                                data.SetColor(paletteIndex, colorIndex, MainWindow.CopiedColor);
+                                button.Rgba = MainWindow.CopiedColor.ToGdk();
+                            }
+                        };
+                        contextMenu.Append(pasteItem);
+
+                        contextMenu.ShowAll();
+
+                        button.ButtonPressEvent += (_, args) =>
+                        {
+                            if (args.Event.Button == 3)
+                            {
+                                contextMenu.Popup();
+                            }
+                        };
+
                         box.Add(button);
                     }
 
