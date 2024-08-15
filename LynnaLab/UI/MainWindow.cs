@@ -410,6 +410,27 @@ public class MainWindow
         chestEventWrapper.Bind<EventArgs>("DeletedEvent", (sender, args) => UpdateChestData());
 
 
+        // Menu items
+        Gtk.MenuItem shiftRoomMenuItem = new Gtk.MenuItem("Shift room");
+        shiftRoomMenuItem.Submenu = new Gtk.Menu();
+
+        Action<string, int, int> addShiftMenuItem = (label, x, y) =>
+        {
+            Gtk.MenuItem menuItem = new Gtk.MenuItem(label);
+            menuItem.Activated += (s, e) =>
+            {
+                ActiveRoomLayout?.ShiftTiles(x, y);
+            };
+            (shiftRoomMenuItem.Submenu as Gtk.Menu).Append(menuItem);
+        };
+
+        addShiftMenuItem("Left", -1, 0);
+        addShiftMenuItem("Right", 1, 0);
+        addShiftMenuItem("Up", 0, -1);
+        addShiftMenuItem("Down", 0, 1);
+
+        (editMenuItem.Submenu as Gtk.Menu).Append(shiftRoomMenuItem);
+
         // Load "plugins"
 
         pluginCore = new PluginCore(this);

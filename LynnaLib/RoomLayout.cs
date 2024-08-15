@@ -123,6 +123,34 @@ namespace LynnaLib
             }
         }
 
+        // Shift room tiles by given values
+        public void ShiftTiles(int xshift, int yshift)
+        {
+            byte[] oldLayout = GetLayout();
+            byte[] newLayout = (byte[])oldLayout.Clone();
+
+            for (int x=0; x<Width; x++)
+            {
+                for (int y=0; y<Height; y++)
+                {
+                    Func<int, int, int> normalize = (val, max) =>
+                    {
+                        while (val < 0)
+                            val += max;
+                        while (val >= max)
+                            val -= max;
+                        return val;
+                    };
+                    int oldX = normalize(x - xshift, Width);
+                    int oldY = normalize(y - yshift, Height);
+
+                    newLayout[y * Stride + x] = oldLayout[oldY * Stride + oldX];
+                }
+            }
+
+            SetLayout(newLayout);
+        }
+
 
         internal void UpdateTileset()
         {
