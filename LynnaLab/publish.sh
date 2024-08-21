@@ -17,6 +17,7 @@ profiledir="$projectdir/Properties/PublishProfiles"
 versionfile="$projectdir/version.txt"
 publishdirname="LynnaLab-win64"
 
+mkdir -p "$publishbasedir"
 cd "$publishbasedir"
 rm -R "$publishdirname/"
 
