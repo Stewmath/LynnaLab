@@ -6,7 +6,10 @@ using System.IO;
 using Veldrid;
 using System.Runtime.CompilerServices;
 
-namespace ImGuiNET
+using ImGuiNET;
+
+
+namespace LynnaLab
 {
     /// <summary>
     /// A modified version of Veldrid.ImGui's ImGuiRenderer.

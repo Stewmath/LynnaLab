@@ -6,9 +6,13 @@ using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
 
+using ImGuiNET;
+using System.Runtime.InteropServices;
+using LynnaLib;
+
 [assembly: log4net.Config.XmlConfigurator(Watch = true)]
 
-namespace ImGuiNET
+namespace LynnaLab
 {
     // Mostly boilerplate code for setting up Imgui with Veldrid, copied from ImGui.NET examples
     class Program
@@ -48,6 +52,55 @@ namespace ImGuiNET
             _cl = _gd.ResourceFactory.CreateCommandList();
             _controller = new ImGuiController(_gd, _gd.MainSwapchain.Framebuffer.OutputDescription, _window.Width, _window.Height);
 
+            TopLevel topLevel;
+
+            if (args.Length >= 2)
+                topLevel = new TopLevel(args[0], args[1]);
+            else if (args.Length >= 1)
+                topLevel = new TopLevel(args[0]);
+            else
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    string path = $"C:\\msys64\\home\\{Environment.UserName}\\oracles-disasm";
+                    topLevel = new TopLevel(path);
+                }
+                else
+                    topLevel = new TopLevel();
+            }
+
+            var bitmap1 = topLevel.Project.LinkBitmap;
+            Cairo.ImageSurface bitmap = topLevel.Project.LinkBitmap;
+
+            PixelFormat pixelFormat;
+
+            if (bitmap.Format == Cairo.Format.ARGB32)
+                pixelFormat = PixelFormat.B8_G8_R8_A8_UNorm;
+            else
+                throw new Exception("Couldn't convert Cairo image format: " + bitmap.Format);
+
+            TextureDescription textureDescription = TextureDescription.Texture2D(
+                (uint)bitmap.Width,
+                (uint)bitmap.Height,
+                mipLevels: 1,
+                arrayLayers: 1,
+                pixelFormat,
+                TextureUsage.Sampled);
+            Texture texture = _gd.ResourceFactory.CreateTexture(ref textureDescription);
+
+            {
+                uint sizeInBytes = (uint)(4 * bitmap.Height * bitmap.Width);
+
+                bitmap.Flush();
+                IntPtr pixelData = bitmap.DataPtr;
+
+                // Update the texture with the pixel data
+                _gd.UpdateTexture(texture, pixelData, sizeInBytes, 0, 0, 0,
+                                  (uint)bitmap.Width, (uint)bitmap.Height, 1, 0, 0);
+            }
+
+            IntPtr imageBinding = _controller.GetOrCreateImGuiBinding(_gd.ResourceFactory, texture);
+
             var stopwatch = Stopwatch.StartNew();
             float deltaTime = 0f;
 
@@ -66,7 +119,10 @@ namespace ImGuiNET
                 // Feed the input events to our ImGui controller, which passes them through to ImGui.
                 _controller.Update(deltaTime, snapshot);
 
-                SubmitUI();
+                ImGui.Image(imageBinding, new Vector2(bitmap.Width, bitmap.Height));
+
+                topLevel.Render();
+                //SubmitUI();
 
                 _cl.Begin();
                 _cl.SetFramebuffer(_gd.MainSwapchain.Framebuffer);
