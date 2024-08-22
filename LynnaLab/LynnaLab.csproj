@@ -25,11 +25,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Glade\*.ui" />
-    <EmbeddedResource Include="Resources\*" />
     <EmbeddedResource Include="icon.ico" />
     <EmbeddedResource Include="version.txt" />
+
+    <EmbeddedResource Include="Shaders/GLSL/imgui-vertex.glsl" LogicalName="imgui-vertex.glsl" />
+    <EmbeddedResource Include="Shaders/GLSL/imgui-frag.glsl" LogicalName="imgui-frag.glsl" />
+    <EmbeddedResource Include="Shaders/HLSL/imgui-vertex.hlsl.bytes" LogicalName="imgui-vertex.hlsl.bytes" />
+    <EmbeddedResource Include="Shaders/HLSL/imgui-frag.hlsl.bytes" LogicalName="imgui-frag.hlsl.bytes" />
+    <EmbeddedResource Include="Shaders/SPIR-V/imgui-vertex.spv" LogicalName="imgui-vertex.spv" />
+    <EmbeddedResource Include="Shaders/SPIR-V/imgui-frag.spv" LogicalName="imgui-frag.spv" />
+    <EmbeddedResource Include="Shaders/Metal/imgui-vertex.metallib" LogicalName="imgui-vertex.metallib" />
+    <EmbeddedResource Include="Shaders/Metal/imgui-frag.metallib" LogicalName="imgui-frag.metallib" />
   </ItemGroup>
+
 
   <ItemGroup>
     <None Update="log4net.config">
@@ -47,8 +55,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="GtkSharp" Version="3.24.24.95" />
+    <PackageReference Include="ImGui.NET" Version="1.91.0.1" />
     <PackageReference Include="NUnit" Version="4.1.0" />
+    <PackageReference Include="Veldrid" Version="4.9.0" />
+    <PackageReference Include="Veldrid.Sdl2" Version="4.9.0" />
+    <PackageReference Include="Veldrid.StartupUtilities" Version="4.9.0" />
 
       <!-- This fixes a package downgrade warning -->
       <!--<PackageReference Include="System.Net.Sockets" Version="4.3.0" /> -->
