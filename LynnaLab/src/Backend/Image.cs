@@ -30,6 +30,11 @@ namespace LynnaLab
         /// </summary>
         public abstract IntPtr GetBinding();
 
+        /// <summary>
+        /// Replaces the contents of the image with the given bitmap.
+        /// </summary>
+        public abstract void UpdateFromBitmap(LynnaLib.Bitmap bitmap);
+
         public abstract void Dispose();
 
         // ================================================================================

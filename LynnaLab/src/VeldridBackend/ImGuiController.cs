@@ -118,7 +118,8 @@ namespace VeldridBackend
                 new ResourceLayoutElementDescription("ProjectionMatrixBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
                 new ResourceLayoutElementDescription("MainSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
             _textureLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
-                new ResourceLayoutElementDescription("MainTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment)));
+                new ResourceLayoutElementDescription("MainTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+                new ResourceLayoutElementDescription("Sampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
             GraphicsPipelineDescription pd = new GraphicsPipelineDescription(
                 BlendStateDescription.SingleAlphaBlend,
@@ -135,7 +136,7 @@ namespace VeldridBackend
                 _projMatrixBuffer,
                 gd.PointSampler));
 
-            _fontTextureResourceSet = factory.CreateResourceSet(new ResourceSetDescription(_textureLayout, _fontTextureView));
+            _fontTextureResourceSet = factory.CreateResourceSet(new ResourceSetDescription(_textureLayout, _fontTextureView, _gd.PointSampler));
         }
 
         /// <summary>
@@ -146,7 +147,7 @@ namespace VeldridBackend
         {
             if (!_setsByView.TryGetValue(textureView, out ResourceSetInfo rsi))
             {
-                ResourceSet resourceSet = factory.CreateResourceSet(new ResourceSetDescription(_textureLayout, textureView));
+                ResourceSet resourceSet = factory.CreateResourceSet(new ResourceSetDescription(_textureLayout, textureView, _gd.PointSampler));
                 rsi = new ResourceSetInfo(GetNextImGuiBindingID(), resourceSet);
 
                 _setsByView.Add(textureView, rsi);
