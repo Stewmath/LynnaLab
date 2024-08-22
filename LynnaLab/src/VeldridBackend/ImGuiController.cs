@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using ImGuiNET;
 
 
-namespace LynnaLab
+namespace VeldridBackend
 {
     /// <summary>
     /// A modified version of Veldrid.ImGui's ImGuiRenderer.
@@ -69,6 +69,12 @@ namespace LynnaLab
             SetPerFrameImGuiData(1f / 60f);
             ImGui.NewFrame();
             _frameBegun = true;
+        }
+
+
+        public GraphicsDevice GraphicsDevice
+        {
+            get { return _gd; }
         }
 
         public void WindowResized(int width, int height)

@@ -6,8 +6,9 @@ namespace LynnaLab
 {
     public class TopLevel
     {
-        public TopLevel(string path = "", string game = "seasons")
+        public TopLevel(IBackend backend, string path = "", string game = "seasons")
         {
+            this.backend = backend;
             if (path != "")
                 OpenProject(path, game);
         }
@@ -16,9 +17,11 @@ namespace LynnaLab
         // Variables
         // ================================================================================
 
+        IBackend backend;
         bool showImGuiDemoWindow = true;
         byte room;
 
+        Image linkImage;
 
         // ================================================================================
         // Properties
@@ -35,6 +38,8 @@ namespace LynnaLab
 
         public void Render()
         {
+            Widget.Image(linkImage);
+
             ImGui.Text("Hello, world!");
 
             Widget.InputByte("Room", ref room);
@@ -58,6 +63,8 @@ namespace LynnaLab
             ProjectConfig config = ProjectConfig.Load(path);
 
             Project = new Project(path, game, config);
+
+            linkImage = backend.ImageFromBitmap(Project.LinkBitmap);
         }
     }
 }

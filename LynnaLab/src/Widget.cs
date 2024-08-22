@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using ImGuiNET;
 
 namespace LynnaLab
@@ -20,6 +21,14 @@ namespace LynnaLab
                 v = 255;
 
             value = v;
+        }
+
+        /// <summary>
+        /// Convenience method for rendering images
+        /// </summary>
+        public static void Image(Image image)
+        {
+            ImGui.Image(image.GetBinding(), new Vector2(image.Width, image.Height));
         }
     }
 }

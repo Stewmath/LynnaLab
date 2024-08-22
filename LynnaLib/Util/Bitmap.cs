@@ -9,7 +9,7 @@ namespace LynnaLib
         Cairo.ImageSurface surface;
 
         /// Constructor for blank surface
-        public Bitmap(int width, int height, Cairo.Format format = Cairo.Format.Rgb24)
+        public Bitmap(int width, int height, Cairo.Format format = Cairo.Format.Argb32)
         {
             surface = new Cairo.ImageSurface(format, width, height);
         }
