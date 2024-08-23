@@ -102,6 +102,8 @@ namespace LynnaLab
 
             if (Image != null)
             {
+                ImGui.BeginGroup();
+
                 Widget.DrawImage(Image, scale: Scale);
 
                 // Use InvisibleButton to prevent left click from dragging the window
@@ -153,6 +155,8 @@ namespace LynnaLab
                     Rect r = TileRect(SelectedIndex);
                     base.AddRect(r, SelectColor, thickness: 2 * Scale);
                 }
+
+                ImGui.EndGroup();
             }
         }
 

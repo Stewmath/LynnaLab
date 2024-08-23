@@ -16,7 +16,6 @@ namespace LynnaLab
             base.Width = 16;
             base.Height = 16;
             base.Selectable = true;
-            base.Scale = 2;
         }
 
         // ================================================================================
@@ -67,7 +66,6 @@ namespace LynnaLab
         /// </summary>
         void OnTilesetChanged()
         {
-            image?.Dispose();
             image = null;
 
             if (tileset != null)

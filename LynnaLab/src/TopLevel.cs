@@ -29,12 +29,11 @@ namespace LynnaLab
         ImFontPtr oraclesFont;
         Dictionary<Bitmap, Image> imageDict = new Dictionary<Bitmap, Image>();
 
-        Image linkImage;
-        RoomLayoutEditor roomLayoutEditor;
-        TilesetViewer tilesetViewer;
-        Minimap minimap;
+        RoomEditor roomEditor;
 
-        bool showImGuiDemoWindow = true;
+        Image linkImage;
+
+        bool showImGuiDemoWindow = false;
 
         // ================================================================================
         // Properties
@@ -59,43 +58,31 @@ namespace LynnaLab
 
         public void Render()
         {
+            if (Project == null)
+                return;
+
             ImGui.PushFont(oraclesFont);
 
             {
                 ImGui.Begin("Control Panel");
 
-                int roomIndex = roomLayoutEditor.Room.Index;
+                ImGui.Checkbox("Demo Window".AsSpan(), ref showImGuiDemoWindow);
+
+                int roomIndex = roomEditor.Room.Index;
                 ImGui.InputInt("Room", ref roomIndex);
                 if (roomIndex >= 0 && roomIndex < Project.NumRooms &&
-                    roomIndex != roomLayoutEditor.Room.Index)
+                    roomIndex != roomEditor.Room.Index)
                 {
                     var room = Project.GetIndexedDataType<Room>(roomIndex);
-                    RoomLayout layout;
-                    if (room.Group == 0)
-                        layout = room.GetLayout(0);
-                    else
-                        layout = room.GetLayout(-1);
-                    roomLayoutEditor.SetRoomLayout(layout);
+                    roomEditor.SetRoom(room);
                 }
 
                 ImGui.End();
             }
 
             {
-                ImGui.Begin("Room Layout");
-                roomLayoutEditor.Render();
-                ImGui.End();
-            }
-
-            {
-                ImGui.Begin("Tileset");
-                tilesetViewer.Render();
-                ImGui.End();
-            }
-
-            {
-                ImGui.Begin("Minimap");
-                minimap.Render();
+                ImGui.Begin("Room Editor");
+                roomEditor.Render();
                 ImGui.End();
             }
 
@@ -142,34 +129,7 @@ namespace LynnaLab
             Project = new Project(path, game, config);
 
             linkImage = backend.ImageFromBitmap(Project.LinkBitmap);
-            roomLayoutEditor = new RoomLayoutEditor(this);
-            roomLayoutEditor.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(-1));
-
-            tilesetViewer = new TilesetViewer(this);
-            tilesetViewer.SetTileset(roomLayoutEditor.Room.GetTileset(-1));
-
-            minimap = new Minimap(this);
-            minimap.SetMap(Project.GetWorldMap(0, 0));
-
-            roomLayoutEditor.AddMouseAction(MouseButton.LeftClick,
-                                            MouseModifier.Any | MouseModifier.Drag,
-                                            GridAction.Callback,
-            (_, args) =>
-            {
-                int x = args.selectedIndex % roomLayoutEditor.Width;
-                int y = args.selectedIndex / roomLayoutEditor.Width;
-                roomLayoutEditor.RoomLayout.SetTile(x, y, tilesetViewer.SelectedIndex);
-            });
-            roomLayoutEditor.AddMouseAction(MouseButton.RightClick,
-                                            MouseModifier.Any,
-                                            GridAction.Callback,
-            (_, args) =>
-            {
-                int x = args.selectedIndex % roomLayoutEditor.Width;
-                int y = args.selectedIndex / roomLayoutEditor.Width;
-                int tile = roomLayoutEditor.RoomLayout.GetTile(x, y);
-                tilesetViewer.SelectedIndex = tile;
-            });
+            roomEditor = new RoomEditor(this);
         }
     }
 }

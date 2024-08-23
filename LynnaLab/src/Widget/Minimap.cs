@@ -12,6 +12,8 @@ namespace LynnaLab
         public Minimap(TopLevel topLevel)
         {
             this.topLevel = topLevel;
+
+            base.Selectable = true;
         }
 
         // ================================================================================
