@@ -284,7 +284,6 @@ namespace LynnaLib
 
             cr.Dispose();
 
-            cachedImageDirty = false;
             cachedImage.MarkModified();
 
             if (changed && LayoutModifiedEvent != null)
