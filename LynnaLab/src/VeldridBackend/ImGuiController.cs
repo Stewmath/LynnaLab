@@ -287,8 +287,9 @@ namespace VeldridBackend
 
         /// <summary>
         /// Renders the ImGui draw list data.
-        /// This method requires a <see cref="GraphicsDevice"/> because it may create new DeviceBuffers if the size of vertex
-        /// or index data has increased beyond the capacity of the existing buffers.
+        /// This method requires a <see cref="GraphicsDevice"/> because it may create new
+        /// DeviceBuffers if the size of vertex or index data has increased beyond the capacity of
+        /// the existing buffers.
         /// A <see cref="CommandList"/> is needed to submit drawing and resource update commands.
         /// </summary>
         public void Render(GraphicsDevice gd, CommandList cl)

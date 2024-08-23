@@ -16,6 +16,8 @@ namespace LynnaLab
         public void Render();
 
         public Image ImageFromBitmap(Bitmap bitmap);
+        public Image CreateImage(int width, int height);
+
         public void RecreateFontTexture();
     }
 }

@@ -1,5 +1,7 @@
 using System;
 
+using Point = Cairo.Point;
+
 namespace LynnaLab
 {
     /// <summary>
@@ -29,6 +31,11 @@ namespace LynnaLab
         /// Returns an image binding usable with ImGui.Image().
         /// </summary>
         public abstract IntPtr GetBinding();
+
+        /// <summary>
+        /// Draw this image onto another image
+        /// </summary>
+        public abstract void DrawOn(Image destImage, Point srcPos, Point destPos, Point size);
 
         /// <summary>
         /// Replaces the contents of the image with the given bitmap.

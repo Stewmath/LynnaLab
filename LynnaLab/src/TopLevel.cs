@@ -32,6 +32,7 @@ namespace LynnaLab
         Image linkImage;
         RoomLayoutEditor roomLayoutEditor;
         TilesetViewer tilesetViewer;
+        Minimap minimap;
 
         bool showImGuiDemoWindow = true;
 
@@ -42,6 +43,14 @@ namespace LynnaLab
         public Project Project
         {
             get; private set;
+        }
+
+        public IBackend Backend
+        {
+            get
+            {
+                return backend;
+            }
         }
 
         // ================================================================================
@@ -81,6 +90,12 @@ namespace LynnaLab
             {
                 ImGui.Begin("Tileset");
                 tilesetViewer.Render();
+                ImGui.End();
+            }
+
+            {
+                ImGui.Begin("Minimap");
+                minimap.Render();
                 ImGui.End();
             }
 
@@ -132,6 +147,9 @@ namespace LynnaLab
 
             tilesetViewer = new TilesetViewer(this);
             tilesetViewer.SetTileset(roomLayoutEditor.Room.GetTileset(-1));
+
+            minimap = new Minimap(this);
+            minimap.SetMap(Project.GetWorldMap(0, 0));
 
             roomLayoutEditor.AddMouseAction(MouseButton.LeftClick,
                                             MouseModifier.Any | MouseModifier.Drag,

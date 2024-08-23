@@ -3,9 +3,13 @@ using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
 
+using IBackend = LynnaLab.IBackend;
+using Image = LynnaLab.Image;
+using Bitmap = LynnaLib.Bitmap;
+
 namespace VeldridBackend
 {
-    public class VeldridBackend : LynnaLab.IBackend
+    public class VeldridBackend : IBackend
     {
         // ================================================================================
         // Constructors
@@ -79,9 +83,13 @@ namespace VeldridBackend
             _gd.SwapBuffers(_gd.MainSwapchain);
         }
 
-        public LynnaLab.Image ImageFromBitmap(LynnaLib.Bitmap bitmap)
+        public Image ImageFromBitmap(Bitmap bitmap)
         {
             return new VeldridImage(_controller, bitmap);
+        }
+        public Image CreateImage(int width, int height)
+        {
+            return new VeldridImage(_controller, width, height);
         }
 
         public void RecreateFontTexture()
