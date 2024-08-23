@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Numerics;
 using ImGuiNET;
 
 namespace LynnaLab
@@ -17,5 +18,9 @@ namespace LynnaLab
             }
         }
 
+        public static uint ToImGuiColor(LynnaLib.Color color)
+        {
+            return ImGui.GetColorU32(new Vector4(color.R, color.G, color.B, color.A));
+        }
     }
 }

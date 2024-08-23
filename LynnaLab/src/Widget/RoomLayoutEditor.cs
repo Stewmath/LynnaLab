@@ -11,6 +11,8 @@ namespace LynnaLab
         {
             _topLevel = topLevel;
 
+            base.TileWidth = 16;
+            base.TileHeight = 16;
             base.Scale = 2;
         }
 
@@ -67,6 +69,9 @@ namespace LynnaLab
             {
                 // TODO: Watch for changes
                 _image = Backend.ImageFromBitmap(RoomLayout.GetImage());
+
+                base.Width = RoomLayout.Width;
+                base.Height = RoomLayout.Height;
             }
         }
     }

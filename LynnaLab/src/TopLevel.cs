@@ -52,15 +52,11 @@ namespace LynnaLab
         {
             ImGui.PushFont(oraclesFont);
 
-            Widget.Image(linkImage, scale:3);
-
-            viewer.Render();
-
-            ImGui.Text("Hello, world!");
-
-            Widget.InputByte("Room", ref room);
-            if (room < 0)
-                room = 0;
+            {
+                ImGui.Begin("Room Layout");
+                viewer.Render();
+                ImGui.End();
+            }
 
             ImGui.PopFont();
 
