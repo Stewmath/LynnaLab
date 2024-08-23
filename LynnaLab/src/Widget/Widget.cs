@@ -4,8 +4,17 @@ using ImGuiNET;
 
 namespace LynnaLab
 {
-    public class Widget
+    public abstract class Widget
     {
+        // ================================================================================
+        // Public methods
+        // ================================================================================
+        public abstract void Render();
+
+        // ================================================================================
+        // Static methods
+        // ================================================================================
+
         /// <summary>
         ///  Byte input field
         /// </summary>
@@ -26,9 +35,9 @@ namespace LynnaLab
         /// <summary>
         /// Convenience method for rendering images
         /// </summary>
-        public static void Image(Image image)
+        public static void Image(Image image, int scale = 1)
         {
-            ImGui.Image(image.GetBinding(), new Vector2(image.Width, image.Height));
+            ImGui.Image(image.GetBinding(), new Vector2(image.Width * scale, image.Height * scale));
         }
     }
 }

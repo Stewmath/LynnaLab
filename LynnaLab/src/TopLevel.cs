@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using ImGuiNET;
 using LynnaLib;
 
@@ -9,6 +10,12 @@ namespace LynnaLab
         public TopLevel(IBackend backend, string path = "", string game = "seasons")
         {
             this.backend = backend;
+
+            oraclesFont = ImGuiHelper.LoadFont(
+                Util.Helper.GetResourceStream("LynnaLab.ZeldaOracles.ttf"), 20);
+
+            backend.RecreateFontTexture();
+
             if (path != "")
                 OpenProject(path, game);
         }
@@ -18,10 +25,13 @@ namespace LynnaLab
         // ================================================================================
 
         IBackend backend;
-        bool showImGuiDemoWindow = true;
-        byte room;
+        ImFontPtr oraclesFont;
 
         Image linkImage;
+        RoomLayoutEditor viewer;
+
+        bool showImGuiDemoWindow = true;
+        byte room;
 
         // ================================================================================
         // Properties
@@ -32,19 +42,27 @@ namespace LynnaLab
             get; private set;
         }
 
+        public IBackend Backend { get { return backend; } }
+
         // ================================================================================
         // Public methods
         // ================================================================================
 
         public void Render()
         {
-            Widget.Image(linkImage);
+            ImGui.PushFont(oraclesFont);
+
+            Widget.Image(linkImage, scale:3);
+
+            viewer.Render();
 
             ImGui.Text("Hello, world!");
 
             Widget.InputByte("Room", ref room);
             if (room < 0)
                 room = 0;
+
+            ImGui.PopFont();
 
             if (showImGuiDemoWindow)
             {
@@ -65,6 +83,8 @@ namespace LynnaLab
             Project = new Project(path, game, config);
 
             linkImage = backend.ImageFromBitmap(Project.LinkBitmap);
+            viewer = new RoomLayoutEditor(this);
+            viewer.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(-1));
         }
     }
 }

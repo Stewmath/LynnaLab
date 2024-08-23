@@ -84,6 +84,13 @@ namespace VeldridBackend
             return new VeldridImage(_controller, bitmap);
         }
 
+        public void RecreateFontTexture()
+        {
+            // This may be overkill, but the commented line below doesn't work for some reason
+            _controller.CreateDeviceResources(_gd, _gd.MainSwapchain.Framebuffer.OutputDescription);
+            //_controller.RecreateFontDeviceTexture(_gd);
+        }
+
 
         // ================================================================================
         // Private methods

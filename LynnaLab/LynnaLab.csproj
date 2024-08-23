@@ -27,6 +27,7 @@
   <ItemGroup>
     <EmbeddedResource Include="icon.ico" />
     <EmbeddedResource Include="version.txt" />
+    <EmbeddedResource Include="ZeldaOracles.ttf" />
 
     <EmbeddedResource Include="Shaders/GLSL/imgui-vertex.glsl" LogicalName="imgui-vertex.glsl" />
     <EmbeddedResource Include="Shaders/GLSL/imgui-frag.glsl" LogicalName="imgui-frag.glsl" />

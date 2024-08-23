@@ -1,16 +1,20 @@
-using System;
-
 namespace LynnaLab
 {
     /// <summary>
-    /// An Image is used by the graphics backend (Veldrid) to render stuff with Imgui.
-    ///
-    /// Contrast with LynnaLib.Bitmap which is a Cairo surface used within LynnaLib. This is
-    /// converted to an Image through IBackend.ImageFromBitmap so that it can be rendered to the
-    /// screen.
+    /// Represents any kind of tile-based grid. It can be hovered over with the mouse, and
+    /// optionally allows one to select tiles by clicking, or define actions to occur with other
+    /// mouse buttons.
     /// </summary>
-    public abstract class Image : IDisposable
+    public class TileGridViewer : Widget
     {
+        // ================================================================================
+        // Constructors
+        // ================================================================================
+        public TileGridViewer()
+        {
+
+        }
+
         // ================================================================================
         // Variables
         // ================================================================================
@@ -18,24 +22,20 @@ namespace LynnaLab
         // ================================================================================
         // Properties
         // ================================================================================
-        public abstract int Width { get; }
-        public abstract int Height { get; }
+        public int Scale { get; set; } = 1;
+
+        protected virtual Image Image { get { return null; } }
 
         // ================================================================================
         // Public methods
         // ================================================================================
-
-        /// <summary>
-        /// Returns an image binding usable with ImGui.Image().
-        /// </summary>
-        public abstract IntPtr GetBinding();
-
-        /// <summary>
-        /// Replaces the contents of the image with the given bitmap.
-        /// </summary>
-        //public abstract void UpdateFromBitmap(LynnaLib.Bitmap bitmap);
-
-        public abstract void Dispose();
+        public override void Render()
+        {
+            if (Image != null)
+            {
+                Widget.Image(Image, scale: Scale);
+            }
+        }
 
         // ================================================================================
         // Private methods
