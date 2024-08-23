@@ -28,6 +28,7 @@ namespace LynnaLab
         // Variables
         // ================================================================================
         List<TileGridAction> actionList = new List<TileGridAction>();
+        int selectedIndex;
 
         // ================================================================================
         // Events
@@ -48,7 +49,22 @@ namespace LynnaLab
         public int Scale { get; set; } = 1;
 
         public bool Selectable { get; set; }
-        public int SelectedIndex { get; private set; }
+        public int SelectedIndex
+        {
+            get
+            {
+                return selectedIndex;
+            }
+            set
+            {
+                if (!Selectable)
+                    return;
+                if (value < 0 || value > MaxIndex)
+                    selectedIndex = -1;
+                selectedIndex = value;
+            }
+        }
+        public int MaxIndex { get { return Width * Height - 1; } }
         public int HoveringIndex
         {
             get
