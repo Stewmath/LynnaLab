@@ -4,7 +4,7 @@ using LynnaLib;
 
 namespace LynnaLab
 {
-    public class RoomEditor : Widget
+    public class RoomEditor
     {
         // ================================================================================
         // Constructors
@@ -24,27 +24,35 @@ namespace LynnaLab
             tilesetViewer.SetTileset(roomLayoutEditor.Room.GetTileset(-1));
 
             minimap = new Minimap(topLevel);
-            minimap.SetMap(Project.GetWorldMap(0, 0));
 
-            roomLayoutEditor.AddMouseAction(MouseButton.LeftClick,
-                                            MouseModifier.Any | MouseModifier.Drag,
-                                            GridAction.Callback,
-            (_, args) =>
+            SetRoom(0);
+
+            roomLayoutEditor.AddMouseAction(
+                MouseButton.LeftClick,
+                MouseModifier.Any | MouseModifier.Drag,
+                GridAction.Callback,
+                (_, args) =>
+                {
+                    int x = args.selectedIndex % roomLayoutEditor.Width;
+                    int y = args.selectedIndex / roomLayoutEditor.Width;
+                    roomLayoutEditor.RoomLayout.SetTile(x, y, tilesetViewer.SelectedIndex);
+                });
+            roomLayoutEditor.AddMouseAction(
+                MouseButton.RightClick,
+                MouseModifier.Any,
+                GridAction.Callback,
+                (_, args) =>
+                {
+                    int x = args.selectedIndex % roomLayoutEditor.Width;
+                    int y = args.selectedIndex / roomLayoutEditor.Width;
+                    int tile = roomLayoutEditor.RoomLayout.GetTile(x, y);
+                    tilesetViewer.SelectedIndex = tile;
+                });
+
+            minimap.SelectedEvent += (selectedIndex) =>
             {
-                int x = args.selectedIndex % roomLayoutEditor.Width;
-                int y = args.selectedIndex / roomLayoutEditor.Width;
-                roomLayoutEditor.RoomLayout.SetTile(x, y, tilesetViewer.SelectedIndex);
-            });
-            roomLayoutEditor.AddMouseAction(MouseButton.RightClick,
-                                            MouseModifier.Any,
-                                            GridAction.Callback,
-            (_, args) =>
-            {
-                int x = args.selectedIndex % roomLayoutEditor.Width;
-                int y = args.selectedIndex / roomLayoutEditor.Width;
-                int tile = roomLayoutEditor.RoomLayout.GetTile(x, y);
-                tilesetViewer.SelectedIndex = tile;
-            });
+                SetRoomLayout(minimap.Map.GetRoomLayout(minimap.SelectedX, minimap.SelectedY, Season));
+            };
         }
 
         // ================================================================================
@@ -53,6 +61,7 @@ namespace LynnaLab
         RoomLayoutEditor roomLayoutEditor;
         TilesetViewer tilesetViewer;
         Minimap minimap;
+        int suppressEvents = 0;
 
         // ================================================================================
         // Properties
@@ -69,26 +78,73 @@ namespace LynnaLab
         // Public methods
         // ================================================================================
 
-        public override void Render()
+        public void Render()
         {
-            ImGui.BeginChild("Tileset", new Vector2(tilesetViewer.CanvasWidth, 0.0f));
+            const float OFFSET = 15.0f;
+
+            ImGui.BeginChild("Left Panel", new Vector2(tilesetViewer.WidgetSize.X + OFFSET, 0.0f),
+                             ImGuiChildFlags.Border);
             ImGui.SeparatorText("Tileset");
             tilesetViewer.Render();
             ImGui.EndChild();
 
             ImGui.SameLine();
-            ImGui.BeginChild("Room", new Vector2(roomLayoutEditor.CanvasWidth, 0.0f));
+            ImGui.BeginChild("Middle Panel", new Vector2(roomLayoutEditor.WidgetSize.X + OFFSET, 0.0f),
+                             ImGuiChildFlags.Border);
             ImGui.SeparatorText("Room");
             roomLayoutEditor.Render();
             ImGui.EndChild();
 
             ImGui.SameLine();
-            ImGui.BeginChild("Minimap");
+            ImGui.BeginChild("Right Panel", Vector2.Zero, ImGuiChildFlags.Border);
+
+            ImGui.SeparatorText("Overworld");
+
+            {
+                ImGui.PushItemWidth(150.0f);
+
+                int worldIndex = Room.Group;
+                if (Widget.InputHex("World", ref worldIndex, 1))
+                {
+                    if (worldIndex >= 0 && worldIndex < Project.NumGroups)
+                    {
+                        int s = -1;
+                        if (worldIndex == 0)
+                            s = 0;
+                        SetMap(Project.GetWorldMap(worldIndex, s));
+                    }
+                }
+
+                ImGui.SameLine();
+                int roomIndex = Room.Index;
+                if (Widget.InputHex("Room", ref roomIndex, 3))
+                {
+                    if (roomIndex >= 0 && roomIndex <= Project.NumRooms)
+                        SetRoom(roomIndex);
+                }
+
+                ImGui.SameLine();
+                int season = RoomLayout.Season;
+                if (Widget.InputHex("Season", ref season, 1))
+                {
+                    if (Room.IsValidSeason(season))
+                        SetRoomLayout(Room.GetLayout(season));
+                }
+
+                ImGui.PopItemWidth();
+            }
+
             ImGui.SeparatorText("Minimap");
-            ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, ImGuiWindowFlags.HorizontalScrollbar);
             minimap.Render();
+
             ImGui.EndChild();
-            ImGui.EndChild();
+        }
+
+        public void SetRoom(int roomIndex)
+        {
+            if (roomIndex == Room.Index)
+                return;
+            SetRoom(Project.GetIndexedDataType<Room>(roomIndex));
         }
 
         /// <summary>
@@ -98,9 +154,20 @@ namespace LynnaLab
         {
             if (Room == room)
                 return;
+            SetRoomLayout(room.GetLayout(Season));
+        }
 
-            roomLayoutEditor.SetRoomLayout(room.GetLayout(Season));
-            RoomLayoutChanged();
+        /// <summary>
+        /// Changes the loaded map, updates the loaded room accordingly
+        /// </summary>
+        public void SetMap(Map map)
+        {
+            RoomLayout roomLayout = map.GetRoomLayout(minimap.SelectedX, minimap.SelectedY, 0);
+
+            suppressEvents++;
+            minimap.SetMap(map);
+            SetRoomLayout(roomLayout);
+            suppressEvents--;
         }
 
         // ================================================================================
@@ -108,12 +175,18 @@ namespace LynnaLab
         // ================================================================================
 
         /// <summary>
-        /// Called when roomLayoutEditor has changed to reference a new RoomLayout
+        /// Changes the RoomLayout, updates all the viewers.
         /// </summary>
-        void RoomLayoutChanged()
+        void SetRoomLayout(RoomLayout roomLayout)
         {
-            minimap.SelectedIndex = Room.Index & 0xff;
-            tilesetViewer.SetTileset(RoomLayout.Tileset);
+            suppressEvents++;
+
+            roomLayoutEditor.SetRoomLayout(roomLayout);
+            tilesetViewer.SetTileset(roomLayout.Tileset);
+            minimap.SetMap(Project.GetWorldMap(roomLayout.Group, roomLayout.Season));
+            minimap.SelectedIndex = roomLayout.Room.Index & 0xff;
+
+            suppressEvents--;
         }
     }
 }

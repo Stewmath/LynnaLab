@@ -68,15 +68,6 @@ namespace LynnaLab
 
                 ImGui.Checkbox("Demo Window".AsSpan(), ref showImGuiDemoWindow);
 
-                int roomIndex = roomEditor.Room.Index;
-                ImGui.InputInt("Room", ref roomIndex);
-                if (roomIndex >= 0 && roomIndex < Project.NumRooms &&
-                    roomIndex != roomEditor.Room.Index)
-                {
-                    var room = Project.GetIndexedDataType<Room>(roomIndex);
-                    roomEditor.SetRoom(room);
-                }
-
                 ImGui.End();
             }
 

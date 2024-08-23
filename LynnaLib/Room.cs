@@ -357,6 +357,14 @@ namespace LynnaLib
             // Deletion handler will set "chest" to null
         }
 
+        public bool IsValidSeason(int season)
+        {
+            if (HasSeasons)
+                return season >= 0 && season <= 3;
+            else
+                return season == -1;
+        }
+
 
 
         // Private methods

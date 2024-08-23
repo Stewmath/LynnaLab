@@ -92,6 +92,7 @@ namespace LynnaLib
                 }
             }
 
+            cachedImageDirty = false;
             cachedImage.MarkModified();
             return cachedImage;
         }

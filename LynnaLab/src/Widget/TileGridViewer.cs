@@ -34,9 +34,23 @@ namespace LynnaLab
         // Events
         // ================================================================================
 
+        /// <summary>
+        /// Invoked when selected tile is changed, could possibly have -1 (unselected) as the tile.
+        /// </summary>
+        public event Action<int> SelectedEvent;
+
         // ================================================================================
         // Properties
         // ================================================================================
+
+        // Widget overrides
+        public override Vector2 WidgetSize
+        {
+            get
+            {
+                return new Vector2(CanvasWidth, CanvasHeight);
+            }
+        }
 
         // Number of tiles on each axis
         public int Width { get; protected set; }
@@ -61,9 +75,17 @@ namespace LynnaLab
                     return;
                 if (value < 0 || value > MaxIndex)
                     selectedIndex = -1;
-                selectedIndex = value;
+                if (selectedIndex != value)
+                {
+                    selectedIndex = value;
+                    SelectedEvent?.Invoke(value);
+                }
             }
         }
+
+        public int SelectedX { get { return selectedIndex % Width; } }
+        public int SelectedY { get { return selectedIndex / Width; } }
+
         public int MaxIndex { get { return Width * Height - 1; } }
         public int HoveringIndex
         {

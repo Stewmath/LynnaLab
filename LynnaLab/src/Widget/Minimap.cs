@@ -1,3 +1,5 @@
+using System.Numerics;
+using ImGuiNET;
 using LynnaLib;
 
 using Point = Cairo.Point;
@@ -35,9 +37,25 @@ namespace LynnaLab
             }
         }
 
+        public Map Map { get { return map; } }
+
+        public RoomLayout SelectedRoomLayout
+        {
+            get { return map.GetRoomLayout(SelectedX, SelectedY, 0); }
+        }
+
         // ================================================================================
         // Public methods
         // ================================================================================
+
+        public override void Render()
+        {
+            ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, ImGuiWindowFlags.HorizontalScrollbar);
+
+            base.Render();
+
+            ImGui.EndChild();
+        }
 
         /// <summary>
         /// Sets the map to display

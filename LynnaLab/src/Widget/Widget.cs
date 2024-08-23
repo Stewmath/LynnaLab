@@ -11,6 +11,11 @@ namespace LynnaLab
     public abstract class Widget
     {
         // ================================================================================
+        // Properties
+        // ================================================================================
+        public abstract Vector2 WidgetSize { get; }
+
+        // ================================================================================
         // Public methods
         // ================================================================================
         public virtual void Render()
@@ -51,20 +56,21 @@ namespace LynnaLab
         // ================================================================================
 
         /// <summary>
-        /// Byte input field
+        /// Hex input field. Returns true if value was changed.
         /// </summary>
-        public static unsafe void InputByte(string name, ref byte value)
+        public static unsafe bool InputHex(string name, ref int value, int digits = 2)
         {
-            byte v = value;
-            byte step = 1;
-            ImGui.InputScalar("Room", ImGuiDataType.U8, (IntPtr)(&v), (IntPtr)(&step));
+            int v = value;
+            int step = 1;
+            int stepFast = 16;
+            ImGui.InputScalar(name, ImGuiDataType.S32, (IntPtr)(&v),
+                              (IntPtr)(&step), (IntPtr)(&stepFast), $"%0{digits}X",
+                              ImGuiInputTextFlags.CharsHexadecimal);
 
-            if (v < 0)
-                v = 0;
-            if (v > 255)
-                v = 255;
-
+            if (value == v)
+                return false;
             value = v;
+            return true;
         }
 
         /// <summary>
