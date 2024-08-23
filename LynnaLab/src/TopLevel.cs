@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using ImGuiNET;
 using LynnaLib;
@@ -26,12 +27,13 @@ namespace LynnaLab
 
         IBackend backend;
         ImFontPtr oraclesFont;
+        Dictionary<Bitmap, Image> imageDict = new Dictionary<Bitmap, Image>();
 
         Image linkImage;
-        RoomLayoutEditor viewer;
+        RoomLayoutEditor roomLayoutEditor;
+        TilesetViewer tilesetViewer;
 
         bool showImGuiDemoWindow = true;
-        byte room;
 
         // ================================================================================
         // Properties
@@ -41,8 +43,6 @@ namespace LynnaLab
         {
             get; private set;
         }
-
-        public IBackend Backend { get { return backend; } }
 
         // ================================================================================
         // Public methods
@@ -54,7 +54,13 @@ namespace LynnaLab
 
             {
                 ImGui.Begin("Room Layout");
-                viewer.Render();
+                roomLayoutEditor.Render();
+                ImGui.End();
+            }
+
+            {
+                ImGui.Begin("Tileset");
+                tilesetViewer.Render();
                 ImGui.End();
             }
 
@@ -65,6 +71,28 @@ namespace LynnaLab
                 ImGui.ShowDemoWindow(ref showImGuiDemoWindow);
             }
         }
+
+        /// <summary>
+        /// Turns a Bitmap (cpu) into an Image (gpu), or looks up the existing Image if one exists
+        /// in the cache for that Bitmap already.
+        /// </summary>
+        public Image ImageFromBitmap(Bitmap bitmap)
+        {
+            Image image;
+            if (imageDict.TryGetValue(bitmap, out image))
+                return image;
+
+            image = backend.ImageFromBitmap(bitmap);
+            imageDict[bitmap] = image;
+            return image;
+        }
+
+        public void UnregisterBitmap(Bitmap bitmap)
+        {
+            if (!imageDict.Remove(bitmap))
+                throw new Exception("Bitmap to remove did not exist in imageDict.");
+        }
+
 
 
         // ================================================================================
@@ -79,8 +107,19 @@ namespace LynnaLab
             Project = new Project(path, game, config);
 
             linkImage = backend.ImageFromBitmap(Project.LinkBitmap);
-            viewer = new RoomLayoutEditor(this);
-            viewer.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(-1));
+            roomLayoutEditor = new RoomLayoutEditor(this);
+            roomLayoutEditor.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(-1));
+
+            tilesetViewer = new TilesetViewer(this);
+            tilesetViewer.SetTileset(roomLayoutEditor.Room.GetTileset(-1));
+
+            roomLayoutEditor.AddMouseAction(MouseButton.Any, MouseModifier.Any, GridAction.Callback,
+            (_, args) =>
+            {
+                int x = args.selectedIndex % roomLayoutEditor.Width;
+                int y = args.selectedIndex / roomLayoutEditor.Width;
+                roomLayoutEditor.RoomLayout.SetTile(x, y, tilesetViewer.SelectedIndex);
+            });
         }
     }
 }

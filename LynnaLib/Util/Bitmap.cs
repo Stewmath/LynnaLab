@@ -6,8 +6,6 @@ namespace LynnaLib
     /// from using the deprecated System.Drawing.Common.Bitmap.
     public class Bitmap : System.IDisposable
     {
-        Cairo.ImageSurface surface;
-
         /// Constructor for blank surface
         public Bitmap(int width, int height, Cairo.Format format = Cairo.Format.Argb32)
         {
@@ -34,6 +32,11 @@ namespace LynnaLib
         {
             this.surface = new Cairo.ImageSurface(filename);
         }
+
+
+        Cairo.ImageSurface surface;
+
+        public event Action ModifiedEvent;
 
 
         public int Width
@@ -84,6 +87,13 @@ namespace LynnaLib
                 surface.Dispose();
             surface = null;
             System.GC.SuppressFinalize(this);
+        }
+
+        // Should call this after modifying the surface, otherwise ImGui may not receive the update
+        public void MarkModified()
+        {
+            if (ModifiedEvent != null)
+                ModifiedEvent();
         }
 
         /// Implicit conversion to Cairo.ImageSurface, should be seamless

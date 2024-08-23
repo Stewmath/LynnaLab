@@ -17,6 +17,7 @@ namespace LynnaLib
         MemoryFileStream tileDataFile;
         Tileset loadedTileset;
         Bitmap cachedImage;
+        bool cachedImageDirty = true;
 
 
         public delegate void LayoutModifiedHandler();
@@ -28,7 +29,12 @@ namespace LynnaLib
         {
             Room = room;
             Season = season;
+
             UpdateTileset();
+
+            // TODO: This is going to have issues on the master branch when layout groups change
+            // because the bitmap size won't change with it. hack-base should be fine.
+            cachedImage = new Bitmap(width * 16, height * 16);
         }
 
 
@@ -71,10 +77,8 @@ namespace LynnaLib
 
         public Bitmap GetImage()
         {
-            if (cachedImage != null)
+            if (!cachedImageDirty)
                 return cachedImage;
-
-            cachedImage = new Bitmap(width * 16, height * 16);
 
             using (var cr = cachedImage.CreateContext())
             {
@@ -88,6 +92,7 @@ namespace LynnaLib
                 }
             }
 
+            cachedImage.MarkModified();
             return cachedImage;
         }
 
@@ -164,8 +169,7 @@ namespace LynnaLib
                 Tileset.TileModifiedEvent += ModifiedTilesetCallback;
                 Tileset.LayoutGroupModifiedEvent += ModifiedLayoutGroupCallback;
 
-                cachedImage?.Dispose();
-                cachedImage = null;
+                cachedImageDirty = true;
                 loadedTileset = Tileset;
 
                 UpdateRoomData();
@@ -238,22 +242,22 @@ namespace LynnaLib
         // Room layout modified
         void TileDataModified(object sender, MemoryFileStream.ModifiedEventArgs args)
         {
-            if (cachedImage != null)
+            using (var cr = cachedImage.CreateContext())
             {
-                using (var cr = cachedImage.CreateContext())
-                {
 
-                    for (long i = args.modifiedRangeStart; i < args.modifiedRangeEnd; i++)
-                    {
-                        int x = (int)(i % Stride);
-                        int y = (int)(i / Stride);
-                        if (x >= Width)
-                            continue;
-                        cr.SetSource(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
-                        cr.Paint();
-                    }
+                for (long i = args.modifiedRangeStart; i < args.modifiedRangeEnd; i++)
+                {
+                    int x = (int)(i % Stride);
+                    int y = (int)(i / Stride);
+                    if (x >= Width)
+                        continue;
+                    cr.SetSource(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
+                    cr.Paint();
                 }
             }
+
+            cachedImage.MarkModified();
+
             if (LayoutModifiedEvent != null)
                 LayoutModifiedEvent();
         }
@@ -261,7 +265,7 @@ namespace LynnaLib
         // Tileset data modified
         void ModifiedTilesetCallback(object sender, int tile)
         {
-            Cairo.Context cr = cachedImage?.CreateContext();
+            Cairo.Context cr = cachedImage.CreateContext();
 
             bool changed = false;
             for (int x = 0; x < Width; x++)
@@ -270,16 +274,17 @@ namespace LynnaLib
                 {
                     if (GetTile(x, y) == tile)
                     {
-                        if (cachedImage != null) {
-                            cr.SetSource(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
-                            cr.Paint();
-                        }
+                        cr.SetSource(Tileset.GetTileImage(GetTile(x, y)), x * 16, y * 16);
+                        cr.Paint();
                         changed = true;
                     }
                 }
             }
 
-            cr?.Dispose();
+            cr.Dispose();
+
+            cachedImageDirty = false;
+            cachedImage.MarkModified();
 
             if (changed && LayoutModifiedEvent != null)
                 LayoutModifiedEvent();
@@ -288,8 +293,7 @@ namespace LynnaLib
         void ModifiedLayoutGroupCallback()
         {
             UpdateRoomData();
-            cachedImage?.Dispose();
-            cachedImage = null;
+            cachedImageDirty = true;
             if (LayoutModifiedEvent != null)
                 LayoutModifiedEvent();
         }

@@ -11,20 +11,7 @@ namespace VeldridBackend
             this.bitmap = bitmap;
             this.gd = controller.GraphicsDevice;
 
-            Cairo.ImageSurface surface = (Cairo.ImageSurface)bitmap;
-
-            PixelFormat pixelFormat;
-            uint sizeInBytes;
-
-            switch (surface.Format)
-            {
-                case Cairo.Format.ARGB32:
-                    pixelFormat = PixelFormat.B8_G8_R8_A8_UNorm;
-                    sizeInBytes = (uint)(4 * bitmap.Height * bitmap.Width);
-                    break;
-                default:
-                    throw new Exception("Couldn't convert Cairo image format: " + surface.Format);
-            }
+            var (sizeInBytes, pixelFormat) = GetBitmapFormat();
 
             TextureDescription textureDescription = TextureDescription.Texture2D(
                 (uint)bitmap.Width,
@@ -36,12 +23,9 @@ namespace VeldridBackend
 
             this.texture = gd.ResourceFactory.CreateTexture(ref textureDescription);
 
-            surface.Flush();
-            IntPtr pixelData = surface.DataPtr;
+            OnBitmapModified();
 
-            // Update the texture with the pixel data
-            gd.UpdateTexture(texture, pixelData, sizeInBytes, 0, 0, 0,
-                              (uint)bitmap.Width, (uint)bitmap.Height, 1, 0, 0);
+            bitmap.ModifiedEvent += OnBitmapModified;
         }
 
         // ================================================================================
@@ -76,5 +60,38 @@ namespace VeldridBackend
         // ================================================================================
         // Private methods
         // ================================================================================
+
+        void OnBitmapModified()
+        {
+            Cairo.ImageSurface surface = (Cairo.ImageSurface)bitmap;
+
+            surface.Flush();
+            IntPtr pixelData = surface.DataPtr;
+            var (sizeInBytes, _) = GetBitmapFormat();
+
+            // Update the texture with the pixel data
+            gd.UpdateTexture(texture, pixelData, sizeInBytes, 0, 0, 0,
+                              (uint)bitmap.Width, (uint)bitmap.Height, 1, 0, 0);
+        }
+
+        (uint, PixelFormat) GetBitmapFormat()
+        {
+            Cairo.ImageSurface surface = (Cairo.ImageSurface)bitmap;
+
+            uint sizeInBytes;
+            PixelFormat pixelFormat;
+
+            switch (surface.Format)
+            {
+                case Cairo.Format.ARGB32:
+                    pixelFormat = PixelFormat.B8_G8_R8_A8_UNorm;
+                    sizeInBytes = (uint)(4 * bitmap.Height * bitmap.Width);
+                    break;
+                default:
+                    throw new Exception("Couldn't convert Cairo image format: " + surface.Format);
+            }
+
+            return (sizeInBytes, pixelFormat);
+        }
     }
 }

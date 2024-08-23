@@ -677,6 +677,16 @@ namespace LynnaLib
             return fullCachedImage;
         }
 
+        // This function guarantees to return the full image, unlike above.
+        public Bitmap GetFullImage()
+        {
+            for (int i = 0; i < 256; i++)
+            {
+                GetTileImage(i);
+            }
+            return fullCachedImage;
+        }
+
         // Returns a list of tiles which have changed
         public IList<byte> UpdateAnimations(int frames)
         {

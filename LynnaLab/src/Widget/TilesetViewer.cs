@@ -2,52 +2,59 @@ using LynnaLib;
 
 namespace LynnaLab
 {
-    public class RoomLayoutEditor : TileGridViewer
+    public class TilesetViewer : TileGridViewer
     {
         // ================================================================================
         // Constructors
         // ================================================================================
-        public RoomLayoutEditor(TopLevel topLevel)
+        public TilesetViewer(TopLevel topLevel)
         {
-            _topLevel = topLevel;
+            this.topLevel = topLevel;
 
             base.TileWidth = 16;
             base.TileHeight = 16;
+            base.Width = 16;
+            base.Height = 16;
+            base.Selectable = true;
             base.Scale = 2;
         }
 
         // ================================================================================
         // Variables
         // ================================================================================
-        Image _image;
-        TopLevel _topLevel;
+        TopLevel topLevel;
+        Tileset tileset;
+        Image image;
 
         // ================================================================================
         // Properties
         // ================================================================================
-        public Project Project { get { return _topLevel.Project; } }
-        public Room Room { get { return RoomLayout?.Room; } }
-        public RoomLayout RoomLayout { get; private set; }
 
+        public Project Project { get { return topLevel.Project; } }
 
-        // TileGridViewer overrides
-
-        protected override Image Image { get { return _image; } }
-
+        protected override Image Image
+        {
+            get
+            {
+                return image;
+            }
+        }
 
         // ================================================================================
         // Public methods
         // ================================================================================
 
-        /// <summary>
-        /// Set the room layout
-        /// </summary>
-        public void SetRoomLayout(RoomLayout layout)
+        public override void Render()
         {
-            if (layout != RoomLayout)
+            base.Render();
+        }
+
+        public void SetTileset(Tileset t)
+        {
+            if (tileset != t)
             {
-                RoomLayout = layout;
-                RoomChanged();
+                tileset = t;
+                OnTilesetChanged();
             }
         }
 
@@ -56,20 +63,16 @@ namespace LynnaLab
         // ================================================================================
 
         /// <summary>
-        /// Called when room is changed
+        /// Called when the tileset is changed
         /// </summary>
-        void RoomChanged()
+        void OnTilesetChanged()
         {
-            _image?.Dispose();
-            _image = null;
+            image?.Dispose();
+            image = null;
 
-            if (RoomLayout != null)
+            if (tileset != null)
             {
-                // TODO: Watch for changes
-                _image = _topLevel.ImageFromBitmap(RoomLayout.GetImage());
-
-                base.Width = RoomLayout.Width;
-                base.Height = RoomLayout.Height;
+                image = topLevel.ImageFromBitmap(tileset.GetFullImage());
             }
         }
     }
