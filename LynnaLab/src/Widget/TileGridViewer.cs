@@ -88,6 +88,10 @@ namespace LynnaLab
             {
                 Widget.DrawImage(Image, scale: Scale);
 
+                // Use InvisibleButton to prevent left click from dragging the window
+                ImGui.SetCursorScreenPos(base.origin);
+                ImGui.InvisibleButton("".AsSpan(), new Vector2(CanvasWidth, CanvasHeight));
+
                 // Check mouse clicks
                 int mouseIndex = CoordToTile(base.GetMousePos());
 
@@ -211,8 +215,13 @@ namespace LynnaLab
 
             public bool ButtonMatchesState()
             {
-                bool left = ImGui.IsMouseClicked(ImGuiMouseButton.Left);
-                bool right = ImGui.IsMouseClicked(ImGuiMouseButton.Right);
+                Func<ImGuiMouseButton, bool> checker;
+                if (mod.HasFlag(MouseModifier.Drag))
+                    checker = ImGui.IsMouseDown;
+                else
+                    checker = ImGui.IsMouseClicked;
+                bool left = checker(ImGuiMouseButton.Left);
+                bool right = checker(ImGuiMouseButton.Right);
                 if (button == MouseButton.Any && (left || right))
                     return true;
                 if (button == MouseButton.LeftClick && left)

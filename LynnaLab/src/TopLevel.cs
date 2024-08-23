@@ -113,7 +113,9 @@ namespace LynnaLab
             tilesetViewer = new TilesetViewer(this);
             tilesetViewer.SetTileset(roomLayoutEditor.Room.GetTileset(-1));
 
-            roomLayoutEditor.AddMouseAction(MouseButton.Any, MouseModifier.Any, GridAction.Callback,
+            roomLayoutEditor.AddMouseAction(MouseButton.Any,
+                                            MouseModifier.Any | MouseModifier.Drag,
+                                            GridAction.Callback,
             (_, args) =>
             {
                 int x = args.selectedIndex % roomLayoutEditor.Width;
