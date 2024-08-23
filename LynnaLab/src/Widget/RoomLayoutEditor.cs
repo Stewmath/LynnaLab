@@ -60,7 +60,7 @@ namespace LynnaLab
         /// </summary>
         void RoomChanged()
         {
-            _image?.Dispose();
+            // Choosing not to dispose the image here, leave it in the TopLevel cache
             _image = null;
 
             if (RoomLayout != null)

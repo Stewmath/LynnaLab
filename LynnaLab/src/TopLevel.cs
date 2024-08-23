@@ -53,6 +53,26 @@ namespace LynnaLab
             ImGui.PushFont(oraclesFont);
 
             {
+                ImGui.Begin("Control Panel");
+
+                int roomIndex = roomLayoutEditor.Room.Index;
+                ImGui.InputInt("Room", ref roomIndex);
+                if (roomIndex >= 0 && roomIndex < Project.NumRooms &&
+                    roomIndex != roomLayoutEditor.Room.Index)
+                {
+                    var room = Project.GetIndexedDataType<Room>(roomIndex);
+                    RoomLayout layout;
+                    if (room.Group == 0)
+                        layout = room.GetLayout(0);
+                    else
+                        layout = room.GetLayout(-1);
+                    roomLayoutEditor.SetRoomLayout(layout);
+                }
+
+                ImGui.End();
+            }
+
+            {
                 ImGui.Begin("Room Layout");
                 roomLayoutEditor.Render();
                 ImGui.End();
