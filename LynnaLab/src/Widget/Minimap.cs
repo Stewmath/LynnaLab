@@ -24,6 +24,11 @@ namespace LynnaLab
         TopLevel topLevel;
         Map map;
         Image image;
+        int minimapScale = 10;
+
+        const float MIN_SCALE = 0.1f;
+        const float MAX_SCALE = 1.0f;
+        const int MAX_SCALE_SLIDER = 100;
 
         // ================================================================================
         // Properties
@@ -50,10 +55,15 @@ namespace LynnaLab
 
         public override void Render()
         {
+            {
+                ImGui.SliderInt("Scale", ref minimapScale, 0, MAX_SCALE_SLIDER);
+
+                base.Scale =
+                    MIN_SCALE + (minimapScale / (float)MAX_SCALE_SLIDER) * (MAX_SCALE - MIN_SCALE);
+            }
+
             ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, ImGuiWindowFlags.HorizontalScrollbar);
-
             base.Render();
-
             ImGui.EndChild();
         }
 
@@ -95,7 +105,7 @@ namespace LynnaLab
         {
             image?.Dispose();
 
-            image = topLevel.Backend.CreateImage(base.CanvasWidth, base.CanvasHeight);
+            image = topLevel.Backend.CreateImage(base.ImageSize.X, base.ImageSize.Y);
 
             for (int x=0; x<map.MapWidth; x++)
             {

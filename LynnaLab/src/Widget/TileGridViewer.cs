@@ -3,7 +3,7 @@ using System.Numerics;
 using ImGuiNET;
 
 using Point = Cairo.Point;
-using Rect = Cairo.Rectangle;
+using FRect = Util.FRect;
 using Color = LynnaLib.Color;
 using System.Collections.Generic;
 
@@ -60,7 +60,7 @@ namespace LynnaLab
         public int TileWidth { get; protected set; }
         public int TileHeight { get; protected set; }
 
-        public int Scale { get; set; } = 1;
+        public float Scale { get; set; } = 1.0f;
 
         public bool Selectable { get; set; }
         public int SelectedIndex
@@ -98,14 +98,22 @@ namespace LynnaLab
         public Color HoverColor { get; protected set; } = Color.Red;
         public Color SelectColor { get; protected set; } = Color.White;
 
-        public int CanvasWidth
+        public Point ImageSize
+        {
+            get
+            {
+                return new Point(TileWidth * Width, TileHeight * Height);
+            }
+        }
+
+        public float CanvasWidth
         {
             get
             {
                 return TileWidth * Width * Scale;
             }
         }
-        public int CanvasHeight
+        public float CanvasHeight
         {
             get
             {
@@ -166,7 +174,7 @@ namespace LynnaLab
                 {
                     if (mouseIndex != -1)
                     {
-                        Rect r = TileRect(mouseIndex);
+                        FRect r = TileRect(mouseIndex);
 
                         base.AddRect(r, HoverColor, thickness: 2 * Scale);
                     }
@@ -174,7 +182,7 @@ namespace LynnaLab
 
                 if (Selectable && SelectedIndex != -1)
                 {
-                    Rect r = TileRect(SelectedIndex);
+                    FRect r = TileRect(SelectedIndex);
                     base.AddRect(r, SelectColor, thickness: 2 * Scale);
                 }
 
@@ -215,19 +223,20 @@ namespace LynnaLab
             if (pos.X < 0 || pos.Y < 0 || pos.X >= CanvasWidth || pos.Y >= CanvasHeight)
                 return -1;
 
-            return (pos.Y / (TileHeight * Scale)) * Width + (pos.X / (TileWidth * Scale));
+            return ((int)(pos.Y / (TileHeight * Scale)) * Width)
+                + (int)(pos.X / (TileWidth * Scale));
         }
 
         /// <summary>
         /// Gets the bounds of a tile in a rectangle.
         /// </summary>
-        Rect TileRect(int tileIndex)
+        FRect TileRect(int tileIndex)
         {
             int x = tileIndex % Width;
             int y = tileIndex / Width;
 
-            Point tl = new Point(x * TileWidth * Scale, y * TileHeight * Scale);
-            return new Rect(tl.X, tl.Y, TileWidth * Scale, TileHeight * Scale);
+            Vector2 tl = new Vector2(x * TileWidth * Scale, y * TileHeight * Scale);
+            return new FRect(tl.X, tl.Y, TileWidth * Scale, TileHeight * Scale);
         }
 
 

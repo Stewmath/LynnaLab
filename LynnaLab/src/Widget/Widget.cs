@@ -3,7 +3,7 @@ using System.Numerics;
 using ImGuiNET;
 
 using Point = Cairo.Point;
-using Rect = Cairo.Rectangle;
+using FRect = Util.FRect;
 using Color = LynnaLib.Color;
 
 namespace LynnaLab
@@ -34,11 +34,11 @@ namespace LynnaLab
             return new Point((int)mousePos.X, (int)mousePos.Y);
         }
 
-        public void AddRect(Rect rect, Color color, float thickness = 1.0f)
+        public void AddRect(FRect rect, Color color, float thickness = 1.0f)
         {
             drawList.AddRect(
-                origin + new Vector2((float)rect.X, (float)rect.Y),
-                origin + new Vector2((float)(rect.X + rect.Width), (float)(rect.Y + rect.Height)),
+                origin + new Vector2(rect.X, rect.Y),
+                origin + new Vector2(rect.X + rect.Width, rect.Y + rect.Height),
                 ImGuiHelper.ToImGuiColor(color),
                 0,
                 0,
@@ -76,7 +76,7 @@ namespace LynnaLab
         /// <summary>
         /// Convenience method for rendering images
         /// </summary>
-        public static void DrawImage(Image image, int scale = 1)
+        public static void DrawImage(Image image, float scale = 1.0f)
         {
             ImGui.Image(image.GetBinding(), new Vector2(image.Width * scale, image.Height * scale));
         }
