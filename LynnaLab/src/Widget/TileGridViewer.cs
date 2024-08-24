@@ -56,7 +56,7 @@ namespace LynnaLab
         public int Width { get; protected set; }
         public int Height { get; protected set; }
 
-        // Size of tiles on each axis
+        // Size of tiles on each axis (not accounting for scale)
         public int TileWidth { get; protected set; }
         public int TileHeight { get; protected set; }
 

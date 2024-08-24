@@ -56,10 +56,15 @@ namespace LynnaLab
         public override void Render()
         {
             {
-                ImGui.SliderInt("Scale", ref minimapScale, 0, MAX_SCALE_SLIDER);
+                bool centerScroll = false;
+                if (ImGui.SliderInt("Scale", ref minimapScale, 0, MAX_SCALE_SLIDER))
+                    centerScroll = true;
 
                 base.Scale =
                     MIN_SCALE + (minimapScale / (float)MAX_SCALE_SLIDER) * (MAX_SCALE - MIN_SCALE);
+
+                if (centerScroll)
+                    CenterScroll();
             }
 
             ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, ImGuiWindowFlags.HorizontalScrollbar);
@@ -121,6 +126,26 @@ namespace LynnaLab
                                      new Point(TileWidth, TileHeight));
                 }
             }
+        }
+
+        /// <summary>
+        /// Move the scrollbar such that the selected room is in the center.
+        /// Must be called before starting the scroll window.
+        /// </summary>
+        void CenterScroll()
+        {
+            var windowSize = ImGui.GetContentRegionAvail();
+            var tilePos = new Vector2(
+                SelectedX * TileWidth + TileWidth / 2.0f,
+                SelectedY * TileHeight + TileHeight / 2.0f) * Scale;
+
+            var scroll = tilePos - windowSize / 2;
+            if (scroll.X < 0)
+                scroll.X = 0;
+            if (scroll.Y < 0)
+                scroll.Y = 0;
+
+            ImGui.SetNextWindowScroll(tilePos - windowSize / 2);
         }
     }
 }
