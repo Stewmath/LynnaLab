@@ -196,7 +196,8 @@ namespace VeldridBackend
             }
             else if (image.Interpolation == Interpolation.Bicubic)
             {
-                sampler = _gd.PointSampler;
+                // This seems to have some effect, but the bulk of the work is in the shader
+                sampler = _gd.LinearSampler;
             }
             else
             {

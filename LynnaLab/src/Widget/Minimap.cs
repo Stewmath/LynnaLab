@@ -56,20 +56,16 @@ namespace LynnaLab
 
         public override void Render()
         {
+            bool scrollChanged = false;
+
             {
                 ImGui.PushItemWidth(200);
 
-                bool scrollChanged = false;
                 if (ImGui.SliderInt("Scale", ref minimapScale, 0, MAX_SCALE_SLIDER))
                     scrollChanged = true;
 
                 base.Scale =
                     MIN_SCALE + (minimapScale / (float)MAX_SCALE_SLIDER) * (MAX_SCALE - MIN_SCALE);
-
-                if (scrollChanged)
-                {
-                    CenterScroll();
-                }
 
                 ImGui.SameLine();
                 int newInterpolation = interpolation;
@@ -85,6 +81,9 @@ namespace LynnaLab
 
                 ImGui.PopItemWidth();
             }
+
+            if (scrollChanged)
+                CenterScroll();
 
             ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, ImGuiWindowFlags.HorizontalScrollbar);
             base.Render();
@@ -162,12 +161,9 @@ namespace LynnaLab
                 SelectedY * TileHeight + TileHeight / 2.0f) * Scale;
 
             var scroll = tilePos - windowSize / 2;
-            if (scroll.X < 0)
-                scroll.X = 0;
-            if (scroll.Y < 0)
-                scroll.Y = 0;
 
-            ImGui.SetNextWindowScroll(tilePos - windowSize / 2);
+            ImGui.SetNextWindowScroll(scroll);
+            ImGui.SetNextWindowContentSize(new Vector2(CanvasWidth, CanvasHeight));
         }
     }
 }
