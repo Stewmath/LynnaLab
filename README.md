@@ -108,6 +108,10 @@ either.
 
 * Logs are stored in the disassembly folder under the "LynnaLab\\Logs\\"
   subdirectory.
+  
+### ImGui stuff
+
+* Hold the Shift button with the mouse wheel to scroll horizontally.
 
 ## For more information
 

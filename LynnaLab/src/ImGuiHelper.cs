@@ -22,5 +22,16 @@ namespace LynnaLab
         {
             return ImGui.GetColorU32(new Vector4(color.R, color.G, color.B, color.A));
         }
+
+        public static Vector2 GetScroll()
+        {
+            return new Vector2(ImGui.GetScrollX(), ImGui.GetScrollY());
+        }
+
+        public static void SetScroll(Vector2 scroll)
+        {
+            ImGui.SetScrollX(scroll.X);
+            ImGui.SetScrollY(scroll.Y);
+        }
     }
 }

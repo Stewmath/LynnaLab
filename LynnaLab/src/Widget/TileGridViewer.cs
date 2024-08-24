@@ -218,7 +218,7 @@ namespace LynnaLab
         /// <summary>
         /// Converts a mouse position in pixels to a tile index.
         /// </summary>
-        int CoordToTile(Vector2 pos)
+        public int CoordToTile(Vector2 pos)
         {
             if (pos.X < 0 || pos.Y < 0 || pos.X >= CanvasWidth || pos.Y >= CanvasHeight)
                 return -1;

@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using ImGuiNET;
 using LynnaLib;
@@ -24,14 +25,23 @@ namespace LynnaLab
         TopLevel topLevel;
         Map map;
         Image image;
-        int minimapScale = 10;
-        int interpolation = (int)Interpolation.Bicubic;
-
         Vector2? lastMousePos = null;
 
+        // Used for scrolling operations to keep zoom focused around point of interest
+        Vector2? centerScaledPos = null; // Position relative to internal window (Scaling + scroll applied)
+        Vector2? centerUnscaledPos = null; // No scaling/scroll applied
+        Vector2 lastFrameScroll;
+
+        // User-controllable options
+        int minimapScale = 10;
+        int interpolation = (int)Interpolation.Bicubic;
+        bool scrollToZoom = true;
+
+        // Constants
         const float MIN_SCALE = 0.1f;
         const float MAX_SCALE = 1.0f;
         const int MAX_SCALE_SLIDER = 100;
+        const int MIN_SCALE_SLIDER = 0;
 
         // ================================================================================
         // Properties
@@ -58,13 +68,21 @@ namespace LynnaLab
 
         public override void Render()
         {
-            bool forceCenter = false;
-
+            // Top bar
             {
-                ImGui.PushItemWidth(200);
+                bool scaleChangedFromUI = false;
 
-                if (ImGui.SliderInt("Scale", ref minimapScale, 0, MAX_SCALE_SLIDER))
-                    forceCenter = true;
+                ImGui.PushItemWidth(200);
+                scaleChangedFromUI = ImGui.SliderInt("Scale", ref minimapScale, 0, MAX_SCALE_SLIDER);
+
+                if (scaleChangedFromUI)
+                {
+                    // Keep the view centered around the selected tile
+                    this.centerUnscaledPos = new Vector2(
+                        SelectedX * TileWidth + TileWidth / 2.0f,
+                        SelectedY * TileHeight + TileHeight / 2.0f);
+                    this.centerScaledPos = centerUnscaledPos * Scale - lastFrameScroll;
+                }
 
                 base.Scale =
                     MIN_SCALE + (minimapScale / (float)MAX_SCALE_SLIDER) * (MAX_SCALE - MIN_SCALE);
@@ -81,34 +99,60 @@ namespace LynnaLab
                     }
                 }
 
+                ImGui.SameLine();
+                ImGui.Checkbox("Scroll To Zoom".AsSpan(), ref scrollToZoom);
+
                 ImGui.PopItemWidth();
             }
 
-            UpdateScroll(forceCenter);
-
+            // Start position of window containing the scrollbars
             var scrollOrigin = ImGui.GetCursorScreenPos();
-            ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, ImGuiWindowFlags.HorizontalScrollbar);
+            // Mouse position "above" the scroll widget (not affected by scrolling)
+            var topLevelMousePos = ImGui.GetIO().MousePos - scrollOrigin;
+
+            UpdateScroll();
+
+            ImGuiWindowFlags flags = ImGuiWindowFlags.HorizontalScrollbar;
+            if (scrollToZoom)
+                flags |= ImGuiWindowFlags.NoScrollWithMouse;
+            ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, flags);
+
             base.Render();
 
             if (ImGui.IsItemHovered() && ImGui.IsMouseDown(ImGuiMouseButton.Right))
             {
-                var mousePos = ImGui.GetIO().MousePos - scrollOrigin;
-
                 if (lastMousePos != null)
                 {
-                    Vector2 delta = mousePos - (Vector2)lastMousePos;
-                    var scroll = new Vector2(ImGui.GetScrollX(), ImGui.GetScrollY());
+                    Vector2 delta = topLevelMousePos - (Vector2)lastMousePos;
+                    var scroll = ImGuiHelper.GetScroll();
                     scroll -= delta;
-                    ImGui.SetScrollX(scroll.X);
-                    ImGui.SetScrollY(scroll.Y);
+                    ImGuiHelper.SetScroll(scroll);
                 }
 
-                this.lastMousePos = mousePos;
+                this.lastMousePos = topLevelMousePos;
             }
             else
             {
                 this.lastMousePos = null;
             }
+
+            if (scrollToZoom && ImGui.IsItemHovered())
+            {
+                int offset = (int)(ImGui.GetIO().MouseWheel * 5);
+                if (offset != 0)
+                {
+                    // Keep the view centered around the mouse cursor
+                    this.centerScaledPos = topLevelMousePos;
+                    this.centerUnscaledPos = (centerScaledPos + ImGuiHelper.GetScroll()) / Scale;
+
+                    // base.Scale will be updated next frame based on this
+                    minimapScale += offset;
+                    minimapScale = Math.Min(minimapScale, MAX_SCALE_SLIDER);
+                    minimapScale = Math.Max(minimapScale, MIN_SCALE_SLIDER);
+                }
+            }
+
+            lastFrameScroll = ImGuiHelper.GetScroll();
 
             ImGui.EndChild();
         }
@@ -174,22 +218,24 @@ namespace LynnaLab
 
         /// <summary>
         /// Move the scrollbar such that the selected room is in the center.
-        /// Must be called before starting the scroll window.
+        /// Must be called just before the BeginChild containing the scrollable area.
         /// </summary>
-        void UpdateScroll(bool forceCenter)
+        void UpdateScroll()
         {
             ImGui.SetNextWindowContentSize(new Vector2(CanvasWidth, CanvasHeight));
 
-            if (forceCenter)
+            if (centerScaledPos != null)
             {
-                var windowSize = ImGui.GetContentRegionAvail();
-                var tilePos = new Vector2(
-                    SelectedX * TileWidth + TileWidth / 2.0f,
-                    SelectedY * TileHeight + TileHeight / 2.0f) * Scale;
+                // centerUnscaledPos is the unscaled position within the TileGridViewer that must be
+                // placed at centerScaledPos (above the scrollbar window) in order for the zooming
+                // to focus on the point of interest.
+                // These variables should have been calculated before the Scale was updated. We now
+                // calculate the new scroll value using the updated Scale.
+                var scroll = centerUnscaledPos * Scale - centerScaledPos;
 
-                var scroll = tilePos - windowSize / 2;
-
-                ImGui.SetNextWindowScroll(scroll);
+                ImGui.SetNextWindowScroll((Vector2)scroll);
+                centerScaledPos = null;
+                centerUnscaledPos = null;
             }
         }
     }
