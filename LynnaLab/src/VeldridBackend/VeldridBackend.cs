@@ -4,6 +4,7 @@ using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
 
 using IBackend = LynnaLab.IBackend;
+using Interpolation = LynnaLab.Interpolation;
 using Image = LynnaLab.Image;
 using Bitmap = LynnaLib.Bitmap;
 
@@ -16,10 +17,10 @@ namespace VeldridBackend
         // ================================================================================
         public VeldridBackend()
         {
-            // Create window, GraphicsDevice, and all resources necessary for the demo.
             VeldridStartup.CreateWindowAndGraphicsDevice(
                 new WindowCreateInfo(50, 50, 1280, 720, WindowState.Maximized, "LynnaLab"),
                 new GraphicsDeviceOptions(true, null, true, ResourceBindingModel.Improved, true, true),
+                GraphicsBackend.OpenGL,
                 out _window,
                 out _gd);
 
@@ -83,13 +84,13 @@ namespace VeldridBackend
             _gd.SwapBuffers(_gd.MainSwapchain);
         }
 
-        public Image ImageFromBitmap(Bitmap bitmap)
+        public Image ImageFromBitmap(Bitmap bitmap, Interpolation interpolation)
         {
-            return new VeldridImage(_controller, bitmap);
+            return new VeldridImage(_controller, interpolation, bitmap);
         }
-        public Image CreateImage(int width, int height)
+        public Image CreateImage(int width, int height, Interpolation interpolation)
         {
-            return new VeldridImage(_controller, width, height);
+            return new VeldridImage(_controller, interpolation, width, height);
         }
 
         public void RecreateFontTexture()

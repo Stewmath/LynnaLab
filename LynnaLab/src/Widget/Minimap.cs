@@ -56,15 +56,17 @@ namespace LynnaLab
         public override void Render()
         {
             {
-                bool centerScroll = false;
+                bool scrollChanged = false;
                 if (ImGui.SliderInt("Scale", ref minimapScale, 0, MAX_SCALE_SLIDER))
-                    centerScroll = true;
+                    scrollChanged = true;
 
                 base.Scale =
                     MIN_SCALE + (minimapScale / (float)MAX_SCALE_SLIDER) * (MAX_SCALE - MIN_SCALE);
 
-                if (centerScroll)
+                if (scrollChanged)
+                {
                     CenterScroll();
+                }
             }
 
             ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, ImGuiWindowFlags.HorizontalScrollbar);
@@ -110,7 +112,10 @@ namespace LynnaLab
         {
             image?.Dispose();
 
-            image = topLevel.Backend.CreateImage(base.ImageSize.X, base.ImageSize.Y);
+            image = topLevel.Backend.CreateImage(
+                base.ImageSize.X,
+                base.ImageSize.Y,
+                Interpolation.Bicubic);
 
             for (int x=0; x<map.MapWidth; x++)
             {

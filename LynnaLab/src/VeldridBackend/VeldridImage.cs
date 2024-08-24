@@ -1,6 +1,7 @@
 using System;
 using Veldrid;
 
+using Interpolation = LynnaLab.Interpolation;
 using Bitmap = LynnaLib.Bitmap;
 using Image = LynnaLab.Image;
 using Point = Cairo.Point;
@@ -9,14 +10,15 @@ namespace VeldridBackend
 {
     public class VeldridImage : Image
     {
-        private VeldridImage(ImGuiController controller)
+        private VeldridImage(ImGuiController controller, Interpolation interpolation)
         {
             this.controller = controller;
             this.gd = controller.GraphicsDevice;
+            this.interpolation = interpolation;
         }
 
-        public VeldridImage(ImGuiController controller, Bitmap bitmap)
-            : this(controller)
+        public VeldridImage(ImGuiController controller, Interpolation interpolation, Bitmap bitmap)
+            : this(controller, interpolation)
         {
             var (sizeInBytes, pixelFormat) = GetBitmapFormat(bitmap);
 
@@ -40,8 +42,8 @@ namespace VeldridBackend
             this.unsubscribeFromBitmapChanges = () => bitmap.ModifiedEvent -= modifiedEventHandler;
         }
 
-        public VeldridImage(ImGuiController controller, int width, int height)
-            : this(controller)
+        public VeldridImage(ImGuiController controller, Interpolation interpolation, int width, int height)
+            : this(controller, interpolation)
         {
             var pixelFormat = PixelFormat.B8_G8_R8_A8_UNorm;
 
@@ -65,7 +67,10 @@ namespace VeldridBackend
         ImGuiController controller;
         GraphicsDevice gd;
         Texture texture;
+        Interpolation interpolation;
+
         int width, height;
+
         Action unsubscribeFromBitmapChanges = null;
 
         // ================================================================================
@@ -111,7 +116,7 @@ namespace VeldridBackend
 
         public override IntPtr GetBinding()
         {
-            return controller.GetOrCreateImGuiBinding(gd.ResourceFactory, texture);
+            return controller.GetOrCreateImGuiBinding(gd.ResourceFactory, texture, interpolation);
         }
 
         public override void Dispose()

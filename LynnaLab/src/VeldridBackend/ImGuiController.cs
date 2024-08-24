@@ -8,6 +8,8 @@ using System.Runtime.CompilerServices;
 
 using ImGuiNET;
 
+using Interpolation = LynnaLab.Interpolation;
+
 
 namespace VeldridBackend
 {
@@ -24,6 +26,7 @@ namespace VeldridBackend
         private DeviceBuffer _vertexBuffer;
         private DeviceBuffer _indexBuffer;
         private DeviceBuffer _projMatrixBuffer;
+        private DeviceBuffer _fontFragUniformBuffer;
         private Texture _fontTexture;
         private TextureView _fontTextureView;
         private Shader _vertexShader;
@@ -48,6 +51,14 @@ namespace VeldridBackend
         private readonly Dictionary<IntPtr, ResourceSetInfo> _viewsById = new Dictionary<IntPtr, ResourceSetInfo>();
         private readonly List<IDisposable> _ownedResources = new List<IDisposable>();
         private int _lastAssignedID = 100;
+
+
+        struct FragUniformStruct
+        {
+            public int InterpolationMode;
+
+            public const int sizeInBytes = 4;
+        }
 
         /// <summary>
         /// Constructs a new ImGuiController.
@@ -101,6 +112,12 @@ namespace VeldridBackend
             _projMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
             _projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
 
+            _fontFragUniformBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
+            _fontFragUniformBuffer.Name = "Fragment shader uniform buffer";
+
+            var fragUniformStruct = new FragUniformStruct { InterpolationMode = 0 };
+            _gd.UpdateBuffer(_fontFragUniformBuffer, 0, ref fragUniformStruct);
+
             byte[] vertexShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-vertex", ShaderStages.Vertex);
             byte[] fragmentShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-frag", ShaderStages.Fragment);
             _vertexShader = factory.CreateShader(new ShaderDescription(ShaderStages.Vertex, vertexShaderBytes, gd.BackendType == GraphicsBackend.Metal ? "VS" : "main"));
@@ -114,12 +131,17 @@ namespace VeldridBackend
                     new VertexElementDescription("in_color", VertexElementSemantic.Color, VertexElementFormat.Byte4_Norm))
             };
 
+            // Layout for rendering imgui components
             _layout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("ProjectionMatrixBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-                new ResourceLayoutElementDescription("MainSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
+                new ResourceLayoutElementDescription("MainSampler", ResourceKind.Sampler, ShaderStages.Fragment)
+                ));
+
+            // Layout for rendering textures (including font)
             _textureLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("MainTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
-                new ResourceLayoutElementDescription("Sampler", ResourceKind.Sampler, ShaderStages.Fragment)));
+                new ResourceLayoutElementDescription("MainSampler", ResourceKind.Sampler, ShaderStages.Fragment),
+                new ResourceLayoutElementDescription("FragUniformBuffer", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
 
             GraphicsPipelineDescription pd = new GraphicsPipelineDescription(
                 BlendStateDescription.SingleAlphaBlend,
@@ -132,27 +154,64 @@ namespace VeldridBackend
                 ResourceBindingModel.Default);
             _pipeline = factory.CreateGraphicsPipeline(ref pd);
 
-            _mainResourceSet = factory.CreateResourceSet(new ResourceSetDescription(_layout,
+            // Resource set for rendering imgui components
+            _mainResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
+                _layout,
                 _projMatrixBuffer,
                 gd.PointSampler));
 
-            _fontTextureResourceSet = factory.CreateResourceSet(new ResourceSetDescription(_textureLayout, _fontTextureView, _gd.PointSampler));
+            // Resource set for rendering fonts
+            _fontTextureResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
+                _textureLayout,
+                _fontTextureView,
+                _gd.PointSampler,
+                _fontFragUniformBuffer));
         }
 
         /// <summary>
         /// Gets or creates a handle for a texture to be drawn with ImGui.
         /// Pass the returned handle to Image() or ImageButton().
         /// </summary>
-        public IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, TextureView textureView)
+        public IntPtr GetOrCreateImGuiBinding(
+            ResourceFactory factory, TextureView textureView, Interpolation interpolation)
         {
             if (!_setsByView.TryGetValue(textureView, out ResourceSetInfo rsi))
             {
-                ResourceSet resourceSet = factory.CreateResourceSet(new ResourceSetDescription(_textureLayout, textureView, _gd.PointSampler));
+                Sampler sampler;
+                FragUniformStruct uniformStruct = new FragUniformStruct();
+                ResourceSet resourceSet;
+
+                uniformStruct.InterpolationMode = (int)interpolation;
+
+                var fragUniformBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
+
+                _gd.UpdateBuffer(fragUniformBuffer, 0, ref uniformStruct);
+
+                if (interpolation == Interpolation.Nearest)
+                {
+                    sampler = _gd.PointSampler;
+                }
+                else if (interpolation == Interpolation.Bicubic)
+                {
+                    sampler = _gd.PointSampler;
+                }
+                else
+                {
+                    throw new Exception($"Interpolation method {interpolation} unknown");
+                }
+
+                resourceSet = factory.CreateResourceSet(
+                    new ResourceSetDescription(_textureLayout,
+                                               textureView,
+                                               sampler,
+                                               fragUniformBuffer));
+
                 rsi = new ResourceSetInfo(GetNextImGuiBindingID(), resourceSet);
 
                 _setsByView.Add(textureView, rsi);
                 _viewsById.Add(rsi.ImGuiBinding, rsi);
                 _ownedResources.Add(resourceSet);
+                _ownedResources.Add(fragUniformBuffer);
             }
 
             return rsi.ImGuiBinding;
@@ -168,7 +227,7 @@ namespace VeldridBackend
         /// Gets or creates a handle for a texture to be drawn with ImGui.
         /// Pass the returned handle to Image() or ImageButton().
         /// </summary>
-        public IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, Texture texture)
+        public IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, Texture texture, Interpolation interpolation)
         {
             if (!_autoViewsByTexture.TryGetValue(texture, out TextureView textureView))
             {
@@ -177,7 +236,7 @@ namespace VeldridBackend
                 _ownedResources.Add(textureView);
             }
 
-            return GetOrCreateImGuiBinding(factory, textureView);
+            return GetOrCreateImGuiBinding(factory, textureView, interpolation);
         }
 
         /// <summary>
@@ -533,6 +592,7 @@ namespace VeldridBackend
             _vertexBuffer.Dispose();
             _indexBuffer.Dispose();
             _projMatrixBuffer.Dispose();
+            _fontFragUniformBuffer.Dispose();
             _fontTexture.Dispose();
             _fontTextureView.Dispose();
             _vertexShader.Dispose();
