@@ -38,14 +38,15 @@ namespace LynnaLab
         public abstract void DrawOn(Image destImage, Point srcPos, Point destPos, Point size);
 
         /// <summary>
+        /// Sets the interpolation mode for the image.
+        /// </summary>
+        public abstract void SetInterpolation(Interpolation interpolation);
+
+        /// <summary>
         /// Replaces the contents of the image with the given bitmap.
         /// </summary>
         //public abstract void UpdateFromBitmap(LynnaLib.Bitmap bitmap);
 
         public abstract void Dispose();
-
-        // ================================================================================
-        // Private methods
-        // ================================================================================
     }
 }

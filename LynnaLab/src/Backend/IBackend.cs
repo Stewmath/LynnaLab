@@ -27,5 +27,7 @@ namespace LynnaLab
     {
         Nearest = 0,
         Bicubic = 1,
+
+        Count
     }
 }

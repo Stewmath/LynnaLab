@@ -79,9 +79,17 @@ namespace VeldridBackend
         public override int Width { get { return width; } }
         public override int Height { get { return height; } }
 
+        public Texture Texture { get { return texture; } }
+        public Interpolation Interpolation { get { return interpolation; } }
+
         // ================================================================================
         // Public methods
         // ================================================================================
+
+        public override IntPtr GetBinding()
+        {
+            return controller.GetOrCreateImGuiBinding(this);
+        }
 
         public override void DrawOn(Image _destImage, Point srcPos, Point destPos, Point size)
         {
@@ -114,9 +122,10 @@ namespace VeldridBackend
             framebuffer.Dispose();
         }
 
-        public override IntPtr GetBinding()
+        public override void SetInterpolation(Interpolation interpolation)
         {
-            return controller.GetOrCreateImGuiBinding(gd.ResourceFactory, texture, interpolation);
+            this.interpolation = interpolation;
+            controller.RegenerateImageBinding(this);
         }
 
         public override void Dispose()

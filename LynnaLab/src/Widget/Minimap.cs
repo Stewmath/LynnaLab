@@ -25,6 +25,7 @@ namespace LynnaLab
         Map map;
         Image image;
         int minimapScale = 10;
+        int interpolation = (int)Interpolation.Bicubic;
 
         const float MIN_SCALE = 0.1f;
         const float MAX_SCALE = 1.0f;
@@ -56,6 +57,8 @@ namespace LynnaLab
         public override void Render()
         {
             {
+                ImGui.PushItemWidth(200);
+
                 bool scrollChanged = false;
                 if (ImGui.SliderInt("Scale", ref minimapScale, 0, MAX_SCALE_SLIDER))
                     scrollChanged = true;
@@ -67,6 +70,20 @@ namespace LynnaLab
                 {
                     CenterScroll();
                 }
+
+                ImGui.SameLine();
+                int newInterpolation = interpolation;
+                if (ImGui.Combo("Interpolation", ref newInterpolation,
+                                new string[] { "Nearest", "Bicubic" }, (int)Interpolation.Count))
+                {
+                    if (newInterpolation >= 0 && newInterpolation < (int)Interpolation.Count)
+                    {
+                        interpolation = newInterpolation;
+                        image.SetInterpolation((Interpolation)interpolation);
+                    }
+                }
+
+                ImGui.PopItemWidth();
             }
 
             ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, ImGuiWindowFlags.HorizontalScrollbar);
@@ -115,7 +132,7 @@ namespace LynnaLab
             image = topLevel.Backend.CreateImage(
                 base.ImageSize.X,
                 base.ImageSize.Y,
-                Interpolation.Bicubic);
+                (Interpolation)interpolation);
 
             for (int x=0; x<map.MapWidth; x++)
             {
