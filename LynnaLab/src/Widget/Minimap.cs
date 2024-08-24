@@ -27,6 +27,8 @@ namespace LynnaLab
         int minimapScale = 10;
         int interpolation = (int)Interpolation.Bicubic;
 
+        Vector2? lastMousePos = null;
+
         const float MIN_SCALE = 0.1f;
         const float MAX_SCALE = 1.0f;
         const int MAX_SCALE_SLIDER = 100;
@@ -56,13 +58,13 @@ namespace LynnaLab
 
         public override void Render()
         {
-            bool scrollChanged = false;
+            bool forceCenter = false;
 
             {
                 ImGui.PushItemWidth(200);
 
                 if (ImGui.SliderInt("Scale", ref minimapScale, 0, MAX_SCALE_SLIDER))
-                    scrollChanged = true;
+                    forceCenter = true;
 
                 base.Scale =
                     MIN_SCALE + (minimapScale / (float)MAX_SCALE_SLIDER) * (MAX_SCALE - MIN_SCALE);
@@ -82,11 +84,32 @@ namespace LynnaLab
                 ImGui.PopItemWidth();
             }
 
-            if (scrollChanged)
-                CenterScroll();
+            UpdateScroll(forceCenter);
 
+            var scrollOrigin = ImGui.GetCursorScreenPos();
             ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, ImGuiWindowFlags.HorizontalScrollbar);
             base.Render();
+
+            if (ImGui.IsItemHovered() && ImGui.IsMouseDown(ImGuiMouseButton.Right))
+            {
+                var mousePos = ImGui.GetIO().MousePos - scrollOrigin;
+
+                if (lastMousePos != null)
+                {
+                    Vector2 delta = mousePos - (Vector2)lastMousePos;
+                    var scroll = new Vector2(ImGui.GetScrollX(), ImGui.GetScrollY());
+                    scroll -= delta;
+                    ImGui.SetScrollX(scroll.X);
+                    ImGui.SetScrollY(scroll.Y);
+                }
+
+                this.lastMousePos = mousePos;
+            }
+            else
+            {
+                this.lastMousePos = null;
+            }
+
             ImGui.EndChild();
         }
 
@@ -153,17 +176,21 @@ namespace LynnaLab
         /// Move the scrollbar such that the selected room is in the center.
         /// Must be called before starting the scroll window.
         /// </summary>
-        void CenterScroll()
+        void UpdateScroll(bool forceCenter)
         {
-            var windowSize = ImGui.GetContentRegionAvail();
-            var tilePos = new Vector2(
-                SelectedX * TileWidth + TileWidth / 2.0f,
-                SelectedY * TileHeight + TileHeight / 2.0f) * Scale;
-
-            var scroll = tilePos - windowSize / 2;
-
-            ImGui.SetNextWindowScroll(scroll);
             ImGui.SetNextWindowContentSize(new Vector2(CanvasWidth, CanvasHeight));
+
+            if (forceCenter)
+            {
+                var windowSize = ImGui.GetContentRegionAvail();
+                var tilePos = new Vector2(
+                    SelectedX * TileWidth + TileWidth / 2.0f,
+                    SelectedY * TileHeight + TileHeight / 2.0f) * Scale;
+
+                var scroll = tilePos - windowSize / 2;
+
+                ImGui.SetNextWindowScroll(scroll);
+            }
         }
     }
 }

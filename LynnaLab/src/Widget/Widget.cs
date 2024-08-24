@@ -2,7 +2,6 @@ using System;
 using System.Numerics;
 using ImGuiNET;
 
-using Point = Cairo.Point;
 using FRect = Util.FRect;
 using Color = LynnaLib.Color;
 
@@ -27,11 +26,11 @@ namespace LynnaLab
         /// <summary>
         /// Get the position of the mouse relative to the widget origin
         /// </summary>
-        public Point GetMousePos()
+        public Vector2 GetMousePos()
         {
             var io = ImGui.GetIO();
             var mousePos = io.MousePos - origin;
-            return new Point((int)mousePos.X, (int)mousePos.Y);
+            return new Vector2((int)mousePos.X, (int)mousePos.Y);
         }
 
         public void AddRect(FRect rect, Color color, float thickness = 1.0f)
