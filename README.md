@@ -111,7 +111,8 @@ either.
   
 ### ImGui stuff
 
-* Hold the Shift button with the mouse wheel to scroll horizontally.
+* In some situations you can hold the Shift button with the mouse wheel to
+  scroll horizontally.
 
 ## For more information
 

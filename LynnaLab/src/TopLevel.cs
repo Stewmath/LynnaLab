@@ -63,6 +63,20 @@ namespace LynnaLab
 
             ImGui.PushFont(oraclesFont);
 
+            if (ImGui.BeginMainMenuBar())
+            {
+                if (ImGui.BeginMenu("File"))
+                {
+                    if (ImGui.MenuItem("Open"))
+                    {
+                    }
+                    if (ImGui.MenuItem("Save"))
+                    {
+                        Project.Save();
+                    }
+                }
+            }
+
             {
                 ImGui.Begin("Control Panel");
 
