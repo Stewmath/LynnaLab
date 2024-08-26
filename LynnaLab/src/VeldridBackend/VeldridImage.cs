@@ -151,7 +151,7 @@ namespace VeldridBackend
 
             // Update the texture with the pixel data
             gd.UpdateTexture(texture, pixelData, sizeInBytes, 0, 0, 0,
-                              (uint)bitmap.Width, (uint)bitmap.Height, 1, 0, 0);
+                             (uint)bitmap.Width, (uint)bitmap.Height, 1, 0, 0);
         }
 
         (uint, PixelFormat) GetBitmapFormat(Bitmap bitmap)

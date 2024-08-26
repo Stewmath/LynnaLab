@@ -16,9 +16,13 @@ namespace VeldridBackend
     /// <summary>
     /// A modified version of Veldrid.ImGui's ImGuiRenderer.
     /// Manages input for ImGui and handles rendering ImGui's DrawLists with Veldrid.
+    ///
+    /// It's not clear why this is a different class from VeldridBackend, but I feel like there's a
+    /// reason.
     /// </summary>
     public class ImGuiController : IDisposable
     {
+        private VeldridBackend _backend;
         private GraphicsDevice _gd;
         private bool _frameBegun;
 
@@ -61,9 +65,11 @@ namespace VeldridBackend
         /// <summary>
         /// Constructs a new ImGuiController.
         /// </summary>
-        public ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, int width, int height)
+        public ImGuiController(VeldridBackend backend, OutputDescription outputDescription, int width, int height)
         {
-            _gd = gd;
+            _backend = backend;
+            _gd = backend.GraphicsDevice;
+
             _windowWidth = width;
             _windowHeight = height;
 
@@ -74,17 +80,14 @@ namespace VeldridBackend
                 ImGuiConfigFlags.DockingEnable;
             io.Fonts.Flags |= ImFontAtlasFlags.NoBakedLines;
 
-            CreateDeviceResources(gd, outputDescription);
+            CreateDeviceResources(_gd, outputDescription);
             SetPerFrameImGuiData(1f / 60f);
             ImGui.NewFrame();
             _frameBegun = true;
         }
 
-
-        public GraphicsDevice GraphicsDevice
-        {
-            get { return _gd; }
-        }
+        public VeldridBackend Backend { get { return _backend; } }
+        public GraphicsDevice GraphicsDevice { get { return _gd; } }
 
         public void WindowResized(int width, int height)
         {

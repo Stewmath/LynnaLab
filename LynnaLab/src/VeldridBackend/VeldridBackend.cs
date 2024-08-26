@@ -31,7 +31,7 @@ namespace VeldridBackend
             };
 
             _cl = _gd.ResourceFactory.CreateCommandList();
-            _controller = new ImGuiController(_gd, _gd.MainSwapchain.Framebuffer.OutputDescription, _window.Width, _window.Height);
+            _controller = new ImGuiController(this, _gd.MainSwapchain.Framebuffer.OutputDescription, _window.Width, _window.Height);
         }
 
         ~VeldridBackend()
@@ -57,6 +57,8 @@ namespace VeldridBackend
         // Properties
         // ================================================================================
         public bool Exited { get { return !_window.Exists; } }
+        public GraphicsDevice GraphicsDevice { get { return _gd; } }
+        //public CommandList CommandList { get { return _cl; } }
 
         // ================================================================================
         // Public methods
