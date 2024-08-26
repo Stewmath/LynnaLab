@@ -5,6 +5,14 @@ using Util;
 
 namespace LynnaLib
 {
+    /// <summary>
+    /// A Tileset object is guaranteed to uniquely represent either:
+    /// - A tileset index (for tilesets with no season)
+    /// - A tileset index + a season number (for tilesets with a season)
+    ///
+    /// Current design of this class won't allow for changing whether a tileset is seasonal or not.
+    /// Should probably be reworked somehow.
+    /// </summary>
     public class Tileset : IDisposable
     {
         FileParser tilesetFile;

@@ -169,11 +169,7 @@ namespace LynnaLab
 
             this.map = map;
 
-            if (image != null)
-            {
-                image.Dispose();
-                image = null;
-            }
+            this.image = null;
 
             if (map == null)
                 return;
@@ -183,40 +179,12 @@ namespace LynnaLab
             base.Width = map.MapWidth;
             base.Height = map.MapHeight;
 
-            GenerateImage();
+            this.image = Workspace.GetCachedMapImage((Map, 0));
         }
 
         // ================================================================================
         // Private methods
         // ================================================================================
-
-        /// <summary>
-        /// Generate the full minimap image
-        /// </summary>
-        void GenerateImage()
-        {
-            image?.Dispose();
-
-            image = TopLevel.Backend.CreateImage(
-                base.ImageSize.X,
-                base.ImageSize.Y,
-                (Interpolation)interpolation);
-
-            for (int x=0; x<map.MapWidth; x++)
-            {
-                for (int y=0; y<map.MapHeight; y++)
-                {
-                    Room room = map.GetRoom(x, y);
-                    int season = map.Season;
-                    Image roomImage = TopLevel.ImageFromBitmap(room.GetLayout(season).GetImage());
-
-                    roomImage.DrawOn(image,
-                                     new Point(0, 0),
-                                     new Point(x * TileWidth, y * TileHeight),
-                                     new Point(TileWidth, TileHeight));
-                }
-            }
-        }
 
         /// <summary>
         /// Move the scrollbar such that the selected room is in the center.

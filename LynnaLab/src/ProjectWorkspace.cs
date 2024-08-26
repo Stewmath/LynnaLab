@@ -18,6 +18,10 @@ namespace LynnaLab
             this.TopLevel = topLevel;
             this.Project = project;
 
+            tilesetImageCacher = new TilesetImageCacher(this);
+            roomImageCacher = new RoomImageCacher(this);
+            mapImageCacher = new MapImageCacher(this);
+
             linkImage = TopLevel.ImageFromBitmap(project.LinkBitmap);
             roomEditor = new RoomEditor(this);
         }
@@ -28,6 +32,10 @@ namespace LynnaLab
 
         RoomEditor roomEditor;
         Image linkImage;
+
+        TilesetImageCacher tilesetImageCacher;
+        RoomImageCacher roomImageCacher;
+        MapImageCacher mapImageCacher;
 
         // ================================================================================
         // Properties
@@ -63,6 +71,21 @@ namespace LynnaLab
                 roomEditor.Render();
                 ImGui.End();
             }
+        }
+
+        public Image GetCachedTilesetImage(Tileset tileset)
+        {
+            return tilesetImageCacher.GetImage(tileset);
+        }
+
+        public Image GetCachedRoomImage(RoomLayout layout)
+        {
+            return roomImageCacher.GetImage(layout);
+        }
+
+        public Image GetCachedMapImage((Map map, int floor) key)
+        {
+            return mapImageCacher.GetImage(key);
         }
 
         // ================================================================================

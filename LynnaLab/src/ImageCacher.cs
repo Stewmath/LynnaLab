@@ -1,31 +1,30 @@
+using System.Collections.Generic;
 using LynnaLib;
 
 namespace LynnaLab
 {
     /// <summary>
-    /// Viewing a tileset & selecting tiles from it
+    /// Interface for caching images based on a LynnaLib class. It is assumed that, whatever class
+    /// is used as the KeyClass, there is only one unique instance of that class representing the
+    /// given data (ie. only one Tileset class ever exists per actual tileset). Most LynnaLib
+    /// classes are designed with this in mind already.
     /// </summary>
-    public class TilesetViewer : TileGridViewer
+    public abstract class ImageCacher<KeyClass>
     {
         // ================================================================================
         // Constructors
         // ================================================================================
-        public TilesetViewer(ProjectWorkspace workspace)
+
+        public ImageCacher(ProjectWorkspace workspace)
         {
             this.Workspace = workspace;
-
-            base.TileWidth = 16;
-            base.TileHeight = 16;
-            base.Width = 16;
-            base.Height = 16;
-            base.Selectable = true;
         }
 
         // ================================================================================
         // Variables
         // ================================================================================
-        Tileset tileset;
-        Image image;
+
+        Dictionary<KeyClass, Image> imageCache = new Dictionary<KeyClass, Image>();
 
         // ================================================================================
         // Properties
@@ -35,47 +34,30 @@ namespace LynnaLab
         public Project Project { get { return Workspace.Project; } }
         public TopLevel TopLevel { get { return Workspace.TopLevel; } }
 
-        protected override Image Image
-        {
-            get
-            {
-                return image;
-            }
-        }
-
         // ================================================================================
         // Public methods
         // ================================================================================
 
-        public override void Render()
+        public Image GetImage(KeyClass key)
         {
-            base.Render();
+            Image image;
+            if (imageCache.TryGetValue(key, out image))
+                return image;
+
+            image = GenerateImage(key);
+            imageCache[key] = image;
+            return image;
         }
 
-        public void SetTileset(Tileset t)
-        {
-            if (tileset != t)
-            {
-                tileset = t;
-                OnTilesetChanged();
-            }
-        }
+        // ================================================================================
+        // Protected methods
+        // ================================================================================
+
+        protected abstract Image GenerateImage(KeyClass key);
+
 
         // ================================================================================
         // Private methods
         // ================================================================================
-
-        /// <summary>
-        /// Called when the tileset is changed
-        /// </summary>
-        void OnTilesetChanged()
-        {
-            image = null;
-
-            if (tileset != null)
-            {
-                image = Workspace.GetCachedTilesetImage(tileset);
-            }
-        }
     }
 }

@@ -20,7 +20,7 @@ namespace LynnaLab
         // ================================================================================
         // Variables
         // ================================================================================
-        Image _image;
+        Image image;
 
         // ================================================================================
         // Properties
@@ -44,7 +44,7 @@ namespace LynnaLab
             }
         }
 
-        protected override Image Image { get { return _image; } }
+        protected override Image Image { get { return image; } }
 
 
         // ================================================================================
@@ -73,12 +73,11 @@ namespace LynnaLab
         void RoomChanged()
         {
             // Choosing not to dispose the image here, leave it in the TopLevel cache
-            _image = null;
+            image = null;
 
             if (RoomLayout != null)
             {
-                // TODO: Watch for changes
-                _image = TopLevel.ImageFromBitmap(RoomLayout.GetImage());
+                image = Workspace.GetCachedRoomImage(RoomLayout);
 
                 base.Width = RoomLayout.Width;
                 base.Height = RoomLayout.Height;
