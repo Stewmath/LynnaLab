@@ -31,7 +31,6 @@ namespace LynnaLib
         GraphicsState graphicsState;
 
         Bitmap[] tileImagesCache = new Bitmap[256];
-        Bitmap fullCachedImage = new Bitmap(16 * 16, 16 * 16);
 
         WeakEventWrapper<ReloadableStream> gfxStreamEventWrapper
             = new WeakEventWrapper<ReloadableStream>();
@@ -560,13 +559,6 @@ namespace LynnaLib
                 }
             }
 
-            // Update the full tileset image
-            using (Cairo.Context cr = fullCachedImage.CreateContext())
-            {
-                cr.SetSourceSurface(image, (index % 16) * 16, (index / 16) * 16);
-                cr.Paint();
-            }
-
             tileImagesCache[index] = image;
 
             TileModifiedEvent?.Invoke(this, index);
@@ -674,27 +666,6 @@ namespace LynnaLib
                 tilesetHeaderGroup.SetCollisionsData(index, val);
         }
 
-        // This function doesn't guarantee to return a fully rendered image, only what is currently
-        // available. Call "DrawAllTiles" to begin drawing the full image (though it will run
-        // asynchronously).
-        // The full image is not drawn after initialization, but it IS updated properly when any
-        // properties of the tileset are modified. This is because it is inefficient to draw the
-        // full tileset image for every single tileset when drawing the minimap.
-        public Bitmap GetFullCachedImage()
-        {
-            return fullCachedImage;
-        }
-
-        // This function guarantees to return the full image, unlike above.
-        public Bitmap GetFullImage()
-        {
-            for (int i = 0; i < 256; i++)
-            {
-                GetTileImage(i);
-            }
-            return fullCachedImage;
-        }
-
         // Returns a list of tiles which have changed
         public IList<byte> UpdateAnimations(int frames)
         {
@@ -796,8 +767,6 @@ namespace LynnaLib
             foreach (Bitmap b in tileImagesCache)
                 b?.Dispose();
             tileImagesCache = null;
-            fullCachedImage.Dispose();
-            fullCachedImage = null;
             paletteEventWrapper.UnbindAll();
         }
 
