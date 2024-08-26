@@ -12,9 +12,9 @@ namespace LynnaLab
         // ================================================================================
         // Constructors
         // ================================================================================
-        public Minimap(TopLevel topLevel)
+        public Minimap(ProjectWorkspace workspace)
         {
-            this.topLevel = topLevel;
+            this.Workspace = workspace;
 
             base.Selectable = true;
         }
@@ -22,7 +22,6 @@ namespace LynnaLab
         // ================================================================================
         // Variables
         // ================================================================================
-        TopLevel topLevel;
         Map map;
         Image image;
         Vector2? lastMousePos = null;
@@ -54,6 +53,9 @@ namespace LynnaLab
                 return image;
             }
         }
+
+        public ProjectWorkspace Workspace { get; private set; }
+        public TopLevel TopLevel { get { return Workspace.TopLevel; } }
 
         public Map Map { get { return map; } }
 
@@ -195,7 +197,7 @@ namespace LynnaLab
         {
             image?.Dispose();
 
-            image = topLevel.Backend.CreateImage(
+            image = TopLevel.Backend.CreateImage(
                 base.ImageSize.X,
                 base.ImageSize.Y,
                 (Interpolation)interpolation);
@@ -206,7 +208,7 @@ namespace LynnaLab
                 {
                     Room room = map.GetRoom(x, y);
                     int season = map.Season;
-                    Image roomImage = topLevel.ImageFromBitmap(room.GetLayout(season).GetImage());
+                    Image roomImage = TopLevel.ImageFromBitmap(room.GetLayout(season).GetImage());
 
                     roomImage.DrawOn(image,
                                      new Point(0, 0),

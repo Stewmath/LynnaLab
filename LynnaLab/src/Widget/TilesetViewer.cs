@@ -2,14 +2,17 @@ using LynnaLib;
 
 namespace LynnaLab
 {
+    /// <summary>
+    /// Viewing a tileset & selecting tiles from it
+    /// </summary>
     public class TilesetViewer : TileGridViewer
     {
         // ================================================================================
         // Constructors
         // ================================================================================
-        public TilesetViewer(TopLevel topLevel)
+        public TilesetViewer(ProjectWorkspace workspace)
         {
-            this.topLevel = topLevel;
+            this.Workspace = workspace;
 
             base.TileWidth = 16;
             base.TileHeight = 16;
@@ -21,7 +24,6 @@ namespace LynnaLab
         // ================================================================================
         // Variables
         // ================================================================================
-        TopLevel topLevel;
         Tileset tileset;
         Image image;
 
@@ -29,7 +31,9 @@ namespace LynnaLab
         // Properties
         // ================================================================================
 
-        public Project Project { get { return topLevel.Project; } }
+        public ProjectWorkspace Workspace { get; private set; }
+        public Project Project { get { return Workspace.Project; } }
+        public TopLevel TopLevel { get { return Workspace.TopLevel; } }
 
         protected override Image Image
         {
@@ -70,7 +74,7 @@ namespace LynnaLab
 
             if (tileset != null)
             {
-                image = topLevel.ImageFromBitmap(tileset.GetFullImage());
+                image = TopLevel.ImageFromBitmap(tileset.GetFullImage());
             }
         }
     }

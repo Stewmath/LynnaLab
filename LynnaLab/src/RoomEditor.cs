@@ -13,17 +13,17 @@ namespace LynnaLab
         /// <summary>
         /// Assumes that the TopLevel has a valid Project loaded.
         /// </summary>
-        public RoomEditor(TopLevel topLevel)
+        public RoomEditor(ProjectWorkspace workspace)
         {
-            this.TopLevel = topLevel;
+            this.Workspace = workspace;
 
-            roomLayoutEditor = new RoomLayoutEditor(topLevel);
+            roomLayoutEditor = new RoomLayoutEditor(this.Workspace);
             roomLayoutEditor.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(-1));
 
-            tilesetViewer = new TilesetViewer(topLevel);
+            tilesetViewer = new TilesetViewer(this.Workspace);
             tilesetViewer.SetTileset(roomLayoutEditor.Room.GetTileset(-1));
 
-            minimap = new Minimap(topLevel);
+            minimap = new Minimap(this.Workspace);
 
             SetRoom(0);
 
@@ -67,8 +67,9 @@ namespace LynnaLab
         // Properties
         // ================================================================================
 
-        public TopLevel TopLevel { get; private set; }
-        public Project Project { get { return TopLevel.Project; } }
+        public ProjectWorkspace Workspace { get; private set; }
+        public TopLevel TopLevel { get { return Workspace.TopLevel; } }
+        public Project Project { get { return Workspace.Project; } }
 
         public RoomLayout RoomLayout { get { return roomLayoutEditor.RoomLayout; } }
         public Room Room { get { return RoomLayout.Room; } }

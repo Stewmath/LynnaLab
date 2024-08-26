@@ -8,9 +8,9 @@ namespace LynnaLab
         // ================================================================================
         // Constructors
         // ================================================================================
-        public RoomLayoutEditor(TopLevel topLevel)
+        public RoomLayoutEditor(ProjectWorkspace workspace)
         {
-            _topLevel = topLevel;
+            this.Workspace = workspace;
 
             base.TileWidth = 16;
             base.TileHeight = 16;
@@ -21,12 +21,13 @@ namespace LynnaLab
         // Variables
         // ================================================================================
         Image _image;
-        TopLevel _topLevel;
 
         // ================================================================================
         // Properties
         // ================================================================================
-        public Project Project { get { return _topLevel.Project; } }
+        public ProjectWorkspace Workspace { get; private set; }
+        public Project Project { get { return Workspace.Project; } }
+        public TopLevel TopLevel { get { return Workspace.TopLevel; } }
         public Room Room { get { return RoomLayout?.Room; } }
         public RoomLayout RoomLayout { get; private set; }
 
@@ -77,7 +78,7 @@ namespace LynnaLab
             if (RoomLayout != null)
             {
                 // TODO: Watch for changes
-                _image = _topLevel.ImageFromBitmap(RoomLayout.GetImage());
+                _image = TopLevel.ImageFromBitmap(RoomLayout.GetImage());
 
                 base.Width = RoomLayout.Width;
                 base.Height = RoomLayout.Height;

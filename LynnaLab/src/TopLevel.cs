@@ -6,6 +6,9 @@ using LynnaLib;
 
 namespace LynnaLab
 {
+    /// <summary>
+    /// TopLevel class could potentially contain multiple ProjectWorkspaces in the future.
+    /// </summary>
     public class TopLevel
     {
         public TopLevel(IBackend backend, string path = "", string game = "seasons")
@@ -29,20 +32,11 @@ namespace LynnaLab
         ImFontPtr oraclesFont;
         Dictionary<Bitmap, Image> imageDict = new Dictionary<Bitmap, Image>();
 
-        RoomEditor roomEditor;
-
-        Image linkImage;
-
         bool showImGuiDemoWindow = false;
 
         // ================================================================================
         // Properties
         // ================================================================================
-
-        public Project Project
-        {
-            get; private set;
-        }
 
         public IBackend Backend
         {
@@ -52,44 +46,26 @@ namespace LynnaLab
             }
         }
 
+        private ProjectWorkspace Workspace
+        {
+            get; set;
+        }
+
         // ================================================================================
         // Public methods
         // ================================================================================
 
         public void Render()
         {
-            if (Project == null)
-                return;
-
             ImGui.PushFont(oraclesFont);
-
-            if (ImGui.BeginMainMenuBar())
-            {
-                if (ImGui.BeginMenu("File"))
-                {
-                    if (ImGui.MenuItem("Open"))
-                    {
-                    }
-                    if (ImGui.MenuItem("Save"))
-                    {
-                        Project.Save();
-                    }
-                }
-            }
 
             {
                 ImGui.Begin("Control Panel");
-
                 ImGui.Checkbox("Demo Window".AsSpan(), ref showImGuiDemoWindow);
-
                 ImGui.End();
             }
 
-            {
-                ImGui.Begin("Room Editor");
-                roomEditor.Render();
-                ImGui.End();
-            }
+            Workspace?.Render();
 
             ImGui.PopFont();
 
@@ -131,10 +107,8 @@ namespace LynnaLab
             // Try to load project config
             ProjectConfig config = ProjectConfig.Load(path);
 
-            Project = new Project(path, game, config);
-
-            linkImage = backend.ImageFromBitmap(Project.LinkBitmap);
-            roomEditor = new RoomEditor(this);
+            var project = new Project(path, game, config);
+            this.Workspace = new ProjectWorkspace(this, project);
         }
     }
 }
