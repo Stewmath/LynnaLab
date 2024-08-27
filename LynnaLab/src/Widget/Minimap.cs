@@ -180,6 +180,7 @@ namespace LynnaLab
             base.Height = map.MapHeight;
 
             this.image = Workspace.GetCachedMapImage((Map, 0));
+            this.image.SetInterpolation((Interpolation)interpolation);
         }
 
         // ================================================================================
