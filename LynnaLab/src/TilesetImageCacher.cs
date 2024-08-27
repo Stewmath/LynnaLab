@@ -57,7 +57,7 @@ namespace LynnaLab
         void DrawTile(Image image, Tileset tileset, int x, int y)
         {
             int index = x + y * 16;
-            var bitmap = tileset.GetTileImage(index);
+            var bitmap = tileset.GetTileBitmap(index);
             var bitmapImage = TopLevel.ImageFromBitmap(bitmap);
 
             bitmapImage.DrawOn(image,

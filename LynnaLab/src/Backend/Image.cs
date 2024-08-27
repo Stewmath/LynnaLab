@@ -17,6 +17,9 @@ namespace LynnaLab
         // Variables
         // ================================================================================
 
+        // Invoked when the image is modified
+        public event Action<ImageModifiedEventArgs> ModifiedEvent;
+
         // ================================================================================
         // Properties
         // ================================================================================
@@ -48,5 +51,20 @@ namespace LynnaLab
         //public abstract void UpdateFromBitmap(LynnaLib.Bitmap bitmap);
 
         public abstract void Dispose();
+
+        // ================================================================================
+        // Protected methods
+        // ================================================================================
+
+        /// <summary>
+        /// This function allows child classes to invoke the event
+        /// </summary>
+        protected void InvokeModifiedEvent(ImageModifiedEventArgs args)
+        {
+            ModifiedEvent?.Invoke(args);
+        }
     }
+
+    // stub in case we need it later
+    public struct ImageModifiedEventArgs {}
 }

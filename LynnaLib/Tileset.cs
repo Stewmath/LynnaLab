@@ -497,7 +497,7 @@ namespace LynnaLib
             {
                 for (int i = 0; i < 256; i++)
                 {
-                    GetTileImage(i);
+                    GetTileBitmap(i);
                 }
             }
         }
@@ -515,7 +515,7 @@ namespace LynnaLib
                 if (tileImagesCache[tileUpdaterIndex] == null)
                 {
                     numDrawnTiles++;
-                    GetTileImage(tileUpdaterIndex); // Will generate the image if it's not cached
+                    GetTileBitmap(tileUpdaterIndex); // Will generate the image if it's not cached
                 }
                 tileUpdaterIndex++;
             }
@@ -526,7 +526,7 @@ namespace LynnaLib
 
         // This returns an image for the specified tile index, and also updates the "master" tileset
         // image if said tile has been changed.
-        public Bitmap GetTileImage(int index)
+        public Bitmap GetTileBitmap(int index)
         {
             if (tileImagesCache[index] != null)
                 return tileImagesCache[index];
@@ -591,7 +591,7 @@ namespace LynnaLib
             GenerateUsedTileList();
             tileImagesCache[index]?.Dispose();
             tileImagesCache[index] = null;
-            GetTileImage(index); // Redraw tile image
+            GetTileBitmap(index); // Redraw tile image
             TileModifiedEvent?.Invoke(this, index);
         }
         public byte GetSubTileFlags(int index, int x, int y)
@@ -619,7 +619,7 @@ namespace LynnaLib
             }
             tileImagesCache[index]?.Dispose();
             tileImagesCache[index] = null;
-            GetTileImage(index); // Redraw tile image
+            GetTileBitmap(index); // Redraw tile image
             TileModifiedEvent?.Invoke(this, index);
         }
 
@@ -715,7 +715,7 @@ namespace LynnaLib
                 // Refresh the image of each animated metatile
                 tileImagesCache[t]?.Dispose();
                 tileImagesCache[t] = null;
-                GetTileImage(t);
+                GetTileBitmap(t);
 
                 TileModifiedEvent?.Invoke(this, t);
             }

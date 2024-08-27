@@ -4,6 +4,7 @@ using Veldrid;
 using Interpolation = LynnaLab.Interpolation;
 using Bitmap = LynnaLib.Bitmap;
 using Image = LynnaLab.Image;
+using ImageModifiedEventArgs = LynnaLab.ImageModifiedEventArgs;
 using Point = Cairo.Point;
 
 namespace VeldridBackend
@@ -120,6 +121,8 @@ namespace VeldridBackend
 
             cl.Dispose();
             framebuffer.Dispose();
+
+            destImage.InvokeModifiedEvent(new ImageModifiedEventArgs {});
         }
 
         public override void SetInterpolation(Interpolation interpolation)
@@ -152,6 +155,8 @@ namespace VeldridBackend
             // Update the texture with the pixel data
             gd.UpdateTexture(texture, pixelData, sizeInBytes, 0, 0, 0,
                              (uint)bitmap.Width, (uint)bitmap.Height, 1, 0, 0);
+
+            InvokeModifiedEvent(new ImageModifiedEventArgs {});
         }
 
         (uint, PixelFormat) GetBitmapFormat(Bitmap bitmap)

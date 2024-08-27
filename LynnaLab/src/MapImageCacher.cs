@@ -45,6 +45,20 @@ namespace LynnaLab
                 for (int y = 0; y < key.map.MapHeight; y++)
                 {
                     DrawTile(image, key, x, y);
+
+                    // Watch for changes to the room image.
+                    // TODO: Must account for dungeon room assignments changing, this always looks
+                    // at the initially loaded room at that position
+
+                    int tileX = x, tileY = y; // New variables for closure
+                    var modifiedEventHandler = (ImageModifiedEventArgs args) =>
+                    {
+                        DrawTile(image, key, tileX, tileY);
+                    };
+
+                    var layout = key.map.GetRoomLayout(x, y, key.floor);
+                    Image roomImage = Workspace.GetCachedRoomImage(layout);
+                    roomImage.ModifiedEvent += modifiedEventHandler;
                 }
             }
 

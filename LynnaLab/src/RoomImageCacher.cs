@@ -38,13 +38,8 @@ namespace LynnaLab
         {
             Image image = TopLevel.Backend.CreateImage(layout.Width * 16, layout.Height * 16);
 
-            for (int x = 0; x < layout.Width; x++)
-            {
-                for (int y = 0; y < layout.Height; y++)
-                {
-                    DrawTile(image, layout, x, y);
-                }
-            }
+            Redraw(image, layout);
+            layout.LayoutModifiedEvent += () => Redraw(image, layout);
 
             return image;
         }
@@ -54,11 +49,22 @@ namespace LynnaLab
         // Private methods
         // ================================================================================
 
+        void Redraw(Image image, RoomLayout layout)
+        {
+            for (int x = 0; x < layout.Width; x++)
+            {
+                for (int y = 0; y < layout.Height; y++)
+                {
+                    DrawTile(image, layout, x, y);
+                }
+            }
+        }
+
         void DrawTile(Image image, RoomLayout layout, int x, int y)
         {
             int tileIndex = layout.GetTile(x, y);
-            var bitmap = layout.Tileset.GetTileImage(tileIndex);
-            var tileImage = TopLevel.ImageFromBitmap(bitmap);
+            var tileBitmap = layout.Tileset.GetTileBitmap(tileIndex);
+            var tileImage = TopLevel.ImageFromBitmap(tileBitmap);
 
             tileImage.DrawOn(image,
                              new Point(0, 0),
