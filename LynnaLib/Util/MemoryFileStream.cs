@@ -183,5 +183,14 @@ namespace Util
         {
             modifiedEvent -= handler;
         }
+
+        public void LockEvents()
+        {
+            modifiedEvent.Lock();
+        }
+        public void UnlockEvents()
+        {
+            modifiedEvent.Unlock();
+        }
     }
 }

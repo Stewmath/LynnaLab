@@ -31,6 +31,7 @@ namespace VeldridBackend
             };
 
             _cl = _gd.ResourceFactory.CreateCommandList();
+            _cl.Begin();
             _controller = new ImGuiController(this, _gd.MainSwapchain.Framebuffer.OutputDescription, _window.Width, _window.Height);
         }
 
@@ -58,7 +59,7 @@ namespace VeldridBackend
         // ================================================================================
         public bool Exited { get { return !_window.Exists; } }
         public GraphicsDevice GraphicsDevice { get { return _gd; } }
-        //public CommandList CommandList { get { return _cl; } }
+        public CommandList CommandList { get { return _cl; } }
 
         // ================================================================================
         // Public methods
@@ -77,13 +78,15 @@ namespace VeldridBackend
 
         public void Render()
         {
-            _cl.Begin();
             _cl.SetFramebuffer(_gd.MainSwapchain.Framebuffer);
             _cl.ClearColorTarget(0, new RgbaFloat(_clearColor.X, _clearColor.Y, _clearColor.Z, 1f));
             _controller.Render(_gd, _cl);
             _cl.End();
+
             _gd.SubmitCommands(_cl);
             _gd.SwapBuffers(_gd.MainSwapchain);
+
+            _cl.Begin();
         }
 
         public Image ImageFromBitmap(Bitmap bitmap, Interpolation interpolation)

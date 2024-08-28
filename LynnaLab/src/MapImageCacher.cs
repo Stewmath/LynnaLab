@@ -1,3 +1,4 @@
+using System;
 using LynnaLib;
 
 using Point = Cairo.Point;
@@ -6,6 +7,10 @@ namespace LynnaLab
 {
     /// <summary>
     /// Caches images for maps. Key is a tuple: (Map, int) where the int is the floor index.
+    ///
+    /// The code here is quite simple compared to RoomImageCacher because the RoomImageCacher
+    /// accounts for almost anything that would affect a minimap's image. So this class only needs
+    /// to watch for changes to the room images.
     /// </summary>
     public class MapImageCacher : ImageCacher<(Map map, int floor)>
     {
@@ -51,14 +56,14 @@ namespace LynnaLab
                     // at the initially loaded room at that position
 
                     int tileX = x, tileY = y; // New variables for closure
-                    var modifiedEventHandler = (ImageModifiedEventArgs args) =>
+                    EventHandler<ImageModifiedEventArgs> modifiedEventHandler = (_, args) =>
                     {
                         DrawTile(image, key, tileX, tileY);
                     };
 
                     var layout = key.map.GetRoomLayout(x, y, key.floor);
                     Image roomImage = Workspace.GetCachedRoomImage(layout);
-                    roomImage.ModifiedEvent += modifiedEventHandler;
+                    roomImage.AddModifiedEventHandler(modifiedEventHandler);
                 }
             }
 

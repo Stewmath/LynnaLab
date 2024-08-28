@@ -586,6 +586,25 @@ namespace LynnaLib
             return value;
         }
 
+        public IList<Tileset> GetAllTilesets()
+        {
+            var list = new List<Tileset>();
+
+            for (int i=0; i<NumTilesets; i++)
+            {
+                if (TilesetIsSeasonal(i))
+                    list.Add(GetTileset(i, -1));
+                else
+                {
+                    for (int s=0; s<4; s++)
+                        list.Add(GetTileset(i, s));
+                }
+            }
+
+            return list;
+        }
+
+
         public Dungeon GetDungeon(int index)
         {
             Dungeon retval;

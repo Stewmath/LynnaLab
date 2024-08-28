@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 
 using System.Runtime.InteropServices;
 
@@ -29,23 +28,7 @@ namespace LynnaLab
                     topLevel = new TopLevel(backend);
             }
 
-            var stopwatch = Stopwatch.StartNew();
-            float deltaTime = 0f;
-
-            // Main application loop
-            while (!backend.Exited)
-            {
-                deltaTime = stopwatch.ElapsedTicks / (float)Stopwatch.Frequency;
-                stopwatch.Restart();
-
-                backend.HandleEvents(deltaTime);
-
-                if (backend.Exited)
-                    break;
-
-                topLevel.Render();
-                backend.Render();
-            }
+            topLevel.Run();
         }
     }
 }

@@ -483,39 +483,53 @@ namespace LynnaLib
                 tileImagesCache[i] = null;
             }
             if (constructorFinished)
-                DrawAllTiles();
+                RequestRedraw();
         }
+
         // Trigger asynchronous redraw of all tiles that are marked as needing to be redrawn
-        public void DrawAllTiles()
+        public void RequestRedraw()
         {
             if (idleHandlerAdder != null)
             {
+                // Don't add handler again if it's already in progress
+                if (tileUpdaterIndex != 256)
+                {
+                    tileUpdaterIndex = 0;
+                    return;
+                }
+
                 tileUpdaterIndex = 0;
                 idleHandlerAdder(TileUpdater);
             }
             else
             {
-                for (int i = 0; i < 256; i++)
-                {
-                    GetTileBitmap(i);
-                }
+                throw new Exception("idleHandlerAdder not defined");
             }
         }
 
         int tileUpdaterIndex = 256;
 
-        // TileUpdater is called by GLib.IdleHandler, which just calls this "when it has time".
+        // TileUpdater is called by the idle handler, which just calls this "when it has time".
         bool TileUpdater()
         {
             if (tileUpdaterIndex == 256)
+            {
+                TileModifiedEvent?.Invoke(this, -1);
                 return false;
+            }
             int numDrawnTiles = 0;
             while (tileUpdaterIndex < 256 && numDrawnTiles < 16)
             {
                 if (tileImagesCache[tileUpdaterIndex] == null)
                 {
                     numDrawnTiles++;
-                    GetTileBitmap(tileUpdaterIndex); // Will generate the image if it's not cached
+                    // Generate the image if it's not cached
+                    GetTileBitmap(tileUpdaterIndex, invokeModifiedEvent:false);
+
+                    // Do not invoke TileModifiedEvent here. We would not be in this function in the
+                    // first place if we weren't updating many tiles at once. So only invoke it when
+                    // all tiles are finished updating, with parameter -1, indicating that all tiles
+                    // were redrawn.
                 }
                 tileUpdaterIndex++;
             }
@@ -524,9 +538,8 @@ namespace LynnaLib
             return true;
         }
 
-        // This returns an image for the specified tile index, and also updates the "master" tileset
-        // image if said tile has been changed.
-        public Bitmap GetTileBitmap(int index)
+        // This returns an image for the specified tile index.
+        public Bitmap GetTileBitmap(int index, bool invokeModifiedEvent=true)
         {
             if (tileImagesCache[index] != null)
                 return tileImagesCache[index];
@@ -560,8 +573,9 @@ namespace LynnaLib
             }
 
             tileImagesCache[index] = image;
+            if (invokeModifiedEvent)
+                TileModifiedEvent?.Invoke(this, index);
 
-            TileModifiedEvent?.Invoke(this, index);
             return image;
         }
 
@@ -759,6 +773,14 @@ namespace LynnaLib
                 }
             }
             return references;
+        }
+
+        /// <summary>
+        /// Returns true if the given tileIndex has a cached Bitmap image that is up-to-date
+        /// </summary>
+        public bool TileIsRendered(int tileIndex)
+        {
+            return tileImagesCache[tileIndex] != null;
         }
 
         public void Dispose()

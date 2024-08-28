@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using ImGuiNET;
 using LynnaLib;
@@ -31,6 +32,7 @@ namespace LynnaLab
         IBackend backend;
         ImFontPtr oraclesFont;
         Dictionary<Bitmap, Image> imageDict = new Dictionary<Bitmap, Image>();
+        Queue<Func<bool>> idleFunctions = new Queue<Func<bool>>();
 
         bool showImGuiDemoWindow = false;
 
@@ -55,13 +57,58 @@ namespace LynnaLab
         // Public methods
         // ================================================================================
 
-        public void Render()
+        /// <summary>
+        /// Main loop
+        /// </summary>
+        public void Run()
+        {
+            var stopwatch = Stopwatch.StartNew();
+
+            // Main application loop
+            while (!backend.Exited)
+            {
+                float lastDeltaTime = stopwatch.ElapsedTicks / (float)Stopwatch.Frequency;
+                stopwatch.Restart();
+
+                backend.HandleEvents(lastDeltaTime);
+
+                if (backend.Exited)
+                    break;
+
+                this.Render(lastDeltaTime);
+
+                // Call the "idle functions", used for lazy drawing.
+                // Do this before backend.Render() as that triggers vsync and messes up our timer.
+                while (idleFunctions.Count != 0)
+                {
+                    var func = idleFunctions.Peek();
+                    if (!func())
+                        idleFunctions.Dequeue();
+
+                    // Maximum frame time up to which we can run another idle function.
+                    // At 60fps, 1 frame = 0.016 seconds. So we keep this a bit under that.
+                    const float MAX_FRAME_TIME = 0.01f;
+
+                    float deltaTime = stopwatch.ElapsedTicks / (float)Stopwatch.Frequency;
+                    if (deltaTime >= MAX_FRAME_TIME)
+                        break;
+                }
+
+                backend.Render();
+            }
+        }
+
+        /// <summary>
+        /// Draw ImGui interface
+        /// </summary>
+        public void Render(float deltaTime)
         {
             ImGui.PushFont(oraclesFont);
 
             {
                 ImGui.Begin("Control Panel");
                 ImGui.Checkbox("Demo Window".AsSpan(), ref showImGuiDemoWindow);
+                ImGui.Text("Frametime: " + deltaTime);
                 ImGui.End();
             }
 
@@ -96,6 +143,20 @@ namespace LynnaLab
                 throw new Exception("Bitmap to remove did not exist in imageDict.");
         }
 
+        /// <summary>
+        /// Queues the given function to run when some free time is available.
+        /// The function will be repeatedly called until it returns false.
+        /// Modeled after GLib.IdleHandler.
+        /// </summary>
+        public void LazyInvoke(Func<bool> function)
+        {
+            idleFunctions.Enqueue(function);
+        }
+
+        public void LazyInvoke(Action function)
+        {
+            LazyInvoke(() => { function(); return false; });
+        }
 
 
         // ================================================================================

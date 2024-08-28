@@ -17,10 +17,14 @@ namespace LynnaLib
         MemoryFileStream tileDataFile;
         Tileset loadedTileset;
 
+        // List of positions where each tile index is used in the room
+        List<(int,int)>[] tilePositions = new List<(int,int)>[256];
 
-        public delegate void LayoutModifiedHandler();
-        // Event invoked when the room's image is modified in any way
-        public event LayoutModifiedHandler LayoutModifiedEvent;
+
+        // Event invoked when tileset used for this room is changed
+        public event EventHandler<RoomTilesetChangedEventArgs> TilesetChangedEvent;
+        // Event invoked when room layout is changed
+        public event EventHandler<RoomLayoutChangedEventArgs> LayoutChangedEvent;
 
 
         internal RoomLayout(Room room, int season)
@@ -81,9 +85,16 @@ namespace LynnaLib
         {
             if (layout.Length != Stride * Height)
                 throw new Exception($"Tried to write a layout of invalid size to room {Room.Index:x3}");
+
+            tileDataFile.LockEvents();
             tileDataFile.Position = 0;
             tileDataFile.Write(layout, 0, Stride * Height);
-            // Modifying the data will trigger the callback to the TileDataModified function
+            // Modifying the data will trigger the callback to the TileDataModified function when
+            // events are unlocked
+
+            CalculateTilePositions();
+
+            tileDataFile.UnlockEvents();
         }
 
         public int GetTile(int x, int y)
@@ -93,8 +104,11 @@ namespace LynnaLib
         }
         public void SetTile(int x, int y, int value)
         {
-            if (GetTile(x, y) != value)
+            int oldTile = GetTile(x, y);
+            if (oldTile != value)
             {
+                tilePositions[oldTile].Remove((x, y));
+                tilePositions[value].Add((x, y));
                 tileDataFile.Position = y * Stride + x;
                 tileDataFile.WriteByte((byte)value);
                 // Modifying the data will trigger the callback to the TileDataModified function
@@ -129,29 +143,55 @@ namespace LynnaLib
             SetLayout(newLayout);
         }
 
+        /// <summary>
+        /// Returns a list of positions where a given tile is located.
+        /// </summary>
+        public IList<(int, int)> GetTilePositions(int tileIndex)
+        {
+            return tilePositions[tileIndex].AsReadOnly();
+        }
+
 
         internal void UpdateTileset()
         {
             if (loadedTileset != Tileset)
             {
+                var oldTileset = loadedTileset;
+
                 if (loadedTileset != null)
                 {
-                    loadedTileset.TileModifiedEvent -= ModifiedTilesetCallback;
                     loadedTileset.LayoutGroupModifiedEvent -= ModifiedLayoutGroupCallback;
                 }
-                Tileset.TileModifiedEvent += ModifiedTilesetCallback;
                 Tileset.LayoutGroupModifiedEvent += ModifiedLayoutGroupCallback;
 
                 loadedTileset = Tileset;
 
                 UpdateRoomData();
-                if (LayoutModifiedEvent != null)
-                    LayoutModifiedEvent();
+
+                TilesetChangedEvent?.Invoke(
+                    this,
+                    new RoomTilesetChangedEventArgs { oldTileset = oldTileset, newTileset = Tileset });
             }
         }
 
 
         // Private methods
+
+        void CalculateTilePositions()
+        {
+            for (int t = 0; t < 256; t++)
+            {
+                tilePositions[t] = new List<(int, int)>();
+            }
+            for (int x = 0; x < Width; x++)
+            {
+                for (int y = 0; y < Height; y++)
+                {
+                    int tile = GetTile(x, y);
+                    tilePositions[tile].Add((x, y));
+                }
+            }
+        }
 
         void UpdateRoomData()
         {
@@ -209,40 +249,28 @@ namespace LynnaLib
             }
             else
                 throw new AssemblyErrorException("Size of file \"" + tileDataFile.Name + "\" was invalid!");
+
+            CalculateTilePositions();
         }
 
         // Room layout modified
         void TileDataModified(object sender, MemoryFileStream.ModifiedEventArgs args)
         {
-            if (LayoutModifiedEvent != null)
-                LayoutModifiedEvent();
-        }
-
-        // Tileset data modified
-        void ModifiedTilesetCallback(object sender, int tile)
-        {
-            bool changed = false;
-
-            for (int x = 0; x < Width; x++)
-            {
-                for (int y = 0; y < Height; y++)
-                {
-                    if (GetTile(x, y) == tile)
-                    {
-                        changed = true;
-                    }
-                }
-            }
-
-            if (changed && LayoutModifiedEvent != null)
-                LayoutModifiedEvent();
+            LayoutChangedEvent?.Invoke(this, new RoomLayoutChangedEventArgs {});
         }
 
         void ModifiedLayoutGroupCallback()
         {
             UpdateRoomData();
-            if (LayoutModifiedEvent != null)
-                LayoutModifiedEvent();
         }
+    }
+
+    public struct RoomTilesetChangedEventArgs
+    {
+        public Tileset newTileset, oldTileset;
+    }
+
+    public struct RoomLayoutChangedEventArgs // stub in case we need this later
+    {
     }
 }

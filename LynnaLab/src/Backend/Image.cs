@@ -1,15 +1,16 @@
 using System;
-
+using Util;
 using Point = Cairo.Point;
 
 namespace LynnaLab
 {
     /// <summary>
-    /// An Image is used by the graphics backend (Veldrid) to render stuff with Imgui.
+    /// An Image is used by the graphics backend (Veldrid) to render stuff with Imgui. It is stored
+    /// on the GPU so can be drawn efficiently.
     ///
-    /// Contrast with LynnaLib.Bitmap which is a Cairo surface used within LynnaLib. This is
-    /// converted to an Image through IBackend.ImageFromBitmap so that it can be rendered to the
-    /// screen.
+    /// Contrast with LynnaLib.Bitmap which is a Cairo surface used within LynnaLib rendered on the
+    /// cpu side. This is converted to an Image through IBackend.ImageFromBitmap so that it can be
+    /// rendered to the screen.
     /// </summary>
     public abstract class Image : IDisposable
     {
@@ -18,7 +19,8 @@ namespace LynnaLab
         // ================================================================================
 
         // Invoked when the image is modified
-        public event Action<ImageModifiedEventArgs> ModifiedEvent;
+        protected LockableEvent<ImageModifiedEventArgs> modifiedEvent
+            = new LockableEvent<ImageModifiedEventArgs>();
 
         // ================================================================================
         // Properties
@@ -52,16 +54,23 @@ namespace LynnaLab
 
         public abstract void Dispose();
 
-        // ================================================================================
-        // Protected methods
-        // ================================================================================
 
         /// <summary>
-        /// This function allows child classes to invoke the event
+        /// Call this to inhibit modifiedEvent invocations until EndAtomicOperation() is invoked.
         /// </summary>
-        protected void InvokeModifiedEvent(ImageModifiedEventArgs args)
+        public void BeginAtomicOperation()
         {
-            ModifiedEvent?.Invoke(args);
+            modifiedEvent.Lock();
+        }
+
+        public void EndAtomicOperation()
+        {
+            modifiedEvent.Unlock();
+        }
+
+        public void AddModifiedEventHandler(EventHandler<ImageModifiedEventArgs> handler)
+        {
+            modifiedEvent += handler;
         }
     }
 

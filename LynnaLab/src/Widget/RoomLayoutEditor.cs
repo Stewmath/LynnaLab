@@ -72,7 +72,6 @@ namespace LynnaLab
         /// </summary>
         void RoomChanged()
         {
-            // Choosing not to dispose the image here, leave it in the TopLevel cache
             image = null;
 
             if (RoomLayout != null)

@@ -18,6 +18,11 @@ namespace LynnaLab
             this.TopLevel = topLevel;
             this.Project = project;
 
+            foreach (Tileset tileset in Project.GetAllTilesets())
+            {
+                tileset.LazyTileRedraw(topLevel.LazyInvoke);
+            }
+
             tilesetImageCacher = new TilesetImageCacher(this);
             roomImageCacher = new RoomImageCacher(this);
             mapImageCacher = new MapImageCacher(this);

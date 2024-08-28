@@ -95,15 +95,7 @@ namespace VeldridBackend
         public override void DrawOn(Image _destImage, Point srcPos, Point destPos, Point size)
         {
             VeldridImage destImage = (VeldridImage)_destImage;
-            var cl = gd.ResourceFactory.CreateCommandList();
-
-            // Create a framebuffer for the destination texture
-            FramebufferDescription fbDesc = new FramebufferDescription(null, destImage.texture);
-            var framebuffer = gd.ResourceFactory.CreateFramebuffer(fbDesc);
-
-            cl.Begin();
-            cl.SetFramebuffer(framebuffer);
-            //cl.ClearColorTarget(0, new RgbaFloat(_clearColor.X, _clearColor.Y, _clearColor.Z, 1f));
+            var cl = controller.Backend.CommandList;
 
             cl.CopyTexture(texture,
                            (uint)srcPos.X, (uint)srcPos.Y, 0,
@@ -116,13 +108,7 @@ namespace VeldridBackend
                            (uint)size.X, (uint)size.Y, 1,
                            1);
 
-            cl.End();
-            gd.SubmitCommands(cl);
-
-            cl.Dispose();
-            framebuffer.Dispose();
-
-            destImage.InvokeModifiedEvent(new ImageModifiedEventArgs {});
+            destImage.modifiedEvent.Invoke(destImage, new ImageModifiedEventArgs {});
         }
 
         public override void SetInterpolation(Interpolation interpolation)
@@ -156,7 +142,7 @@ namespace VeldridBackend
             gd.UpdateTexture(texture, pixelData, sizeInBytes, 0, 0, 0,
                              (uint)bitmap.Width, (uint)bitmap.Height, 1, 0, 0);
 
-            InvokeModifiedEvent(new ImageModifiedEventArgs {});
+            modifiedEvent.Invoke(this, new ImageModifiedEventArgs {});
         }
 
         (uint, PixelFormat) GetBitmapFormat(Bitmap bitmap)
