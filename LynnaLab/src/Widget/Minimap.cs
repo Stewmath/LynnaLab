@@ -23,6 +23,7 @@ namespace LynnaLab
         // Variables
         // ================================================================================
         Map map;
+        int floor;
         Image image;
         Vector2? lastMousePos = null;
 
@@ -162,12 +163,13 @@ namespace LynnaLab
         /// <summary>
         /// Sets the map to display
         /// </summary>
-        public void SetMap(Map map)
+        public void SetMap(Map map, int floor = 0)
         {
-            if (this.map == map)
+            if (this.map == map && this.floor == floor)
                 return;
 
             this.map = map;
+            this.floor = floor;
 
             this.image = null;
 
@@ -179,7 +181,7 @@ namespace LynnaLab
             base.Width = map.MapWidth;
             base.Height = map.MapHeight;
 
-            this.image = Workspace.GetCachedMapImage((Map, 0));
+            this.image = Workspace.GetCachedMapImage((Map, floor));
             this.image.SetInterpolation((Interpolation)interpolation);
         }
 

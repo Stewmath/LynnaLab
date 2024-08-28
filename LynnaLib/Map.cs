@@ -6,7 +6,7 @@ namespace LynnaLib
 {
     // Represents a "Map", or layout of rooms. Subclass "WorldMap" represents a group of 256 rooms
     // laid out in a square, while the "Dungeon" subclass represents an 8x8 dungeon with a tweakable
-    // layout.
+    // layout, which also has multiple floors.
     public abstract class Map
     {
         public Project Project { get; private set; }

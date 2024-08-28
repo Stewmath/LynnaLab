@@ -23,9 +23,10 @@ namespace LynnaLab
             tilesetViewer = new TilesetViewer(this.Workspace);
             tilesetViewer.SetTileset(roomLayoutEditor.Room.GetTileset(-1));
 
-            minimap = new Minimap(this.Workspace);
+            overworldMinimap = new Minimap(this.Workspace);
+            dungeonMinimap = new Minimap(this.Workspace);
 
-            SetRoom(0);
+            SetRoom(0, false);
 
             roomLayoutEditor.AddMouseAction(
                 MouseButton.LeftClick,
@@ -49,9 +50,22 @@ namespace LynnaLab
                     tilesetViewer.SelectedIndex = tile;
                 });
 
-            minimap.SelectedEvent += (selectedIndex) =>
+            overworldMinimap.SetMap(Project.GetWorldMap(0, 0));
+            overworldMinimap.SelectedEvent += (selectedIndex) =>
             {
-                SetRoomLayout(minimap.Map.GetRoomLayout(minimap.SelectedX, minimap.SelectedY, Season));
+                if (suppressEvents != 0)
+                    return;
+
+                SetRoomLayout(overworldMinimap.Map.GetRoomLayout(overworldMinimap.SelectedX, overworldMinimap.SelectedY, Season), false);
+            };
+
+            dungeonMinimap.SetMap(Project.GetDungeon(0));
+            dungeonMinimap.SelectedEvent += (selectedIndex) =>
+            {
+                if (suppressEvents != 0)
+                    return;
+
+                SetRoomLayout(dungeonMinimap.Map.GetRoomLayout(dungeonMinimap.SelectedX, dungeonMinimap.SelectedY, Season), false);
             };
         }
 
@@ -60,8 +74,11 @@ namespace LynnaLab
         // ================================================================================
         RoomLayoutEditor roomLayoutEditor;
         TilesetViewer tilesetViewer;
-        Minimap minimap;
+        Minimap overworldMinimap, dungeonMinimap;
+        int floor = 0;
         int suppressEvents = 0;
+
+        const float ENTRY_ITEM_WIDTH = 150.0f;
 
         // ================================================================================
         // Properties
@@ -74,6 +91,13 @@ namespace LynnaLab
         public RoomLayout RoomLayout { get { return roomLayoutEditor.RoomLayout; } }
         public Room Room { get { return RoomLayout.Room; } }
         public int Season { get { return RoomLayout.Season; } }
+
+        // Private properties
+
+        Minimap ActiveMinimap { get; set; }
+        Map ActiveMap { get { return ActiveMinimap.Map; } }
+        bool OverworldTabActive { get { return ActiveMinimap == overworldMinimap; } }
+        bool DungeonTabActive { get { return ActiveMinimap == dungeonMinimap; } }
 
         // ================================================================================
         // Public methods
@@ -99,63 +123,128 @@ namespace LynnaLab
             ImGui.SameLine();
             ImGui.BeginChild("Right Panel", Vector2.Zero, ImGuiChildFlags.Border);
 
-            ImGui.SeparatorText("Overworld");
+            ImGui.SeparatorText("Map Selector");
 
+            // Input fields for either minimap type
             {
-                ImGui.PushItemWidth(150.0f);
-
-                int worldIndex = Room.Group;
-                if (Widget.InputHex("World", ref worldIndex, 1))
-                {
-                    if (worldIndex >= 0 && worldIndex < Project.NumGroups)
-                    {
-                        int s = -1;
-                        if (worldIndex == 0)
-                            s = 0;
-                        SetMap(Project.GetWorldMap(worldIndex, s));
-                    }
-                }
-
-                ImGui.SameLine();
+                ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
                 int roomIndex = Room.Index;
                 if (Widget.InputHex("Room", ref roomIndex, 3))
                 {
                     if (roomIndex >= 0 && roomIndex <= Project.NumRooms)
-                        SetRoom(roomIndex);
+                        SetRoom(roomIndex, true);
                 }
-
-                ImGui.SameLine();
-                int season = RoomLayout.Season;
-                if (Widget.InputHex("Season", ref season, 1))
-                {
-                    if (Room.IsValidSeason(season))
-                        SetRoomLayout(Room.GetLayout(season));
-                }
-
                 ImGui.PopItemWidth();
             }
 
-            ImGui.SeparatorText("Minimap");
-            minimap.Render();
+            var updateSelectedTab = (Minimap minimap) =>
+            {
+                if (ActiveMinimap != minimap)
+                {
+                    ActiveMinimap = minimap;
+                    SetRoomLayout(
+                        ActiveMap.GetRoomLayout(
+                                      ActiveMinimap.SelectedX, ActiveMinimap.SelectedY),
+                        false);
+                }
+            };
+
+            ImGui.BeginTabBar("Map Tabs");
+            if (ImGui.BeginTabItem("Overworld"))
+            {
+                updateSelectedTab(overworldMinimap);
+
+                // Input fields for overworld minimaps
+                {
+                    ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
+
+                    int worldIndex = Room.Group;
+                    if (Widget.InputHex("World", ref worldIndex, 1))
+                    {
+                        if (worldIndex >= 0 && worldIndex < Project.NumGroups)
+                        {
+                            int s = -1;
+                            if (worldIndex == 0)
+                                s = 0;
+                            SetMap(Project.GetWorldMap(worldIndex, s));
+                        }
+                    }
+
+                    ImGui.SameLine();
+                    int season = RoomLayout.Season;
+                    if (Widget.InputHex("Season", ref season, 1))
+                    {
+                        if (Room.IsValidSeason(season))
+                            SetRoomLayout(Room.GetLayout(season), true);
+                    }
+
+                    ImGui.PopItemWidth();
+                }
+
+                overworldMinimap.Render();
+                ImGui.EndTabItem();
+            }
+            if (ImGui.BeginTabItem("Dungeon"))
+            {
+                updateSelectedTab(dungeonMinimap);
+
+                if (floor >= (dungeonMinimap.Map as Dungeon).NumFloors)
+                    floor = (dungeonMinimap.Map as Dungeon).NumFloors - 1;
+
+                // Input fields for dungeons
+                {
+                    ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
+
+                    int dungeonIndex = (dungeonMinimap.Map as Dungeon).Index;
+                    if (Widget.InputHex("Dungeon", ref dungeonIndex, 1))
+                    {
+                        if (dungeonIndex >= 0 && dungeonIndex < Project.NumDungeons)
+                        {
+                            SetMap(Project.GetDungeon(dungeonIndex));
+                        }
+                    }
+
+                    ImGui.SameLine();
+                    int newFloor = floor;
+                    if (Widget.InputHex("Floor", ref newFloor, 1))
+                    {
+                        if (newFloor >= 0 && newFloor < (dungeonMinimap.Map as Dungeon).NumFloors)
+                        {
+                            floor = newFloor;
+                            dungeonMinimap.SetMap(dungeonMinimap.Map, floor);
+                        }
+                    }
+
+                    ImGui.PopItemWidth();
+                }
+
+                dungeonMinimap.Render();
+                ImGui.EndTabItem();
+            }
+            ImGui.EndTabBar();
 
             ImGui.EndChild();
         }
 
-        public void SetRoom(int roomIndex)
+        public void SetRoom(int roomIndex, bool updateMinimap)
         {
             if (roomIndex == Room.Index)
                 return;
-            SetRoom(Project.GetIndexedDataType<Room>(roomIndex));
+            SetRoom(Project.GetIndexedDataType<Room>(roomIndex), updateMinimap);
         }
 
         /// <summary>
         /// Changes the loaded room, updates minimap & tileset viewer
         /// </summary>
-        public void SetRoom(Room room)
+        public void SetRoom(Room room, bool updateMinimap)
         {
+            // Adjust the room index to its "expected" value, accounting for duplicates.
+            if (room.ExpectedIndex != room.Index)
+                room = Project.GetIndexedDataType<Room>(room.ExpectedIndex);
+
             if (Room == room)
                 return;
-            SetRoomLayout(room.GetLayout(Season));
+            SetRoomLayout(room.GetLayout(Season), updateMinimap);
         }
 
         /// <summary>
@@ -163,11 +252,12 @@ namespace LynnaLab
         /// </summary>
         public void SetMap(Map map)
         {
-            RoomLayout roomLayout = map.GetRoomLayout(minimap.SelectedX, minimap.SelectedY, 0);
+            RoomLayout roomLayout = map.GetRoomLayout(
+                ActiveMinimap.SelectedX, ActiveMinimap.SelectedY, 0);
 
             suppressEvents++;
-            minimap.SetMap(map);
-            SetRoomLayout(roomLayout);
+            ActiveMinimap.SetMap(map);
+            SetRoomLayout(roomLayout, false);
             suppressEvents--;
         }
 
@@ -178,14 +268,32 @@ namespace LynnaLab
         /// <summary>
         /// Changes the RoomLayout, updates all the viewers.
         /// </summary>
-        void SetRoomLayout(RoomLayout roomLayout)
-        {
+        void SetRoomLayout(RoomLayout roomLayout, bool updateMinimap)
+        {           
             suppressEvents++;
 
             roomLayoutEditor.SetRoomLayout(roomLayout);
             tilesetViewer.SetTileset(roomLayout.Tileset);
-            minimap.SetMap(Project.GetWorldMap(roomLayout.Group, roomLayout.Season));
-            minimap.SelectedIndex = roomLayout.Room.Index & 0xff;
+
+            if (updateMinimap)
+            {
+                if (OverworldTabActive)
+                {
+                    overworldMinimap.SetMap(Project.GetWorldMap(roomLayout.Group, roomLayout.Season));
+                    overworldMinimap.SelectedIndex = roomLayout.Room.Index & 0xff;
+                }
+                else if (DungeonTabActive)
+                {
+                    int x, y, floor;
+                    Dungeon dungeon = Project.GetRoomDungeon(roomLayout.Room, out x, out y, out floor);
+
+                    if (dungeon != null)
+                    {
+                        dungeonMinimap.SetMap(dungeon, floor);
+                        dungeonMinimap.SelectedIndex = y * dungeon.MapWidth + x;
+                    }
+                }
+            }
 
             suppressEvents--;
         }
