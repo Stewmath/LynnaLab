@@ -32,10 +32,10 @@ namespace LynnaLib
 
         Bitmap[] tileImagesCache = new Bitmap[256];
 
-        WeakEventWrapper<ReloadableStream> gfxStreamEventWrapper
-            = new WeakEventWrapper<ReloadableStream>();
-        WeakEventWrapper<PaletteHeaderGroup> paletteEventWrapper
-            = new WeakEventWrapper<PaletteHeaderGroup>();
+        EventWrapper<ReloadableStream> gfxStreamEventWrapper
+            = new EventWrapper<ReloadableStream>();
+        EventWrapper<PaletteHeaderGroup> paletteEventWrapper
+            = new EventWrapper<PaletteHeaderGroup>();
 
         bool constructorFinished = false;
 

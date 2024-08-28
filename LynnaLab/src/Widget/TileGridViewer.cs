@@ -14,7 +14,7 @@ namespace LynnaLab
     /// optionally allows one to select tiles by clicking, or define actions to occur with other
     /// mouse buttons.
     /// </summary>
-    public class TileGridViewer : Widget
+    public class TileGridViewer : SizedWidget
     {
         // ================================================================================
         // Constructors
@@ -134,7 +134,7 @@ namespace LynnaLab
             {
                 ImGui.BeginGroup();
 
-                Widget.DrawImage(Image, scale: Scale);
+                ImGuiX.DrawImage(Image, scale: Scale);
 
                 // Use InvisibleButton to prevent left click from dragging the window
                 ImGui.SetCursorScreenPos(base.origin);

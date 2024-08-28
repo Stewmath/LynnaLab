@@ -16,7 +16,7 @@ namespace LynnaLab
         {
             this.backend = backend;
 
-            oraclesFont = ImGuiHelper.LoadFont(
+            oraclesFont = ImGuiX.LoadFont(
                 Util.Helper.GetResourceStream("LynnaLab.ZeldaOracles.ttf"), 20);
 
             backend.RecreateFontTexture();

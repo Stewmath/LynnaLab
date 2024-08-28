@@ -7,7 +7,10 @@ using Color = LynnaLib.Color;
 
 namespace LynnaLab
 {
-    public abstract class Widget
+    /// <summary>
+    /// A widget whose size is precisely defined.
+    /// </summary>
+    public abstract class SizedWidget
     {
         // ================================================================================
         // Properties
@@ -38,7 +41,7 @@ namespace LynnaLab
             drawList.AddRect(
                 origin + new Vector2(rect.X, rect.Y),
                 origin + new Vector2(rect.X + rect.Width, rect.Y + rect.Height),
-                ImGuiHelper.ToImGuiColor(color),
+                ImGuiX.ToImGuiColor(color),
                 0,
                 0,
                 thickness);
@@ -49,35 +52,5 @@ namespace LynnaLab
         // ================================================================================
         protected Vector2 origin;
         protected ImDrawListPtr drawList;
-
-        // ================================================================================
-        // Static methods
-        // ================================================================================
-
-        /// <summary>
-        /// Hex input field. Returns true if value was changed.
-        /// </summary>
-        public static unsafe bool InputHex(string name, ref int value, int digits = 2)
-        {
-            int v = value;
-            int step = 1;
-            int stepFast = 16;
-            ImGui.InputScalar(name, ImGuiDataType.S32, (IntPtr)(&v),
-                              (IntPtr)(&step), (IntPtr)(&stepFast), $"%0{digits}X",
-                              ImGuiInputTextFlags.CharsHexadecimal);
-
-            if (value == v)
-                return false;
-            value = v;
-            return true;
-        }
-
-        /// <summary>
-        /// Convenience method for rendering images
-        /// </summary>
-        public static void DrawImage(Image image, float scale = 1.0f)
-        {
-            ImGui.Image(image.GetBinding(), new Vector2(image.Width * scale, image.Height * scale));
-        }
     }
 }

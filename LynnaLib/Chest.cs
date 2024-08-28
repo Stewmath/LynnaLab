@@ -9,8 +9,8 @@ namespace LynnaLib
     public class Chest
     {
         Data dataStart;
-        WeakEventWrapper<ValueReferenceGroup> treasureModifiedEventWrapper
-            = new WeakEventWrapper<ValueReferenceGroup>();
+        EventWrapper<ValueReferenceGroup> treasureModifiedEventWrapper
+            = new EventWrapper<ValueReferenceGroup>();
 
 
         // Invoked when the chest is modified (but NOT if the TreasureObject contained in the chest

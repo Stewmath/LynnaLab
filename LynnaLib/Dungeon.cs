@@ -10,7 +10,9 @@ namespace LynnaLib
     {
         public bool all; // True if all rooms must be updated
 
-        public int x, y, floor; // Otherwise, this is the position in grid of changed room
+        // Otherwise the following values are filled out
+        public int x, y, floor; // position in grid of changed room
+        public int oldRoom, newRoom;
     }
 
     /// Represents a dungeon, which is really just an organized layout of rooms. Some "dungeons" are
@@ -140,12 +142,18 @@ namespace LynnaLib
                 throw new ArgumentException(string.Format("Floor {0} too high.", floor));
 
             Data d = GetFloorLayoutData(floor).GetDataAtOffset(y * 8 + x);
+            int oldRoom = d.GetIntValue(0);
 
-            roomsUsed[d.GetIntValue(0)]--;
+            roomsUsed[oldRoom]--;
             d.SetByteValue(0, (byte)room);
             roomsUsed[(byte)room]++;
 
-            RoomChangedEvent?.Invoke(this, new DungeonRoomChangedEventArgs { x = x, y = y, floor = floor });
+            RoomChangedEvent?.Invoke(this, new DungeonRoomChangedEventArgs {
+                x = x,
+                y = y,
+                floor = floor,
+                oldRoom = oldRoom,
+                newRoom = room});
         }
 
         public bool RoomUsed(int roomIndex)

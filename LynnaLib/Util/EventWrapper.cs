@@ -10,28 +10,46 @@ namespace Util
     /// The instance of the "event source" class may be replaced at any time, and the events will be
     /// updated accordingly to fire on the new instance.
     ///
+    /// If the "weak" parameter is "false" then this is simply a convenience class allowing one to
+    /// swap the class of an event source as described above.
+    ///
     /// NOTE: When this object is freed, the events may cease to fire (garbage collection kicks in
     /// due to weak references). Must maintain a reference to it as long as the events are relevant.
-    public class WeakEventWrapper<TEventSource> where TEventSource : class
+    public class EventWrapper<TEventSource> where TEventSource : class
     {
         List<EventStruct> eventList = new List<EventStruct>();
         TEventSource eventSource;
 
-        public WeakEventWrapper(TEventSource eventSource = null)
+        public EventWrapper(TEventSource eventSource = null)
         {
             this.eventSource = eventSource;
         }
 
 
         /// Pass an event name that's in "TEventSource" and the handler for the event.
-        public void Bind<TEventArgs>(string eventName, EventHandler<TEventArgs> handler)
+        public void Bind<TEventArgs>(string eventName, EventHandler<TEventArgs> handler, bool weak = true)
         {
             EventStruct ev = new EventStruct();
 
             Action addHandlerMethod = () =>
             {
-                var signaller = new WeakEventBinder<TEventSource, TEventArgs>(eventSource, ev.eventName, handler);
-                ev.removeHandlerMethod = signaller.RemoveHandler;
+                if (weak)
+                {
+                    var signaller = new WeakEventBinder<TEventSource, TEventArgs>(
+                        eventSource, ev.eventName, handler);
+                    ev.removeHandlerMethod = signaller.RemoveHandler;
+                }
+                else
+                {
+                    var bindingFlags = BindingFlags.Public | BindingFlags.Instance;
+                    var eventInfo = typeof(TEventSource).GetEvent(eventName, bindingFlags);
+
+                    eventInfo.GetAddMethod().Invoke(eventSource, new object[] { handler });
+                    ev.removeHandlerMethod = () =>
+                    {
+                        eventInfo.GetRemoveMethod().Invoke(eventSource, new object[] { handler });
+                    };
+                }
             };
 
             ev.eventName = eventName;
@@ -79,11 +97,10 @@ namespace Util
             public Action removeHandlerMethod;
         }
     }
+
+    /// <summary>
     /// This is sort of a substitute for .NET's WeakEventManager class. Seems to not be available in
     /// Mono.
-    ///
-    /// It was initially intended to be public, but it turned out to be really similar to
-    /// WeakEventWrapper so it's private now...
     ///
     /// In a nutshell: allows use of events using "weak pointers", ie. installing an event callback
     /// does not prevent the object with the handler from being garbage collected.
@@ -91,11 +108,7 @@ namespace Util
     /// Simply creating a new instance of the object will tie the event to the handler. It shouldn't
     /// be necessary to explicitly maintain a reference to this object, since the event in the
     /// TEventSource object maintains a strong event link to this class.
-    ///
-    /// NOTE NOTE NOTE CAVEAT CAVEAT CAVEAT: Calls to the "AddHandler" function MUST be done with an
-    /// object of type "EventHandler<TEventArgs>", NOT with "FunctionName". It seems like in the
-    /// latter case, a temporary delegate is created, which is immediately deleted, and since this
-    /// uses a weak reference, that ruins everything... or something like that.
+    /// </summary>
     class WeakEventBinder<TEventSource, TEventArgs> where TEventSource : class
     {
 
@@ -103,6 +116,7 @@ namespace Util
 
         WeakReference<TEventSource> source;
         WeakReference<EventHandler<TEventArgs>> handler;
+
         EventInfo eventInfo;
 
         public WeakEventBinder(TEventSource source, string eventName, EventHandler<TEventArgs> handler)
@@ -112,10 +126,14 @@ namespace Util
 
             // Could add BindingFlag.NonInstance, but there's no benefit to using this class in that
             // case? (since the whole point is to allow the GC to free the object)
-            eventInfo = typeof(TEventSource).GetEvent(eventName, BindingFlags.Public | BindingFlags.Instance);
+            var bindingFlags = BindingFlags.Public | BindingFlags.Instance;
+            eventInfo = typeof(TEventSource).GetEvent(eventName, bindingFlags);
 
             if (eventInfo == null)
-                throw new ArgumentException("WeakEventBinder: Couldn't locate event \"" + eventName + "\".");
+            {
+                throw new ArgumentException(
+                    "WeakEventBinder: Couldn't locate event \"" + eventName + "\".");
+            }
 
             AddHandler(source);
         }
@@ -129,7 +147,7 @@ namespace Util
                 EventHandler<TEventArgs> h;
                 handler.TryGetTarget(out h);
 
-                if (h != null) // handler object has not been freed
+                if (h != null) // may be null if handler object was freed by GC
                     h(sender, args);
                 else
                     RemoveHandler();

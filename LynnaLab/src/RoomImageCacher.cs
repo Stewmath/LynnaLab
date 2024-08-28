@@ -29,8 +29,8 @@ namespace LynnaLab
         // Variables
         // ================================================================================
 
-        Dictionary<RoomLayout, WeakEventWrapper<Tileset>> tilesetEventWrappers
-            = new Dictionary<RoomLayout, WeakEventWrapper<Tileset>>();
+        Dictionary<RoomLayout, EventWrapper<Tileset>> tilesetEventWrappers
+            = new Dictionary<RoomLayout, EventWrapper<Tileset>>();
 
         // ================================================================================
         // Properties
@@ -76,7 +76,7 @@ namespace LynnaLab
             };
 
             // Register tile modified handler
-            var tilesetEventWrapper = new WeakEventWrapper<Tileset>(layout.Tileset);
+            var tilesetEventWrapper = new EventWrapper<Tileset>(layout.Tileset);
             tilesetEventWrappers[layout] = tilesetEventWrapper;
             tilesetEventWrapper.Bind<int>("TileModifiedEvent", OnTileModified);
 

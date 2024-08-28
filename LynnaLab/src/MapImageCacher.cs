@@ -1,6 +1,7 @@
 using System;
+using System.Collections.Generic;
 using LynnaLib;
-
+using Util;
 using Point = Cairo.Point;
 
 namespace LynnaLab
@@ -45,27 +46,55 @@ namespace LynnaLab
                 key.map.MapWidth * key.map.RoomWidth * 16,
                 key.map.MapHeight * key.map.RoomHeight * 16);
 
+            // EventWrappers for each position in the map, managing events to invoke when those
+            // specific room images have been modified.
+            var imageEventWrappers = new Dictionary<(int, int), EventWrapper<Image>>();
+
+            // Set up the event handlers for room image modification. They will be bound to the
+            // relevant room later, in the "RegenerateImageWatchers" function.
             for (int x = 0; x < key.map.MapWidth; x++)
             {
                 for (int y = 0; y < key.map.MapHeight; y++)
                 {
-                    DrawTile(image, key, x, y);
-
-                    // Watch for changes to the room image.
-                    // TODO: Must account for dungeon room assignments changing, this always looks
-                    // at the initially loaded room at that position
-
                     int tileX = x, tileY = y; // New variables for closure
-                    EventHandler<ImageModifiedEventArgs> modifiedEventHandler = (_, args) =>
+                    EventHandler<ImageModifiedEventArgs> handler = (_, args) =>
                     {
                         DrawTile(image, key, tileX, tileY);
                     };
 
-                    var layout = key.map.GetRoomLayout(x, y, key.floor);
-                    Image roomImage = Workspace.GetCachedRoomImage(layout);
-                    roomImage.AddModifiedEventHandler(modifiedEventHandler);
+                    var wrapper = new EventWrapper<Image>();
+                    wrapper.Bind<ImageModifiedEventArgs>("ModifiedEvent", handler, weak:false);
+                    imageEventWrappers[(x, y)] = wrapper;
                 }
             }
+
+            // Watch for changes to the dungeon layout (for dungeons only)
+            if (key.map is Dungeon)
+            {
+                var dungeon = key.map as Dungeon;
+
+                EventHandler<DungeonRoomChangedEventArgs> dHandler = (_, args) =>
+                {
+                    if (args.all)
+                    {
+                        Redraw(image, key);
+                        RegenerateImageWatchers(image, key, imageEventWrappers);
+                    }
+                    else if (args.floor != key.floor)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        DrawTile(image, key, args.x, args.y);
+                        RegenerateImageWatchers(image, key, imageEventWrappers);
+                    }
+                };
+                dungeon.RoomChangedEvent += dHandler;
+            }
+
+            RegenerateImageWatchers(image, key, imageEventWrappers);
+            Redraw(image, key);
 
             return image;
         }
@@ -74,6 +103,39 @@ namespace LynnaLab
         // ================================================================================
         // Private methods
         // ================================================================================
+
+        /// <summary>
+        /// Register event handlers for room images being modified
+        /// </summary>
+        void RegenerateImageWatchers(Image image, (Map map, int floor) key,
+                                     Dictionary<(int, int), EventWrapper<Image>> imageEventWrappers)
+        {
+            for (int x = 0; x < key.map.MapWidth; x++)
+            {
+                for (int y = 0; y < key.map.MapHeight; y++)
+                {
+                    var layout = key.map.GetRoomLayout(x, y, key.floor);
+                    Image roomImage = Workspace.GetCachedRoomImage(layout);
+
+                    // EventWrapper that should trigger when the room at this position is modified.
+                    // The event handler has been registered already but we need to update the event
+                    // source here.
+                    var wrapper = imageEventWrappers[(x ,y)];
+                    wrapper.ReplaceEventSource(roomImage);
+                }
+            }
+        }
+
+        void Redraw(Image image, (Map map, int floor) key)
+        {
+            for (int x = 0; x < key.map.MapWidth; x++)
+            {
+                for (int y = 0; y < key.map.MapHeight; y++)
+                {
+                    DrawTile(image, key, x, y);
+                }
+            }
+        }
 
         void DrawTile(Image image, (Map map, int floor) key, int x, int y)
         {

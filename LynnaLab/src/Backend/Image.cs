@@ -18,7 +18,6 @@ namespace LynnaLab
         // Variables
         // ================================================================================
 
-        // Invoked when the image is modified
         protected LockableEvent<ImageModifiedEventArgs> modifiedEvent
             = new LockableEvent<ImageModifiedEventArgs>();
 
@@ -27,6 +26,21 @@ namespace LynnaLab
         // ================================================================================
         public abstract int Width { get; }
         public abstract int Height { get; }
+
+        /// <summary>
+        /// Invoked when the image is modified
+        /// </summary>
+        public event EventHandler<ImageModifiedEventArgs> ModifiedEvent
+        {
+            add
+            {
+                modifiedEvent += value;
+            }
+            remove
+            {
+                modifiedEvent -= value;
+            }
+        }
 
         // ================================================================================
         // Public methods
@@ -66,11 +80,6 @@ namespace LynnaLab
         public void EndAtomicOperation()
         {
             modifiedEvent.Unlock();
-        }
-
-        public void AddModifiedEventHandler(EventHandler<ImageModifiedEventArgs> handler)
-        {
-            modifiedEvent += handler;
         }
     }
 

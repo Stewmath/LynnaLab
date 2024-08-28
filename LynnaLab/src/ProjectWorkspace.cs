@@ -29,6 +29,7 @@ namespace LynnaLab
 
             linkImage = TopLevel.ImageFromBitmap(project.LinkBitmap);
             roomEditor = new RoomEditor(this);
+            dungeonEditor = new DungeonEditor(this);
         }
 
         // ================================================================================
@@ -36,6 +37,7 @@ namespace LynnaLab
         // ================================================================================
 
         RoomEditor roomEditor;
+        DungeonEditor dungeonEditor;
         Image linkImage;
 
         TilesetImageCacher tilesetImageCacher;
@@ -74,6 +76,10 @@ namespace LynnaLab
             {
                 ImGui.Begin("Room Editor");
                 roomEditor.Render();
+                ImGui.End();
+
+                ImGui.Begin("Dungeon Editor");
+                dungeonEditor.Render();
                 ImGui.End();
             }
         }

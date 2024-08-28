@@ -78,7 +78,7 @@ namespace LynnaLab
         int floor = 0;
         int suppressEvents = 0;
 
-        const float ENTRY_ITEM_WIDTH = 150.0f;
+        public const float ENTRY_ITEM_WIDTH = 150.0f;
 
         // ================================================================================
         // Properties
@@ -129,7 +129,7 @@ namespace LynnaLab
             {
                 ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
                 int roomIndex = Room.Index;
-                if (Widget.InputHex("Room", ref roomIndex, 3))
+                if (ImGuiX.InputHex("Room", ref roomIndex, 3))
                 {
                     if (roomIndex >= 0 && roomIndex <= Project.NumRooms)
                         SetRoom(roomIndex, true);
@@ -159,7 +159,7 @@ namespace LynnaLab
                     ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
 
                     int worldIndex = Room.Group;
-                    if (Widget.InputHex("World", ref worldIndex, 1))
+                    if (ImGuiX.InputHex("World", ref worldIndex, 1))
                     {
                         if (worldIndex >= 0 && worldIndex < Project.NumGroups)
                         {
@@ -172,7 +172,7 @@ namespace LynnaLab
 
                     ImGui.SameLine();
                     int season = RoomLayout.Season;
-                    if (Widget.InputHex("Season", ref season, 1))
+                    if (ImGuiX.InputHex("Season", ref season, 1))
                     {
                         if (Room.IsValidSeason(season))
                             SetRoomLayout(Room.GetLayout(season), true);
@@ -196,7 +196,7 @@ namespace LynnaLab
                     ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
 
                     int dungeonIndex = (dungeonMinimap.Map as Dungeon).Index;
-                    if (Widget.InputHex("Dungeon", ref dungeonIndex, 1))
+                    if (ImGuiX.InputHex("Dungeon", ref dungeonIndex, 1))
                     {
                         if (dungeonIndex >= 0 && dungeonIndex < Project.NumDungeons)
                         {
@@ -206,7 +206,7 @@ namespace LynnaLab
 
                     ImGui.SameLine();
                     int newFloor = floor;
-                    if (Widget.InputHex("Floor", ref newFloor, 1))
+                    if (ImGuiX.InputHex("Floor", ref newFloor, 1))
                     {
                         if (newFloor >= 0 && newFloor < (dungeonMinimap.Map as Dungeon).NumFloors)
                         {

@@ -70,7 +70,7 @@ namespace LynnaLib
         Data _data;
         bool useConstantAlias; // If true, save value as ConstantsMapping string instead of as int
 
-        WeakEventWrapper<Data> dataEventWrapper = new WeakEventWrapper<Data>();
+        EventWrapper<Data> dataEventWrapper = new EventWrapper<Data>();
 
 
         // Properties

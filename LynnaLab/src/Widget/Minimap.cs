@@ -127,9 +127,9 @@ namespace LynnaLab
                 if (lastMousePos != null)
                 {
                     Vector2 delta = topLevelMousePos - (Vector2)lastMousePos;
-                    var scroll = ImGuiHelper.GetScroll();
+                    var scroll = ImGuiX.GetScroll();
                     scroll -= delta;
-                    ImGuiHelper.SetScroll(scroll);
+                    ImGuiX.SetScroll(scroll);
                 }
 
                 this.lastMousePos = topLevelMousePos;
@@ -146,7 +146,7 @@ namespace LynnaLab
                 {
                     // Keep the view centered around the mouse cursor
                     this.centerScaledPos = topLevelMousePos;
-                    this.centerUnscaledPos = (centerScaledPos + ImGuiHelper.GetScroll()) / Scale;
+                    this.centerUnscaledPos = (centerScaledPos + ImGuiX.GetScroll()) / Scale;
 
                     // base.Scale will be updated next frame based on this
                     minimapScale += offset;
@@ -155,7 +155,7 @@ namespace LynnaLab
                 }
             }
 
-            lastFrameScroll = ImGuiHelper.GetScroll();
+            lastFrameScroll = ImGuiX.GetScroll();
 
             ImGui.EndChild();
         }

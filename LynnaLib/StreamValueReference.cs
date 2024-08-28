@@ -13,7 +13,7 @@ namespace LynnaLib
         int offset;
         int startBit, endBit;
 
-        WeakEventWrapper<MemoryFileStream> streamEventWrapper = new WeakEventWrapper<MemoryFileStream>();
+        EventWrapper<MemoryFileStream> streamEventWrapper = new EventWrapper<MemoryFileStream>();
 
         // Standard constructor
         public StreamValueReference(Project project, MemoryFileStream stream, string name, int offset, DataValueType type, int startBit = 0, int endBit = 0, int maxValue = -1, bool editable = true, string constantsMappingString = null, string tooltip = null)
