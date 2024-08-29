@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Numerics;
 using ImGuiNET;
 using LynnaLib;
@@ -56,7 +58,7 @@ namespace LynnaLab
                 if (suppressEvents != 0)
                     return;
 
-                SetRoomLayout(overworldMinimap.Map.GetRoomLayout(overworldMinimap.SelectedX, overworldMinimap.SelectedY, Season), false);
+                SetRoomLayout(overworldMinimap.Map.GetRoomLayout(overworldMinimap.SelectedX, overworldMinimap.SelectedY), false);
             };
 
             dungeonMinimap.SetMap(Project.GetDungeon(0));
@@ -65,7 +67,7 @@ namespace LynnaLab
                 if (suppressEvents != 0)
                     return;
 
-                SetRoomLayout(dungeonMinimap.Map.GetRoomLayout(dungeonMinimap.SelectedX, dungeonMinimap.SelectedY, Season), false);
+                SetRoomLayout(dungeonMinimap.Map.GetRoomLayout(dungeonMinimap.SelectedX, dungeonMinimap.SelectedY, ActiveFloor), false);
             };
         }
 
@@ -75,8 +77,11 @@ namespace LynnaLab
         RoomLayoutEditor roomLayoutEditor;
         TilesetViewer tilesetViewer;
         Minimap overworldMinimap, dungeonMinimap;
-        int floor = 0;
         int suppressEvents = 0;
+
+        // Maps dungeon index to floor number. Allows the editor to remember what floor we were last
+        // on for a given dungeon.
+        Dictionary<int, int> floorDict = new Dictionary<int, int>();
 
         public const float ENTRY_ITEM_WIDTH = 150.0f;
 
@@ -98,6 +103,20 @@ namespace LynnaLab
         Map ActiveMap { get { return ActiveMinimap.Map; } }
         bool OverworldTabActive { get { return ActiveMinimap == overworldMinimap; } }
         bool DungeonTabActive { get { return ActiveMinimap == dungeonMinimap; } }
+
+        int ActiveFloor
+        {
+            get
+            {
+                return GetSelectedFloor(ActiveMap);
+            }
+            set
+            {
+                if (OverworldTabActive)
+                    throw new NotImplementedException();
+                floorDict[(ActiveMap as Dungeon).Index] = value;
+            }
+        }
 
         // ================================================================================
         // Public methods
@@ -188,8 +207,8 @@ namespace LynnaLab
             {
                 updateSelectedTab(dungeonMinimap);
 
-                if (floor >= (dungeonMinimap.Map as Dungeon).NumFloors)
-                    floor = (dungeonMinimap.Map as Dungeon).NumFloors - 1;
+                if (ActiveFloor >= (ActiveMap as Dungeon).NumFloors)
+                    ActiveFloor = (ActiveMap as Dungeon).NumFloors - 1;
 
                 // Input fields for dungeons
                 {
@@ -205,13 +224,16 @@ namespace LynnaLab
                     }
 
                     ImGui.SameLine();
-                    int newFloor = floor;
+                    int newFloor = ActiveFloor;
                     if (ImGuiX.InputHex("Floor", ref newFloor, 1))
                     {
                         if (newFloor >= 0 && newFloor < (dungeonMinimap.Map as Dungeon).NumFloors)
                         {
-                            floor = newFloor;
-                            dungeonMinimap.SetMap(dungeonMinimap.Map, floor);
+                            ActiveFloor = newFloor;
+                            dungeonMinimap.SetMap(dungeonMinimap.Map, ActiveFloor);
+                            SetRoom(ActiveMap.GetRoom(
+                                        ActiveMinimap.SelectedX, ActiveMinimap.SelectedY, ActiveFloor),
+                                    updateMinimap: false);
                         }
                     }
 
@@ -252,18 +274,29 @@ namespace LynnaLab
         /// </summary>
         public void SetMap(Map map)
         {
-            RoomLayout roomLayout = map.GetRoomLayout(
-                ActiveMinimap.SelectedX, ActiveMinimap.SelectedY, 0);
-
             suppressEvents++;
-            ActiveMinimap.SetMap(map);
+
+            ActiveMinimap.SetMap(map, GetSelectedFloor(map));
+            RoomLayout roomLayout = map.GetRoomLayout(
+                ActiveMinimap.SelectedX, ActiveMinimap.SelectedY, ActiveFloor);
             SetRoomLayout(roomLayout, false);
+
             suppressEvents--;
         }
 
         // ================================================================================
         // Private methods
         // ================================================================================
+
+        /// <summary>
+        /// Gets the floor that was last selected for the given map
+        /// </summary>
+        int GetSelectedFloor(Map map)
+        {
+            if (map is not Dungeon)
+                return 0;
+            return floorDict.GetValueOrDefault((map as Dungeon).Index, 0);
+        }
 
         /// <summary>
         /// Changes the RoomLayout, updates all the viewers.
