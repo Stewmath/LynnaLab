@@ -592,7 +592,7 @@ namespace LynnaLib
 
             for (int i=0; i<NumTilesets; i++)
             {
-                if (TilesetIsSeasonal(i))
+                if (!TilesetIsSeasonal(i))
                     list.Add(GetTileset(i, -1));
                 else
                 {
