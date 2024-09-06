@@ -190,7 +190,8 @@ namespace LynnaLab
         // ================================================================================
 
         /// <summary>
-        /// Move the scrollbar such that the selected room is in the center.
+        /// Updates the scrollbar. Deals with smoothly zooming in and out relative to a particular
+        /// point.
         /// Must be called just before the BeginChild containing the scrollable area.
         /// </summary>
         void UpdateScroll()

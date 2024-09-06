@@ -22,7 +22,7 @@ namespace Util
             if (mainThreadInvokeFunction != null)
                 mainThreadInvokeFunction(action);
             else
-                action();
+                throw new NotImplementedException("MainThreadInvoke not implemented");
         }
 
         // Convert a string range into a list of ints.

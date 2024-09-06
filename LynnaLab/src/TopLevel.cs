@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using ImGuiNET;
-using LynnaLib;
 
 namespace LynnaLab
 {
     /// <summary>
-    /// TopLevel class could potentially contain multiple ProjectWorkspaces in the future.
+    /// TopLevel class contains the main loop and deals with anything that's not project-specific.
+    /// It could potentially contain multiple ProjectWorkspaces in the future.
     /// </summary>
     public class TopLevel
     {
@@ -16,8 +12,19 @@ namespace LynnaLab
         {
             this.backend = backend;
 
-            oraclesFont = ImGuiX.LoadFont(
-                Util.Helper.GetResourceStream("LynnaLab.ZeldaOracles.ttf"), 20);
+            Helper.mainThreadInvokeFunction = this.LazyInvoke;
+
+            GlobalConfig = GlobalConfig.Load();
+            if (GlobalConfig == null)
+            {
+                GlobalConfig = new GlobalConfig();
+                GlobalConfig.Save();
+                // TODO: Save on exit?
+            }
+
+            this.DefaultFont = ImGui.GetFont();
+            this.OraclesFont = ImGuiX.LoadFont(
+                Helper.GetResourceStream("LynnaLab.ZeldaOracles.ttf"), 20);
 
             backend.RecreateFontTexture();
 
@@ -30,7 +37,6 @@ namespace LynnaLab
         // ================================================================================
 
         IBackend backend;
-        ImFontPtr oraclesFont;
         Dictionary<Bitmap, Image> imageDict = new Dictionary<Bitmap, Image>();
         Queue<Func<bool>> idleFunctions = new Queue<Func<bool>>();
 
@@ -40,18 +46,14 @@ namespace LynnaLab
         // Properties
         // ================================================================================
 
-        public IBackend Backend
-        {
-            get
-            {
-                return backend;
-            }
-        }
+        public IBackend Backend { get { return backend; } }
+        public GlobalConfig GlobalConfig { get; private set; }
 
-        private ProjectWorkspace Workspace
-        {
-            get; set;
-        }
+        public ImFontPtr DefaultFont { get; private set; }
+        public ImFontPtr OraclesFont { get; private set; }
+
+        // Private properties
+        private ProjectWorkspace Workspace { get; set; }
 
         // ================================================================================
         // Public methods
@@ -103,7 +105,7 @@ namespace LynnaLab
         /// </summary>
         public void Render(float deltaTime)
         {
-            ImGui.PushFont(oraclesFont);
+            ImGui.PushFont(OraclesFont);
 
             {
                 ImGui.Begin("Control Panel");

@@ -43,6 +43,43 @@ namespace LynnaLab
         // ================================================================================
 
         /// <summary>
+        /// Convenience method for rendering images
+        /// </summary>
+        public static void DrawImage(Image image, float scale = 1.0f)
+        {
+            ImGui.Image(image.GetBinding(), new Vector2(image.Width, image.Height) * scale);
+        }
+
+        // ================================================================================
+        // Function wrappers
+        // ================================================================================
+
+        /// <summary>
+        /// Like ImGui.Begin but takes a callback for something to do when window is closed
+        /// </summary>
+        public static bool Begin(string name, Action onClose)
+        {
+            bool value = true;
+            bool retval = ImGui.Begin(name, ref value);
+            if (!value)
+                onClose();
+            return retval;
+        }
+
+        /// <summary>
+        /// A checkbox which takes a boolean property as a parameter, wrapped through the Accessor
+        /// class
+        /// </summary>
+        public static bool Checkbox(string name, Accessor<bool> accessor)
+        {
+            bool value = accessor.Get();
+            bool changed = ImGui.Checkbox(name, ref value);
+            if (changed)
+                accessor.Set(value);
+            return changed;
+        }
+
+        /// <summary>
         /// Hex input field. Returns true if value was changed.
         /// </summary>
         public static unsafe bool InputHex(string name, ref int value,
@@ -70,27 +107,6 @@ namespace LynnaLab
             int value = initial;
             if (InputHex(name, ref value, digits, min, max))
                 changed(value);
-        }
-
-        /// <summary>
-        /// Convenience method for rendering images
-        /// </summary>
-        public static void DrawImage(Image image, float scale = 1.0f)
-        {
-            ImGui.Image(image.GetBinding(), new Vector2(image.Width, image.Height) * scale);
-        }
-
-        /// <summary>
-        /// A checkbox which takes a boolean property as a parameter, wrapped through the Accessor
-        /// class
-        /// </summary>
-        public static bool Checkbox(string name, Accessor<bool> accessor)
-        {
-            bool value = accessor.Get();
-            bool changed = ImGui.Checkbox(name, ref value);
-            if (changed)
-                accessor.Set(value);
-            return changed;
         }
     }
 }
