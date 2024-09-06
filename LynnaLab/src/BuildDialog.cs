@@ -136,10 +136,9 @@ public class BuildDialog
             CreateNoWindow = true,
         };
 
-        // TODO
         // When using quickstart, the environment variable EXTRA_DEFINES is
         // passed to the assembler by the makefile to set the position
-        if (true)
+        if (Workspace.QuickstartData.Enabled)
         {
             string definitions = "";
             var q = Workspace.QuickstartData;

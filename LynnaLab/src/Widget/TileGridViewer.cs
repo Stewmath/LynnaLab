@@ -82,7 +82,7 @@ public class TileGridViewer : SizedWidget
     {
         get
         {
-            return CoordToTile(base.GetMousePos());
+            return CoordToTile(base.GetRelativeMousePos());
         }
     }
 
@@ -117,9 +117,18 @@ public class TileGridViewer : SizedWidget
     // ================================================================================
     // Public methods
     // ================================================================================
-    public override void Render()
+
+    public virtual void Render()
     {
-        base.Render();
+        Render(false);
+    }
+
+    /// <summary>
+    /// Pass inhibitMouse=true to skip mouse input checks and not draw hovering tile.
+    /// </summary>
+    public void Render(bool inhibitMouse)
+    {
+        base.RenderPrep();
 
         if (Image != null)
         {
@@ -131,46 +140,7 @@ public class TileGridViewer : SizedWidget
             ImGui.SetCursorScreenPos(base.origin);
             ImGui.InvisibleButton("".AsSpan(), new Vector2(CanvasWidth, CanvasHeight));
 
-            // Check mouse clicks
-            int mouseIndex = CoordToTile(base.GetMousePos());
-
-            if (ImGui.IsItemHovered() && mouseIndex != -1)
-            {
-                TileGridEventArgs args = new TileGridEventArgs();
-                args.mouseAction = "click";
-                args.selectedIndex = mouseIndex;
-
-                foreach (TileGridAction action in actionList)
-                {
-                    if (action.MatchesState())
-                    {
-                        if (action.action == GridAction.Callback)
-                        {
-                            action.callback(this, args);
-                        }
-                        else if (action.action == GridAction.Select)
-                        {
-                            if (Selectable)
-                                SelectedIndex = mouseIndex;
-                        }
-                        else
-                            throw new NotImplementedException();
-                    }
-                }
-            }
-
-            // Draw stuff on top
-
-            if (ImGui.IsItemHovered())
-            {
-                if (mouseIndex != -1)
-                {
-                    FRect r = TileRect(mouseIndex);
-
-                    base.AddRect(r, HoverColor, thickness: 2 * Scale);
-                }
-            }
-
+            // Draw selection rectangle
             if (Selectable && SelectedIndex != -1)
             {
                 FRect r = TileRect(SelectedIndex);
@@ -178,6 +148,52 @@ public class TileGridViewer : SizedWidget
             }
 
             ImGui.EndGroup();
+        }
+
+        if (!inhibitMouse && ImGui.IsItemHovered())
+        {
+            RenderMouse();
+        }
+    }
+
+    /// <summary>
+    /// Check for mouse input & render hovering. Must be called after Render(), May need to be
+    /// called manually if "inhibitMouse=true" was passed to "Render()".
+    ///
+    /// Only call if ImGui.IsItemHovered() returns true just after "Render()".
+    /// </summary>
+    public void RenderMouse()
+    {
+        int mouseIndex = CoordToTile(base.GetRelativeMousePos());
+
+        // Draw hover rectangle
+        if (mouseIndex != -1)
+        {
+            FRect r = TileRect(mouseIndex);
+            base.AddRect(r, HoverColor, thickness: 2 * Scale);
+
+            // Check mouse input
+            TileGridEventArgs args = new TileGridEventArgs();
+            args.mouseAction = "click";
+            args.selectedIndex = mouseIndex;
+
+            foreach (TileGridAction action in actionList)
+            {
+                if (action.MatchesState())
+                {
+                    if (action.action == GridAction.Callback)
+                    {
+                        action.callback(this, args);
+                    }
+                    else if (action.action == GridAction.Select)
+                    {
+                        if (Selectable)
+                            SelectedIndex = mouseIndex;
+                    }
+                    else
+                        throw new NotImplementedException();
+                }
+            }
         }
     }
 

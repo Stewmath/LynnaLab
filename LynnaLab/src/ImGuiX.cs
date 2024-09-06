@@ -34,6 +34,12 @@ public static class ImGuiX
         ImGui.SetScrollY(scroll.Y);
     }
 
+    public static void ShiftCursorScreenPos(Vector2 delta)
+    {
+        var pos = ImGui.GetCursorScreenPos() + delta;
+        ImGui.SetCursorScreenPos(pos);
+    }
+
     // ================================================================================
     // Custom widgets
     // ================================================================================
@@ -103,5 +109,27 @@ public static class ImGuiX
         int value = initial;
         if (InputHex(name, ref value, digits, min, max))
             changed(value);
+    }
+
+    /// <summary>
+    /// Menu item that behaves as a checkbox, with an accessor for the value
+    /// </summary>
+    public static void MenuItemCheckbox(string name, Accessor<bool> accessor)
+    {
+        bool value = accessor.Get();
+        bool changed = ImGui.MenuItem(name, null, ref value);
+        if (changed)
+            accessor.Set(value);
+    }
+
+    /// <summary>
+    /// Menu item that behaves as a checkbox, with a callback
+    /// </summary>
+    public static void MenuItemCheckbox(string name, bool initial, Action<bool> onChanged)
+    {
+        bool value = initial;
+        bool changed = ImGui.MenuItem(name, null, ref value);
+        if (changed)
+            onChanged(value);
     }
 }

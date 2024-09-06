@@ -82,6 +82,23 @@ public class ProjectWorkspace
                 {
                     buildDialog.BeginCompile();
                 }
+                ImGui.EndMenu();
+            }
+            if (ImGui.BeginMenu("Misc"))
+            {
+                ImGuiX.MenuItemCheckbox(
+                    "Quickstart",
+                    QuickstartData.Enabled,
+                    (value) =>
+                    {
+                        QuickstartData.group = (byte)roomEditor.Room.Group;
+                        QuickstartData.room = (byte)(roomEditor.Room.Index & 0xff);
+                        QuickstartData.season = (byte)roomEditor.Season;
+                        QuickstartData.x = 0x48;
+                        QuickstartData.y = 0x48;
+                        QuickstartData.Enabled = value;
+                    });
+                ImGui.EndMenu();
             }
         }
 
@@ -135,7 +152,35 @@ public class ProjectWorkspace
     // ================================================================================
 }
 
+/// <summary>
+/// Little class to hold quickstart state
+/// </summary>
 public class QuickstartData
 {
+    // ================================================================================
+    // Variables
+    // ================================================================================
     public byte group, room, season, y, x;
+    bool _enabled;
+
+    // ================================================================================
+    // Properties
+    // ================================================================================
+    public bool Enabled
+    {
+        get { return _enabled; }
+        set
+        {
+            if (_enabled != value)
+            {
+                _enabled = value;
+                enableToggledEvent?.Invoke(this, value);
+            }
+        }
+    }
+
+    // ================================================================================
+    // Events
+    // ================================================================================
+    public event EventHandler<bool> enableToggledEvent;
 }

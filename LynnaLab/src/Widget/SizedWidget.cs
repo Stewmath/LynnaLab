@@ -13,7 +13,11 @@ public abstract class SizedWidget
     // ================================================================================
     // Public methods
     // ================================================================================
-    public virtual void Render()
+
+    /// <summary>
+    /// Call this just before rendering begins to set up some helper stuff.
+    /// </summary>
+    public void RenderPrep()
     {
         origin = ImGui.GetCursorScreenPos();
         drawList = ImGui.GetWindowDrawList();
@@ -22,7 +26,7 @@ public abstract class SizedWidget
     /// <summary>
     /// Get the position of the mouse relative to the widget origin
     /// </summary>
-    public Vector2 GetMousePos()
+    public Vector2 GetRelativeMousePos()
     {
         var io = ImGui.GetIO();
         var mousePos = io.MousePos - origin;
