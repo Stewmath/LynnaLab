@@ -1,43 +1,39 @@
-using System;
-using LynnaLib;
+namespace LynnaLab;
 
-namespace LynnaLab
+public interface IBackend
 {
-    public interface IBackend
-    {
-        // ================================================================================
-        // Properties
-        // ================================================================================
-        public bool Exited { get; }
+    // ================================================================================
+    // Properties
+    // ================================================================================
+    public bool Exited { get; }
 
 
-        // ================================================================================
-        // Public methods
-        // ================================================================================
+    // ================================================================================
+    // Public methods
+    // ================================================================================
 
-        /// <summary>
-        /// Called before ImGui rendering occurs
-        /// </summary>
-        public void HandleEvents(float deltaTime);
+    /// <summary>
+    /// Called before ImGui rendering occurs
+    /// </summary>
+    public void HandleEvents(float deltaTime);
 
-        /// <summary>
-        /// Called after main imgui rendering occurs, this will draw the results of that
-        /// </summary>
-        public void Render();
+    /// <summary>
+    /// Called after main imgui rendering occurs, this will draw the results of that
+    /// </summary>
+    public void Render();
 
-        public Image ImageFromBitmap(Bitmap bitmap,
-                                     Interpolation interpolation = Interpolation.Nearest);
-        public Image CreateImage(int width, int height,
+    public Image ImageFromBitmap(Bitmap bitmap,
                                  Interpolation interpolation = Interpolation.Nearest);
+    public Image CreateImage(int width, int height,
+                             Interpolation interpolation = Interpolation.Nearest);
 
-        public void RecreateFontTexture();
-    }
+    public void RecreateFontTexture();
+}
 
-    public enum Interpolation
-    {
-        Nearest = 0,
-        Bicubic = 1,
+public enum Interpolation
+{
+    Nearest = 0,
+    Bicubic = 1,
 
-        Count
-    }
+    Count
 }
