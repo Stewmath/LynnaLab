@@ -84,15 +84,14 @@ public class DataValueReference : ValueReference
     /// <param="constantsMappingString">
     /// If specified, will use ContantsMapping aliases when updating the value of the data.
     /// </param>
-    public DataValueReference(Data data, string name, int index, DataValueType type,
+    public DataValueReference(Data data, int index, DataValueType type,
         int startBit = 0,
         int endBit = 0,
         int maxValue = -1,
         string constantsMappingString = null)
-    : base(data.Project, name, GetValueType(type), constantsMappingString)
+    : base(data.Project, GetValueType(type), constantsMappingString)
     {
         this._data = data;
-        this.Name = name;
         this.dataType = type;
         this.valueIndex = index;
         this.startBit = startBit;
@@ -108,7 +107,6 @@ public class DataValueReference : ValueReference
 
     public DataValueReference(DataValueReference vref) : base(vref)
     {
-        this.Name = vref.Name;
         this.dataType = vref.dataType;
         this.valueIndex = vref.valueIndex;
         this.startBit = vref.startBit;
@@ -186,7 +184,7 @@ public class DataValueReference : ValueReference
     {
         if (i > MaxValue)
         {
-            log.Warn(string.Format("Tried to set \"{0}\" to {1} (max value is {2})", Name, i, MaxValue));
+            log.Warn(string.Format("Tried to set value  to {0} (max value is {1})", i, MaxValue));
             i = MaxValue;
         }
 
@@ -287,9 +285,9 @@ public class DataValueReference : ValueReference
         bool editable = true,
         string tooltip = null)
     {
-        var vr = new DataValueReference(data, name, index, type,
+        var vr = new DataValueReference(data, index, type,
                                         startBit, endBit, maxValue, constantsMappingString);
-        var descriptor = new ValueReferenceDescriptor(vr, editable, tooltip);
+        var descriptor = new ValueReferenceDescriptor(vr, name, editable, tooltip);
         return descriptor;
     }
 }

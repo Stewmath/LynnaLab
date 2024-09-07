@@ -32,7 +32,7 @@ namespace LynnaLib
                         vref,
                         getter: () => objectData.ValueReferenceGroup.GetIntValue(name),
                         setter: (v) => OnValueSet(name, v));
-                descriptors.Add(new ValueReferenceDescriptor(newVref));
+                descriptors.Add(new ValueReferenceDescriptor(newVref, name));
             }
 
             base.SetDescriptors(descriptors);

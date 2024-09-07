@@ -12,9 +12,9 @@ public class StreamValueReference : ValueReference
     // ================================================================================
 
     // Standard constructor
-    public StreamValueReference(Project project, MemoryFileStream stream, string name, int offset, DataValueType type, int startBit = 0, int endBit = 0, int maxValue = -1,
+    public StreamValueReference(Project project, MemoryFileStream stream, int offset, DataValueType type, int startBit = 0, int endBit = 0, int maxValue = -1,
             string constantsMappingString = null)
-        : base(project, name, DataValueReference.GetValueType(type), constantsMappingString)
+        : base(project, DataValueReference.GetValueType(type), constantsMappingString)
     {
         this.stream = stream;
         this.dataType = type;
@@ -188,8 +188,8 @@ public class StreamValueReference : ValueReference
         string constantsMappingString = null,
         string tooltip = null)
     {
-        var vr = new StreamValueReference(project, stream, name, offset, type, startBit, endBit, maxValue, constantsMappingString);
-        var descriptor = new ValueReferenceDescriptor(vr, editable, tooltip);
+        var vr = new StreamValueReference(project, stream, offset, type, startBit, endBit, maxValue, constantsMappingString);
+        var descriptor = new ValueReferenceDescriptor(vr, name, editable, tooltip);
         return descriptor;
     }
 }

@@ -10,10 +10,12 @@ public class ValueReferenceDescriptor
     // Constructors
     // ================================================================================
     public ValueReferenceDescriptor(ValueReference valueReference,
+                                    string name,
                                     bool editable = true,
                                     string tooltip = null)
     {
         this.valueReference = valueReference;
+        this.Name = name;
         this.Editable = editable;
         this.Tooltip = tooltip;
 
@@ -31,6 +33,7 @@ public class ValueReferenceDescriptor
     public ValueReferenceDescriptor(ValueReferenceDescriptor desc)
     {
         this.valueReference = desc.ValueReference.Clone();
+        this.Name = desc.Name;
         this.Editable = desc.Editable;
         this.Tooltip = desc.Tooltip;
         this.Documentation = desc.Documentation;
@@ -48,7 +51,7 @@ public class ValueReferenceDescriptor
     public Project Project { get { return valueReference.Project; } }
     public ValueReference ValueReference { get { return valueReference; } }
 
-    public string Name { get { return valueReference.Name; } }
+    public string Name { get; private set; }
     public bool Editable { get; private set; }
     public string Tooltip { get; private set; }
 

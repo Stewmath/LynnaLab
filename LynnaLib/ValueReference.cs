@@ -26,12 +26,11 @@ public abstract class ValueReference
     // Constuctors
     // ================================================================================
 
-    public ValueReference(Project project, string name,
+    public ValueReference(Project project,
                           ValueReferenceType type, string constantsMappingString)
     {
         Project = project;
         ValueType = type;
-        Name = name;
 
         if (constantsMappingString != null)
         {
@@ -47,7 +46,6 @@ public abstract class ValueReference
     public ValueReference(ValueReference r)
     {
         Project = r.Project;
-        Name = r.Name;
         MaxValue = r.MaxValue;
         MinValue = r.MinValue;
         ValueType = r.ValueType;
@@ -79,9 +77,6 @@ public abstract class ValueReference
 
 
     // Other properties
-
-    // TODO: Move this outta here
-    public string Name { get; protected set; }
 
     public string ConstantsMappingString { get; private set; }
     public ConstantsMapping ConstantsMapping { get { return constantsMapping; } }

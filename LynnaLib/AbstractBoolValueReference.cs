@@ -12,13 +12,12 @@ public class AbstractBoolValueReference : AbstractIntValueReference
     // Constuctors
     // ================================================================================
 
-    public AbstractBoolValueReference(Project project, string name,
+    public AbstractBoolValueReference(Project project,
                                       Func<bool> getter, Action<bool> setter,
                                       ValueReferenceType type = ValueReferenceType.Bool,
                                       string constantsMappingString = null)
         : base(
             project,
-            name,
             getter: () => getter() ? 1 : 0,
             setter: (v) => setter(v != 0 ? true : false),
             maxValue: 1,
@@ -60,9 +59,9 @@ public class AbstractBoolValueReference : AbstractIntValueReference
         string constantsMappingString = null,
         string tooltip = null)
     {
-        var vr = new AbstractBoolValueReference(project, name, getter, setter, type,
+        var vr = new AbstractBoolValueReference(project, getter, setter, type,
                                                 constantsMappingString);
-        var descriptor = new ValueReferenceDescriptor(vr, editable, tooltip);
+        var descriptor = new ValueReferenceDescriptor(vr, name, editable, tooltip);
         return descriptor;
     }
 }

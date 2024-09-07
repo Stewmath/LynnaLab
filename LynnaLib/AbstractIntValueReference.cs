@@ -18,9 +18,9 @@ public class AbstractIntValueReference : ValueReference
     // ================================================================================
 
 
-    public AbstractIntValueReference(Project project, string name, Func<int> getter, Action<int> setter, int maxValue, int minValue = 0, ValueReferenceType type = ValueReferenceType.Int,
+    public AbstractIntValueReference(Project project, Func<int> getter, Action<int> setter, int maxValue, int minValue = 0, ValueReferenceType type = ValueReferenceType.Int,
             string constantsMappingString = null)
-    : base(project, name, type, constantsMappingString)
+    : base(project, type, constantsMappingString)
     {
         this.getter = getter;
         this.setter = setter;
@@ -75,7 +75,7 @@ public class AbstractIntValueReference : ValueReference
     {
         if (i > MaxValue)
         {
-            log.Warn(string.Format("Tried to set \"{0}\" to {1} (max value is {2})", Name, i, MaxValue));
+            log.Warn(string.Format("Tried to set value to {0} (max value is {1})", i, MaxValue));
             i = MaxValue;
         }
         if (i == GetIntValue())
@@ -114,9 +114,9 @@ public class AbstractIntValueReference : ValueReference
         string constantsMappingString = null,
         string tooltip = null)
     {
-        var vr = new AbstractIntValueReference(project, name, getter, setter,
+        var vr = new AbstractIntValueReference(project, getter, setter,
                                                maxValue, minValue, type, constantsMappingString);
-        var descriptor = new ValueReferenceDescriptor(vr, editable, tooltip);
+        var descriptor = new ValueReferenceDescriptor(vr, name, editable, tooltip);
         return descriptor;
     }
 }
