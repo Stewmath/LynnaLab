@@ -315,23 +315,35 @@ namespace LynnaLib
         void ConstructValueReferenceGroup()
         {
             var list = new List<ValueReference>();
+            var descList = new List<ValueReferenceDescriptor>();
+
+            var addDescriptor = (string name, bool editable=true, string tooltip=null) =>
+            {
+                var vr = list.Where((vr) => vr.Name == name).First();
+                var descriptor = new ValueReferenceDescriptor(
+                    vr, editable, tooltip);
+                list.Add(vr);
+            };
 
             if (Project.GameString == "ages")
             {
-                list.AddRange(new ValueReference[] {
-                    new DataValueReference(GetDataIndex(1),
-                            name: "Past",
-                            index: 0,
-                            startBit: 7,
-                            type: DataValueType.ByteBit,
-                            tooltip: "Set in the past. Determines which minimap comes up with the select button, maybe other stuff too. If a tileset can be used in both the present in the past, this is left unchecked, and the 'roomsInAltWorld' table is checked instead."),
-                    new DataValueReference(GetDataIndex(1),
-                            name: "Underwater",
-                            index: 0,
-                            startBit: 6,
-                            type: DataValueType.ByteBit,
-                            tooltip: "Set in underwater rooms.")
-                });
+                list.Add(new DataValueReference(
+                             GetDataIndex(1),
+                             name: "Past",
+                             index: 0,
+                             startBit: 7,
+                             type: DataValueType.ByteBit));
+                list.Add(new DataValueReference(
+                        GetDataIndex(1),
+                        name: "Underwater",
+                        index: 0,
+                        startBit: 6,
+                        type: DataValueType.ByteBit));
+
+                addDescriptor("Past", true,
+                              "Set in the past. Determines which minimap comes up with the select button, maybe other stuff too. If a tileset can be used in both the present in the past, this is left unchecked, and the 'roomsInAltWorld' table is checked instead.");
+                addDescriptor("Underwater", true,
+                              "Set in underwater rooms.");
             }
             else
             { // seasons
@@ -340,54 +352,64 @@ namespace LynnaLib
                             name: "Subrosia",
                             index: 0,
                             startBit: 7,
-                            type: DataValueType.ByteBit,
-                            tooltip: "Set in subrosia. Determines which minimap comes up with the select button, maybe other stuff too. If a tileset can be used in both the overworld and subrosia, this is left unchecked, and the 'roomsInAltWorld' table is checked instead."),
+                            type: DataValueType.ByteBit),
                     new DataValueReference(GetDataIndex(1),
                             name: "Bit 6 (0x40)",
                             index: 0,
                             startBit: 6,
-                            type: DataValueType.ByteBit,
-                            tooltip: "Likely unused.")
+                            type: DataValueType.ByteBit)
                 });
+
+                addDescriptor("Subrosia", true,
+                            "Set in subrosia. Determines which minimap comes up with the select button, maybe other stuff too. If a tileset can be used in both the overworld and subrosia, this is left unchecked, and the 'roomsInAltWorld' table is checked instead.");
+                addDescriptor("Bit 6 (0x40)", true,
+                              "Likely unused.");
             }
             list.AddRange(new ValueReference[] {
                 new DataValueReference(GetDataIndex(1),
                         name: "Sidescrolling",
                         index: 0,
                         startBit: 5,
-                        type: DataValueType.ByteBit,
-                        tooltip: "Set in sidescrolling rooms."),
+                        type: DataValueType.ByteBit),
                 new DataValueReference(GetDataIndex(1),
                         name: "Large Indoor Room",
                         index: 0,
                         startBit: 4,
-                        type: DataValueType.ByteBit,
-                        tooltip: "Set in large, indoor rooms (which aren't real dungeons, ie. ambi's palace). Seems to disable certain properties of dungeons? (Ages only?)"),
+                        type: DataValueType.ByteBit),
                 new DataValueReference(GetDataIndex(1),
                         name: "Dungeon",
                         index: 0,
                         startBit: 3,
-                        type: DataValueType.ByteBit,
-                        tooltip: "Flag is set on dungeons, but also on any room which has a layout in the 'dungeons' tab, even if it's not a real dungeon (ie. ambi's palace). In that case set the 'Large Indoor Room' flag also."),
+                        type: DataValueType.ByteBit),
                 new DataValueReference(GetDataIndex(1),
                         name: "Small Indoor Room",
                         index: 0,
                         startBit: 2,
-                        type: DataValueType.ByteBit,
-                        tooltip: "Set in small indoor rooms."),
+                        type: DataValueType.ByteBit),
                 new DataValueReference(GetDataIndex(1),
                         name: "Maku Tree",
                         index: 0,
                         startBit: 1,
-                        type: DataValueType.ByteBit,
-                        tooltip: "In Ages, this hardcodes the location on the minimap for the maku tree screens, and prevents harp use. Not sure if this does anything in Seasons?"),
+                        type: DataValueType.ByteBit),
                 new DataValueReference(GetDataIndex(1),
                         name: "Outdoors",
                         index: 0,
                         startBit: 0,
-                        type: DataValueType.ByteBit,
-                        tooltip: "Affects whether you can use gale seeds, and other things. In Ages this must be checked for the minimap to update your position."),
+                        type: DataValueType.ByteBit)
             });
+
+            addDescriptor("Sidescrolling", true,
+                          "Set in sidescrolling rooms.");
+            addDescriptor("Large Indoor Room", true,
+                          "Set in large, indoor rooms (which aren't real dungeons, ie. ambi's palace). Seems to disable certain properties of dungeons? (Ages only?)");
+            addDescriptor("Dungeon", true,
+                          "Flag is set on dungeons, but also on any room which has a layout in the 'dungeons' tab, even if it's not a real dungeon (ie. ambi's palace). In that case set the 'Large Indoor Room' flag also.");
+            addDescriptor("Small Indoor Room", true,
+                          "Set in small indoor rooms.");
+            addDescriptor("Maku Tree", true,
+                          "In Ages, this hardcodes the location on the minimap for the maku tree screens, and prevents harp use. Not sure if this does anything in Seasons?");
+            addDescriptor("Outdoors", true,
+                          "Affects whether you can use gale seeds, and other things. In Ages this must be checked for the minimap to update your position.");
 
             list.AddRange(new ValueReference[] {
                 new DataValueReference(GetDataIndex(0),
@@ -395,19 +417,22 @@ namespace LynnaLib
                         index: 0,
                         startBit: 0,
                         endBit: 3,
-                        type: DataValueType.ByteBits,
-                        tooltip: "Dungeon index (should match value in the Dungeons tab; Dungeon bit must be set)."),
+                        type: DataValueType.ByteBits),
                 new DataValueReference(GetDataIndex(0),
                         name: "Collision Type",
                         index: 0,
                         startBit: 4,
                         endBit: 6,
-                        type: DataValueType.ByteBits,
-                        tooltip: ("Determines most collision behaviour aside from solidity (ie. water, holes). The meaning of the values differ between ages and seasons.\n\n"
+                        type: DataValueType.ByteBits),
+            });
+
+            addDescriptor("Dungeon Index", true,
+                          "Dungeon index (should match value in the Dungeons tab; Dungeon bit must be set).");
+            addDescriptor("Collision Type", true,
+                          ("Determines most collision behaviour aside from solidity (ie. water, holes). The meaning of the values differ between ages and seasons.\n\n"
                                        + (Project.Game == Game.Seasons
                                        ? "0: Overworld\n1: Indoors\n2: Maku Tree\n3: Indoors\n4: Dungeons\n5: Sidescrolling"
-                                       : "0: Overworld\n1: Indoors\n2: Dungeons\n3: Sidescrolling\n4: Underwater\n5: Unused?")))
-            });
+                                       : "0: Overworld\n1: Indoors\n2: Dungeons\n3: Sidescrolling\n4: Underwater\n5: Unused?")));
 
             // These fields do nothing with the expanded tilesets patch.
             if (!Project.Config.ExpandedTilesets)
@@ -417,14 +442,12 @@ namespace LynnaLib
                         name: "Unique Gfx",
                         index: 0,
                         type: DataValueType.Byte,
-                        constantsMappingString: "UniqueGfxMapping",
-                        useConstantAlias: true),
+                        constantsMappingString: "UniqueGfxMapping"),
                     new DataValueReference(GetDataIndex(3),
                         name: "Main Gfx",
                         index: 0,
                         type: DataValueType.Byte,
-                        constantsMappingString: "MainGfxMapping",
-                        useConstantAlias: true),
+                        constantsMappingString: "MainGfxMapping"),
                     new DataValueReference(GetDataIndex(5),
                         name: "Layout",
                         index: 0,
@@ -433,9 +456,11 @@ namespace LynnaLib
                         name: "Layout Group",
                         index: 0,
                         type: DataValueType.Byte,
-                        maxValue: Project.NumLayoutGroups - 1,
-                        tooltip: "Determines where to read the room layout from (ie. for value '2', it reads from the file 'room02XX.bin', even if the group number is not 2). In general, to prevent confusion, all rooms in the same overworld (or group) should use tilesets which have the same value for this."),
+                        maxValue: Project.NumLayoutGroups - 1),
                 });
+
+                addDescriptor("Layout Group", true,
+                "Determines where to read the room layout from (ie. for value '2', it reads from the file 'room02XX.bin', even if the group number is not 2). In general, to prevent confusion, all rooms in the same overworld (or group) should use tilesets which have the same value for this.");
             }
 
             list.AddRange(new ValueReference[] {
@@ -443,8 +468,7 @@ namespace LynnaLib
                         name: "Palettes",
                         index: 0,
                         type: DataValueType.Byte,
-                        constantsMappingString: "PaletteHeaderMapping",
-                        useConstantAlias: true),
+                        constantsMappingString: "PaletteHeaderMapping"),
                 new DataValueReference(GetDataIndex(7),
                         name: "Animations",
                         index: 0,
@@ -459,10 +483,17 @@ namespace LynnaLib
             //             type: DataValueType.ByteBit),
             // });
 
+            foreach (ValueReference vr in list)
+            {
+                if (descList.Where((desc) => desc.Name == vr.Name).Count() == 0)
+                {
+                    descList.Add(new ValueReferenceDescriptor(vr));
+                }
+            }
 
-            vrg = new ValueReferenceGroup(list);
+            vrg = new ValueReferenceGroup(descList);
 
-            vrg["Palettes"].ModifiedEvent += (sender, args) => PaletteHeaderGroupModifiedEvent?.Invoke(this, null);
+            vrg["Palettes"].ValueReference.ModifiedEvent += (sender, args) => PaletteHeaderGroupModifiedEvent?.Invoke(this, null);
         }
 
 

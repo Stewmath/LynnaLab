@@ -1,8 +1,3 @@
-using System;
-using System.IO;
-using System.Collections.Generic;
-using Util;
-
 namespace LynnaLib
 {
     // This class is an abstraction of WarpSourceData and WarpDestData, managed by the WarpGroup
@@ -234,64 +229,64 @@ namespace LynnaLib
         // when possible, so that its "value changed" event handlers are properly invoked.
         void ConstructValueReferenceGroup()
         {
-            var valueReferences = new List<ValueReference>();
+            var descriptors = new List<ValueReferenceDescriptor>();
 
-            ValueReference vref;
+            ValueReferenceDescriptor desc;
 
             if (WarpSourceType == WarpSourceType.Standard)
             {
-                vref = new AbstractBoolValueReference(Project,
+                desc = AbstractBoolValueReference.Descriptor(Project,
                         name: "Top-Left",
                         getter: () => SourceData.TopLeft,
                         setter: (value) => SourceData.TopLeft = value);
-                valueReferences.Add(vref);
+                descriptors.Add(desc);
 
-                vref = new AbstractBoolValueReference(Project,
+                desc = AbstractBoolValueReference.Descriptor(Project,
                         name: "Top-Right",
                         getter: () => SourceData.TopRight,
                         setter: (value) => SourceData.TopRight = value);
-                valueReferences.Add(vref);
+                descriptors.Add(desc);
 
-                vref = new AbstractBoolValueReference(Project,
+                desc = AbstractBoolValueReference.Descriptor(Project,
                         name: "Bottom-Left",
                         getter: () => SourceData.BottomLeft,
                         setter: (value) => SourceData.BottomLeft = value);
-                valueReferences.Add(vref);
+                descriptors.Add(desc);
 
-                vref = new AbstractBoolValueReference(Project,
+                desc = AbstractBoolValueReference.Descriptor(Project,
                         name: "Bottom-Right",
                         getter: () => SourceData.BottomRight,
                         setter: (value) => SourceData.BottomRight = value);
-                valueReferences.Add(vref);
+                descriptors.Add(desc);
             }
             else if (WarpSourceType == WarpSourceType.Position)
             {
-                vref = new AbstractIntValueReference(Project,
+                desc = AbstractIntValueReference.Descriptor(Project,
                         name: "Source Y",
                         getter: () => SourceData.Y,
                         setter: (value) => SourceData.Y = value,
                         maxValue: 15);
-                valueReferences.Add(vref);
+                descriptors.Add(desc);
 
-                vref = new AbstractIntValueReference(Project,
+                desc = AbstractIntValueReference.Descriptor(Project,
                         name: "Source X",
                         getter: () => SourceData.X,
                         setter: (value) => SourceData.X = value,
                         maxValue: 15);
-                valueReferences.Add(vref);
+                descriptors.Add(desc);
             }
             else
                 throw new Exception("Invalid warp source type for warp.");
 
-            vref = new AbstractIntValueReference(Project,
+            desc = AbstractIntValueReference.Descriptor(Project,
                     name: "Source Transition",
                     getter: () => SourceData.Transition,
                     setter: (value) => SourceData.Transition = value,
                     maxValue: 15,
                     constantsMappingString: "SourceTransitionMapping");
-            valueReferences.Add(vref);
+            descriptors.Add(desc);
 
-            vref = new AbstractIntValueReference(Project,
+            desc = AbstractIntValueReference.Descriptor(Project,
                     name: "Dest Room",
                     getter: () => (SourceData.DestGroupIndex << 8) | DestData.Map,
                     setter: (value) =>
@@ -308,9 +303,9 @@ namespace LynnaLib
                         }
                     },
                     maxValue: Project.NumRooms - 1); // TODO: seasons has some "gap" rooms
-            valueReferences.Add(vref);
+            descriptors.Add(desc);
 
-            vref = new AbstractIntValueReference(Project,
+            desc = AbstractIntValueReference.Descriptor(Project,
                     name: "Dest Y",
                     getter: () => DestData.Y,
                     setter: (value) =>
@@ -322,9 +317,9 @@ namespace LynnaLib
                         }
                     },
                     maxValue: 15);
-            valueReferences.Add(vref);
+            descriptors.Add(desc);
 
-            vref = new AbstractIntValueReference(Project,
+            desc = AbstractIntValueReference.Descriptor(Project,
                     name: "Dest X",
                     getter: () => DestData.X,
                     setter: (value) =>
@@ -336,9 +331,9 @@ namespace LynnaLib
                         }
                     },
                     maxValue: 15);
-            valueReferences.Add(vref);
+            descriptors.Add(desc);
 
-            vref = new AbstractIntValueReference(Project,
+            desc = AbstractIntValueReference.Descriptor(Project,
                     name: "Dest Parameter",
                     getter: () => DestData.Parameter,
                     setter: (value) =>
@@ -350,9 +345,9 @@ namespace LynnaLib
                         }
                     },
                     maxValue: 15);
-            valueReferences.Add(vref);
+            descriptors.Add(desc);
 
-            vref = new AbstractIntValueReference(Project,
+            desc = AbstractIntValueReference.Descriptor(Project,
                     name: "Dest Transition",
                     getter: () => DestData.Transition,
                     setter: (value) =>
@@ -365,9 +360,9 @@ namespace LynnaLib
                     },
                     maxValue: 15,
                     constantsMappingString: "DestTransitionMapping");
-            valueReferences.Add(vref);
+            descriptors.Add(desc);
 
-            vrg = new ValueReferenceGroup(valueReferences);
+            vrg = new ValueReferenceGroup(descriptors);
             vrg.AddValueModifiedHandler((sender, args) => OnDataModified(sender, null));
         }
 

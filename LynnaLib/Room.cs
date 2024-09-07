@@ -438,38 +438,43 @@ namespace LynnaLib
 
         void GenerateValueReferenceGroup()
         {
-            ValueReference roomPackVr;
+            ValueReferenceDescriptor roomPackDesc;
+
+            var tooltip = "Seasons: Forces a season recheck when transitioning between rooms with different values."
+                + "\nBoth games: Specific values force different tilesets to load in animal companion regions."
+                + "\nAges: Forces seasons-like screen reloads only if bit 7 is set (value $80 or above).";
+
             if (HasRoomPack)
             {
-                roomPackVr = new StreamValueReference(Project,
-                        stream: GetRoomPackFile(),
-                        name: "Room Pack",
-                        offset: Index & 0xff,
-                        type: DataValueType.Byte);
+                roomPackDesc = StreamValueReference.Descriptor(
+                    Project,
+                    stream: GetRoomPackFile(),
+                    name: "Room Pack",
+                    offset: Index & 0xff,
+                    type: DataValueType.Byte,
+                    tooltip: tooltip);
             }
             else
             {
                 // Placeholder (need to keep elements the same at all times to make the UI simpler)
-                roomPackVr = new AbstractIntValueReference(Project,
-                        name: "Room Pack",
-                        getter: () => 0,
-                        setter: (v) => { },
-                        maxValue: 255,
-                        editable: false);
+                roomPackDesc = AbstractIntValueReference.Descriptor(
+                    Project,
+                    name: "Room Pack",
+                    getter: () => 0,
+                    setter: (v) => { },
+                    maxValue: 255,
+                    editable: false,
+                    tooltip: tooltip);
             }
-            roomPackVr.Tooltip = "Seasons: Forces a season recheck when transitioning between rooms with different values."
-                + "\nBoth games: Specific values force different tilesets to load in animal companion regions."
-                + "\nAges: Forces seasons-like screen reloads only if bit 7 is set (value $80 or above).";
 
-
-            var vrs = new ValueReference[] {
-                new StreamValueReference(Project,
+            var descriptors = new ValueReferenceDescriptor[] {
+                StreamValueReference.Descriptor(Project,
                         stream: GetMusicFile(),
                         name: "Music",
                         offset: Index & 0xff,
                         type: DataValueType.Byte,
                         constantsMappingString: "MusicMapping"),
-                new StreamValueReference(Project,
+                StreamValueReference.Descriptor(Project,
                         stream: GetTilesetMappingFile(),
                         name: "Tileset",
                         offset: Index & 0xff,
@@ -477,8 +482,8 @@ namespace LynnaLib
                         maxValue: Project.NumTilesets-1,
                         startBit: 0,
                         endBit: 6),
-                roomPackVr,
-                new StreamValueReference(Project,
+                roomPackDesc,
+                StreamValueReference.Descriptor(Project,
                         stream: GetTilesetMappingFile(),
                         name: "Gfx Load After Transition",
                         offset: Index & 0xff,
@@ -487,9 +492,9 @@ namespace LynnaLib
                         tooltip: "Check to load this screen's tileset graphics after the screen transition, instead of before."),
             };
 
-            ValueReferenceGroup = new ValueReferenceGroup(vrs);
+            ValueReferenceGroup = new ValueReferenceGroup(descriptors);
 
-            ValueReferenceGroup["Tileset"].AddValueModifiedHandler((sender, args) =>
+            ValueReferenceGroup["Tileset"].ValueReference.AddValueModifiedHandler((sender, args) =>
             {
                 UpdateTileset();
             });

@@ -1,43 +1,68 @@
-using System;
-using System.Collections.Generic;
-using Util;
+namespace LynnaLib;
 
-namespace LynnaLib
+/// <summary>
+/// Similar to AbstractIntValueReference
+/// </summary>
+public class AbstractBoolValueReference : AbstractIntValueReference
 {
-    // Similar to AbstractIntValueReference
-    public class AbstractBoolValueReference : AbstractIntValueReference
-    {
-
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 
-        // Constructors
+    // ================================================================================
+    // Constuctors
+    // ================================================================================
 
-        public AbstractBoolValueReference(Project project, string name, Func<bool> getter, Action<bool> setter, ValueReferenceType type = ValueReferenceType.Bool, bool editable = true, string tooltip = null)
+    public AbstractBoolValueReference(Project project, string name,
+                                      Func<bool> getter, Action<bool> setter,
+                                      ValueReferenceType type = ValueReferenceType.Bool,
+                                      string constantsMappingString = null)
         : base(
-                project,
-                name,
-                getter: () => getter() ? 1 : 0,
-                setter: (v) => setter(v != 0 ? true : false),
-                maxValue: 1,
-                type: type,
-                editable: editable,
-                constantsMappingString: null,
-                tooltip: tooltip)
-        { }
+            project,
+            name,
+            getter: () => getter() ? 1 : 0,
+            setter: (v) => setter(v != 0 ? true : false),
+            maxValue: 1,
+            type: type,
+            constantsMappingString: constantsMappingString)
+    { }
 
-        public AbstractBoolValueReference(AbstractBoolValueReference r)
-        : base(r) { }
+    public AbstractBoolValueReference(AbstractBoolValueReference r)
+    : base(r) { }
 
-        public AbstractBoolValueReference(ValueReference r, Func<bool> getter = null, Action<bool> setter = null)
-        : base(r, () => getter() ? 1 : 0, (v) => setter(v != 0 ? true : false)) { }
+    public AbstractBoolValueReference(ValueReference r, Func<bool> getter = null, Action<bool> setter = null)
+    : base(r, () => getter() ? 1 : 0, (v) => setter(v != 0 ? true : false)) { }
 
 
-        // Methods
+    // ================================================================================
+    // Public methods
+    // ================================================================================
 
-        public override ValueReference Clone()
-        {
-            return new AbstractBoolValueReference(this);
-        }
+    public override ValueReference Clone()
+    {
+        return new AbstractBoolValueReference(this);
+    }
+
+    // ================================================================================
+    // Static methods
+    // ================================================================================
+
+    /// <summary>
+    /// Helper function to create a DataValueReference wrapped around a ValueReferenceDescriptor in
+    /// a single function call.
+    /// </summary>
+    public static ValueReferenceDescriptor Descriptor(
+        Project project,
+        string name,
+        Func<bool> getter,
+        Action<bool> setter,
+        ValueReferenceType type = ValueReferenceType.Int,
+        bool editable = true,
+        string constantsMappingString = null,
+        string tooltip = null)
+    {
+        var vr = new AbstractBoolValueReference(project, name, getter, setter, type,
+                                                constantsMappingString);
+        var descriptor = new ValueReferenceDescriptor(vr, editable, tooltip);
+        return descriptor;
     }
 }

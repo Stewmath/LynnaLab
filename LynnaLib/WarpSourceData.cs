@@ -53,44 +53,46 @@ namespace LynnaLib
             },
         };
 
-        private static List<ValueReference> GetWarpValueReferences(WarpSourceType type, Data data)
+        private static List<ValueReferenceDescriptor> GetWarpDescriptors(WarpSourceType type, Data data)
         {
             switch (type)
             {
                 case WarpSourceType.Standard:
-                    return new List<ValueReference> { // StandardWarp
-                    new DataValueReference(data,"Top-Left",0,DataValueType.ByteBit,0,0),
-                    new DataValueReference(data,"Top-Right",0,DataValueType.ByteBit,1,1),
-                    new DataValueReference(data,"Bottom-Left",0,DataValueType.ByteBit,2,2),
-                    new DataValueReference(data,"Bottom-Right",0,DataValueType.ByteBit,3,3),
-                    new DataValueReference(data,"Map",1,DataValueType.Byte, editable:false),
-                    new DataValueReference(data,"Dest Index",2,DataValueType.Byte),
-                    new DataValueReference(data,"Dest Group",3,DataValueType.HalfByte),
-                    new DataValueReference(data,"Transition",4,DataValueType.HalfByte,
-                        constantsMappingString:"SourceTransitionMapping"),
+                    return new List<ValueReferenceDescriptor> { // StandardWarp
+                        DataValueReference.Descriptor(data,"Top-Left",0,DataValueType.ByteBit,0,0),
+                        DataValueReference.Descriptor(data,"Top-Right",0,DataValueType.ByteBit,1,1),
+                        DataValueReference.Descriptor(data,"Bottom-Left",0,DataValueType.ByteBit,2,2),
+                        DataValueReference.Descriptor(data,"Bottom-Right",0,DataValueType.ByteBit,3,3),
+                        DataValueReference.Descriptor(data,"Map",1,DataValueType.Byte, editable:false),
+                        DataValueReference.Descriptor(data,"Dest Index",2,DataValueType.Byte),
+                        DataValueReference.Descriptor(data,"Dest Group",3,DataValueType.HalfByte),
+                        DataValueReference.Descriptor(data,"Transition",4,DataValueType.HalfByte,
+                                                      constantsMappingString: "SourceTransitionMapping"),
                 };
                 case WarpSourceType.Position:
-                    return new List<ValueReference> { // PositionWarp
-                    new DataValueReference(data,"Y",0,DataValueType.ByteBits,4,7),
-                    new DataValueReference(data,"X",0,DataValueType.ByteBits,0,3),
+                    return new List<ValueReferenceDescriptor> { // PositionWarp
+                        DataValueReference.Descriptor(data,"Y",0,DataValueType.ByteBits,4,7),
+                        DataValueReference.Descriptor(data,"X",0,DataValueType.ByteBits,0,3),
 
-                    new DataValueReference(data,"Dest Index",1,DataValueType.Byte),
-                    new DataValueReference(data,"Dest Group",2,DataValueType.HalfByte),
-                    new DataValueReference(data,"Transition",3,DataValueType.HalfByte,
-                        constantsMappingString:"SourceTransitionMapping"),
+                        DataValueReference.Descriptor(data,"Dest Index",1,DataValueType.Byte),
+                        DataValueReference.Descriptor(data,"Dest Group",2,DataValueType.HalfByte),
+                        DataValueReference.Descriptor(data,"Transition",3,DataValueType.HalfByte,
+                                                      constantsMappingString: "SourceTransitionMapping"),
                 };
                 case WarpSourceType.Pointer:
-                    return new List<ValueReference> { // PointerWarp
-                    new DataValueReference(data,"Map",0,DataValueType.Byte, editable:false),
+                    return new List<ValueReferenceDescriptor> { // PointerWarp
+                        DataValueReference.Descriptor(data,"Map",0,DataValueType.Byte,
+                                                      editable: false),
 
-                    // For warp sources which point to others, the pointer replaces
-                    // Group/Entrance/Dest Index.
-                    new DataValueReference(data,"Pointer", 1, DataValueType.String, editable:false),
+                        // For warp sources which point to others, the pointer replaces
+                        // Group/Entrance/Dest Index.
+                        DataValueReference.Descriptor(data,"Pointer", 1, DataValueType.String,
+                                                      editable: false),
                 };
                 case WarpSourceType.EndNoDefault:
                 case WarpSourceType.EndWithDefault:
                 case WarpSourceType.FallThrough:
-                    return new List<ValueReference>
+                    return new List<ValueReferenceDescriptor>
                     {
                     };
             }
@@ -273,7 +275,7 @@ namespace LynnaLib
                 }
             }
 
-            vrg = new ValueReferenceGroup(GetWarpValueReferences(_type, this));
+            vrg = new ValueReferenceGroup(GetWarpDescriptors(_type, this));
 
             referencedDestData = GetReferencedDestData();
             if (referencedDestData != null)

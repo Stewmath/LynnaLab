@@ -18,11 +18,12 @@ namespace LynnaLib
             this.objectData = od;
             this.Index = index;
 
-            var valueReferences = new List<ValueReference>();
+            var descriptors = new List<ValueReferenceDescriptor>();
 
-            foreach (var vref in objectData.ValueReferenceGroup.GetValueReferences())
+            foreach (var desc in objectData.ValueReferenceGroup.GetDescriptors())
             {
-                string name = vref.Name;
+                string name = desc.Name;
+                var vref = desc.ValueReference;
 
                 // Create a new AbstractIntValueReference which INDIRECTLY reads from the old
                 // ValueReference. The underlying ValueReference may be changed; so it's important
@@ -31,10 +32,10 @@ namespace LynnaLib
                         vref,
                         getter: () => objectData.ValueReferenceGroup.GetIntValue(name),
                         setter: (v) => OnValueSet(name, v));
-                valueReferences.Add(newVref);
+                descriptors.Add(new ValueReferenceDescriptor(newVref));
             }
 
-            base.SetValueReferences(valueReferences);
+            base.SetDescriptors(descriptors);
         }
 
 

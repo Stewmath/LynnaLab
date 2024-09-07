@@ -1,209 +1,180 @@
-using System;
-using System.Collections.Generic;
-using Util;
+namespace LynnaLib;
 
-namespace LynnaLib
+/// <summary>
+/// This class contains a list of ValueReferences and allows you to look them up by name to get
+/// or set them.
+/// </summary>
+public class ValueReferenceGroup
 {
-    // This class contains a list of ValueReferences and allows you to look them up by name to get
-    // or set them.
-    public class ValueReferenceGroup
+    IList<ValueReferenceDescriptor> descriptors;
+    LockableEvent<ValueModifiedEventArgs> lockableModifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
+
+
+    /// Constructor to let subclasses set valueReferences manually
+    protected ValueReferenceGroup()
     {
-        IList<ValueReference> valueReferences;
-        LockableEvent<ValueModifiedEventArgs> lockableModifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
+        lockableModifiedEvent += (sender, args) => ModifiedEvent?.Invoke(sender, args);
+    }
+
+    public ValueReferenceGroup(IList<ValueReferenceDescriptor> refs) : this()
+    {
+        SetDescriptors(refs);
+    }
 
 
-        /// Constructor to let subclasses set valueReferences manually
-        protected ValueReferenceGroup()
+    public event EventHandler<ValueModifiedEventArgs> ModifiedEvent;
+
+
+
+    // Properties
+
+    public Project Project
+    {
+        get
         {
-            lockableModifiedEvent += (sender, args) => ModifiedEvent?.Invoke(sender, args);
+            if (descriptors.Count == 0)
+                return null;
+            return descriptors[0].Project;
         }
+    }
 
-        public ValueReferenceGroup(IList<ValueReference> refs) : this()
+    public int Count
+    {
+        get { return descriptors.Count; }
+    }
+
+
+    // Indexers
+
+    public ValueReferenceDescriptor this[int i]
+    {
+        get { return descriptors[i]; }
+    }
+    public ValueReferenceDescriptor this[string name]
+    {
+        get
         {
-            SetValueReferences(refs);
+            return GetDescriptor(name);
         }
+    }
 
 
-        public event EventHandler<ValueModifiedEventArgs> ModifiedEvent;
+    // Public methods
 
-
-
-        // Properties
-
-        public Project Project
+    public IList<ValueReferenceDescriptor> GetDescriptors()
+    {
+        return descriptors;
+    }
+    public ValueReferenceDescriptor GetDescriptor(string name)
+    {
+        foreach (ValueReferenceDescriptor desc in descriptors)
         {
-            get
+            if (desc.Name == name)
             {
-                if (valueReferences.Count == 0)
-                    return null;
-                return valueReferences[0].Project;
+                return desc;
             }
         }
+        throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
+    }
 
-        public int Count
+    public int GetNumValueReferences()
+    { // TODO: replace with "Count" property
+        return descriptors.Count;
+    }
+
+    public int GetIndexOf(ValueReferenceDescriptor r)
+    {
+        int i = 0;
+        foreach (ValueReferenceDescriptor s in descriptors)
         {
-            get { return valueReferences.Count; }
+            if (s.Name == r.Name)
+                return i;
+            i++;
+        }
+        return -1;
+    }
+
+    public bool HasValue(string name)
+    {
+        foreach (var r in descriptors)
+            if (r.Name == name)
+                return true;
+        return false;
+    }
+
+
+    public string GetValue(string name)
+    {
+        return GetDescriptor(name).GetStringValue();
+    }
+    public int GetIntValue(string name)
+    {
+        ValueReferenceDescriptor desc = GetDescriptor(name);
+        return desc.GetIntValue();
+    }
+
+    public void SetValue(string name, string value)
+    {
+        ValueReferenceDescriptor desc = GetDescriptor(name);
+        desc.SetValue(value);
+    }
+    public void SetValue(string name, int value)
+    {
+        ValueReferenceDescriptor desc = GetDescriptor(name);
+        desc.SetValue(value);
+        return;
+    }
+
+    // TODO: remove these, use the public event instead
+    public void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler)
+    {
+        ModifiedEvent += handler;
+    }
+    public void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler)
+    {
+        ModifiedEvent -= handler;
+    }
+
+    /// Call this to prevent events from firing until EndAtomicOperation is called.
+    public void BeginAtomicOperation()
+    {
+        lockableModifiedEvent.Lock();
+        // TODO: Would be ideal if this also locked events for the ValueReferences themselves
+    }
+
+    public void EndAtomicOperation()
+    {
+        lockableModifiedEvent.Unlock();
+    }
+
+    public void CopyFrom(ValueReferenceGroup vrg)
+    {
+        BeginAtomicOperation();
+
+        foreach (var desc in descriptors)
+        {
+            desc.SetValue(vrg.GetValue(desc.Name));
         }
 
+        EndAtomicOperation();
+    }
 
-        // Indexers
 
-        public ValueReference this[int i]
+    // Protected
+
+    protected void SetDescriptors(IList<ValueReferenceDescriptor> refs)
+    {
+        if (descriptors != null)
+            throw new Exception();
+
+        descriptors = new List<ValueReferenceDescriptor>();
+        foreach (var desc in refs)
         {
-            get { return valueReferences[i]; }
-        }
-        public ValueReference this[string name]
-        {
-            get
-            {
-                foreach (var r in valueReferences)
-                {
-                    if (r.Name == name)
-                        return r;
-                }
-                throw new ArgumentException("ValueReference \"" + name + "\" isn't in this group.");
-            }
-        }
+            ValueReferenceDescriptor copy = new ValueReferenceDescriptor(desc);
+            descriptors.Add(copy);
 
-
-        // Public methods
-
-        public IList<ValueReference> GetValueReferences()
-        {
-            return valueReferences;
-        }
-        public ValueReference GetValueReference(string name)
-        {
-            foreach (ValueReference r in valueReferences)
-            {
-                if (r.Name == name)
-                {
-                    return r;
-                }
-            }
-            return null;
-        }
-
-        public int GetNumValueReferences()
-        { // TODO: replace with "Count" property
-            return valueReferences.Count;
-        }
-
-        public int GetIndexOf(ValueReference r)
-        {
-            int i = 0;
-            foreach (ValueReference s in valueReferences)
-            {
-                if (s.Name == r.Name)
-                    return i;
-                i++;
-            }
-            return -1;
-        }
-
-        public bool HasValue(string name)
-        {
-            foreach (var r in valueReferences)
-                if (r.Name == name)
-                    return true;
-            return false;
-        }
-
-
-        public string GetValue(string name)
-        {
-            foreach (var r in valueReferences)
-            {
-                if (r.Name == name)
-                    return r.GetStringValue();
-            }
-            throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
-        }
-        public int GetIntValue(string name)
-        {
-            foreach (var r in valueReferences)
-            {
-                if (r.Name == name)
-                    return r.GetIntValue();
-            }
-            throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
-        }
-
-        public void SetValue(string name, string value)
-        {
-            foreach (var r in valueReferences)
-            {
-                if (r.Name == name)
-                {
-                    r.SetValue(value);
-                    return;
-                }
-            }
-            throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
-        }
-        public void SetValue(string name, int value)
-        {
-            foreach (var r in valueReferences)
-            {
-                if (r.Name == name)
-                {
-                    r.SetValue(value);
-                    return;
-                }
-            }
-            throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
-        }
-
-        // TODO: remove these, use the public event instead
-        public void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler)
-        {
-            ModifiedEvent += handler;
-        }
-        public void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler)
-        {
-            ModifiedEvent -= handler;
-        }
-
-        /// Call this to prevent events from firing until EndAtomicOperation is called.
-        public void BeginAtomicOperation()
-        {
-            lockableModifiedEvent.Lock();
-            // TODO: Would be ideal if this also locked events for the ValueReferences themselves
-        }
-
-        public void EndAtomicOperation()
-        {
-            lockableModifiedEvent.Unlock();
-        }
-
-        public void CopyFrom(ValueReferenceGroup vrg)
-        {
-            BeginAtomicOperation();
-
-            foreach (var vr in valueReferences)
-            {
-                vr.SetValue(vrg.GetValue(vr.Name));
-            }
-
-            EndAtomicOperation();
-        }
-
-
-        // Protected
-
-        protected void SetValueReferences(IList<ValueReference> refs)
-        {
-            if (valueReferences != null)
-                throw new Exception();
-
-            valueReferences = new List<ValueReference>();
-            foreach (var vref in refs)
-            {
-                ValueReference copy = vref.Clone();
-                valueReferences.Add(copy);
-
-                copy.AddValueModifiedHandler((sender, args) => lockableModifiedEvent?.Invoke(sender, args));
-            }
+            copy.ValueReference.AddValueModifiedHandler(
+                (sender, args) => lockableModifiedEvent?.Invoke(sender, args));
         }
     }
 }

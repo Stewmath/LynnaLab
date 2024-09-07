@@ -64,101 +64,101 @@ namespace LynnaLib
 
 
 
-        private static IList<ValueReference> GetObjectValueReferences(ObjectType type, Data data)
+        private static IList<ValueReferenceDescriptor> GetObjectValueReferenceDescriptors(ObjectType type, Data data)
         {
             // Interaction, Part, SpecificEnemyA, and ItemDrop objects have a variable number of
             // parameters. In the constructor, the data is set to always have the maximum number of
-            // parameters so that all of these ValueReferences are valid. The extra parameters are
+            // parameters so that all of these ValueReferenceDescriptors are valid. The extra parameters are
             // removed when it is time to save.
             switch (type)
             {
                 case ObjectType.Condition:
-                    return new List<ValueReference> { // Condition
-                    //new DataValueReference(data,"Condition",0,DataValueType.Byte,editable:false),
-                    new DataValueReference(data,"Spring",0,DataValueType.ByteBit,0,0),
-                    new DataValueReference(data,"Summer",0,DataValueType.ByteBit,1,1),
-                    new DataValueReference(data,"Autumn",0,DataValueType.ByteBit,2,2),
-                    new DataValueReference(data,"Winter",0,DataValueType.ByteBit,3,3),
+                    return new List<ValueReferenceDescriptor> { // Condition
+                    //new DataValueReferenceDescriptor(data,"Condition",0,DataValueType.Byte,editable:false),
+                    DataValueReference.Descriptor(data,"Spring",0,DataValueType.ByteBit,0,0),
+                    DataValueReference.Descriptor(data,"Summer",0,DataValueType.ByteBit,1,1),
+                    DataValueReference.Descriptor(data,"Autumn",0,DataValueType.ByteBit,2,2),
+                    DataValueReference.Descriptor(data,"Winter",0,DataValueType.ByteBit,3,3),
                 };
                 case ObjectType.Interaction:
-                    return new List<ValueReference> { // Interaction
-                    new DataValueReference(data,"ID",0,DataValueType.Byte,constantsMappingString:"InteractionMapping"),
-                    new DataValueReference(data,"SubID",1,DataValueType.Byte),
-                    new DataValueReference(data,"Y",2,DataValueType.Byte),
-                    new DataValueReference(data,"X",3,DataValueType.Byte),
-                    new DataValueReference(data,"Var03",4,DataValueType.Byte),
+                    return new List<ValueReferenceDescriptor> { // Interaction
+                    DataValueReference.Descriptor(data,"ID",0,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"SubID",1,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"Y",2,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"X",3,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"Var03",4,DataValueType.Byte),
                 };
                 case ObjectType.Pointer:
-                    return new List<ValueReference> { // Pointer
-                    new DataValueReference(data,"Pointer",0,DataValueType.String),
+                    return new List<ValueReferenceDescriptor> { // Pointer
+                    DataValueReference.Descriptor(data,"Pointer",0,DataValueType.String),
                 };
                 case ObjectType.BeforeEvent:
-                    return new List<ValueReference> { // BeforeEvent
-                    new DataValueReference(data,"Pointer",0,DataValueType.String),
+                    return new List<ValueReferenceDescriptor> { // BeforeEvent
+                    DataValueReference.Descriptor(data,"Pointer",0,DataValueType.String),
                 };
                 case ObjectType.AfterEvent:
-                    return new List<ValueReference> { // AfterEvent
-                    new DataValueReference(data,"Pointer",0,DataValueType.String),
+                    return new List<ValueReferenceDescriptor> { // AfterEvent
+                    DataValueReference.Descriptor(data,"Pointer",0,DataValueType.String),
                 };
                 case ObjectType.RandomEnemy:
-                    return new List<ValueReference> { // Random Enemy
-                    //new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
-                    new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0,
+                    return new List<ValueReferenceDescriptor> { // Random Enemy
+                    //DataValueReference.Descriptor(data,"Flags",0,DataValueType.Byte,editable:false),
+                    DataValueReference.Descriptor(data,"Respawn",0,DataValueType.ByteBit,0,0,
                             tooltip: "Always respawn when you re-enter the room"),
-                    new DataValueReference(data,"Uncounted",0,DataValueType.ByteBit,1,1,
+                    DataValueReference.Descriptor(data,"Uncounted",0,DataValueType.ByteBit,1,1,
                             tooltip: "Don't count towards the wNumEnemies variable (for puzzles)."),
-                    new DataValueReference(data,"Spawn anywhere",0,DataValueType.ByteBit,2,2),
-                    new DataValueReference(data,"Quantity",0,DataValueType.ByteBits,5,7),
-                    new DataValueReference(data,"ID",1,DataValueType.Byte,constantsMappingString:"EnemyMapping"),
-                    new DataValueReference(data,"SubID",2,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"Spawn anywhere",0,DataValueType.ByteBit,2,2),
+                    DataValueReference.Descriptor(data,"Quantity",0,DataValueType.ByteBits,5,7),
+                    DataValueReference.Descriptor(data,"ID",1,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"SubID",2,DataValueType.Byte),
                 };
                 case ObjectType.SpecificEnemyA:
-                    return new List<ValueReference> { // Specific Enemy A
-                    //new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
-                    new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0,
+                    return new List<ValueReferenceDescriptor> { // Specific Enemy A
+                    //DataValueReference.Descriptor(data,"Flags",0,DataValueType.Byte,editable:false),
+                    DataValueReference.Descriptor(data,"Respawn",0,DataValueType.ByteBit,0,0,
                             tooltip: "Always respawn when you re-enter the room"),
-                    new DataValueReference(data,"Uncounted",0,DataValueType.ByteBit,1,1,
+                    DataValueReference.Descriptor(data,"Uncounted",0,DataValueType.ByteBit,1,1,
                             tooltip: "Don't count towards the wNumEnemies variable (for puzzles)."),
-                    new DataValueReference(data,"ID",1,DataValueType.Byte,constantsMappingString:"EnemyMapping"),
-                    new DataValueReference(data,"SubID",2,DataValueType.Byte),
-                    new DataValueReference(data,"Y",3,DataValueType.Byte),
-                    new DataValueReference(data,"X",4,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"ID",1,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"SubID",2,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"Y",3,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"X",4,DataValueType.Byte),
                 };
                 case ObjectType.SpecificEnemyB:
-                    return new List<ValueReference> { // Specific Enemy B
-                    new DataValueReference(data,"ID",0,DataValueType.Byte,constantsMappingString:"EnemyMapping"),
-                    new DataValueReference(data,"SubID",1,DataValueType.Byte),
-                    new DataValueReference(data,"Y",2,DataValueType.Byte),
-                    new DataValueReference(data,"X",3,DataValueType.Byte),
-                    new DataValueReference(data,"Var03",4,DataValueType.Byte),
+                    return new List<ValueReferenceDescriptor> { // Specific Enemy B
+                    DataValueReference.Descriptor(data,"ID",0,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"SubID",1,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"Y",2,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"X",3,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"Var03",4,DataValueType.Byte),
                 };
                 case ObjectType.Part:
-                    return new List<ValueReference> { // Part
-                    new DataValueReference(data,"ID",0,DataValueType.Byte,constantsMappingString:"PartMapping"),
-                    new DataValueReference(data,"SubID",1,DataValueType.Byte),
-                    new DataValueReference(data,"Y",2,DataValueType.Byte),
-                    new DataValueReference(data,"X",3,DataValueType.Byte),
-                    new DataValueReference(data,"Var03",4,DataValueType.Byte),
+                    return new List<ValueReferenceDescriptor> { // Part
+                    DataValueReference.Descriptor(data,"ID",0,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"SubID",1,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"Y",2,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"X",3,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"Var03",4,DataValueType.Byte),
                 };
                 case ObjectType.ItemDrop:
-                    return new List<ValueReference> { // Item Drop
-                    //new DataValueReference(data,"Flags",0,DataValueType.Byte,editable:false),
-                    new DataValueReference(data,"Respawn",0,DataValueType.ByteBit,0,0,
+                    return new List<ValueReferenceDescriptor> { // Item Drop
+                    //DataValueReference.Descriptor(data,"Flags",0,DataValueType.Byte,editable:false),
+                    DataValueReference.Descriptor(data,"Respawn",0,DataValueType.ByteBit,0,0,
                             tooltip: "Always respawn when you re-enter the room"),
-                    new DataValueReference(data,"Item",1,DataValueType.Byte,constantsMappingString:"ItemDropMapping"),
-                    new DataValueReference(data,"Y",2,DataValueType.ByteBits,4,7),
-                    new DataValueReference(data,"X",2,DataValueType.ByteBits,0,3),
+                    DataValueReference.Descriptor(data,"Item",1,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"Y",2,DataValueType.ByteBits,4,7),
+                    DataValueReference.Descriptor(data,"X",2,DataValueType.ByteBits,0,3),
                 };
                 case ObjectType.End:
-                    return new List<ValueReference>
+                    return new List<ValueReferenceDescriptor>
                     { // InteracEnd
                     };
                 case ObjectType.EndPointer:
-                    return new List<ValueReference>
+                    return new List<ValueReferenceDescriptor>
                     { // InteracEndPointer
                     };
                 case ObjectType.Garbage:
-                    return new List<ValueReference>
+                    return new List<ValueReferenceDescriptor>
                     { // Garbage
                     };
             }
@@ -208,8 +208,8 @@ namespace LynnaLib
 
             base.LockModifiedEvents();
 
-            foreach (ValueReference vref in vrg.GetValueReferences())
-                vref.Initialize();
+            foreach (ValueReferenceDescriptor desc in vrg.GetDescriptors())
+                desc.ValueReference.Initialize();
 
             base.ClearAndUnlockModifiedEvents();
         }
@@ -231,7 +231,7 @@ namespace LynnaLib
         // Common code for constructors
         void InitializeValueReferenceGroup()
         {
-            vrg = new ValueReferenceGroup(GetObjectValueReferences(objectType, this));
+            vrg = new ValueReferenceGroup(GetObjectValueReferenceDescriptors(objectType, this));
         }
 
         public ObjectType GetObjectType()

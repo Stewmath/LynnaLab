@@ -136,24 +136,24 @@ namespace LynnaLib
 
         void GenerateValueReferenceGroup()
         {
-            var v1 = new DataValueReference(dataStart,
+            var v1 = DataValueReference.Descriptor(dataStart,
                     name: "Y",
                     index: 0,
                     type: DataValueType.ByteBits,
                     startBit: 4,
                     endBit: 7);
-            var v2 = new DataValueReference(dataStart,
+            var v2 = DataValueReference.Descriptor(dataStart,
                     name: "X",
                     index: 0,
                     type: DataValueType.ByteBits,
                     startBit: 0,
                     endBit: 3);
-            var v3 = new DataValueReference(dataStart,
+            var v3 = DataValueReference.Descriptor(dataStart,
                     name: "Room",
                     index: 1,
                     type: DataValueType.Byte,
                     editable: false);
-            var v4 = new AbstractIntValueReference(Project,
+            var v4 = AbstractIntValueReference.Descriptor(Project,
                     name: "ID",
                     getter: () => { return Project.EvalToInt(dataStart.GetValue(2)) >> 8; },
                     setter: (v) =>
@@ -162,7 +162,7 @@ namespace LynnaLib
                     },
                     maxValue: Project.NumTreasures - 1,
                     constantsMappingString: "TreasureMapping");
-            var v5 = new AbstractIntValueReference(Project,
+            var v5 = AbstractIntValueReference.Descriptor(Project,
                     name: "SubID",
                     getter: () => { return Project.EvalToInt(dataStart.GetValue(2)) & 0xff; },
                     setter: (v) =>
@@ -171,7 +171,7 @@ namespace LynnaLib
                     },
                     maxValue: 255);
 
-            var list = new ValueReference[] {
+            var list = new ValueReferenceDescriptor[] {
                 v1, v2, v3, v4, v5
             };
 

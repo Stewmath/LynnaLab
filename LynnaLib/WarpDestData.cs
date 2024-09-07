@@ -9,14 +9,14 @@ namespace LynnaLib
         public static string WarpCommand = "m_WarpDest";
 
 
-        private static List<ValueReference> GetWarpValueReferences(Data data)
+        private static List<ValueReferenceDescriptor> GetWarpValueReferences(Data data)
         {
-            return new List<ValueReference> {
-                new DataValueReference(data,"Map",0,DataValueType.Byte),
-                new DataValueReference(data,"Y",1,DataValueType.ByteBits,4,7),
-                new DataValueReference(data,"X",1,DataValueType.ByteBits,0,3),
-                new DataValueReference(data,"Parameter",2,DataValueType.HalfByte),
-                new DataValueReference(data,"Transition",3,DataValueType.HalfByte,
+            return new List<ValueReferenceDescriptor> {
+                DataValueReference.Descriptor(data,"Map",0,DataValueType.Byte),
+                DataValueReference.Descriptor(data,"Y",1,DataValueType.ByteBits,4,7),
+                DataValueReference.Descriptor(data,"X",1,DataValueType.ByteBits,0,3),
+                DataValueReference.Descriptor(data,"Parameter",2,DataValueType.HalfByte),
+                DataValueReference.Descriptor(data,"Transition",3,DataValueType.HalfByte,
                     constantsMappingString:"DestTransitionMapping"),
             };
         }

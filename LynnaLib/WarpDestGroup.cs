@@ -81,8 +81,8 @@ namespace LynnaLib
                     fileParser,
                     new List<string> { "\t" });
 
-            foreach (ValueReference vref in newData.ValueReferenceGroup.GetValueReferences())
-                vref.Initialize();
+            foreach (ValueReferenceDescriptor desc in newData.ValueReferenceGroup.GetDescriptors())
+                desc.ValueReference.Initialize();
 
             newData.Transition = 1;
 

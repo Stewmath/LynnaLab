@@ -286,36 +286,36 @@ namespace LynnaLib
 
         void GenerateValueReferenceGroup()
         {
-            var groupValueReference = new AbstractIntValueReference(Project,
-                    name: "Group",
-                    getter: () => MainGroup,
-                    setter: (v) => SetGroup(v),
-                    minValue: 4,
-                    maxValue: 5,
-                    tooltip: "Also known as the high byte of the room index."
-                    );
+            var groupDescriptor = AbstractIntValueReference.Descriptor(
+                Project,
+                name: "Group",
+                getter: () => MainGroup,
+                setter: (v) => SetGroup(v),
+                minValue: 4,
+                maxValue: 5,
+                tooltip: "Also known as the high byte of the room index.");
             // TODO: tie groupValueReference to the underlying data's modified event handler somehow
 
-            var list = new ValueReference[] {
-                groupValueReference,
-                new DataValueReference(
+            var list = new ValueReferenceDescriptor[] {
+                groupDescriptor,
+                DataValueReference.Descriptor(
                         data: dataStart,
                         name: "Wallmaster dest room",
                         index: 1,
                         type: DataValueType.Byte,
                         tooltip: "The low byte of the room index wallmasters will send you to."),
-                new DataValueReference(
+                DataValueReference.Descriptor(
                         data: dataStart,
                         name: "Base floor name",
                         index: 4,
                         type: DataValueType.Byte,
                         tooltip: "Determines what the game will call the bottom floor. For a value of:\n$00: The bottom floor is 'B3'.\n$01: The bottom floor is 'B2'.\n$02: The bottom floor is 'B1'.\n$03: The bottom floor is 'F1'."),
-                new DataValueReference(
+                DataValueReference.Descriptor(
                         data: dataStart,
                         name: "Floors unlocked with compass",
                         index: 5,
                         type: DataValueType.Byte,
-                        tooltip: "A bitset of floors that will appear on the map when the compass is obtained.\n\nEg. If this is $05, then floors 0 and 2 will be unlocked (bits 0 and 2 are set).")
+                        tooltip: "A bitset of floors that will appear on the map when the compass is obtained.\n\nEg. If this is $05, then floors 0 and 2 will be unlocked (bits 0 and 2 are set)."),
             };
 
             ValueReferenceGroup = new ValueReferenceGroup(list);
