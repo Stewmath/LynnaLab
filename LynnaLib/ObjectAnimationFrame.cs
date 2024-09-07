@@ -135,9 +135,12 @@ namespace LynnaLib
 
 
         /// <summary>
-        ///  Will throw InvalidAnimationException if initialization failed earlier...
+        /// Loops through all 8x16 sprite images and calls "spriteDrawer" on all of them so that the
+        /// full image can be drawn. Done in reverse order so that layering can work properly.
+        ///
+        /// Will throw InvalidAnimationException if initialization failed earlier...
         /// </summary>
-        public void Draw(Cairo.Context cr, int x, int y)
+        public void Draw(Action<Bitmap, int, int> spriteDrawer)
         {
             if (bitmaps == null)
                 throw new InvalidAnimationException();
@@ -148,16 +151,7 @@ namespace LynnaLib
             for (int i = _numSprites - 1; i >= 0; i--)
             {
                 Tuple<Bitmap, int, int> tup = bitmaps[i];
-                Bitmap bitmap = tup.Item1;
-                int xOffset = tup.Item2;
-                int yOffset = tup.Item3;
-
-                cr.SetSourceSurface(bitmap, x + xOffset, y + yOffset);
-                using (Cairo.SurfacePattern pattern = (Cairo.SurfacePattern)cr.GetSource())
-                {
-                    pattern.Filter = Cairo.Filter.Nearest;
-                }
-                cr.Paint();
+                spriteDrawer(tup.Item1, tup.Item2, tup.Item3);
             }
         }
 

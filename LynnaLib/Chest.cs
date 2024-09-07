@@ -5,7 +5,9 @@ using Util;
 
 namespace LynnaLib
 {
+    /// <summary>
     /// Represents the 4 bytes defining a chest. There should only be one of these per room.
+    /// </summary>
     public class Chest
     {
         Data dataStart;

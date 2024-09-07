@@ -44,6 +44,14 @@ public abstract class SizedWidget
             thickness);
     }
 
+    public void AddRectFilled(FRect rect, Color color)
+    {
+        drawList.AddRectFilled(
+            origin + new Vector2(rect.X, rect.Y),
+            origin + new Vector2(rect.X + rect.Width, rect.Y + rect.Height),
+            ImGuiX.ToImGuiColor(color));
+    }
+
     // ================================================================================
     // Variables
     // ================================================================================

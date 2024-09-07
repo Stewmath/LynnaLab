@@ -20,7 +20,8 @@ public static class ImGuiX
 
     public static uint ToImGuiColor(LynnaLib.Color color)
     {
-        return ImGui.GetColorU32(new Vector4(color.R, color.G, color.B, color.A));
+        return ImGui.GetColorU32(
+            new Vector4(color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, color.A / 255.0f));
     }
 
     public static Vector2 GetScroll()
@@ -82,7 +83,7 @@ public static class ImGuiX
     }
 
     /// <summary>
-    /// Hex input field. Returns true if value was changed.
+    /// Hex input field, takes a ref int. Returns true if value was changed.
     /// </summary>
     public static unsafe bool InputHex(string name, ref int value,
                                        int digits = 2, int min = 0, int max = int.MaxValue)
@@ -101,7 +102,7 @@ public static class ImGuiX
     }
 
     /// <summary>
-    /// Like above, but takes an initial value + callback function instead of a ref int
+    /// Hex input field, takes an initial value + callback function.
     /// </summary>
     public static void InputHex(string name, int initial, Action<int> changed,
                                 int digits = 2, int min = 0, int max = int.MaxValue)
@@ -109,6 +110,18 @@ public static class ImGuiX
         int value = initial;
         if (InputHex(name, ref value, digits, min, max))
             changed(value);
+    }
+
+    /// <summary>
+    /// Hex input field, takes a property accessor.
+    /// </summary>
+    public static void InputHex(string name, Accessor<int> accessor,
+                                int digits = 2, int min = 0, int max = int.MaxValue)
+    {
+        int value = accessor.Get();
+        bool changed = InputHex(name, ref value, digits, min, max);
+        if (changed)
+            accessor.Set(value);
     }
 
     /// <summary>

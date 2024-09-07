@@ -120,10 +120,21 @@ public class RoomEditor
     {
         const float OFFSET = 15.0f;
 
-        ImGui.BeginChild("Left Panel", new Vector2(tilesetViewer.WidgetSize.X + OFFSET, 0.0f),
-                         ImGuiChildFlags.Border);
-        ImGui.SeparatorText("Tileset");
-        tilesetViewer.Render();
+        ImGui.BeginChild("Left Panel", new Vector2(tilesetViewer.WidgetSize.X + OFFSET, 0.0f));
+        if (ImGui.BeginTabBar("##Left Panel Tabs"))
+        {
+            if (ImGui.BeginTabItem("Tileset"))
+            {
+                tilesetViewer.Render();
+                ImGui.EndTabItem();
+            }
+            if (ImGui.BeginTabItem("Chests"))
+            {
+                DisplayChestTab();
+                ImGui.EndTabItem();
+            }
+            ImGui.EndTabBar();
+        }
         ImGui.EndChild();
 
         ImGui.SameLine();
@@ -323,5 +334,25 @@ public class RoomEditor
         }
 
         suppressEvents--;
+    }
+
+    /// <summary>
+    /// Display contents of the "Chests" tab
+    /// </summary>
+    void DisplayChestTab()
+    {
+        if (Room.Chest == null)
+        {
+            ImGui.TextWrapped("Room does not contain a chest.");
+
+            if (ImGui.Button("Add chest"))
+            {
+                Room.AddChest();
+            }
+            return;
+        }
+
+        ImGuiX.InputHex("ID", new Accessor<int>(() => Room.Chest.TreasureID));
+        ImGuiX.InputHex("SubID", new Accessor<int>(() => Room.Chest.TreasureSubID));
     }
 }

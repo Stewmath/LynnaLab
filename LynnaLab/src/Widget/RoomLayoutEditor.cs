@@ -14,6 +14,12 @@ public class RoomLayoutEditor : TileGridViewer
         base.Scale = 2;
 
         QuickstartData.enableToggledEvent += (s, a) => UpdateQuickstartRoomComponent();
+
+        roomEventWrapper = new EventWrapper<Room>();
+        roomEventWrapper.Bind<EventArgs>(
+            "ChestAddedEvent",
+            (s, a) => UpdateChestComponent(),
+            weak: false);
     }
 
     // ================================================================================
@@ -21,8 +27,10 @@ public class RoomLayoutEditor : TileGridViewer
     // ================================================================================
     Image image;
     RoomComponent selectedRoomComponent;
+    ChestRoomComponent chestRoomComponent;
     List<RoomComponent> roomComponents;
     bool draggingComponent;
+    EventWrapper<Room> roomEventWrapper;
 
     // ================================================================================
     // Properties
@@ -33,6 +41,8 @@ public class RoomLayoutEditor : TileGridViewer
     public Room Room { get { return RoomLayout?.Room; } }
     public RoomLayout RoomLayout { get; private set; }
     public QuickstartData QuickstartData { get { return Workspace.QuickstartData; } }
+
+    public bool DrawChest { get { return true; } }
 
 
     // TileGridViewer overrides
@@ -62,7 +72,7 @@ public class RoomLayoutEditor : TileGridViewer
         if (layout != RoomLayout)
         {
             RoomLayout = layout;
-            RoomChanged();
+            OnRoomChanged();
         }
     }
 
@@ -75,6 +85,12 @@ public class RoomLayoutEditor : TileGridViewer
 
         Action<RoomComponent> renderRoomComponent = (com) =>
         {
+            // Draw background box
+            if (com.BoxColor != null)
+            {
+                base.AddRectFilled(com.BoxRectangle * Scale, com.BoxColor);
+            }
+
             // Draw it
             ImGui.SetCursorScreenPos(origin);
             com.Render();
@@ -131,6 +147,11 @@ public class RoomLayoutEditor : TileGridViewer
         }
         ImGui.SetCursorScreenPos(endPos);
 
+        if (chestRoomComponent != null)
+        {
+            renderRoomComponent(chestRoomComponent);
+        }
+
         if (hovered && !inhibitMouse)
             base.RenderMouse();
     }
@@ -142,19 +163,32 @@ public class RoomLayoutEditor : TileGridViewer
     /// <summary>
     /// Called when room is changed
     /// </summary>
-    void RoomChanged()
+    void OnRoomChanged()
     {
-        image = null;
+        image = Workspace.GetCachedRoomImage(RoomLayout);
 
-        if (RoomLayout != null)
-        {
-            image = Workspace.GetCachedRoomImage(RoomLayout);
+        base.Width = RoomLayout.Width;
+        base.Height = RoomLayout.Height;
 
-            base.Width = RoomLayout.Width;
-            base.Height = RoomLayout.Height;
-        }
-
+        UpdateChestComponent();
         UpdateRoomComponents();
+
+        roomEventWrapper.ReplaceEventSource(Room);
+    }
+
+    /// <summary>
+    /// Called when a chest has been added to the current room
+    /// </summary>
+    void UpdateChestComponent()
+    {
+        if (Room.Chest != null)
+        {
+            this.chestRoomComponent = new ChestRoomComponent(this, Room.Chest);
+        }
+        else
+        {
+            this.chestRoomComponent = null;
+        }
     }
 
     /// <summary>
@@ -320,6 +354,85 @@ public class RoomLayoutEditor : TileGridViewer
         public override bool Compare(RoomComponent com)
         {
             return quickstart == (com as QuickstartRoomComponent)?.quickstart;
+        }
+    }
+
+    /// <summary>
+    /// Draggable chest
+    /// </summary>
+    class ChestRoomComponent : RoomComponent
+    {
+        RoomLayoutEditor parent;
+        Chest chest;
+
+        public ChestRoomComponent(RoomLayoutEditor parent, Chest chest)
+        {
+            this.parent = parent;
+            this.chest = chest;
+        }
+
+        Project Project { get { return chest.Project; } }
+
+        public override Color BoxColor
+        {
+            get
+            {
+                return Color.FromRgba(204, 51, 153, 0xc0);
+            }
+        }
+
+        public override bool Deletable { get { return true; } }
+        public override bool HasXY { get { return true; } }
+        public override bool HasShortenedXY { get { return true; } }
+        public override int X
+        {
+            get { return chest.ValueReferenceGroup.GetIntValue("X") * 16 + 8; }
+            set { chest.ValueReferenceGroup.SetValue("X", value / 16); }
+        }
+        public override int Y
+        {
+            get { return chest.ValueReferenceGroup.GetIntValue("Y") * 16 + 8; }
+            set { chest.ValueReferenceGroup.SetValue("Y", value / 16); }
+        }
+        public override int BoxWidth { get { return 18; } }
+        public override int BoxHeight { get { return 18; } }
+
+        public override void Render()
+        {
+            if (chest.Treasure == null)
+                return;
+            GameObject obj = Project.GetIndexedDataType<InteractionObject>(
+                    Project.EvalToInt("INTERAC_TREASURE") * 256 + chest.Treasure.Graphics);
+            var origin = ImGui.GetCursorScreenPos();
+            try
+            {
+                var spriteDrawer = (Bitmap sprite, int xOffset, int yOffset) =>
+                {
+                    var offset = new Vector2(X + xOffset, Y + yOffset);
+                    Image image = parent.Workspace.TopLevel.ImageFromBitmap(sprite);
+                    ImGui.SetCursorScreenPos(origin + offset * parent.Scale);
+                    ImGuiX.DrawImage(image, parent.Scale);
+                };
+                obj.DefaultAnimation.GetFrame(0).Draw(spriteDrawer);
+            }
+            catch (InvalidAnimationException)
+            {
+            }
+        }
+
+        public override void Select()
+        {
+            base.Select();
+        }
+
+        public override bool Compare(RoomComponent com)
+        {
+            return chest == (com as ChestRoomComponent)?.chest;
+        }
+
+        public override void Delete()
+        {
+            chest.Delete();
         }
     }
 }
