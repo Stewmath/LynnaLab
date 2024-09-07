@@ -87,8 +87,9 @@ namespace LynnaLib
             }
         }
 
-        // The GraphicsState which contains the data as it will be loaded into
-        // vram.
+        /// <summary>
+        /// The GraphicsState which contains the data as it will be loaded into vram.
+        /// </summary>
         public GraphicsState GraphicsState
         {
             get { return graphicsState; }
@@ -101,55 +102,30 @@ namespace LynnaLib
 
         // Following properties correspond to the 8 bytes defining the tileset.
 
-        public bool SidescrollFlag
-        {
-            get { return vrg.GetIntValue("Sidescrolling") != 0; }
-        }
-        public bool MakuTreeFlag
-        {
-            get { return vrg.GetIntValue("Maku Tree") != 0; }
-        }
-        public bool SubrosiaFlag // Will only work in seasons of course
-        {
-            get { return vrg.GetIntValue("Subrosia") != 0; }
-        }
-        public bool SmallIndoorFlag // Will only work in seasons of course
-        {
-            get { return vrg.GetIntValue("Small Indoor Room") != 0; }
-        }
-        public int UniqueGfx
-        {
-            get
-            {
-                return vrg.GetIntValue("Unique Gfx");
-            }
-            set
-            {
-                vrg.SetValue("Unique Gfx", value);
-            }
-        }
-        public int MainGfx
-        {
-            get
-            {
-                return vrg.GetIntValue("Main Gfx");
-            }
-            set
-            {
-                vrg.SetValue("Main Gfx", value);
-            }
-        }
-        public int PaletteHeader
-        {
-            get
-            {
-                return vrg.GetIntValue("Palettes");
-            }
-            set
-            {
-                vrg.SetValue("Palettes", value);
-            }
-        }
+        public BoolValueReferenceWrapper SidescrollFlag { get; private set; }
+        public BoolValueReferenceWrapper LargeIndoorFlag { get; private set; }
+        public BoolValueReferenceWrapper DungeonFlag { get; private set; }
+        public BoolValueReferenceWrapper SmallIndoorFlag { get; private set; }
+        public BoolValueReferenceWrapper MakuTreeFlag { get; private set;}
+        public BoolValueReferenceWrapper OutdoorFlag { get; private set; }
+
+        // Seasons-only flags
+        public BoolValueReferenceWrapper SubrosiaFlag { get; private set; }
+
+        // Ages-only flags
+        public BoolValueReferenceWrapper PastFlag { get; private set; }
+        public BoolValueReferenceWrapper UnderwaterFlag { get; private set; }
+
+        public IntValueReferenceWrapper UniqueGfx { get; private set; }
+        public IntValueReferenceWrapper MainGfx { get; private set; }
+        public IntValueReferenceWrapper PaletteHeader { get; private set; }
+
+        public IntValueReferenceWrapper TilesetLayoutIndex { get; private set; }
+        public IntValueReferenceWrapper LayoutGroup { get; private set; }
+        public IntValueReferenceWrapper AnimationIndex { get; private set; }
+        public IntValueReferenceWrapper DungeonIndex { get; private set; }
+        public IntValueReferenceWrapper CollisionType { get; private set; }
+
         public PaletteHeaderGroup PaletteHeaderGroup
         {
             get
@@ -162,53 +138,6 @@ namespace LynnaLib
                 {
                     return null;
                 }
-            }
-        }
-        public int TilesetLayoutIndex
-        {
-            get
-            {
-                return vrg.GetIntValue("Layout");
-            }
-            set
-            {
-                vrg.SetValue("Layout", value);
-            }
-        }
-        public int LayoutGroup
-        {
-            get
-            {
-                return vrg.GetIntValue("Layout Group");
-            }
-            set
-            {
-                vrg.SetValue("Layout Group", value);
-            }
-        }
-        public int AnimationIndex
-        {
-            get
-            {
-                return vrg.GetIntValue("Animations");
-            }
-            set
-            {
-                vrg.SetValue("Animations", value);
-            }
-        }
-        public int DungeonIndex
-        {
-            get
-            {
-                return vrg.GetIntValue("Dungeon Index");
-            }
-        }
-        public bool IsDungeon
-        {
-            get
-            {
-                return vrg.GetIntValue("Dungeon") != 0;
             }
         }
 
@@ -311,124 +240,121 @@ namespace LynnaLib
             return data;
         }
 
-        // Alternative method to access data fields (this data feeds the GUI directly)
+        /// <summary>
+        /// Set up all the ValueReferences making up the underlying tileset data.
+        /// </summary>
         void ConstructValueReferenceGroup()
         {
             var list = new List<ValueReference>();
             var descList = new List<ValueReferenceDescriptor>();
 
-            var addDescriptor = (string name, bool editable=true, string tooltip=null) =>
+            var addVR = (ValueReference vr) =>
             {
-                var vr = list.Where((vr) => vr.Name == name).First();
+                list.Add(vr);
+                return vr;
+            };
+            var addDescriptor = (ValueReference vr, bool editable=true, string tooltip=null) =>
+            {
                 var descriptor = new ValueReferenceDescriptor(
                     vr, editable, tooltip);
-                list.Add(vr);
+                descList.Add(descriptor);
             };
+
 
             if (Project.GameString == "ages")
             {
-                list.Add(new DataValueReference(
-                             GetDataIndex(1),
-                             name: "Past",
-                             index: 0,
-                             startBit: 7,
-                             type: DataValueType.ByteBit));
-                list.Add(new DataValueReference(
+                PastFlag = addVR(new DataValueReference(
+                        GetDataIndex(1),
+                        name: "Past",
+                        index: 0,
+                        startBit: 7,
+                        type: DataValueType.ByteBit));
+                UnderwaterFlag = addVR(new DataValueReference(
                         GetDataIndex(1),
                         name: "Underwater",
                         index: 0,
                         startBit: 6,
                         type: DataValueType.ByteBit));
 
-                addDescriptor("Past", true,
+                addDescriptor(PastFlag, true,
                               "Set in the past. Determines which minimap comes up with the select button, maybe other stuff too. If a tileset can be used in both the present in the past, this is left unchecked, and the 'roomsInAltWorld' table is checked instead.");
-                addDescriptor("Underwater", true,
+                addDescriptor(UnderwaterFlag, true,
                               "Set in underwater rooms.");
             }
             else
             { // seasons
-                list.AddRange(new ValueReference[] {
-                    new DataValueReference(GetDataIndex(1),
+                SubrosiaFlag = addVR(new DataValueReference(GetDataIndex(1),
                             name: "Subrosia",
                             index: 0,
                             startBit: 7,
-                            type: DataValueType.ByteBit),
-                    new DataValueReference(GetDataIndex(1),
-                            name: "Bit 6 (0x40)",
-                            index: 0,
-                            startBit: 6,
-                            type: DataValueType.ByteBit)
-                });
+                            type: DataValueType.ByteBit));
 
-                addDescriptor("Subrosia", true,
+                addDescriptor(SubrosiaFlag, true,
                             "Set in subrosia. Determines which minimap comes up with the select button, maybe other stuff too. If a tileset can be used in both the overworld and subrosia, this is left unchecked, and the 'roomsInAltWorld' table is checked instead.");
-                addDescriptor("Bit 6 (0x40)", true,
-                              "Likely unused.");
+
+                // NOTE: Seasons unused bit (byte 1, bit 6) has no ValueReference.
             }
-            list.AddRange(new ValueReference[] {
-                new DataValueReference(GetDataIndex(1),
+
+            SidescrollFlag = addVR(new DataValueReference(GetDataIndex(1),
                         name: "Sidescrolling",
                         index: 0,
                         startBit: 5,
-                        type: DataValueType.ByteBit),
-                new DataValueReference(GetDataIndex(1),
+                        type: DataValueType.ByteBit));
+            LargeIndoorFlag = addVR(new DataValueReference(GetDataIndex(1),
                         name: "Large Indoor Room",
                         index: 0,
                         startBit: 4,
-                        type: DataValueType.ByteBit),
-                new DataValueReference(GetDataIndex(1),
+                        type: DataValueType.ByteBit));
+            DungeonFlag = addVR(new DataValueReference(GetDataIndex(1),
                         name: "Dungeon",
                         index: 0,
                         startBit: 3,
-                        type: DataValueType.ByteBit),
-                new DataValueReference(GetDataIndex(1),
+                        type: DataValueType.ByteBit));
+            SmallIndoorFlag = addVR(new DataValueReference(GetDataIndex(1),
                         name: "Small Indoor Room",
                         index: 0,
                         startBit: 2,
-                        type: DataValueType.ByteBit),
-                new DataValueReference(GetDataIndex(1),
+                        type: DataValueType.ByteBit));
+            MakuTreeFlag = addVR(new DataValueReference(GetDataIndex(1),
                         name: "Maku Tree",
                         index: 0,
                         startBit: 1,
-                        type: DataValueType.ByteBit),
-                new DataValueReference(GetDataIndex(1),
+                        type: DataValueType.ByteBit));
+            OutdoorFlag = addVR(new DataValueReference(GetDataIndex(1),
                         name: "Outdoors",
                         index: 0,
                         startBit: 0,
-                        type: DataValueType.ByteBit)
-            });
+                        type: DataValueType.ByteBit));
 
-            addDescriptor("Sidescrolling", true,
-                          "Set in sidescrolling rooms.");
-            addDescriptor("Large Indoor Room", true,
-                          "Set in large, indoor rooms (which aren't real dungeons, ie. ambi's palace). Seems to disable certain properties of dungeons? (Ages only?)");
-            addDescriptor("Dungeon", true,
-                          "Flag is set on dungeons, but also on any room which has a layout in the 'dungeons' tab, even if it's not a real dungeon (ie. ambi's palace). In that case set the 'Large Indoor Room' flag also.");
-            addDescriptor("Small Indoor Room", true,
-                          "Set in small indoor rooms.");
-            addDescriptor("Maku Tree", true,
-                          "In Ages, this hardcodes the location on the minimap for the maku tree screens, and prevents harp use. Not sure if this does anything in Seasons?");
-            addDescriptor("Outdoors", true,
-                          "Affects whether you can use gale seeds, and other things. In Ages this must be checked for the minimap to update your position.");
-
-            list.AddRange(new ValueReference[] {
-                new DataValueReference(GetDataIndex(0),
+            DungeonIndex = addVR(new DataValueReference(GetDataIndex(0),
                         name: "Dungeon Index",
                         index: 0,
                         startBit: 0,
                         endBit: 3,
-                        type: DataValueType.ByteBits),
-                new DataValueReference(GetDataIndex(0),
+                        type: DataValueType.ByteBits));
+            CollisionType = addVR(new DataValueReference(GetDataIndex(0),
                         name: "Collision Type",
                         index: 0,
                         startBit: 4,
                         endBit: 6,
-                        type: DataValueType.ByteBits),
-            });
+                        type: DataValueType.ByteBits));
 
-            addDescriptor("Dungeon Index", true,
+            addDescriptor(SidescrollFlag, true,
+                          "Set in sidescrolling rooms.");
+            addDescriptor(LargeIndoorFlag, true,
+                          "Set in large, indoor rooms (which aren't real dungeons, ie. ambi's palace). Seems to disable certain properties of dungeons? (Ages only?)");
+            addDescriptor(DungeonFlag, true,
+                          "Flag is set on dungeons, but also on any room which has a layout in the 'dungeons' tab, even if it's not a real dungeon (ie. ambi's palace). In that case set the 'Large Indoor Room' flag also.");
+            addDescriptor(SmallIndoorFlag, true,
+                          "Set in small indoor rooms.");
+            addDescriptor(MakuTreeFlag, true,
+                          "In Ages, this hardcodes the location on the minimap for the maku tree screens, and prevents harp use. Not sure if this does anything in Seasons?");
+            addDescriptor(OutdoorFlag, true,
+                          "Affects whether you can use gale seeds, and other things. In Ages this must be checked for the minimap to update your position.");
+
+            addDescriptor(DungeonIndex, true,
                           "Dungeon index (should match value in the Dungeons tab; Dungeon bit must be set).");
-            addDescriptor("Collision Type", true,
+            addDescriptor(CollisionType, true,
                           ("Determines most collision behaviour aside from solidity (ie. water, holes). The meaning of the values differ between ages and seasons.\n\n"
                                        + (Project.Game == Game.Seasons
                                        ? "0: Overworld\n1: Indoors\n2: Maku Tree\n3: Indoors\n4: Dungeons\n5: Sidescrolling"
@@ -437,51 +363,43 @@ namespace LynnaLib
             // These fields do nothing with the expanded tilesets patch.
             if (!Project.Config.ExpandedTilesets)
             {
-                list.AddRange(new ValueReference[] {
-                    new DataValueReference(GetDataIndex(2),
+                TilesetLayoutIndex = addVR(new DataValueReference(GetDataIndex(5),
+                        name: "Layout",
+                        index: 0,
+                        type: DataValueType.Byte));
+                UniqueGfx = addVR(new DataValueReference(GetDataIndex(2),
                         name: "Unique Gfx",
                         index: 0,
                         type: DataValueType.Byte,
-                        constantsMappingString: "UniqueGfxMapping"),
-                    new DataValueReference(GetDataIndex(3),
+                        constantsMappingString: "UniqueGfxMapping"));
+                MainGfx = addVR(new DataValueReference(GetDataIndex(3),
                         name: "Main Gfx",
                         index: 0,
                         type: DataValueType.Byte,
-                        constantsMappingString: "MainGfxMapping"),
-                    new DataValueReference(GetDataIndex(5),
-                        name: "Layout",
-                        index: 0,
-                        type: DataValueType.Byte),
-                    new DataValueReference(GetDataIndex(6),
+                        constantsMappingString: "MainGfxMapping"));
+                LayoutGroup = addVR(new DataValueReference(GetDataIndex(6),
                         name: "Layout Group",
                         index: 0,
                         type: DataValueType.Byte,
-                        maxValue: Project.NumLayoutGroups - 1),
-                });
+                        maxValue: Project.NumLayoutGroups - 1));
 
-                addDescriptor("Layout Group", true,
+                addDescriptor(LayoutGroup, true,
                 "Determines where to read the room layout from (ie. for value '2', it reads from the file 'room02XX.bin', even if the group number is not 2). In general, to prevent confusion, all rooms in the same overworld (or group) should use tilesets which have the same value for this.");
             }
 
-            list.AddRange(new ValueReference[] {
+            PaletteHeader = addVR(new IntValueReferenceWrapper(
                 new DataValueReference(GetDataIndex(4),
                         name: "Palettes",
                         index: 0,
                         type: DataValueType.Byte,
-                        constantsMappingString: "PaletteHeaderMapping"),
+                        constantsMappingString: "PaletteHeaderMapping")));
+            AnimationIndex = addVR(new IntValueReferenceWrapper(
                 new DataValueReference(GetDataIndex(7),
-                        name: "Animations",
-                        index: 0,
-                        type: DataValueType.Byte),
-            });
+                                       name: "Animations",
+                                       index: 0,
+                                       type: DataValueType.Byte)));
 
-            // list.AddRange(new ValueReference[] {
-            //     new DataValueReference(GetDataIndex(0),
-            //             name: "Unused(?) Bit",
-            //             index: 0,
-            //             startBit: 7,
-            //             type: DataValueType.ByteBit),
-            // });
+            // NOTE: unused bit (byte 0, bit 7) has no ValueReference
 
             foreach (ValueReference vr in list)
             {
@@ -493,7 +411,7 @@ namespace LynnaLib
 
             vrg = new ValueReferenceGroup(descList);
 
-            vrg["Palettes"].ValueReference.ModifiedEvent += (sender, args) => PaletteHeaderGroupModifiedEvent?.Invoke(this, null);
+            PaletteHeader.ValueReference.ModifiedEvent += (sender, args) => PaletteHeaderGroupModifiedEvent?.Invoke(this, null);
         }
 
 

@@ -26,7 +26,6 @@ public abstract class ValueReference
     // Constuctors
     // ================================================================================
 
-    // Standard constructor for most ValueReferenceTypes
     public ValueReference(Project project, string name,
                           ValueReferenceType type, string constantsMappingString)
     {
@@ -42,6 +41,9 @@ public abstract class ValueReference
         }
     }
 
+    /// <summary>
+    /// Derived classes can use this copy constructor to help implement their copy constructors
+    /// </summary>
     public ValueReference(ValueReference r)
     {
         Project = r.Project;
