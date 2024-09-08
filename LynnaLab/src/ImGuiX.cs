@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace LynnaLab;
 
@@ -41,6 +43,22 @@ public static class ImGuiX
         ImGui.SetCursorScreenPos(pos);
     }
 
+    /// <summary>
+    /// Moves the cursor such that the given widget will be centered horizontally if drawn
+    /// immediately after this call
+    /// </summary>
+    public static void CenterHorizontal(SizedWidget widget)
+    {
+        var cursor = ImGui.GetCursorScreenPos();
+        var avail = ImGui.GetContentRegionAvail();
+
+        float x = cursor.X;
+        float y = cursor.Y;
+        x += (avail.X - widget.WidgetSize.X) / 2;
+
+        ImGui.SetCursorScreenPos(new Vector2(x, y));
+    }
+
     // ================================================================================
     // Custom widgets
     // ================================================================================
@@ -48,9 +66,18 @@ public static class ImGuiX
     /// <summary>
     /// Convenience method for rendering images
     /// </summary>
-    public static void DrawImage(Image image, float scale = 1.0f)
+    public static void DrawImage(Image image, float scale = 1.0f,
+                                 Vector2? topLeft = null, Vector2? bottomRight = null)
     {
-        ImGui.Image(image.GetBinding(), new Vector2(image.Width, image.Height) * scale);
+        if (bottomRight == null)
+        {
+            topLeft = new Vector2(0, 0);
+            bottomRight = new Vector2(image.Width, image.Height);
+        }
+        Vector2 drawSize = (Vector2)(bottomRight - topLeft);
+        Vector2 totalSize = new Vector2(image.Width, image.Height);
+        ImGui.Image(image.GetBinding(), drawSize * scale,
+                    (Vector2)topLeft / totalSize, (Vector2)bottomRight / totalSize);
     }
 
     // ================================================================================
@@ -80,6 +107,17 @@ public static class ImGuiX
         if (changed)
             accessor.Set(value);
         return changed;
+    }
+
+    /// <summary>
+    /// A checkbox with a callback
+    /// </summary>
+    public static void Checkbox(string name, bool initial, Action<bool> onChanged)
+    {
+        bool value = initial;
+        bool changed = ImGui.Checkbox(name, ref value);
+        if (changed)
+            onChanged(value);
     }
 
     /// <summary>
@@ -144,5 +182,39 @@ public static class ImGuiX
         bool changed = ImGui.MenuItem(name, null, ref value);
         if (changed)
             onChanged(value);
+    }
+
+    /// <summary>
+    /// Set the Drag/Drop payload with an unmanaged type (ie. an int, or a struct which does not
+    /// point to any managed types)
+    /// </summary>
+    public static unsafe void SetDragDropPayload<T>(string type, T payload) where T : unmanaged
+    {
+        IntPtr ptr = (IntPtr)(&payload);
+        ImGui.SetDragDropPayload(type, ptr, (uint)sizeof(T));
+    }
+
+    public static unsafe T? AcceptDragDropPayload<T>(string type) where T : unmanaged
+    {
+        var payload = ImGui.AcceptDragDropPayload(type);
+        if (payload.NativePtr == null)
+            return null;
+        Debug.Assert(payload.DataSize == sizeof(T));
+
+        IntPtr ptr = (IntPtr)payload.Data;
+        return Marshal.PtrToStructure<T>(ptr);
+    }
+
+    public const float TOOLTIP_WINDOW_WIDTH = 500.0f;
+
+    /// <summary>
+    /// A tooltip with a standardized window size
+    /// </summary>
+    public static void Tooltip(string text)
+    {
+        ImGui.SetNextWindowSize(new Vector2(TOOLTIP_WINDOW_WIDTH, 0.0f));
+        ImGui.BeginTooltip();
+        ImGui.TextWrapped(text);
+        ImGui.EndTooltip();
     }
 }

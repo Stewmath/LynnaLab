@@ -6,6 +6,7 @@ public class RoomLayoutEditor : TileGridViewer
     // Constructors
     // ================================================================================
     public RoomLayoutEditor(ProjectWorkspace workspace)
+        : base("Room Layout Editor")
     {
         this.Workspace = workspace;
 

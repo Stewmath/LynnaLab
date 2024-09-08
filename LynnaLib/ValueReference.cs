@@ -73,6 +73,8 @@ public abstract class ValueReference
     }
     public int MaxValue { get; protected set; }
     public int MinValue { get; protected set; }
+
+    // TODO: Move this to ValueReferenceDescriptor
     public ValueReferenceType ValueType { get; protected set; }
 
 

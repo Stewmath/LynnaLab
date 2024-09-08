@@ -110,6 +110,8 @@ public class RealTileset : Tileset
         get { return parentData.CommandLowerCase == "m_seasonaltileset"; }
     }
 
+    public ValueReferenceGroup ValueReferenceGroup { get { return vrg; } }
+
     // ================================================================================
     // Public methods
     // ================================================================================

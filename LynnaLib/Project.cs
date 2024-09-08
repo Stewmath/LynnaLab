@@ -46,7 +46,8 @@ namespace LynnaLib
         // Dictionary of .DEFINE's
         Dictionary<string, string> definesDictionary = new Dictionary<string, string>();
 
-        Dictionary<Tuple<int, int>, Tileset> tilesetCache = new Dictionary<Tuple<int, int>, Tileset>();
+        Dictionary<Tuple<int, int>, RealTileset> tilesetCache
+            = new Dictionary<Tuple<int, int>, RealTileset>();
         Dictionary<int, bool> tilesetSeasonalCache = new Dictionary<int, bool>();
         Dictionary<int, Dungeon> dungeonCache = new Dictionary<int, Dungeon>();
         Dictionary<Tuple<int, int>, WorldMap> worldMapCache = new Dictionary<Tuple<int, int>, WorldMap>();
@@ -542,7 +543,7 @@ namespace LynnaLib
 
         /// Always load Tileset objects through this function. We do not want duplicate Tileset
         /// objects referring to the same data.
-        public Tileset GetTileset(int index, int season)
+        public RealTileset GetTileset(int index, int season)
         {
             Debug.Assert(index >= 0 && index < NumTilesets);
             Debug.Assert(season >= -1 && season <= 3);
@@ -557,7 +558,7 @@ namespace LynnaLib
                 season = -1;
             }
 
-            Tileset retval;
+            RealTileset retval;
             tilesetCache.TryGetValue(new Tuple<int, int>(index, season), out retval);
             if (retval == null)
             {

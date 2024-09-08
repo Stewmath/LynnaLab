@@ -45,7 +45,7 @@ public class DungeonEditor
 
     public void Render()
     {
-        ImGui.PushItemWidth(RoomEditor.ENTRY_ITEM_WIDTH);
+        ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
 
         // Top bar inputs
         {

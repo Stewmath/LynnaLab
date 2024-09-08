@@ -6,6 +6,7 @@ public class Minimap : TileGridViewer
     // Constructors
     // ================================================================================
     public Minimap(ProjectWorkspace workspace)
+        : base("Minimap")
     {
         this.Workspace = workspace;
 

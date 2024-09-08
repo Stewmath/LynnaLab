@@ -10,16 +10,32 @@ public abstract class SizedWidget
     // ================================================================================
     public abstract Vector2 WidgetSize { get; }
 
+    // Whether to center the widget within the available region
+    public bool CenterX { get; set; }
+    public bool CenterY { get; set; }
+
     // ================================================================================
     // Public methods
     // ================================================================================
 
     /// <summary>
-    /// Call this just before rendering begins to set up some helper stuff.
+    /// Call this just before rendering begins to set up some helper stuff. ImGui cursor position
+    /// should be at the start of the render area when this is called.
     /// </summary>
     public void RenderPrep()
     {
-        origin = ImGui.GetCursorScreenPos();
+        var cursor = ImGui.GetCursorScreenPos();
+        var avail = ImGui.GetContentRegionAvail();
+
+        float x = cursor.X;
+        float y = cursor.Y;
+        if (CenterX)
+            x += (avail.X - WidgetSize.X) / 2;
+        if (CenterY)
+            y += (avail.Y - WidgetSize.Y) / 2;
+
+        origin = new Vector2(x, y);
+        ImGui.SetCursorScreenPos(origin);
         drawList = ImGui.GetWindowDrawList();
     }
 

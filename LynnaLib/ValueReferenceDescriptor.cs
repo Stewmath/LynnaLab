@@ -50,11 +50,13 @@ public class ValueReferenceDescriptor
 
     public Project Project { get { return valueReference.Project; } }
     public ValueReference ValueReference { get { return valueReference; } }
+    public ValueReferenceType ValueType { get { return ValueReference.ValueType; } }
 
     public string Name { get; private set; }
     public bool Editable { get; private set; }
     public string Tooltip { get; private set; }
 
+    public ConstantsMapping ConstantsMapping { get { return ValueReference.ConstantsMapping; } }
     // This documentation tends to change based on what the current value is...
     public Documentation Documentation { get; private set; }
 

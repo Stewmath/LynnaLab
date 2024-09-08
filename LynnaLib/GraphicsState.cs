@@ -19,8 +19,7 @@ namespace LynnaLib
     public class GraphicsState
     {
         // Called when a tile is changed ("-1, -1" means full invalidation)
-        public delegate void TileModifiedHandler(int bank, int tile);
-        event TileModifiedHandler tileModifiedEvent;
+        event Action<int, int> tileModifiedEvent;
 
         bool gfxModified, palettesModified;
 
@@ -192,11 +191,11 @@ namespace LynnaLib
             palettesModified = true;
         }
 
-        public void AddTileModifiedHandler(TileModifiedHandler handler)
+        public void AddTileModifiedHandler(Action<int, int> handler)
         {
             tileModifiedEvent += handler;
         }
-        public void RemoveTileModifiedHandler(TileModifiedHandler handler)
+        public void RemoveTileModifiedHandler(Action<int, int> handler)
         {
             tileModifiedEvent -= handler;
         }

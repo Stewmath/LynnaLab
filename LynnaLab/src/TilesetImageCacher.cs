@@ -34,13 +34,15 @@ public class TilesetImageCacher : ImageCacher<Tileset>
     {
         Image image = TopLevel.Backend.CreateImage(16 * 16, 16 * 16);
 
-        for (int x = 0; x < 16; x++)
+        RedrawAll(image, tileset);
+
+        tileset.TileModifiedEvent += (_, tile) =>
         {
-            for (int y = 0; y < 16; y++)
-            {
-                DrawTile(image, tileset, x, y);
-            }
-        }
+            if (tile == -1)
+                RedrawAll(image, tileset);
+            else
+                DrawTile(image, tileset, tile % 16, tile / 16);
+        };
 
         return image;
     }
@@ -49,6 +51,17 @@ public class TilesetImageCacher : ImageCacher<Tileset>
     // ================================================================================
     // Private methods
     // ================================================================================
+
+    void RedrawAll(Image image, Tileset tileset)
+    {
+        for (int x = 0; x < 16; x++)
+        {
+            for (int y = 0; y < 16; y++)
+            {
+                DrawTile(image, tileset, x, y);
+            }
+        }
+    }
 
     void DrawTile(Image image, Tileset tileset, int x, int y)
     {

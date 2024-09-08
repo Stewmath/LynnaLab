@@ -29,6 +29,7 @@ public class ProjectWorkspace
         linkImage = TopLevel.ImageFromBitmap(project.LinkBitmap);
         roomEditor = new RoomEditor(this);
         dungeonEditor = new DungeonEditor(this);
+        tilesetEditor = new TilesetEditor(this);
         buildDialog = new BuildDialog(this);
     }
 
@@ -38,6 +39,8 @@ public class ProjectWorkspace
 
     RoomEditor roomEditor;
     DungeonEditor dungeonEditor;
+    TilesetEditor tilesetEditor;
+
     Image linkImage;
     BuildDialog buildDialog;
 
@@ -105,6 +108,10 @@ public class ProjectWorkspace
 
         ImGui.Begin("Dungeon Editor");
         dungeonEditor.Render();
+        ImGui.End();
+
+        ImGui.Begin("Tileset Editor");
+        tilesetEditor.Render();
         ImGui.End();
 
         if (buildDialog.Visible)

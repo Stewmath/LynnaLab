@@ -15,6 +15,9 @@ public class VeldridImage : Image
         this.interpolation = interpolation;
     }
 
+    /// <summary>
+    /// Image from bitmap
+    /// </summary>
     public VeldridImage(ImGuiController controller, Interpolation interpolation, Bitmap bitmap)
         : this(controller, interpolation)
     {
@@ -40,6 +43,9 @@ public class VeldridImage : Image
         this.unsubscribeFromBitmapChanges = () => bitmap.ModifiedEvent -= modifiedEventHandler;
     }
 
+    /// <summary>
+    /// Blank image
+    /// </summary>
     public VeldridImage(ImGuiController controller, Interpolation interpolation, int width, int height)
         : this(controller, interpolation)
     {

@@ -77,8 +77,6 @@ public class RoomEditor
     // on for a given dungeon.
     Dictionary<int, int> floorDict = new Dictionary<int, int>();
 
-    public const float ENTRY_ITEM_WIDTH = 150.0f;
-
     // ================================================================================
     // Properties
     // ================================================================================
@@ -151,7 +149,7 @@ public class RoomEditor
 
         // Input fields for either minimap type
         {
-            ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
+            ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
             int roomIndex = Room.Index;
             if (ImGuiX.InputHex("Room", ref roomIndex, 3))
             {
@@ -180,7 +178,7 @@ public class RoomEditor
 
             // Input fields for overworld minimaps
             {
-                ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
+                ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
 
                 int worldIndex = Room.Group;
                 if (ImGuiX.InputHex("World", ref worldIndex, 1))
@@ -217,7 +215,7 @@ public class RoomEditor
 
             // Input fields for dungeons
             {
-                ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
+                ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
 
                 int dungeonIndex = (dungeonMinimap.Map as Dungeon).Index;
                 if (ImGuiX.InputHex("Dungeon", ref dungeonIndex, 1))

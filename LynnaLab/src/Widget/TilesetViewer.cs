@@ -9,6 +9,7 @@ public class TilesetViewer : TileGridViewer
     // Constructors
     // ================================================================================
     public TilesetViewer(ProjectWorkspace workspace)
+        : base("Tileset Viewer")
     {
         this.Workspace = workspace;
 
@@ -17,6 +18,7 @@ public class TilesetViewer : TileGridViewer
         base.Width = 16;
         base.Height = 16;
         base.Selectable = true;
+        base.HoverImagePreview = true;
     }
 
     // ================================================================================

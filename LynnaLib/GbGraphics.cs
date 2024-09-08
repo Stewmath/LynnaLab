@@ -1,7 +1,3 @@
-using System;
-using System.Linq;
-using System.Collections.Generic;
-
 namespace LynnaLib
 {
     public class GbGraphics
@@ -70,7 +66,7 @@ namespace LynnaLib
                 }
             }
 
-            var format = sprite ? Cairo.Format.Argb32 : Cairo.Format.Rgb24;
+            var format = Cairo.Format.Argb32;
 
             using (var surface = new Cairo.ImageSurface(pixels, format, 8, height, stride))
             {
