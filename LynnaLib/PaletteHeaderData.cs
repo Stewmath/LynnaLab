@@ -117,9 +117,23 @@ namespace LynnaLib
             data.Color = color;
         }
 
+        public Color GetColor(int palette, int colorIndex)
+        {
+            RgbData data = GetRgbData(palette, colorIndex);
+            return data.Color;
+        }
+
         RgbData GetRgbData(int palette, int colorIndex)
         {
+            if (!IsResolvable)
+                throw new Exception($"Palette {PointerName} could not be resolved");
+
+            if (palette < FirstPalette || palette >= FirstPalette + NumPalettes)
+                throw new Exception($"Requested palette index {palette} from palette header, out of range");
+
+            palette -= FirstPalette;
             RgbData data = Data;
+
             for (int i = 0; i < palette * 4 + colorIndex; i++)
             {
                 data = data.NextData as RgbData;

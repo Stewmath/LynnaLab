@@ -106,7 +106,86 @@ public class ImGuiLL
         ImGui.PopItemWidth();
     }
 
-    // ================================================================================
-    // Private methods
-    // ================================================================================
+    /// <summary>
+    /// Render all palettes in a palette header group as buttons that can be clicked to change them.
+    /// Note: PaletteHeaderData.GetColor() is inefficient, not great to call it every frame
+    /// </summary>
+    public static void RenderPaletteHeader(PaletteHeaderGroup phg)
+    {
+        const float COLUMN_WIDTH = 30.0f;
+        int callCount = 0;
+
+        var displayPalette = (PaletteHeaderData data) =>
+        {
+            string name = data.PointerName;
+            string t = data.PaletteType == PaletteType.Background ? "BG" : "SPR";
+
+            ImGui.SeparatorText(name);
+            ImGui.BeginChild($"{name}-{callCount} child", new Vector2(COLUMN_WIDTH * 9, 0.0f));
+            if (ImGui.BeginTable(name, 9))
+            {
+                // Number headings
+                ImGui.TableNextRow();
+                for (int p = 0; p < 8; p++)
+                {
+                    ImGui.TableSetColumnIndex(p);
+                    ImGuiX.TextCentered(p.ToString());
+                }
+
+                // For each row
+                for (int i = 0; i < 4; i++)
+                {
+                    ImGui.TableNextRow();
+
+                    // For each column
+                    for (int p = data.FirstPalette; p < data.FirstPalette + data.NumPalettes; p++)
+                    {
+                        ImGui.TableSetColumnIndex(p);
+                        if (data.IsResolvable)
+                        {
+                            // Color picker button
+                            string label = $"{t}-{p}-{i} ({name})##{callCount}";
+                            ImGuiX.ColorEdit(label, data.GetColor(p, i), (color) =>
+                            {
+                                data.SetColor(p, i, color);
+                            });
+                        }
+                        else
+                        {
+                            ImGuiX.TextCentered("X");
+                            if (ImGui.IsItemHovered())
+                                ImGui.SetTooltip("Failed to load");
+                        }
+                    }
+                }
+
+                ImGui.EndTable();
+            }
+            ImGui.EndChild();
+
+            callCount++;
+        };
+
+        string sectionName = null;
+
+        ImGui.BeginGroup();
+
+        phg.Foreach((data) =>
+        {
+            string name = data.PaletteType == PaletteType.Background ? "BG" : "SPR";
+            if (name != sectionName)
+            {
+                if (sectionName != null)
+                    ImGui.EndGroup();
+                ImGui.BeginGroup();
+                sectionName = name;
+                ImGui.SeparatorText(name + " Palettes");
+            }
+
+            displayPalette(data);
+        });
+
+        ImGui.EndGroup();
+        ImGui.EndGroup();
+    }
 }

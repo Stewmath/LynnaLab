@@ -66,9 +66,14 @@ public class TilesetEditor
         ImGui.EndChild();
 
         ImGui.SameLine();
-        ImGui.BeginChild("SubTile Panel", new Vector2(0.0f, HEIGHT));
+        ImGui.BeginChild("SubTile Panel", new Vector2(subTileViewer.WidgetSize.X, HEIGHT));
         ImGui.SeparatorText($"SubTiles");
         subTileViewer.Render();
+        ImGui.EndChild();
+
+        ImGui.SameLine();
+        ImGui.BeginChild("Palette Panel", new Vector2(0.0f, HEIGHT));
+        ImGuiLL.RenderPaletteHeader(Tileset.PaletteHeaderGroup);
         ImGui.EndChild();
 
         ImGui.SeparatorText("Tileset Properties");

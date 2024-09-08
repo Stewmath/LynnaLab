@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace LynnaLib
 {
     /// I don't like Cairo.Color (it uses doubles) so I made this
@@ -54,6 +56,10 @@ namespace LynnaLib
             return c;
         }
 
+        // ================================================================================
+        // Conversion
+        // ================================================================================
+
         public static Color FromCairo(Cairo.Color c)
         {
             return FromRgbaDbl(c.R, c.G, c.B, c.A);
@@ -64,6 +70,21 @@ namespace LynnaLib
             return new Cairo.Color(c.r / 255.0, c.g / 255.0, c.b / 255.0, c.a / 255.0);
         }
 
+        public static implicit operator Vector4(Color c)
+        {
+            return new Vector4(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
+        }
+
+        public static implicit operator Color(Vector4 c)
+        {
+            return Color.FromRgbaDbl(c.X, c.Y, c.Z, c.W);
+        }
+
+
+
+        // ================================================================================
+        // Constants
+        // ================================================================================
 
         // Some colors copied over from System.Drawing to keep things consistent
         public static readonly Color Black = FromRgb(0x00, 0x00, 0x00);

@@ -121,6 +121,23 @@ public static class ImGuiX
     }
 
     /// <summary>
+    /// Color picker with a callback
+    /// </summary>
+    public static void ColorEdit(string name, Vector4 initial, Action<Vector4> onChanged)
+    {
+        if (ImGui.ColorEdit4(
+            name,
+            ref initial,
+            ImGuiColorEditFlags.NoInputs
+            | ImGuiColorEditFlags.NoLabel
+            | ImGuiColorEditFlags.NoAlpha
+        ))
+        {
+            onChanged(initial);
+        }
+    }
+
+    /// <summary>
     /// Hex input field, takes a ref int. Returns true if value was changed.
     /// </summary>
     public static unsafe bool InputHex(string name, ref int value,
@@ -203,6 +220,20 @@ public static class ImGuiX
 
         IntPtr ptr = (IntPtr)payload.Data;
         return Marshal.PtrToStructure<T>(ptr);
+    }
+
+    /// <summary>
+    /// Same as Text() but centers the text in the available region horizontally. Not for multiline
+    /// text.
+    /// </summary>
+    public static void TextCentered(string text)
+    {
+        var avail = ImGui.GetContentRegionAvail();
+        var size = ImGui.CalcTextSize(text);
+        var shiftVector = new Vector2(((avail - size) / 2).X, 0.0f);
+        ShiftCursorScreenPos(shiftVector);
+        ImGui.Text(text);
+        ShiftCursorScreenPos(-shiftVector);
     }
 
     public const float TOOLTIP_WINDOW_WIDTH = 500.0f;
