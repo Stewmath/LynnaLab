@@ -20,10 +20,7 @@ public class ProjectWorkspace
         QuickstartData.x = 0x48;
         QuickstartData.y = 0x48;
 
-        foreach (Tileset tileset in Project.GetAllTilesets())
-        {
-            tileset.LazyTileRedraw(topLevel.LazyInvoke);
-        }
+        Project.LazyInvoke = topLevel.LazyInvoke;
 
         tilesetImageCacher = new TilesetImageCacher(this);
         roomImageCacher = new RoomImageCacher(this);

@@ -358,6 +358,8 @@ namespace LynnaLib
 
         public Bitmap LinkBitmap { get; private set; }
 
+        public Action<Func<bool>> LazyInvoke { get; set; }
+
 
         // Methods
 
@@ -559,7 +561,7 @@ namespace LynnaLib
             tilesetCache.TryGetValue(new Tuple<int, int>(index, season), out retval);
             if (retval == null)
             {
-                retval = new Tileset(this, index, season);
+                retval = new RealTileset(this, index, season);
                 tilesetCache[new Tuple<int, int>(index, season)] = retval;
             }
             return retval;
