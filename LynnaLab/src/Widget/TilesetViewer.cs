@@ -19,6 +19,13 @@ public class TilesetViewer : TileGridViewer
         base.Height = 16;
         base.Selectable = true;
         base.HoverImagePreview = true;
+
+        base.OnHover = (tile) =>
+        {
+            ImGui.BeginTooltip();
+            ImGui.Text($"Tile {tile:X2}");
+            ImGui.EndTooltip();
+        };
     }
 
     // ================================================================================
@@ -34,6 +41,8 @@ public class TilesetViewer : TileGridViewer
     public ProjectWorkspace Workspace { get; private set; }
     public Project Project { get { return Workspace.Project; } }
     public TopLevel TopLevel { get { return Workspace.TopLevel; } }
+
+    public Tileset Tileset { get { return tileset; } }
 
     protected override Image Image
     {

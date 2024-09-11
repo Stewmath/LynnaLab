@@ -170,10 +170,9 @@ public class ValueReferenceGroup
         descriptors = new List<ValueReferenceDescriptor>();
         foreach (var desc in refs)
         {
-            ValueReferenceDescriptor copy = new ValueReferenceDescriptor(desc);
-            descriptors.Add(copy);
+            descriptors.Add(desc);
 
-            copy.ValueReference.AddValueModifiedHandler(
+            desc.ValueReference.AddValueModifiedHandler(
                 (sender, args) => lockableModifiedEvent?.Invoke(sender, args));
         }
     }

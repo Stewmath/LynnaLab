@@ -5,37 +5,44 @@ namespace LynnaLab;
 /// </summary>
 public class ImGuiLL
 {
-    public const float ENTRY_ITEM_WIDTH = 150.0f;
-    public const float COMBO_ITEM_WIDTH = ENTRY_ITEM_WIDTH * 3;
+    public const float ENTRY_ITEM_WIDTH = 120.0f;
 
-    public static void ComboBoxFromConstants(ValueReferenceDescriptor desc)
+    public static void ComboBoxFromConstants(
+        string name, ConstantsMapping mapping, ref int value,
+        bool withIntInput, bool omitPrefix)
     {
-        ConstantsMapping mapping = desc.ConstantsMapping;
+        string getLabelName(string name, ConstantsMapping mapping, bool omitPrefix)
+        {
+            if (!omitPrefix)
+                return name;
+            return mapping.RemovePrefix(name);
+        }
 
         ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
         ImGui.BeginGroup();
 
-        int initial = desc.GetIntValue();
+        if (withIntInput)
+            ImGuiX.InputHex($"{name}##InputHex", ref value);
 
-        ImGuiX.InputHex(desc.Name, initial, (value) =>
-        {
-            desc.SetValue(value);
-        });
+        // Calculate width of largest text item
+        float width = 40.0f;
+        foreach (string v in mapping.GetAllStrings())
+            width = Math.Max(width, ImGui.CalcTextSize(getLabelName(v, mapping, omitPrefix)).X);
 
-        ImGui.PushItemWidth(COMBO_ITEM_WIDTH);
+        ImGui.PushItemWidth(width + 35.0f);
 
         string preview = "";
-        if (mapping.HasValue(initial))
-            preview = mapping.ByteToString(initial);
-        if (ImGui.BeginCombo("##Combobox", preview))
+        if (mapping.HasValue(value))
+            preview = getLabelName(mapping.ByteToString(value), mapping, omitPrefix);
+        if (ImGui.BeginCombo($"##{name}-Combobox", preview))
         {
             foreach (string v in mapping.GetAllStrings().OrderBy(v => v))
             {
                 int i = mapping.StringToByte(v);
-                bool selected = i == initial;
-                if (ImGui.Selectable(v, selected))
+                bool selected = i == value;
+                if (ImGui.Selectable(getLabelName(v, mapping, omitPrefix), selected))
                 {
-                    desc.SetValue(i);
+                    value = i;
                 }
 
                 if (selected)
@@ -47,6 +54,17 @@ public class ImGuiLL
         ImGui.PopItemWidth();
         ImGui.EndGroup();
         ImGui.PopItemWidth();
+    }
+
+    public static void ComboBoxFromConstants(ValueReferenceDescriptor desc, bool withIntInput = true, bool omitPrefix = false)
+    {
+        ConstantsMapping mapping = desc.ConstantsMapping;
+
+        int initial = desc.GetIntValue();
+        int value = initial;
+        ComboBoxFromConstants(desc.Name, desc.ConstantsMapping, ref value, withIntInput, omitPrefix);
+        if (value != initial)
+            desc.SetValue(value);
     }
 
     public static void RenderValueReferenceGroup(ValueReferenceGroup vrg, ISet<string> linebreaks)
@@ -186,6 +204,42 @@ public class ImGuiLL
         });
 
         ImGui.EndGroup();
+        ImGui.EndGroup();
+    }
+
+    static readonly HashSet<string> tilesetPropsLineBreaks = new HashSet<string>(
+        "Dungeon Index".Split(","));
+
+    public static void RenderTilesetFields(Tileset tileset)
+    {
+        RenderValueReferenceGroup(tileset.ValueReferenceGroup, tilesetPropsLineBreaks);
+    }
+
+    /// <summary>
+    /// Fields to choose a tileset (index + season).
+    /// </summary>
+    public static void TilesetChooser(Project project, string name, int index, int season, Action<int, int> onChanged)
+    {
+        ImGui.BeginGroup();
+        ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
+
+        ImGuiX.InputHex($"##{name}-Tileset-Index", index, (value) =>
+        {
+            onChanged(value, season);
+        }, max: project.NumTilesets-1);
+
+        if (project.TilesetIsSeasonal(index))
+        {
+            ImGui.SameLine();
+
+            int newSeason = season;
+            ComboBoxFromConstants($"##{name}-Tileset-Season", project.SeasonMapping, ref newSeason,
+                                  withIntInput: false, omitPrefix: true);
+            if (newSeason != season)
+                onChanged(index, newSeason);
+        }
+
+        ImGui.PopItemWidth();
         ImGui.EndGroup();
     }
 }

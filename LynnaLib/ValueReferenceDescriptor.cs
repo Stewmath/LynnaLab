@@ -26,19 +26,6 @@ public class ValueReferenceDescriptor
         }
     }
 
-    /// <summary>
-    /// Clones a ValueReferenceDescriptor by instantiating a new instance of its underlying
-    /// ValueReference and using that for the new ValueReferenceDescriptor.
-    /// </summary>
-    public ValueReferenceDescriptor(ValueReferenceDescriptor desc)
-    {
-        this.valueReference = desc.ValueReference.Clone();
-        this.Name = desc.Name;
-        this.Editable = desc.Editable;
-        this.Tooltip = desc.Tooltip;
-        this.Documentation = desc.Documentation;
-    }
-
     // ================================================================================
     // Variables
     // ================================================================================

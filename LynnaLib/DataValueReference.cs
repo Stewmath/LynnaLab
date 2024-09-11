@@ -105,17 +105,6 @@ public class DataValueReference : ValueReference
         BindEventHandler();
     }
 
-    public DataValueReference(DataValueReference vref) : base(vref)
-    {
-        this.dataType = vref.dataType;
-        this.valueIndex = vref.valueIndex;
-        this.startBit = vref.startBit;
-        this.endBit = vref.endBit;
-        this._data = vref._data;
-
-        BindEventHandler();
-    }
-
     void BindEventHandler()
     {
         dataEventWrapper.Bind<DataModifiedEventArgs>("ModifiedEvent", OnDataModified);
@@ -242,11 +231,6 @@ public class DataValueReference : ValueReference
             Data.SetNumValues(valueIndex + 1, "$00");
         Data.SetValue(valueIndex, defaultDataValues[(int)dataType]);
         RaiseModifiedEvent(null);
-    }
-
-    public override ValueReference Clone()
-    {
-        return new DataValueReference(this);
     }
 
 

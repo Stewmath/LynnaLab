@@ -40,21 +40,6 @@ public abstract class ValueReference
         }
     }
 
-    /// <summary>
-    /// Derived classes can use this copy constructor to help implement their copy constructors
-    /// </summary>
-    public ValueReference(ValueReference r)
-    {
-        Project = r.Project;
-        MaxValue = r.MaxValue;
-        MinValue = r.MinValue;
-        ValueType = r.ValueType;
-        constantsMapping = r.ConstantsMapping;
-        ConstantsMappingString = r.ConstantsMappingString;
-        ModifiedEvent = r.ModifiedEvent;
-    }
-
-
 
     // ================================================================================
     // Variables
@@ -113,6 +98,4 @@ public abstract class ValueReference
 
     // Sets the value to its default.
     public abstract void Initialize();
-
-    public abstract ValueReference Clone();
 }

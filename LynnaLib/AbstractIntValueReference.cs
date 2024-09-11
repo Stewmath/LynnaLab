@@ -29,15 +29,8 @@ public class AbstractIntValueReference : ValueReference
         base.MinValue = minValue;
     }
 
-    public AbstractIntValueReference(AbstractIntValueReference r)
-    : base(r)
-    {
-        this.getter = r.getter;
-        this.setter = r.setter;
-    }
-
     public AbstractIntValueReference(ValueReference r, Func<int> getter = null, Action<int> setter = null)
-    : base(r)
+        : base(r.Project, r.ValueType, r.ConstantsMappingString)
     {
         this.getter = getter;
         this.setter = setter;
@@ -87,11 +80,6 @@ public class AbstractIntValueReference : ValueReference
     public override void Initialize()
     {
         throw new NotImplementedException();
-    }
-
-    public override ValueReference Clone()
-    {
-        return new AbstractIntValueReference(this);
     }
 
     // ================================================================================

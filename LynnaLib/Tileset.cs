@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 
 namespace LynnaLib
 {
@@ -30,6 +31,7 @@ namespace LynnaLib
         List<byte>[] usedTileList = new List<byte>[256];
 
         int inhibitRedraw = 0;
+        int inhibitUsedTileListUpdate = 0;
 
 
         // ================================================================================
@@ -59,6 +61,8 @@ namespace LynnaLib
             get { return graphicsState; }
         }
 
+        public ValueReferenceGroup ValueReferenceGroup { get; private set; }
+
         // Following properties correspond to the 8 bytes defining the tileset.
         // Subclasses must set these up in their constructors.
 
@@ -86,6 +90,11 @@ namespace LynnaLib
         public IntValueReferenceWrapper DungeonIndex { get; protected set; }
         public IntValueReferenceWrapper CollisionType { get; protected set; }
 
+        public Stream GfxFileStream { get; protected set; }
+
+        // End of properties that subclass must set in constructor
+
+
         public PaletteHeaderGroup PaletteHeaderGroup
         {
             get
@@ -101,9 +110,7 @@ namespace LynnaLib
             }
         }
 
-
         protected TilesetHeaderGroup TilesetHeaderGroup { get; private set; }
-        protected Stream GfxFileStream { get; set; } // Subclass must set this in constructor
 
         // ================================================================================
         // Constructors
@@ -128,8 +135,8 @@ namespace LynnaLib
             });
             paletteEventWrapper.Bind<EventArgs>("ModifiedEvent", OnPaletteDataModified);
 
-            // Subclass constructor should call ReloadAll() after their constructors are finished to
-            // begin loading the graphics.
+            // Subclass constructor should call SubclassInitializationFinished() after their
+            // constructors are finished to begin loading the graphics.
             // Ideally we'd have all the information we need already within this constructor, but
             // subclasses are providing data through protected properties which aren't initialized
             // yet. This is probably against some kind of C# design pattern.
@@ -144,6 +151,8 @@ namespace LynnaLib
         // from the constructor), which is costly.
         public void InvalidateAllTiles()
         {
+            if (inhibitRedraw != 0)
+                return;
             for (int i = 0; i < 256; i++) {
                 tileImagesCache[i]?.Dispose();
                 tileImagesCache[i] = null;
@@ -245,10 +254,35 @@ namespace LynnaLib
         public abstract void SetSubTileIndex(int index, int x, int y, byte value);
         public abstract byte GetSubTileFlags(int index, int x, int y);
         public abstract void SetSubTileFlags(int index, int x, int y, byte value);
-        public abstract bool GetSubTileBasicCollision(int index, int x, int y);
-        public abstract void SetSubTileBasicCollision(int index, int x, int y, bool value);
         public abstract byte GetTileCollision(int index);
         public abstract void SetTileCollision(int index, byte value);
+
+
+        /// <summary>
+        /// Get the "basic collision" of a subtile (whether or not that part is
+        /// solid). This ignores the upper half of the collision data bytes and
+        /// assumes it is zero.
+        /// </summary>
+        public bool GetSubTileBasicCollision(int index, int x, int y)
+        {
+            VerifySubTileParams(index, x, y);
+
+            byte b = GetTileCollision(index);
+            byte i = (byte)(1 << (3 - (x + y * 2)));
+            return (b & i) != 0;
+        }
+        public void SetSubTileBasicCollision(int index, int x, int y, bool val)
+        {
+            VerifySubTileParams(index, x, y);
+
+            byte b = GetTileCollision(index);
+            byte i = (byte)(1 << (3 - (x + y * 2)));
+            b = (byte)(b & ~i);
+            if (val)
+                b |= i;
+            SetTileCollision(index, b);
+        }
+
 
         // Returns a list of tiles which have changed
         public IList<byte> UpdateAnimations(int frames)
@@ -331,6 +365,102 @@ namespace LynnaLib
             return tileImagesCache[tileIndex] != null;
         }
 
+        /// <summary>
+        /// Clones all data fields from another tileset into this tileset.
+        /// Typically used to load a FakeTileset's data into a RealTileset.
+        /// </summary>
+        public void LoadFrom(Tileset source)
+        {
+            inhibitRedraw++;
+
+            LoadSubTileIndices(source);
+            LoadSubTileFlags(source);
+            LoadGraphics(source);
+            LoadCollisions(source);
+            LoadProperties(source);
+
+            inhibitRedraw--;
+
+            InvalidateAllTiles();
+            GenerateUsedTileList();
+        }
+
+        /// <summary>
+        /// Replace the tile index list with the values from the given tileset source
+        /// </summary>
+        public void LoadSubTileIndices(Tileset source)
+        {
+            inhibitUsedTileListUpdate++;
+            for (int tile = 0; tile < 256; tile++)
+            {
+                for (int subtile = 0; subtile < 4; subtile++)
+                {
+                    var (x, y) = (subtile % 2, subtile / 2);
+                    SetSubTileIndex(tile, x, y, source.GetSubTileIndex(tile, x, y));
+                }
+            }
+            inhibitUsedTileListUpdate--;
+            GenerateUsedTileList();
+        }
+
+        /// <summary>
+        /// Replace the tile flag list with the values from the given tileset source
+        /// </summary>
+        public void LoadSubTileFlags(Tileset source)
+        {
+            inhibitRedraw++;
+
+            for (int tile = 0; tile < 256; tile++)
+            {
+                for (int subtile = 0; subtile < 4; subtile++)
+                {
+                    var (x, y) = (subtile % 2, subtile / 2);
+                    SetSubTileFlags(tile, x, y, source.GetSubTileFlags(tile, x, y));
+                }
+            }
+
+            inhibitRedraw--;
+            InvalidateAllTiles();
+        }
+
+        /// <summary>
+        /// Replace the graphics with the data from the source.
+        /// TODO: Write change to file
+        /// </summary>
+        public void LoadGraphics(Tileset source)
+        {
+            GfxFileStream = source.GfxFileStream;
+            LoadAllGfxData();
+            InvalidateAllTiles();
+        }
+
+        /// <summary>
+        /// Replace the collision data with the data from the source
+        /// </summary>
+        public void LoadCollisions(Tileset source)
+        {
+            for (int tile = 0; tile < 256; tile++)
+            {
+                SetTileCollision(tile, source.GetTileCollision(tile));
+            }
+        }
+
+        /// <summary>
+        /// Load all "property" fields from another tileset (see GenerateDescriptors function).
+        /// </summary>
+        public void LoadProperties(Tileset source)
+        {
+            inhibitRedraw++;
+
+            foreach (var vr in ValueReferenceGroup.GetDescriptors())
+            {
+                vr.SetValue(source.ValueReferenceGroup[vr.Name].GetIntValue());
+            }
+
+            inhibitRedraw--;
+            InvalidateAllTiles();
+        }
+
         public void Dispose()
         {
             graphicsState = null;
@@ -347,6 +477,8 @@ namespace LynnaLib
         // Generate usedTileList for quick lookup of which metatiles use which 4 gameboy tiles.
         protected void GenerateUsedTileList()
         {
+            if (inhibitUsedTileListUpdate != 0)
+                return;
             for (int j = 0; j < 256; j++)
                 usedTileList[j] = new List<byte>();
             for (int j = 0; j < 256; j++)
@@ -367,6 +499,8 @@ namespace LynnaLib
 
         protected void InvalidateTile(int index)
         {
+            if (inhibitRedraw != 0)
+                return;
             tileImagesCache[index]?.Dispose();
             tileImagesCache[index] = null;
             GetTileBitmap(index); // Redraw tile image
@@ -380,6 +514,7 @@ namespace LynnaLib
             if (Project.Config.ExpandedTilesets)
             {
                 byte[] gfx = new byte[0x1000];
+                GfxFileStream.Seek(0, SeekOrigin.Begin);
                 GfxFileStream.Read(gfx, 0, 0x1000);
                 graphicsState.AddRawVram(1, 0x800, gfx);
                 gfxStreamEventWrapper.ReplaceEventSource(GfxFileStream as ReloadableStream);
@@ -491,13 +626,25 @@ namespace LynnaLib
         /// <summary>
         /// Subclasses should call this at the end of their constructors
         /// </summary>
-        protected void ReloadAll()
+        protected void SubclassInitializationFinished()
         {
+            // Set inhibitRedraw because we want to delay drawing until it's requested, and some of
+            // the functions called here would otherwise trigger redraws
             inhibitRedraw++;
+
             OnTilesetLayoutChanged();
             LoadAllGfxData();
             OnPaletteHeaderChanged();
+
+            GenerateDescriptors();
+            InstallModifiedHandlers();
+
             inhibitRedraw--;
+        }
+
+        protected void VerifySubTileParams(int index, int x, int y)
+        {
+            Debug.Assert(index >= 0 && index <= 0xff && x >= 0 && x <= 1 && y >= 0 && y <= 1);
         }
 
         // ================================================================================
@@ -519,6 +666,91 @@ namespace LynnaLib
             if (PaletteHeaderGroup != null)
                 graphicsState.AddPaletteHeaderGroup(PaletteHeaderGroup, PaletteGroupType.Main);
             InvalidateAllTiles();
+        }
+
+        /// <summary>
+        /// Generate ValueReferenceDescriptors for all the ValueReferences. Called once at the end
+        /// of initialization.
+        /// </summary>
+        void GenerateDescriptors()
+        {
+            var descList = new List<ValueReferenceDescriptor>();
+
+            var addDescriptor = (ValueReference vr, string name, bool editable = true, string tooltip = null) =>
+            {
+                var descriptor = new ValueReferenceDescriptor(
+                    vr, name, editable, tooltip);
+                descList.Add(descriptor);
+            };
+
+
+            if (Project.Game == Game.Ages)
+            {
+                addDescriptor(PastFlag, "Past", true,
+                          "Set in the past. Determines which minimap comes up with the select button, maybe other stuff too. If a tileset can be used in both the present in the past, this is left unchecked, and the 'roomsInAltWorld' table is checked instead.");
+                addDescriptor(UnderwaterFlag, "Underwater", true,
+                    "Set in underwater rooms.");
+            }
+            else // Seasons
+            {
+                addDescriptor(SubrosiaFlag, "Subrosia", true,
+                            "Set in subrosia. Determines which minimap comes up with the select button, maybe other stuff too. If a tileset can be used in both the overworld and subrosia, this is left unchecked, and the 'roomsInAltWorld' table is checked instead.");
+            }
+
+            addDescriptor(SidescrollFlag, "Sidescrolling", true,
+                          "Set in sidescrolling rooms.");
+            addDescriptor(LargeIndoorFlag, "Large Indoor Room", true,
+                          "Set in large, indoor rooms (which aren't real dungeons, ie. ambi's palace). Seems to disable certain properties of dungeons? (Ages only?)");
+            addDescriptor(DungeonFlag, "Is Dungeon", true,
+                          "Flag is set on dungeons, but also on any room which has a layout in the 'dungeons' tab, even if it's not a real dungeon (ie. ambi's palace). In that case set the 'Large Indoor Room' flag also.");
+            addDescriptor(SmallIndoorFlag, "Small Indoor Room", true,
+                          "Set in small indoor rooms.");
+            addDescriptor(MakuTreeFlag, "Maku Tree", true,
+                          "In Ages, this hardcodes the location on the minimap for the maku tree screens, and prevents harp use. Not sure if this does anything in Seasons?");
+            addDescriptor(OutdoorFlag, "Outdoors", true,
+                          "Affects whether you can use gale seeds, and other things. In Ages this must be checked for the minimap to update your position.");
+
+            addDescriptor(DungeonIndex, "Dungeon Index", true,
+                          "Dungeon index (should match value in the Dungeons tab; Dungeon bit must be set).");
+            addDescriptor(CollisionType, "Collision Type", true,
+                          ("Determines most collision behaviour aside from solidity (ie. water, holes). The meaning of the values differ between ages and seasons.\n\n"
+                                       + (Project.Game == Game.Seasons
+                                       ? "0: Overworld\n1: Indoors\n2: Maku Tree\n3: Indoors\n4: Dungeons\n5: Sidescrolling"
+                                       : "0: Overworld\n1: Indoors\n2: Dungeons\n3: Sidescrolling\n4: Underwater\n5: Unused?")));
+
+            if (!Project.Config.ExpandedTilesets)
+            {
+                addDescriptor(TilesetLayoutIndex, "Layout Index", true, null);
+                addDescriptor(UniqueGfx, "Unique GFX Index", true, null);
+                addDescriptor(MainGfx, "Main GFX Index", true, null);
+                addDescriptor(LayoutGroup, "Layout Group", true,
+                    "Determines where to read the room layout from (ie. for value '2', it reads from the file 'room02XX.bin', even if the group number is not 2). In general, to prevent confusion, all rooms in the same overworld (or group) should use tilesets which have the same value for this.");
+            }
+
+            addDescriptor(PaletteHeader, "Palettes", true, null);
+            addDescriptor(AnimationIndex, "Animation Index", true, null);
+
+            ValueReferenceGroup = new ValueReferenceGroup(descList);
+        }
+
+        /// <summary>
+        /// Install modified handlers onto the ValueReferences. Called once at the end of initialization.
+        /// </summary>
+        void InstallModifiedHandlers()
+        {
+            // These ones may be null due to only being used on the master branch
+            UniqueGfx?.ValueReference.AddValueModifiedHandler(
+                (sender, args) => OnUniqueGfxChanged());
+            MainGfx?.ValueReference.AddValueModifiedHandler(
+                (sender, args) => OnMainGfxChanged());
+            TilesetLayoutIndex?.ValueReference.AddValueModifiedHandler(
+                (sender, args) => OnTilesetLayoutChanged());
+            LayoutGroup?.ValueReference.AddValueModifiedHandler(
+                (sender, args) => OnLayoutGroupChanged());
+
+            // These ones should never be null
+            PaletteHeader.ValueReference.ModifiedEvent += (_, _) => OnPaletteHeaderChanged();
+            AnimationIndex.ValueReference.ModifiedEvent += (_, _) => OnAnimationChanged();
         }
     }
 }

@@ -30,18 +30,6 @@ public class StreamValueReference : ValueReference
         BindEventHandler();
     }
 
-    public StreamValueReference(StreamValueReference r)
-        : base(r)
-    {
-        this.stream = r.stream;
-        this.dataType = r.dataType;
-        this.offset = r.offset;
-        this.startBit = r.startBit;
-        this.endBit = r.endBit;
-
-        BindEventHandler();
-    }
-
     void BindEventHandler()
     {
         streamEventWrapper.Bind<MemoryFileStream.ModifiedEventArgs>("ModifiedEvent", OnStreamModified);
@@ -144,11 +132,6 @@ public class StreamValueReference : ValueReference
     public override void Initialize()
     {
         throw new NotImplementedException();
-    }
-
-    public override ValueReference Clone()
-    {
-        return new StreamValueReference(this);
     }
 
 

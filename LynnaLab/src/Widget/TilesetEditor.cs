@@ -38,9 +38,6 @@ public class TilesetEditor
     // Public methods
     // ================================================================================
 
-    readonly HashSet<string> tilesetPropsLinebreaks = new HashSet<string>(
-        "Dungeon Index".Split(","));
-
     public void Render()
     {
         float HEIGHT = tilesetViewer.WidgetSize.Y + 40.0f;
@@ -77,7 +74,7 @@ public class TilesetEditor
         ImGui.EndChild();
 
         ImGui.SeparatorText("Tileset Properties");
-        ImGuiLL.RenderValueReferenceGroup(Tileset.ValueReferenceGroup, tilesetPropsLinebreaks);
+        ImGuiLL.RenderTilesetFields(Tileset);
     }
 
     // ================================================================================

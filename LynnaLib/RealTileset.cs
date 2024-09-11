@@ -55,22 +55,12 @@ public class RealTileset : Tileset
 
         ConstructValueReferenceGroup();
 
-        // Data modified handlers
-        GetDataIndex(2).AddModifiedEventHandler((sender, args) => OnUniqueGfxChanged());
-        GetDataIndex(3).AddModifiedEventHandler((sender, args) => OnMainGfxChanged());
-        GetDataIndex(4).AddModifiedEventHandler((sender, args) => OnPaletteHeaderChanged());
-        GetDataIndex(5).AddModifiedEventHandler((sender, args) => OnTilesetLayoutChanged());
-        GetDataIndex(6).AddModifiedEventHandler((sender, args) => OnLayoutGroupChanged());
-        GetDataIndex(7).AddModifiedEventHandler((sender, args) => OnAnimationChanged());
-
-        base.ReloadAll();
+        base.SubclassInitializationFinished();
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
-    ValueReferenceGroup vrg;
-
     // These two Data's are the same unless it's a seasonal tileset.
     // In that case, parentData points to the table of seasonal tilesets.
     // (m_SeasonalTileset)
@@ -110,8 +100,6 @@ public class RealTileset : Tileset
         get { return parentData.CommandLowerCase == "m_seasonaltileset"; }
     }
 
-    public ValueReferenceGroup ValueReferenceGroup { get { return vrg; } }
-
     // ================================================================================
     // Public methods
     // ================================================================================
@@ -119,7 +107,7 @@ public class RealTileset : Tileset
     // Functions dealing with subtiles
     public override byte GetSubTileIndex(int index, int x, int y)
     {
-        Debug.Assert(index >= 0 && index <= 0xff && x >= 0 && x <= 1 && y >= 0 && y <= 1);
+        VerifySubTileParams(index, x, y);
 
         if (Project.Config.ExpandedTilesets)
         {
@@ -132,7 +120,7 @@ public class RealTileset : Tileset
     }
     public override void SetSubTileIndex(int index, int x, int y, byte value)
     {
-        Debug.Assert(index >= 0 && index <= 0xff && x >= 0 && x <= 1 && y >= 0 && y <= 1);
+        VerifySubTileParams(index, x, y);
 
         if (Project.Config.ExpandedTilesets)
         {
@@ -148,7 +136,7 @@ public class RealTileset : Tileset
     }
     public override byte GetSubTileFlags(int index, int x, int y)
     {
-        Debug.Assert(index >= 0 && index <= 0xff && x >= 0 && x <= 1 && y >= 0 && y <= 1);
+        VerifySubTileParams(index, x, y);
 
         if (Project.Config.ExpandedTilesets)
         {
@@ -161,7 +149,7 @@ public class RealTileset : Tileset
     }
     public override void SetSubTileFlags(int index, int x, int y, byte value)
     {
-        Debug.Assert(index >= 0 && index <= 0xff && x >= 0 && x <= 1 && y >= 0 && y <= 1);
+        VerifySubTileParams(index, x, y);
 
         if (Project.Config.ExpandedTilesets)
         {
@@ -174,29 +162,6 @@ public class RealTileset : Tileset
             TilesetHeaderGroup.SetMappingsData(index * 8 + y * 2 + x + 4, value);
         }
         base.InvalidateTile(index);
-    }
-
-    // Get the "basic collision" of a subtile (whether or not that part is
-    // solid). This ignores the upper half of the collision data bytes and
-    // assumes it is zero.
-    public override bool GetSubTileBasicCollision(int index, int x, int y)
-    {
-        Debug.Assert(index >= 0 && index <= 0xff && x >= 0 && x <= 1 && y >= 0 && y <= 1);
-
-        byte b = GetTileCollision(index);
-        byte i = (byte)(1 << (3 - (x + y * 2)));
-        return (b & i) != 0;
-    }
-    public override void SetSubTileBasicCollision(int index, int x, int y, bool val)
-    {
-        Debug.Assert(index >= 0 && index <= 0xff && x >= 0 && x <= 1 && y >= 0 && y <= 1);
-
-        byte b = GetTileCollision(index);
-        byte i = (byte)(1 << (3 - (x + y * 2)));
-        b = (byte)(b & ~i);
-        if (val)
-            b |= i;
-        SetTileCollision(index, b);
     }
 
     // Get the full collision byte for a tile.
@@ -258,16 +223,6 @@ public class RealTileset : Tileset
     /// </summary>
     void ConstructValueReferenceGroup()
     {
-        var descList = new List<ValueReferenceDescriptor>();
-
-        var addDescriptor = (ValueReference vr, string name, bool editable = true, string tooltip = null) =>
-        {
-            var descriptor = new ValueReferenceDescriptor(
-                vr, name, editable, tooltip);
-            descList.Add(descriptor);
-        };
-
-
         if (Project.GameString == "ages")
         {
             PastFlag = new DataValueReference(
@@ -280,11 +235,6 @@ public class RealTileset : Tileset
                     index: 0,
                     startBit: 6,
                     type: DataValueType.ByteBit);
-
-            addDescriptor(PastFlag, "Past", true,
-                          "Set in the past. Determines which minimap comes up with the select button, maybe other stuff too. If a tileset can be used in both the present in the past, this is left unchecked, and the 'roomsInAltWorld' table is checked instead.");
-            addDescriptor(UnderwaterFlag, "Underwater", true,
-                          "Set in underwater rooms.");
         }
         else
         { // seasons
@@ -292,10 +242,6 @@ public class RealTileset : Tileset
                         index: 0,
                         startBit: 7,
                         type: DataValueType.ByteBit);
-
-            addDescriptor(SubrosiaFlag, "Subrosia", true,
-                        "Set in subrosia. Determines which minimap comes up with the select button, maybe other stuff too. If a tileset can be used in both the overworld and subrosia, this is left unchecked, and the 'roomsInAltWorld' table is checked instead.");
-
             // NOTE: Seasons unused bit (byte 1, bit 6) has no ValueReference.
         }
 
@@ -335,27 +281,6 @@ public class RealTileset : Tileset
                     endBit: 6,
                     type: DataValueType.ByteBits);
 
-        addDescriptor(SidescrollFlag, "Sidescrolling", true,
-                      "Set in sidescrolling rooms.");
-        addDescriptor(LargeIndoorFlag, "Large Indoor Room", true,
-                      "Set in large, indoor rooms (which aren't real dungeons, ie. ambi's palace). Seems to disable certain properties of dungeons? (Ages only?)");
-        addDescriptor(DungeonFlag, "Is Dungeon", true,
-                      "Flag is set on dungeons, but also on any room which has a layout in the 'dungeons' tab, even if it's not a real dungeon (ie. ambi's palace). In that case set the 'Large Indoor Room' flag also.");
-        addDescriptor(SmallIndoorFlag, "Small Indoor Room", true,
-                      "Set in small indoor rooms.");
-        addDescriptor(MakuTreeFlag, "Maku Tree", true,
-                      "In Ages, this hardcodes the location on the minimap for the maku tree screens, and prevents harp use. Not sure if this does anything in Seasons?");
-        addDescriptor(OutdoorFlag, "Outdoors", true,
-                      "Affects whether you can use gale seeds, and other things. In Ages this must be checked for the minimap to update your position.");
-
-        addDescriptor(DungeonIndex, "Dungeon Index", true,
-                      "Dungeon index (should match value in the Dungeons tab; Dungeon bit must be set).");
-        addDescriptor(CollisionType, "Collision Type", true,
-                      ("Determines most collision behaviour aside from solidity (ie. water, holes). The meaning of the values differ between ages and seasons.\n\n"
-                                   + (Project.Game == Game.Seasons
-                                   ? "0: Overworld\n1: Indoors\n2: Maku Tree\n3: Indoors\n4: Dungeons\n5: Sidescrolling"
-                                   : "0: Overworld\n1: Indoors\n2: Dungeons\n3: Sidescrolling\n4: Underwater\n5: Unused?")));
-
         // These fields do nothing with the expanded tilesets patch.
         if (!Project.Config.ExpandedTilesets)
         {
@@ -374,12 +299,6 @@ public class RealTileset : Tileset
                     index: 0,
                     type: DataValueType.Byte,
                     maxValue: Project.NumLayoutGroups - 1);
-
-            addDescriptor(TilesetLayoutIndex, "Layout Index", true, null);
-            addDescriptor(UniqueGfx, "Unique GFX Index", true, null);
-            addDescriptor(MainGfx, "Main GFX Index", true, null);
-            addDescriptor(LayoutGroup, "Layout Group", true,
-                "Determines where to read the room layout from (ie. for value '2', it reads from the file 'room02XX.bin', even if the group number is not 2). In general, to prevent confusion, all rooms in the same overworld (or group) should use tilesets which have the same value for this.");
         }
 
         PaletteHeader = new IntValueReferenceWrapper(
@@ -392,12 +311,7 @@ public class RealTileset : Tileset
                                    index: 0,
                                    type: DataValueType.Byte));
 
-        addDescriptor(PaletteHeader, "Palettes", true, null);
-        addDescriptor(AnimationIndex, "Animation Index", true, null);
-
         // NOTE: unused bit (byte 0, bit 7) has no ValueReference
-
-        vrg = new ValueReferenceGroup(descList);
     }
 
     MemoryFileStream GetExpandedMappingsFile()

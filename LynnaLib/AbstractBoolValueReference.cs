@@ -25,21 +25,10 @@ public class AbstractBoolValueReference : AbstractIntValueReference
             constantsMappingString: constantsMappingString)
     { }
 
-    public AbstractBoolValueReference(AbstractBoolValueReference r)
-    : base(r) { }
-
-    public AbstractBoolValueReference(ValueReference r, Func<bool> getter = null, Action<bool> setter = null)
-    : base(r, () => getter() ? 1 : 0, (v) => setter(v != 0 ? true : false)) { }
-
 
     // ================================================================================
     // Public methods
     // ================================================================================
-
-    public override ValueReference Clone()
-    {
-        return new AbstractBoolValueReference(this);
-    }
 
     // ================================================================================
     // Static methods

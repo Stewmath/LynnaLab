@@ -30,6 +30,7 @@ public class ProjectWorkspace
         roomEditor = new RoomEditor(this);
         dungeonEditor = new DungeonEditor(this);
         tilesetEditor = new TilesetEditor(this);
+        tilesetCloner = new TilesetCloner(this);
         buildDialog = new BuildDialog(this);
     }
 
@@ -40,6 +41,7 @@ public class ProjectWorkspace
     RoomEditor roomEditor;
     DungeonEditor dungeonEditor;
     TilesetEditor tilesetEditor;
+    TilesetCloner tilesetCloner;
 
     Image linkImage;
     BuildDialog buildDialog;
@@ -112,6 +114,10 @@ public class ProjectWorkspace
 
         ImGui.Begin("Tileset Editor");
         tilesetEditor.Render();
+        ImGui.End();
+
+        ImGui.Begin("Tileset Cloner");
+        tilesetCloner.Render();
         ImGui.End();
 
         if (buildDialog.Visible)
