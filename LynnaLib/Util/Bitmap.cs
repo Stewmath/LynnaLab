@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace LynnaLib
 {
@@ -6,27 +8,19 @@ namespace LynnaLib
     /// from using the deprecated System.Drawing.Common.Bitmap.
     public class Bitmap : System.IDisposable
     {
-        Cairo.ImageSurface surface;
-
         /// Constructor for blank surface
         public Bitmap(int width, int height, Cairo.Format format = Cairo.Format.Rgb24)
         {
             surface = new Cairo.ImageSurface(format, width, height);
         }
 
-        /// Constructor from ImageSurface
-        /// Implicit type conversion also makes this work as a "Bitmap(Bitmap)" constructor
-        public Bitmap(Cairo.ImageSurface surface)
+        /// Constructor from pixel data.
+        /// Input "pixels" array must be unmanaged memory. Will be disposed of by this class when
+        /// finished with it.
+        public Bitmap(IntPtr pixels, Cairo.Format format, int width, int height, int stride)
         {
-            // I ran into some bizarre corruption issues when this constructor used to just set
-            // this.surface to the parameter of this function. We need to make a copy of it to avoid
-            // issues for some reason. Caller must dispose the surface it passes in.
-            this.surface = new Cairo.ImageSurface(surface.Format, surface.Width, surface.Height);
-            using (Cairo.Context cr = new Cairo.Context(this.surface))
-            {
-                cr.SetSourceSurface(surface, 0, 0);
-                cr.Paint();
-            }
+            this.surface = new Cairo.ImageSurface((IntPtr)pixels, format, width, height, stride);
+            pixelsPointer = pixels;
         }
 
         /// Constructor from file
@@ -34,6 +28,15 @@ namespace LynnaLib
         {
             this.surface = new Cairo.ImageSurface(filename);
         }
+
+        ~Bitmap()
+        {
+            Dispose(false);
+        }
+
+
+        Cairo.ImageSurface surface;
+        IntPtr pixelsPointer;
 
 
         public int Width
@@ -52,7 +55,7 @@ namespace LynnaLib
             return new Cairo.Context(surface);
         }
 
-        public Color GetPixel(int x, int y)
+        public unsafe Color GetPixel(int x, int y)
         {
             // Ensure the coordinates are within the surface bounds
             if (x < 0 || x >= surface.Width || y < 0 || y >= surface.Height)
@@ -62,28 +65,68 @@ namespace LynnaLib
 
             // Get the pixel data
             surface.Flush();
-            IntPtr dataPtr = surface.DataPtr;
+
+            byte* data = (byte*)surface.DataPtr;
             int stride = surface.Stride;
 
-            // Calculate the offset for the pixel
-            int offset = y * stride + x * 4;
+            if (surface.Format == Cairo.Format.Argb32)
+            {
+                // Calculate the offset for the pixel
+                int offset = y * stride + x * 4;
 
-            // Read the pixel data (ARGB format)
-            byte b = System.Runtime.InteropServices.Marshal.ReadByte(dataPtr, offset);
-            byte g = System.Runtime.InteropServices.Marshal.ReadByte(dataPtr, offset + 1);
-            byte r = System.Runtime.InteropServices.Marshal.ReadByte(dataPtr, offset + 2);
-            byte a = System.Runtime.InteropServices.Marshal.ReadByte(dataPtr, offset + 3);
+                // Read the pixel data (ARGB format)
+                byte b = data[offset];
+                byte g = data[offset + 1];
+                byte r = data[offset + 2];
+                byte a = data[offset + 3];
 
-            // Convert to Color
-            return Color.FromRgba(r, g, b, a);
+                // Convert to Color
+                return Color.FromRgba(r, g, b, a);
+            }
+            else if (surface.Format == Cairo.Format.Rgb24)
+            {
+                // Calculate the offset for the pixel
+                int offset = y * stride + x * 4;
+
+                Debug.Assert(offset + 2 < stride * surface.Height);
+
+                // Read the pixel data (ARGB format)
+                byte b = data[offset];
+                byte g = data[offset + 1];
+                byte r = data[offset + 2];
+
+                // Convert to Color
+                return Color.FromRgb(r, g, b);
+            }
+            else
+            {
+                throw new Exception("Unsupported Cairo.Surface format: " + surface.Format);
+            }
         }
 
         public void Dispose()
         {
-            if (surface != null)
-                surface.Dispose();
-            surface = null;
-            System.GC.SuppressFinalize(this);
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        public virtual void Dispose(bool disposing)
+        {
+            if (surface == null)
+                return;
+
+            if (disposing)
+            {
+                if (surface != null)
+                    surface.Dispose();
+                surface = null;
+            }
+
+            if (pixelsPointer != 0)
+            {
+                Marshal.FreeHGlobal(pixelsPointer);
+                pixelsPointer = 0;
+            }
         }
 
         /// Implicit conversion to Cairo.ImageSurface, should be seamless

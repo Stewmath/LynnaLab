@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace LynnaLib
 {
@@ -18,7 +19,7 @@ namespace LynnaLib
         ///  Convert a single tile to an image. (Supports 8x8 or 8x16 tiles; 8x16 are treated as
         ///  sprites.)
         /// </summary>
-        public static Bitmap TileToBitmap(IList<byte> data, IList<Color> palette = null, int flags = 0)
+        public static unsafe Bitmap TileToBitmap(IList<byte> data, IList<Color> palette = null, int flags = 0)
         {
             if (palette == null)
                 palette = GrayPalette;
@@ -31,7 +32,8 @@ namespace LynnaLib
 
             int stride = 32;
             int bytesPerPixel = 4;
-            byte[] pixels = new byte[stride * height];
+
+            byte* pixels = (byte*)Marshal.AllocHGlobal(stride * height);
 
             bool hflip = (flags & 0x20) == 0x20;
             bool vflip = (flags & 0x40) == 0x40;
@@ -72,10 +74,7 @@ namespace LynnaLib
 
             var format = sprite ? Cairo.Format.Argb32 : Cairo.Format.Rgb24;
 
-            using (var surface = new Cairo.ImageSurface(pixels, format, 8, height, stride))
-            {
-                return new Bitmap(surface);
-            }
+            return new Bitmap((IntPtr)pixels, format, 8, height, stride);
         }
     }
 }
