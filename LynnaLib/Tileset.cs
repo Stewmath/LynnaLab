@@ -18,6 +18,7 @@ namespace LynnaLib
         GraphicsState graphicsState;
 
         Bitmap[] tileImagesCache = new Bitmap[256];
+        bool[] tileImagesDrawn = new bool[256];
 
         EventWrapper<ReloadableStream> gfxStreamEventWrapper
             = new EventWrapper<ReloadableStream>();
@@ -124,6 +125,12 @@ namespace LynnaLib
         {
             Project = p;
 
+            // Initialize blank tile images
+            for (int i = 0; i < 256; i++)
+            {
+                tileImagesCache[i] = new Bitmap(16, 16);
+            }
+
             // Initialize graphics state
             graphicsState = new GraphicsState();
 
@@ -158,8 +165,7 @@ namespace LynnaLib
             if (inhibitRedraw != 0)
                 return;
             for (int i = 0; i < 256; i++) {
-                tileImagesCache[i]?.Dispose();
-                tileImagesCache[i] = null;
+                tileImagesDrawn[i] = false;
             }
             RequestRedraw();
         }
@@ -197,7 +203,7 @@ namespace LynnaLib
             int numDrawnTiles = 0;
             while (tileUpdaterIndex < 256 && numDrawnTiles < 16)
             {
-                if (tileImagesCache[tileUpdaterIndex] == null)
+                if (!tileImagesDrawn[tileUpdaterIndex])
                 {
                     numDrawnTiles++;
                     // Generate the image if it's not cached
@@ -218,10 +224,10 @@ namespace LynnaLib
         // This returns an image for the specified tile index.
         public Bitmap GetTileBitmap(int index, bool invokeModifiedEvent=true)
         {
-            if (tileImagesCache[index] != null)
+            if (tileImagesDrawn[index])
                 return tileImagesCache[index];
 
-            var image = new Bitmap(16, 16);
+            var image = tileImagesCache[index];
 
             // Draw the tile
             using (Cairo.Context cr = image.CreateContext())
@@ -249,7 +255,8 @@ namespace LynnaLib
                 }
             }
 
-            tileImagesCache[index] = image;
+            tileImagesDrawn[index] = true;
+            image.MarkModified();
             if (invokeModifiedEvent)
                 TileModifiedEvent?.Invoke(this, index);
 
@@ -338,8 +345,7 @@ namespace LynnaLib
             foreach (int t in changedTiles)
             {
                 // Refresh the image of each animated metatile
-                tileImagesCache[t]?.Dispose();
-                tileImagesCache[t] = null;
+                tileImagesDrawn[t] = false;
                 GetTileBitmap(t);
 
                 TileModifiedEvent?.Invoke(this, t);
@@ -369,7 +375,7 @@ namespace LynnaLib
         /// </summary>
         public bool TileIsRendered(int tileIndex)
         {
-            return tileImagesCache[tileIndex] != null;
+            return tileImagesDrawn[tileIndex];
         }
 
         /// <summary>
@@ -511,8 +517,7 @@ namespace LynnaLib
         {
             if (inhibitRedraw != 0)
                 return;
-            tileImagesCache[index]?.Dispose();
-            tileImagesCache[index] = null;
+            tileImagesDrawn[index] = false;
             GetTileBitmap(index); // Redraw tile image
             TileModifiedEvent?.Invoke(this, index);
         }
