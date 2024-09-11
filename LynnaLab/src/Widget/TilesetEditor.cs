@@ -42,14 +42,14 @@ public class TilesetEditor
     {
         float HEIGHT = tilesetViewer.WidgetSize.Y + 40.0f;
 
-        ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
-        ImGuiX.InputHex("Tileset", Tileset.Index, (value) => SetTileset(value, Tileset.Season));
-        if (Tileset.IsSeasonal)
+        ImGuiLL.TilesetChooser(Project, "Chooser", Tileset.Index, Tileset.Season,
+            (t, s) => SetTileset(t, s));
+        ImGui.SameLine();
+        ImGuiX.ShiftCursorScreenPos(10.0f, 0.0f);
+        if (ImGui.Button("Open Cloner"))
         {
-            ImGui.SameLine();
-            ImGuiX.InputHex("Season", Tileset.Season, (value) => SetTileset(Tileset.Index, value));
+            Workspace.OpenTilesetCloner(Tileset, Tileset);
         }
-        ImGui.PopItemWidth();
 
         ImGui.BeginChild("Tileset Viewer Panel", new Vector2(tilesetViewer.WidgetSize.X, HEIGHT));
         ImGui.SeparatorText("Tileset");

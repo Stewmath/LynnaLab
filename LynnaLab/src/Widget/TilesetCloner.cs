@@ -1,11 +1,12 @@
 namespace LynnaLab;
 
-public class TilesetCloner
+public class TilesetCloner : Frame
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public TilesetCloner(ProjectWorkspace workspace)
+    public TilesetCloner(ProjectWorkspace workspace, string name)
+        : base(name)
     {
         this.Workspace = workspace;
         sourceViewer = new TilesetViewer(workspace);
@@ -45,7 +46,7 @@ public class TilesetCloner
     // Public methods
     // ================================================================================
 
-    public void Render()
+    public override void Render()
     {
         Vector2 panelSize = sourceViewer.WidgetSize;
         panelSize.Y += 80.0f;
@@ -124,21 +125,21 @@ public class TilesetCloner
         }
     }
 
-    // ================================================================================
-    // Private methods
-    // ================================================================================
-
-    void SetSourceTileset(RealTileset tileset)
+    public void SetSourceTileset(RealTileset tileset)
     {
         sourceTileset = tileset;
         sourceViewer.SetTileset(sourceTileset);
     }
 
-    void SetDestTileset(RealTileset tileset)
+    public void SetDestTileset(RealTileset tileset)
     {
         destTileset = tileset;
         ReloadPreview();
     }
+
+    // ================================================================================
+    // Private methods
+    // ================================================================================
 
     void ReloadPreview()
     {

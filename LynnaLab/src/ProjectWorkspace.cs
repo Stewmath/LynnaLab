@@ -30,7 +30,7 @@ public class ProjectWorkspace
         roomEditor = new RoomEditor(this);
         dungeonEditor = new DungeonEditor(this);
         tilesetEditor = new TilesetEditor(this);
-        tilesetCloner = new TilesetCloner(this);
+        tilesetCloner = new TilesetCloner(this, "Tileset Cloner");
         buildDialog = new BuildDialog(this);
     }
 
@@ -124,9 +124,7 @@ public class ProjectWorkspace
         tilesetEditor.Render();
         ImGui.End();
 
-        ImGui.Begin("Tileset Cloner");
-        tilesetCloner.Render();
-        ImGui.End();
+        tilesetCloner.RenderAsWindow();
 
         if (buildDialog.Visible)
         {
@@ -151,6 +149,13 @@ public class ProjectWorkspace
     public Image GetCachedMapImage((Map map, int floor) key)
     {
         return mapImageCacher.GetImage(key);
+    }
+
+    public void OpenTilesetCloner(RealTileset source, RealTileset dest)
+    {
+        tilesetCloner.SetSourceTileset(source);
+        tilesetCloner.SetDestTileset(dest);
+        tilesetCloner.Active = true;
     }
 
     /// <summary>

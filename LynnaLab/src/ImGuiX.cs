@@ -43,6 +43,11 @@ public static class ImGuiX
         ImGui.SetCursorScreenPos(pos);
     }
 
+    public static void ShiftCursorScreenPos(float x, float y)
+    {
+        ShiftCursorScreenPos(new Vector2(x, y));
+    }
+
     /// <summary>
     /// Moves the cursor such that the given widget will be centered horizontally if drawn
     /// immediately after this call
