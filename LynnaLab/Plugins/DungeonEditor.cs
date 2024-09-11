@@ -61,7 +61,7 @@ namespace Plugins
             roomVre = null;
 
             Gtk.Container frame = new Gtk.Grid();
-            dungeonSpinButton = new SpinButton(0, 15, 1);
+            dungeonSpinButton = new SpinButton(0, Project.NumDungeons - 1, 1);
             floorSpinButton = new SpinButton(0, 15, 1);
             roomSpinButton = new SpinButtonHexadecimal(0, 255, 1);
             roomSpinButton.Digits = 2;
