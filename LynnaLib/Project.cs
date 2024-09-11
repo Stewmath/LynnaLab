@@ -57,6 +57,7 @@ namespace LynnaLib
         Dictionary<string, ProjectDataType> dataStructDictionary = new Dictionary<string, ProjectDataType>();
         Dictionary<string, ObjectGroup> objectGroupDictionary = new Dictionary<string, ObjectGroup>();
 
+        int numTilesets;
 
         // See "GetStandardSpritePalettes"
         Color[][] _standardSpritePalettes;
@@ -218,8 +219,41 @@ namespace LynnaLib
                     g.GetTreasureObject(s);
             }
 
+            numTilesets = determineNumTilesets();
 
             LinkBitmap = LoadLinkBitmap();
+        }
+
+        /// <summary>
+        /// Getting the number of tilesets should not be a complicated calculation. However, I
+        /// neglected to add extra tilesets to the Seasons hack-base branch at first, so this must
+        /// detect whether they've been added.
+        /// </summary>
+        int determineNumTilesets()
+        {
+            if (!Config.ExpandedTilesets)
+            {
+                if (Game == Game.Ages)
+                    return 0x67;
+                else
+                    return 0x63;
+            }
+
+            if (Game == Game.Ages)
+                return 0x80;
+
+            // Detect number of Seasons tileset
+            Data data = GetData("tilesetData");
+            Data end = GetData("tileset00Seasons");
+            for (int t = 0; t < 0x81; t++)
+            {
+                if (data == end)
+                    return t;
+                data = data.GetDataAtOffset(8);
+            }
+
+            // Something went wrong
+            throw new ProjectErrorException("Couldn't calculate # of tilesets");
         }
 
         void LoadFilesRecursively(string directory)
@@ -332,12 +366,7 @@ namespace LynnaLib
         {
             get
             {
-                if (Config.ExpandedTilesets)
-                    return 0x80;
-                else if (GameString == "ages")
-                    return 0x67;
-                else
-                    return 0x63;
+                return numTilesets;
             }
         }
 
