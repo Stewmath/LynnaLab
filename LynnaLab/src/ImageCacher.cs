@@ -46,9 +46,21 @@ public abstract class ImageCacher<KeyClass>
         return image;
     }
 
+    public void DisposeImage(KeyClass key)
+    {
+        var image = imageCache[key];
+        image.Dispose();
+        imageCache.Remove(key);
+    }
+
     // ================================================================================
     // Protected methods
     // ================================================================================
+
+    protected Image CacheLookup(KeyClass key)
+    {
+        return imageCache[key];
+    }
 
     protected abstract Image GenerateImage(KeyClass key);
 

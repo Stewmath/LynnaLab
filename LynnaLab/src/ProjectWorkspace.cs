@@ -102,6 +102,14 @@ public class ProjectWorkspace
                     });
                 ImGui.EndMenu();
             }
+            if (ImGui.BeginMenu("Debug"))
+            {
+                if (ImGui.MenuItem("Trigger GC"))
+                {
+                    System.GC.Collect();
+                }
+                ImGui.EndMenu();
+            }
         }
 
         ImGui.Begin("Room Editor");

@@ -36,12 +36,18 @@ public class TilesetImageCacher : ImageCacher<Tileset>
 
         RedrawAll(image, tileset);
 
-        tileset.TileModifiedEvent += (_, tile) =>
+        tileset.TileModifiedEvent += (sender, tile) =>
         {
+            Image image = base.CacheLookup(sender as Tileset);
             if (tile == -1)
-                RedrawAll(image, tileset);
+                RedrawAll(image, sender as Tileset);
             else
-                DrawTile(image, tileset, tile % 16, tile / 16);
+                DrawTile(image, sender as Tileset, tile % 16, tile / 16);
+        };
+
+        tileset.DisposedEvent += (sender) =>
+        {
+            base.DisposeImage(sender as Tileset);
         };
 
         return image;

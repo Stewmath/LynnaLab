@@ -136,6 +136,13 @@ public class TopLevel
 
         image = backend.ImageFromBitmap(bitmap);
         imageDict[bitmap] = image;
+
+        bitmap.DisposedEvent += (sender) =>
+        {
+            var image = imageDict[sender as Bitmap];
+            imageDict.Remove(sender as Bitmap);
+            image.Dispose();
+        };
         return image;
     }
 

@@ -32,6 +32,8 @@ public class TilesetCloner
     RealTileset sourceTileset, destTileset;
     FakeTileset previewTileset;
 
+    bool changedDestTileset;
+
     // ================================================================================
     // Properties
     // ================================================================================
@@ -47,6 +49,8 @@ public class TilesetCloner
     {
         Vector2 panelSize = sourceViewer.WidgetSize;
         panelSize.Y += 80.0f;
+
+        changedDestTileset = false;
 
         ImGui.BeginChild("Source Panel", panelSize);
         ImGui.SeparatorText("From");
@@ -65,6 +69,7 @@ public class TilesetCloner
                                (index, season) =>
         {
             SetDestTileset(Project.GetTileset(index, season));
+            changedDestTileset = true;
         });
 
         previewViewer.Render();
@@ -77,7 +82,7 @@ public class TilesetCloner
         // Lambda for defining a checkbox to copy data to the preview tileset
         var copyButton = (string name, ref bool boolean, Action<Tileset> loader, string tooltip) =>
         {
-            if (ImGui.Checkbox(name, ref boolean))
+            if (ImGui.Checkbox(name, ref boolean) || changedDestTileset)
             {
                 if (boolean)
                     loader(sourceTileset);
@@ -100,12 +105,8 @@ public class TilesetCloner
                    "The tile map determines which subtiles are mapped to which tiles.\nThe tile flags determine palette, flip X/Y, and priority.\n\nIn vanilla these values are identical between seasonal variants, but in hack-base they can be modified independantly per-season.");
         copyButton("Copy Collisions", ref copyCollisions, previewTileset.LoadCollisions,
                    "Per-tile collision data (only affects solidity, not other properties like warps, etc).");
-
-        copyButton("Copy properties", ref copyProperties, (source) =>
-        {
-            previewTileset.LoadProperties(source);
-        },
-            "Copy all properties (bottom panel) from the source tileset.");
+        copyButton("Copy properties", ref copyProperties, previewTileset.LoadProperties,
+                   "Copy all properties (bottom panel) from the source tileset.");
 
         ImGui.EndChild();
 
@@ -141,7 +142,7 @@ public class TilesetCloner
 
     void ReloadPreview()
     {
-        // TODO: Should dispose old preview and ensure it's no longer cached in TilesetImageCacher
+        previewTileset?.Dispose();
         previewTileset = new FakeTileset(destTileset);
         previewViewer.SetTileset(previewTileset);
     }

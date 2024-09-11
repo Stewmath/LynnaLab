@@ -234,6 +234,19 @@ public class ImGuiController : IDisposable
         return rsi.ImGuiBinding;
     }
 
+    public void UnbindImage(VeldridImage image)
+    {
+        if (!_setsByImage.ContainsKey(image))
+            return;
+        var rsi = _setsByImage[image];
+        _ownedResources.Remove(rsi.TextureView);
+        _ownedResources.Remove(rsi.ResourceSet);
+        rsi.TextureView.Dispose();
+        rsi.ResourceSet.Dispose();
+        _setsByImage.Remove(image);
+        _viewsById.Remove(rsi.ImGuiBinding);
+    }
+
     private IntPtr GetNextImGuiBindingID()
     {
         int newID = _lastAssignedID++;

@@ -37,6 +37,7 @@ namespace LynnaLib
         Cairo.ImageSurface surface;
 
         public event Action ModifiedEvent;
+        public event Action<object> DisposedEvent;
 
 
         public int Width
@@ -86,6 +87,7 @@ namespace LynnaLib
             if (surface != null)
                 surface.Dispose();
             surface = null;
+            DisposedEvent?.Invoke(this);
             System.GC.SuppressFinalize(this);
         }
 

@@ -46,12 +46,16 @@ namespace LynnaLib
         public event LayoutGroupModifiedHandler LayoutGroupModifiedEvent;
         public event EventHandler<EventArgs> PaletteHeaderGroupModifiedEvent;
 
+        public event Action<object> DisposedEvent;
+
 
         // ================================================================================
         // Properties
         // ================================================================================
 
         public Project Project { get; private set; }
+
+        public bool Disposed { get { return tileImagesCache == null; } }
 
         /// <summary>
         /// The GraphicsState which contains the data as it will be loaded into vram.
@@ -163,7 +167,7 @@ namespace LynnaLib
         // Trigger asynchronous redraw of all tiles that are marked as needing to be redrawn
         public void RequestRedraw()
         {
-            if (inhibitRedraw > 0)
+            if (Disposed || inhibitRedraw > 0)
                 return;
 
             // Don't add handler again if it's already in progress
@@ -182,6 +186,9 @@ namespace LynnaLib
         // TileUpdater is called by the idle handler, which just calls this "when it has time".
         bool TileUpdater()
         {
+            if (Disposed)
+                return false;
+
             if (tileUpdaterIndex == 256)
             {
                 TileModifiedEvent?.Invoke(this, -1);
@@ -463,11 +470,14 @@ namespace LynnaLib
 
         public void Dispose()
         {
+            graphicsState.ClearGfx();
             graphicsState = null;
             foreach (Bitmap b in tileImagesCache)
                 b?.Dispose();
             tileImagesCache = null;
             paletteEventWrapper.UnbindAll();
+            gfxStreamEventWrapper.UnbindAll();
+            DisposedEvent?.Invoke(this);
         }
 
         // ================================================================================

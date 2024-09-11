@@ -122,7 +122,8 @@ public class VeldridImage : Image
 
     public override void Dispose()
     {
-        texture?.Dispose();
+        controller.UnbindImage(this);
+        texture.Dispose();
         texture = null;
 
         if (unsubscribeFromBitmapChanges != null)
