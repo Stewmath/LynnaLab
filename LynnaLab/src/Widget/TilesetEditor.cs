@@ -313,6 +313,6 @@ class TileEditor : TileGrid
 
     void DrawTile()
     {
-        image = parent.Workspace.TopLevel.ImageFromBitmap(Tileset.GetTileBitmap(TileIndex));
+        image = TopLevel.ImageFromBitmap(Tileset.GetTileBitmap(TileIndex));
     }
 }

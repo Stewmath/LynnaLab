@@ -29,7 +29,6 @@ public abstract class ImageCacher<KeyClass>
 
     public ProjectWorkspace Workspace { get; private set; }
     public Project Project { get { return Workspace.Project; } }
-    public TopLevel TopLevel { get { return Workspace.TopLevel; } }
 
     // ================================================================================
     // Public methods

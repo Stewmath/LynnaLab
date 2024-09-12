@@ -12,15 +12,14 @@ public class ProjectWorkspace
     // ================================================================================
     // Constructors
     // ================================================================================
-    public ProjectWorkspace(TopLevel topLevel, Project project)
+    public ProjectWorkspace(Project project)
     {
-        this.TopLevel = topLevel;
         this.Project = project;
 
         QuickstartData.x = 0x48;
         QuickstartData.y = 0x48;
 
-        Project.LazyInvoke = topLevel.LazyInvoke;
+        Project.LazyInvoke = TopLevel.LazyInvoke;
 
         tilesetImageCacher = new TilesetImageCacher(this);
         roomImageCacher = new RoomImageCacher(this);
@@ -55,9 +54,7 @@ public class ProjectWorkspace
     // ================================================================================
     // Properties
     // ================================================================================
-    public TopLevel TopLevel { get; private set; }
     public Project Project { get; private set; }
-    public GlobalConfig GlobalConfig { get { return TopLevel.GlobalConfig; } }
     public QuickstartData QuickstartData { get; set; } = new QuickstartData();
 
     // ================================================================================

@@ -38,7 +38,6 @@ public class RoomLayoutEditor : TileGrid
     // ================================================================================
     public ProjectWorkspace Workspace { get; private set; }
     public Project Project { get { return Workspace.Project; } }
-    public TopLevel TopLevel { get { return Workspace.TopLevel; } }
     public Room Room { get { return RoomLayout?.Room; } }
     public RoomLayout RoomLayout { get; private set; }
     public QuickstartData QuickstartData { get { return Workspace.QuickstartData; } }
@@ -348,7 +347,7 @@ public class RoomLayoutEditor : TileGrid
             Vector2 size = new Vector2(BoxWidth, BoxHeight) * parent.Scale;
 
             ImGuiX.ShiftCursorScreenPos(pos - size / 2);
-            var linkImage = parent.TopLevel.ImageFromBitmap(parent.Project.LinkBitmap);
+            var linkImage = TopLevel.ImageFromBitmap(parent.Project.LinkBitmap);
             ImGuiX.DrawImage(linkImage, parent.Scale);
         }
 
@@ -410,7 +409,7 @@ public class RoomLayoutEditor : TileGrid
                 var spriteDrawer = (Bitmap sprite, int xOffset, int yOffset) =>
                 {
                     var offset = new Vector2(X + xOffset, Y + yOffset);
-                    Image image = parent.Workspace.TopLevel.ImageFromBitmap(sprite);
+                    Image image = TopLevel.ImageFromBitmap(sprite);
                     ImGui.SetCursorScreenPos(origin + offset * parent.Scale);
                     ImGuiX.DrawImage(image, parent.Scale);
                 };

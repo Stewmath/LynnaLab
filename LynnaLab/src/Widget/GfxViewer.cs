@@ -75,7 +75,7 @@ public partial class GfxViewer : TileGrid
         TileHeight = 8;
         Scale = scale;
 
-        image = Workspace.TopLevel.Backend.CreateImage(Width * TileWidth, Height * TileHeight);
+        image = TopLevel.Backend.CreateImage(Width * TileWidth, Height * TileHeight);
 
         RedrawAll();
     }
@@ -114,7 +114,7 @@ public partial class GfxViewer : TileGrid
 
         using (Bitmap _subImage = GbGraphics.TileToBitmap(data))
         {
-            Image subImage = Workspace.TopLevel.ImageFromBitmap(_subImage);
+            Image subImage = TopLevel.ImageFromBitmap(_subImage);
             subImage.DrawOn(image,
                             new Point(0, 0),
                             new Point(x * 8, y * 8),

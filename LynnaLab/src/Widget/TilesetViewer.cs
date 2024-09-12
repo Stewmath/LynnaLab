@@ -40,7 +40,6 @@ public class TilesetViewer : TileGrid
 
     public ProjectWorkspace Workspace { get; private set; }
     public Project Project { get { return Workspace.Project; } }
-    public TopLevel TopLevel { get { return Workspace.TopLevel; } }
 
     public Tileset Tileset { get { return tileset; } }
 

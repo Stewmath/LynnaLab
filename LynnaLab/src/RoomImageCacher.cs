@@ -59,7 +59,7 @@ public class RoomImageCacher : ImageCacher<RoomLayout>
 
             var tilePositions = layout.GetTilePositions(tileIndex);
 
-            Workspace.TopLevel.LazyInvoke(() =>
+            TopLevel.LazyInvoke(() =>
             {
                 image.BeginAtomicOperation();
                 foreach ((int x, int y) in tilePositions)
@@ -132,7 +132,7 @@ public class RoomImageCacher : ImageCacher<RoomLayout>
 
     void LazyRedraw(Image image, RoomLayout layout, bool cachedOnly = false)
     {
-        Workspace.TopLevel.LazyInvoke(() => Redraw(image, layout, cachedOnly));
+        TopLevel.LazyInvoke(() => Redraw(image, layout, cachedOnly));
     }
 
     /// <summary>

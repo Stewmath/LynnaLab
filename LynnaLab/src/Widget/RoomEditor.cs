@@ -82,7 +82,6 @@ public class RoomEditor
     // ================================================================================
 
     public ProjectWorkspace Workspace { get; private set; }
-    public TopLevel TopLevel { get { return Workspace.TopLevel; } }
     public Project Project { get { return Workspace.Project; } }
 
     public RoomLayout RoomLayout { get { return roomLayoutEditor.RoomLayout; } }

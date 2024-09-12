@@ -50,7 +50,6 @@ public class Minimap : TileGrid
     }
 
     public ProjectWorkspace Workspace { get; private set; }
-    public TopLevel TopLevel { get { return Workspace.TopLevel; } }
 
     public Map Map { get { return map; } }
 

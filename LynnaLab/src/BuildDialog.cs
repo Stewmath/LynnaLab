@@ -33,7 +33,7 @@ public class BuildDialog
     public bool Visible { get; private set; }
 
     // Private properties
-    GlobalConfig GlobalConfig { get { return Workspace.GlobalConfig; } }
+    GlobalConfig GlobalConfig { get { return TopLevel.GlobalConfig; } }
 
     // ================================================================================
     // Public methods
@@ -41,7 +41,7 @@ public class BuildDialog
 
     public void Render()
     {
-        ImGui.PushFont(Workspace.TopLevel.DefaultFont);
+        ImGui.PushFont(TopLevel.DefaultFont);
 
         if (ImGui.BeginChild("Build Dialog ProcessView",
                              new Vector2(0.0f, -40.0f)))
