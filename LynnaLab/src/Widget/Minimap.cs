@@ -1,6 +1,6 @@
 namespace LynnaLab;
 
-public class Minimap : TileGridViewer
+public class Minimap : TileGrid
 {
     // ================================================================================
     // Constructors

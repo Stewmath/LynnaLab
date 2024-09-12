@@ -190,7 +190,7 @@ class SubTileViewer : GfxViewer
 /// <summary>
 /// Zoomed in view of one 16x16 tile, consisting of 4 subtiles.
 /// </summary>
-class TileEditor : TileGridViewer
+class TileEditor : TileGrid
 {
     // ================================================================================
     // Constructors

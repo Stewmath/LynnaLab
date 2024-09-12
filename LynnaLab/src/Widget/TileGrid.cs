@@ -5,12 +5,12 @@ namespace LynnaLab;
 /// optionally allows one to select tiles by clicking, or define actions to occur with other
 /// mouse buttons.
 /// </summary>
-public class TileGridViewer : SizedWidget
+public class TileGrid : SizedWidget
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public TileGridViewer(string name)
+    public TileGrid(string name)
     {
         this.Name = name;
         AddMouseAction(MouseButton.LeftClick, MouseModifier.Any, GridAction.Select);

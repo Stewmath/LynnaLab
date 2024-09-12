@@ -1,6 +1,6 @@
 namespace LynnaLab;
 
-public partial class GfxViewer : TileGridViewer
+public partial class GfxViewer : TileGrid
 {
     // ================================================================================
     // Constructors

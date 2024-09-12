@@ -3,7 +3,7 @@ namespace LynnaLab;
 /// <summary>
 /// Viewing a tileset & selecting tiles from it
 /// </summary>
-public class TilesetViewer : TileGridViewer
+public class TilesetViewer : TileGrid
 {
     // ================================================================================
     // Constructors

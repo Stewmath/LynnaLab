@@ -1,6 +1,6 @@
 namespace LynnaLab;
 
-public class RoomLayoutEditor : TileGridViewer
+public class RoomLayoutEditor : TileGrid
 {
     // ================================================================================
     // Constructors
@@ -46,7 +46,7 @@ public class RoomLayoutEditor : TileGridViewer
     public bool DrawChest { get { return true; } }
 
 
-    // TileGridViewer overrides
+    // TileGrid overrides
 
     public override Vector2 WidgetSize
     {
