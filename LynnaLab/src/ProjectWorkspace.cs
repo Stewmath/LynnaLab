@@ -109,7 +109,7 @@ public class ProjectWorkspace
             }
         }
 
-        ImGui.Begin("Room Editor");
+        ImGui.Begin("Room Editor", ImGuiWindowFlags.MenuBar);
         roomEditor.Render();
         ImGui.End();
 
