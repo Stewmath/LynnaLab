@@ -248,9 +248,25 @@ public static class ImGuiX
     /// </summary>
     public static void Tooltip(string text)
     {
-        ImGui.SetNextWindowSize(new Vector2(TOOLTIP_WINDOW_WIDTH, 0.0f));
+        var textSize = ImGui.CalcTextSize(text);
+
+        if (textSize.X > TOOLTIP_WINDOW_WIDTH)
+            ImGui.SetNextWindowSize(new Vector2(TOOLTIP_WINDOW_WIDTH, 0.0f));
+        else
+            ImGui.SetNextWindowSize(new Vector2(textSize.X + 20.0f, 0.0f));
         ImGui.BeginTooltip();
         ImGui.TextWrapped(text);
         ImGui.EndTooltip();
+    }
+
+    /// <summary>
+    /// Contains the code for checking whether to show the tooltip. Should replace uses of the above
+    /// function with this in most cases.
+    /// </summary>
+    public static void TooltipOnHover(string text)
+    {
+        if (!ImGui.IsItemHovered())
+            return;
+        Tooltip(text);
     }
 }

@@ -16,7 +16,6 @@ public partial class GfxViewer : TileGrid
         base.Height = 0;
         base.Scale = 2;
         base.Selectable = true;
-        base.SelectedIndex = 0;
     }
 
 

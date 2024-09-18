@@ -22,11 +22,14 @@ public class RoomEditor
         overworldMinimap = new Minimap(this.Workspace);
         dungeonMinimap = new Minimap(this.Workspace);
 
+        objectGroupEditor = new ObjectGroupEditor("Object Group Editor", Room.GetObjectGroup());
+
         SetRoom(0, false);
 
         roomLayoutEditor.AddMouseAction(
             MouseButton.LeftClick,
-            MouseModifier.Any | MouseModifier.Drag,
+            MouseModifier.Any,
+            MouseAction.ClickDrag,
             GridAction.Callback,
             (_, args) =>
             {
@@ -37,6 +40,7 @@ public class RoomEditor
         roomLayoutEditor.AddMouseAction(
             MouseButton.RightClick,
             MouseModifier.Any,
+            MouseAction.Click,
             GridAction.Callback,
             (_, args) =>
             {
@@ -71,6 +75,8 @@ public class RoomEditor
     RoomLayoutEditor roomLayoutEditor;
     TilesetViewer tilesetViewer;
     Minimap overworldMinimap, dungeonMinimap;
+    ObjectGroupEditor objectGroupEditor;
+
     int suppressEvents = 0;
 
     // Maps dungeon index to floor number. Allows the editor to remember what floor we were last
@@ -123,6 +129,11 @@ public class RoomEditor
             if (ImGui.BeginTabItem("Tileset"))
             {
                 tilesetViewer.Render();
+                ImGui.EndTabItem();
+            }
+            if (ImGui.BeginTabItem("Objects"))
+            {
+                objectGroupEditor.Render();
                 ImGui.EndTabItem();
             }
             if (ImGui.BeginTabItem("Chests"))
@@ -309,6 +320,7 @@ public class RoomEditor
 
         roomLayoutEditor.SetRoomLayout(roomLayout);
         tilesetViewer.SetTileset(roomLayout.Tileset);
+        objectGroupEditor.SetObjectGroup(roomLayout.Room.GetObjectGroup());
 
         if (updateMinimap)
         {

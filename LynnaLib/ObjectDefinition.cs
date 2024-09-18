@@ -30,6 +30,8 @@ namespace LynnaLib
                 // that the getter and setter functions are redefined in an indirect way.
                 var newVref = new AbstractIntValueReference(
                         vref,
+                        maxValue: vref.MaxValue,
+                        minValue: vref.MinValue,
                         getter: () => objectData.ValueReferenceGroup.GetIntValue(name),
                         setter: (v) => OnValueSet(name, v));
                 descriptors.Add(new ValueReferenceDescriptor(newVref, name));

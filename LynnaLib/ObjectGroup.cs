@@ -46,7 +46,7 @@ namespace LynnaLib
 
 
         // Invoked when the group is modified in any way (including modifying objects themselves).
-        event EventHandler<EventArgs> modifiedEvent;
+        public event EventHandler<EventArgs> ModifiedEvent;
 
 
         // NOTE: this list may not be complete at any given time
@@ -313,12 +313,12 @@ namespace LynnaLib
 
         public void AddModifiedHandler(EventHandler<EventArgs> handler)
         {
-            modifiedEvent += handler;
+            ModifiedEvent += handler;
         }
 
         public void RemoveModifiedHandler(EventHandler<EventArgs> handler)
         {
-            modifiedEvent -= handler;
+            ModifiedEvent -= handler;
         }
 
 
@@ -482,7 +482,7 @@ namespace LynnaLib
 
         void ModifiedHandler(object sender, ValueModifiedEventArgs args)
         {
-            modifiedEvent?.Invoke(this, null);
+            ModifiedEvent?.Invoke(this, null);
             foreach (var parent in parents)
                 parent.ModifiedHandler(sender, args);
         }

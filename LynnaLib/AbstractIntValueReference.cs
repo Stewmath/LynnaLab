@@ -29,9 +29,11 @@ public class AbstractIntValueReference : ValueReference
         base.MinValue = minValue;
     }
 
-    public AbstractIntValueReference(ValueReference r, Func<int> getter = null, Action<int> setter = null)
+    public AbstractIntValueReference(ValueReference r, int maxValue, int minValue = 0, Func<int> getter = null, Action<int> setter = null)
         : base(r.Project, r.ValueType, r.ConstantsMappingString)
     {
+        this.MaxValue = maxValue;
+        this.MinValue = minValue;
         this.getter = getter;
         this.setter = setter;
 

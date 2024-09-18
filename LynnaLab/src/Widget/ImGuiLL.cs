@@ -67,7 +67,10 @@ public class ImGuiLL
             desc.SetValue(value);
     }
 
-    public static void RenderValueReferenceGroup(ValueReferenceGroup vrg, ISet<string> linebreaks)
+    /// <summary>
+    /// Displays an interface for editing the given ValueReferenceGroup.
+    /// </summary>
+    public static void RenderValueReferenceGroup(ValueReferenceGroup vrg, ISet<string> linebreaks = null)
     {
         ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
 
@@ -77,7 +80,7 @@ public class ImGuiLL
 
         foreach (ValueReferenceDescriptor desc in vrg.GetDescriptors())
         {
-            if (rowCount >= maxRows || linebreaks.Contains(desc.Name))
+            if (rowCount >= maxRows || (linebreaks != null && linebreaks.Contains(desc.Name)))
             {
                 rowCount = 0;
                 ImGui.EndGroup();
