@@ -24,6 +24,8 @@ public class RoomEditor
 
         objectGroupEditor = new ObjectGroupEditor("Object Group Editor", Room.GetObjectGroup());
 
+        roomLayoutEventWrapper.Bind<RoomTilesetChangedEventArgs>("TilesetChangedEvent", OnTilesetIndexChanged);
+
         SetRoom(0, false);
 
         roomLayoutEditor.AddMouseAction(
@@ -77,6 +79,8 @@ public class RoomEditor
     Minimap overworldMinimap, dungeonMinimap;
     ObjectGroupEditor objectGroupEditor;
 
+    EventWrapper<RoomLayout> roomLayoutEventWrapper = new EventWrapper<RoomLayout>();
+
     int suppressEvents = 0;
 
     // Maps dungeon index to floor number. Allows the editor to remember what floor we were last
@@ -129,6 +133,7 @@ public class RoomEditor
             if (ImGui.BeginTabItem("Tileset"))
             {
                 tilesetViewer.Render();
+                ImGuiX.InputHex("Tileset", new Accessor<int>(() => Room.TilesetIndex));
                 ImGui.EndTabItem();
             }
             if (ImGui.BeginTabItem("Objects"))
@@ -321,6 +326,7 @@ public class RoomEditor
         roomLayoutEditor.SetRoomLayout(roomLayout);
         tilesetViewer.SetTileset(roomLayout.Tileset);
         objectGroupEditor.SetObjectGroup(roomLayout.Room.GetObjectGroup());
+        roomLayoutEventWrapper.ReplaceEventSource(roomLayout);
 
         if (updateMinimap)
         {
@@ -363,5 +369,13 @@ public class RoomEditor
 
         ImGuiX.InputHex("ID", new Accessor<int>(() => Room.Chest.TreasureID));
         ImGuiX.InputHex("SubID", new Accessor<int>(() => Room.Chest.TreasureSubID));
+    }
+
+    /// <summary>
+    /// Called when the room layout's tileset index changes.
+    /// </summary>
+    void OnTilesetIndexChanged(object sender, RoomTilesetChangedEventArgs args)
+    {
+        tilesetViewer.SetTileset(RoomLayout.Tileset);
     }
 }
