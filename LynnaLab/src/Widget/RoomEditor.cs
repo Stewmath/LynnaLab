@@ -1,5 +1,9 @@
 namespace LynnaLab;
 
+/// <summary>
+/// A Frame consisting of a RoomLayoutEditor, TilesetViewer, Minimap, etc. All the essentials for
+/// editing a room.
+/// </summary>
 public class RoomEditor : Frame
 {
     // ================================================================================

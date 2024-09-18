@@ -115,6 +115,9 @@ public class ObjectGroupEditor : Frame
     public override void Render()
     {
         var childSize = ImGui.GetContentRegionAvail() - new Vector2(0.0f, 200.0f);
+        if (SelectedObject == null)
+            childSize = new Vector2(0.0f, 0.0f);
+
         if (ImGui.BeginChild(Name + " Object Boxes", childSize, ImGuiChildFlags.Border))
         {
             if (ImGui.BeginTable(Name + " Table", 1))

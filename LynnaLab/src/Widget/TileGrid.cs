@@ -150,27 +150,12 @@ public class TileGrid : SizedWidget
             ValidateSelection();
         }
     }
-    public int HoveringIndex
-    {
-        get
-        {
-            return CoordToTile(base.GetRelativeMousePos());
-        }
-    }
 
     public Color HoverColor { get; protected set; } = Color.Red;
     public Color SelectColor { get; protected set; } = Color.White;
     public Color DragColor { get; protected set; } = Color.Cyan;
 
     public float RectThickness { get; set; } = 3.0f;
-
-    public Point ImageSize
-    {
-        get
-        {
-            return new Point(TileWidth * Width, TileHeight * Height);
-        }
-    }
 
     public float CanvasWidth
     {
