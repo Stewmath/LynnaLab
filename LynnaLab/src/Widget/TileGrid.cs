@@ -25,6 +25,10 @@ public class TileGrid : SizedWidget
     int draggingTileIndex = -1;
     int maxIndexOverride = -1;
 
+    // For rectangle selection
+    TileGridAction activeRectSelectAction = null;
+    int rectSelectStart, rectSelectEnd;
+
     // ================================================================================
     // Events
     // ================================================================================
@@ -319,11 +323,49 @@ public class TileGrid : SizedWidget
             RenderMouse();
         }
 
-        // Draw selection rectangle
+        // Draw regular (1-tile) selection rectangle
         if (Selectable && SelectedIndex != -1)
         {
             FRect r = TileRect(SelectedIndex);
             base.AddRect(r, SelectColor, thickness: RectThickness);
+        }
+
+        // Rectangle selection stuff (only executes if rectangle selection has begun)
+        if (activeRectSelectAction != null)
+        {
+            int mouseIndex = CoordToTile(base.GetRelativeMousePos());
+            if (!ImGui.IsItemHovered())
+                mouseIndex = -1;
+
+            if (activeRectSelectAction.ActionTriggered())
+            {
+                // Button still being held
+                if (mouseIndex != -1)
+                    rectSelectEnd = mouseIndex;
+            }
+            else
+            {
+                // Released the button
+                var args = new TileGridEventArgs();
+
+                var (x1, y1) = TileToXY(rectSelectStart);
+                var (x2, y2) = TileToXY(rectSelectEnd);
+
+                args.topLeft = new Point(
+                    Math.Min(x1, x2),
+                    Math.Min(y1, y2)
+                );
+                args.bottomRight = new Point(
+                    Math.Max(x1, x2),
+                    Math.Max(y1, y2)
+                );
+
+                activeRectSelectAction.callback(this, args);
+                activeRectSelectAction = null;
+            }
+
+            // Draw rectangle selection range
+            base.AddRect(TileRangeRect(rectSelectStart, rectSelectEnd), HoverColor, RectThickness);
         }
     }
 
@@ -337,37 +379,49 @@ public class TileGrid : SizedWidget
     {
         int mouseIndex = CoordToTile(base.GetRelativeMousePos());
 
-        // Draw hover rectangle
         if (mouseIndex != -1 && mouseIndex <= MaxIndex && draggingTileIndex == -1)
         {
-            FRect r = TileRect(mouseIndex);
-            base.AddRect(r, HoverColor, thickness: RectThickness);
-
             // Check mouse input
             TileGridEventArgs args = new TileGridEventArgs();
             args.selectedIndex = mouseIndex;
 
-            foreach (TileGridAction action in actionList)
+            // This only executes if not currently doing a rectangle select
+            if (activeRectSelectAction == null)
             {
-                if (action.MatchesState())
+                // Draw hover rectangle
+                FRect r = TileRect(mouseIndex);
+                base.AddRect(r, HoverColor, thickness: RectThickness);
+
+                // Check mouse actions
+                foreach (TileGridAction action in actionList)
                 {
-                    if (action.action == GridAction.Callback)
+                    if (action.ActionTriggered())
                     {
-                        action.callback(this, args);
-                    }
-                    else if (action.action == GridAction.Select)
-                    {
-                        if (SelectedIndex == mouseIndex && Unselectable)
+                        if (action.action == GridAction.Callback)
                         {
-                            SelectedIndex = -1;
+                            action.callback(this, args);
                         }
-                        else if (Selectable)
+                        else if (action.action == GridAction.SelectRangeCallback)
                         {
-                            SelectedIndex = mouseIndex;
+                            // We're just starting the rectangle selection
+                            activeRectSelectAction = action;
+                            rectSelectStart = mouseIndex;
+                            rectSelectEnd = rectSelectStart;
                         }
+                        else if (action.action == GridAction.Select)
+                        {
+                            if (SelectedIndex == mouseIndex && Unselectable)
+                            {
+                                SelectedIndex = -1;
+                            }
+                            else if (Selectable)
+                            {
+                                SelectedIndex = mouseIndex;
+                            }
+                        }
+                        else
+                            throw new NotImplementedException();
                     }
-                    else
-                        throw new NotImplementedException();
                 }
             }
         }
@@ -481,6 +535,28 @@ public class TileGrid : SizedWidget
         return new FRect(tl.X, tl.Y, TileWidth * Scale, TileHeight * Scale);
     }
 
+    /// <summary>
+    /// Gets the bounds of a range of tiles in a rectangle.
+    /// </summary>
+    protected FRect TileRangeRect(int tile1, int tile2)
+    {
+        var coord1 = TileToCoord(tile1);
+        var coord2 = TileToCoord(tile2);
+
+        var tl = new Vector2(
+            Math.Min(coord1.X, coord2.X),
+            Math.Min(coord1.Y, coord2.Y)
+        );
+        var br = new Vector2(
+            Math.Max(coord1.X, coord2.X),
+            Math.Max(coord1.Y, coord2.Y)
+        );
+
+        br += new Vector2(TileWidth, TileHeight) * Scale;
+
+        return FRect.FromVectors(tl, br);
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================
@@ -546,8 +622,9 @@ public class TileGrid : SizedWidget
 
         /// <summary>
         /// Returns true if the conditions are met for the action to be triggered.
+        /// In the case of rectangle selection "triggered" means the selection is active.
         /// </summary>
-        public bool MatchesState()
+        public bool ActionTriggered()
         {
             return ButtonMatchesState() && ModifierMatchesState();
         }

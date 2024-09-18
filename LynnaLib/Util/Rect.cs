@@ -45,6 +45,10 @@ namespace Util
                 && point.Y >= Y && point.Y <= Y + Height;
         }
 
+        // ================================================================================
+        // Operator overloads
+        // ================================================================================
+
         public static FRect operator*(FRect rect1, float scale)
         {
             return new FRect(rect1.X * scale, rect1.Y * scale,
@@ -52,7 +56,24 @@ namespace Util
         }
 
         // ================================================================================
-        // Private methods
+        // Static methods
         // ================================================================================
+
+        /// <summary>
+        /// Return a rectangle which contains the two points.
+        /// </summary>
+        public static FRect FromVectors(Vector2 p1, Vector2 p2)
+        {
+            Vector2 tl = new Vector2(
+                Math.Min(p1.X, p2.X),
+                Math.Min(p1.Y, p2.Y)
+            );
+            Vector2 br = new Vector2(
+                Math.Max(p1.X, p2.X),
+                Math.Max(p1.Y, p2.Y)
+            );
+
+            return new FRect(tl.X, tl.Y, br.X - tl.X, br.Y - tl.Y);
+        }
     }
 }

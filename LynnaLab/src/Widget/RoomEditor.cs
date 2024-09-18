@@ -14,7 +14,7 @@ public class RoomEditor : Frame
     {
         this.Workspace = workspace;
 
-        roomLayoutEditor = new RoomLayoutEditor(this.Workspace);
+        roomLayoutEditor = new RoomLayoutEditor(this.Workspace, () => tilesetViewer.SelectedIndex);
         roomLayoutEditor.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(-1));
 
         tilesetViewer = new TilesetViewer(this.Workspace);
@@ -30,19 +30,8 @@ public class RoomEditor : Frame
         SetRoom(0, false);
 
         roomLayoutEditor.AddMouseAction(
-            MouseButton.LeftClick,
-            MouseModifier.Any,
-            MouseAction.ClickDrag,
-            GridAction.Callback,
-            (_, args) =>
-            {
-                int x = args.selectedIndex % roomLayoutEditor.Width;
-                int y = args.selectedIndex / roomLayoutEditor.Width;
-                roomLayoutEditor.RoomLayout.SetTile(x, y, tilesetViewer.SelectedIndex);
-            });
-        roomLayoutEditor.AddMouseAction(
             MouseButton.RightClick,
-            MouseModifier.Any,
+            MouseModifier.None,
             MouseAction.Click,
             GridAction.Callback,
             (_, args) =>

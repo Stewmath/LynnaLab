@@ -5,14 +5,42 @@ public class RoomLayoutEditor : TileGrid
     // ================================================================================
     // Constructors
     // ================================================================================
-    public RoomLayoutEditor(ProjectWorkspace workspace)
+    public RoomLayoutEditor(ProjectWorkspace workspace, Func<int> _selectedTileGetter)
         : base("Room Layout Editor")
     {
         this.Workspace = workspace;
+        this.selectedTileGetter = _selectedTileGetter;
 
         base.TileWidth = 16;
         base.TileHeight = 16;
         base.Scale = 2;
+
+        // Left click to set tile
+        base.AddMouseAction(
+            MouseButton.LeftClick,
+            MouseModifier.None,
+            MouseAction.ClickDrag,
+            GridAction.Callback,
+            (sender, args) =>
+            {
+                int x = args.selectedIndex % Width;
+                int y = args.selectedIndex / Width;
+                RoomLayout.SetTile(x, y, selectedTileGetter());
+            });
+
+        // Ctrl+Left click to set range of tiles
+        base.AddMouseAction(
+            MouseButton.LeftClick,
+            MouseModifier.Ctrl,
+            MouseAction.ClickDrag,
+            GridAction.SelectRangeCallback,
+            (sender, args) =>
+            {
+                args.Foreach((x, y) =>
+                {
+                    RoomLayout.SetTile(x, y, selectedTileGetter());
+                });
+            });
 
         QuickstartData.enableToggledEvent += (s, a) => UpdateQuickstartRoomComponent();
 
@@ -32,6 +60,7 @@ public class RoomLayoutEditor : TileGrid
     List<RoomComponent> roomComponents;
     bool draggingComponent;
     EventWrapper<Room> roomEventWrapper;
+    Func<int> selectedTileGetter;
 
     // ================================================================================
     // Properties
@@ -122,7 +151,7 @@ public class RoomLayoutEditor : TileGrid
                 }
             }
 
-            // Update dragging
+            // Update room component dragging
             if (draggingComponent && com == selectedRoomComponent)
             {
                 inhibitMouse = true;
