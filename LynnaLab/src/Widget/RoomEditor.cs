@@ -18,11 +18,30 @@ public class RoomEditor : Frame
     {
         this.Workspace = workspace;
 
-        roomLayoutEditor = new RoomLayoutEditor(this.Workspace, () => tilesetViewer.SelectedIndex);
+        roomLayoutEditor = new RoomLayoutEditor(this.Workspace, roomBrush);
         roomLayoutEditor.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(-1));
 
         tilesetViewer = new TilesetViewer(this.Workspace);
+        tilesetViewer.Unselectable = true;
         tilesetViewer.SetTileset(roomLayoutEditor.Room.GetTileset(-1));
+
+        // Tileset viewer: Selecting a single tile
+        tilesetViewer.SelectedEvent += (index) =>
+        {
+            if (index != -1)
+                roomBrush.SetTile(tilesetViewer, index);
+        };
+        // Tileset viewer: Selecting multiple tiles
+        tilesetViewer.AddMouseAction(
+            MouseButton.LeftClick,
+            MouseModifier.None,
+            MouseAction.ClickDrag,
+            GridAction.SelectRangeCallback,
+            (sender, args) =>
+            {
+                roomBrush.SetTiles(tilesetViewer, args.RectArray((x, y) => x + y * 16));
+                tilesetViewer.SelectedIndex = -1;
+            });
 
         overworldMinimap = new Minimap(this.Workspace);
         dungeonMinimap = new Minimap(this.Workspace);
@@ -72,6 +91,7 @@ public class RoomEditor : Frame
     TilesetViewer tilesetViewer;
     Minimap overworldMinimap, dungeonMinimap;
     ObjectGroupEditor objectGroupEditor;
+    Brush roomBrush = new Brush();
 
     EventWrapper<RoomLayout> roomLayoutEventWrapper = new EventWrapper<RoomLayout>();
 

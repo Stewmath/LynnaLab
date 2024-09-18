@@ -5,11 +5,11 @@ public class RoomLayoutEditor : TileGrid
     // ================================================================================
     // Constructors
     // ================================================================================
-    public RoomLayoutEditor(ProjectWorkspace workspace, Func<int> _selectedTileGetter)
+    public RoomLayoutEditor(ProjectWorkspace workspace, Brush brush)
         : base("Room Layout Editor")
     {
         this.Workspace = workspace;
-        this.selectedTileGetter = _selectedTileGetter;
+        this.Brush = brush;
 
         base.TileWidth = 16;
         base.TileHeight = 16;
@@ -25,7 +25,12 @@ public class RoomLayoutEditor : TileGrid
             {
                 int x = args.selectedIndex % Width;
                 int y = args.selectedIndex / Width;
-                RoomLayout.SetTile(x, y, selectedTileGetter());
+                brush.Draw((x2, y2, t) =>
+                {
+                    if (x2 < 0 || y2 < 0 || x2 >= RoomLayout.Width || y2 >= RoomLayout.Height)
+                        return;
+                    RoomLayout.SetTile(x2, y2, t);
+                }, x, y);
             });
 
         // Ctrl+Left click to set range of tiles
@@ -38,7 +43,9 @@ public class RoomLayoutEditor : TileGrid
             {
                 args.Foreach((x, y) =>
                 {
-                    RoomLayout.SetTile(x, y, selectedTileGetter());
+                    int brushX = (x - args.topLeft.X) % Brush.BrushWidth;
+                    int brushY = (y - args.topLeft.Y) % Brush.BrushHeight;
+                    RoomLayout.SetTile(x, y, Brush.GetTile(brushX, brushY));
                 });
             });
 
@@ -60,7 +67,6 @@ public class RoomLayoutEditor : TileGrid
     List<RoomComponent> roomComponents;
     bool draggingComponent;
     EventWrapper<Room> roomEventWrapper;
-    Func<int> selectedTileGetter;
 
     // ================================================================================
     // Properties
@@ -70,6 +76,7 @@ public class RoomLayoutEditor : TileGrid
     public Room Room { get { return RoomLayout?.Room; } }
     public RoomLayout RoomLayout { get; private set; }
     public QuickstartData QuickstartData { get { return Workspace.QuickstartData; } }
+    public Brush Brush { get; private set; }
 
     public bool DrawChest { get { return true; } }
 

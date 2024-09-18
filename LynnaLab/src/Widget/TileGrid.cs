@@ -113,6 +113,8 @@ public class TileGrid : SizedWidget
     {
         get
         {
+            if (RectangleSelected)
+                return -1;
             return selectedIndex;
         }
         set
@@ -125,8 +127,9 @@ public class TileGrid : SizedWidget
                     throw new Exception("Tried to set SelectedIndex to out of range value " + value);
                 selectedIndex = -1;
             }
-            if (selectedIndex != value)
+            if (RectangleSelected || selectedIndex != value)
             {
+                RectangleSelected = false;
                 selectedIndex = value;
                 SelectedEvent?.Invoke(value);
             }
@@ -203,6 +206,16 @@ public class TileGrid : SizedWidget
     /// Not invoked while dragging.
     /// </summary>
     public Action<int> OnHover { get; set; }
+
+    /// <summary>
+    /// True if a rectangle region has been selected (process of selection is finished).
+    /// </summary>
+    public bool RectangleSelected { get; private set; }
+
+    /// <summary>
+    /// True if a rectangle region is in the process of being selected.
+    /// </summary>
+    public bool SelectingRectangle { get { return activeRectSelectAction != null; } }
 
     /// <summary>
     /// A derived class should override either the Image get operator or the TileDrawer function in
@@ -308,15 +321,8 @@ public class TileGrid : SizedWidget
             RenderMouse();
         }
 
-        // Draw regular (1-tile) selection rectangle
-        if (Selectable && SelectedIndex != -1)
-        {
-            FRect r = TileRect(SelectedIndex);
-            base.AddRect(r, SelectColor, thickness: RectThickness);
-        }
-
-        // Rectangle selection stuff (only executes if rectangle selection has begun)
-        if (activeRectSelectAction != null)
+        // Currently selecting a rectangle region
+        if (SelectingRectangle)
         {
             int mouseIndex = CoordToTile(base.GetRelativeMousePos());
             if (!ImGui.IsItemHovered())
@@ -346,12 +352,41 @@ public class TileGrid : SizedWidget
                 );
 
                 activeRectSelectAction.callback(this, args);
+
+                if (Selectable)
+                {
+                    int width = args.bottomRight.X - args.topLeft.X + 1;
+                    int height = args.bottomRight.Y - args.topLeft.Y + 1;
+                    if (width == 1 && height == 1)
+                    {
+                        // Only one tile was selected, just set the selectedIndex to that.
+                        // TODO: Is this wise? Not all callers may want this. They can set the
+                        // callback themselves...
+                        SelectedIndex = args.topLeft.X + args.topLeft.Y * Width;
+                    }
+                    else
+                    {
+                        RectangleSelected = true;
+                    }
+                }
+
                 activeRectSelectAction = null;
             }
-
-            // Draw rectangle selection range
-            base.AddRect(TileRangeRect(rectSelectStart, rectSelectEnd), HoverColor, RectThickness);
         }
+
+        if (RectangleSelected || SelectingRectangle)
+        {
+            // Draw rectangle selection range
+            base.AddRect(TileRangeRect(rectSelectStart, rectSelectEnd), SelectColor, RectThickness);
+        }
+
+        if (!RectangleSelected && !SelectingRectangle && Selectable && SelectedIndex != -1)
+        {
+            // Draw regular (1-tile) selection rectangle
+            FRect r = TileRect(SelectedIndex);
+            base.AddRect(r, SelectColor, thickness: RectThickness);
+        }
+
     }
 
     /// <summary>
@@ -704,6 +739,9 @@ public struct TileGridEventArgs
     // For GridAction.SelectRange
     public Point topLeft, bottomRight;
 
+    public int SelectedWidth { get { return bottomRight.X - topLeft.X + 1; } }
+    public int SelectedHeight { get { return bottomRight.Y - topLeft.Y + 1; } }
+
     public void Foreach(System.Action<int, int> action)
     {
         for (int x = topLeft.X; x <= bottomRight.X; x++)
@@ -713,5 +751,25 @@ public struct TileGridEventArgs
                 action(x, y);
             }
         }
+    }
+
+    /// <summary>
+    /// For rectangle selections, returns the grid of selected tiles as a 2d array.
+    /// Takes a function which converts the X/Y coordinates to an int value (which should be a tile
+    /// index of some kind).
+    /// </summary>
+    public int[,] RectArray(Func<int, int, int> tileGetter)
+    {
+        int[,] array = new int[SelectedWidth, SelectedHeight];
+
+        for (int x = 0; x < SelectedWidth; x++)
+        {
+            for (int y = 0; y < SelectedHeight; y++)
+            {
+                array[x,y] = tileGetter(topLeft.X + x, topLeft.Y + y);
+            }
+        }
+
+        return array;
     }
 }
