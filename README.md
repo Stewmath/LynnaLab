@@ -1,6 +1,9 @@
 An editor for The Legend of Zelda: Oracle of Ages & Seasons, based on
 [oracles-disasm](https://github.com/stewmath/oracles-disasm).
 
+See the [release trailer](https://www.youtube.com/watch?v=u-Sz1d0ZdEk) for a feature overview and
+setup instructions!
+
 ![](images/preview-general.png)
 
 ## Features
@@ -46,6 +49,9 @@ code.
 ## Setting it up
 
 ### Windows
+
+Either follow the steps in the [release trailer](https://www.youtube.com/watch?v=u-Sz1d0ZdEk&t=126s)
+or follow the steps below.
 
 The following steps are necessary to install not only LynnaLab, but also
 oracles-disasm and the dependencies necessary to build it.
