@@ -4,14 +4,17 @@ using System.Runtime.InteropServices;
 
 namespace LynnaLab;
 
-public class BuildDialog
+public class BuildDialog : Frame
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public BuildDialog(ProjectWorkspace workspace)
+    public BuildDialog(ProjectWorkspace workspace, string name)
+        : base(name)
     {
         this.Workspace = workspace;
+
+        base.ClosedEvent += (_, _) => Close();
     }
 
     // ================================================================================
@@ -30,7 +33,6 @@ public class BuildDialog
     // ================================================================================
     public ProjectWorkspace Workspace { get; private set; }
     public Project Project { get { return Workspace.Project; } }
-    public bool Visible { get; private set; }
 
     // Private properties
     GlobalConfig GlobalConfig { get { return TopLevel.GlobalConfig; } }
@@ -39,7 +41,7 @@ public class BuildDialog
     // Public methods
     // ================================================================================
 
-    public void Render()
+    public override void Render()
     {
         ImGui.PushFont(TopLevel.DefaultFont);
 
@@ -89,12 +91,10 @@ public class BuildDialog
     /// </summary>
     public void Close()
     {
-        if (!Visible)
-            return;
         HaltMake();
         if (GlobalConfig.CloseEmulatorWithRunDialog)
             HaltEmulator();
-        Visible = false;
+        Active = false;
 
         // Just in case checkboxes were modified
         GlobalConfig.Save();
@@ -105,7 +105,7 @@ public class BuildDialog
         // Stop previous compilation if it's in progress
         HaltMake();
 
-        Visible = true;
+        Active = true;
 
         string makeCommand = GlobalConfig.MakeCommand;
 

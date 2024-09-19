@@ -25,12 +25,25 @@ public class ProjectWorkspace
         this.Brush = new Brush();
 
         linkImage = TopLevel.ImageFromBitmap(project.LinkBitmap);
+
         roomEditor = new RoomEditor(this);
-        dungeonEditor = new DungeonEditor(this);
-        tilesetEditor = new TilesetEditor(this);
+        dungeonEditor = new DungeonEditor(this, "Dungeon Editor");
+        tilesetEditor = new TilesetEditor(this, "Tileset Editor");
         tilesetCloner = new TilesetCloner(this, "Tileset Cloner");
-        buildDialog = new BuildDialog(this);
+        buildDialog = new BuildDialog(this, "Build");
         scratchpad = new ScratchPad("Scratchpad", roomEditor.TilesetViewer, Brush);
+
+        frames.AddRange(new Frame[] {
+                roomEditor,
+                dungeonEditor,
+                tilesetEditor,
+                tilesetCloner,
+                scratchpad,
+                buildDialog,
+            });
+
+        // Default active windows
+        roomEditor.Active = true;
         scratchpad.Active = true;
     }
 
@@ -43,6 +56,7 @@ public class ProjectWorkspace
     TilesetEditor tilesetEditor;
     TilesetCloner tilesetCloner;
     ScratchPad scratchpad;
+    List<Frame> frames = new List<Frame>();
 
     Image linkImage;
     BuildDialog buildDialog;
@@ -86,6 +100,20 @@ public class ProjectWorkspace
                 }
                 ImGui.EndMenu();
             }
+            if (ImGui.BeginMenu("Windows"))
+            {
+                foreach (Frame frame in frames)
+                {
+                    ImGuiX.MenuItemCheckbox(
+                        frame.Name,
+                        frame.Active,
+                        (active) =>
+                        {
+                            frame.Active = active;
+                        });
+                }
+                ImGui.EndMenu();
+            }
             if (ImGui.BeginMenu("Misc"))
             {
                 ImGuiX.MenuItemCheckbox(
@@ -112,30 +140,11 @@ public class ProjectWorkspace
             }
         }
 
-        ImGui.Begin("Room Editor", ImGuiWindowFlags.MenuBar);
-        roomEditor.Render();
-        ImGui.End();
 
-        ImGui.Begin("Dungeon Editor");
-        dungeonEditor.Render();
-        ImGui.End();
-
-        ImGui.Begin("Tileset Editor");
-        tilesetEditor.Render();
-        ImGui.End();
-
-        tilesetCloner.RenderAsWindow();
-
-        if (buildDialog.Visible)
+        foreach (var frame in frames)
         {
-            if (ImGuiX.Begin("Build", () => buildDialog.Close()))
-            {
-                buildDialog.Render();
-            }
-            ImGui.End();
+            frame.RenderAsWindow();
         }
-
-        scratchpad.RenderAsWindow();
     }
 
     public Image GetCachedTilesetImage(Tileset tileset)

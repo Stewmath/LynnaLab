@@ -1,11 +1,12 @@
 namespace LynnaLab;
 
-public class TilesetEditor
+public class TilesetEditor : Frame
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public TilesetEditor(ProjectWorkspace workspace)
+    public TilesetEditor(ProjectWorkspace workspace, string name)
+        : base(name)
     {
         Workspace = workspace;
         tilesetViewer = new TilesetViewer(Workspace);
@@ -38,7 +39,7 @@ public class TilesetEditor
     // Public methods
     // ================================================================================
 
-    public void Render()
+    public override void Render()
     {
         float HEIGHT = tilesetViewer.WidgetSize.Y + 40.0f;
 

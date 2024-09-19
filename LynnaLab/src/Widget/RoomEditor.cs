@@ -17,6 +17,7 @@ public class RoomEditor : Frame
         : base("Room Editor")
     {
         this.Workspace = workspace;
+        base.WindowFlags = ImGuiWindowFlags.MenuBar;
 
         roomLayoutEditor = new RoomLayoutEditor(this.Workspace, Brush);
         roomLayoutEditor.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(-1));

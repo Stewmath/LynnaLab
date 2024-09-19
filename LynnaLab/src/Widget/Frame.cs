@@ -21,6 +21,12 @@ public abstract class Frame
     bool active;
 
     // ================================================================================
+    // Events
+    // ================================================================================
+
+    public event EventHandler ClosedEvent;
+
+    // ================================================================================
     // Properties
     // ================================================================================
 
@@ -35,7 +41,12 @@ public abstract class Frame
         }
         set
         {
+            bool old = active;
             active = value;
+            if (old && !active)
+            {
+                ClosedEvent?.Invoke(this, null);
+            }
         }
     }
 

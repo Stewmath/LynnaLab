@@ -1,11 +1,12 @@
 namespace LynnaLab;
 
-public class DungeonEditor
+public class DungeonEditor : Frame
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public DungeonEditor(ProjectWorkspace workspace)
+    public DungeonEditor(ProjectWorkspace workspace, string name)
+        : base(name)
     {
         this.Workspace = workspace;
         this.Dungeon = Project.GetDungeon(2);
@@ -43,7 +44,7 @@ public class DungeonEditor
     // Public methods
     // ================================================================================
 
-    public void Render()
+    public override void Render()
     {
         ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
 
