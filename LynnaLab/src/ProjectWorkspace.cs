@@ -16,14 +16,13 @@ public class ProjectWorkspace
     {
         this.Project = project;
 
-        QuickstartData.x = 0x48;
-        QuickstartData.y = 0x48;
-
         Project.LazyInvoke = TopLevel.LazyInvoke;
 
         tilesetImageCacher = new TilesetImageCacher(this);
         roomImageCacher = new RoomImageCacher(this);
         mapImageCacher = new MapImageCacher(this);
+
+        this.Brush = new Brush();
 
         linkImage = TopLevel.ImageFromBitmap(project.LinkBitmap);
         roomEditor = new RoomEditor(this);
@@ -31,6 +30,8 @@ public class ProjectWorkspace
         tilesetEditor = new TilesetEditor(this);
         tilesetCloner = new TilesetCloner(this, "Tileset Cloner");
         buildDialog = new BuildDialog(this);
+        scratchpad = new ScratchPad("Scratchpad", roomEditor.TilesetViewer, Brush);
+        scratchpad.Active = true;
     }
 
     // ================================================================================
@@ -41,6 +42,7 @@ public class ProjectWorkspace
     DungeonEditor dungeonEditor;
     TilesetEditor tilesetEditor;
     TilesetCloner tilesetCloner;
+    ScratchPad scratchpad;
 
     Image linkImage;
     BuildDialog buildDialog;
@@ -56,6 +58,7 @@ public class ProjectWorkspace
     // ================================================================================
     public Project Project { get; private set; }
     public QuickstartData QuickstartData { get; set; } = new QuickstartData();
+    public Brush Brush { get; private set; }
 
     // ================================================================================
     // Public methods
@@ -131,6 +134,8 @@ public class ProjectWorkspace
             }
             ImGui.End();
         }
+
+        scratchpad.RenderAsWindow();
     }
 
     public Image GetCachedTilesetImage(Tileset tileset)

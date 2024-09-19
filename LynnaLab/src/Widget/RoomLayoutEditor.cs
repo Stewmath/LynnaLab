@@ -15,39 +15,13 @@ public class RoomLayoutEditor : TileGrid
         base.TileHeight = 16;
         base.Scale = 2;
 
-        // Left click to set tile
-        base.AddMouseAction(
-            MouseButton.LeftClick,
-            MouseModifier.None,
-            MouseAction.ClickDrag,
-            GridAction.Callback,
-            (sender, args) =>
-            {
-                int x = args.selectedIndex % Width;
-                int y = args.selectedIndex / Width;
-                brush.Draw((x2, y2, t) =>
-                {
-                    if (x2 < 0 || y2 < 0 || x2 >= RoomLayout.Width || y2 >= RoomLayout.Height)
-                        return;
-                    RoomLayout.SetTile(x2, y2, t);
-                }, x, y);
-            });
-
-        // Ctrl+Left click to set range of tiles
-        base.AddMouseAction(
-            MouseButton.LeftClick,
-            MouseModifier.Ctrl,
-            MouseAction.ClickDrag,
-            GridAction.SelectRangeCallback,
-            (sender, args) =>
-            {
-                args.Foreach((x, y) =>
-                {
-                    int brushX = (x - args.topLeft.X) % Brush.BrushWidth;
-                    int brushY = (y - args.topLeft.Y) % Brush.BrushHeight;
-                    RoomLayout.SetTile(x, y, Brush.GetTile(brushX, brushY));
-                });
-            });
+        // Register mouse buttons for tile selection & placement
+        RegisterTilePlacementInputs(
+            brush,
+            (x, y) => RoomLayout.GetTile(x, y),
+            (x, y, tile) => RoomLayout.SetTile(x, y, tile),
+            () => RoomLayout.Width,
+            () => RoomLayout.Height);
 
         QuickstartData.enableToggledEvent += (s, a) => UpdateQuickstartRoomComponent();
 

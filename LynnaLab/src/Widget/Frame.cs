@@ -41,6 +41,8 @@ public abstract class Frame
 
     public string Name { get; private set; }
 
+    public ImGuiWindowFlags WindowFlags;
+
     // ================================================================================
     // Public methods
     // ================================================================================
@@ -52,7 +54,7 @@ public abstract class Frame
     {
         if (Active)
         {
-            if (ImGui.Begin(Name, ref active))
+            if (ImGui.Begin(Name, ref active, WindowFlags))
             {
                 Render();
             }

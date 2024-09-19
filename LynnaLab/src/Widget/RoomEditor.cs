@@ -18,7 +18,7 @@ public class RoomEditor : Frame
     {
         this.Workspace = workspace;
 
-        roomLayoutEditor = new RoomLayoutEditor(this.Workspace, roomBrush);
+        roomLayoutEditor = new RoomLayoutEditor(this.Workspace, Brush);
         roomLayoutEditor.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(-1));
 
         tilesetViewer = new TilesetViewer(this.Workspace);
@@ -29,7 +29,7 @@ public class RoomEditor : Frame
         tilesetViewer.SelectedEvent += (index) =>
         {
             if (index != -1)
-                roomBrush.SetTile(tilesetViewer, index);
+                Brush.SetTile(tilesetViewer, index);
         };
         // Tileset viewer: Selecting multiple tiles
         tilesetViewer.AddMouseAction(
@@ -39,33 +39,23 @@ public class RoomEditor : Frame
             GridAction.SelectRangeCallback,
             (sender, args) =>
             {
-                roomBrush.SetTiles(tilesetViewer, args.RectArray((x, y) => x + y * 16));
+                Brush.SetTiles(tilesetViewer, args.RectArray((x, y) => x + y * 16));
                 tilesetViewer.SelectedIndex = -1;
             });
 
         overworldMinimap = new Minimap(this.Workspace);
         dungeonMinimap = new Minimap(this.Workspace);
-
         objectGroupEditor = new ObjectGroupEditor("Object Group Editor", Room.GetObjectGroup());
-
-        roomLayoutEventWrapper.Bind<RoomTilesetChangedEventArgs>("TilesetChangedEvent", OnTilesetIndexChanged);
 
         SetRoom(0, false);
 
-        roomLayoutEditor.AddMouseAction(
-            MouseButton.RightClick,
-            MouseModifier.None,
-            MouseAction.Click,
-            GridAction.Callback,
-            (_, args) =>
-            {
-                int x = args.selectedIndex % roomLayoutEditor.Width;
-                int y = args.selectedIndex / roomLayoutEditor.Width;
-                int tile = roomLayoutEditor.RoomLayout.GetTile(x, y);
-                tilesetViewer.SelectedIndex = tile;
-            });
-
         overworldMinimap.SetMap(Project.GetWorldMap(0, 0));
+        dungeonMinimap.SetMap(Project.GetDungeon(0));
+
+
+        // Set up events
+
+        roomLayoutEventWrapper.Bind<RoomTilesetChangedEventArgs>("TilesetChangedEvent", OnTilesetIndexChanged);
         overworldMinimap.SelectedEvent += (selectedIndex) =>
         {
             if (suppressEvents != 0)
@@ -74,7 +64,6 @@ public class RoomEditor : Frame
             SetRoomLayout(overworldMinimap.Map.GetRoomLayout(overworldMinimap.SelectedX, overworldMinimap.SelectedY), false);
         };
 
-        dungeonMinimap.SetMap(Project.GetDungeon(0));
         dungeonMinimap.SelectedEvent += (selectedIndex) =>
         {
             if (suppressEvents != 0)
@@ -82,17 +71,30 @@ public class RoomEditor : Frame
 
             SetRoomLayout(dungeonMinimap.Map.GetRoomLayout(dungeonMinimap.SelectedX, dungeonMinimap.SelectedY, ActiveFloor), false);
         };
+
+        Brush.BrushChanged += (_, _) =>
+        {
+            if (Brush.Source != tilesetViewer)
+            {
+                if (Brush.IsSingleTile)
+                    tilesetViewer.SelectedIndex = Brush.GetTile(0, 0);
+                else
+                    tilesetViewer.SelectedIndex = -1;
+            }
+        };
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
+
+    // Windows / rendering areas
     RoomLayoutEditor roomLayoutEditor;
     TilesetViewer tilesetViewer;
     Minimap overworldMinimap, dungeonMinimap;
     ObjectGroupEditor objectGroupEditor;
-    Brush roomBrush = new Brush();
 
+    // Misc
     EventWrapper<RoomLayout> roomLayoutEventWrapper = new EventWrapper<RoomLayout>();
 
     int suppressEvents = 0;
@@ -111,6 +113,11 @@ public class RoomEditor : Frame
     public RoomLayout RoomLayout { get { return roomLayoutEditor.RoomLayout; } }
     public Room Room { get { return RoomLayout.Room; } }
     public int Season { get { return RoomLayout.Season; } }
+
+    public TilesetViewer TilesetViewer { get { return tilesetViewer; } }
+
+    public Brush Brush { get { return Workspace.Brush; } }
+
 
     // Private properties
 

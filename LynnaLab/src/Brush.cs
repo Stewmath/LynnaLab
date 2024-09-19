@@ -22,11 +22,19 @@ public class Brush
     int[,] tiles;
 
     // ================================================================================
+    // Events
+    // ================================================================================
+
+    public event EventHandler BrushChanged;
+
+    // ================================================================================
     // Properties
     // ================================================================================
 
     public int BrushWidth { get { return tiles.GetLength(0); } }
     public int BrushHeight { get { return tiles.GetLength(1); } }
+
+    public bool IsSingleTile { get { return BrushWidth == 1 && BrushHeight == 1; } }
 
     /// <summary>
     /// The source from which the current brush pattern was retrieved.
@@ -57,6 +65,7 @@ public class Brush
     {
         Source = source;
         tiles = new int[,] { { tile } };
+        BrushChanged?.Invoke(this, null);
     }
 
     /// <summary>
@@ -66,6 +75,7 @@ public class Brush
     {
         Source = source;
         tiles = newTiles;
+        BrushChanged?.Invoke(this, null);
     }
 
     /// <summary>

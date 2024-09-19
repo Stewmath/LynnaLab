@@ -533,6 +533,62 @@ public class TileGrid : SizedWidget
         ImGuiX.DrawImage(Image, scale, tilePos, tilePos + tileSize);
     }
 
+    /// <summary>
+    /// Register mouse inputs used by RoomLayoutEditor and ScratchPad for drawing tiles
+    /// </summary>
+    public void RegisterTilePlacementInputs(
+        Brush brush,
+        Func<int, int, int> tileGetter,
+        Action<int, int, int> tileSetter,
+        Func<int> maxX,
+        Func<int> maxY)
+    {
+        // Left click to set tile
+        AddMouseAction(
+            MouseButton.LeftClick,
+            MouseModifier.None,
+            MouseAction.ClickDrag,
+            GridAction.Callback,
+            (sender, args) =>
+            {
+                int x = args.selectedIndex % Width;
+                int y = args.selectedIndex / Width;
+                brush.Draw((x2, y2, t) =>
+                {
+                    if (x2 < 0 || y2 < 0 || x2 >= maxX() || y2 >= maxY())
+                        return;
+                    tileSetter(x2, y2, t);
+                }, x, y);
+            });
+
+        // Ctrl+Left click to set range of tiles
+        AddMouseAction(
+            MouseButton.LeftClick,
+            MouseModifier.Ctrl,
+            MouseAction.ClickDrag,
+            GridAction.SelectRangeCallback,
+            (sender, args) =>
+            {
+                args.Foreach((x, y) =>
+                {
+                    int brushX = (x - args.topLeft.X) % brush.BrushWidth;
+                    int brushY = (y - args.topLeft.Y) % brush.BrushHeight;
+                    tileSetter(x, y, brush.GetTile(brushX, brushY));
+                });
+            });
+
+        // Right-click to select a tile or a range of tiles
+        AddMouseAction(
+            MouseButton.RightClick,
+            MouseModifier.None,
+            MouseAction.ClickDrag,
+            GridAction.SelectRangeCallback,
+            (_, args) =>
+            {
+                brush.SetTiles(this, args.RectArray((x2, y2) => tileGetter(x2, y2)));
+            });
+    }
+
     // ================================================================================
     // Protected methods
     // ================================================================================
