@@ -44,8 +44,6 @@ public static class TopLevel
     static Dictionary<Bitmap, Image> imageDict = new Dictionary<Bitmap, Image>();
     static Queue<Func<bool>> idleFunctions = new Queue<Func<bool>>();
 
-    static bool showImGuiDemoWindow = false;
-
     // ================================================================================
     // Properties
     // ================================================================================
@@ -111,21 +109,9 @@ public static class TopLevel
     {
         ImGui.PushFont(OraclesFont);
 
-        {
-            ImGui.Begin("Control Panel");
-            ImGui.Checkbox("Demo Window".AsSpan(), ref showImGuiDemoWindow);
-            ImGui.Text("Frametime: " + deltaTime);
-            ImGui.End();
-        }
-
-        Workspace?.Render();
+        Workspace?.Render(deltaTime);
 
         ImGui.PopFont();
-
-        if (showImGuiDemoWindow)
-        {
-            ImGui.ShowDemoWindow(ref showImGuiDemoWindow);
-        }
     }
 
     /// <summary>

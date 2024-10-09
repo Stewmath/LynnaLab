@@ -185,6 +185,14 @@ public static class ImGuiX
     }
 
     /// <summary>
+    /// Menu item that behaves as a checkbox
+    /// </summary>
+    public static bool MenuItemCheckbox(string name, ref bool value)
+    {
+        return ImGui.MenuItem(name, null, ref value);
+    }
+
+    /// <summary>
     /// Menu item that behaves as a checkbox, with an accessor for the value
     /// </summary>
     public static void MenuItemCheckbox(string name, Accessor<bool> accessor)

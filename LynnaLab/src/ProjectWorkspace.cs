@@ -57,6 +57,8 @@ public class ProjectWorkspace
     TilesetCloner tilesetCloner;
     ScratchPad scratchpad;
     List<Frame> frames = new List<Frame>();
+    bool showDebugWindow;
+    bool showImGuiDemoWindow;
 
     Image linkImage;
     BuildDialog buildDialog;
@@ -78,7 +80,7 @@ public class ProjectWorkspace
     // Public methods
     // ================================================================================
 
-    public void Render()
+    public void Render(float deltaTime)
     {
         if (Project == null)
             return;
@@ -132,14 +134,26 @@ public class ProjectWorkspace
             }
             if (ImGui.BeginMenu("Debug"))
             {
-                if (ImGui.MenuItem("Trigger GC"))
-                {
-                    System.GC.Collect();
-                }
+                ImGuiX.MenuItemCheckbox("Debug Window", ref showDebugWindow);
+                ImGuiX.MenuItemCheckbox("ImGui Demo Window", ref showImGuiDemoWindow);
                 ImGui.EndMenu();
             }
         }
 
+
+        if (showDebugWindow)
+        {
+            ImGui.Begin("Debug", ref showDebugWindow);
+            ImGui.Text("Frametime: " + deltaTime);
+            ImGui.End();
+        }
+
+        if (showImGuiDemoWindow)
+        {
+            ImGui.PushFont(TopLevel.DefaultFont);
+            ImGui.ShowDemoWindow(ref showImGuiDemoWindow);
+            ImGui.PopFont();
+        }
 
         foreach (var frame in frames)
         {
