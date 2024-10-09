@@ -5,11 +5,12 @@ public class RoomLayoutEditor : TileGrid
     // ================================================================================
     // Constructors
     // ================================================================================
-    public RoomLayoutEditor(ProjectWorkspace workspace, Brush brush)
+    public RoomLayoutEditor(ProjectWorkspace workspace, RoomEditor roomEditor, Brush brush)
         : base("Room Layout Editor")
     {
         this.Workspace = workspace;
         this.Brush = brush;
+        this.RoomEditor = roomEditor;
 
         base.TileWidth = 16;
         base.TileHeight = 16;
@@ -69,6 +70,8 @@ public class RoomLayoutEditor : TileGrid
 
     protected override Image Image { get { return image; } }
 
+    private RoomEditor RoomEditor { get; set; }
+
 
     // ================================================================================
     // Public methods
@@ -89,6 +92,12 @@ public class RoomLayoutEditor : TileGrid
     public override void Render()
     {
         base.RenderTileGrid();
+        var endPos = ImGui.GetCursorScreenPos();
+
+        base.RenderBrushPreview(Brush, (index) =>
+        {
+            RoomEditor.TilesetViewer.DrawTileImage(index, Scale);
+        });
 
         bool inhibitMouse = false;
 
@@ -149,7 +158,6 @@ public class RoomLayoutEditor : TileGrid
         };
 
         // Render room components
-        var endPos = ImGui.GetCursorScreenPos();
         foreach (var com in roomComponents)
         {
             renderRoomComponent(com);
@@ -158,6 +166,7 @@ public class RoomLayoutEditor : TileGrid
         {
             renderRoomComponent(chestRoomComponent);
         }
+
         ImGui.SetCursorScreenPos(endPos);
 
         if (!inhibitMouse)

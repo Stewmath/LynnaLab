@@ -444,6 +444,23 @@ public class TileGrid : SizedWidget
         }
     }
 
+    public void RenderBrushPreview(Brush brush, Action<int> tileDrawer)
+    {
+        if (!isHovered)
+            return;
+        int mouseIndex = CoordToTile(base.GetRelativeMousePos());
+        if (mouseIndex == -1)
+            return;
+
+        brush.Draw((x, y, i) =>
+        {
+            if (!XYValid(x, y))
+                return;
+            ImGui.SetCursorScreenPos(origin + TileToCoord(XYToTile(x, y)));
+            tileDrawer(i);
+        }, mouseIndex % Width, mouseIndex / Width);
+    }
+
     public void AddMouseAction(MouseButton button, MouseModifier mod, MouseAction mouseAction,
         GridAction action, TileGridEventHandler callback = null)
     {
@@ -628,6 +645,14 @@ public class TileGrid : SizedWidget
         br += new Vector2(TileWidth, TileHeight) * Scale;
 
         return FRect.FromVectors(tl, br);
+    }
+
+    /// <summary>
+    /// Returns true if x/y coords correspond to a valid tile index
+    /// </summary>
+    protected bool XYValid(int x, int y)
+    {
+        return x >= 0 && y >= 0 && x < Width && y < Height && x + y * Width <= MaxIndex;
     }
 
     // ================================================================================

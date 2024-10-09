@@ -19,7 +19,7 @@ public class RoomEditor : Frame
         this.Workspace = workspace;
         base.WindowFlags = ImGuiWindowFlags.MenuBar;
 
-        roomLayoutEditor = new RoomLayoutEditor(this.Workspace, Brush);
+        roomLayoutEditor = new RoomLayoutEditor(this.Workspace, this, Brush);
         roomLayoutEditor.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(-1));
 
         tilesetViewer = new TilesetViewer(this.Workspace);
