@@ -88,9 +88,8 @@ public class RoomLayoutEditor : TileGrid
 
     public override void Render()
     {
-        base.Render(inhibitMouse: true);
+        base.RenderTileGrid();
 
-        bool hovered = ImGui.IsItemHovered();
         bool inhibitMouse = false;
 
         Action<RoomComponent> renderRoomComponent = (com) =>
@@ -155,15 +154,16 @@ public class RoomLayoutEditor : TileGrid
         {
             renderRoomComponent(com);
         }
-        ImGui.SetCursorScreenPos(endPos);
-
         if (chestRoomComponent != null)
         {
             renderRoomComponent(chestRoomComponent);
         }
+        ImGui.SetCursorScreenPos(endPos);
 
-        if (hovered && !inhibitMouse)
-            base.RenderMouse();
+        if (!inhibitMouse)
+        {
+            base.RenderHoverAndSelection();
+        }
     }
 
     // ================================================================================

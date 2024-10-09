@@ -38,6 +38,7 @@ public class Brush
 
     /// <summary>
     /// The source from which the current brush pattern was retrieved.
+    /// IE. Right-clicking on the tileset viewer sents the Source to that tileset viewer.
     /// </summary>
     public TileGrid Source { get; private set; }
 

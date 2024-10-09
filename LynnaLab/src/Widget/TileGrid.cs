@@ -24,6 +24,7 @@ public class TileGrid : SizedWidget
     bool selectable, unselectable;
     int draggingTileIndex = -1;
     int maxIndexOverride = -1;
+    bool isHovered; // Return value of "IsItemHovered()"
 
     // For rectangle selection
     TileGridAction activeRectSelectAction = null;
@@ -229,13 +230,14 @@ public class TileGrid : SizedWidget
 
     public virtual void Render()
     {
-        Render(false);
+        RenderTileGrid();
+        RenderHoverAndSelection();
     }
 
     /// <summary>
-    /// Pass inhibitMouse=true to skip mouse input checks and not draw hovering tile.
+    /// Renders the image. This should be called before RenderHover().
     /// </summary>
-    public void Render(bool inhibitMouse)
+    public void RenderTileGrid()
     {
         base.RenderPrep();
         ImGui.BeginGroup();
@@ -316,18 +318,72 @@ public class TileGrid : SizedWidget
 
         ImGui.EndGroup();
 
-        if (!inhibitMouse && ImGui.IsItemHovered())
+        isHovered = ImGui.IsItemHovered();
+    }
+
+    /// <summary>
+    /// Render red hover box and white selection box, and also handle mouse inputs related to those.
+    ///
+    /// Should be called after RenderTileGrid.
+    /// </summary>
+    public void RenderHoverAndSelection()
+    {
+        int mouseIndex = -1;
+        if (isHovered)
+            mouseIndex = CoordToTile(base.GetRelativeMousePos());
+
+        if (isHovered)
         {
-            RenderMouse();
+            if (mouseIndex != -1 && mouseIndex <= MaxIndex && draggingTileIndex == -1)
+            {
+                TileGridEventArgs args = new TileGridEventArgs();
+                args.selectedIndex = mouseIndex;
+
+                // This only executes if not currently doing a rectangle select
+                if (activeRectSelectAction == null)
+                {
+                    // Draw hover rectangle
+                    FRect r = TileRect(mouseIndex);
+                    base.AddRect(r, HoverColor, thickness: RectThickness);
+
+                    // Check mouse actions
+                    foreach (TileGridAction action in actionList)
+                    {
+                        if (action.ActionTriggered())
+                        {
+                            if (action.action == GridAction.Callback)
+                            {
+                                action.callback(this, args);
+                            }
+                            else if (action.action == GridAction.SelectRangeCallback)
+                            {
+                                // We're just starting the rectangle selection
+                                activeRectSelectAction = action;
+                                rectSelectStart = mouseIndex;
+                                rectSelectEnd = rectSelectStart;
+                            }
+                            else if (action.action == GridAction.Select)
+                            {
+                                if (SelectedIndex == mouseIndex && Unselectable)
+                                {
+                                    SelectedIndex = -1;
+                                }
+                                else if (Selectable)
+                                {
+                                    SelectedIndex = mouseIndex;
+                                }
+                            }
+                            else
+                                throw new NotImplementedException();
+                        }
+                    }
+                }
+            }
         }
 
         // Currently selecting a rectangle region
         if (SelectingRectangle)
         {
-            int mouseIndex = CoordToTile(base.GetRelativeMousePos());
-            if (!ImGui.IsItemHovered())
-                mouseIndex = -1;
-
             if (activeRectSelectAction.ActionTriggered())
             {
                 // Button still being held
@@ -385,65 +441,6 @@ public class TileGrid : SizedWidget
             // Draw regular (1-tile) selection rectangle
             FRect r = TileRect(SelectedIndex);
             base.AddRect(r, SelectColor, thickness: RectThickness);
-        }
-
-    }
-
-    /// <summary>
-    /// Check for mouse input & render hovering. Must be called after Render(), May need to be
-    /// called manually if "inhibitMouse=true" was passed to "Render()".
-    ///
-    /// Only call if ImGui.IsItemHovered() returns true just after "Render()".
-    /// </summary>
-    public void RenderMouse()
-    {
-        int mouseIndex = CoordToTile(base.GetRelativeMousePos());
-
-        if (mouseIndex != -1 && mouseIndex <= MaxIndex && draggingTileIndex == -1)
-        {
-            // Check mouse input
-            TileGridEventArgs args = new TileGridEventArgs();
-            args.selectedIndex = mouseIndex;
-
-            // This only executes if not currently doing a rectangle select
-            if (activeRectSelectAction == null)
-            {
-                // Draw hover rectangle
-                FRect r = TileRect(mouseIndex);
-                base.AddRect(r, HoverColor, thickness: RectThickness);
-
-                // Check mouse actions
-                foreach (TileGridAction action in actionList)
-                {
-                    if (action.ActionTriggered())
-                    {
-                        if (action.action == GridAction.Callback)
-                        {
-                            action.callback(this, args);
-                        }
-                        else if (action.action == GridAction.SelectRangeCallback)
-                        {
-                            // We're just starting the rectangle selection
-                            activeRectSelectAction = action;
-                            rectSelectStart = mouseIndex;
-                            rectSelectEnd = rectSelectStart;
-                        }
-                        else if (action.action == GridAction.Select)
-                        {
-                            if (SelectedIndex == mouseIndex && Unselectable)
-                            {
-                                SelectedIndex = -1;
-                            }
-                            else if (Selectable)
-                            {
-                                SelectedIndex = mouseIndex;
-                            }
-                        }
-                        else
-                            throw new NotImplementedException();
-                    }
-                }
-            }
         }
     }
 
