@@ -109,9 +109,9 @@ public class VeldridImage : Image
     // ================================================================================
 
     // Draw command functions (return a handle usable with ImGui.Image())
-    public override IntPtr GetBinding()
+    public override IntPtr GetBinding(Interpolation? interpolation, float? alpha)
     {
-        return controller.GetOrCreateImGuiBinding(this);
+        return controller.GetOrCreateImGuiBinding(this, interpolation, alpha);
     }
 
     public override void DrawOn(Image _destImage, Point srcPos, Point destPos, Point size)
@@ -136,7 +136,6 @@ public class VeldridImage : Image
     public override void SetInterpolation(Interpolation interpolation)
     {
         this.interpolation = interpolation;
-        controller.RegenerateImageBinding(this);
     }
 
     public override void Dispose()

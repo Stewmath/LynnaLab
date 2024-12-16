@@ -46,7 +46,7 @@ public abstract class Image : IDisposable
     /// <summary>
     /// Returns an image binding usable with ImGui.Image().
     /// </summary>
-    public abstract IntPtr GetBinding();
+    public abstract IntPtr GetBinding(Interpolation? interpolation = null, float? alpha = null);
 
     /// <summary>
     /// Draw this image onto another image

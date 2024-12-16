@@ -72,7 +72,7 @@ public static class ImGuiX
     /// Convenience method for rendering images
     /// </summary>
     public static void DrawImage(Image image, float scale = 1.0f,
-                                 Vector2? topLeft = null, Vector2? bottomRight = null)
+                                 Vector2? topLeft = null, Vector2? bottomRight = null, float alpha = 1.0f)
     {
         if (bottomRight == null)
         {
@@ -81,7 +81,7 @@ public static class ImGuiX
         }
         Vector2 drawSize = (Vector2)(bottomRight - topLeft);
         Vector2 totalSize = new Vector2(image.Width, image.Height);
-        ImGui.Image(image.GetBinding(), drawSize * scale,
+        ImGui.Image(image.GetBinding(alpha: alpha), drawSize * scale,
                     (Vector2)topLeft / totalSize, (Vector2)bottomRight / totalSize);
     }
 

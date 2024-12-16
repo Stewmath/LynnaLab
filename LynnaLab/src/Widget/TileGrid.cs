@@ -566,10 +566,7 @@ public class TileGrid : SizedWidget
                                   (index / Height) * TileHeight);
         var tileSize = new Vector2(TileWidth, TileHeight);
 
-        Image img = Image;
-        if (transparent)
-            img = TopLevel.Backend.ImageFromImage(Image, Image.Interpolation, 0.5f);
-        ImGuiX.DrawImage(img, scale, tilePos, tilePos + tileSize);
+        ImGuiX.DrawImage(Image, scale, tilePos, tilePos + tileSize, alpha: transparent ? 0.5f : 1.0f);
     }
 
     /// <summary>
