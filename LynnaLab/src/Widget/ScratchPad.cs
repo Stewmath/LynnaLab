@@ -60,6 +60,7 @@ public class ScratchPadGrid : TileGrid
         base.Height = height;
 
         this.ReferenceGrid = referenceGrid;
+        this.Brush = brush;
 
         tileGrid = new int[Width, Height];
 
@@ -82,6 +83,8 @@ public class ScratchPadGrid : TileGrid
     // Properties
     // ================================================================================
 
+    Brush Brush { get; set;  }
+
     /// <summary>
     /// A TileGrid where each tile index provides the image to use for that value.
     /// It must override the Image property rather than the TileDrawer function for this to work.
@@ -95,6 +98,16 @@ public class ScratchPadGrid : TileGrid
     public void SetTile(int x, int y, int value)
     {
         tileGrid[x, y] = value;
+    }
+
+    public override void Render()
+    {
+        base.RenderTileGrid();
+        base.RenderBrushPreview(Brush, (index) =>
+        {
+            ReferenceGrid.DrawTileImage(index, Scale, transparent: true);
+        });
+        base.RenderHoverAndSelection(Brush);
     }
 
     // ================================================================================

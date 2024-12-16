@@ -89,11 +89,15 @@ public class VeldridBackend : IBackend
 
     public Image ImageFromBitmap(Bitmap bitmap, Interpolation interpolation)
     {
-        return new VeldridImage(_controller, interpolation, bitmap);
+        return new VeldridImage(_controller, interpolation, bitmap, 1.0f);
+    }
+    public Image ImageFromImage(Image image, Interpolation interpolation, float alpha)
+    {
+        return new VeldridImage(image as VeldridImage, interpolation, alpha);
     }
     public Image CreateImage(int width, int height, Interpolation interpolation)
     {
-        return new VeldridImage(_controller, interpolation, width, height);
+        return new VeldridImage(_controller, interpolation, width, height, 1.0f);
     }
 
     public void RecreateFontTexture()

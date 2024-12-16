@@ -22,6 +22,7 @@ public abstract class Image : IDisposable
     // ================================================================================
     public abstract int Width { get; }
     public abstract int Height { get; }
+    public abstract Interpolation Interpolation { get; }
 
     /// <summary>
     /// Invoked when the image is modified

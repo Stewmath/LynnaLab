@@ -5,6 +5,7 @@ uniform sampler2D Texture;
 uniform FragUniformBuffer
 {
     int InterpolationMode;
+    float alpha;
 };
 
 in vec4 color;
@@ -57,8 +58,10 @@ vec4 textureBicubic(sampler2D sampler, vec2 texCoords){
 
 void main()
 {
+    vec4 newColor = vec4(color.rgb, alpha);
+
     if (InterpolationMode == 0) // Nearest Neighbor
-        outputColor = color * texture(Texture, texCoord);
+        outputColor = newColor * texture(Texture, texCoord);
     else // Bicubic
-        outputColor = color * textureBicubic(Texture, texCoord);
+        outputColor = newColor * textureBicubic(Texture, texCoord);
 }

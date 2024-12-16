@@ -96,7 +96,7 @@ public class RoomLayoutEditor : TileGrid
 
         base.RenderBrushPreview(Brush, (index) =>
         {
-            RoomEditor.TilesetViewer.DrawTileImage(index, Scale);
+            RoomEditor.TilesetViewer.DrawTileImage(index, Scale, transparent: true);
         });
 
         bool inhibitMouse = false;
@@ -171,7 +171,7 @@ public class RoomLayoutEditor : TileGrid
 
         if (!inhibitMouse)
         {
-            base.RenderHoverAndSelection();
+            base.RenderHoverAndSelection(Brush);
         }
     }
 

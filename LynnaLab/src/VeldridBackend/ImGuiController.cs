@@ -25,7 +25,6 @@ public class ImGuiController : IDisposable
     private DeviceBuffer _vertexBuffer;
     private DeviceBuffer _indexBuffer;
     private DeviceBuffer _projMatrixBuffer;
-    private DeviceBuffer[] _fragUniformBuffers;
     private Texture _fontTexture;
     private TextureView _fontTextureView;
     private Shader _vertexShader;
@@ -42,6 +41,8 @@ public class ImGuiController : IDisposable
     private int _windowHeight;
     private Vector2 _scaleFactor = Vector2.One;
 
+    Dictionary<FragUniformStruct, DeviceBuffer> fragStructMap = new Dictionary<FragUniformStruct, DeviceBuffer>();
+
     // Image trackers
     private readonly Dictionary<VeldridImage, ResourceSetInfo> _setsByImage
         = new Dictionary<VeldridImage, ResourceSetInfo>();
@@ -53,8 +54,9 @@ public class ImGuiController : IDisposable
     struct FragUniformStruct
     {
         public int InterpolationMode;
+        public float alpha;
 
-        public const int sizeInBytes = 4;
+        public const int sizeInBytes = 8;
     }
 
     /// <summary>
@@ -108,16 +110,6 @@ public class ImGuiController : IDisposable
         _projMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
         _projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
 
-        _fragUniformBuffers = new DeviceBuffer[(int)Interpolation.Count];
-        for (int i = 0; i < (int)Interpolation.Count; i++)
-        {
-            var buf = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
-            _fragUniformBuffers[i] = buf;
-
-            var fragUniformStruct = new FragUniformStruct { InterpolationMode = i };
-            _gd.UpdateBuffer(buf, 0, ref fragUniformStruct);
-        }
-
         byte[] vertexShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-vertex", ShaderStages.Vertex);
         byte[] fragmentShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-frag", ShaderStages.Fragment);
         _vertexShader = factory.CreateShader(new ShaderDescription(ShaderStages.Vertex, vertexShaderBytes, gd.BackendType == GraphicsBackend.Metal ? "VS" : "main"));
@@ -165,7 +157,7 @@ public class ImGuiController : IDisposable
             _textureLayout,
             _fontTextureView,
             _gd.PointSampler,
-            _fragUniformBuffers[(int)Interpolation.Nearest]));
+            LookupFragDeviceBuffer(new FragUniformStruct { InterpolationMode = (int)Interpolation.Nearest, alpha = 1.0f })));
     }
 
     /// <summary>
@@ -203,12 +195,16 @@ public class ImGuiController : IDisposable
         }
 
         var textureView = factory.CreateTextureView(image.Texture);
+        var fragUniformStruct = new FragUniformStruct {
+            InterpolationMode = (int)image.Interpolation,
+            alpha = image.Alpha
+        };
 
         resourceSet = factory.CreateResourceSet(
             new ResourceSetDescription(_textureLayout,
                                        textureView,
                                        sampler,
-                                       _fragUniformBuffers[(int)image.Interpolation]));
+                                       LookupFragDeviceBuffer(fragUniformStruct)));
 
         rsi = new ResourceSetInfo(GetNextImGuiBindingID(), resourceSet, image, textureView);
 
@@ -598,6 +594,21 @@ public class ImGuiController : IDisposable
     }
 
     /// <summary>
+    /// Looks up a DeviceBuffer which can be used for the fragment shader (basically, the contents
+    /// of the "uniform FragUniformBuffer" in imgui-frag.glsl)
+    /// </summary>
+    private DeviceBuffer LookupFragDeviceBuffer(FragUniformStruct fragUniformStruct)
+    {
+        if (fragStructMap.ContainsKey(fragUniformStruct))
+            return fragStructMap[fragUniformStruct];
+
+        var buf = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
+        _gd.UpdateBuffer(buf, 0, ref fragUniformStruct);
+        fragStructMap[fragUniformStruct] = buf;
+        return buf;
+    }
+
+    /// <summary>
     /// Frees all graphics resources used by the renderer.
     /// </summary>
     public void Dispose()
@@ -605,8 +616,6 @@ public class ImGuiController : IDisposable
         _vertexBuffer.Dispose();
         _indexBuffer.Dispose();
         _projMatrixBuffer.Dispose();
-        foreach (var buf in _fragUniformBuffers)
-            buf.Dispose();
         _fontTexture.Dispose();
         _fontTextureView.Dispose();
         _vertexShader.Dispose();
@@ -620,6 +629,12 @@ public class ImGuiController : IDisposable
         {
             resource.Dispose();
         }
+
+        foreach (var deviceBuffer in fragStructMap.Values)
+        {
+            deviceBuffer.Dispose();
+        }
+        fragStructMap = null;
     }
 
     private struct ResourceSetInfo

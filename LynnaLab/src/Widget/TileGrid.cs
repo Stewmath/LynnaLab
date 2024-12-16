@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace LynnaLab;
 
 /// <summary>
@@ -231,7 +233,7 @@ public class TileGrid : SizedWidget
     public virtual void Render()
     {
         RenderTileGrid();
-        RenderHoverAndSelection();
+        RenderHoverAndSelection(null);
     }
 
     /// <summary>
@@ -326,7 +328,7 @@ public class TileGrid : SizedWidget
     ///
     /// Should be called after RenderTileGrid.
     /// </summary>
-    public void RenderHoverAndSelection()
+    public void RenderHoverAndSelection(Brush brush)
     {
         int mouseIndex = -1;
         if (isHovered)
@@ -334,8 +336,19 @@ public class TileGrid : SizedWidget
 
         if (isHovered)
         {
+            int hoverWidth = 1, hoverHeight = 1;
+
+            if (brush != null)
+            {
+                hoverWidth = brush.BrushWidth;
+                hoverHeight = brush.BrushHeight;
+            }
+
             if (mouseIndex != -1 && mouseIndex <= MaxIndex && draggingTileIndex == -1)
             {
+                int mouseX = mouseIndex % Width;
+                int mouseY = mouseIndex / Width;
+
                 TileGridEventArgs args = new TileGridEventArgs();
                 args.selectedIndex = mouseIndex;
 
@@ -343,7 +356,10 @@ public class TileGrid : SizedWidget
                 if (activeRectSelectAction == null)
                 {
                     // Draw hover rectangle
-                    FRect r = TileRect(mouseIndex);
+                    //FRect r = TileRect(mouseIndex);
+                    FRect r = TileRangeRect(mouseIndex, XYToTile(
+                                                Math.Min(mouseX + hoverWidth - 1, Width - 1),
+                                                Math.Min(mouseY + hoverHeight - 1, Height - 1)));
                     base.AddRect(r, HoverColor, thickness: RectThickness);
 
                     // Check mouse actions
@@ -444,9 +460,12 @@ public class TileGrid : SizedWidget
         }
     }
 
+    /// <summary>
+    /// Renders the transparent preview of what will be drawn at the current position with the given brush
+    /// </summary>
     public void RenderBrushPreview(Brush brush, Action<int> tileDrawer)
     {
-        if (!isHovered)
+        if (!isHovered || SelectingRectangle)
             return;
         int mouseIndex = CoordToTile(base.GetRelativeMousePos());
         if (mouseIndex == -1)
@@ -525,6 +544,8 @@ public class TileGrid : SizedWidget
 
     public int XYToTile(int x, int y)
     {
+        Debug.Assert(x >= 0 && x < Width);
+        Debug.Assert(y >= 0 && y < Height);
         return x + y * Width;
     }
 
@@ -539,12 +560,16 @@ public class TileGrid : SizedWidget
     /// Helper function to draw a tile from the current image. Can be used in various contexts, ie.
     /// in tooltips, not just internally.
     /// </summary>
-    public void DrawTileImage(int index, float scale)
+    public void DrawTileImage(int index, float scale, bool transparent = false)
     {
         var tilePos = new Vector2((index % Width) * TileWidth,
                                   (index / Height) * TileHeight);
         var tileSize = new Vector2(TileWidth, TileHeight);
-        ImGuiX.DrawImage(Image, scale, tilePos, tilePos + tileSize);
+
+        Image img = Image;
+        if (transparent)
+            img = TopLevel.Backend.ImageFromImage(Image, Image.Interpolation, 0.5f);
+        ImGuiX.DrawImage(img, scale, tilePos, tilePos + tileSize);
     }
 
     /// <summary>

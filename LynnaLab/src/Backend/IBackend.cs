@@ -22,8 +22,14 @@ public interface IBackend
     /// </summary>
     public void Render();
 
+    // Image creation functions
     public Image ImageFromBitmap(Bitmap bitmap,
                                  Interpolation interpolation = Interpolation.Nearest);
+    /// <summary>
+    /// Creates an image which is a reference to another image. Contents will be the same but
+    /// interpolation & alpha values used for rendering can be different.
+    /// </summary>
+    public Image ImageFromImage(Image image, Interpolation interpolation, float alpha);
     public Image CreateImage(int width, int height,
                              Interpolation interpolation = Interpolation.Nearest);
 
