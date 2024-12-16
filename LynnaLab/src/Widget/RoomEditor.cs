@@ -105,6 +105,13 @@ public class RoomEditor : Frame
     Dictionary<int, int> floorDict = new Dictionary<int, int>();
 
     // ================================================================================
+    // Events
+    // ================================================================================
+
+    // Event that fires when the selected left-side tab has been changed
+    public event EventHandler TabChangedEvent;
+
+    // ================================================================================
     // Properties
     // ================================================================================
 
@@ -119,11 +126,18 @@ public class RoomEditor : Frame
 
     public Brush Brush { get { return Workspace.Brush; } }
 
+    public bool ObjectTabActive { get { return ActiveTabName == "Objects"; } }
+
 
     // Private properties
 
     Minimap ActiveMinimap { get; set; }
     Map ActiveMap { get { return ActiveMinimap.Map; } }
+
+    // Left: Editor mode tabs
+    string ActiveTabName { get; set; }
+
+    // Right: Overworld tabs
     bool OverworldTabActive { get { return ActiveMinimap == overworldMinimap; } }
     bool DungeonTabActive { get { return ActiveMinimap == dungeonMinimap; } }
 
@@ -173,21 +187,37 @@ public class RoomEditor : Frame
 
         const float OFFSET = 15.0f;
 
+        // Wrapper over ImGui.BeginTabItem() to help us keep track of which tab is open at any given time
+        var TrackedTabItem = (string tabName) => {
+            if (ImGui.BeginTabItem(tabName))
+            {
+                bool changed = ActiveTabName != tabName;
+                ActiveTabName = tabName;
+                if (changed)
+                    TabChangedEvent?.Invoke(this, null);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        };
+
         ImGui.BeginChild("Left Panel", new Vector2(tilesetViewer.WidgetSize.X + OFFSET, 0.0f));
         if (ImGui.BeginTabBar("##Left Panel Tabs"))
         {
-            if (ImGui.BeginTabItem("Tileset"))
+            if (TrackedTabItem("Tileset"))
             {
                 tilesetViewer.Render();
                 ImGuiX.InputHex("Tileset", new Accessor<int>(() => Room.TilesetIndex));
                 ImGui.EndTabItem();
             }
-            if (ImGui.BeginTabItem("Objects"))
+            if (TrackedTabItem("Objects"))
             {
                 objectGroupEditor.Render();
                 ImGui.EndTabItem();
             }
-            if (ImGui.BeginTabItem("Chests"))
+            if (TrackedTabItem("Chests"))
             {
                 DisplayChestTab();
                 ImGui.EndTabItem();

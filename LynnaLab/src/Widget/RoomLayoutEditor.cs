@@ -25,6 +25,7 @@ public class RoomLayoutEditor : TileGrid
             () => RoomLayout.Height);
 
         QuickstartData.enableToggledEvent += (s, a) => UpdateQuickstartRoomComponent();
+        RoomEditor.TabChangedEvent += (s, a) => UpdateRoomComponents();
 
         roomEventWrapper = new EventWrapper<Room>();
         roomEventWrapper.Bind<EventArgs>(
@@ -41,6 +42,7 @@ public class RoomLayoutEditor : TileGrid
     ChestRoomComponent chestRoomComponent;
     List<RoomComponent> roomComponents;
     bool draggingComponent;
+    Vector2 draggingComponentOffset;
     EventWrapper<Room> roomEventWrapper;
 
     // ================================================================================
@@ -132,6 +134,8 @@ public class RoomLayoutEditor : TileGrid
                 {
                     selectedRoomComponent = com;
                     draggingComponent = true;
+                    draggingComponentOffset.X = com.X - mousePos.X;
+                    draggingComponentOffset.Y = com.Y - mousePos.Y;
                 }
             }
 
@@ -142,8 +146,37 @@ public class RoomLayoutEditor : TileGrid
 
                 if (ImGui.IsMouseDown(ImGuiMouseButton.Left))
                 {
-                    com.X = (int)Math.Round(mousePos.X);
-                    com.Y = (int)Math.Round(mousePos.Y);
+                    // Shortened XY: Snapping is "automatic" due to low resolution of XY variables;
+                    // also don't add draggingComponentOffset as it only works well with smooth
+                    // movement
+                    if (com.HasShortenedXY)
+                    {
+                        com.X = (int)Math.Round(mousePos.X);
+                        com.Y = (int)Math.Round(mousePos.Y);
+                    }
+                    // Ctrl pressed: No snapping
+                    else if (ImGui.IsKeyDown(ImGuiKey.ModCtrl))
+                    {
+                        com.X = (int)Math.Round(mousePos.X + draggingComponentOffset.X);
+                        com.Y = (int)Math.Round(mousePos.Y + draggingComponentOffset.Y);
+                    }
+                    // Ctrl not pressed: Snap to 8x8
+                    else
+                    {
+                        const int snap = 8;
+
+                        var snapTo = (int oldPos, int mousePos) => {
+                            int snapLog = (int)Math.Log(snap, 2);
+                            int data = oldPos + snap / 2;
+                            int align = data % snap;
+                            int newp = (mousePos - align) >> snapLog;
+                            newp = newp * snap + align + snap / 2;
+                            return newp;
+                        };
+
+                        com.X = snapTo(com.X, (int)Math.Round(mousePos.X));
+                        com.Y = snapTo(com.Y, (int)Math.Round(mousePos.Y));
+                    }
                 }
                 else
                 {
@@ -224,6 +257,22 @@ public class RoomLayoutEditor : TileGrid
             return;
 
         UpdateQuickstartRoomComponent();
+
+        // Object room components
+        if (RoomEditor.ObjectTabActive)
+        {
+            foreach (var group in Room.GetObjectGroup().GetAllGroups())
+            {
+                foreach (var obj in group.GetObjects())
+                {
+                    if (obj.HasXY())
+                    {
+                        var com = new ObjectRoomComponent(this, obj);
+                        roomComponents.Add(com);
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -274,6 +323,14 @@ public class RoomLayoutEditor : TileGrid
     abstract class RoomComponent
     {
         // ================================================================================
+        // Constructors
+        // ================================================================================
+        public RoomComponent(RoomLayoutEditor parent)
+        {
+            this.Parent = parent;
+        }
+
+        // ================================================================================
         // Events
         // ================================================================================
 
@@ -288,10 +345,12 @@ public class RoomLayoutEditor : TileGrid
         public abstract bool Deletable { get; }
         public abstract bool HasXY { get; }
         public abstract bool HasShortenedXY { get; }
-        public abstract int X { get; set; } // These are always in the full range even if "ShortPosition" is true
+        public abstract int X { get; set; } // These are always in the full range even if "HasShortedenXY" is true
         public abstract int Y { get; set; }
         public abstract int BoxWidth { get; }
         public abstract int BoxHeight { get; }
+
+        public RoomLayoutEditor Parent { get; private set; }
 
         public virtual FRect BoxRectangle
         {
@@ -319,16 +378,31 @@ public class RoomLayoutEditor : TileGrid
         /// Right-click, select "delete", or press "Delete" key while selected
         /// </summary>
         public virtual void Delete() { }
+
+        // ================================================================================
+        // Protected methods
+        // ================================================================================
+
+        /// <summary>
+        /// Helper function for drawing an object's sprites at this position.
+        /// </summary>
+        protected void SpriteDrawer(Bitmap sprite, int xOffset, int yOffset)
+        {
+            var origin = ImGui.GetCursorScreenPos();
+            var offset = new Vector2(X + xOffset, Y + yOffset);
+            Image image = TopLevel.ImageFromBitmap(sprite);
+            ImGui.SetCursorScreenPos(origin + offset * Parent.Scale);
+            ImGuiX.DrawImage(image, Parent.Scale);
+            ImGui.SetCursorScreenPos(origin);
+        }
     }
 
     class QuickstartRoomComponent : RoomComponent
     {
         QuickstartData quickstart;
-        RoomLayoutEditor parent;
 
-        public QuickstartRoomComponent(RoomLayoutEditor parent, QuickstartData data)
+        public QuickstartRoomComponent(RoomLayoutEditor parent, QuickstartData data) : base(parent)
         {
-            this.parent = parent;
             this.quickstart = data;
         }
 
@@ -365,12 +439,12 @@ public class RoomLayoutEditor : TileGrid
         public override void Render()
         {
             // Get component position relative to widget origin
-            Vector2 pos = new Vector2(X, Y) * parent.Scale;
-            Vector2 size = new Vector2(BoxWidth, BoxHeight) * parent.Scale;
+            Vector2 pos = new Vector2(X, Y) * Parent.Scale;
+            Vector2 size = new Vector2(BoxWidth, BoxHeight) * Parent.Scale;
 
             ImGuiX.ShiftCursorScreenPos(pos - size / 2);
-            var linkImage = TopLevel.ImageFromBitmap(parent.Project.LinkBitmap);
-            ImGuiX.DrawImage(linkImage, parent.Scale);
+            var linkImage = TopLevel.ImageFromBitmap(Parent.Project.LinkBitmap);
+            ImGuiX.DrawImage(linkImage, Parent.Scale);
         }
 
         public override bool Compare(RoomComponent com)
@@ -384,12 +458,10 @@ public class RoomLayoutEditor : TileGrid
     /// </summary>
     class ChestRoomComponent : RoomComponent
     {
-        RoomLayoutEditor parent;
         Chest chest;
 
-        public ChestRoomComponent(RoomLayoutEditor parent, Chest chest)
+        public ChestRoomComponent(RoomLayoutEditor parent, Chest chest) : base(parent)
         {
-            this.parent = parent;
             this.chest = chest;
         }
 
@@ -425,17 +497,9 @@ public class RoomLayoutEditor : TileGrid
                 return;
             GameObject obj = Project.GetIndexedDataType<InteractionObject>(
                     Project.EvalToInt("INTERAC_TREASURE") * 256 + chest.Treasure.Graphics);
-            var origin = ImGui.GetCursorScreenPos();
             try
             {
-                var spriteDrawer = (Bitmap sprite, int xOffset, int yOffset) =>
-                {
-                    var offset = new Vector2(X + xOffset, Y + yOffset);
-                    Image image = TopLevel.ImageFromBitmap(sprite);
-                    ImGui.SetCursorScreenPos(origin + offset * parent.Scale);
-                    ImGuiX.DrawImage(image, parent.Scale);
-                };
-                obj.DefaultAnimation.GetFrame(0).Draw(spriteDrawer);
+                obj.DefaultAnimation.GetFrame(0).Draw(base.SpriteDrawer);
             }
             catch (InvalidAnimationException)
             {
@@ -455,6 +519,86 @@ public class RoomLayoutEditor : TileGrid
         public override void Delete()
         {
             chest.Delete();
+        }
+    }
+
+    class ObjectRoomComponent : RoomComponent
+    {
+        public ObjectDefinition obj;
+
+
+        public ObjectRoomComponent(RoomLayoutEditor parent, ObjectDefinition obj) : base(parent)
+        {
+            this.obj = obj;
+        }
+
+
+        public override Color BoxColor
+        {
+            get
+            {
+                Color color = ObjectGroupEditor.GetObjectColor(obj.GetObjectType());
+                return Color.FromRgba(color.R, color.G, color.B, (int)(0.75 * 255));
+            }
+        }
+
+        public override bool Deletable
+        {
+            get { return true; }
+        }
+        public override bool HasXY
+        {
+            get { return obj.HasXY(); }
+        }
+        public override bool HasShortenedXY
+        {
+            get { return obj.HasShortenedXY(); }
+        }
+        public override int X
+        {
+            get { return obj.GetX(); }
+            set { obj.SetX((byte)value); }
+        }
+        public override int Y
+        {
+            get { return obj.GetY(); }
+            set { obj.SetY((byte)value); }
+        }
+        public override int BoxWidth { get { return 16; } }
+        public override int BoxHeight { get { return 16; } }
+
+
+        public override void Render()
+        {
+            if (obj.GetGameObject() == null)
+                return;
+
+            try
+            {
+                ObjectAnimationFrame frame = obj.GetGameObject().DefaultAnimation.GetFrame(0);
+                var origin = ImGui.GetCursorScreenPos();
+                frame.Draw(base.SpriteDrawer);
+            }
+            catch (NoAnimationException)
+            {
+                // No animation defined
+            }
+            catch (InvalidAnimationException)
+            {
+                // Error parsing an animation; draw a blue X to indicate the error (TODO)
+            }
+        }
+
+        // TODO: Right click -> "Clone" button
+
+        public override bool Compare(RoomComponent com)
+        {
+            return obj == (com as ObjectRoomComponent)?.obj;
+        }
+
+        public override void Delete()
+        {
+            obj.Remove();
         }
     }
 }
