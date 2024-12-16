@@ -58,7 +58,7 @@ vec4 textureBicubic(sampler2D sampler, vec2 texCoords){
 
 void main()
 {
-    vec4 newColor = vec4(color.rgb, alpha);
+    vec4 newColor = vec4(color.rgb, alpha * color.a);
 
     if (InterpolationMode == 0) // Nearest Neighbor
         outputColor = newColor * texture(Texture, texCoord);

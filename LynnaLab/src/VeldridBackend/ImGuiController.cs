@@ -164,27 +164,28 @@ public class ImGuiController : IDisposable
             ResourceBindingModel.Default);
         _pipeline = factory.CreateGraphicsPipeline(ref pd);
 
+        // Default uniform buffer for font textures, also applies to stuff like rectangle rendering?
+        // (Even though it's not in the mainResourceSet?)
+        var defaultFragBuf = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
+        var defaultFragUniformStruct = new FragUniformStruct
+        {
+            InterpolationMode = (int)Interpolation.Nearest,
+            alpha = 1.0f
+        };
+        _gd.UpdateBuffer(defaultFragBuf, 0, defaultFragUniformStruct);
+
         // Resource set for rendering imgui components
         _mainResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
             _layout,
             _projMatrixBuffer,
             gd.PointSampler));
 
-        // Fragment uniform buffer for font textures
-        var textureFragBuf = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
-        var textureFragUniformStruct = new FragUniformStruct
-        {
-            InterpolationMode = (int)Interpolation.Nearest,
-            alpha = 1.0f
-        };
-        _gd.UpdateBuffer(textureFragBuf, 0, textureFragUniformStruct);
-
         // Resource set for rendering fonts
         _fontTextureResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
             _textureLayout,
             _fontTextureView,
             _gd.PointSampler,
-            textureFragBuf));
+            defaultFragBuf));
     }
 
     /// <summary>
