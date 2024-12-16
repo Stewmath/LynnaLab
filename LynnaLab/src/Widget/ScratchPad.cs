@@ -8,13 +8,13 @@ public class ScratchPad : Frame
     // ================================================================================
     // Constructors
     // ================================================================================
-    public ScratchPad(string name, TileGrid referenceGrid, Brush brush)
+    public ScratchPad(ProjectWorkspace workspace, string name, TileGrid referenceGrid, Brush brush)
         : base(name)
     {
         this.brush = brush;
         base.WindowFlags = ImGuiWindowFlags.HorizontalScrollbar;
 
-        Grid = new ScratchPadGrid("Grid", brush, referenceGrid, 32, 32);
+        Grid = new ScratchPadGrid(workspace, "Grid", brush, referenceGrid, 32, 32);
     }
 
     // ================================================================================
@@ -51,7 +51,7 @@ public class ScratchPadGrid : TileGrid
     // ================================================================================
     // Constructors
     // ================================================================================
-    public ScratchPadGrid(string name, Brush brush, TileGrid referenceGrid, int width, int height)
+    public ScratchPadGrid(ProjectWorkspace workspace, string name, Brush brush, TileGrid referenceGrid, int width, int height)
         : base(name)
     {
         base.TileWidth = referenceGrid.TileWidth;
@@ -59,6 +59,7 @@ public class ScratchPadGrid : TileGrid
         base.Width = width;
         base.Height = height;
 
+        this.Workspace = workspace;
         this.ReferenceGrid = referenceGrid;
         this.Brush = brush;
 
@@ -83,7 +84,9 @@ public class ScratchPadGrid : TileGrid
     // Properties
     // ================================================================================
 
-    Brush Brush { get; set;  }
+    ProjectWorkspace Workspace { get; set; }
+
+    Brush Brush { get; set; }
 
     /// <summary>
     /// A TileGrid where each tile index provides the image to use for that value.
@@ -103,10 +106,13 @@ public class ScratchPadGrid : TileGrid
     public override void Render()
     {
         base.RenderTileGrid();
-        base.RenderBrushPreview(Brush, (index) =>
+        if (Workspace.ShowBrushPreview)
         {
-            ReferenceGrid.DrawTileImage(index, Scale, transparent: true);
-        });
+            base.RenderBrushPreview(Brush, (index) =>
+            {
+                ReferenceGrid.DrawTileImage(index, Scale, transparent: true);
+            });
+        }
         base.RenderHoverAndSelection(Brush);
     }
 

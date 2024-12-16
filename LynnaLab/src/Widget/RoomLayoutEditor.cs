@@ -94,10 +94,13 @@ public class RoomLayoutEditor : TileGrid
         base.RenderTileGrid();
         var endPos = ImGui.GetCursorScreenPos();
 
-        base.RenderBrushPreview(Brush, (index) =>
+        if (Workspace.ShowBrushPreview)
         {
-            RoomEditor.TilesetViewer.DrawTileImage(index, Scale, transparent: true);
-        });
+            base.RenderBrushPreview(Brush, (index) =>
+            {
+                RoomEditor.TilesetViewer.DrawTileImage(index, Scale, transparent: true);
+            });
+        }
 
         bool inhibitMouse = false;
 

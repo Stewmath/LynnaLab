@@ -31,7 +31,7 @@ public class ProjectWorkspace
         tilesetEditor = new TilesetEditor(this, "Tileset Editor");
         tilesetCloner = new TilesetCloner(this, "Tileset Cloner");
         buildDialog = new BuildDialog(this, "Build");
-        scratchpad = new ScratchPad("Scratchpad", roomEditor.TilesetViewer, Brush);
+        scratchpad = new ScratchPad(this, "Scratchpad", roomEditor.TilesetViewer, Brush);
 
         frames.AddRange(new Frame[] {
                 roomEditor,
@@ -75,6 +75,7 @@ public class ProjectWorkspace
     public Project Project { get; private set; }
     public QuickstartData QuickstartData { get; set; } = new QuickstartData();
     public Brush Brush { get; private set; }
+    public bool ShowBrushPreview { get; private set; } = true;
 
     // ================================================================================
     // Public methods
@@ -130,6 +131,10 @@ public class ProjectWorkspace
                         QuickstartData.y = 0x48;
                         QuickstartData.Enabled = value;
                     });
+                ImGuiX.MenuItemCheckbox(
+                    "Hover preview",
+                    new Accessor<bool>(() => ShowBrushPreview
+                    ));
                 ImGui.EndMenu();
             }
             if (ImGui.BeginMenu("Debug"))
