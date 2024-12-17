@@ -110,6 +110,11 @@ public class RoomLayoutEditor : TileGrid
             ImGui.SetCursorScreenPos(origin);
             com.Render();
 
+            // Create an InvisibleButton so that we can select it without dragging the entire window.
+            // Names are not unique... probably not an issue? These don't really do anything.
+            ImGui.SetCursorScreenPos(origin + (new Vector2(com.X, com.Y) - com.BoxSize / 2) * Scale);
+            ImGui.InvisibleButton($"RoomComponent button", com.BoxSize * Scale);
+
             // Draw hover outline if mouse covering
             var mousePos = base.GetRelativeMousePos() / Scale;
             var rect = com.BoxRectangle;
@@ -352,7 +357,11 @@ public class RoomLayoutEditor : TileGrid
 
         public RoomLayoutEditor Parent { get; private set; }
 
-        public virtual FRect BoxRectangle
+        public Vector2 BoxSize
+        {
+            get { return new Vector2(BoxWidth, BoxHeight); }
+        }
+        public FRect BoxRectangle
         {
             get { return new FRect(X - BoxWidth / 2.0f, Y - BoxHeight / 2.0f, BoxWidth, BoxHeight); }
         }
