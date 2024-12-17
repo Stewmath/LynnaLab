@@ -83,6 +83,25 @@ public class RoomEditor : Frame
                     tilesetViewer.SelectedIndex = -1;
             }
         };
+
+        // Keeping selected object synchronized between ObjectGroupEditor & RoomLayoutEditor
+        var handleObjectSelection = (ObjectDefinition obj) =>
+        {
+            if (handlingObjectSelection)
+                return;
+            handlingObjectSelection = true;
+
+            roomLayoutEditor.SelectObject(obj);
+            if (obj == null)
+                objectGroupEditor.Unselect();
+            else
+                objectGroupEditor.SelectObject(obj.ObjectGroup, obj);
+
+            handlingObjectSelection = false;
+        };
+
+        objectGroupEditor.ObjectSelectedEvent += (s, a) => handleObjectSelection(objectGroupEditor.SelectedObject);
+        roomLayoutEditor.ChangedSelectedRoomComponentEvent += (s, a) => handleObjectSelection(roomLayoutEditor.SelectedObject);
     }
 
     // ================================================================================
@@ -99,6 +118,7 @@ public class RoomEditor : Frame
     EventWrapper<RoomLayout> roomLayoutEventWrapper = new EventWrapper<RoomLayout>();
 
     int suppressEvents = 0;
+    bool handlingObjectSelection;
 
     // Maps dungeon index to floor number. Allows the editor to remember what floor we were last
     // on for a given dungeon.

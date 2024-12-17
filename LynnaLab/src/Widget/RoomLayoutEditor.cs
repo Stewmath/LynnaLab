@@ -45,6 +45,13 @@ public class RoomLayoutEditor : TileGrid
     EventWrapper<Room> roomEventWrapper;
 
     // ================================================================================
+    // Events
+    // ================================================================================
+
+    // Invoked when the selected RoomComponent is changed.
+    public event EventHandler ChangedSelectedRoomComponentEvent;
+
+    // ================================================================================
     // Properties
     // ================================================================================
     public ProjectWorkspace Workspace { get; private set; }
@@ -53,8 +60,7 @@ public class RoomLayoutEditor : TileGrid
     public RoomLayout RoomLayout { get; private set; }
     public QuickstartData QuickstartData { get { return Workspace.QuickstartData; } }
     public Brush Brush { get; private set; }
-
-    public bool DrawChest { get { return true; } }
+    public ObjectDefinition SelectedObject { get { return (selectedRoomComponent as ObjectRoomComponent)?.obj; } }
 
 
     // TileGrid overrides
@@ -146,10 +152,13 @@ public class RoomLayoutEditor : TileGrid
                 // Clicked on
                 if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && !draggingComponent)
                 {
+                    bool changed = selectedRoomComponent != hoveringComponent;
                     selectedRoomComponent = hoveringComponent;
                     draggingComponent = true;
                     draggingComponentOffset.X = hoveringComponent.X - mousePos.X;
                     draggingComponentOffset.Y = hoveringComponent.Y - mousePos.Y;
+                    if (changed)
+                        ChangedSelectedRoomComponentEvent?.Invoke(this, null);
                 }
             }
         }
@@ -213,6 +222,26 @@ public class RoomLayoutEditor : TileGrid
             }
 
             base.RenderHoverAndSelection(Brush);
+        }
+    }
+
+    /// <summary>
+    /// Sets the selected room component to the specified object if it's in the room component list.
+    /// </summary>
+    public void SelectObject(ObjectDefinition obj)
+    {
+        foreach (RoomComponent com in roomComponents)
+        {
+            if ((com as ObjectRoomComponent)?.obj == obj)
+            {
+                if (selectedRoomComponent != com)
+                {
+                    selectedRoomComponent = com;
+                    draggingComponent = false;
+                    ChangedSelectedRoomComponentEvent?.Invoke(this, null);
+                }
+                break;
+            }
         }
     }
 
@@ -287,8 +316,12 @@ public class RoomLayoutEditor : TileGrid
                 return;
             }
         }
-        selectedRoomComponent = null;
-        draggingComponent = false;
+        if (selectedRoomComponent != null)
+        {
+            selectedRoomComponent = null;
+            draggingComponent = false;
+            ChangedSelectedRoomComponentEvent(this, null);
+        }
     }
 
     /// <summary>

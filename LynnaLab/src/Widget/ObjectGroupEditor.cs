@@ -54,6 +54,14 @@ public class ObjectGroupEditor : Frame
     bool disableBoxCallback = false;
 
     // ================================================================================
+    // Events
+    // ================================================================================
+
+    // Invoked when the selected object is changed by any means (clicking on it, or updated
+    // automatically some other way).
+    public event EventHandler ObjectSelectedEvent;
+
+    // ================================================================================
     // Properties
     // ================================================================================
 
@@ -167,6 +175,12 @@ public class ObjectGroupEditor : Frame
 
     public void SelectObject(ObjectGroup group, int index)
     {
+        if (group == null || index == -1)
+        {
+            Unselect();
+            return;
+        }
+
         if (!topObjectGroup.GetAllGroups().Contains(group))
             throw new Exception("Tried to select from an invalid object group.");
 
@@ -187,21 +201,33 @@ public class ObjectGroupEditor : Frame
 
         disableBoxCallback = false;
 
-        if (selectedIndex == -1)
-            SetObject(null);
-        else
-            SetObject(selectedObjectGroup.GetObject(selectedIndex));
+        SetObject(selectedObjectGroup.GetObject(selectedIndex));
+    }
+
+    public void SelectObject(ObjectGroup group, ObjectDefinition obj)
+    {
+        int index = group.GetObjects().IndexOf(obj);
+        SelectObject(group, index);
+    }
+
+    public void Unselect()
+    {
+        selectedObjectGroup = null;
+        selectedIndex = -1;
+
+        disableBoxCallback = true;
+        foreach (ObjectGroup g in topObjectGroup.GetAllGroups())
+        {
+            objectBoxDict[g].SetSelectedIndex(-1);
+        }
+        disableBoxCallback = false;
+
+        SetObject(null);
     }
 
     // ================================================================================
     // Private methods
     // ================================================================================
-
-    void SelectObject(ObjectGroup group, ObjectDefinition obj)
-    {
-        int index = group.GetObjects().IndexOf(obj);
-        SelectObject(group, index);
-    }
 
     void SetObject(ObjectDefinition obj)
     {
@@ -209,9 +235,7 @@ public class ObjectGroupEditor : Frame
             return;
         activeObject = obj;
 
-        // TODO
-        // if (RoomEditor != null)
-        //     RoomEditor.OnObjectSelected();
+        ObjectSelectedEvent?.Invoke(this, null);
 
         UpdateDocumentation();
     }
