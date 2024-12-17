@@ -109,10 +109,28 @@ either.
 * Logs are stored in the disassembly folder under the "LynnaLab\\Logs\\"
   subdirectory.
   
-### ImGui stuff
+## Controls
 
-* In some situations you can hold the Shift button with the mouse wheel to
-  scroll horizontally.
+### Tileset viewer (left)
+
+* Left click: Select a tile (drag to select a range of tiles)
+
+### Room layout (middle)
+
+* Left click: Place tile(s)
+* Right click: Select a tile (drag to select a range of tiles)
+* Ctrl + left click + drag: Rectangle fill with selected tile(s)
+* Left click (on object): Select, drag object
+  * Hold Ctrl to disable tile snapping
+
+### Minimap (right)
+
+* Left click: Select a room to edit
+* Right click + drag: Scroll through overworld (when zoomed in)
+* Scroll wheel:
+  * Zoom in & out (if "scroll to zoom" is ON)
+  * Scroll vertically (if "scroll to zoom" is OFF)
+    * Hold shift to scroll horizontally. (Can also apply to other windows that are horizontally scrollable)
 
 ## For more information
 
