@@ -272,7 +272,7 @@ public class RoomLayoutEditor : TileGrid
         }
 
         // Chest
-        if (Room.Chest != null)
+        if (RoomEditor.ChestTabActive && Room.Chest != null)
         {
             roomComponents.Add(new ChestRoomComponent(this, Room.Chest));
         }

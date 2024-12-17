@@ -127,6 +127,7 @@ public class RoomEditor : Frame
     public Brush Brush { get { return Workspace.Brush; } }
 
     public bool ObjectTabActive { get { return ActiveTabName == "Objects"; } }
+    public bool ChestTabActive { get { return ActiveTabName == "Chests"; } }
 
 
     // Private properties
