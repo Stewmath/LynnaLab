@@ -39,7 +39,6 @@ public class RoomLayoutEditor : TileGrid
     // ================================================================================
     Image image;
     RoomComponent selectedRoomComponent;
-    ChestRoomComponent chestRoomComponent;
     List<RoomComponent> roomComponents;
     bool draggingComponent;
     Vector2 draggingComponentOffset;
@@ -96,9 +95,11 @@ public class RoomLayoutEditor : TileGrid
         base.RenderTileGrid();
         var endPos = ImGui.GetCursorScreenPos();
 
-        bool inhibitMouse = false;
+        RoomComponent hoveringComponent = null;
+        var mousePos = base.GetRelativeMousePos() / Scale;
 
-        Action<RoomComponent> renderRoomComponent = (com) =>
+        // Render room components
+        foreach (var com in roomComponents)
         {
             // Draw background box
             if (com.BoxColor != null)
@@ -115,94 +116,93 @@ public class RoomLayoutEditor : TileGrid
             ImGui.SetCursorScreenPos(origin + (new Vector2(com.X, com.Y) - com.BoxSize / 2) * Scale);
             ImGui.InvisibleButton($"RoomComponent button", com.BoxSize * Scale);
 
-            // Draw hover outline if mouse covering
-            var mousePos = base.GetRelativeMousePos() / Scale;
+            // Check if we're hovering over it. But don't draw the hovering rectangle right now
+            // because we don't want to draw it on more than one RoomComponent.
             var rect = com.BoxRectangle;
             if (rect.Contains(mousePos))
             {
-                base.AddRect(rect * Scale, Color.Cyan, thickness: Scale);
+                hoveringComponent = com;
             }
+        }
 
-            // Draw selection outline if selected
-            if (com == selectedRoomComponent)
-            {
-                base.AddRect(rect * Scale, Color.White, thickness: Scale);
-            }
+        // Draw hover outline if something is being hovered over
+        if (hoveringComponent != null)
+        {
+            base.AddRect(hoveringComponent.BoxRectangle * Scale, Color.Cyan, thickness: Scale);
+        }
+        // Draw selection outline if something is selected
+        if (selectedRoomComponent != null)
+        {
+            base.AddRect(selectedRoomComponent.BoxRectangle * Scale, Color.White, thickness: Scale);
+        }
 
-            // Check mouse operations
+        // Check if we clicked on the hoveringComponent, make that the selectedRoomComponent if so
+        if (hoveringComponent != null)
+        {
+            var rect = hoveringComponent.BoxRectangle;
+
             if (rect.Contains(mousePos))
             {
-                inhibitMouse = true;
-
                 // Clicked on
-                if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+                if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && !draggingComponent)
                 {
-                    selectedRoomComponent = com;
+                    selectedRoomComponent = hoveringComponent;
                     draggingComponent = true;
-                    draggingComponentOffset.X = com.X - mousePos.X;
-                    draggingComponentOffset.Y = com.Y - mousePos.Y;
+                    draggingComponentOffset.X = hoveringComponent.X - mousePos.X;
+                    draggingComponentOffset.Y = hoveringComponent.Y - mousePos.Y;
                 }
             }
+        }
 
-            // Update room component dragging
-            if (draggingComponent && com == selectedRoomComponent)
+        // Update room component dragging
+        if (draggingComponent)
+        {
+            var com = selectedRoomComponent;
+
+            if (ImGui.IsMouseDown(ImGuiMouseButton.Left))
             {
-                inhibitMouse = true;
-
-                if (ImGui.IsMouseDown(ImGuiMouseButton.Left))
+                // Shortened XY: Snapping is "automatic" due to low resolution of XY variables;
+                // also don't add draggingComponentOffset as it only works well with smooth
+                // movement
+                if (com.HasShortenedXY)
                 {
-                    // Shortened XY: Snapping is "automatic" due to low resolution of XY variables;
-                    // also don't add draggingComponentOffset as it only works well with smooth
-                    // movement
-                    if (com.HasShortenedXY)
-                    {
-                        com.X = (int)Math.Round(mousePos.X);
-                        com.Y = (int)Math.Round(mousePos.Y);
-                    }
-                    // Ctrl pressed: No snapping
-                    else if (ImGui.IsKeyDown(ImGuiKey.ModCtrl))
-                    {
-                        com.X = (int)Math.Round(mousePos.X + draggingComponentOffset.X);
-                        com.Y = (int)Math.Round(mousePos.Y + draggingComponentOffset.Y);
-                    }
-                    // Ctrl not pressed: Snap to 8x8
-                    else
-                    {
-                        const int snap = 8;
-
-                        var snapTo = (int oldPos, int mousePos) => {
-                            int snapLog = (int)Math.Log(snap, 2);
-                            int data = oldPos + snap / 2;
-                            int align = data % snap;
-                            int newp = (mousePos - align) >> snapLog;
-                            newp = newp * snap + align + snap / 2;
-                            return newp;
-                        };
-
-                        com.X = snapTo(com.X, (int)Math.Round(mousePos.X));
-                        com.Y = snapTo(com.Y, (int)Math.Round(mousePos.Y));
-                    }
+                    com.X = (int)Math.Round(mousePos.X);
+                    com.Y = (int)Math.Round(mousePos.Y);
                 }
+                // Ctrl pressed: No snapping
+                else if (ImGui.IsKeyDown(ImGuiKey.ModCtrl))
+                {
+                    com.X = (int)Math.Round(mousePos.X + draggingComponentOffset.X);
+                    com.Y = (int)Math.Round(mousePos.Y + draggingComponentOffset.Y);
+                }
+                // Ctrl not pressed: Snap to 8x8
                 else
                 {
-                    draggingComponent = false;
+                    const int snap = 8;
+
+                    var snapTo = (int oldPos, int mousePos) =>
+                    {
+                        int snapLog = (int)Math.Log(snap, 2);
+                        int data = oldPos + snap / 2;
+                        int align = data % snap;
+                        int newp = (mousePos - align) >> snapLog;
+                        newp = newp * snap + align + snap / 2;
+                        return newp;
+                    };
+
+                    com.X = snapTo(com.X, (int)Math.Round(mousePos.X));
+                    com.Y = snapTo(com.Y, (int)Math.Round(mousePos.Y));
                 }
             }
-        };
-
-        // Render room components
-        foreach (var com in roomComponents)
-        {
-            renderRoomComponent(com);
-        }
-        if (chestRoomComponent != null)
-        {
-            renderRoomComponent(chestRoomComponent);
+            else
+            {
+                draggingComponent = false;
+            }
         }
 
         ImGui.SetCursorScreenPos(endPos);
 
-        if (!inhibitMouse)
+        if (hoveringComponent == null && !draggingComponent)
         {
             if (Workspace.ShowBrushPreview)
             {
@@ -230,7 +230,6 @@ public class RoomLayoutEditor : TileGrid
         base.Width = RoomLayout.Width;
         base.Height = RoomLayout.Height;
 
-        UpdateChestComponent();
         UpdateRoomComponents();
 
         roomEventWrapper.ReplaceEventSource(Room);
@@ -241,14 +240,7 @@ public class RoomLayoutEditor : TileGrid
     /// </summary>
     void UpdateChestComponent()
     {
-        if (Room.Chest != null)
-        {
-            this.chestRoomComponent = new ChestRoomComponent(this, Room.Chest);
-        }
-        else
-        {
-            this.chestRoomComponent = null;
-        }
+        UpdateRoomComponents();
     }
 
     /// <summary>
@@ -278,6 +270,25 @@ public class RoomLayoutEditor : TileGrid
                 }
             }
         }
+
+        // Chest
+        if (Room.Chest != null)
+        {
+            roomComponents.Add(new ChestRoomComponent(this, Room.Chest));
+        }
+
+        // Check if the previous selectedRoomComponent has an equivalent in the new list. If not,
+        // unselect it.
+        foreach (var com in roomComponents)
+        {
+            if (com.Compare(selectedRoomComponent))
+            {
+                selectedRoomComponent = com;
+                return;
+            }
+        }
+        selectedRoomComponent = null;
+        draggingComponent = false;
     }
 
     /// <summary>
