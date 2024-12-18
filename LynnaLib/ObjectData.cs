@@ -82,7 +82,7 @@ namespace LynnaLib
                 };
                 case ObjectType.Interaction:
                     return new List<ValueReferenceDescriptor> { // Interaction
-                    DataValueReference.Descriptor(data,"ID",0,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"ID",0,DataValueType.Byte,constantsMappingString:"InteractionMapping"),
                     DataValueReference.Descriptor(data,"SubID",1,DataValueType.Byte),
                     DataValueReference.Descriptor(data,"Y",2,DataValueType.Byte),
                     DataValueReference.Descriptor(data,"X",3,DataValueType.Byte),
@@ -109,7 +109,7 @@ namespace LynnaLib
                             tooltip: "Don't count towards the wNumEnemies variable (for puzzles)."),
                     DataValueReference.Descriptor(data,"Spawn anywhere",0,DataValueType.ByteBit,2,2),
                     DataValueReference.Descriptor(data,"Quantity",0,DataValueType.ByteBits,5,7),
-                    DataValueReference.Descriptor(data,"ID",1,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"ID",1,DataValueType.Byte,constantsMappingString:"EnemyMapping"),
                     DataValueReference.Descriptor(data,"SubID",2,DataValueType.Byte),
                 };
                 case ObjectType.SpecificEnemyA:
@@ -119,14 +119,14 @@ namespace LynnaLib
                             tooltip: "Always respawn when you re-enter the room"),
                     DataValueReference.Descriptor(data,"Uncounted",0,DataValueType.ByteBit,1,1,
                             tooltip: "Don't count towards the wNumEnemies variable (for puzzles)."),
-                    DataValueReference.Descriptor(data,"ID",1,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"ID",1,DataValueType.Byte,constantsMappingString:"EnemyMapping"),
                     DataValueReference.Descriptor(data,"SubID",2,DataValueType.Byte),
                     DataValueReference.Descriptor(data,"Y",3,DataValueType.Byte),
                     DataValueReference.Descriptor(data,"X",4,DataValueType.Byte),
                 };
                 case ObjectType.SpecificEnemyB:
                     return new List<ValueReferenceDescriptor> { // Specific Enemy B
-                    DataValueReference.Descriptor(data,"ID",0,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"ID",0,DataValueType.Byte,constantsMappingString:"EnemyMapping"),
                     DataValueReference.Descriptor(data,"SubID",1,DataValueType.Byte),
                     DataValueReference.Descriptor(data,"Y",2,DataValueType.Byte),
                     DataValueReference.Descriptor(data,"X",3,DataValueType.Byte),
@@ -134,7 +134,7 @@ namespace LynnaLib
                 };
                 case ObjectType.Part:
                     return new List<ValueReferenceDescriptor> { // Part
-                    DataValueReference.Descriptor(data,"ID",0,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"ID",0,DataValueType.Byte,constantsMappingString:"PartMapping"),
                     DataValueReference.Descriptor(data,"SubID",1,DataValueType.Byte),
                     DataValueReference.Descriptor(data,"Y",2,DataValueType.Byte),
                     DataValueReference.Descriptor(data,"X",3,DataValueType.Byte),
@@ -145,7 +145,7 @@ namespace LynnaLib
                     //DataValueReference.Descriptor(data,"Flags",0,DataValueType.Byte,editable:false),
                     DataValueReference.Descriptor(data,"Respawn",0,DataValueType.ByteBit,0,0,
                             tooltip: "Always respawn when you re-enter the room"),
-                    DataValueReference.Descriptor(data,"Item",1,DataValueType.Byte),
+                    DataValueReference.Descriptor(data,"Item",1,DataValueType.Byte,constantsMappingString:"ItemDropMapping"),
                     DataValueReference.Descriptor(data,"Y",2,DataValueType.ByteBits,4,7),
                     DataValueReference.Descriptor(data,"X",2,DataValueType.ByteBits,0,3),
                 };

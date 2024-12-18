@@ -122,7 +122,8 @@ public class ObjectGroupEditor : Frame
 
     public override void Render()
     {
-        var childSize = ImGui.GetContentRegionAvail() - new Vector2(0.0f, 200.0f);
+        // Allocate a certain amount of space for the fields at the bottom, only if an object is selected
+        var childSize = ImGui.GetContentRegionAvail() - new Vector2(0.0f, 300.0f);
         if (SelectedObject == null)
             childSize = new Vector2(0.0f, 0.0f);
 
