@@ -347,7 +347,14 @@ public class RoomLayoutEditor : TileGrid
             if (validInRoom)
                 return;
             else
+            {
                 roomComponents.Remove(com);
+                if (com == selectedRoomComponent)
+                {
+                    selectedRoomComponent = null;
+                    draggingComponent = false;
+                }
+            }
         }
         else // Doesn't exist in list
         {
