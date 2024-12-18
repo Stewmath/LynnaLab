@@ -5,8 +5,10 @@ public class ObjectGroupEditor : Frame
     // ================================================================================
     // Constructors
     // ================================================================================
-    public ObjectGroupEditor(string name, ObjectGroup group) : base(name)
+    public ObjectGroupEditor(ProjectWorkspace workspace, string name, ObjectGroup group) : base(name)
     {
+        this.Workspace = workspace;
+
         SetObjectGroup(group);
     }
 
@@ -65,13 +67,8 @@ public class ObjectGroupEditor : Frame
     // Properties
     // ================================================================================
 
-    Project Project
-    {
-        get
-        {
-            return TopObjectGroup.Project;
-        }
-    }
+    public ProjectWorkspace Workspace { get; private set; }
+    Project Project { get { return Workspace.Project; } }
 
     // The TOP-LEVEL object group for this room.
     public ObjectGroup TopObjectGroup
@@ -161,7 +158,7 @@ public class ObjectGroupEditor : Frame
         ImGui.EndChild();
 
         if (SelectedObject != null)
-            ImGuiLL.RenderValueReferenceGroup(SelectedObject);
+            ImGuiLL.RenderValueReferenceGroup(SelectedObject, null, Workspace.ShowDocumentation);
     }
 
     public void SetObjectGroup(ObjectGroup topObjectGroup)

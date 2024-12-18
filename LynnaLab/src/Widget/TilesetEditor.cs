@@ -75,7 +75,7 @@ public class TilesetEditor : Frame
         ImGui.EndChild();
 
         ImGui.SeparatorText("Tileset Properties");
-        ImGuiLL.RenderTilesetFields(Tileset);
+        ImGuiLL.RenderTilesetFields(Tileset, Workspace.ShowDocumentation);
     }
 
     // ================================================================================

@@ -112,7 +112,7 @@ public class TilesetCloner : Frame
         ImGui.EndChild();
 
         ImGui.SeparatorText("Tileset Properties (for preview)");
-        ImGuiLL.RenderTilesetFields(previewTileset);
+        ImGuiLL.RenderTilesetFields(previewTileset, Workspace.ShowDocumentation);
 
         ImGui.Separator();
         if (ImGui.Button("Apply Tileset Changes"))

@@ -31,6 +31,7 @@ public class ProjectWorkspace
         tilesetEditor = new TilesetEditor(this, "Tileset Editor");
         tilesetCloner = new TilesetCloner(this, "Tileset Cloner");
         buildDialog = new BuildDialog(this, "Build");
+        documentationDialog = new DocumentationDialog(this, "Documentation Dialog");
         scratchpad = new ScratchPad(this, "Scratchpad", roomEditor.TilesetViewer, Brush);
 
         frames.AddRange(new Frame[] {
@@ -40,7 +41,9 @@ public class ProjectWorkspace
                 tilesetCloner,
                 scratchpad,
                 buildDialog,
+                documentationDialog,
             });
+        frames.Sort((f1, f2) => f1.Name.CompareTo(f2.Name));
 
         // Default active windows
         roomEditor.Active = true;
@@ -62,6 +65,7 @@ public class ProjectWorkspace
 
     Image linkImage;
     BuildDialog buildDialog;
+    DocumentationDialog documentationDialog;
 
     TilesetImageCacher tilesetImageCacher;
     RoomImageCacher roomImageCacher;
@@ -198,6 +202,12 @@ public class ProjectWorkspace
             emulatorProcess.Kill(true); // Pass true to kill whole process tree
         }
         emulatorProcess = process;
+    }
+
+    public void ShowDocumentation(Documentation documentation)
+    {
+        documentationDialog.SetDocumentation(documentation);
+        documentationDialog.Active = true;
     }
 
     // ================================================================================

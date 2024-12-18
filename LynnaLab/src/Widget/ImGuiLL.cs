@@ -7,10 +7,16 @@ public class ImGuiLL
 {
     public const float ENTRY_ITEM_WIDTH = 120.0f;
 
-    public static void ComboBoxFromConstants(
+    /// <summary>
+    /// Displays a ComboBox along with (optionally) the raw integer field as an alternate way to set
+    /// the value. Returns true if "?" button for documentation was clicked.
+    /// </summary>
+    public static bool ComboBoxFromConstants(
         string name, ConstantsMapping mapping, ref int value,
         bool withIntInput, bool omitPrefix)
     {
+        bool openDoc = false;
+
         string getLabelName(string name, ConstantsMapping mapping, bool omitPrefix)
         {
             if (!omitPrefix)
@@ -22,7 +28,14 @@ public class ImGuiLL
         ImGui.BeginGroup();
 
         if (withIntInput)
+        {
             ImGuiX.InputHex($"{name}##InputHex", ref value);
+            ImGui.SameLine();
+            if (ImGui.Button("?"))
+            {
+                openDoc = true;
+            }
+        }
 
         // Calculate width of largest text item
         float width = 40.0f;
@@ -54,23 +67,26 @@ public class ImGuiLL
         ImGui.PopItemWidth();
         ImGui.EndGroup();
         ImGui.PopItemWidth();
+
+        return openDoc;
     }
 
-    public static void ComboBoxFromConstants(ValueReferenceDescriptor desc, bool withIntInput = true, bool omitPrefix = false)
+    public static bool ComboBoxFromConstants(ValueReferenceDescriptor desc, bool withIntInput = true, bool omitPrefix = false)
     {
         ConstantsMapping mapping = desc.ConstantsMapping;
 
         int initial = desc.GetIntValue();
         int value = initial;
-        ComboBoxFromConstants(desc.Name, desc.ConstantsMapping, ref value, withIntInput, omitPrefix);
+        bool showDoc = ComboBoxFromConstants(desc.Name, desc.ConstantsMapping, ref value, withIntInput, omitPrefix);
         if (value != initial)
             desc.SetValue(value);
+        return showDoc;
     }
 
     /// <summary>
     /// Displays an interface for editing the given ValueReferenceGroup.
     /// </summary>
-    public static void RenderValueReferenceGroup(ValueReferenceGroup vrg, ISet<string> linebreaks = null)
+    public static void RenderValueReferenceGroup(ValueReferenceGroup vrg, ISet<string> linebreaks, Action<Documentation> showDoc)
     {
         ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
 
@@ -100,7 +116,8 @@ public class ImGuiLL
                 case ValueReferenceType.Int:
                     if (desc.ConstantsMapping != null)
                     {
-                        ComboBoxFromConstants(desc);
+                        if (ComboBoxFromConstants(desc))
+                            showDoc(desc.Documentation);
                     }
                     else
                     {
@@ -213,9 +230,9 @@ public class ImGuiLL
     static readonly HashSet<string> tilesetPropsLineBreaks = new HashSet<string>(
         "Dungeon Index".Split(","));
 
-    public static void RenderTilesetFields(Tileset tileset)
+    public static void RenderTilesetFields(Tileset tileset, Action<Documentation> showDoc)
     {
-        RenderValueReferenceGroup(tileset.ValueReferenceGroup, tilesetPropsLineBreaks);
+        RenderValueReferenceGroup(tileset.ValueReferenceGroup, tilesetPropsLineBreaks, showDoc);
     }
 
     /// <summary>
