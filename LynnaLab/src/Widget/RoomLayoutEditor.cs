@@ -35,7 +35,7 @@ public class RoomLayoutEditor : TileGrid
 
         objectGroupEventWrapper = new EventWrapper<ObjectGroup>();
         objectGroupEventWrapper.Bind<EventArgs>(
-            "ModifiedEvent",
+            "StructureModifiedEvent",
             (_, _) => UpdateRoomComponents(),
             weak: false);
     }

@@ -47,7 +47,7 @@ namespace LynnaLib
 
         // Invoked when the structure of the object group is modified (ie. adding, deleting, or
         // rearranging objects). Not invoked when an object's data is modified.
-        public event EventHandler<EventArgs> ModifiedEvent;
+        public event EventHandler<EventArgs> StructureModifiedEvent;
 
 
         // NOTE: this list may not be complete at any given time
@@ -308,16 +308,6 @@ namespace LynnaLib
             ModifiedHandler(this, null);
         }
 
-        public void AddModifiedHandler(EventHandler<EventArgs> handler)
-        {
-            ModifiedEvent += handler;
-        }
-
-        public void RemoveModifiedHandler(EventHandler<EventArgs> handler)
-        {
-            ModifiedEvent -= handler;
-        }
-
 
         // Internal methods
 
@@ -479,7 +469,7 @@ namespace LynnaLib
 
         void ModifiedHandler(object sender, ValueModifiedEventArgs args)
         {
-            ModifiedEvent?.Invoke(this, null);
+            StructureModifiedEvent?.Invoke(this, null);
             foreach (var parent in parents)
                 parent.ModifiedHandler(sender, args);
         }

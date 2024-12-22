@@ -14,7 +14,7 @@ public class ObjectBox : SelectionBox
         base.Unselectable = true;
         base.RectThickness = 1.0f;
 
-        objectGroupEventWrapper.Bind<EventArgs>("ModifiedEvent", OnObjectGroupModified, weak: false);
+        objectGroupEventWrapper.Bind<EventArgs>("StructureModifiedEvent", OnObjectGroupModified, weak: false);
         SetObjectGroup(group);
     }
 

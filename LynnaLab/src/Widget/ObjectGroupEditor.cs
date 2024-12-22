@@ -164,9 +164,9 @@ public class ObjectGroupEditor : Frame
     public void SetObjectGroup(ObjectGroup topObjectGroup)
     {
         if (this.topObjectGroup != null)
-            this.topObjectGroup.RemoveModifiedHandler(ObjectGroupModifiedHandler);
+            this.topObjectGroup.StructureModifiedEvent -= ObjectGroupModifiedHandler;
         this.topObjectGroup = topObjectGroup;
-        this.topObjectGroup.AddModifiedHandler(ObjectGroupModifiedHandler);
+        this.topObjectGroup.StructureModifiedEvent += ObjectGroupModifiedHandler;
 
         ReloadObjectBoxes();
     }
