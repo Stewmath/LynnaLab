@@ -14,8 +14,26 @@ public class ObjectBox : SelectionBox
         base.Unselectable = true;
         base.RectThickness = 1.0f;
 
-        objectGroupEventWrapper.Bind<EventArgs>("StructureModifiedEvent", OnObjectGroupModified, weak: false);
+        objectGroupEventWrapper.Bind<EventArgs>(
+            "StructureModifiedEvent",
+            (sender, _) => SetObjectGroup(sender as ObjectGroup),
+            weak: false);
         SetObjectGroup(group);
+
+        base.AddMouseAction(
+            MouseButton.RightClick,
+            MouseModifier.None,
+            MouseAction.Click,
+            GridAction.Callback,
+            (s, arg) =>
+            {
+                if (arg.selectedIndex != -1)
+                {
+                    base.SelectedIndex = arg.selectedIndex;
+                    ImGui.OpenPopup("ObjectPopupMenu");
+                }
+            }
+        );
     }
 
     // ================================================================================
@@ -33,6 +51,56 @@ public class ObjectBox : SelectionBox
     // ================================================================================
     // Public methods
     // ================================================================================
+
+    public override void Render()
+    {
+        // Render tile grid & handle most inputs
+        base.Render();
+
+        // Catch right clicks outside any existing components
+        ImGui.SetCursorScreenPos(base.origin);
+        if (ImGui.InvisibleButton("Background button", base.WidgetSize, ImGuiButtonFlags.MouseButtonRight))
+        {
+            ImGui.OpenPopup("AddPopupMenu");
+        }
+
+        // Popup menu (right clicked on an object)
+        if (GetSelectedObject() != null)
+        {
+            ObjectPopupMenu(GetSelectedObject(), "ObjectPopupMenu");
+        }
+
+        // Popup menu (right clicked on an empty spot)
+        if (ImGui.BeginPopup("AddPopupMenu"))
+        {
+            // List of object types that can be added manually (omits "Pointer" types which are
+            // managed automatically)
+            ObjectType[] objectTypes = {
+                ObjectType.Condition,
+                ObjectType.Interaction,
+                ObjectType.RandomEnemy,
+                ObjectType.SpecificEnemyA,
+                ObjectType.SpecificEnemyB,
+                ObjectType.Part,
+                ObjectType.ItemDrop,
+            };
+
+            ImGui.Text("Add Object...");
+            ImGui.Separator();
+
+            foreach (var objType in objectTypes)
+            {
+                var name = ObjectGroupEditor.ObjectNames[(int)objType];
+
+                if (ImGui.Selectable(name))
+                {
+                    SelectedIndex = ObjectGroup.AddObject(objType);
+                }
+            }
+
+            ImGui.EndPopup();
+        }
+    }
 
     public void SetObjectGroup(ObjectGroup group)
     {
@@ -93,11 +161,6 @@ public class ObjectBox : SelectionBox
     // Private methods
     // ================================================================================
 
-    void OnObjectGroupModified(object sender, EventArgs args)
-    {
-        MaxIndex = ObjectGroup.GetNumObjects() - 1;
-    }
-
     void DrawObject(ObjectDefinition obj, float x, float y)
     {
         if (obj.GetGameObject() != null)
@@ -123,6 +186,22 @@ public class ObjectBox : SelectionBox
             {
                 // Error parsing an animation
             }
+        }
+    }
+
+    // ================================================================================
+    // Static methods
+    // ================================================================================
+
+    public static void ObjectPopupMenu(ObjectDefinition def, string name)
+    {
+        if (ImGui.BeginPopup(name))
+        {
+            if (ImGui.Selectable("Delete"))
+            {
+                def.Remove();
+            }
+            ImGui.EndPopup();
         }
     }
 }

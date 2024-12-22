@@ -141,7 +141,7 @@ public class ObjectGroupEditor : Frame
                     ImGuiX.TooltipOnHover(tooltip);
 
                     if (ImGui.BeginChild(box.ObjectGroup.Identifier + " frame",
-                                         box.WidgetSize + new Vector2(12.0f, 12.0f),
+                                         box.WidgetSize + new Vector2(12.0f, 16.0f),
                                          ImGuiChildFlags.Border))
                     {
                         box.Render();
