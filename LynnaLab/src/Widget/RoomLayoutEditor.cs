@@ -32,6 +32,12 @@ public class RoomLayoutEditor : TileGrid
             "ChestAddedEvent",
             (s, a) => UpdateChestComponent(),
             weak: false);
+
+        objectGroupEventWrapper = new EventWrapper<ObjectGroup>();
+        objectGroupEventWrapper.Bind<EventArgs>(
+            "ModifiedEvent",
+            (_, _) => UpdateRoomComponents(),
+            weak: false);
     }
 
     // ================================================================================
@@ -43,6 +49,7 @@ public class RoomLayoutEditor : TileGrid
     bool draggingComponent;
     Vector2 draggingComponentOffset;
     EventWrapper<Room> roomEventWrapper;
+    EventWrapper<ObjectGroup> objectGroupEventWrapper;
 
     // ================================================================================
     // Events
@@ -142,25 +149,46 @@ public class RoomLayoutEditor : TileGrid
             base.AddRect(selectedRoomComponent.BoxRectangle * Scale, Color.White, thickness: Scale);
         }
 
-        // Check if we clicked on the hoveringComponent, make that the selectedRoomComponent if so
+        // Check if we clicked on the hoveringComponent
         if (hoveringComponent != null)
         {
             var rect = hoveringComponent.BoxRectangle;
 
             if (rect.Contains(mousePos))
             {
-                // Clicked on
-                if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && !draggingComponent)
+                // Left or right click
+                if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseClicked(ImGuiMouseButton.Right) && !draggingComponent)
                 {
                     bool changed = selectedRoomComponent != hoveringComponent;
                     selectedRoomComponent = hoveringComponent;
-                    draggingComponent = true;
-                    draggingComponentOffset.X = hoveringComponent.X - mousePos.X;
-                    draggingComponentOffset.Y = hoveringComponent.Y - mousePos.Y;
+                    if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+                    {
+                        draggingComponent = true;
+                        draggingComponentOffset.X = hoveringComponent.X - mousePos.X;
+                        draggingComponentOffset.Y = hoveringComponent.Y - mousePos.Y;
+                    }
                     if (changed)
                         ChangedSelectedRoomComponentEvent?.Invoke(this, null);
                 }
+
+                // Right click
+                if (ImGui.IsMouseClicked(ImGuiMouseButton.Right) && !draggingComponent)
+                {
+                    ImGui.OpenPopup(TopLevel.RightClickPopupName);
+                }
             }
+        }
+
+        // Render right-click menu
+        if (ImGui.BeginPopup(TopLevel.RightClickPopupName))
+        {
+            var com = selectedRoomComponent;
+
+            if (com.Deletable && ImGui.Selectable("Delete"))
+            {
+                com.Delete();
+            }
+            ImGui.EndPopup();
         }
 
         // Update room component dragging
@@ -250,7 +278,7 @@ public class RoomLayoutEditor : TileGrid
     // ================================================================================
 
     /// <summary>
-    /// Called when room is changed
+    /// Called when the room being edited is changed
     /// </summary>
     void OnRoomChanged()
     {
@@ -262,6 +290,7 @@ public class RoomLayoutEditor : TileGrid
         UpdateRoomComponents();
 
         roomEventWrapper.ReplaceEventSource(Room);
+        objectGroupEventWrapper.ReplaceEventSource(Room.GetObjectGroup());
     }
 
     /// <summary>

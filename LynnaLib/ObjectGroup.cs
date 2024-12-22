@@ -45,7 +45,8 @@ namespace LynnaLib
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 
-        // Invoked when the group is modified in any way (including modifying objects themselves).
+        // Invoked when the structure of the object group is modified (ie. adding, deleting, or
+        // rearranging objects). Not invoked when an object's data is modified.
         public event EventHandler<EventArgs> ModifiedEvent;
 
 
@@ -115,8 +116,6 @@ namespace LynnaLib
                     st.def = new ObjectDefinition(this, obj, objectList.Count);
                     st.data = obj;
                     objectList.Add(st);
-
-                    st.def.ModifiedEvent += ModifiedHandler;
                 }
             }
 
@@ -233,7 +232,6 @@ namespace LynnaLib
             st.rawIndex = rawObjectGroup.GetNumObjects() - 1;
             st.data = rawObjectGroup.GetObjectData(st.rawIndex);
             st.def = new ObjectDefinition(this, st.data, objectList.Count);
-            st.def.AddValueModifiedHandler(ModifiedHandler);
             objectList.Add(st);
 
             UpdateRawIndices();
@@ -251,7 +249,6 @@ namespace LynnaLib
 
             rawObjectGroup.RemoveObject(objectList[index].rawIndex);
 
-            objectList[index].def.RemoveValueModifiedHandler(ModifiedHandler);
             objectList.RemoveAt(index);
 
             UpdateRawIndices();
