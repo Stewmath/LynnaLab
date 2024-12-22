@@ -27,6 +27,22 @@ namespace Util
         /// Pass an event name that's in "TEventSource" and the handler for the event.
         public void Bind<TEventArgs>(string eventName, EventHandler<TEventArgs> handler, bool weak = true)
         {
+            // Could add BindingFlag.NonInstance, but there's no benefit to using this class in that
+            // case? (since the whole point is to allow the GC to free the object)
+            var bindingFlags = BindingFlags.Public | BindingFlags.Instance;
+            EventInfo eventInfo = typeof(TEventSource).GetEvent(eventName, bindingFlags);
+
+            if (eventInfo == null)
+            {
+                throw new ArgumentException(
+                    "WeakEventBinder: Couldn't locate event \"" + eventName + "\".");
+            }
+
+            Bind(eventInfo, handler, weak);
+        }
+
+        public void Bind<TEventArgs>(EventInfo eventInfo, EventHandler<TEventArgs> handler, bool weak = true)
+        {
             EventStruct ev = new EventStruct();
 
             Action addHandlerMethod = () =>
@@ -34,14 +50,11 @@ namespace Util
                 if (weak)
                 {
                     var signaller = new WeakEventBinder<TEventSource, TEventArgs>(
-                        eventSource, ev.eventName, handler);
+                        eventSource, ev.eventInfo, handler);
                     ev.removeHandlerMethod = signaller.RemoveHandler;
                 }
                 else
                 {
-                    var bindingFlags = BindingFlags.Public | BindingFlags.Instance;
-                    var eventInfo = typeof(TEventSource).GetEvent(eventName, bindingFlags);
-
                     eventInfo.GetAddMethod().Invoke(eventSource, new object[] { handler });
                     ev.removeHandlerMethod = () =>
                     {
@@ -50,7 +63,7 @@ namespace Util
                 }
             };
 
-            ev.eventName = eventName;
+            ev.eventInfo = eventInfo;
             ev.addHandlerMethod = addHandlerMethod;
 
             if (eventSource != null)
@@ -90,7 +103,7 @@ namespace Util
 
         class EventStruct
         {
-            public string eventName;
+            public EventInfo eventInfo;
             public Action addHandlerMethod;
             public Action removeHandlerMethod;
         }
@@ -117,21 +130,11 @@ namespace Util
 
         EventInfo eventInfo;
 
-        public WeakEventBinder(TEventSource source, string eventName, EventHandler<TEventArgs> handler)
+        public WeakEventBinder(TEventSource source, EventInfo eventInfo, EventHandler<TEventArgs> handler)
         {
             this.source = new WeakReference<TEventSource>(source);
             this.handler = new WeakReference<EventHandler<TEventArgs>>(handler);
-
-            // Could add BindingFlag.NonInstance, but there's no benefit to using this class in that
-            // case? (since the whole point is to allow the GC to free the object)
-            var bindingFlags = BindingFlags.Public | BindingFlags.Instance;
-            eventInfo = typeof(TEventSource).GetEvent(eventName, bindingFlags);
-
-            if (eventInfo == null)
-            {
-                throw new ArgumentException(
-                    "WeakEventBinder: Couldn't locate event \"" + eventName + "\".");
-            }
+            this.eventInfo = eventInfo;
 
             AddHandler(source);
         }
