@@ -49,10 +49,12 @@ public class RoomEditor : Frame
         objectGroupEditor = new ObjectGroupEditor(this.Workspace, "Object Group Editor", Room.GetObjectGroup());
         warpEditor = new WarpEditor(Workspace, "Warp Editor", Room.GetWarpGroup());
 
-        SetRoom(0, false);
+        SetRoom(0, 0);
 
         overworldMinimap.SetMap(Project.GetWorldMap(0, 0));
         dungeonMinimap.SetMap(Project.GetDungeon(0));
+
+        ActiveMinimap = overworldMinimap;
 
 
         // Set up events
@@ -63,7 +65,7 @@ public class RoomEditor : Frame
             if (suppressEvents != 0)
                 return;
 
-            SetRoomLayout(overworldMinimap.Map.GetRoomLayout(overworldMinimap.SelectedX, overworldMinimap.SelectedY), false);
+            SetRoomLayout(overworldMinimap.Map.GetRoomLayout(overworldMinimap.SelectedX, overworldMinimap.SelectedY), 0);
         };
 
         dungeonMinimap.SelectedEvent += (selectedIndex) =>
@@ -71,7 +73,7 @@ public class RoomEditor : Frame
             if (suppressEvents != 0)
                 return;
 
-            SetRoomLayout(dungeonMinimap.Map.GetRoomLayout(dungeonMinimap.SelectedX, dungeonMinimap.SelectedY, ActiveFloor), false);
+            SetRoomLayout(dungeonMinimap.Map.GetRoomLayout(dungeonMinimap.SelectedX, dungeonMinimap.SelectedY, ActiveFloor), 0);
         };
 
         Brush.BrushChanged += (_, _) =>
@@ -139,6 +141,7 @@ public class RoomEditor : Frame
 
     int suppressEvents = 0;
     bool handlingObjectSelection, handlingWarpSelection;
+    string minimapTabToSelect;
 
     // Maps dungeon index to floor number. Allows the editor to remember what floor we were last
     // on for a given dungeon.
@@ -166,8 +169,8 @@ public class RoomEditor : Frame
 
     public Brush Brush { get { return Workspace.Brush; } }
 
-    public bool ObjectTabActive { get { return ActiveTabName == "Objects"; } }
-    public bool ChestTabActive { get { return ActiveTabName == "Chests"; } }
+    public bool ObjectTabActive { get { return ActiveLeftTabName == "Objects"; } }
+    public bool ChestTabActive { get { return ActiveLeftTabName == "Chests"; } }
 
 
     // Private properties
@@ -176,7 +179,7 @@ public class RoomEditor : Frame
     Map ActiveMap { get { return ActiveMinimap.Map; } }
 
     // Left: Editor mode tabs
-    string ActiveTabName { get; set; }
+    string ActiveLeftTabName { get; set; }
 
     // Right: Overworld tabs
     bool OverworldTabActive { get { return ActiveMinimap == overworldMinimap; } }
@@ -232,8 +235,8 @@ public class RoomEditor : Frame
         var TrackedTabItem = (string tabName) => {
             if (ImGui.BeginTabItem(tabName))
             {
-                bool changed = ActiveTabName != tabName;
-                ActiveTabName = tabName;
+                bool changed = ActiveLeftTabName != tabName;
+                ActiveLeftTabName = tabName;
                 if (changed)
                     TabChangedEvent?.Invoke(this, null);
                 return true;
@@ -291,28 +294,33 @@ public class RoomEditor : Frame
             if (ImGuiX.InputHex("Room", ref roomIndex, 3))
             {
                 if (roomIndex >= 0 && roomIndex <= Project.NumRooms)
-                    SetRoom(roomIndex, true);
+                    SetRoom(roomIndex, 1);
             }
             ImGui.PopItemWidth();
         }
 
-        var updateSelectedTab = (Minimap minimap) =>
+        var minimapTabItem = (string name, Minimap minimap) =>
         {
-            if (ActiveMinimap != minimap)
+            var flags = minimapTabToSelect == name ? ImGuiTabItemFlags.SetSelected : 0;
+            if (ImGuiX.BeginTabItem(name, flags))
             {
-                ActiveMinimap = minimap;
-                SetRoomLayout(
-                    ActiveMap.GetRoomLayout(
-                                  ActiveMinimap.SelectedX, ActiveMinimap.SelectedY),
-                    false);
+                if (ActiveMinimap != minimap)
+                {
+                    ActiveMinimap = minimap;
+                    SetRoomLayout(
+                        ActiveMap.GetRoomLayout(ActiveMinimap.SelectedX, ActiveMinimap.SelectedY),
+                        0);
+                }
+
+                return true;
             }
+
+            return false;
         };
 
         ImGui.BeginTabBar("Map Tabs");
-        if (ImGui.BeginTabItem("Overworld"))
+        if (minimapTabItem("Overworld", overworldMinimap))
         {
-            updateSelectedTab(overworldMinimap);
-
             // Input fields for overworld minimaps
             {
                 ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
@@ -334,7 +342,7 @@ public class RoomEditor : Frame
                 if (ImGuiX.InputHex("Season", ref season, 1))
                 {
                     if (Room.IsValidSeason(season))
-                        SetRoomLayout(Room.GetLayout(season), true);
+                        SetRoomLayout(Room.GetLayout(season), 1);
                 }
 
                 ImGui.PopItemWidth();
@@ -343,10 +351,8 @@ public class RoomEditor : Frame
             overworldMinimap.Render();
             ImGui.EndTabItem();
         }
-        if (ImGui.BeginTabItem("Dungeon"))
+        if (minimapTabItem("Dungeon", dungeonMinimap))
         {
-            updateSelectedTab(dungeonMinimap);
-
             if (ActiveFloor >= (ActiveMap as Dungeon).NumFloors)
                 ActiveFloor = (ActiveMap as Dungeon).NumFloors - 1;
 
@@ -373,7 +379,7 @@ public class RoomEditor : Frame
                         dungeonMinimap.SetMap(dungeonMinimap.Map, ActiveFloor);
                         SetRoom(ActiveMap.GetRoom(
                                     ActiveMinimap.SelectedX, ActiveMinimap.SelectedY, ActiveFloor),
-                                updateMinimap: false);
+                                updateMinimap: 0);
                     }
                 }
 
@@ -385,10 +391,12 @@ public class RoomEditor : Frame
         }
         ImGui.EndTabBar();
 
+        minimapTabToSelect = null;
+
         ImGui.EndChild();
     }
 
-    public void SetRoom(int roomIndex, bool updateMinimap)
+    public void SetRoom(int roomIndex, int updateMinimap)
     {
         if (roomIndex == Room.Index)
             return;
@@ -398,7 +406,7 @@ public class RoomEditor : Frame
     /// <summary>
     /// Changes the loaded room, updates minimap & tileset viewer
     /// </summary>
-    public void SetRoom(Room room, bool updateMinimap)
+    public void SetRoom(Room room, int updateMinimap)
     {
         // Adjust the room index to its "expected" value, accounting for duplicates.
         if (room.ExpectedIndex != room.Index)
@@ -419,7 +427,7 @@ public class RoomEditor : Frame
         ActiveMinimap.SetMap(map, GetSelectedFloor(map));
         RoomLayout roomLayout = map.GetRoomLayout(
             ActiveMinimap.SelectedX, ActiveMinimap.SelectedY, ActiveFloor);
-        SetRoomLayout(roomLayout, false);
+        SetRoomLayout(roomLayout, 0);
 
         suppressEvents--;
     }
@@ -429,7 +437,7 @@ public class RoomEditor : Frame
     /// </summary>
     public void FollowWarp(Warp warp)
     {
-        SetRoom(warp.DestRoom, true);
+        SetRoom(warp.DestRoom, 2);
     }
 
     // ================================================================================
@@ -448,8 +456,10 @@ public class RoomEditor : Frame
 
     /// <summary>
     /// Changes the RoomLayout, updates all the viewers.
+    /// updateMinimap: 0 = don't change minimap, 1 = change minimap to match the room, 2 = change
+    /// between overworld/dungeon tabs as necessary
     /// </summary>
-    void SetRoomLayout(RoomLayout roomLayout, bool updateMinimap)
+    void SetRoomLayout(RoomLayout roomLayout, int updateMinimap)
     {
         suppressEvents++;
 
@@ -459,8 +469,26 @@ public class RoomEditor : Frame
         warpEditor.SetWarpGroup(roomLayout.Room.GetWarpGroup());
         roomLayoutEventWrapper.ReplaceEventSource(roomLayout);
 
-        if (updateMinimap)
+        if (updateMinimap != 0)
         {
+            int x, y, floor;
+            Dungeon dungeon = Project.GetRoomDungeon(roomLayout.Room, out x, out y, out floor);
+
+            if (updateMinimap == 2)
+            {
+                // Change which tab is selected
+                if (dungeon == null)
+                {
+                    ActiveMinimap = overworldMinimap;
+                    minimapTabToSelect = "Overworld";
+                }
+                else
+                {
+                    ActiveMinimap = dungeonMinimap;
+                    minimapTabToSelect = "Dungeon";
+                }
+            }
+
             if (OverworldTabActive)
             {
                 overworldMinimap.SetMap(Project.GetWorldMap(roomLayout.Group, roomLayout.Season));
@@ -468,9 +496,6 @@ public class RoomEditor : Frame
             }
             else if (DungeonTabActive)
             {
-                int x, y, floor;
-                Dungeon dungeon = Project.GetRoomDungeon(roomLayout.Room, out x, out y, out floor);
-
                 if (dungeon != null)
                 {
                     dungeonMinimap.SetMap(dungeon, floor);

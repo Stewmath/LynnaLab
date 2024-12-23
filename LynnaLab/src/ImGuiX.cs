@@ -261,4 +261,18 @@ public static class ImGuiX
             return;
         Tooltip(text);
     }
+
+    /// <summary>
+    /// ImGui.NET's wrapper for BeginTabItem doesn't support passing "null" in the p_open parameter,
+    /// so we must have a custom implementation to support that.
+    /// See: https://github.com/ImGuiNET/ImGui.NET/issues/495
+    /// </summary>
+    public static unsafe bool BeginTabItem(string label, ImGuiTabItemFlags flags)
+    {
+        byte* native_label = (byte*)Marshal.StringToCoTaskMemUTF8(label);
+        byte ret;
+        ret = ImGuiNative.igBeginTabItem(native_label, (byte*)0, flags);
+        Marshal.FreeCoTaskMem((nint)native_label);
+        return ret != 0;
+    }
 }
