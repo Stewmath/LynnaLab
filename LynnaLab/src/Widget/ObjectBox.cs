@@ -186,6 +186,12 @@ public class ObjectBox : SelectionBox
 
     public static void ObjectPopupMenu(ObjectDefinition def)
     {
+        if (ImGui.Selectable("Clone"))
+        {
+            int i = def.ObjectGroup.AddObject(def.GetObjectType());
+            ObjectDefinition newObj = def.ObjectGroup.GetObject(i);
+            newObj.CopyFrom(def);
+        }
         if (ImGui.Selectable("Delete"))
         {
             def.Remove();

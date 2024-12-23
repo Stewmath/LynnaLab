@@ -805,8 +805,6 @@ public class RoomLayoutEditor : TileGrid
             }
         }
 
-        // TODO: Right click -> "Clone" button
-
         public override bool Compare(RoomComponent com)
         {
             return obj == (com as ObjectRoomComponent)?.obj;
