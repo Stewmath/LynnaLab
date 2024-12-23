@@ -172,7 +172,7 @@ public class WarpEditor : Frame
             base.RectThickness = 1.0f;
 
             warpGroupEventWrapper = new EventWrapper<WarpGroup>();
-            warpGroupEventWrapper.Bind<EventArgs>("StructureModifiedEvent",
+            warpGroupEventWrapper.Bind<EventArgs>("ModifiedEvent",
                                                   (_, _) => OnWarpGroupModified(),
                                                   weak: false);
             SetWarpGroup(warpGroup);

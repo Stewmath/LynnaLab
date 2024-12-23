@@ -53,7 +53,7 @@ public class RoomLayoutEditor : TileGrid
 
         warpGroupEventWrapper = new EventWrapper<WarpGroup>();
         warpGroupEventWrapper.Bind<EventArgs>(
-            "StructureModifiedEvent",
+            "ModifiedEvent",
             (_, _) => UpdateRoomComponents(),
             weak: false);
     }
