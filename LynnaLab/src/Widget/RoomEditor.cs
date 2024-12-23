@@ -34,7 +34,7 @@ public class RoomEditor : Frame
         };
         // Tileset viewer: Selecting multiple tiles
         tilesetViewer.AddMouseAction(
-            MouseButton.LeftClick,
+            MouseButton.Any,
             MouseModifier.None,
             MouseAction.ClickDrag,
             GridAction.SelectRangeCallback,
