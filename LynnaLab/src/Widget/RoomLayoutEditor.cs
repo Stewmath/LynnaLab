@@ -30,7 +30,13 @@ public class RoomLayoutEditor : TileGrid
         roomEventWrapper = new EventWrapper<Room>();
         roomEventWrapper.Bind<EventArgs>(
             "ChestAddedEvent",
-            (s, a) => UpdateChestComponent(),
+            (s, a) => UpdateChest(),
+            weak: false);
+
+        chestEventWrapper = new EventWrapper<Chest>();
+        chestEventWrapper.Bind<EventArgs>(
+            "DeletedEvent",
+            (_, _) => UpdateChest(),
             weak: false);
 
         objectGroupEventWrapper = new EventWrapper<ObjectGroup>();
@@ -50,6 +56,7 @@ public class RoomLayoutEditor : TileGrid
     Vector2 draggingComponentOffset;
     EventWrapper<Room> roomEventWrapper;
     EventWrapper<ObjectGroup> objectGroupEventWrapper;
+    EventWrapper<Chest> chestEventWrapper;
 
     // ================================================================================
     // Events
@@ -290,14 +297,16 @@ public class RoomLayoutEditor : TileGrid
         UpdateRoomComponents();
 
         roomEventWrapper.ReplaceEventSource(Room);
+        chestEventWrapper.ReplaceEventSource(Room.Chest);
         objectGroupEventWrapper.ReplaceEventSource(Room.GetObjectGroup());
     }
 
     /// <summary>
-    /// Called when a chest has been added to the current room
+    /// Called when a chest has been added to or removed from the current room
     /// </summary>
-    void UpdateChestComponent()
+    void UpdateChest()
     {
+        chestEventWrapper.ReplaceEventSource(Room.Chest);
         UpdateRoomComponents();
     }
 
