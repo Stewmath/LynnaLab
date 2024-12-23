@@ -22,7 +22,7 @@ public class WarpEditor : Frame
     {
         this.Workspace = workspace;
 
-        warpSourceBox = new WarpSourceBox("Warp Sources", group);
+        warpSourceBox = new WarpSourceBox(this, "Warp Sources", group);
         warpSourceBox.SelectedEvent += (index) =>
         {
             SelectedWarpEvent?.Invoke(this, null);
@@ -46,6 +46,9 @@ public class WarpEditor : Frame
     // ================================================================================
 
     public event EventHandler<EventArgs> SelectedWarpEvent;
+
+    // Invoked when "right click -> follow" happens
+    public event EventHandler<Warp> FollowEvent;
 
     // ================================================================================
     // Properties
@@ -146,6 +149,10 @@ public class WarpEditor : Frame
         SelectedIndex = i;
     }
 
+    // ================================================================================
+    // Private methods
+    // ================================================================================
+
     // Gets the index corresponding to a spin button value.
     Warp GetWarpIndex(int i)
     {
@@ -159,6 +166,26 @@ public class WarpEditor : Frame
         return WarpGroup.IndexOf(warp);
     }
 
+    // ================================================================================
+    // Static methods
+    // ================================================================================
+
+    public static void WarpPopupMenu(Warp warp, Action followAction)
+    {
+        if (ImGui.Selectable("Follow"))
+        {
+            followAction();
+        }
+        if (ImGui.Selectable("Delete"))
+        {
+            warp.Remove();
+        }
+    }
+
+
+    // ================================================================================
+    // Subclass: WarpSourceBox
+    // ================================================================================
 
     class WarpSourceBox : SelectionBox
     {
@@ -166,8 +193,9 @@ public class WarpEditor : Frame
         // Constructors
         // ================================================================================
 
-        public WarpSourceBox(string name, WarpGroup warpGroup) : base(name)
+        public WarpSourceBox(WarpEditor parent, string name, WarpGroup warpGroup) : base(name)
         {
+            this.Parent = parent;
             base.Unselectable = true;
             base.RectThickness = 1.0f;
 
@@ -176,6 +204,21 @@ public class WarpEditor : Frame
                                                   (_, _) => OnWarpGroupModified(),
                                                   weak: false);
             SetWarpGroup(warpGroup);
+
+            // Right click on a warp to open a menu
+            base.AddMouseAction(
+                MouseButton.RightClick,
+                MouseModifier.None,
+                MouseAction.Click,
+                GridAction.Callback,
+                (s, arg) =>
+                {
+                    if (arg.selectedIndex != -1)
+                    {
+                        base.SelectedIndex = arg.selectedIndex;
+                        ImGui.OpenPopup("WarpPopupMenu");
+                    }
+                });
         }
 
         // ================================================================================
@@ -188,6 +231,7 @@ public class WarpEditor : Frame
         // Properties
         // ================================================================================
 
+        public WarpEditor Parent { get; private set; }
         public WarpGroup WarpGroup { get; private set; }
         public Warp SelectedWarp
         {
@@ -215,7 +259,11 @@ public class WarpEditor : Frame
             // Popup menu (right clicked on an object)
             if (SelectedWarp != null)
             {
-                WarpPopupMenu(SelectedWarp, "WarpPopupMenu");
+                if (ImGui.BeginPopup("WarpPopupMenu"))
+                {
+                    WarpEditor.WarpPopupMenu(SelectedWarp, () => Parent.FollowEvent?.Invoke(null, SelectedWarp));
+                    ImGui.EndPopup();
+                }
             }
         }
 
@@ -227,18 +275,6 @@ public class WarpEditor : Frame
                 SelectedIndex = -1;
                 warpGroupEventWrapper.ReplaceEventSource(group);
                 OnWarpGroupModified();
-            }
-        }
-
-        public static void WarpPopupMenu(Warp warp, string name)
-        {
-            if (ImGui.BeginPopup(name))
-            {
-                if (ImGui.Selectable("Delete"))
-                {
-                    warp.Remove();
-                }
-                ImGui.EndPopup();
             }
         }
 
@@ -301,7 +337,7 @@ public class WarpEditor : Frame
             if (WarpGroup.Count == 0)
             {
                 base.MaxIndex = 0;
-                Selectable = false;
+                base.Selectable = false;
             }
             else
             {

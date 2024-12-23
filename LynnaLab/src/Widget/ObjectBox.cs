@@ -60,7 +60,11 @@ public class ObjectBox : SelectionBox
         // Popup menu (right clicked on an object)
         if (GetSelectedObject() != null)
         {
-            ObjectPopupMenu(GetSelectedObject(), "ObjectPopupMenu");
+            if (ImGui.BeginPopup("ObjectPopupMenu"))
+            {
+                ObjectPopupMenu(GetSelectedObject());
+                ImGui.EndPopup();
+            }
         }
     }
 
@@ -180,15 +184,11 @@ public class ObjectBox : SelectionBox
     // Static methods
     // ================================================================================
 
-    public static void ObjectPopupMenu(ObjectDefinition def, string name)
+    public static void ObjectPopupMenu(ObjectDefinition def)
     {
-        if (ImGui.BeginPopup(name))
+        if (ImGui.Selectable("Delete"))
         {
-            if (ImGui.Selectable("Delete"))
-            {
-                def.Remove();
-            }
-            ImGui.EndPopup();
+            def.Remove();
         }
     }
 }

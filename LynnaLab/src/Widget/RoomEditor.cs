@@ -119,6 +119,8 @@ public class RoomEditor : Frame
 
         warpEditor.SelectedWarpEvent += (s, a) => handleWarpSelection(warpEditor.SelectedWarp);
         roomLayoutEditor.ChangedSelectedRoomComponentEvent += (s, a) => handleWarpSelection(roomLayoutEditor.SelectedWarpSource);
+
+        warpEditor.FollowEvent += (_, warp) => FollowWarp(warp);
     }
 
     // ================================================================================
@@ -420,6 +422,14 @@ public class RoomEditor : Frame
         SetRoomLayout(roomLayout, false);
 
         suppressEvents--;
+    }
+
+    /// <summary>
+    /// Invoked when doing "right click -> follow" on a warp
+    /// </summary>
+    public void FollowWarp(Warp warp)
+    {
+        SetRoom(warp.DestRoom, true);
     }
 
     // ================================================================================

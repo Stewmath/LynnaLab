@@ -207,13 +207,20 @@ public class RoomLayoutEditor : TileGrid
         {
             var com = selectedRoomComponent;
 
-            if (com is WarpSourceRoomComponent wcom && ImGui.Selectable("Follow"))
+            if (com is ObjectRoomComponent ocom)
             {
-                RoomEditor.SetRoom(wcom.warp.DestRoom, true);
+                ObjectBox.ObjectPopupMenu(ocom.obj);
             }
-            if (com.Deletable && ImGui.Selectable("Delete"))
+            else if (com is WarpSourceRoomComponent wcom)
             {
-                com.Delete();
+                WarpEditor.WarpPopupMenu(wcom.warp, () => RoomEditor.FollowWarp(wcom.warp));
+            }
+            else // Not an object or a warp source
+            {
+                if (com.Deletable && ImGui.Selectable("Delete"))
+                {
+                    com.Delete();
+                }
             }
             ImGui.EndPopup();
         }
