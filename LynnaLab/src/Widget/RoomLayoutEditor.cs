@@ -205,6 +205,10 @@ public class RoomLayoutEditor : TileGrid
         {
             var com = selectedRoomComponent;
 
+            if (com is WarpSourceRoomComponent wcom && ImGui.Selectable("Follow"))
+            {
+                RoomEditor.SetRoom(wcom.warp.DestRoom, true);
+            }
             if (com.Deletable && ImGui.Selectable("Delete"))
             {
                 com.Delete();
