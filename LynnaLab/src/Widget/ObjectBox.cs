@@ -57,48 +57,10 @@ public class ObjectBox : SelectionBox
         // Render tile grid & handle most inputs
         base.Render();
 
-        // Catch right clicks outside any existing components
-        ImGui.SetCursorScreenPos(base.origin);
-        if (ImGui.InvisibleButton("Background button", base.WidgetSize, ImGuiButtonFlags.MouseButtonRight))
-        {
-            ImGui.OpenPopup("AddPopupMenu");
-        }
-
         // Popup menu (right clicked on an object)
         if (GetSelectedObject() != null)
         {
             ObjectPopupMenu(GetSelectedObject(), "ObjectPopupMenu");
-        }
-
-        // Popup menu (right clicked on an empty spot)
-        if (ImGui.BeginPopup("AddPopupMenu"))
-        {
-            // List of object types that can be added manually (omits "Pointer" types which are
-            // managed automatically)
-            ObjectType[] objectTypes = {
-                ObjectType.Condition,
-                ObjectType.Interaction,
-                ObjectType.RandomEnemy,
-                ObjectType.SpecificEnemyA,
-                ObjectType.SpecificEnemyB,
-                ObjectType.Part,
-                ObjectType.ItemDrop,
-            };
-
-            ImGui.Text("Add Object...");
-            ImGui.Separator();
-
-            foreach (var objType in objectTypes)
-            {
-                var name = ObjectGroupEditor.ObjectNames[(int)objType];
-
-                if (ImGui.Selectable(name))
-                {
-                    SelectedIndex = ObjectGroup.AddObject(objType);
-                }
-            }
-
-            ImGui.EndPopup();
         }
     }
 
@@ -137,9 +99,34 @@ public class ObjectBox : SelectionBox
         ObjectGroup.MoveObject(oldIndex, newIndex);
     }
 
-    protected override void ShowPopupMenu()
+    protected override void RenderPopupMenu()
     {
-        // TODO
+        // List of object types that can be added manually (omits "Pointer" types which are
+        // managed automatically)
+        ObjectType[] objectTypes = {
+            ObjectType.Condition,
+            ObjectType.Interaction,
+            ObjectType.RandomEnemy,
+            ObjectType.SpecificEnemyA,
+            ObjectType.SpecificEnemyB,
+            ObjectType.Part,
+            ObjectType.ItemDrop,
+        };
+
+        ImGui.Text("Add Object...");
+        ImGui.Separator();
+
+        foreach (var objType in objectTypes)
+        {
+            var name = ObjectGroupEditor.ObjectNames[(int)objType];
+
+            if (ImGui.Selectable(name))
+            {
+                SelectedIndex = ObjectGroup.AddObject(objType);
+            }
+        }
+
+        ImGui.EndPopup();
     }
 
     protected override void TileDrawer(int index)

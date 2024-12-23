@@ -221,7 +221,7 @@ public class WarpEditor : Frame
         }
 
         // TODO
-        protected override void ShowPopupMenu()
+        protected override void RenderPopupMenu()
         {
         //     Gtk.Menu menu = new Gtk.Menu();
         //     {

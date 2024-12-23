@@ -54,6 +54,24 @@ public abstract class SelectionBox : TileGrid
     // Public methods
     // ================================================================================
 
+    public override void Render()
+    {
+        base.Render();
+
+        // Catch right clicks outside any existing components
+        ImGui.SetCursorScreenPos(base.origin);
+        if (ImGui.InvisibleButton("Background button", base.WidgetSize, ImGuiButtonFlags.MouseButtonRight))
+        {
+            ImGui.OpenPopup("AddPopupMenu");
+        }
+
+        // Popup menu (right clicked on an empty spot)
+        if (ImGui.BeginPopup("AddPopupMenu"))
+        {
+            RenderPopupMenu();
+        }
+    }
+
     public void SetSelectedIndex(int index)
     {
         SelectedIndex = index;
@@ -64,5 +82,9 @@ public abstract class SelectionBox : TileGrid
     // ================================================================================
 
     protected abstract void OnMoveSelection(int oldIndex, int newIndex);
-    protected abstract void ShowPopupMenu();
+
+    /// <summary>
+    /// Invoked after right-clicking on an empty spot within an "ImGui.BeginPopup" context
+    /// </summary>
+    protected abstract void RenderPopupMenu();
 }
