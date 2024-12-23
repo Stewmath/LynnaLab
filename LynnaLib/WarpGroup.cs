@@ -21,7 +21,8 @@ namespace LynnaLib
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 
-        LockableEvent<EventArgs> ModifiedEvent = new LockableEvent<EventArgs>();
+        // Event invoked when warps are added to or removed from the warp group.
+        public event EventHandler<EventArgs> StructureModifiedEvent;
 
 
         public int Group
@@ -282,7 +283,7 @@ namespace LynnaLib
             data.GetReferencedDestData().Transition = 1;
 
             RegenWarpSourceDataList();
-            ModifiedEvent.Invoke(this, null);
+            StructureModifiedEvent?.Invoke(this, null);
 
             // TODO
             return 0;
@@ -328,7 +329,7 @@ namespace LynnaLib
                 throw new ArgumentException("RemoveWarp doesn't support this warp source type.");
 
             RegenWarpSourceDataList();
-            ModifiedEvent.Invoke(this, null);
+            StructureModifiedEvent?.Invoke(this, null);
         }
 
         public void RemoveWarp(int index)
@@ -336,20 +337,10 @@ namespace LynnaLib
             RemoveWarp(GetWarp(index));
         }
 
-        public void AddModifiedHandler(EventHandler<EventArgs> handler)
-        {
-            ModifiedEvent += handler;
-        }
-
-        public void RemoveModifiedHandler(EventHandler<EventArgs> handler)
-        {
-            ModifiedEvent -= handler;
-        }
-
 
         void OnDataModified(object sender, EventArgs args)
         {
-            ModifiedEvent.Invoke(sender, args);
+            // Stub, called when any underlying warp data is modified
         }
     }
 }

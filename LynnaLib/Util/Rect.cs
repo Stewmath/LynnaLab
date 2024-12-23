@@ -34,6 +34,7 @@ namespace Util
 
         public Vector2 TopLeft { get { return new Vector2(X, Y); } }
         public Vector2 BottomRight { get { return TopLeft + Size; } }
+        public Vector2 Center { get { return (TopLeft + BottomRight) / 2; } }
 
         // ================================================================================
         // Public methods

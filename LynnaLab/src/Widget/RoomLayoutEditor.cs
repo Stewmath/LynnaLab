@@ -50,6 +50,12 @@ public class RoomLayoutEditor : TileGrid
             "StructureModifiedEvent",
             (_, _) => UpdateRoomComponents(),
             weak: false);
+
+        warpGroupEventWrapper = new EventWrapper<WarpGroup>();
+        warpGroupEventWrapper.Bind<EventArgs>(
+            "StructureModifiedEvent",
+            (_, _) => UpdateRoomComponents(),
+            weak: false);
     }
 
     // ================================================================================
@@ -63,6 +69,7 @@ public class RoomLayoutEditor : TileGrid
     EventWrapper<Room> roomEventWrapper;
     EventWrapper<ObjectGroup> objectGroupEventWrapper;
     EventWrapper<Chest> chestEventWrapper;
+    EventWrapper<WarpGroup> warpGroupEventWrapper;
 
     // ================================================================================
     // Events
@@ -139,7 +146,7 @@ public class RoomLayoutEditor : TileGrid
 
             // Create an InvisibleButton so that we can select it without dragging the entire window.
             // Names are not unique... probably not an issue? These don't really do anything.
-            ImGui.SetCursorScreenPos(origin + (new Vector2(com.X, com.Y) - com.BoxSize / 2) * Scale);
+            ImGui.SetCursorScreenPos(origin + com.BoxRectangle.TopLeft * Scale);
             ImGui.InvisibleButton($"RoomComponent button", com.BoxSize * Scale);
 
             // Check if we're hovering over it. But don't draw the hovering rectangle right now
@@ -170,18 +177,19 @@ public class RoomLayoutEditor : TileGrid
             if (rect.Contains(mousePos))
             {
                 // Left or right click
-                if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseClicked(ImGuiMouseButton.Right) && !draggingComponent)
+                if ((ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseClicked(ImGuiMouseButton.Right)) && !draggingComponent)
                 {
-                    bool changed = selectedRoomComponent != hoveringComponent;
-                    selectedRoomComponent = hoveringComponent;
+                    // Set dragOffset to non-null if we should start dragging it.
+                    // In any case the hovered object will become the selected object.
+                    Vector2? dragOffset = null;
                     if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
                     {
-                        draggingComponent = true;
-                        draggingComponentOffset.X = hoveringComponent.X - mousePos.X;
-                        draggingComponentOffset.Y = hoveringComponent.Y - mousePos.Y;
+                        if (hoveringComponent.HasXY)
+                            dragOffset = new Vector2(hoveringComponent.X, hoveringComponent.Y) - mousePos;
+                        else
+                            dragOffset = new Vector2(0, 0); // Just set it to anything non-null
                     }
-                    if (changed)
-                        ChangedSelectedRoomComponentEvent?.Invoke(this, null);
+                    SetSelectedRoomComponent(hoveringComponent, dragOffset != null, dragOffset);
                 }
 
                 // Right click
@@ -211,10 +219,14 @@ public class RoomLayoutEditor : TileGrid
 
             if (ImGui.IsMouseDown(ImGuiMouseButton.Left))
             {
+                // No XY: Can't move this at all by dragging.
+                if (!com.HasXY)
+                {
+                }
                 // Shortened XY: Snapping is "automatic" due to low resolution of XY variables;
                 // also don't add draggingComponentOffset as it only works well with smooth
                 // movement
-                if (com.HasShortenedXY)
+                else if (com.HasShortenedXY)
                 {
                     com.X = (int)Math.Round(mousePos.X);
                     com.Y = (int)Math.Round(mousePos.Y);
@@ -271,16 +283,18 @@ public class RoomLayoutEditor : TileGrid
     /// </summary>
     public void SelectObject(ObjectDefinition obj)
     {
+        if (obj == null)
+        {
+            if (selectedRoomComponent is ObjectRoomComponent)
+                SetSelectedRoomComponent(null);
+            return;
+        }
+
         foreach (RoomComponent com in roomComponents)
         {
             if ((com as ObjectRoomComponent)?.obj == obj)
             {
-                if (selectedRoomComponent != com)
-                {
-                    selectedRoomComponent = com;
-                    draggingComponent = false;
-                    ChangedSelectedRoomComponentEvent?.Invoke(this, null);
-                }
+                SetSelectedRoomComponent(com);
                 break;
             }
         }
@@ -289,6 +303,27 @@ public class RoomLayoutEditor : TileGrid
     // ================================================================================
     // Private methods
     // ================================================================================
+
+    void SetSelectedRoomComponent(RoomComponent comp, bool startDrag = false, Vector2? dragOffset = null)
+    {
+        // Even if the RoomComponent object changed, the underlying data may actually be the same as before.
+        // "isDifferent" checks the underlying data rather than the RoomComponents themselves.
+        bool isDifferent = comp == null || !comp.Compare(selectedRoomComponent);
+        if (isDifferent || startDrag)
+        {
+            draggingComponent = startDrag;
+            if (startDrag)
+                draggingComponentOffset = (Vector2)dragOffset;
+        }
+
+        if (selectedRoomComponent == comp)
+            return;
+        RoomComponent old = selectedRoomComponent;
+        selectedRoomComponent = comp;
+
+        if (isDifferent)
+            ChangedSelectedRoomComponentEvent?.Invoke(this, null);
+    }
 
     /// <summary>
     /// Called when the room being edited is changed
@@ -305,6 +340,7 @@ public class RoomLayoutEditor : TileGrid
         roomEventWrapper.ReplaceEventSource(Room);
         chestEventWrapper.ReplaceEventSource(Room.Chest);
         objectGroupEventWrapper.ReplaceEventSource(Room.GetObjectGroup());
+        warpGroupEventWrapper.ReplaceEventSource(Room.GetWarpGroup());
     }
 
     /// <summary>
@@ -350,22 +386,65 @@ public class RoomLayoutEditor : TileGrid
             roomComponents.Add(new ChestRoomComponent(this, Room.Chest));
         }
 
+        // Warps
+        var warpGroup = Room.GetWarpGroup();
+        for (int warpIndex=0; warpIndex < warpGroup.GetWarps().Count; warpIndex++)
+        {
+            Warp warp = warpGroup.GetWarp(warpIndex);
+
+            Action<int, int, int, int> addWarpComponent = (x, y, width, height) =>
+            {
+                var rect = new FRect(x, y, width, height);
+                var com = new WarpSourceRoomComponent(this, warp, warpIndex, rect);
+                com.SelectedEvent += (sender, args) =>
+                {
+                    // TODO
+                    //WarpEditor.SetWarpIndex(com.index);
+                };
+                roomComponents.Add(com);
+            };
+
+            if (warp.WarpSourceType == WarpSourceType.Standard)
+            {
+                int middle;
+                if (Room.Width == 15) // Large room
+                    middle = ((Room.Width + 1) / 2) * 16;
+                else // Small room
+                    middle = ((Room.Width + 1) / 2) * 16 + 8;
+                int right = Room.Width * 16;
+                int bottom = Room.Height * 16 - 8;
+
+                if (warp.TopLeft)
+                    addWarpComponent(0, -8, middle, 16);
+                if (warp.TopRight)
+                    addWarpComponent(middle, -8, right - middle, 16);
+                if (warp.BottomLeft)
+                    addWarpComponent(0, bottom, middle, 16);
+                if (warp.BottomRight)
+                    addWarpComponent(middle, bottom, right - middle, 16);
+
+                if (!warp.TopLeft && !warp.TopRight && !warp.BottomLeft && !warp.BottomRight)
+                {
+                    addWarpComponent(0, 16 * 13, Room.Width * 16, 32);
+                }
+            }
+            else if (warp.WarpSourceType == WarpSourceType.Position)
+            {
+                addWarpComponent(warp.SourceX * TileWidth, warp.SourceY * TileHeight, TileWidth, TileHeight);
+            }
+        }
+
         // Check if the previous selectedRoomComponent has an equivalent in the new list. If not,
         // unselect it.
         foreach (var com in roomComponents)
         {
             if (com.Compare(selectedRoomComponent))
             {
-                selectedRoomComponent = com;
+                SetSelectedRoomComponent(com);
                 return;
             }
         }
-        if (selectedRoomComponent != null)
-        {
-            selectedRoomComponent = null;
-            draggingComponent = false;
-            ChangedSelectedRoomComponentEvent(this, null);
-        }
+        SetSelectedRoomComponent(null);
     }
 
     /// <summary>
@@ -395,8 +474,7 @@ public class RoomLayoutEditor : TileGrid
                 roomComponents.Remove(com);
                 if (com == selectedRoomComponent)
                 {
-                    selectedRoomComponent = null;
-                    draggingComponent = false;
+                    SetSelectedRoomComponent(null);
                 }
             }
         }
@@ -456,7 +534,7 @@ public class RoomLayoutEditor : TileGrid
         {
             get { return new Vector2(BoxWidth, BoxHeight); }
         }
-        public FRect BoxRectangle
+        public virtual FRect BoxRectangle
         {
             get { return new FRect(X - BoxWidth / 2.0f, Y - BoxHeight / 2.0f, BoxWidth, BoxHeight); }
         }
@@ -680,7 +758,6 @@ public class RoomLayoutEditor : TileGrid
             try
             {
                 ObjectAnimationFrame frame = obj.GetGameObject().DefaultAnimation.GetFrame(0);
-                var origin = ImGui.GetCursorScreenPos();
                 frame.Draw(base.SpriteDrawer);
             }
             catch (NoAnimationException)
@@ -705,4 +782,124 @@ public class RoomLayoutEditor : TileGrid
             obj.Remove();
         }
     }
+
+    class WarpSourceRoomComponent : RoomComponent
+    {
+        public Warp warp;
+        public int index;
+
+        FRect rect;
+
+
+        public WarpSourceRoomComponent(RoomLayoutEditor parent, Warp warp, int index, FRect rect) : base(parent)
+        {
+            this.warp = warp;
+            this.index = index;
+            this.rect = rect;
+        }
+
+
+        public override Color BoxColor
+        {
+            get
+            {
+                return Color.FromRgba(186, 8, 206, 0xc0);
+            }
+        }
+
+        public override bool Deletable
+        {
+            get { return true; }
+        }
+        public override bool HasXY
+        {
+            get { return warp.WarpSourceType == WarpSourceType.Position; }
+        }
+        public override bool HasShortenedXY
+        {
+            get { return true; }
+        }
+        public override int X
+        {
+            get { return warp.SourceX * 16 + 8; }
+            set
+            {
+                warp.SourceX = value / 16;
+                UpdateRect();
+            }
+        }
+        public override int Y
+        {
+            get { return warp.SourceY * 16 + 8; }
+            set
+            {
+                warp.SourceY = value / 16;
+                UpdateRect();
+            }
+        }
+
+        public override int BoxWidth { get { return (int)rect.Width; } }
+        public override int BoxHeight { get { return (int)rect.Height; } }
+
+        public override FRect BoxRectangle { get { return rect; } }
+
+
+        public override void Render()
+        {
+            // Draw digit representing the warp index in the center of the rectangle
+            ImGui.PushFont(TopLevel.OraclesFont24px);
+            var origin = ImGui.GetCursorScreenPos();
+            string text = index.ToString("X");
+            Vector2 textSize = ImGui.CalcTextSize(text);
+            ImGui.SetCursorScreenPos(origin + BoxRectangle.Center * Parent.Scale - textSize / 2 + new Vector2(1, 0));
+            ImGui.Text(text);
+            ImGui.SetCursorScreenPos(origin);
+            ImGui.PopFont();
+        }
+
+        /*
+        public override IList<Gtk.MenuItem> GetRightClickMenuItems()
+        {
+            var list = new List<Gtk.MenuItem>();
+
+            {
+                Gtk.MenuItem followButton = new Gtk.MenuItem("Follow");
+                followButton.Activated += (sender, args) =>
+                {
+                    parent.SetRoom(warp.DestRoom, parent.season, true);
+                };
+                list.Add(followButton);
+            }
+            {
+                Gtk.MenuItem setDestButton = new Gtk.MenuItem("Edit Destination");
+                setDestButton.Activated += (sender, args) =>
+                {
+                    parent.EditingWarpDestination = warp;
+                    parent.SetRoom(warp.DestRoom, parent.season, true);
+                    parent.WarpEditor.SetSelectedWarp(warp);
+                };
+                list.Add(setDestButton);
+            }
+
+            return list;
+        }
+        */
+
+        public override bool Compare(RoomComponent com)
+        {
+            return warp == (com as WarpSourceRoomComponent)?.warp;
+        }
+
+        public override void Delete()
+        {
+            warp.Remove();
+        }
+
+
+        void UpdateRect()
+        {
+            rect = new FRect(X - rect.Width / 2.0f, Y - rect.Height / 2.0f, rect.Width, rect.Height);
+        }
+    }
+
 }

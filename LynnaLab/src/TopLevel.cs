@@ -29,6 +29,8 @@ public static class TopLevel
         TopLevel.DefaultFont = ImGui.GetFont();
         TopLevel.OraclesFont = ImGuiX.LoadFont(
             Helper.GetResourceStream("LynnaLab.ZeldaOracles.ttf"), 18);
+        TopLevel.OraclesFont24px = ImGuiX.LoadFont(
+            Helper.GetResourceStream("LynnaLab.ZeldaOracles.ttf"), 24);
 
         backend.RecreateFontTexture();
 
@@ -59,6 +61,7 @@ public static class TopLevel
 
     public static ImFontPtr DefaultFont { get; private set; }
     public static ImFontPtr OraclesFont { get; private set; }
+    public static ImFontPtr OraclesFont24px { get; private set; }
 
     // Private properties
     private static ProjectWorkspace Workspace { get; set; }
