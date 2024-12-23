@@ -1,5 +1,8 @@
 namespace LynnaLab;
 
+/// <summary>
+/// Tab in the RoomEditor for editing object properties.
+/// </summary>
 public class ObjectGroupEditor : Frame
 {
     // ================================================================================

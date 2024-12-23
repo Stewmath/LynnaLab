@@ -114,7 +114,7 @@ public class ObjectBox : SelectionBox
         }
         else
         {
-            base.MaxIndex = ObjectGroup.GetNumObjects() - 1;
+            base.MaxIndex = ObjectGroup.GetNumObjects();
             base.Selectable = true;
         }
     }

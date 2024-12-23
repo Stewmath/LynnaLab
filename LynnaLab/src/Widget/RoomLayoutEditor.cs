@@ -87,7 +87,9 @@ public class RoomLayoutEditor : TileGrid
     public RoomLayout RoomLayout { get; private set; }
     public QuickstartData QuickstartData { get { return Workspace.QuickstartData; } }
     public Brush Brush { get; private set; }
+
     public ObjectDefinition SelectedObject { get { return (selectedRoomComponent as ObjectRoomComponent)?.obj; } }
+    public Warp SelectedWarpSource { get { return (selectedRoomComponent as WarpSourceRoomComponent)?.warp; } }
 
 
     // TileGrid overrides
@@ -297,6 +299,28 @@ public class RoomLayoutEditor : TileGrid
         foreach (RoomComponent com in roomComponents)
         {
             if ((com as ObjectRoomComponent)?.obj == obj)
+            {
+                SetSelectedRoomComponent(com);
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Sets the selected room component to the specified warp source if it's in the room component list.
+    /// </summary>
+    public void SelectWarpSource(Warp warp)
+    {
+        if (warp == null)
+        {
+            if (selectedRoomComponent is WarpSourceRoomComponent)
+                SetSelectedRoomComponent(null);
+            return;
+        }
+
+        foreach (RoomComponent com in roomComponents)
+        {
+            if ((com as WarpSourceRoomComponent)?.warp == warp)
             {
                 SetSelectedRoomComponent(com);
                 break;
@@ -807,7 +831,7 @@ public class RoomLayoutEditor : TileGrid
         {
             get
             {
-                return Color.FromRgba(186, 8, 206, 0xc0);
+                return WarpEditor.WarpSourceColor;
             }
         }
 

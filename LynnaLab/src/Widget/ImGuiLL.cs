@@ -86,11 +86,10 @@ public class ImGuiLL
     /// <summary>
     /// Displays an interface for editing the given ValueReferenceGroup.
     /// </summary>
-    public static void RenderValueReferenceGroup(ValueReferenceGroup vrg, ISet<string> linebreaks, Action<Documentation> showDoc)
+    public static void RenderValueReferenceGroup(ValueReferenceGroup vrg, ISet<string> linebreaks, Action<Documentation> showDoc, int maxRows = 8)
     {
         ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
 
-        int maxRows = 8;
         int rowCount = 0;
         ImGui.BeginGroup();
 

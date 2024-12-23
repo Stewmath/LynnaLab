@@ -124,11 +124,11 @@ public class TileGrid : SizedWidget
         {
             if (!Selectable)
                 return;
-            if (value < 0 || value > MaxIndex)
+            if (value < 0 || value >= MaxIndex)
             {
                 if (!unselectable)
                     throw new Exception("Tried to set SelectedIndex to out of range value " + value);
-                selectedIndex = -1;
+                value = -1;
             }
             if (RectangleSelected || selectedIndex != value)
             {
@@ -142,13 +142,19 @@ public class TileGrid : SizedWidget
     public int SelectedX { get { return selectedIndex % Width; } }
     public int SelectedY { get { return selectedIndex / Width; } }
 
+    /// <summary>
+    /// This is 1 + the maximum index value which can be hovered over or selected. Set to "0" to
+    /// disable hovering & selection entirely.
+    /// This always returns a valid value. If maxIndexOverride is -1 then this is determined by the
+    /// width & height of the TileGrid.
+    /// </summary>
     public int MaxIndex
     {
         get
         {
             if (maxIndexOverride != -1)
                 return maxIndexOverride;
-            return Width * Height - 1;
+            return Width * Height;
         }
         set
         {
@@ -251,7 +257,7 @@ public class TileGrid : SizedWidget
 
         bool dragging = false;
 
-        for (int tile = 0; tile <= MaxIndex; tile++)
+        for (int tile = 0; tile < MaxIndex; tile++)
         {
             var (x, y) = TileToXY(tile);
 
@@ -344,7 +350,7 @@ public class TileGrid : SizedWidget
                 hoverHeight = brush.BrushHeight;
             }
 
-            if (mouseIndex != -1 && mouseIndex <= MaxIndex && draggingTileIndex == -1)
+            if (mouseIndex != -1 && mouseIndex < MaxIndex && draggingTileIndex == -1)
             {
                 int mouseX = mouseIndex % Width;
                 int mouseY = mouseIndex / Width;
@@ -514,7 +520,7 @@ public class TileGrid : SizedWidget
         int x = (int)((pos.X - TilePaddingX * Scale / 2) / (PaddedTileWidth * Scale));
 
         int index = x + y * Width;
-        if (index > MaxIndex || index < 0)
+        if (index >= MaxIndex || index < 0)
             return -1;
         return index;
     }
@@ -671,7 +677,7 @@ public class TileGrid : SizedWidget
     /// </summary>
     protected bool XYValid(int x, int y)
     {
-        return x >= 0 && y >= 0 && x < Width && y < Height && x + y * Width <= MaxIndex;
+        return x >= 0 && y >= 0 && x < Width && y < Height && x + y * Width < MaxIndex;
     }
 
     // ================================================================================
@@ -685,6 +691,8 @@ public class TileGrid : SizedWidget
     {
         if (!selectable)
         {
+            // Must set the variable selectedIndex instead of the property SelectedIndex as the
+            // property cannot be written to while selectable == false
             if (selectedIndex != -1)
             {
                 selectedIndex = -1;
@@ -697,9 +705,9 @@ public class TileGrid : SizedWidget
             {
                 SelectedIndex = 0;
             }
-            else if (maxIndexOverride != -1 && selectedIndex > maxIndexOverride)
+            else if (maxIndexOverride != -1 && selectedIndex >= maxIndexOverride)
             {
-                SelectedIndex = maxIndexOverride;
+                SelectedIndex = maxIndexOverride - 1; // If maxIndexOverride == 0 then this could be -1
             }
         }
     }

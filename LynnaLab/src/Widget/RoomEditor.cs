@@ -47,6 +47,7 @@ public class RoomEditor : Frame
         overworldMinimap = new Minimap(this.Workspace);
         dungeonMinimap = new Minimap(this.Workspace);
         objectGroupEditor = new ObjectGroupEditor(this.Workspace, "Object Group Editor", Room.GetObjectGroup());
+        warpEditor = new WarpEditor(Workspace, "Warp Editor", Room.GetWarpGroup());
 
         SetRoom(0, false);
 
@@ -102,6 +103,22 @@ public class RoomEditor : Frame
 
         objectGroupEditor.ObjectSelectedEvent += (s, a) => handleObjectSelection(objectGroupEditor.SelectedObject);
         roomLayoutEditor.ChangedSelectedRoomComponentEvent += (s, a) => handleObjectSelection(roomLayoutEditor.SelectedObject);
+
+        // Keeping selected warp synchronized between ObjectGroupEditor & RoomLayoutEditor
+        var handleWarpSelection = (Warp warp) =>
+        {
+            if (handlingWarpSelection)
+                return;
+            handlingWarpSelection = true;
+
+            roomLayoutEditor.SelectWarpSource(warp);
+            warpEditor.SetSelectedWarp(warp);
+
+            handlingWarpSelection = false;
+        };
+
+        warpEditor.SelectedWarpEvent += (s, a) => handleWarpSelection(warpEditor.SelectedWarp);
+        roomLayoutEditor.ChangedSelectedRoomComponentEvent += (s, a) => handleWarpSelection(roomLayoutEditor.SelectedWarpSource);
     }
 
     // ================================================================================
@@ -113,12 +130,13 @@ public class RoomEditor : Frame
     TilesetViewer tilesetViewer;
     Minimap overworldMinimap, dungeonMinimap;
     ObjectGroupEditor objectGroupEditor;
+    WarpEditor warpEditor;
 
     // Misc
     EventWrapper<RoomLayout> roomLayoutEventWrapper = new EventWrapper<RoomLayout>();
 
     int suppressEvents = 0;
-    bool handlingObjectSelection;
+    bool handlingObjectSelection, handlingWarpSelection;
 
     // Maps dungeon index to floor number. Allows the editor to remember what floor we were last
     // on for a given dungeon.
@@ -236,6 +254,11 @@ public class RoomEditor : Frame
             if (TrackedTabItem("Objects"))
             {
                 objectGroupEditor.Render();
+                ImGui.EndTabItem();
+            }
+            if (TrackedTabItem("Warps"))
+            {
+                warpEditor.Render();
                 ImGui.EndTabItem();
             }
             if (TrackedTabItem("Chests"))
@@ -423,6 +446,7 @@ public class RoomEditor : Frame
         roomLayoutEditor.SetRoomLayout(roomLayout);
         tilesetViewer.SetTileset(roomLayout.Tileset);
         objectGroupEditor.SetObjectGroup(roomLayout.Room.GetObjectGroup());
+        warpEditor.SetWarpGroup(roomLayout.Room.GetWarpGroup());
         roomLayoutEventWrapper.ReplaceEventSource(roomLayout);
 
         if (updateMinimap)
