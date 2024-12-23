@@ -422,50 +422,53 @@ public class RoomLayoutEditor : TileGrid
         }
 
         // Warps
-        var warpGroup = Room.GetWarpGroup();
-        for (int warpIndex=0; warpIndex < warpGroup.GetWarps().Count; warpIndex++)
+        if (RoomEditor.WarpTabActive)
         {
-            Warp warp = warpGroup.GetWarp(warpIndex);
-
-            Action<int, int, int, int> addWarpComponent = (x, y, width, height) =>
+            var warpGroup = Room.GetWarpGroup();
+            for (int warpIndex = 0; warpIndex < warpGroup.GetWarps().Count; warpIndex++)
             {
-                var rect = new FRect(x, y, width, height);
-                var com = new WarpSourceRoomComponent(this, warp, warpIndex, rect);
-                com.SelectedEvent += (sender, args) =>
+                Warp warp = warpGroup.GetWarp(warpIndex);
+
+                Action<int, int, int, int> addWarpComponent = (x, y, width, height) =>
                 {
-                    // TODO
-                    //WarpEditor.SetWarpIndex(com.index);
+                    var rect = new FRect(x, y, width, height);
+                    var com = new WarpSourceRoomComponent(this, warp, warpIndex, rect);
+                    com.SelectedEvent += (sender, args) =>
+                    {
+                        // TODO
+                        //WarpEditor.SetWarpIndex(com.index);
+                    };
+                    roomComponents.Add(com);
                 };
-                roomComponents.Add(com);
-            };
 
-            if (warp.WarpSourceType == WarpSourceType.Standard)
-            {
-                int middle;
-                if (Room.Width == 15) // Large room
-                    middle = ((Room.Width + 1) / 2) * 16;
-                else // Small room
-                    middle = ((Room.Width + 1) / 2) * 16 + 8;
-                int right = Room.Width * 16;
-                int bottom = Room.Height * 16 - 8;
-
-                if (warp.TopLeft)
-                    addWarpComponent(0, -8, middle, 16);
-                if (warp.TopRight)
-                    addWarpComponent(middle, -8, right - middle, 16);
-                if (warp.BottomLeft)
-                    addWarpComponent(0, bottom, middle, 16);
-                if (warp.BottomRight)
-                    addWarpComponent(middle, bottom, right - middle, 16);
-
-                if (!warp.TopLeft && !warp.TopRight && !warp.BottomLeft && !warp.BottomRight)
+                if (warp.WarpSourceType == WarpSourceType.Standard)
                 {
-                    addWarpComponent(0, 16 * 13, Room.Width * 16, 32);
+                    int middle;
+                    if (Room.Width == 15) // Large room
+                        middle = ((Room.Width + 1) / 2) * 16;
+                    else // Small room
+                        middle = ((Room.Width + 1) / 2) * 16 + 8;
+                    int right = Room.Width * 16;
+                    int bottom = Room.Height * 16 - 8;
+
+                    if (warp.TopLeft)
+                        addWarpComponent(0, -8, middle, 16);
+                    if (warp.TopRight)
+                        addWarpComponent(middle, -8, right - middle, 16);
+                    if (warp.BottomLeft)
+                        addWarpComponent(0, bottom, middle, 16);
+                    if (warp.BottomRight)
+                        addWarpComponent(middle, bottom, right - middle, 16);
+
+                    if (!warp.TopLeft && !warp.TopRight && !warp.BottomLeft && !warp.BottomRight)
+                    {
+                        addWarpComponent(0, 16 * 13, Room.Width * 16, 32);
+                    }
                 }
-            }
-            else if (warp.WarpSourceType == WarpSourceType.Position)
-            {
-                addWarpComponent(warp.SourceX * TileWidth, warp.SourceY * TileHeight, TileWidth, TileHeight);
+                else if (warp.WarpSourceType == WarpSourceType.Position)
+                {
+                    addWarpComponent(warp.SourceX * TileWidth, warp.SourceY * TileHeight, TileWidth, TileHeight);
+                }
             }
         }
 

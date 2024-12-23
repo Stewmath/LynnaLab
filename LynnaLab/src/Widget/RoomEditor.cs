@@ -170,6 +170,7 @@ public class RoomEditor : Frame
     public Brush Brush { get { return Workspace.Brush; } }
 
     public bool ObjectTabActive { get { return ActiveLeftTabName == "Objects"; } }
+    public bool WarpTabActive { get { return ActiveLeftTabName == "Warps"; } }
     public bool ChestTabActive { get { return ActiveLeftTabName == "Chests"; } }
 
 
