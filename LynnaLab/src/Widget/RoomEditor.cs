@@ -247,7 +247,7 @@ public class RoomEditor : Frame
             }
         };
 
-        ImGui.BeginChild("Left Panel", new Vector2(tilesetViewer.WidgetSize.X + OFFSET, 0.0f));
+        ImGui.BeginChild("Left Panel", new Vector2(tilesetViewer.WidgetSize.X + OFFSET + 20.0f, 0.0f));
         if (ImGui.BeginTabBar("##Left Panel Tabs"))
         {
             if (TrackedTabItem("Tileset"))

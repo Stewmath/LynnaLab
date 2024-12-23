@@ -89,11 +89,11 @@ namespace LynnaLib
         {
             get
             {
-                return vrg.GetIntValue("Source Transition");
+                return vrg.GetIntValue("Src Transition");
             }
             set
             {
-                vrg.SetValue("Source Transition", value);
+                vrg.SetValue("Src Transition", value);
             }
         }
         public int SourceX
@@ -279,7 +279,7 @@ namespace LynnaLib
                 throw new Exception("Invalid warp source type for warp.");
 
             desc = AbstractIntValueReference.Descriptor(Project,
-                    name: "Source Transition",
+                    name: "Src Transition",
                     getter: () => SourceData.Transition,
                     setter: (value) => SourceData.Transition = value,
                     maxValue: 15,
