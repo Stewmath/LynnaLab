@@ -1,5 +1,10 @@
 namespace LynnaLab;
 
+/// <summary>
+/// This is the TileGrid showing the room's layout which can be drawn on to modify it. Also allows
+/// manipulation of objects, warps, chests, etc. which can be optionally drawn on top of the
+/// TileGrid.
+/// </summary>
 public class RoomLayoutEditor : TileGrid
 {
     // ================================================================================
@@ -15,6 +20,7 @@ public class RoomLayoutEditor : TileGrid
         base.TileWidth = 16;
         base.TileHeight = 16;
         base.Scale = 2;
+        base.RenderOffset = new Vector2(8, 8) * Scale;
 
         // Register mouse buttons for tile selection & placement
         RegisterTilePlacementInputs(
@@ -85,7 +91,7 @@ public class RoomLayoutEditor : TileGrid
         {
             // Always keep it 256x256 so that objects can be rendered even out of bounds, and
             // also so that it doesn't fluctuate when moving between small & large rooms
-            return new Vector2(256.0f * Scale, 256.0f * Scale);
+            return new Vector2(256.0f * Scale, 256.0f * Scale) + RenderOffset;
         }
     }
 
