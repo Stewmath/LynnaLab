@@ -69,14 +69,7 @@ public class WarpEditor : Frame
     {
         get
         {
-            if (SelectedIndex == -1)
-                return null;
-            else if (SelectedIndex >= WarpGroup.Count)
-            {
-                log.Warn("SelectedIndex >= WarpGroup.Count?");
-                return null;
-            }
-            return WarpGroup.GetWarp(SelectedIndex);
+            return warpSourceBox.SelectedWarp;
         }
     }
 
@@ -196,10 +189,35 @@ public class WarpEditor : Frame
         // ================================================================================
 
         public WarpGroup WarpGroup { get; private set; }
+        public Warp SelectedWarp
+        {
+            get
+            {
+                if (SelectedIndex == -1)
+                    return null;
+                else if (SelectedIndex >= WarpGroup.Count)
+                {
+                    log.Warn("SelectedIndex >= WarpGroup.Count?");
+                    return null;
+                }
+                return WarpGroup.GetWarp(SelectedIndex);
+            }
+        }
 
         // ================================================================================
         // Public methods
         // ================================================================================
+
+        public override void Render()
+        {
+            base.Render();
+
+            // Popup menu (right clicked on an object)
+            if (SelectedWarp != null)
+            {
+                WarpPopupMenu(SelectedWarp, "WarpPopupMenu");
+            }
+        }
 
         public void SetWarpGroup(WarpGroup group)
         {
@@ -207,7 +225,20 @@ public class WarpEditor : Frame
             {
                 this.WarpGroup = group;
                 SelectedIndex = -1;
+                warpGroupEventWrapper.ReplaceEventSource(group);
                 OnWarpGroupModified();
+            }
+        }
+
+        public static void WarpPopupMenu(Warp warp, string name)
+        {
+            if (ImGui.BeginPopup(name))
+            {
+                if (ImGui.Selectable("Delete"))
+                {
+                    warp.Remove();
+                }
+                ImGui.EndPopup();
             }
         }
 
@@ -217,49 +248,29 @@ public class WarpEditor : Frame
 
         protected override void OnMoveSelection(int oldIndex, int newIndex)
         {
-            // Can't be moved; do nothing
+            // Warp order can't be rearranged in the general case; so do nothing.
         }
 
-        // TODO
         protected override void RenderPopupMenu()
         {
-        //     Gtk.Menu menu = new Gtk.Menu();
-        //     {
-        //         Gtk.MenuItem item = new Gtk.MenuItem("Add standard warp");
-        //         menu.Append(item);
+            // List of warp types that can be added
+            (WarpSourceType, string)[] warpTypes = {
+                (WarpSourceType.Standard, "Standard warp"),
+                (WarpSourceType.Position, "Specific-position warp"),
+            };
 
-        //         item.Activated += (sender, args) =>
-        //         {
-        //             SelectedIndex = WarpGroup.AddWarp(WarpSourceType.Standard);
-        //         };
-        //     }
+            ImGui.Text("Add Warp...");
+            ImGui.Separator();
 
-        //     {
-        //         Gtk.MenuItem item = new Gtk.MenuItem("Add specific-position warp");
-        //         menu.Append(item);
+            foreach (var (warpType, name) in warpTypes)
+            {
+                if (ImGui.Selectable(name))
+                {
+                    SelectedIndex = WarpGroup.AddWarp(warpType);
+                }
+            }
 
-        //         item.Activated += (sender, args) =>
-        //         {
-        //             SelectedIndex = WarpGroup.AddWarp(WarpSourceType.Position);
-        //         };
-        //     }
-
-        //     if (HoveringIndex != -1)
-        //     {
-        //         menu.Append(new Gtk.SeparatorMenuItem());
-
-        //         Gtk.MenuItem deleteItem = new Gtk.MenuItem("Delete");
-        //         deleteItem.Activated += (sender, args) =>
-        //         {
-        //             if (SelectedIndex != -1)
-        //                 WarpGroup.RemoveWarp(SelectedIndex);
-        //         };
-        //         menu.Append(deleteItem);
-        //     }
-
-        //     menu.AttachToWidget(this, null);
-        //     menu.ShowAll();
-        //     menu.PopupAtPointer(ev);
+            ImGui.EndPopup();
         }
 
         protected override void TileDrawer(int index)

@@ -191,7 +191,6 @@ namespace LynnaLib
         // If "data" is of type "WarpSourceType.PositionWarp", this gets inserted at the end of the
         // "PointerWarp" list; it automatically creates a "PointerWarp" if necessary.
         // For any other warp type, this throws an ArgumentException.
-        // The "room" argument is necessary for PositionWarps (which don't have a field for it).
         // Returns the index at which the new warp was placed.
         public int AddWarp(WarpSourceType type)
         {
