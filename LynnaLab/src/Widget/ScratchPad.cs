@@ -110,7 +110,7 @@ public class ScratchPadGrid : TileGrid
         {
             base.RenderBrushPreview(Brush, (index) =>
             {
-                ReferenceGrid.DrawTileImage(index, Scale, transparent: true);
+                ReferenceGrid.DrawTileImage(index, Scale, !SelectingRectangle);
             });
         }
         base.RenderHoverAndSelection(Brush);

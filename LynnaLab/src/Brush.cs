@@ -82,16 +82,18 @@ public class Brush
     /// <summary>
     /// Calls the given function for each tile in the brush, using (xOffset, yOffset) as an offset
     /// to pass to that function.
+    /// Mainly used for drawing, but can be used for anything involving looping all tiles affected
+    /// by the brush.
     /// </summary>
-    public void Draw(Action<int, int, int> drawer, int xOffset, int yOffset)
+    public void Draw(Action<int, int, int> drawer, int xOffset, int yOffset, int width, int height)
     {
-        for (int x = 0; x < BrushWidth; x++)
+        for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < BrushHeight; y++)
+            for (int y = 0; y < height; y++)
             {
                 int destX = x + xOffset;
                 int destY = y + yOffset;
-                drawer(destX, destY, tiles[x,y]);
+                drawer(destX, destY, tiles[x % BrushWidth, y % BrushHeight]);
             }
         }
     }

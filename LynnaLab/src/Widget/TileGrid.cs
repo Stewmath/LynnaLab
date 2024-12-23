@@ -30,7 +30,7 @@ public class TileGrid : SizedWidget
 
     // For rectangle selection
     TileGridAction activeRectSelectAction = null;
-    int rectSelectStart, rectSelectEnd;
+    int rectSelectStart, rectSelectEnd; // Always have valid values as long as activeRectSelectAction != null
 
     // ================================================================================
     // Events
@@ -410,18 +410,7 @@ public class TileGrid : SizedWidget
             {
                 // Released the button
                 var args = new TileGridEventArgs();
-
-                var (x1, y1) = TileToXY(rectSelectStart);
-                var (x2, y2) = TileToXY(rectSelectEnd);
-
-                args.topLeft = new Point(
-                    Math.Min(x1, x2),
-                    Math.Min(y1, y2)
-                );
-                args.bottomRight = new Point(
-                    Math.Max(x1, x2),
-                    Math.Max(y1, y2)
-                );
+                (args.topLeft, args.bottomRight) = GetSelectRectBounds();
 
                 activeRectSelectAction.callback(this, args);
 
@@ -465,37 +454,49 @@ public class TileGrid : SizedWidget
     /// </summary>
     public void RenderBrushPreview(Brush brush, Action<int> tileDrawer)
     {
-        if (!isHovered || SelectingRectangle)
-            return;
-        int mouseIndex = CoordToTile(base.GetRelativeMousePos());
-        if (mouseIndex == -1)
-            return;
-
-        brush.Draw((x, y, i) =>
+        var previewDrawFunc = (int x, int y, int i) =>
         {
             if (!XYValid(x, y))
                 return;
             ImGui.SetCursorScreenPos(origin + TileToCoord(XYToTile(x, y)));
             tileDrawer(i);
-        }, mouseIndex % Width, mouseIndex / Width);
+        };
+
+        if (SelectingRectangle)
+        {
+            if (!activeRectSelectAction.brushPreview)
+                return;
+            var (topLeft, bottomRight) = GetSelectRectBounds();
+            var (x1, y1) = (topLeft.X, topLeft.Y);
+            var (x2, y2) = (bottomRight.X, bottomRight.Y);
+            brush.Draw(previewDrawFunc, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+        }
+        else if (isHovered)
+        {
+            int mouseIndex = CoordToTile(base.GetRelativeMousePos());
+            if (mouseIndex == -1)
+                return;
+
+            brush.Draw(previewDrawFunc, mouseIndex % Width, mouseIndex / Width, brush.BrushWidth, brush.BrushHeight);
+        }
     }
 
     public void AddMouseAction(MouseButton button, MouseModifier mod, MouseAction mouseAction,
-        GridAction action, TileGridEventHandler callback = null)
+        GridAction action, TileGridEventHandler callback = null, bool brushPreview = false)
     {
         TileGridAction act;
         if (action == GridAction.Callback || action == GridAction.SelectRangeCallback)
         {
             if (callback == null)
                 throw new Exception("Need to specify a callback.");
-            act = new TileGridAction(button, mod, mouseAction, action, callback);
         }
         else
         {
             if (callback != null)
                 throw new Exception("This action doesn't take a callback.");
-            act = new TileGridAction(button, mod, mouseAction, action);
         }
+
+        act = new TileGridAction(button, mod, mouseAction, action, callback, brushPreview);
 
         // Insert at front of list; newest actions get highest priority
         actionList.Insert(0, act);
@@ -594,7 +595,7 @@ public class TileGrid : SizedWidget
                     if (x2 < 0 || y2 < 0 || x2 >= maxX() || y2 >= maxY())
                         return;
                     tileSetter(x2, y2, t);
-                }, x, y);
+                }, x, y, brush.BrushWidth, brush.BrushHeight);
             });
 
         // Ctrl+Left click to set range of tiles
@@ -605,13 +606,9 @@ public class TileGrid : SizedWidget
             GridAction.SelectRangeCallback,
             (sender, args) =>
             {
-                args.Foreach((x, y) =>
-                {
-                    int brushX = (x - args.topLeft.X) % brush.BrushWidth;
-                    int brushY = (y - args.topLeft.Y) % brush.BrushHeight;
-                    tileSetter(x, y, brush.GetTile(brushX, brushY));
-                });
-            });
+                brush.Draw(tileSetter, args.topLeft.X, args.topLeft.Y, args.SelectedWidth, args.SelectedHeight);
+            },
+            brushPreview: true);
 
         // Right-click to select a tile or a range of tiles
         AddMouseAction(
@@ -707,6 +704,26 @@ public class TileGrid : SizedWidget
         }
     }
 
+    /// <summary>
+    /// Gets the start & end points of the selection rectangle.
+    /// </summary>
+    (Point, Point) GetSelectRectBounds()
+    {
+        var (x1, y1) = TileToXY(rectSelectStart);
+        var (x2, y2) = TileToXY(rectSelectEnd);
+
+        Point topLeft = new Point(
+            Math.Min(x1, x2),
+            Math.Min(y1, y2)
+        );
+        Point bottomRight = new Point(
+            Math.Max(x1, x2),
+            Math.Max(y1, y2)
+        );
+
+        return (topLeft, bottomRight);
+    }
+
 
     // Nested class
 
@@ -724,17 +741,19 @@ public class TileGrid : SizedWidget
         public readonly MouseButton button;
         public readonly MouseModifier mod;
         public readonly MouseAction mouseAction;
+        public readonly bool brushPreview; // Whether to show a brush preview (only for rectangle selection)
 
         // Action to perform when conditions are cleared
         public readonly GridAction action;
         public readonly TileGridEventHandler callback;
 
         public TileGridAction(MouseButton button, MouseModifier mod, MouseAction mouseAction,
-                              GridAction action, TileGridEventHandler callback = null)
+                              GridAction action, TileGridEventHandler callback, bool brushPreview)
         {
             this.button = button;
             this.mod = mod;
             this.mouseAction = mouseAction;
+            this.brushPreview = brushPreview;
 
             this.action = action;
             this.callback = callback;

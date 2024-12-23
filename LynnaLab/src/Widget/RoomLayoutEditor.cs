@@ -245,7 +245,7 @@ public class RoomLayoutEditor : TileGrid
             {
                 base.RenderBrushPreview(Brush, (index) =>
                 {
-                    RoomEditor.TilesetViewer.DrawTileImage(index, Scale, transparent: true);
+                    RoomEditor.TilesetViewer.DrawTileImage(index, Scale, !SelectingRectangle);
                 });
             }
 
