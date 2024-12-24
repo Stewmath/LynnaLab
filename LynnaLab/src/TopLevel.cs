@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 
 namespace LynnaLab;
 
@@ -52,6 +53,13 @@ public static class TopLevel
     static Dictionary<Bitmap, Image> imageDict = new Dictionary<Bitmap, Image>();
     static Queue<Func<bool>> idleFunctions = new Queue<Func<bool>>();
 
+    // Vars related to modal windows
+    static string activeModal;
+    static string nextPopup;
+    static bool willCloseWorkspace;
+    static bool rememberGameChoice;
+    static string projectDirectoryToOpen;
+
     // ================================================================================
     // Properties
     // ================================================================================
@@ -88,17 +96,20 @@ public static class TopLevel
             if (backend.CloseRequested)
             {
                 if (Workspace != null)
-                    ImGui.OpenPopup("Save Project");
+                    OpenModal("Close Project");
                 else
                     backend.Close();
-            }
-            else if (Workspace?.CloseRequested ?? false)
-            {
-                ImGui.OpenPopup("Save Project");
             }
 
             if (backend.Exited)
                 break;
+
+            if (willCloseWorkspace)
+            {
+                Workspace.Close();
+                Workspace = null;
+                willCloseWorkspace = false;
+            }
 
             TopLevel.Render(lastDeltaTime);
 
@@ -138,6 +149,7 @@ public static class TopLevel
                 {
                     if (ImGui.MenuItem("Open"))
                     {
+                        OpenModal("Open Project");
                     }
                     ImGui.EndMenu();
                 }
@@ -146,51 +158,171 @@ public static class TopLevel
         }
         else
         {
-            // Modal that pops up when attempting to close the window, or "Project -> Close"
-            // (slightly different things)
-            if (ImGui.BeginPopupModal("Save Project", ImGuiWindowFlags.AlwaysAutoResize))
-            {
-                ImGui.Text("Save project before closing?");
-
-                // Close either the project or the entire window, depending on the context
-                var close = () =>
-                {
-                    if (backend.CloseRequested)
-                    {
-                        backend.Close();
-                        backend.CloseRequested = false;
-                    }
-                    else if (Workspace.CloseRequested)
-                    {
-                        Workspace.Close();
-                        Workspace = null;
-                    }
-                };
-
-                if (ImGui.Button("Save"))
-                {
-                    Workspace.Project.Save();
-                    close();
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("Don't save"))
-                {
-                    close();
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("Cancel"))
-                {
-                    backend.CloseRequested = false;
-                    Workspace.CloseRequested = false;
-                    ImGui.CloseCurrentPopup();
-                }
-            }
-
-            // Workspace may be null here
-            Workspace?.Render(deltaTime);
+            Workspace.Render(deltaTime);
         }
 
+        RenderModals();
+
         ImGui.PopFont();
+    }
+
+    /// <summary>
+    /// If another modal is active when this is called it won't open until that one gets closed, if
+    /// at all
+    /// </summary>
+    public static void OpenModal(string name)
+    {
+        nextPopup = name;
+    }
+
+    /// <summary>
+    /// Render code for modal windows.
+    /// This is in the TopLevel class because some modals are needed even when no Workspace is loaded.
+    /// </summary>
+    public static void RenderModals()
+    {
+        Func<string, (string, string)> splitPopupString = (string s) =>
+        {
+            int splitIndex = s.IndexOf('|');
+            string first = splitIndex == -1 ? s : s.Substring(0, splitIndex);
+            string rest = splitIndex == -1 ? null : s.Substring(splitIndex + 1);
+            return (first, rest);
+        };
+
+        Action closeCurrentModal = () =>
+        {
+            ImGui.CloseCurrentPopup();
+            activeModal = null;
+        };
+
+        if (activeModal == null && nextPopup != null)
+        {
+            var (first, rest) = splitPopupString(nextPopup);
+            ImGui.OpenPopup(first);
+            activeModal = first;
+            nextPopup = rest;
+        }
+
+        var beginModal = (string name) =>
+        {
+            bool ret = ImGui.BeginPopupModal(name, ImGuiWindowFlags.AlwaysAutoResize);
+            return ret;
+        };
+
+        // Offer to save the project before closing. Pops up when attempting to close the window, or
+        // "Project -> Close" (slightly different things)
+        if (ImGui.BeginPopupModal("Close Project", ImGuiWindowFlags.AlwaysAutoResize))
+        {
+            ImGui.Text("Save project before closing?");
+
+            // Close either the project or the entire window, depending on the context
+            var close = () =>
+            {
+                if (backend.CloseRequested)
+                {
+                    backend.Close();
+                    backend.CloseRequested = false;
+                }
+                else if (Workspace.CloseRequested)
+                {
+                    // Don't close the workspace right away because we may have rendered some of it
+                    // already, and this will cause some null pointer exceptions if we free its
+                    // resources now.
+                    willCloseWorkspace = true;
+                    Workspace.CloseRequested = false;
+                }
+                closeCurrentModal();
+            };
+
+            if (ImGui.Button("Save"))
+            {
+                Workspace.Project.Save();
+                close();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Don't save"))
+            {
+                close();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Cancel"))
+            {
+                backend.CloseRequested = false;
+                Workspace.CloseRequested = false;
+                nextPopup = null; // Don't show subsequent popup windows, if any
+                closeCurrentModal();
+            }
+            ImGui.EndPopup();
+        }
+
+        // File chooser to open project
+        if (ImGui.BeginPopupModal("Open Project", ImGuiWindowFlags.AlwaysAutoResize))
+        {
+            var picker = FilePicker.GetFolderPicker("Open", Path.Combine(Environment.CurrentDirectory));
+            picker.OnlyAllowFolders = true;
+            picker.RootFolder = "/";
+            if (picker.Draw())
+            {
+                projectDirectoryToOpen = picker.SelectedFile;
+                ProjectConfig config = ProjectConfig.Load(projectDirectoryToOpen);
+
+                if (config == null)
+                {
+                    nextPopup = "Invalid Project";
+                }
+                else if (config.EditingGameIsValid())
+                {
+                    OpenProject(picker.SelectedFile, config.EditingGame);
+                }
+                else
+                {
+                    nextPopup = "Select Game";
+                }
+                FilePicker.RemoveFilePicker("Open");
+                closeCurrentModal();
+            }
+            ImGui.EndPopup();
+        }
+
+        // Notification that the directory selected was not a valid project
+        if (ImGui.BeginPopupModal("Invalid Project", ImGuiWindowFlags.AlwaysAutoResize))
+        {
+            ImGui.Text("Couldn't open project config file. Select the root of the oracles-disasm folder.");
+            if (ImGui.Button("OK"))
+                closeCurrentModal();
+            ImGui.EndPopup();
+        }
+
+        // Deciding which game to edit after selecting a project
+        if (ImGui.BeginPopupModal("Select Game", ImGuiWindowFlags.AlwaysAutoResize))
+        {
+            string gameChoice = null;
+
+            ImGui.Text("Which game to edit?");
+            if (ImGui.Button("Ages"))
+                gameChoice = "ages";
+            ImGui.SameLine();
+            if (ImGui.Button("Seasons"))
+                gameChoice = "seasons";
+            ImGui.Checkbox("Remember my choice", ref rememberGameChoice);
+
+            if (gameChoice != null)
+            {
+                closeCurrentModal();
+
+                if (rememberGameChoice)
+                {
+                    ProjectConfig config = ProjectConfig.Load(projectDirectoryToOpen);
+                    config.SetEditingGame(gameChoice);
+                }
+                OpenProject(projectDirectoryToOpen, gameChoice);
+
+                projectDirectoryToOpen = null;
+                rememberGameChoice = false;
+            }
+
+            ImGui.EndPopup();
+        }
     }
 
     /// <summary>
@@ -250,6 +382,9 @@ public static class TopLevel
 
         // Try to load project config
         ProjectConfig config = ProjectConfig.Load(path);
+
+        if (config == null)
+            return;
 
         var project = new Project(path, game, config);
         Workspace = new ProjectWorkspace(project);

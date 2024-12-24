@@ -25,12 +25,10 @@ namespace LynnaLib
                 config.filename = filename;
                 return config;
             }
-            catch (FileNotFoundException)
+            catch (Exception ex) when (ex is FileNotFoundException || ex is DirectoryNotFoundException)
             {
                 log.Warn("Couldn't open config file '" + filename + "'.");
-                config = new ProjectConfig();
-                config.filename = null;
-                return config;
+                return null;
             }
         }
 
@@ -45,6 +43,11 @@ namespace LynnaLib
         {
             SetVariable("EditingGame", value);
             EditingGame = value;
+        }
+
+        public bool EditingGameIsValid()
+        {
+            return EditingGame != null && (EditingGame == "ages" || EditingGame == "seasons");
         }
 
         /// Set a variable to a value and save it immediately. Not using a proper YAML parser for

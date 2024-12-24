@@ -97,6 +97,8 @@ public class ProjectWorkspace
             {
                 if (ImGui.MenuItem("Open"))
                 {
+                    CloseRequested = true;
+                    TopLevel.OpenModal("Close Project|Open Project");
                 }
                 if (ImGui.MenuItem("Save"))
                 {
@@ -105,6 +107,7 @@ public class ProjectWorkspace
                 if (ImGui.MenuItem("Close"))
                 {
                     CloseRequested = true;
+                    TopLevel.OpenModal("Close Project");
                 }
                 if (ImGui.MenuItem("Run"))
                 {
@@ -154,7 +157,6 @@ public class ProjectWorkspace
             }
             ImGui.EndMainMenuBar();
         }
-
 
         if (showDebugWindow)
         {
