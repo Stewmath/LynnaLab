@@ -66,6 +66,7 @@ public class RoomLayoutEditor : TileGrid
     List<RoomComponent> roomComponents;
     bool draggingComponent;
     Vector2 draggingComponentOffset;
+    bool suppressLeftClick;
     EventWrapper<Room> roomEventWrapper;
     EventWrapper<ObjectGroup> objectGroupEventWrapper;
     EventWrapper<Chest> chestEventWrapper;
@@ -105,6 +106,8 @@ public class RoomLayoutEditor : TileGrid
     }
 
     protected override Image Image { get { return image; } }
+
+    // Private properties
 
     private RoomEditor RoomEditor { get; set; }
 
@@ -199,6 +202,12 @@ public class RoomLayoutEditor : TileGrid
                 {
                     ImGui.OpenPopup(TopLevel.RightClickPopupName);
                 }
+
+                // Double-click
+                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                {
+                    hoveringComponent.OnDoubleClicked();
+                }
             }
         }
 
@@ -287,8 +296,12 @@ public class RoomLayoutEditor : TileGrid
                 });
             }
 
-            base.RenderHoverAndSelection(Brush);
+            if (!suppressLeftClick)
+                base.RenderHoverAndSelection(Brush);
         }
+
+        if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))
+            suppressLeftClick = false;
     }
 
     /// <summary>
@@ -594,6 +607,8 @@ public class RoomLayoutEditor : TileGrid
         /// </summary>
         public virtual void Delete() { }
 
+        public virtual void OnDoubleClicked() {}
+
         // ================================================================================
         // Protected methods
         // ================================================================================
@@ -888,34 +903,6 @@ public class RoomLayoutEditor : TileGrid
             ImGui.PopFont();
         }
 
-        /*
-        public override IList<Gtk.MenuItem> GetRightClickMenuItems()
-        {
-            var list = new List<Gtk.MenuItem>();
-
-            {
-                Gtk.MenuItem followButton = new Gtk.MenuItem("Follow");
-                followButton.Activated += (sender, args) =>
-                {
-                    parent.SetRoom(warp.DestRoom, parent.season, true);
-                };
-                list.Add(followButton);
-            }
-            {
-                Gtk.MenuItem setDestButton = new Gtk.MenuItem("Edit Destination");
-                setDestButton.Activated += (sender, args) =>
-                {
-                    parent.EditingWarpDestination = warp;
-                    parent.SetRoom(warp.DestRoom, parent.season, true);
-                    parent.WarpEditor.SetSelectedWarp(warp);
-                };
-                list.Add(setDestButton);
-            }
-
-            return list;
-        }
-        */
-
         public override bool Compare(RoomComponent com)
         {
             return warp == (com as WarpSourceRoomComponent)?.warp;
@@ -926,6 +913,11 @@ public class RoomLayoutEditor : TileGrid
             warp.Remove();
         }
 
+        public override void OnDoubleClicked()
+        {
+            Parent.RoomEditor.FollowWarp(warp);
+            Parent.suppressLeftClick = true;
+        }
 
         void UpdateRect()
         {
