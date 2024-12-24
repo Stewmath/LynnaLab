@@ -125,7 +125,7 @@ public class ProjectWorkspace
                 }
                 if (ImGui.MenuItem("Run"))
                 {
-                    buildDialog.BeginCompile();
+                    RunGame();
                 }
                 ImGui.EndMenu();
             }
@@ -169,7 +169,7 @@ public class ProjectWorkspace
         {
             if (ImGui.ImageButton("Run", TopLevel.PegasusSeedImage.GetBinding(), TOOLBAR_BUTTON_SIZE))
             {
-                buildDialog.BeginCompile();
+                RunGame();
             }
             ImGuiX.TooltipOnHover("Run (F5)");
 
@@ -198,6 +198,11 @@ public class ProjectWorkspace
         {
             frame.RenderAsWindow();
         }
+
+        if (ImGui.IsKeyPressed(ImGuiKey.F4))
+            ToggleQuickstart(!QuickstartData.Enabled);
+        else if (ImGui.IsKeyPressed(ImGuiKey.F5))
+            RunGame();
     }
 
     /// <summary>
@@ -265,6 +270,11 @@ public class ProjectWorkspace
         QuickstartData.x = 0x48;
         QuickstartData.y = 0x48;
         QuickstartData.Enabled = enabled;
+    }
+
+    void RunGame()
+    {
+        buildDialog.BeginCompile();
     }
 }
 
