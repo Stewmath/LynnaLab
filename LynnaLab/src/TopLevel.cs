@@ -278,9 +278,15 @@ public static class TopLevel
                 {
                     nextPopup = "Select Game";
                 }
+            }
+
+            // Check if FilePicker code closed the modal (may or may not have selected a file)
+            if (picker.Closed)
+            {
                 FilePicker.RemoveFilePicker("Open");
                 closeCurrentModal();
             }
+
             ImGui.EndPopup();
         }
 

@@ -13,6 +13,7 @@ public class FilePicker
     public string SelectedFile;
     public List<string> AllowedExtensions;
     public bool OnlyAllowFolders;
+    public bool Closed;
 
     public static FilePicker GetFolderPicker(object o, string startingPath)
         => GetFilePicker(o, startingPath, null, true);
@@ -68,7 +69,7 @@ public class FilePicker
                 if (di.Parent != null)
                 {
                     ImGui.PushStyleColor(ImGuiCol.Text, Color.Yellow);
-                    if (ImGui.Selectable("../", false, ImGuiSelectableFlags.NoAutoClosePopups))
+                    if (ImGui.Selectable("(Up Directory)", false, ImGuiSelectableFlags.NoAutoClosePopups))
                         CurrentFolder = di.Parent.FullName;
 
                     ImGui.PopStyleColor();
@@ -95,7 +96,7 @@ public class FilePicker
                         if (ImGui.IsMouseDoubleClicked(0))
                         {
                             result = true;
-                            ImGui.CloseCurrentPopup();
+                            Close();
                         }
                     }
                 }
@@ -107,17 +108,17 @@ public class FilePicker
         if (ImGui.Button("Cancel"))
         {
             result = false;
-            ImGui.CloseCurrentPopup();
+            Close();
         }
 
         if (OnlyAllowFolders)
         {
             ImGui.SameLine();
-            if (ImGui.Button("Open This Folder"))
+            if (ImGui.Button("Open Current Folder"))
             {
                 result = true;
                 SelectedFile = CurrentFolder;
-                ImGui.CloseCurrentPopup();
+                Close();
             }
         }
         else if (SelectedFile != null)
@@ -126,11 +127,17 @@ public class FilePicker
             if (ImGui.Button("Open"))
             {
                 result = true;
-                ImGui.CloseCurrentPopup();
+                Close();
             }
         }
 
         return result;
+    }
+
+    void Close()
+    {
+        ImGui.CloseCurrentPopup();
+        Closed = true;
     }
 
     bool TryGetFileInfo(string fileName, out FileInfo realFile)
