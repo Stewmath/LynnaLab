@@ -104,7 +104,7 @@ public class ProjectWorkspace
         {
             if (ImGui.BeginMenu("File"))
             {
-                if (ImGui.MenuItem("Open"))
+                if (ImGui.MenuItem("Open Project"))
                 {
                     CloseRequested = true;
                     TopLevel.OpenModal("Close Project|Open Project");

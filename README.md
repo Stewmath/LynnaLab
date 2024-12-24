@@ -113,7 +113,7 @@ either.
 
 ### Tileset viewer (left)
 
-* Left click: Select a tile (drag to select a range of tiles)
+* Left/right click: Select a tile (drag to select a range of tiles)
 
 ### Room layout (middle)
 
@@ -122,6 +122,9 @@ either.
 * Ctrl + left click + drag: Rectangle fill with selected tile(s)
 * Left click (on object): Select, drag object
   * Hold Ctrl to disable tile snapping
+* Right click (on object): Open context menu
+* Double click (on warp): Follow warp
+* Delete key: Delete selected object, if any
 
 ### Minimap (right)
 
@@ -131,6 +134,11 @@ either.
   * Zoom in & out (if "scroll to zoom" is ON)
   * Scroll vertically (if "scroll to zoom" is OFF)
     * Hold shift to scroll horizontally. (Can also apply to other windows that are horizontally scrollable)
+
+### Global hotkeys
+
+* F4: Toggle quickstart
+* F5: Build & run game
 
 ## For more information
 

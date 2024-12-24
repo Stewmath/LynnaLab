@@ -151,7 +151,7 @@ public static class TopLevel
             {
                 if (ImGui.BeginMenu("File"))
                 {
-                    if (ImGui.MenuItem("Open"))
+                    if (ImGui.MenuItem("Open Project"))
                     {
                         OpenModal("Open Project");
                     }
