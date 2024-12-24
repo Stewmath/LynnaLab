@@ -85,6 +85,18 @@ public static class TopLevel
 
             backend.HandleEvents(lastDeltaTime);
 
+            if (backend.CloseRequested)
+            {
+                if (Workspace != null)
+                    ImGui.OpenPopup("Save Project");
+                else
+                    backend.Close();
+            }
+            else if (Workspace?.CloseRequested ?? false)
+            {
+                ImGui.OpenPopup("Save Project");
+            }
+
             if (backend.Exited)
                 break;
 
@@ -118,7 +130,65 @@ public static class TopLevel
     {
         ImGui.PushFont(OraclesFont);
 
-        Workspace?.Render(deltaTime);
+        if (Workspace == null)
+        {
+            if (ImGui.BeginMainMenuBar())
+            {
+                if (ImGui.BeginMenu("File"))
+                {
+                    if (ImGui.MenuItem("Open"))
+                    {
+                    }
+                    ImGui.EndMenu();
+                }
+                ImGui.EndMainMenuBar();
+            }
+        }
+        else
+        {
+            // Modal that pops up when attempting to close the window, or "Project -> Close"
+            // (slightly different things)
+            if (ImGui.BeginPopupModal("Save Project", ImGuiWindowFlags.AlwaysAutoResize))
+            {
+                ImGui.Text("Save project before closing?");
+
+                // Close either the project or the entire window, depending on the context
+                var close = () =>
+                {
+                    if (backend.CloseRequested)
+                    {
+                        backend.Close();
+                        backend.CloseRequested = false;
+                    }
+                    else if (Workspace.CloseRequested)
+                    {
+                        Workspace.Close();
+                        Workspace = null;
+                    }
+                };
+
+                if (ImGui.Button("Save"))
+                {
+                    Workspace.Project.Save();
+                    close();
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Don't save"))
+                {
+                    close();
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Cancel"))
+                {
+                    backend.CloseRequested = false;
+                    Workspace.CloseRequested = false;
+                    ImGui.CloseCurrentPopup();
+                }
+            }
+
+            // Workspace may be null here
+            Workspace?.Render(deltaTime);
+        }
 
         ImGui.PopFont();
     }
@@ -173,6 +243,11 @@ public static class TopLevel
 
     static void OpenProject(string path, string game)
     {
+        if (Workspace != null)
+        {
+            Workspace.Close();
+        }
+
         // Try to load project config
         ProjectConfig config = ProjectConfig.Load(path);
 

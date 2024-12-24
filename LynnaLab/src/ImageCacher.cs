@@ -6,7 +6,7 @@ namespace LynnaLab;
 /// given data (ie. only one Tileset class ever exists per actual tileset). Most LynnaLib
 /// classes are designed with this in mind already.
 /// </summary>
-public abstract class ImageCacher<KeyClass>
+public abstract class ImageCacher<KeyClass> : IDisposable
 {
     // ================================================================================
     // Constructors
@@ -50,6 +50,15 @@ public abstract class ImageCacher<KeyClass>
         var image = imageCache[key];
         image.Dispose();
         imageCache.Remove(key);
+    }
+
+    public void Dispose()
+    {
+        foreach (KeyClass key in imageCache.Keys)
+        {
+            DisposeImage(key);
+        }
+        imageCache = null;
     }
 
     // ================================================================================

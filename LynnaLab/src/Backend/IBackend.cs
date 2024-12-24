@@ -6,6 +6,7 @@ public interface IBackend
     // Properties
     // ================================================================================
     public bool Exited { get; }
+    public bool CloseRequested { get; set; }
 
 
     // ================================================================================
@@ -21,6 +22,11 @@ public interface IBackend
     /// Called after main imgui rendering occurs, this will draw the results of that
     /// </summary>
     public void Render();
+
+    /// <summary>
+    /// Closes the window.
+    /// </summary>
+    public void Close();
 
     // Image creation functions
     public Image ImageFromBitmap(Bitmap bitmap,

@@ -80,6 +80,7 @@ public class ProjectWorkspace
     public QuickstartData QuickstartData { get; set; } = new QuickstartData();
     public Brush Brush { get; private set; }
     public bool ShowBrushPreview { get; private set; } = true;
+    public bool CloseRequested { get; set; }
 
     // ================================================================================
     // Public methods
@@ -100,6 +101,10 @@ public class ProjectWorkspace
                 if (ImGui.MenuItem("Save"))
                 {
                     Project.Save();
+                }
+                if (ImGui.MenuItem("Close"))
+                {
+                    CloseRequested = true;
                 }
                 if (ImGui.MenuItem("Run"))
                 {
@@ -147,6 +152,7 @@ public class ProjectWorkspace
                 ImGuiX.MenuItemCheckbox("ImGui Demo Window", ref showImGuiDemoWindow);
                 ImGui.EndMenu();
             }
+            ImGui.EndMainMenuBar();
         }
 
 
@@ -168,6 +174,18 @@ public class ProjectWorkspace
         {
             frame.RenderAsWindow();
         }
+    }
+
+    /// <summary>
+    /// This is called when the Project should be closed.
+    /// </summary>
+    public void Close()
+    {
+        Project.Close();
+        linkImage.Dispose();
+        tilesetImageCacher.Dispose();
+        roomImageCacher.Dispose();
+        mapImageCacher.Dispose();
     }
 
     public Image GetCachedTilesetImage(Tileset tileset)

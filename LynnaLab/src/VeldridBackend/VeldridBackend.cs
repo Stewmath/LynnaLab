@@ -28,6 +28,8 @@ public class VeldridBackend : IBackend
             _controller.WindowResized(_window.Width, _window.Height);
         };
 
+        _window.SetCloseRequestedHandler(CloseRequestedHandler);
+
         _cl = _gd.ResourceFactory.CreateCommandList();
         _cl.Begin();
         _controller = new ImGuiController(this, _gd.MainSwapchain.Framebuffer.OutputDescription, _window.Width, _window.Height);
@@ -50,12 +52,14 @@ public class VeldridBackend : IBackend
     static CommandList _cl;
     static ImGuiController _controller;
     static Vector3 _clearColor = new Vector3(0.45f, 0.55f, 0.6f);
+    bool forceWindowClose;
 
 
     // ================================================================================
     // Properties
     // ================================================================================
     public bool Exited { get { return !_window.Exists; } }
+    public bool CloseRequested { get; set; }
     public GraphicsDevice GraphicsDevice { get { return _gd; } }
     public CommandList CommandList { get { return _cl; } }
 
@@ -87,6 +91,12 @@ public class VeldridBackend : IBackend
         _cl.Begin();
     }
 
+    public void Close()
+    {
+        forceWindowClose = true;
+        _window.Close();
+    }
+
     public Image ImageFromBitmap(Bitmap bitmap, Interpolation interpolation)
     {
         return new VeldridImage(_controller, interpolation, bitmap, 1.0f);
@@ -111,4 +121,15 @@ public class VeldridBackend : IBackend
     // ================================================================================
     // Private methods
     // ================================================================================
+
+    /// <summary>
+    /// Called when the user closes the window. Returns true to suppress the window's closure.
+    /// </summary>
+    bool CloseRequestedHandler()
+    {
+        if (forceWindowClose)
+            return false;
+        CloseRequested = true;
+        return true;
+    }
 }
