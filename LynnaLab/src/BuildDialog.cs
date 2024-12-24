@@ -49,8 +49,8 @@ public class BuildDialog : Frame
                              new Vector2(0.0f, -40.0f)))
         {
             processView?.Render();
-            ImGui.EndChild();
         }
+        ImGui.EndChild();
 
         ImGuiX.Checkbox("Close dialog with emulator",
                         new Accessor<bool>(() => GlobalConfig.CloseRunDialogWithEmulator));

@@ -433,11 +433,6 @@ public class RoomLayoutEditor : TileGrid
                 {
                     var rect = new FRect(x, y, width, height);
                     var com = new WarpSourceRoomComponent(this, warp, warpIndex, rect);
-                    com.SelectedEvent += (sender, args) =>
-                    {
-                        // TODO
-                        //WarpEditor.SetWarpIndex(com.index);
-                    };
                     roomComponents.Add(com);
                 };
 

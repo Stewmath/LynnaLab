@@ -5,6 +5,7 @@ using Veldrid.StartupUtilities;
 using IBackend = LynnaLab.IBackend;
 using Interpolation = LynnaLab.Interpolation;
 using Image = LynnaLab.Image;
+using System.IO;
 
 namespace VeldridBackend;
 
@@ -104,6 +105,12 @@ public class VeldridBackend : IBackend
     public Image ImageFromImage(Image image, Interpolation interpolation, float alpha)
     {
         return new VeldridImage(image as VeldridImage, interpolation, alpha);
+    }
+    public Image ImageFromFile(string filename, Interpolation interpolation)
+    {
+        // TODO: This bitmap should be disposed when the image is disposed.
+        Bitmap bitmap = new Bitmap(filename);
+        return ImageFromBitmap(bitmap, interpolation);
     }
     public Image CreateImage(int width, int height, Interpolation interpolation)
     {

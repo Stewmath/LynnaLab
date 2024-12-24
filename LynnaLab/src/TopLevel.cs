@@ -17,6 +17,9 @@ public static class TopLevel
     {
         TopLevel.backend = backend;
 
+        ImageDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/Images/";
+        PegasusSeedImage = backend.ImageFromFile(ImageDir + "Pegasus_Seed_OOX.png", Interpolation.Nearest);
+
         Helper.mainThreadInvokeFunction = TopLevel.LazyInvoke;
 
         GlobalConfig = GlobalConfig.Load();
@@ -32,6 +35,10 @@ public static class TopLevel
             Helper.GetResourceStream("LynnaLab.ZeldaOracles.ttf"), 18);
         TopLevel.OraclesFont24px = ImGuiX.LoadFont(
             Helper.GetResourceStream("LynnaLab.ZeldaOracles.ttf"), 24);
+
+        ImGui.StyleColorsDark(); // Default style
+        //ImGui.StyleColorsClassic();
+        //ImGui.StyleColorsLight();
 
         backend.RecreateFontTexture();
 
@@ -65,10 +72,13 @@ public static class TopLevel
 
     public static IBackend Backend { get { return backend; } }
     public static GlobalConfig GlobalConfig { get; private set; }
+    public static string ImageDir { get; private set; }
 
     public static ImFontPtr DefaultFont { get; private set; }
     public static ImFontPtr OraclesFont { get; private set; }
     public static ImFontPtr OraclesFont24px { get; private set; }
+
+    public static Image PegasusSeedImage { get; private set; }
 
     // Private properties
     private static ProjectWorkspace Workspace { get; set; }

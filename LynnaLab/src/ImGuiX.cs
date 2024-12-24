@@ -275,4 +275,69 @@ public static class ImGuiX
         Marshal.FreeCoTaskMem((nint)native_label);
         return ret != 0;
     }
+
+    /// <summary>
+    /// A toolbar at the top of the main window
+    /// </summary>
+    public static bool BeginToolbar(string name, float offset, float height)
+    {
+        var mainViewport = ImGui.GetMainViewport();
+        ImGui.SetNextWindowPos(mainViewport.Pos + new Vector2(0, offset));
+        ImGui.SetNextWindowSize(new Vector2(mainViewport.Size.X, height));
+        ImGui.SetNextWindowViewport(mainViewport.ID);
+
+        ImGuiWindowFlags window_flags = 0
+            | ImGuiWindowFlags.NoDocking
+            | ImGuiWindowFlags.NoTitleBar
+            | ImGuiWindowFlags.NoResize
+            | ImGuiWindowFlags.NoMove
+            | ImGuiWindowFlags.NoScrollbar
+            | ImGuiWindowFlags.NoSavedSettings
+            ;
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0);
+        bool retval = ImGui.Begin(name, window_flags);
+        ImGui.PopStyleVar();
+        return retval;
+    }
+
+    /// <summary>
+    /// A button which stays pressed down. Imitates the style of builtin ImGui buttons as closely as possible.
+    /// </summary>
+    public static bool ToggleImageButton(string name, nint textureID, Vector2 size, ref bool toggled)
+    {
+        // ImageButtons add FramePadding * 2 to size, so we do that too
+        Vector2 framePadding = ImGui.GetStyle().FramePadding;
+        Vector2 buttonSize = size + framePadding * 2;
+
+        Vector2 startPos = ImGui.GetCursorScreenPos();
+        bool clicked = ImGui.InvisibleButton("Btn: " + name, buttonSize);
+        Vector2 finalPos = ImGui.GetCursorScreenPos();
+
+        if (clicked)
+            toggled = !toggled;
+        bool hovered = ImGui.IsItemHovered();
+        bool mouseDown = hovered && ImGui.IsMouseDown(ImGuiMouseButton.Left);
+
+        // Draw rectangle background, imitating colors used by built-in buttons
+        uint rectColor;
+        if (hovered && !mouseDown)
+            rectColor = ImGui.GetColorU32(ImGuiCol.ButtonHovered);
+        else if (toggled || mouseDown)
+            rectColor = ImGui.GetColorU32(ImGuiCol.ButtonActive);
+        else
+            rectColor = ImGui.GetColorU32(ImGuiCol.Button);
+
+        ImGui.GetWindowDrawList().AddRectFilled(startPos, startPos + buttonSize, rectColor);
+
+        ImGui.SetCursorScreenPos(startPos + framePadding);
+        ImGui.Image(textureID, size);
+        ImGui.SetCursorScreenPos(finalPos);
+        return clicked;
+    }
+
+    public static void ToggleImageButton(string name, nint textureID, Vector2 size, bool toggled, Action<bool> onToggled)
+    {
+        if (ToggleImageButton(name, textureID, size, ref toggled))
+            onToggled(toggled);
+    }
 }

@@ -51,6 +51,12 @@ public class ProjectWorkspace
     }
 
     // ================================================================================
+    // Constants
+    // ================================================================================
+
+    readonly Vector2 TOOLBAR_BUTTON_SIZE = new Vector2(30.0f, 30.0f);
+
+    // ================================================================================
     // Variables
     // ================================================================================
 
@@ -93,6 +99,7 @@ public class ProjectWorkspace
         if (Project == null)
             return;
 
+        float menuBarHeight = 0.0f;
         if (ImGui.BeginMainMenuBar())
         {
             if (ImGui.BeginMenu("File"))
@@ -141,15 +148,7 @@ public class ProjectWorkspace
                 ImGuiX.MenuItemCheckbox(
                     "Quickstart",
                     QuickstartData.Enabled,
-                    (value) =>
-                    {
-                        QuickstartData.group = (byte)roomEditor.Room.Group;
-                        QuickstartData.room = (byte)(roomEditor.Room.Index & 0xff);
-                        QuickstartData.season = (byte)roomEditor.Season;
-                        QuickstartData.x = 0x48;
-                        QuickstartData.y = 0x48;
-                        QuickstartData.Enabled = value;
-                    });
+                    ToggleQuickstart);
                 ImGuiX.MenuItemCheckbox(
                     "Hover preview",
                     new Accessor<bool>(() => ShowBrushPreview
@@ -162,8 +161,24 @@ public class ProjectWorkspace
                 ImGuiX.MenuItemCheckbox("ImGui Demo Window", ref showImGuiDemoWindow);
                 ImGui.EndMenu();
             }
+            menuBarHeight = ImGui.GetWindowHeight();
             ImGui.EndMainMenuBar();
         }
+
+        if (ImGuiX.BeginToolbar("Toolbar", menuBarHeight, 50.0f))
+        {
+            if (ImGui.ImageButton("Run", TopLevel.PegasusSeedImage.GetBinding(), TOOLBAR_BUTTON_SIZE))
+            {
+                buildDialog.BeginCompile();
+            }
+            ImGuiX.TooltipOnHover("Run (F5)");
+
+            ImGui.SameLine();
+            ImGuiX.ToggleImageButton("Quickstart", linkImage.GetBinding(), TOOLBAR_BUTTON_SIZE,
+                    QuickstartData.Enabled, ToggleQuickstart);
+            ImGuiX.TooltipOnHover("Toggle Quickstart (F4)");
+        }
+        ImGui.End();
 
         if (showDebugWindow)
         {
@@ -241,6 +256,16 @@ public class ProjectWorkspace
     // ================================================================================
     // Private methods
     // ================================================================================
+
+    void ToggleQuickstart(bool enabled)
+    {
+        QuickstartData.group = (byte)roomEditor.Room.Group;
+        QuickstartData.room = (byte)(roomEditor.Room.Index & 0xff);
+        QuickstartData.season = (byte)roomEditor.Season;
+        QuickstartData.x = 0x48;
+        QuickstartData.y = 0x48;
+        QuickstartData.Enabled = enabled;
+    }
 }
 
 /// <summary>

@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace LynnaLab;
 
 public interface IBackend
@@ -36,6 +38,7 @@ public interface IBackend
     /// interpolation & alpha values used for rendering can be different.
     /// </summary>
     public Image ImageFromImage(Image image, Interpolation interpolation, float alpha);
+    public Image ImageFromFile(string filename, Interpolation interpolation);
     public Image CreateImage(int width, int height,
                              Interpolation interpolation = Interpolation.Nearest);
 
