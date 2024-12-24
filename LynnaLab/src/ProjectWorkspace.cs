@@ -80,7 +80,9 @@ public class ProjectWorkspace
     public QuickstartData QuickstartData { get; set; } = new QuickstartData();
     public Brush Brush { get; private set; }
     public bool ShowBrushPreview { get; private set; } = true;
+
     public bool CloseRequested { get; set; }
+    public bool SwitchGameRequested { get; set; }
 
     // ================================================================================
     // Public methods
@@ -107,6 +109,11 @@ public class ProjectWorkspace
                 if (ImGui.MenuItem("Close"))
                 {
                     CloseRequested = true;
+                    TopLevel.OpenModal("Close Project");
+                }
+                if (ImGui.MenuItem("Switch Game"))
+                {
+                    SwitchGameRequested = true;
                     TopLevel.OpenModal("Close Project");
                 }
                 if (ImGui.MenuItem("Run"))

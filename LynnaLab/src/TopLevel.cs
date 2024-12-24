@@ -56,7 +56,6 @@ public static class TopLevel
     // Vars related to modal windows
     static string activeModal;
     static string nextPopup;
-    static bool willCloseWorkspace;
     static bool rememberGameChoice;
     static string projectDirectoryToOpen;
 
@@ -104,13 +103,6 @@ public static class TopLevel
             if (backend.Exited)
                 break;
 
-            if (willCloseWorkspace)
-            {
-                Workspace.Close();
-                Workspace = null;
-                willCloseWorkspace = false;
-            }
-
             TopLevel.Render(lastDeltaTime);
 
             // Call the "idle functions", used for lazy drawing.
@@ -141,6 +133,8 @@ public static class TopLevel
     {
         ImGui.PushFont(OraclesFont);
 
+        RenderModals();
+
         if (Workspace == null)
         {
             if (ImGui.BeginMainMenuBar())
@@ -160,8 +154,6 @@ public static class TopLevel
         {
             Workspace.Render(deltaTime);
         }
-
-        RenderModals();
 
         ImGui.PopFont();
     }
@@ -225,11 +217,16 @@ public static class TopLevel
                 }
                 else if (Workspace.CloseRequested)
                 {
-                    // Don't close the workspace right away because we may have rendered some of it
-                    // already, and this will cause some null pointer exceptions if we free its
-                    // resources now.
-                    willCloseWorkspace = true;
-                    Workspace.CloseRequested = false;
+                    Workspace.Close();
+                    Workspace = null;
+                }
+                else if (Workspace.SwitchGameRequested)
+                {
+                    string path = Workspace.Project.BaseDirectory;
+                    string game = Workspace.Project.Game == Game.Ages ? "seasons" : "ages";
+                    Workspace.Close();
+                    Workspace = null;
+                    OpenProject(path, game);
                 }
                 closeCurrentModal();
             };
