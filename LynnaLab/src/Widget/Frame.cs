@@ -19,6 +19,7 @@ public abstract class Frame
     // ================================================================================
 
     bool active;
+    bool grabFocus;
 
     // ================================================================================
     // Events
@@ -63,14 +64,30 @@ public abstract class Frame
     /// </summary>
     public void RenderAsWindow()
     {
+        if (grabFocus)
+            Active = true;
+
         if (Active)
         {
+            if (grabFocus)
+                ImGui.SetNextWindowFocus();
+
             if (ImGui.Begin(Name, ref active, WindowFlags))
             {
                 Render();
             }
             ImGui.End();
         }
+
+        grabFocus = false;
+    }
+
+    /// <summary>
+    /// Makes this window grab focus
+    /// </summary>
+    public void Focus()
+    {
+        grabFocus = true;
     }
 
     /// <summary>

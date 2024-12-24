@@ -31,7 +31,7 @@ public class ImGuiLL
         {
             ImGuiX.InputHex($"{name}##InputHex", ref value);
             ImGui.SameLine();
-            if (ImGui.Button("?"))
+            if (ImGui.Button($"?##{name}"))
             {
                 openDoc = true;
             }
@@ -43,6 +43,9 @@ public class ImGuiLL
             width = Math.Max(width, ImGui.CalcTextSize(getLabelName(v, mapping, omitPrefix)).X);
 
         ImGui.PushItemWidth(width + 35.0f);
+
+        const float horizontalShift = 10.0f;
+        ImGuiX.ShiftCursorScreenPos(horizontalShift, 0.0f);
 
         string preview = "";
         if (mapping.HasValue(value))
@@ -64,6 +67,7 @@ public class ImGuiLL
             ImGui.EndCombo();
         }
 
+        ImGuiX.ShiftCursorScreenPos(-horizontalShift, 0.0f);
         ImGui.PopItemWidth();
         ImGui.EndGroup();
         ImGui.PopItemWidth();
@@ -95,6 +99,9 @@ public class ImGuiLL
 
         foreach (ValueReferenceDescriptor desc in vrg.GetDescriptors())
         {
+            if (!desc.Editable)
+                continue;
+
             if (rowCount >= maxRows || (linebreaks != null && linebreaks.Contains(desc.Name)))
             {
                 rowCount = 0;
@@ -126,8 +133,13 @@ public class ImGuiLL
                         });
                     }
                     break;
+                case ValueReferenceType.String:
+                    string data = desc.GetStringValue();
+                    if (ImGui.InputText(desc.Name, ref data, 100))
+                        desc.SetValue(data);
+                    break;
                 default:
-                    throw new Exception("Unsupported ValueReferenceType");
+                    throw new Exception("Unsupported ValueReferenceType: " + desc.ValueType);
             }
             // TODO: Other types
 

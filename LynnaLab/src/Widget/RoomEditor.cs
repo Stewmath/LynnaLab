@@ -524,8 +524,34 @@ public class RoomEditor : Frame
             return;
         }
 
-        ImGuiX.InputHex("ID", new Accessor<int>(() => Room.Chest.TreasureID));
-        ImGuiX.InputHex("SubID", new Accessor<int>(() => Room.Chest.TreasureSubID));
+        ImGui.SeparatorText("Chest Data");
+
+        ImGuiLL.RenderValueReferenceGroup(Room.Chest.ValueReferenceGroup, null, (doc) => Workspace.ShowDocumentation(doc));
+
+        ImGui.SeparatorText("");
+        ImGuiX.ShiftCursorScreenPos(0.0f, 10.0f);
+
+        TreasureObject treasureObj = Room.Chest.Treasure;
+
+        if (treasureObj == null)
+        {
+            ImGui.TextWrapped($"Treasure {Room.Chest.TreasureID:X2} {Room.Chest.TreasureSubID:X2} doesn't exist.");
+            if (ImGui.Button("Create new SubID"))
+            {
+                TreasureObject newObj = Room.Chest.TreasureGroup.AddTreasureObjectSubid();
+                Room.Chest.TreasureSubID = newObj.SubID;
+            }
+        }
+        else
+        {
+            int id = Room.Chest.TreasureID;
+            int subid = Room.Chest.TreasureSubID;
+            if (ImGui.CollapsingHeader($"Treasure object data: {id:X2} {subid:X2}###TreasureObjectHeader {id}"))
+            {
+                ImGuiX.ShiftCursorScreenPos(new Vector2(10.0f, 0.0f));
+                ImGuiLL.RenderValueReferenceGroup(treasureObj.ValueReferenceGroup, null, Workspace.ShowDocumentation);
+            }
+        }
     }
 
     /// <summary>

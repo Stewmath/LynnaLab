@@ -208,6 +208,7 @@ public class ProjectWorkspace
     {
         documentationDialog.SetDocumentation(documentation);
         documentationDialog.Active = true;
+        documentationDialog.Focus();
     }
 
     // ================================================================================
