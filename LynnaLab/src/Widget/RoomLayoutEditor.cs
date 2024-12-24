@@ -284,6 +284,12 @@ public class RoomLayoutEditor : TileGrid
             }
         }
 
+        if (ImGui.IsKeyPressed(ImGuiKey.Delete))
+        {
+            if (selectedRoomComponent?.Deletable ?? false)
+                selectedRoomComponent.Delete();
+        }
+
         ImGui.SetCursorScreenPos(endPos);
 
         if (hoveringComponent == null && !draggingComponent)
@@ -480,6 +486,10 @@ public class RoomLayoutEditor : TileGrid
             }
         }
 
+        // Below here, we are concerned with updating the selectedRoomComponent.
+        if (selectedRoomComponent == null)
+            return;
+
         // Check if the previous selectedRoomComponent has an equivalent in the new list. If not,
         // unselect it.
         foreach (var com in roomComponents)
@@ -490,6 +500,13 @@ public class RoomLayoutEditor : TileGrid
                 return;
             }
         }
+
+        // We are unselecting the previous selected RoomComponent. If we were dragging it, suppress
+        // mouse inputs so that we don't suddenly start drawing room tiles.
+        // This can occur when double-clicking on a warp to follow it, or toggling quickstart (F4
+        // key) while dragging the Link icon.
+        if (draggingComponent)
+            suppressLeftClick = true;
         SetSelectedRoomComponent(null);
     }
 
@@ -643,7 +660,7 @@ public class RoomLayoutEditor : TileGrid
 
         public override bool Deletable
         {
-            get { return false; }
+            get { return true; }
         }
         public override bool HasXY
         {
@@ -680,6 +697,11 @@ public class RoomLayoutEditor : TileGrid
         public override bool Compare(RoomComponent com)
         {
             return quickstart == (com as QuickstartRoomComponent)?.quickstart;
+        }
+
+        public override void Delete()
+        {
+            Parent.Workspace.QuickstartData.Enabled = false;
         }
     }
 
@@ -916,7 +938,6 @@ public class RoomLayoutEditor : TileGrid
         public override void OnDoubleClicked()
         {
             Parent.RoomEditor.FollowWarp(warp);
-            Parent.suppressLeftClick = true;
         }
 
         void UpdateRect()
