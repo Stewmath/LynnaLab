@@ -21,6 +21,7 @@ namespace LynnaLib
         ISet<string> _fieldKeys; // Maintained separately from documentationParams to preserve original case
 
         public string Name { get; set; }
+        public string KeyName { get; set; } = "Key";
         public string Description { get; set; }
 
         public ICollection<string> Keys
@@ -76,6 +77,7 @@ namespace LynnaLib
             _fieldKeys = new SortedSet<string>(d._fieldKeys);
             Description = d.Description;
             Name = d.Name;
+            KeyName = d.KeyName;
         }
 
 

@@ -62,7 +62,10 @@ namespace LynnaLib
             get
             {
                 if (_documentation == null)
+                {
                     _documentation = new Documentation("", "", GetAllValuesWithDescriptions());
+                    _documentation.KeyName = "ID";
+                }
                 return _documentation;
             }
         }

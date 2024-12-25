@@ -51,7 +51,10 @@ public abstract class Frame
         }
     }
 
+    // Name is the name used for ImGui's internal window tracking. DisplayName, if set, changes only
+    // the name as displayed to the user.
     public string Name { get; private set; }
+    public string DisplayName { get; set; }
 
     public ImGuiWindowFlags WindowFlags;
 
@@ -72,7 +75,8 @@ public abstract class Frame
             if (grabFocus)
                 ImGui.SetNextWindowFocus();
 
-            if (ImGui.Begin(Name, ref active, WindowFlags))
+            string name = DisplayName == null ? Name : $"{DisplayName}###{Name}";
+            if (ImGui.Begin(name, ref active, WindowFlags))
             {
                 Render();
             }

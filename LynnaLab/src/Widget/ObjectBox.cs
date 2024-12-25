@@ -9,10 +9,12 @@ public class ObjectBox : SelectionBox
     // Constructors
     // ================================================================================
 
-    public ObjectBox(string name, ObjectGroup group) : base(name)
+    public ObjectBox(ObjectGroupEditor objectGroupEditor, string name, ObjectGroup group) : base(name)
     {
         base.Unselectable = true;
         base.RectThickness = 1.0f;
+
+        this.ObjectGroupEditor = objectGroupEditor;
 
         objectGroupEventWrapper.Bind<EventArgs>(
             "StructureModifiedEvent",
@@ -46,6 +48,7 @@ public class ObjectBox : SelectionBox
     // Properties
     // ================================================================================
 
+    public ObjectGroupEditor ObjectGroupEditor { get; private set; }
     public ObjectGroup ObjectGroup { get; private set; }
 
     // ================================================================================
@@ -62,7 +65,7 @@ public class ObjectBox : SelectionBox
         {
             if (ImGui.BeginPopup("ObjectPopupMenu"))
             {
-                ObjectPopupMenu(GetSelectedObject());
+                ObjectPopupMenu(GetSelectedObject(), ObjectGroupEditor.Workspace.ShowDocumentation);
                 ImGui.EndPopup();
             }
         }
@@ -184,8 +187,12 @@ public class ObjectBox : SelectionBox
     // Static methods
     // ================================================================================
 
-    public static void ObjectPopupMenu(ObjectDefinition def)
+    public static void ObjectPopupMenu(ObjectDefinition def, Action<Documentation> showDoc)
     {
+        if (ImGui.Selectable("Info"))
+        {
+            showDoc(def.GetIDDocumentation());
+        }
         if (ImGui.Selectable("Clone"))
         {
             int i = def.ObjectGroup.AddObject(def.GetObjectType());

@@ -31,14 +31,23 @@ public class DocumentationDialog : Frame
     public override void Render()
     {
         if (Documentation == null)
+        {
+            ImGui.TextWrapped("No documentation found.");
             return;
+        }
 
         ImGui.PushFont(TopLevel.OraclesFont);
 
+        if (Documentation.Description != null && Documentation.Description != "")
+        {
+            ImGui.TextWrapped(Documentation.Description);
+            ImGuiX.ShiftCursorScreenPos(0.0f, 10.0f);
+        }
+
         if (ImGui.BeginTable("Field table", 2, ImGuiTableFlags.Resizable | ImGuiTableFlags.Borders))
         {
-            ImGui.TableSetupColumn("Key");
-            ImGui.TableSetupColumn("Value");
+            ImGui.TableSetupColumn(Documentation.KeyName);
+            ImGui.TableSetupColumn("Description");
             ImGui.TableHeadersRow();
 
             foreach (string key in Documentation.Keys)
@@ -59,5 +68,9 @@ public class DocumentationDialog : Frame
     public void SetDocumentation(Documentation doc)
     {
         Documentation = doc;
+        if (Documentation != null)
+            DisplayName = "Documentation: " + Documentation.Name;
+        else
+            DisplayName = "Documentation";
     }
 }

@@ -257,7 +257,7 @@ public class ObjectGroupEditor : Frame
         foreach (ObjectGroup group in topObjectGroup.GetAllGroups())
         {
             // TODO: Is name ok
-            var objectBox = new ObjectBox(group.Identifier, group);
+            var objectBox = new ObjectBox(this, group.Identifier, group);
 
             objectBox.SelectedEvent += (index) =>
             {

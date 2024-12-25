@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using Util;
-
 namespace LynnaLib
 {
 
@@ -135,11 +132,15 @@ namespace LynnaLib
                 doc.RemoveField(key);
             }
 
+            doc.KeyName = "SubID";
+
             return doc;
         }
 
         /// <summary>
-        ///  Returns the documentation for the object with this ID and SubID combination.
+        ///  Returns the documentation for the object with this ID and SubID combination. This isn't
+        ///  really meant to be displayed in a DocumentationDialog, rather it can be used to look up
+        ///  subid-specific values like "postype".
         ///
         ///  (TODO: cache, and make it so that not every object stores the subid values for everything;
         ///  might need some kind of new "BaseObject" class that only has ID, not SubID.)
