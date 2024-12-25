@@ -444,6 +444,7 @@ public class RoomEditor : Frame
         Room room = EditingWarpDestination.SourceRoom;
         EditingWarpDestination = null;
         SetRoom(room.Index, 2);
+        roomLayoutEditor.UpdateRoomComponents(); // This line only necessary if dest room is same as source room
     }
 
     // ================================================================================
