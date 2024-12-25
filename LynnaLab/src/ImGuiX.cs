@@ -26,6 +26,16 @@ public static class ImGuiX
             new Vector4(color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, color.A / 255.0f));
     }
 
+    public static Vector4 ImGuiColorToVector4(uint color)
+    {
+        return new Vector4(
+            ((float)(color & 0xff)) / 255.0f,
+            ((float)((color >> 8) & 0xff)) / 255.0f,
+            ((float)((color >> 16) & 0xff)) / 255.0f,
+            ((float)((color >> 24) & 0xff)) / 255.0f
+        );
+    }
+
     public static Vector2 GetScroll()
     {
         return new Vector2(ImGui.GetScrollX(), ImGui.GetScrollY());
@@ -231,6 +241,18 @@ public static class ImGuiX
         ShiftCursorScreenPos(shiftVector);
         ImGui.Text(text);
         ShiftCursorScreenPos(-shiftVector);
+    }
+
+    /// <summary>
+    /// Draws a line of text centered at the given position.
+    /// As this is meant to be used for rendering stuff, it always renders text in white, rather
+    /// than respecting the current style.
+    /// </summary>
+    public static void DrawTextAt(string text, Vector2 pos)
+    {
+        Vector2 textSize = ImGui.CalcTextSize(text);
+        ImGui.SetCursorScreenPos(pos - textSize / 2 + new Vector2(1, 0));
+        ImGui.TextColored(new Vector4(1.0f, 1.0f, 1.0f, 1.0f), text);
     }
 
     public const float TOOLTIP_WINDOW_WIDTH = 500.0f;

@@ -68,6 +68,7 @@ public class ProjectWorkspace
     List<Frame> frames = new List<Frame>();
     bool showDebugWindow;
     bool showImGuiDemoWindow;
+    bool lightMode;
 
     Image linkImage;
     BuildDialog buildDialog;
@@ -143,6 +144,13 @@ public class ProjectWorkspace
             }
             if (ImGui.BeginMenu("Misc"))
             {
+                if (ImGuiX.MenuItemCheckbox("Light Mode", ref lightMode))
+                {
+                    if (lightMode)
+                        ImGui.StyleColorsLight();
+                    else
+                        ImGui.StyleColorsDark();
+                }
                 ImGuiX.MenuItemCheckbox(
                     "Quickstart",
                     QuickstartData.Enabled,

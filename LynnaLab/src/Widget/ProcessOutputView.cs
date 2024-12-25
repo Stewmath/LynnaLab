@@ -33,9 +33,14 @@ public class ProcessOutputView
     {
         foreach (var entry in textList)
         {
-            ImGui.PushStyleColor(ImGuiCol.Text, entry.color);
-            ImGui.TextWrapped(entry.text);
-            ImGui.PopStyleColor();
+            if (entry.color != null)
+            {
+                ImGui.PushStyleColor(ImGuiCol.Text, (Color)entry.color);
+                ImGui.TextWrapped(entry.text);
+                ImGui.PopStyleColor();
+            }
+            else
+                ImGui.TextWrapped(entry.text);
         }
 
         if (jumpToBottom)
@@ -49,11 +54,11 @@ public class ProcessOutputView
     {
         if (text == null)
             return;
-        Vector4 color;
+        Vector4? color;
         switch (preset)
         {
             case "code":
-                color = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+                color = null;
                 break;
             case "error":
                 color = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -113,5 +118,5 @@ public class ProcessOutputView
 struct TextEntry
 {
     public string text;
-    public Vector4 color;
+    public Vector4? color;
 }

@@ -954,9 +954,7 @@ public class RoomLayoutEditor : TileGrid
             ImGui.PushFont(TopLevel.OraclesFont24px);
             var origin = ImGui.GetCursorScreenPos();
             string text = index.ToString("X");
-            Vector2 textSize = ImGui.CalcTextSize(text);
-            ImGui.SetCursorScreenPos(origin + BoxRectangle.Center * Parent.Scale - textSize / 2 + new Vector2(1, 0));
-            ImGui.Text(text);
+            ImGuiX.DrawTextAt(text, origin + BoxRectangle.Center * Parent.Scale);
             ImGui.SetCursorScreenPos(origin);
             ImGui.PopFont();
         }
@@ -1038,10 +1036,7 @@ public class RoomLayoutEditor : TileGrid
         {
             ImGui.PushFont(TopLevel.OraclesFont24px);
             var origin = ImGui.GetCursorScreenPos();
-            string text = "W";
-            Vector2 textSize = ImGui.CalcTextSize(text);
-            ImGui.SetCursorScreenPos(origin + BoxRectangle.Center * Parent.Scale - textSize / 2 + new Vector2(1, 0));
-            ImGui.Text(text);
+            ImGuiX.DrawTextAt("W", origin + BoxRectangle.Center * Parent.Scale);
             ImGui.SetCursorScreenPos(origin);
             ImGui.PopFont();
         }

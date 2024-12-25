@@ -325,9 +325,7 @@ public class WarpEditor : Frame
             // Draw digit representing the warp index in the center of the rectangle
             ImGui.PushFont(TopLevel.OraclesFont);
             string text = index.ToString("X");
-            Vector2 textSize = ImGui.CalcTextSize(text);
-            ImGui.SetCursorScreenPos(base.origin + rect.Center - textSize / 2 + new Vector2(1, 0));
-            ImGui.Text(text);
+            ImGuiX.DrawTextAt(text, base.origin + rect.Center);
             ImGui.PopFont();
         }
 
