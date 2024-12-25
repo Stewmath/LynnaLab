@@ -145,6 +145,7 @@ public class RoomLayoutEditor : TileGrid
     {
         base.RenderTileGrid();
         var endPos = ImGui.GetCursorScreenPos();
+        bool isWindowHovered = ImGui.IsWindowHovered(ImGuiHoveredFlags.AllowWhenBlockedByActiveItem);
 
         RoomComponent hoveringComponent = null;
         var mousePos = base.GetRelativeMousePos() / Scale;
@@ -170,11 +171,18 @@ public class RoomLayoutEditor : TileGrid
             // Check if we're hovering over it. But don't draw the hovering rectangle right now
             // because we don't want to draw it on more than one RoomComponent.
             var rect = com.BoxRectangle;
-            if (rect.Contains(mousePos))
+            if (isWindowHovered && rect.Contains(mousePos))
             {
                 hoveringComponent = com;
             }
         }
+
+        // If the mouse is clicked while not focused on the window, do not allow the tile grid to be
+        // modified through mouse dragging until the mouse is released and clicked again. Prevents
+        // accidental tile grid modifications in some situations, ie. when clicking outside a
+        // right-click popup menu.
+        if (!isWindowHovered && ImGui.IsMouseDown(ImGuiMouseButton.Left))
+            suppressCurrentClick = true;
 
         // Draw hover outline if something is being hovered over
         if (hoveringComponent != null)
