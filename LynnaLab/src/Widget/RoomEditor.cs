@@ -205,7 +205,10 @@ public class RoomEditor : Frame
 
     public override void Render()
     {
-        const float OFFSET = 15.0f;
+        const float X_OFFSET = 15.0f;
+
+        float statusBarHeight = ImGui.GetTextLineHeight() + 8.0f;
+        ImGui.BeginChild("Above status bar", ImGui.GetContentRegionAvail() - new Vector2(0.0f, statusBarHeight));
 
         // Wrapper over ImGui.BeginTabItem() to help us keep track of which tab is open at any given time
         var TrackedTabItem = (string tabName) => {
@@ -223,7 +226,7 @@ public class RoomEditor : Frame
             }
         };
 
-        ImGui.BeginChild("Left Panel", new Vector2(tilesetViewer.WidgetSize.X + OFFSET + 20.0f, 0.0f));
+        ImGui.BeginChild("Left Panel", new Vector2(tilesetViewer.WidgetSize.X + X_OFFSET + 20.0f, 0.0f));
         if (ImGui.BeginTabBar("##Left Panel Tabs"))
         {
             if (TrackedTabItem("Tileset"))
@@ -252,7 +255,7 @@ public class RoomEditor : Frame
         ImGui.EndChild();
 
         ImGui.SameLine();
-        ImGui.BeginChild("Middle Panel", new Vector2(roomLayoutEditor.WidgetSize.X + OFFSET, 0.0f),
+        ImGui.BeginChild("Middle Panel", new Vector2(roomLayoutEditor.WidgetSize.X + X_OFFSET, 0.0f),
                          ImGuiChildFlags.Border);
         ImGui.SeparatorText("Room");
         roomLayoutEditor.Render();
@@ -369,7 +372,11 @@ public class RoomEditor : Frame
 
         minimapTabToSelect = null;
 
-        ImGui.EndChild();
+        ImGui.EndChild(); // Right panel
+        ImGui.EndChild(); // Above status bar
+
+        ImGui.Separator();
+        ImGui.Text(GetStatusBarText());
     }
 
     public void SetRoom(int roomIndex, int updateMinimap)
@@ -527,6 +534,64 @@ public class RoomEditor : Frame
                 ImGuiLL.RenderValueReferenceGroup(treasureObj.ValueReferenceGroup, null, Workspace.ShowDocumentation);
             }
         }
+    }
+
+    /// <summary>
+    /// Text to show at the very bottom of the window.
+    /// </summary>
+    string GetStatusBarText()
+    {
+        Tileset tileset = tilesetViewer.Tileset;
+
+        Func<string> GetWarnings = () =>
+        {
+            // Print warning if tileset is a dungeon but used on an overworld
+            if (OverworldTabActive && tileset.DungeonFlag && RoomLayout.IsSmall)
+                return "Dungeon tileset being used outside a dungeon";
+
+            // Print warning if on the dungeon tab but tileset not marked as a dungeon
+            if (DungeonTabActive && !tileset.DungeonFlag)
+                return "Tileset is not marked as a dungeon, but is used in a dungeon";
+
+            // Print warning if, on the dungeon tab, the tileset's dungeon index doesn't match the
+            // dungeon itself
+            if (DungeonTabActive && tileset.DungeonIndex != (ActiveMap as Dungeon)?.Index)
+                return string.Format("Tileset's dungeon index ({0:X}) doesn't match the dungeon ({1:X})",
+                                     (int)tileset.DungeonIndex, (ActiveMap as Dungeon)?.Index);
+
+            // Print warning if tileset dungeon bit is unset, but dungeon value is not $F.
+            // Only in Seasons, because Ages has better sanity checks for this.
+            if (Project.Game == Game.Seasons && !tileset.DungeonFlag && tileset.DungeonIndex != 0x0f)
+                return "If tileset is not a dungeon, dungeon index should be $F";
+
+            // Warning for a room that's using a dungeon tileset but doesn't exist in that dungeon
+            if (OverworldTabActive && tileset.DungeonFlag && tileset.DungeonIndex < Project.NumDungeons
+                       && !Project.GetDungeon(tileset.DungeonIndex).RoomUsed(Room.Index))
+                return $"Tileset is for dungeon {(int)tileset.DungeonIndex:X} but this room is not in that dungeon";
+
+            // Print warnings when tileset's layout group does not match expected value. Does nothing on
+            // the hack-base branch as the tileset's layout group is ignored.
+            if (!Project.Config.ExpandedTilesets)
+            {
+                int expectedGroup = Project.GetCanonicalLayoutGroup(Room.Group, Season);
+                if (tileset.LayoutGroup != expectedGroup)
+                {
+                    return string.Format(
+                        "Layout group of tileset ({0:X}) does not match expected value ({1:X})!"
+                        + " This room's layout data might be shared with another's.",
+                        (int)tileset.LayoutGroup,
+                        expectedGroup);
+                }
+            }
+
+            return null;
+        };
+
+        string warning = GetWarnings();
+        if (warning != null)
+            return "WARNING: " + warning;
+        else
+            return "";
     }
 
     /// <summary>
