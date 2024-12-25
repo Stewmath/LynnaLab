@@ -68,7 +68,7 @@ public class ProjectWorkspace
     List<Frame> frames = new List<Frame>();
     bool showDebugWindow;
     bool showImGuiDemoWindow;
-    bool lightMode, darkenUsedDungeonRooms = true;
+    bool lightMode, scrollToZoom = true, darkenUsedDungeonRooms = true, bicubicScaling = true;
 
     Image linkImage;
     BuildDialog buildDialog;
@@ -88,7 +88,10 @@ public class ProjectWorkspace
     public Brush Brush { get; private set; }
     public bool ShowBrushPreview { get; private set; } = true;
 
+    // Togglable settings that affect other modules (really just minimaps right now)
     public bool DarkenUsedDungeonRooms { get { return darkenUsedDungeonRooms; } }
+    public bool ScrollToZoom { get { return scrollToZoom; } }
+    public Interpolation MinimapInterpolation { get { return bicubicScaling ? Interpolation.Bicubic : Interpolation.Nearest; } }
 
     // ================================================================================
     // Public methods
@@ -144,6 +147,13 @@ public class ProjectWorkspace
                 }
                 ImGui.EndMenu();
             }
+            if (ImGui.BeginMenu("Minimap"))
+            {
+                ImGuiX.MenuItemCheckbox("Scroll to Zoom", ref scrollToZoom);
+                ImGuiX.MenuItemCheckbox("Darken used dungeon rooms (overworld tab)", ref darkenUsedDungeonRooms);
+                ImGuiX.MenuItemCheckbox("Bicubic scaling", ref bicubicScaling);
+                ImGui.EndMenu();
+            }
             if (ImGui.BeginMenu("Misc"))
             {
                 if (ImGuiX.MenuItemCheckbox("Light Mode", ref lightMode))
@@ -153,7 +163,6 @@ public class ProjectWorkspace
                     else
                         ImGui.StyleColorsDark();
                 }
-                ImGuiX.MenuItemCheckbox("Darken used dungeon rooms (overworld tab)", ref darkenUsedDungeonRooms);
                 ImGuiX.MenuItemCheckbox(
                     "Hover preview",
                     new Accessor<bool>(() => ShowBrushPreview

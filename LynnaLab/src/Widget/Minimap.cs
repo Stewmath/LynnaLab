@@ -28,8 +28,6 @@ public class Minimap : TileGrid
 
     // User-controllable options
     int minimapScale = 10;
-    int interpolation = (int)Interpolation.Bicubic;
-    bool scrollToZoom = true;
 
     // Constants
     const float MIN_SCALE = 0.1f;
@@ -70,6 +68,7 @@ public class Minimap : TileGrid
             bool scaleChangedFromUI = false;
 
             ImGui.PushItemWidth(200);
+            ImGui.SameLine(); // Same line as whatever came before this (World/Season selector buttons)
             scaleChangedFromUI = ImGui.SliderInt("Scale", ref minimapScale, 0, MAX_SCALE_SLIDER);
 
             if (scaleChangedFromUI)
@@ -81,23 +80,9 @@ public class Minimap : TileGrid
                 this.centerScaledPos = centerUnscaledPos * Scale - lastFrameScroll;
             }
 
-            base.Scale =
-                MIN_SCALE + (minimapScale / (float)MAX_SCALE_SLIDER) * (MAX_SCALE - MIN_SCALE);
+            base.Scale = MIN_SCALE + (minimapScale / (float)MAX_SCALE_SLIDER) * (MAX_SCALE - MIN_SCALE);
 
-            ImGui.SameLine();
-            int newInterpolation = interpolation;
-            if (ImGui.Combo("Interpolation", ref newInterpolation,
-                            new string[] { "Nearest", "Bicubic" }, (int)Interpolation.Count))
-            {
-                if (newInterpolation >= 0 && newInterpolation < (int)Interpolation.Count)
-                {
-                    interpolation = newInterpolation;
-                    image.SetInterpolation((Interpolation)interpolation);
-                }
-            }
-
-            ImGui.SameLine();
-            ImGui.Checkbox("Scroll To Zoom".AsSpan(), ref scrollToZoom);
+            image.SetInterpolation(Workspace.MinimapInterpolation);
 
             ImGui.PopItemWidth();
         }
@@ -110,7 +95,7 @@ public class Minimap : TileGrid
         UpdateScroll();
 
         ImGuiWindowFlags flags = ImGuiWindowFlags.HorizontalScrollbar;
-        if (scrollToZoom)
+        if (Workspace.ScrollToZoom)
             flags |= ImGuiWindowFlags.NoScrollWithMouse;
         ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, flags);
 
@@ -149,7 +134,7 @@ public class Minimap : TileGrid
             this.lastMousePos = null;
         }
 
-        if (scrollToZoom && ImGui.IsItemHovered())
+        if (Workspace.ScrollToZoom && ImGui.IsItemHovered())
         {
             int offset = (int)(ImGui.GetIO().MouseWheel * 5);
             if (offset != 0)
@@ -192,7 +177,6 @@ public class Minimap : TileGrid
         base.Height = map.MapHeight;
 
         this.image = Workspace.GetCachedMapImage((Map, floor));
-        this.image.SetInterpolation((Interpolation)interpolation);
     }
 
     // ================================================================================
