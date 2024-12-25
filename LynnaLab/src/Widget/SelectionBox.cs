@@ -56,6 +56,10 @@ public abstract class SelectionBox : TileGrid
 
     public override void Render()
     {
+        // Grey rectangle in background
+        var pos = ImGui.GetCursorScreenPos();
+        ImGui.GetWindowDrawList().AddRectFilled(pos, pos + WidgetSize, ImGuiX.ToImGuiColor(Color.FromRgb(0x40, 0x40, 0x40)));
+
         base.Render();
 
         // Catch right clicks outside any existing components
