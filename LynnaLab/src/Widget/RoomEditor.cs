@@ -17,7 +17,6 @@ public class RoomEditor : Frame
         : base("Room Editor")
     {
         this.Workspace = workspace;
-        base.WindowFlags = ImGuiWindowFlags.MenuBar;
 
         roomLayoutEditor = new RoomLayoutEditor(this.Workspace, this, Brush);
         roomLayoutEditor.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(-1));
@@ -206,30 +205,6 @@ public class RoomEditor : Frame
 
     public override void Render()
     {
-        if (ImGui.BeginMenuBar())
-        {
-            if (ImGui.BeginMenu("Shift Room"))
-            {
-                ((int, int), string)[] directions = {
-                    ((0, -1), "Up"),
-                    ((1, 0), "Right"),
-                    ((0, 1), "Down"),
-                    ((-1, 0), "Left"),
-                };
-
-                foreach (var ((x, y), name) in directions)
-                {
-                    if (ImGui.MenuItem(name))
-                    {
-                        RoomLayout.ShiftTiles(x, y);
-                    }
-                }
-
-                ImGui.EndMenu();
-            }
-            ImGui.EndMenuBar();
-        }
-
         const float OFFSET = 15.0f;
 
         // Wrapper over ImGui.BeginTabItem() to help us keep track of which tab is open at any given time
