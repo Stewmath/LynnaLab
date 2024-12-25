@@ -46,7 +46,7 @@ public class RoomEditor : Frame
         overworldMinimap = new Minimap(this.Workspace);
         dungeonMinimap = new Minimap(this.Workspace);
         objectGroupEditor = new ObjectGroupEditor(this.Workspace, "Object Group Editor", Room.GetObjectGroup());
-        warpEditor = new WarpEditor(Workspace, "Warp Editor", Room.GetWarpGroup());
+        warpEditor = new WarpEditor(this, "Warp Editor", Room.GetWarpGroup());
 
         SetRoom(0, 0);
 
@@ -113,15 +113,14 @@ public class RoomEditor : Frame
             handlingWarpSelection = true;
 
             roomLayoutEditor.SelectWarpSource(warp);
-            warpEditor.SetSelectedWarp(warp);
+            if (EditingWarpDestination == null)
+                warpEditor.SetSelectedWarp(warp);
 
             handlingWarpSelection = false;
         };
 
         warpEditor.SelectedWarpEvent += (s, a) => handleWarpSelection(warpEditor.SelectedWarp);
         roomLayoutEditor.ChangedSelectedRoomComponentEvent += (s, a) => handleWarpSelection(roomLayoutEditor.SelectedWarpSource);
-
-        warpEditor.FollowEvent += (_, warp) => FollowWarp(warp);
     }
 
     // ================================================================================
@@ -171,6 +170,8 @@ public class RoomEditor : Frame
     public bool ObjectTabActive { get { return ActiveLeftTabName == "Objects"; } }
     public bool WarpTabActive { get { return ActiveLeftTabName == "Warps"; } }
     public bool ChestTabActive { get { return ActiveLeftTabName == "Chests"; } }
+
+    public Warp EditingWarpDestination { get; private set; }
 
 
     // Private properties
@@ -416,11 +417,33 @@ public class RoomEditor : Frame
     }
 
     /// <summary>
-    /// Invoked when doing "right click -> follow" on a warp
+    /// Invoked when doing "right click -> follow" on a warp, or double-clicking on it
     /// </summary>
     public void FollowWarp(Warp warp)
     {
         SetRoom(warp.DestRoom, 2);
+    }
+
+    /// <summary>
+    /// Invoked when doing "right click -> edit warp destination"
+    /// </summary>
+    public void EditWarpDestination(Warp warp)
+    {
+        EditingWarpDestination = warp;
+        SetRoom(warp.DestRoom, 2);
+        roomLayoutEditor.UpdateRoomComponents();
+    }
+
+    /// <summary>
+    /// Called when doing "right click -> done" on the warp destination box
+    /// </summary>
+    public void DisableWarpDestEditMode()
+    {
+        if (EditingWarpDestination == null)
+            return;
+        Room room = EditingWarpDestination.SourceRoom;
+        EditingWarpDestination = null;
+        SetRoom(room.Index, 2);
     }
 
     // ================================================================================
@@ -446,11 +469,23 @@ public class RoomEditor : Frame
     {
         suppressEvents++;
 
+        if (EditingWarpDestination != null)
+        {
+            // When in warp dest editing mode, selecting a room sets the warp's destination to that room.
+            EditingWarpDestination.DestRoom = roomLayout.Room;
+        }
+
         roomLayoutEditor.SetRoomLayout(roomLayout);
         tilesetViewer.SetTileset(roomLayout.Tileset);
         objectGroupEditor.SetObjectGroup(roomLayout.Room.GetObjectGroup());
-        warpEditor.SetWarpGroup(roomLayout.Room.GetWarpGroup());
         roomLayoutEventWrapper.ReplaceEventSource(roomLayout);
+
+        if (EditingWarpDestination == null)
+        {
+            // Don't update the warp editor when in warp dest edit mode, because we want it to keep
+            // showing the warp data from the source room, not the room we're currently in
+            warpEditor.SetWarpGroup(roomLayout.Room.GetWarpGroup());
+        }
 
         if (updateMinimap != 0)
         {
@@ -586,6 +621,9 @@ public class RoomEditor : Frame
 
             return null;
         };
+
+        if (EditingWarpDestination != null)
+            return "Warp dest edit mode enabled. Select a room to set the warp's destination. Right-click on the W box and select \"Done\" to exit.";
 
         string warning = GetWarnings();
         if (warning != null)

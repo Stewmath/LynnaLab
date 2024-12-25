@@ -66,7 +66,8 @@ public class RoomLayoutEditor : TileGrid
     List<RoomComponent> roomComponents;
     bool draggingComponent;
     Vector2 draggingComponentOffset;
-    bool suppressLeftClick;
+    bool suppressCurrentClick;
+
     EventWrapper<Room> roomEventWrapper;
     EventWrapper<ObjectGroup> objectGroupEventWrapper;
     EventWrapper<Chest> chestEventWrapper;
@@ -92,7 +93,6 @@ public class RoomLayoutEditor : TileGrid
     public ObjectDefinition SelectedObject { get { return (selectedRoomComponent as ObjectRoomComponent)?.obj; } }
     public Warp SelectedWarpSource { get { return (selectedRoomComponent as WarpSourceRoomComponent)?.warp; } }
 
-
     // TileGrid overrides
 
     public override Vector2 WidgetSize
@@ -110,6 +110,19 @@ public class RoomLayoutEditor : TileGrid
     // Private properties
 
     private RoomEditor RoomEditor { get; set; }
+
+    // If true, cannot draw on or select the underlying TileGrid.
+    bool SuppressTileSelection
+    {
+        get
+        {
+            return suppressCurrentClick || RoomEditor.EditingWarpDestination != null;
+        }
+    }
+
+    bool DrawObjects { get { return RoomEditor.ObjectTabActive && RoomEditor.EditingWarpDestination == null; } }
+    bool DrawWarps { get { return RoomEditor.WarpTabActive && RoomEditor.EditingWarpDestination == null; } }
+    bool DrawChests { get { return RoomEditor.ChestTabActive && Room.Chest != null; } }
 
 
     // ================================================================================
@@ -222,7 +235,15 @@ public class RoomLayoutEditor : TileGrid
             }
             else if (com is WarpSourceRoomComponent wcom)
             {
-                WarpEditor.WarpPopupMenu(wcom.warp, () => RoomEditor.FollowWarp(wcom.warp));
+                WarpEditor.WarpPopupMenu(wcom.warp, RoomEditor);
+            }
+            else if (com is WarpDestRoomComponent dcom)
+            {
+                if (ImGui.Selectable("Done"))
+                {
+                    Room room = dcom.warp.SourceRoom;
+                    RoomEditor.DisableWarpDestEditMode();
+                }
             }
             else // Not an object or a warp source
             {
@@ -302,12 +323,12 @@ public class RoomLayoutEditor : TileGrid
                 });
             }
 
-            if (!suppressLeftClick)
+            if (!SuppressTileSelection)
                 base.RenderHoverAndSelection(Brush);
         }
 
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))
-            suppressLeftClick = false;
+            suppressCurrentClick = false;
     }
 
     /// <summary>
@@ -409,7 +430,7 @@ public class RoomLayoutEditor : TileGrid
     /// <summary>
     /// Regenerate room component list
     /// </summary>
-    void UpdateRoomComponents()
+    public void UpdateRoomComponents()
     {
         roomComponents = new List<RoomComponent>();
 
@@ -419,7 +440,7 @@ public class RoomLayoutEditor : TileGrid
         UpdateQuickstartRoomComponent();
 
         // Object room components
-        if (RoomEditor.ObjectTabActive)
+        if (DrawObjects)
         {
             foreach (var group in Room.GetObjectGroup().GetAllGroups())
             {
@@ -435,13 +456,13 @@ public class RoomLayoutEditor : TileGrid
         }
 
         // Chest
-        if (RoomEditor.ChestTabActive && Room.Chest != null)
+        if (DrawChests)
         {
             roomComponents.Add(new ChestRoomComponent(this, Room.Chest));
         }
 
         // Warps
-        if (RoomEditor.WarpTabActive)
+        if (DrawWarps)
         {
             var warpGroup = Room.GetWarpGroup();
             for (int warpIndex = 0; warpIndex < warpGroup.GetWarps().Count; warpIndex++)
@@ -486,6 +507,13 @@ public class RoomLayoutEditor : TileGrid
             }
         }
 
+        // Warp destination editing mode
+        if (RoomEditor.EditingWarpDestination != null)
+        {
+            var com = new WarpDestRoomComponent(this, RoomEditor.EditingWarpDestination);
+            roomComponents.Add(com);
+        }
+
         // Below here, we are concerned with updating the selectedRoomComponent.
         if (selectedRoomComponent == null)
             return;
@@ -506,7 +534,7 @@ public class RoomLayoutEditor : TileGrid
         // This can occur when double-clicking on a warp to follow it, or toggling quickstart (F4
         // key) while dragging the Link icon.
         if (draggingComponent)
-            suppressLeftClick = true;
+            suppressCurrentClick = true;
         SetSelectedRoomComponent(null);
     }
 
@@ -946,4 +974,73 @@ public class RoomLayoutEditor : TileGrid
         }
     }
 
+    // Represents the singular "warp destination" object that appears when in warp dest editing mode
+    class WarpDestRoomComponent : RoomComponent
+    {
+        public Warp warp;
+
+        public WarpDestRoomComponent(RoomLayoutEditor parent, Warp warp) : base(parent)
+        {
+            this.warp = warp;
+        }
+
+
+        public override Color BoxColor
+        {
+            get
+            {
+                return WarpEditor.WarpSourceColor;
+            }
+        }
+
+        public override bool Deletable
+        {
+            get { return false; }
+        }
+        public override bool HasXY
+        {
+            get { return true; }
+        }
+        public override bool HasShortenedXY
+        {
+            get { return true; }
+        }
+        public override int X
+        {
+            get { return warp.DestX * 16 + 8; }
+            set
+            {
+                warp.DestX = value / 16;
+            }
+        }
+        public override int Y
+        {
+            get { return warp.DestY * 16 + 8; }
+            set
+            {
+                warp.DestY = value / 16;
+            }
+        }
+
+        public override int BoxWidth { get { return 16; } }
+        public override int BoxHeight { get { return 16; } }
+
+
+        public override void Render()
+        {
+            ImGui.PushFont(TopLevel.OraclesFont24px);
+            var origin = ImGui.GetCursorScreenPos();
+            string text = "W";
+            Vector2 textSize = ImGui.CalcTextSize(text);
+            ImGui.SetCursorScreenPos(origin + BoxRectangle.Center * Parent.Scale - textSize / 2 + new Vector2(1, 0));
+            ImGui.Text(text);
+            ImGui.SetCursorScreenPos(origin);
+            ImGui.PopFont();
+        }
+
+        public override bool Compare(RoomComponent com)
+        {
+            return warp == (com as WarpDestRoomComponent)?.warp;
+        }
+    }
 }

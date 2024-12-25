@@ -18,9 +18,9 @@ public class WarpEditor : Frame
     // Constructor
     // ================================================================================
 
-    public WarpEditor(ProjectWorkspace workspace, string name, WarpGroup group) : base(name)
+    public WarpEditor(RoomEditor roomEditor, string name, WarpGroup group) : base(name)
     {
-        this.Workspace = workspace;
+        this.RoomEditor = roomEditor;
 
         warpSourceBox = new WarpSourceBox(this, "Warp Sources", group);
         warpSourceBox.SelectedEvent += (index) =>
@@ -47,14 +47,12 @@ public class WarpEditor : Frame
 
     public event EventHandler<EventArgs> SelectedWarpEvent;
 
-    // Invoked when "right click -> follow" happens
-    public event EventHandler<Warp> FollowEvent;
-
     // ================================================================================
     // Properties
     // ================================================================================
 
-    public ProjectWorkspace Workspace { get; private set; }
+    public RoomEditor RoomEditor { get; private set; }
+    public ProjectWorkspace Workspace { get { return RoomEditor.Workspace; } }
 
     public int SelectedIndex
     {
@@ -170,12 +168,17 @@ public class WarpEditor : Frame
     // Static methods
     // ================================================================================
 
-    public static void WarpPopupMenu(Warp warp, Action followAction)
+    public static void WarpPopupMenu(Warp warp, RoomEditor roomEditor)
     {
+        if (ImGui.Selectable("Edit Destination"))
+        {
+            roomEditor.EditWarpDestination(warp);
+        }
         if (ImGui.Selectable("Follow"))
         {
-            followAction();
+            roomEditor.FollowWarp(warp);
         }
+        ImGui.Separator();
         if (ImGui.Selectable("Delete"))
         {
             warp.Remove();
@@ -261,7 +264,7 @@ public class WarpEditor : Frame
             {
                 if (ImGui.BeginPopup("WarpPopupMenu"))
                 {
-                    WarpEditor.WarpPopupMenu(SelectedWarp, () => Parent.FollowEvent?.Invoke(null, SelectedWarp));
+                    WarpEditor.WarpPopupMenu(SelectedWarp, Parent.RoomEditor);
                     ImGui.EndPopup();
                 }
             }
