@@ -914,8 +914,6 @@ namespace LynnaLib
         // Efficiency is O(D), where D = number of dungeons.
         public bool RoomUsedInDungeon(int roomIndex)
         {
-            var rooms = new HashSet<int>();
-
             for (int i = 0; i < NumDungeons; i++)
             {
                 Dungeon d = GetDungeon(i);

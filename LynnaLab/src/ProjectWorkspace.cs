@@ -68,7 +68,7 @@ public class ProjectWorkspace
     List<Frame> frames = new List<Frame>();
     bool showDebugWindow;
     bool showImGuiDemoWindow;
-    bool lightMode;
+    bool lightMode, darkenUsedDungeonRooms = true;
 
     Image linkImage;
     BuildDialog buildDialog;
@@ -87,6 +87,8 @@ public class ProjectWorkspace
     public QuickstartData QuickstartData { get; set; } = new QuickstartData();
     public Brush Brush { get; private set; }
     public bool ShowBrushPreview { get; private set; } = true;
+
+    public bool DarkenUsedDungeonRooms { get { return darkenUsedDungeonRooms; } }
 
     // ================================================================================
     // Public methods
@@ -151,10 +153,7 @@ public class ProjectWorkspace
                     else
                         ImGui.StyleColorsDark();
                 }
-                ImGuiX.MenuItemCheckbox(
-                    "Quickstart",
-                    QuickstartData.Enabled,
-                    ToggleQuickstart);
+                ImGuiX.MenuItemCheckbox("Darken used dungeon rooms (overworld tab)", ref darkenUsedDungeonRooms);
                 ImGuiX.MenuItemCheckbox(
                     "Hover preview",
                     new Accessor<bool>(() => ShowBrushPreview

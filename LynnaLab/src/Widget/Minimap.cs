@@ -50,6 +50,7 @@ public class Minimap : TileGrid
     }
 
     public ProjectWorkspace Workspace { get; private set; }
+    public Project Project { get { return Workspace.Project; } }
 
     public Map Map { get { return map; } }
 
@@ -113,7 +114,23 @@ public class Minimap : TileGrid
             flags |= ImGuiWindowFlags.NoScrollWithMouse;
         ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, flags);
 
-        base.Render();
+        base.RenderTileGrid();
+
+        if (Workspace.DarkenUsedDungeonRooms && !(map is Dungeon) && map.RoomWidth == 15)
+        {
+            for (int tile=0; tile<MaxIndex; tile++)
+            {
+                int x = tile % Width, y = tile / Width;
+                Room room = map.GetRoom(x, y);
+                if (Project.RoomUsedInDungeon(room.Index))
+                {
+                    var rect = base.TileRect(tile);
+                    base.AddRectFilled(rect, Color.FromRgba(0, 0, 0, 0xa0));
+                }
+            }
+        }
+
+        base.RenderHoverAndSelection(null);
 
         if (ImGui.IsItemHovered() && ImGui.IsMouseDown(ImGuiMouseButton.Right))
         {
