@@ -149,9 +149,9 @@ public static class TopLevel
         {
             if (ImGui.BeginMainMenuBar())
             {
-                if (ImGui.BeginMenu("File"))
+                if (ImGui.BeginMenu("Project"))
                 {
-                    if (ImGui.MenuItem("Open Project"))
+                    if (ImGui.MenuItem("Open"))
                     {
                         OpenModal("Open Project");
                     }
@@ -225,18 +225,28 @@ public static class TopLevel
                     backend.Close();
                     backend.CloseRequested = false;
                 }
-                else if (Workspace.CloseRequested)
-                {
-                    Workspace.Close();
-                    Workspace = null;
-                }
-                else if (Workspace.SwitchGameRequested)
+                else if (nextPopup == "Switch Game")
                 {
                     string path = Workspace.Project.BaseDirectory;
                     string game = Workspace.Project.Game == Game.Ages ? "seasons" : "ages";
                     Workspace.Close();
                     Workspace = null;
                     OpenProject(path, game);
+                    nextPopup = null;
+                }
+                else if (nextPopup == "Reload Project")
+                {
+                    string path = Workspace.Project.BaseDirectory;
+                    string game = Workspace.Project.GameString;
+                    Workspace.Close();
+                    Workspace = null;
+                    OpenProject(path, game);
+                    nextPopup = null;
+                }
+                else
+                {
+                    Workspace.Close();
+                    Workspace = null;
                 }
                 closeCurrentModal();
             };
@@ -255,7 +265,6 @@ public static class TopLevel
             if (ImGui.Button("Cancel"))
             {
                 backend.CloseRequested = false;
-                Workspace.CloseRequested = false;
                 nextPopup = null; // Don't show subsequent popup windows, if any
                 closeCurrentModal();
             }

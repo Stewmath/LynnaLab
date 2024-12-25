@@ -87,9 +87,6 @@ public class ProjectWorkspace
     public Brush Brush { get; private set; }
     public bool ShowBrushPreview { get; private set; } = true;
 
-    public bool CloseRequested { get; set; }
-    public bool SwitchGameRequested { get; set; }
-
     // ================================================================================
     // Public methods
     // ================================================================================
@@ -102,11 +99,10 @@ public class ProjectWorkspace
         float menuBarHeight = 0.0f;
         if (ImGui.BeginMainMenuBar())
         {
-            if (ImGui.BeginMenu("File"))
+            if (ImGui.BeginMenu("Project"))
             {
-                if (ImGui.MenuItem("Open Project"))
+                if (ImGui.MenuItem("Open"))
                 {
-                    CloseRequested = true;
                     TopLevel.OpenModal("Close Project|Open Project");
                 }
                 if (ImGui.MenuItem("Save"))
@@ -115,13 +111,15 @@ public class ProjectWorkspace
                 }
                 if (ImGui.MenuItem("Close"))
                 {
-                    CloseRequested = true;
                     TopLevel.OpenModal("Close Project");
+                }
+                if (ImGui.MenuItem("Reload"))
+                {
+                    TopLevel.OpenModal("Close Project|Reload Project");
                 }
                 if (ImGui.MenuItem("Switch Game"))
                 {
-                    SwitchGameRequested = true;
-                    TopLevel.OpenModal("Close Project");
+                    TopLevel.OpenModal("Close Project|Switch Game");
                 }
                 if (ImGui.MenuItem("Run"))
                 {
