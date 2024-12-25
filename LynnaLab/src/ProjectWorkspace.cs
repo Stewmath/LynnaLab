@@ -272,6 +272,7 @@ public class ProjectWorkspace
 
     void RunGame()
     {
+        Project.Save();
         buildDialog.BeginCompile();
     }
 }
