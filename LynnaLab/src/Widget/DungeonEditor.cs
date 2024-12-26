@@ -9,10 +9,9 @@ public class DungeonEditor : Frame
         : base(name)
     {
         this.Workspace = workspace;
-        this.Dungeon = Project.GetDungeon(2);
 
         minimap = new Minimap(Workspace);
-        minimap.SetMap(Dungeon, 0);
+        SetDungeon(Project.GetDungeon(0));
     }
 
     // ================================================================================
@@ -50,6 +49,16 @@ public class DungeonEditor : Frame
 
         // Top bar inputs
         {
+            int dungeonIndex = Dungeon.Index;
+            if (ImGuiX.InputHex("Dungeon", ref dungeonIndex, 1))
+            {
+                if (dungeonIndex >= 0 && dungeonIndex < Project.NumDungeons)
+                {
+                    SetDungeon(Project.GetDungeon(dungeonIndex));
+                }
+            }
+
+            ImGui.SameLine();
             if (ImGuiX.InputHex("Floor", ref floor, min: 0, max: Dungeon.NumFloors - 1))
             {
                 minimap.SetMap(Dungeon, floor);
@@ -103,4 +112,11 @@ public class DungeonEditor : Frame
     // ================================================================================
     // Private methods
     // ================================================================================
+
+    void SetDungeon(Dungeon dungeon)
+    {
+        Dungeon = dungeon;
+        floor = Math.Min(floor, dungeon.NumFloors - 1);
+        minimap.SetMap(dungeon, floor);
+    }
 }
