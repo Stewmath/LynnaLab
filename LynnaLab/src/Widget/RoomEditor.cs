@@ -139,7 +139,7 @@ public class RoomEditor : Frame
 
     int suppressEvents = 0;
     bool handlingObjectSelection, handlingWarpSelection;
-    string minimapTabToSelect;
+    string minimapTabToSelect; // Set to change right tab bar programmatically
 
     // Maps dungeon index to floor number. Allows the editor to remember what floor we were last
     // on for a given dungeon.
@@ -284,15 +284,27 @@ public class RoomEditor : Frame
             var flags = minimapTabToSelect == name ? ImGuiTabItemFlags.SetSelected : 0;
             if (ImGuiX.BeginTabItem(name, flags))
             {
-                if (ActiveMinimap != minimap)
+                if (ActiveMinimap != minimap && minimapTabToSelect == null)
                 {
+                    // This should only execute when the tab is changed via a click, NOT when it's
+                    // changed programmatically.
                     ActiveMinimap = minimap;
                     SetRoomLayout(
                         ActiveMap.GetRoomLayout(ActiveMinimap.SelectedX, ActiveMinimap.SelectedY),
                         0);
                 }
 
-                return true;
+                // Only return true if ActiveMinimap == minimap, because the code within the tab item
+                // may make this assumption. This condition may not be true while the tab is being
+                // changed programmatically. In this case the tab may be blank for a frame, which
+                // isn't an issue.
+                if (ActiveMinimap == minimap)
+                    return true;
+                else
+                {
+                    ImGui.EndTabItem();
+                    return false;
+                }
             }
 
             return false;
