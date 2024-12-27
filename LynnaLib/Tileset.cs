@@ -297,6 +297,22 @@ namespace LynnaLib
             SetTileCollision(index, b);
         }
 
+        public int GetSubTilePalette(int index, int x, int y)
+        {
+            VerifySubTileParams(index, x, y);
+            return GetSubTileFlags(index, x, y) & 7;
+        }
+
+        public void SetSubTilePalette(int index, int x, int y, int palette)
+        {
+            VerifySubTileParams(index, x, y);
+            Debug.Assert(palette >= 0 && palette <= 7);
+
+            byte flags = GetSubTileFlags(index, x, y);
+            flags = (byte)((flags & (~7)) | palette);
+            SetSubTileFlags(index, x, y, flags);
+        }
+
 
         // Returns a list of tiles which have changed
         public IList<byte> UpdateAnimations(int frames)
@@ -659,7 +675,8 @@ namespace LynnaLib
 
         protected void VerifySubTileParams(int index, int x, int y)
         {
-            Debug.Assert(index >= 0 && index <= 0xff && x >= 0 && x <= 1 && y >= 0 && y <= 1);
+            Debug.Assert(index >= 0 && index <= 0xff && x >= 0 && x <= 1 && y >= 0 && y <= 1,
+                         $"Invalid subtile params: {index}, {x}, {y}");
         }
 
         // ================================================================================

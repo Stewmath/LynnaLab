@@ -2,6 +2,13 @@ namespace LynnaLab;
 
 public class TilesetEditor : Frame
 {
+    enum BrushMode
+    {
+        Normal = 0,
+        Palette = 1,
+        Subtile = 2,
+    }
+
     // ================================================================================
     // Constructors
     // ================================================================================
@@ -12,11 +19,15 @@ public class TilesetEditor : Frame
         tilesetViewer = new TilesetViewer(Workspace);
         subTileViewer = new SubTileViewer(this);
         tileEditor = new TileEditor(this);
+        subtileBrush = new Brush();
 
         tilesetViewer.SelectedEvent += (selectedIndex) =>
         {
-            tileEditor.SetTile(Tileset, selectedIndex);
+            if (brushMode == BrushMode.Normal)
+                tileEditor.SetTile(Tileset, selectedIndex);
         };
+
+        RegisterMouseActions();
 
         SetTileset(0, 1);
     }
@@ -27,6 +38,10 @@ public class TilesetEditor : Frame
     TilesetViewer tilesetViewer;
     SubTileViewer subTileViewer;
     TileEditor tileEditor;
+
+    BrushMode brushMode;
+    int selectedPalette; // Palette to set when in palette brush mode
+    Brush subtileBrush; // Brush to use when in subtile brush mode
 
     // ================================================================================
     // Properties
@@ -47,9 +62,34 @@ public class TilesetEditor : Frame
             (t, s) => SetTileset(t, s));
         ImGui.SameLine();
         ImGuiX.ShiftCursorScreenPos(10.0f, 0.0f);
+
         if (ImGui.Button("Open Cloner"))
         {
             Workspace.OpenTilesetCloner(Tileset, Tileset);
+        }
+
+        ImGuiX.Checkbox("Palette brush mode", brushMode == BrushMode.Palette, (brushOn) =>
+        {
+            brushMode = brushOn ? BrushMode.Palette : BrushMode.Normal;
+            tilesetViewer.SubTileMode = brushOn;
+            tilesetViewer.Selectable = !brushOn;
+            RegisterMouseActions();
+        });
+        ImGui.SameLine();
+        ImGuiX.Checkbox("Subtile brush mode", brushMode == BrushMode.Subtile, (brushOn) =>
+        {
+            brushMode = brushOn ? BrushMode.Subtile : BrushMode.Normal;
+            tilesetViewer.SubTileMode = brushOn;
+            tilesetViewer.Selectable = !brushOn;
+            RegisterMouseActions();
+        });
+
+        if (brushMode == BrushMode.Palette)
+        {
+            ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
+            ImGui.SameLine();
+            ImGuiX.InputHex("Palette index", ref selectedPalette, digits: 1, max: 7);
+            ImGui.PopItemWidth();
         }
 
         ImGui.BeginChild("Tileset Viewer Panel", new Vector2(tilesetViewer.WidgetSize.X, HEIGHT));
@@ -71,7 +111,7 @@ public class TilesetEditor : Frame
 
         ImGui.SameLine();
         ImGui.BeginChild("Palette Panel", new Vector2(0.0f, HEIGHT));
-        ImGuiLL.RenderPaletteHeader(Tileset.PaletteHeaderGroup);
+        ImGuiLL.RenderPaletteHeader(Tileset.PaletteHeaderGroup, brushMode == BrushMode.Palette ? selectedPalette : -1);
         ImGui.EndChild();
 
         ImGui.SeparatorText("Tileset Properties");
@@ -105,6 +145,116 @@ public class TilesetEditor : Frame
         tilesetViewer.SetTileset(Tileset);
         subTileViewer.SetTileset(Tileset);
         tileEditor.SetTile(Tileset, tilesetViewer.SelectedIndex);
+    }
+
+    void SubTileDrawer(int x, int y, int tile)
+    {
+        if (!tilesetViewer.XYValid(x, y))
+            return;
+        var (t, tx, ty) = tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
+        Tileset.SetSubTileIndex(t, tx, ty, (byte)tile);
+    }
+
+    void RegisterMouseActions()
+    {
+        // The mouse actions we register in the tilesetViewer are only enabled situationally. This
+        // function unregisters everything and then reregisters only what we need for the current mode.
+        tilesetViewer.RemoveMouseAction("Brush LeftClick");
+        tilesetViewer.RemoveMouseAction("Brush Ctrl+LeftClick");
+        tilesetViewer.RemoveMouseAction("Palette Brush RightClick");
+        tilesetViewer.RemoveMouseAction("Subtile Brush RightClick");
+
+        if (brushMode != BrushMode.Normal)
+        {
+            // Left click: Draw when in a brush mode
+            tilesetViewer.AddMouseAction(
+                MouseButton.LeftClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
+                (_, args) =>
+                {
+                    if (brushMode == BrushMode.Palette)
+                    {
+                        var (t, x, y) = tilesetViewer.ToSubTileIndex(args.selectedIndex);
+                        Tileset.SetSubTilePalette(t, x, y, selectedPalette);
+                    }
+                    else if (brushMode == BrushMode.Subtile)
+                    {
+                        subtileBrush.Draw(SubTileDrawer,
+                                          args.selectedIndex % tilesetViewer.Width,
+                                          args.selectedIndex / tilesetViewer.Width,
+                                          subtileBrush.BrushWidth,
+                                          subtileBrush.BrushHeight);
+                    }
+                },
+                name: "Brush LeftClick"
+            );
+
+            // Ctrl + left click: Rectangle fill when in a brush mode
+            tilesetViewer.AddMouseAction(
+                MouseButton.LeftClick, MouseModifier.Ctrl, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
+                (_, args) =>
+                {
+                    if (brushMode == BrushMode.Palette)
+                    {
+                        args.Foreach((x1, y1) =>
+                        {
+                            int tile = x1 + y1 * tilesetViewer.Width;
+                            var (t, x, y) = tilesetViewer.ToSubTileIndex(tile);
+                            Tileset.SetSubTilePalette(t, x, y, selectedPalette);
+                        });
+                    }
+                    else if (brushMode == BrushMode.Subtile)
+                    {
+                        subtileBrush.Draw(SubTileDrawer,
+                                          args.topLeft.X,
+                                          args.topLeft.Y,
+                                          args.SelectedWidth,
+                                          args.SelectedHeight
+                        );
+                    }
+                },
+                name: "Brush Ctrl+LeftClick"
+            );
+        }
+
+        if (brushMode == BrushMode.Palette)
+        {
+            // Right click: Copy when in palette brush mode
+            tilesetViewer.AddMouseAction(
+                MouseButton.RightClick, MouseModifier.None, MouseAction.Click, GridAction.Callback,
+                (_, args) =>
+                {
+                    if (brushMode == BrushMode.Palette)
+                    {
+                        var (t, x, y) = tilesetViewer.ToSubTileIndex(args.selectedIndex);
+                        selectedPalette = Tileset.GetSubTilePalette(t, x, y);
+                    }
+                },
+                name: "Palette Brush RightClick"
+            );
+        }
+
+        if (brushMode == BrushMode.Subtile)
+        {
+            // Right click + drag: Rectangle select when in subtile brush mode
+            tilesetViewer.AddMouseAction(
+                MouseButton.RightClick,
+                MouseModifier.None,
+                MouseAction.ClickDrag,
+                GridAction.SelectRangeCallback,
+                (_, args) =>
+                {
+                    if (brushMode == BrushMode.Subtile)
+                    {
+                        subtileBrush.SetTiles(tilesetViewer, args.RectArray((x, y) =>
+                        {
+                            var (t, x2, y2) = tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
+                            return tilesetViewer.Tileset.GetSubTileIndex(t, x2, y2);
+                        }));
+                    }
+                },
+                name: "Subtile Brush RightClick"
+            );
+        }
     }
 }
 

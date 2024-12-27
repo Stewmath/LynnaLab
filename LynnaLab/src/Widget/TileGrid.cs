@@ -488,7 +488,7 @@ public class TileGrid : SizedWidget
     }
 
     public void AddMouseAction(MouseButton button, MouseModifier mod, MouseAction mouseAction,
-        GridAction action, TileGridEventHandler callback = null, bool brushPreview = false)
+        GridAction action, TileGridEventHandler callback = null, bool brushPreview = false, string name = null)
     {
         TileGridAction act;
         if (action == GridAction.Callback || action == GridAction.SelectRangeCallback)
@@ -502,10 +502,16 @@ public class TileGrid : SizedWidget
                 throw new Exception("This action doesn't take a callback.");
         }
 
-        act = new TileGridAction(button, mod, mouseAction, action, callback, brushPreview);
+        act = new TileGridAction(button, mod, mouseAction, action, callback, brushPreview, name);
 
         // Insert at front of list; newest actions get highest priority
         actionList.Insert(0, act);
+    }
+
+    public void RemoveMouseAction(string name)
+    {
+        Debug.Assert(name != null);
+        actionList.RemoveAll(act => act.name == name);
     }
 
     /// <summary>
@@ -628,6 +634,14 @@ public class TileGrid : SizedWidget
             });
     }
 
+    /// <summary>
+    /// Returns true if x/y coords correspond to a valid tile index
+    /// </summary>
+    public bool XYValid(int x, int y)
+    {
+        return x >= 0 && y >= 0 && x < Width && y < Height && x + y * Width < MaxIndex;
+    }
+
     // ================================================================================
     // Protected methods
     // ================================================================================
@@ -670,14 +684,6 @@ public class TileGrid : SizedWidget
         br += new Vector2(TileWidth, TileHeight) * Scale;
 
         return FRect.FromVectors(tl, br);
-    }
-
-    /// <summary>
-    /// Returns true if x/y coords correspond to a valid tile index
-    /// </summary>
-    protected bool XYValid(int x, int y)
-    {
-        return x >= 0 && y >= 0 && x < Width && y < Height && x + y * Width < MaxIndex;
     }
 
     // ================================================================================
@@ -745,6 +751,8 @@ public class TileGrid : SizedWidget
     /// </summary>
     class TileGridAction
     {
+        public readonly string name; // An identifier used to disable previously added actions, often null
+
         // Conditions to trigger action
         public readonly MouseButton button;
         public readonly MouseModifier mod;
@@ -756,15 +764,15 @@ public class TileGrid : SizedWidget
         public readonly TileGridEventHandler callback;
 
         public TileGridAction(MouseButton button, MouseModifier mod, MouseAction mouseAction,
-                              GridAction action, TileGridEventHandler callback, bool brushPreview)
+                              GridAction action, TileGridEventHandler callback, bool brushPreview, string name)
         {
             this.button = button;
             this.mod = mod;
             this.mouseAction = mouseAction;
-            this.brushPreview = brushPreview;
-
             this.action = action;
             this.callback = callback;
+            this.brushPreview = brushPreview;
+            this.name = name;
         }
 
         /// <summary>

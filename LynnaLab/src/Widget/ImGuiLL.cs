@@ -159,7 +159,7 @@ public class ImGuiLL
     /// Render all palettes in a palette header group as buttons that can be clicked to change them.
     /// Note: PaletteHeaderData.GetColor() is inefficient, not great to call it every frame
     /// </summary>
-    public static void RenderPaletteHeader(PaletteHeaderGroup phg)
+    public static void RenderPaletteHeader(PaletteHeaderGroup phg, int paletteToHighlight)
     {
         const float COLUMN_WIDTH = 30.0f;
         int callCount = 0;
@@ -190,6 +190,13 @@ public class ImGuiLL
                     for (int p = data.FirstPalette; p < data.FirstPalette + data.NumPalettes; p++)
                     {
                         ImGui.TableSetColumnIndex(p);
+
+                        // Set the background to blue when rendering the selected palette
+                        if (p == paletteToHighlight)
+                            ImGui.TableSetBgColor(ImGuiTableBgTarget.CellBg, Color.Blue.ToUInt());
+                        else
+                            ImGui.TableSetBgColor(ImGuiTableBgTarget.CellBg, ImGui.GetColorU32(ImGuiCol.TableRowBg));
+
                         if (data.IsResolvable)
                         {
                             // Color picker button

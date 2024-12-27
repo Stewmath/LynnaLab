@@ -60,6 +60,12 @@ namespace LynnaLib
         // Conversion
         // ================================================================================
 
+        // Not implicit because automatic conversion to uint could be a bit too permissive
+        public uint ToUInt()
+        {
+            return (uint)(R | (G<<8) | (B<<16) | (A<<24));
+        }
+
         public static Color FromCairo(Cairo.Color c)
         {
             return FromRgbaDbl(c.R, c.G, c.B, c.A);
