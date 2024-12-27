@@ -59,6 +59,58 @@ public static class ImGuiX
     }
 
     // ================================================================================
+    // Function wrappers
+    // ================================================================================
+
+    /// <summary>
+    /// Like ImGui.Begin but takes a callback for something to do when window is closed
+    /// </summary>
+    public static bool Begin(string name, Action onClose)
+    {
+        bool value = true;
+        bool retval = ImGui.Begin(name, ref value);
+        if (!value)
+            onClose();
+        return retval;
+    }
+
+    /// <summary>
+    /// ImGui.NET's wrapper for BeginTabItem doesn't support passing "null" in the p_open parameter,
+    /// so we must have a custom implementation to support that.
+    /// See: https://github.com/ImGuiNET/ImGui.NET/issues/495
+    /// </summary>
+    public static unsafe bool BeginTabItem(string label, ImGuiTabItemFlags flags)
+    {
+        byte* native_label = (byte*)Marshal.StringToCoTaskMemUTF8(label);
+        byte ret;
+        ret = ImGuiNative.igBeginTabItem(native_label, (byte*)0, flags);
+        Marshal.FreeCoTaskMem((nint)native_label);
+        return ret != 0;
+    }
+
+    /// <summary>
+    /// Set the Drag/Drop payload with an unmanaged type (ie. an int, or a struct which does not
+    /// point to any managed types)
+    /// </summary>
+    public static unsafe void SetDragDropPayload<T>(string type, T payload) where T : unmanaged
+    {
+        IntPtr ptr = (IntPtr)(&payload);
+        ImGui.SetDragDropPayload(type, ptr, (uint)sizeof(T));
+    }
+
+    public static unsafe T? AcceptDragDropPayload<T>(string type) where T : unmanaged
+    {
+        var payload = ImGui.AcceptDragDropPayload(type);
+        if (payload.NativePtr == null)
+            return null;
+        Debug.Assert(payload.DataSize == sizeof(T));
+
+        IntPtr ptr = (IntPtr)payload.Data;
+        return Marshal.PtrToStructure<T>(ptr);
+    }
+
+
+    // ================================================================================
     // Custom widgets
     // ================================================================================
 
@@ -77,22 +129,6 @@ public static class ImGuiX
         Vector2 totalSize = new Vector2(image.Width, image.Height);
         ImGui.Image(image.GetBinding(alpha: alpha), drawSize * scale,
                     (Vector2)topLeft / totalSize, (Vector2)bottomRight / totalSize);
-    }
-
-    // ================================================================================
-    // Function wrappers
-    // ================================================================================
-
-    /// <summary>
-    /// Like ImGui.Begin but takes a callback for something to do when window is closed
-    /// </summary>
-    public static bool Begin(string name, Action onClose)
-    {
-        bool value = true;
-        bool retval = ImGui.Begin(name, ref value);
-        if (!value)
-            onClose();
-        return retval;
     }
 
     /// <summary>
@@ -209,27 +245,6 @@ public static class ImGuiX
     }
 
     /// <summary>
-    /// Set the Drag/Drop payload with an unmanaged type (ie. an int, or a struct which does not
-    /// point to any managed types)
-    /// </summary>
-    public static unsafe void SetDragDropPayload<T>(string type, T payload) where T : unmanaged
-    {
-        IntPtr ptr = (IntPtr)(&payload);
-        ImGui.SetDragDropPayload(type, ptr, (uint)sizeof(T));
-    }
-
-    public static unsafe T? AcceptDragDropPayload<T>(string type) where T : unmanaged
-    {
-        var payload = ImGui.AcceptDragDropPayload(type);
-        if (payload.NativePtr == null)
-            return null;
-        Debug.Assert(payload.DataSize == sizeof(T));
-
-        IntPtr ptr = (IntPtr)payload.Data;
-        return Marshal.PtrToStructure<T>(ptr);
-    }
-
-    /// <summary>
     /// Same as Text() but centers the text in the available region horizontally. Not for multiline
     /// text.
     /// </summary>
@@ -282,20 +297,6 @@ public static class ImGuiX
         if (!ImGui.IsItemHovered())
             return;
         Tooltip(text);
-    }
-
-    /// <summary>
-    /// ImGui.NET's wrapper for BeginTabItem doesn't support passing "null" in the p_open parameter,
-    /// so we must have a custom implementation to support that.
-    /// See: https://github.com/ImGuiNET/ImGui.NET/issues/495
-    /// </summary>
-    public static unsafe bool BeginTabItem(string label, ImGuiTabItemFlags flags)
-    {
-        byte* native_label = (byte*)Marshal.StringToCoTaskMemUTF8(label);
-        byte ret;
-        ret = ImGuiNative.igBeginTabItem(native_label, (byte*)0, flags);
-        Marshal.FreeCoTaskMem((nint)native_label);
-        return ret != 0;
     }
 
     /// <summary>
