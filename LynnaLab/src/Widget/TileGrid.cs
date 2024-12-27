@@ -27,6 +27,7 @@ public class TileGrid : SizedWidget
     int draggingTileIndex = -1;
     int maxIndexOverride = -1;
     bool isHovered; // Return value of "IsItemHovered()"
+    bool suppressCurrentClick;
 
     // For rectangle selection
     TileGridAction activeRectSelectAction = null;
@@ -375,6 +376,15 @@ public class TileGrid : SizedWidget
                     // Check mouse actions
                     foreach (TileGridAction action in actionList)
                     {
+                        // suppressCurrentClick is an override telling us to ignore all mouse
+                        // actions until the mouse is released and clicked again
+                        if (suppressCurrentClick)
+                        {
+                            if (!ImGui.IsMouseDown(ImGuiMouseButton.Left) && !ImGui.IsMouseDown(ImGuiMouseButton.Right))
+                                suppressCurrentClick = false;
+                            break;
+                        }
+
                         if (action.ActionTriggered())
                         {
                             if (action.action == GridAction.Callback)
@@ -415,6 +425,13 @@ public class TileGrid : SizedWidget
                 // Button still being held
                 if (mouseIndex != -1)
                     rectSelectEnd = mouseIndex;
+
+                // If clicked the alternate button, cancel the rectangle selection without doing anything
+                if (ImGui.IsMouseClicked(activeRectSelectAction.GetCancelButton()))
+                {
+                    suppressCurrentClick = true;
+                    activeRectSelectAction = null;
+                }
             }
             else
             {
@@ -794,7 +811,7 @@ public class TileGrid : SizedWidget
         /// <summary>
         /// Return true if the current pressed mouse buttons match the "button" variable.
         /// </summary>
-        public bool ButtonMatchesState()
+        bool ButtonMatchesState()
         {
             Func<ImGuiMouseButton, bool> checker;
 
@@ -824,7 +841,7 @@ public class TileGrid : SizedWidget
         /// <summary>
         /// Return true if the modifier keys (ctrl, shift) match the "mod" variable.
         /// </summary>
-        public bool ModifierMatchesState()
+        bool ModifierMatchesState()
         {
             if (mod.HasFlag(MouseModifier.Any))
                 return true;
@@ -837,6 +854,16 @@ public class TileGrid : SizedWidget
                 flags |= MouseModifier.Shift;
 
             return mod == flags;
+        }
+
+        public ImGuiMouseButton GetCancelButton()
+        {
+            if (button == MouseButton.LeftClick)
+                return ImGuiMouseButton.Right;
+            else if (button == MouseButton.RightClick)
+                return ImGuiMouseButton.Left;
+            else
+                return ImGuiMouseButton.Middle;
         }
     }
 }
