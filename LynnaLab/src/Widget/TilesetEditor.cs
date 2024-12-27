@@ -153,7 +153,10 @@ public class TilesetEditor : Frame
         Tileset = t;
         tilesetViewer.SetTileset(Tileset);
         subTileViewer.SetTileset(Tileset);
-        tileEditor.SetTile(Tileset, tilesetViewer.SelectedIndex);
+        if (brushMode == BrushMode.Normal)
+            tileEditor.SetTile(Tileset, tilesetViewer.SelectedIndex);
+        else
+            tileEditor.SetTile(Tileset, 0);
     }
 
     /// <summary>
@@ -184,9 +187,10 @@ public class TilesetEditor : Frame
                 MouseButton.LeftClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
                 (_, args) =>
                 {
+                    var (t, x, y) = tilesetViewer.ToSubTileIndex(args.selectedIndex);
+
                     if (brushMode == BrushMode.Palette)
                     {
-                        var (t, x, y) = tilesetViewer.ToSubTileIndex(args.selectedIndex);
                         Tileset.SetSubTilePalette(t, x, y, selectedPalette);
                     }
                     else if (brushMode == BrushMode.Subtile)
@@ -197,6 +201,8 @@ public class TilesetEditor : Frame
                                           subtileBrush.BrushWidth,
                                           subtileBrush.BrushHeight);
                     }
+
+                    tileEditor.SetTile(Tileset, t);
                 },
                 name: "Brush LeftClick"
             );
@@ -241,6 +247,7 @@ public class TilesetEditor : Frame
                     {
                         var (t, x, y) = tilesetViewer.ToSubTileIndex(args.selectedIndex);
                         selectedPalette = Tileset.GetSubTilePalette(t, x, y);
+                        tileEditor.SetTile(Tileset, t);
                     }
                 },
                 name: "Palette Brush RightClick"
@@ -289,6 +296,13 @@ public class TilesetEditor : Frame
                             Image image = TopLevel.Backend.ImageFromBitmap(bitmap);
                             subtileBrushInterfacer.SetPreviewImage(image);
                             tilesetViewer.TooltipImagePreview = subtileBrush.IsSingleTile;
+                        }
+
+                        // If we selected just one tile, select it in the tile editor widget
+                        if (subtileBrush.IsSingleTile)
+                        {
+                            var (t, _, _) = tilesetViewer.ToSubTileIndex(args.topLeft.X + args.topLeft.Y * tilesetViewer.Width);
+                            tileEditor.SetTile(Tileset, t);
                         }
                     }
                 },
