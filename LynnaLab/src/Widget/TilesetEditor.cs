@@ -81,6 +81,7 @@ public class TilesetEditor : Frame
                     tilesetViewer.Selectable = mode == BrushMode.Normal;
                     tilesetViewer.SubTileMode = mode != BrushMode.Normal;
                     tilesetViewer.BrushInterfacer = mode == BrushMode.Subtile ? subtileBrushInterfacer : null;
+                    tilesetViewer.TooltipImagePreview = mode != BrushMode.Subtile || subtileBrush.IsSingleTile;
                     RegisterMouseActions();
                 }
                 if (mode == brushMode)
@@ -224,6 +225,7 @@ public class TilesetEditor : Frame
                         );
                     }
                 },
+                brushPreview: true,
                 name: "Brush Ctrl+LeftClick"
             );
         }
@@ -249,10 +251,7 @@ public class TilesetEditor : Frame
         {
             // Right click + drag: Rectangle select when in subtile brush mode
             tilesetViewer.AddMouseAction(
-                MouseButton.RightClick,
-                MouseModifier.None,
-                MouseAction.ClickDrag,
-                GridAction.SelectRangeCallback,
+                MouseButton.RightClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
                 (_, args) =>
                 {
                     if (brushMode == BrushMode.Subtile)
@@ -270,7 +269,27 @@ public class TilesetEditor : Frame
                                 };
                         }));
 
-                        // Update preview image.
+                        // Render the preview image
+                        using (Bitmap bitmap = new Bitmap(subtileBrush.BrushWidth * 8, subtileBrush.BrushHeight * 8))
+                        {
+                            bitmap.Lock();
+                            subtileBrush.Draw(
+                                (x, y, subtile) =>
+                                {
+                                    SubTileDescription desc = new SubTileDescription(
+                                        Tileset.GetSubTileGfxBytes(subtile.subtile), subtile.GetFlags());
+                                    GbGraphics.RenderRawTile(bitmap, x * 8, y * 8,
+                                                             desc.graphics,
+                                                             Tileset.GraphicsState.GetBackgroundPalettes()[desc.flags & 7],
+                                                             desc.flags);
+                                },
+                                0, 0, subtileBrush.BrushWidth, subtileBrush.BrushHeight
+                            );
+                            bitmap.Unlock();
+                            Image image = TopLevel.Backend.ImageFromBitmap(bitmap);
+                            subtileBrushInterfacer.SetPreviewImage(image);
+                            tilesetViewer.TooltipImagePreview = subtileBrush.IsSingleTile;
+                        }
                     }
                 },
                 name: "Subtile Brush RightClick"

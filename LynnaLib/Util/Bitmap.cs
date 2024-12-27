@@ -53,6 +53,8 @@ namespace LynnaLib
             get { return surface.Height; }
         }
 
+        public int Stride { get { return surface.Stride; } }
+
 
         public Cairo.Context CreateContext()
         {

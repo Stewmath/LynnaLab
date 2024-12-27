@@ -98,7 +98,7 @@ namespace LynnaLib
         /// <summary>
         /// Converts a description of a tile from a tileset to a bitmap.
         /// </summary>
-        public static void RenderTile(Bitmap bitmap, TileDescription tileDesc, IList<Color>[] palettes)
+        public static void RenderTile(Bitmap bitmap, int xO, int yO, TileDescription tileDesc, IList<Color>[] palettes)
         {
             Debug.Assert(palettes.Length == 8);
 
@@ -114,10 +114,10 @@ namespace LynnaLib
             bitmap.Lock();
             using (Cairo.Context cr = bitmap.CreateContext())
             {
-                renderSubTile(cr, tileDesc.tileTL, palettes, 0, 0);
-                renderSubTile(cr, tileDesc.tileTR, palettes, 8, 0);
-                renderSubTile(cr, tileDesc.tileBL, palettes, 0, 8);
-                renderSubTile(cr, tileDesc.tileBR, palettes, 8, 8);
+                renderSubTile(cr, tileDesc.tileTL, palettes, xO + 0, yO + 0);
+                renderSubTile(cr, tileDesc.tileTR, palettes, xO + 8, yO + 0);
+                renderSubTile(cr, tileDesc.tileBL, palettes, xO + 0, yO + 8);
+                renderSubTile(cr, tileDesc.tileBR, palettes, xO + 8, yO + 8);
             }
             bitmap.Unlock();
         }

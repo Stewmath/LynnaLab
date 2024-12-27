@@ -30,7 +30,10 @@ public interface IBackend
     /// </summary>
     public void Close();
 
-    // Image creation functions
+    /// <summary>
+    /// Creates an image from the given bitmap. The image tracks changes from the bitmap as long as
+    /// the bitmap is not Disposed.
+    /// </summary>
     public Image ImageFromBitmap(Bitmap bitmap,
                                  Interpolation interpolation = Interpolation.Nearest);
     /// <summary>

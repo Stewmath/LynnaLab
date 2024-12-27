@@ -234,8 +234,7 @@ namespace LynnaLib
             {
                 int tileIndex = GetSubTileIndex(index, x, y);
                 byte flags = GetSubTileFlags(index, x, y);
-                int tileOffset = 0x1000 + ((sbyte)tileIndex) * 16;
-                return new SubTileDescription(graphicsState.VramBuffer[1].AsSpan().Slice(tileOffset, 16), flags);
+                return new SubTileDescription(GetSubTileGfxBytes(tileIndex), flags);
             };
 
             SubTileDescription tl = getSubTileDescription(index, 0, 0);
@@ -244,7 +243,7 @@ namespace LynnaLib
             SubTileDescription br = getSubTileDescription(index, 1, 1);
 
             TileDescription desc = new TileDescription(tl, tr, bl, br);
-            GbGraphics.RenderTile(image, desc, GraphicsState.GetBackgroundPalettes());
+            GbGraphics.RenderTile(image, 0, 0, desc, GraphicsState.GetBackgroundPalettes());
 
             tileImagesDrawn[index] = true;
             image.MarkModified();
@@ -252,6 +251,12 @@ namespace LynnaLib
                 TileModifiedEvent?.Invoke(this, index);
 
             return image;
+        }
+
+        public ReadOnlySpan<byte> GetSubTileGfxBytes(int subTileIndex)
+        {
+            int tileOffset = 0x1000 + ((sbyte)subTileIndex) * 16;
+            return graphicsState.VramBuffer[1].AsSpan().Slice(tileOffset, 16);
         }
 
         // Functions dealing with subtiles

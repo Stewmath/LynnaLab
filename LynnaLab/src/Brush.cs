@@ -134,7 +134,7 @@ public class BrushInterfacer
         // This is a pretty complicated lambda. The gist of it is to create a lambda which "cancels
         // out" the template parameter T so that "drawAll" can be a class field. (This class is not
         // generic, so we can't store "brush" or the "tileDrawer" lambda in class fields.)
-        interfacer.drawAll = (prepTile, x1, y1, x2, y2) => brush.Draw((x, y, i) => prepAndDraw(x, y, i, prepTile), x1, y1, x2, y2);
+        interfacer.drawAll = (prepTile, x1, y1, w, h) => brush.Draw((x, y, i) => prepAndDraw(x, y, i, prepTile), x1, y1, w, h);
 
         return interfacer;
     }
@@ -184,17 +184,24 @@ public class BrushInterfacer
     /// render position to the position at which it should be drawn, or return false if the (x, y)
     /// position is invalid.
     /// </summary>
-    public void Draw(Func<int, int, bool> prepTile, int x1, int y1, int x2, int y2)
+    public void Draw(Func<int, int, bool> prepTile, int x1, int y1, int width, int height)
     {
         if (previewImage != null)
         {
-            if (!prepTile(x1, y1))
-                return;
-            // TODO: Adjust to dimensions
-            ImGuiX.DrawImage(previewImage);
+            for (int x=x1; x<x1+width; x++)
+            {
+                for (int y=y1; y<y1+height; y++)
+                {
+                    if (!prepTile(x, y))
+                        continue;
+                    int tileSize = 8; // Not good to hardcode this
+                    Vector2 offset = new Vector2((x - x1) % BrushWidth, (y - y1) % BrushHeight) * tileSize;
+                    ImGuiX.DrawImage(previewImage, topLeft: offset, bottomRight: offset + new Vector2(tileSize, tileSize));
+                }
+            }
         }
         else if (drawAll != null)
-            drawAll(prepTile, x1, y1, x2, y2);
+            drawAll(prepTile, x1, y1, width, height);
     }
 
     /// <summary>

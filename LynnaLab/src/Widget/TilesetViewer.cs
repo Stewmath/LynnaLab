@@ -22,6 +22,8 @@ public class TilesetViewer : TileGrid
 
         base.OnHover = (tile) =>
         {
+            if (!base.TooltipImagePreview)
+                return;
             ImGui.BeginTooltip();
             if (subTileMode)
             {
