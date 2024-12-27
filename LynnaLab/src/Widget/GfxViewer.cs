@@ -111,7 +111,7 @@ public class GfxViewer : TileGrid
         byte[] data = new byte[16];
         Array.Copy(graphicsState.VramBuffer[bank], offset, data, 0, 16);
 
-        using (Bitmap _subImage = GbGraphics.TileToBitmap(data))
+        using (Bitmap _subImage = GbGraphics.RawTileToBitmap(data))
         {
             Image subImage = TopLevel.ImageFromBitmap(_subImage);
             subImage.DrawOn(image,

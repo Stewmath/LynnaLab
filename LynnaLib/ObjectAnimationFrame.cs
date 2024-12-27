@@ -98,7 +98,7 @@ namespace LynnaLib
                     byte[] gfxData = new byte[0x20];
                     gfxStream.Read(gfxData, 0, 0x20);
 
-                    Bitmap bitmap = GbGraphics.TileToBitmap(gfxData, palettes[flags & 7], flags);
+                    Bitmap bitmap = GbGraphics.RawTileToBitmap(gfxData, palettes[flags & 7], flags);
                     bitmaps.Add(new Tuple<Bitmap, int, int>(bitmap, x, y));
                 }
             }

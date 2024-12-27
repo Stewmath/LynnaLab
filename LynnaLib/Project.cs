@@ -1043,8 +1043,8 @@ namespace LynnaLib
             byte[] rightHalf = new byte[32];
             stream.Read(leftHalf, 0, 32);
             stream.Read(rightHalf, 0, 32);
-            Bitmap leftBitmap = GbGraphics.TileToBitmap(leftHalf, GetStandardSpritePalettes()[0]);
-            Bitmap rightBitmap = GbGraphics.TileToBitmap(rightHalf, GetStandardSpritePalettes()[0]);
+            Bitmap leftBitmap = GbGraphics.RawTileToBitmap(leftHalf, GetStandardSpritePalettes()[0]);
+            Bitmap rightBitmap = GbGraphics.RawTileToBitmap(rightHalf, GetStandardSpritePalettes()[0]);
             Bitmap fullBitmap = new Bitmap(16, 16, Cairo.Format.Argb32);
             using (Cairo.Context cr = fullBitmap.CreateContext())
             {

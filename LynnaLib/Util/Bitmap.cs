@@ -37,6 +37,7 @@ namespace LynnaLib
 
         Cairo.ImageSurface surface;
         IntPtr pixelsPointer;
+        int lockCount;
 
         public event Action ModifiedEvent;
         public event Action<object> DisposedEvent;
@@ -105,6 +106,27 @@ namespace LynnaLib
             {
                 throw new Exception("Unsupported Cairo.Surface format: " + surface.Format);
             }
+        }
+
+        /// <summary>
+        /// Prepares the bitmap for writing directly to the pixel array, returns the pointer to said array
+        /// </summary>
+        public nint Lock()
+        {
+            if (lockCount == 0)
+                surface.Flush();
+            lockCount++;
+            return surface.DataPtr;
+        }
+
+        /// <summary>
+        /// Pair with a previous call to Lock to mark the pixel drawing operation as completed.
+        /// </summary>
+        public void Unlock()
+        {
+            lockCount--;
+            if (lockCount == 0)
+                surface.MarkDirty();
         }
 
         public void Dispose()

@@ -230,30 +230,21 @@ namespace LynnaLib
             var image = tileImagesCache[index];
 
             // Draw the tile
-            using (Cairo.Context cr = image.CreateContext())
+            var getSubTileDescription = (int index, int x, int y) =>
             {
-                for (int y = 0; y < 2; y++)
-                {
-                    for (int x = 0; x < 2; x++)
-                    {
-                        int tileIndex = GetSubTileIndex(index, x, y);
-                        int flags = GetSubTileFlags(index, x, y);
+                int tileIndex = GetSubTileIndex(index, x, y);
+                byte flags = GetSubTileFlags(index, x, y);
+                int tileOffset = 0x1000 + ((sbyte)tileIndex) * 16;
+                return new SubTileDescription(graphicsState.VramBuffer[1].AsSpan().Slice(tileOffset, 16), flags);
+            };
 
-                        int tileOffset = 0x1000 + ((sbyte)tileIndex) * 16;
+            SubTileDescription tl = getSubTileDescription(index, 0, 0);
+            SubTileDescription tr = getSubTileDescription(index, 1, 0);
+            SubTileDescription bl = getSubTileDescription(index, 0, 1);
+            SubTileDescription br = getSubTileDescription(index, 1, 1);
 
-                        byte[] src = new byte[16];
-                        Array.Copy(graphicsState.VramBuffer[1], tileOffset, src, 0, 16);
-                        using (var subImage = GbGraphics.TileToBitmap(
-                            src,
-                            GraphicsState.GetBackgroundPalettes()[flags & 7],
-                            flags))
-                        {
-                            cr.SetSourceSurface(subImage, x * 8, y * 8);
-                            cr.Paint();
-                        }
-                    }
-                }
-            }
+            TileDescription desc = new TileDescription(tl, tr, bl, br);
+            GbGraphics.RenderTile(image, desc, GraphicsState.GetBackgroundPalettes());
 
             tileImagesDrawn[index] = true;
             image.MarkModified();
