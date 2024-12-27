@@ -67,7 +67,7 @@ public class MapImageCacher : ImageCacher<(Map map, int floor)>
         {
             var dungeon = key.map as Dungeon;
 
-            EventHandler<DungeonRoomChangedEventArgs> dHandler = (_, args) =>
+            EventHandler<DungeonRoomChangedEventArgs> roomChangedHandler = (_, args) =>
             {
                 if (args.all)
                 {
@@ -84,7 +84,15 @@ public class MapImageCacher : ImageCacher<(Map map, int floor)>
                     RegenerateImageWatchers(image, key, imageEventWrappers);
                 }
             };
-            dungeon.RoomChangedEvent += dHandler;
+            EventHandler<EventArgs> floorsChangedHandler = (_, args) =>
+            {
+                // Added or removed a floor: Just invalidate all floors to keep things simple.
+                Redraw(image, key);
+                RegenerateImageWatchers(image, key, imageEventWrappers);
+            };
+
+            dungeon.RoomChangedEvent += roomChangedHandler;
+            dungeon.FloorsChangedEvent += floorsChangedHandler;
         }
 
         RegenerateImageWatchers(image, key, imageEventWrappers);

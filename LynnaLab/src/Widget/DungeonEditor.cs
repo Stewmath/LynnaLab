@@ -94,6 +94,21 @@ public class DungeonEditor : Frame
                 ImGui.EndTable();
             }
 
+            if (ImGui.Button("Add floor above"))
+            {
+                Dungeon.InsertFloor(floor + 1);
+                floor = floor + 1;
+                ReloadMap();
+            }
+            if (ImGui.Button("Add floor below"))
+            {
+                Dungeon.InsertFloor(floor);
+            }
+            if (ImGui.Button("Delete floor"))
+            {
+                Dungeon.RemoveFloor(floor);
+            }
+
             ImGui.EndChild();
         }
 
@@ -116,7 +131,12 @@ public class DungeonEditor : Frame
     void SetDungeon(Dungeon dungeon)
     {
         Dungeon = dungeon;
-        floor = Math.Min(floor, dungeon.NumFloors - 1);
-        minimap.SetMap(dungeon, floor);
+        ReloadMap();
+    }
+
+    void ReloadMap()
+    {
+        floor = Math.Min(floor, Dungeon.NumFloors - 1);
+        minimap.SetMap(Dungeon, floor);
     }
 }
