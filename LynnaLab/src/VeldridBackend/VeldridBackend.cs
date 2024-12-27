@@ -108,9 +108,10 @@ public class VeldridBackend : IBackend
     }
     public Image ImageFromFile(string filename, Interpolation interpolation)
     {
-        // TODO: This bitmap should be disposed when the image is disposed.
         Bitmap bitmap = new Bitmap(filename);
-        return ImageFromBitmap(bitmap, interpolation);
+        Image image = ImageFromBitmap(bitmap, interpolation);
+        bitmap.Dispose();
+        return image;
     }
     public Image CreateImage(int width, int height, Interpolation interpolation)
     {

@@ -115,7 +115,7 @@ public class Minimap : TileGrid
             }
         }
 
-        base.RenderHoverAndSelection(null);
+        base.RenderHoverAndSelection();
 
         if (ImGui.IsItemHovered() && ImGui.IsMouseDown(ImGuiMouseButton.Right))
         {

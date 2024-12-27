@@ -43,6 +43,11 @@ public class VeldridImage : Image
         var modifiedEventHandler = () => OnBitmapModified(bitmap);
         bitmap.ModifiedEvent += modifiedEventHandler;
         this.unsubscribeFromBitmapChanges = () => bitmap.ModifiedEvent -= modifiedEventHandler;
+
+        bitmap.DisposedEvent += (_) =>
+        {
+            this.unsubscribeFromBitmapChanges = null;
+        };
     }
 
     /// <summary>
@@ -145,7 +150,10 @@ public class VeldridImage : Image
         texture = null;
 
         if (unsubscribeFromBitmapChanges != null)
+        {
             unsubscribeFromBitmapChanges();
+            unsubscribeFromBitmapChanges = null;
+        }
     }
 
     // ================================================================================

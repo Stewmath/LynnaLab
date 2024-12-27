@@ -20,6 +20,8 @@ public class TilesetEditor : Frame
                 tileEditor.SetTile(Tileset, selectedIndex);
         };
 
+        subtileBrushInterfacer = BrushInterfacer.Create(subtileBrush);
+
         RegisterMouseActions();
 
         SetTileset(0, 1);
@@ -35,6 +37,7 @@ public class TilesetEditor : Frame
     BrushMode brushMode;
     int selectedPalette; // Palette to set when in palette brush mode
     Brush<SubTile> subtileBrush; // Brush to use when in subtile brush mode
+    BrushInterfacer subtileBrushInterfacer;
 
     // ================================================================================
     // Properties
@@ -61,21 +64,33 @@ public class TilesetEditor : Frame
             Workspace.OpenTilesetCloner(Tileset, Tileset);
         }
 
-        ImGuiX.Checkbox("Palette brush mode", brushMode == BrushMode.Palette, (brushOn) =>
+        ImGui.PushItemWidth(200.0f);
+        if (ImGui.BeginCombo("##Brush Mode", BrushModeString(brushMode)))
         {
-            brushMode = brushOn ? BrushMode.Palette : BrushMode.Normal;
-            tilesetViewer.SubTileMode = brushOn;
-            tilesetViewer.Selectable = !brushOn;
-            RegisterMouseActions();
-        });
-        ImGui.SameLine();
-        ImGuiX.Checkbox("Subtile brush mode", brushMode == BrushMode.Subtile, (brushOn) =>
-        {
-            brushMode = brushOn ? BrushMode.Subtile : BrushMode.Normal;
-            tilesetViewer.SubTileMode = brushOn;
-            tilesetViewer.Selectable = !brushOn;
-            RegisterMouseActions();
-        });
+            string[] tooltips = {
+                "Select from Tileset, drag subtiles from Subtile viewer to Tile viewer",
+                "Draw palette assignments directly onto the tileset",
+                "Draw subtiles directly onto the tileset; select by right-clicking on the tileset viewer or subtile viewer"
+            };
+
+            foreach (BrushMode mode in new BrushMode[] { BrushMode.Normal, BrushMode.Palette, BrushMode.Subtile })
+            {
+                if (ImGui.Selectable(BrushModeString(mode)))
+                {
+                    brushMode = mode;
+                    tilesetViewer.Selectable = mode == BrushMode.Normal;
+                    tilesetViewer.SubTileMode = mode != BrushMode.Normal;
+                    tilesetViewer.BrushInterfacer = mode == BrushMode.Subtile ? subtileBrushInterfacer : null;
+                    RegisterMouseActions();
+                }
+                if (mode == brushMode)
+                    ImGui.SetItemDefaultFocus();
+                if (ImGui.IsItemHovered())
+                    ImGuiX.Tooltip(tooltips[(int)mode]);
+            }
+            ImGui.EndCombo();
+        }
+        ImGui.PopItemWidth();
 
         if (brushMode == BrushMode.Palette)
         {
@@ -244,16 +259,18 @@ public class TilesetEditor : Frame
                     {
                         subtileBrush.SetTiles(tilesetViewer, args.RectArray((x, y) =>
                         {
-                            var (t, x2, y2) = tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
-                            byte flags = tilesetViewer.Tileset.GetSubTileFlags(t, x2, y2);
+                            var (t, tx, ty) = tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
+                            byte flags = tilesetViewer.Tileset.GetSubTileFlags(t, tx, ty);
                             return new SubTile{
-                                subtile = tilesetViewer.Tileset.GetSubTileIndex(t, x2, y2),
-                                palette = tilesetViewer.Tileset.GetSubTilePalette(t, x2, y2),
+                                subtile = tilesetViewer.Tileset.GetSubTileIndex(t, tx, ty),
+                                palette = tilesetViewer.Tileset.GetSubTilePalette(t, tx, ty),
                                 flipX = (flags & 0x20) != 0,
                                 flipY = (flags & 0x40) != 0,
                                 priority = (flags & 0x80) != 0,
                                 };
                         }));
+
+                        // Update preview image.
                     }
                 },
                 name: "Subtile Brush RightClick"
@@ -270,6 +287,17 @@ public class TilesetEditor : Frame
         Normal = 0,
         Palette = 1,
         Subtile = 2,
+    }
+
+    static string BrushModeString(BrushMode brushMode)
+    {
+        switch (brushMode)
+        {
+            case BrushMode.Normal: return "Selection Mode";
+            case BrushMode.Palette: return "Palette Brush Mode";
+            case BrushMode.Subtile: return "Subtile Brush Mode";
+            default: throw new Exception();
+        }
     }
 
     /// <summary>
@@ -309,8 +337,8 @@ class SubTileViewer : GfxViewer
         base.Height = 16;
         base.Scale = 2;
         base.Selectable = false;
-        base.HoverImagePreview = true;
-        base.HoverImagePreviewScale = TILE_IMAGE_SCALE;
+        base.TooltipImagePreview = true;
+        base.TooltipImagePreviewScale = TILE_IMAGE_SCALE;
 
         base.OnDrag = (index) =>
         {

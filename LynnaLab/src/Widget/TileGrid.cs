@@ -72,6 +72,8 @@ public class TileGrid : SizedWidget
 
     public float Scale { get; set; } = 1.0f;
 
+    public BrushInterfacer BrushInterfacer { get; set; }
+
     /// <summary>
     /// Whether tiles can be selected (selected tile is accessible through SelectedIndex).
     /// </summary>
@@ -192,12 +194,12 @@ public class TileGrid : SizedWidget
     /// <summary>
     /// Whether to show a preview of the tile while hovering over it
     /// </summary>
-    public bool HoverImagePreview { get; set; } = false;
+    public bool TooltipImagePreview { get; set; } = false;
 
     /// <summary>
     /// Amount to scale tile image for drag preview
     /// </summary>
-    public float HoverImagePreviewScale { get; set; } = 4.0f;
+    public float TooltipImagePreviewScale { get; set; } = 4.0f;
 
     /// <summary>
     /// Callback for ImGui drag functionality. The callback function can call
@@ -239,7 +241,7 @@ public class TileGrid : SizedWidget
     public virtual void Render()
     {
         RenderTileGrid();
-        RenderHoverAndSelection(null);
+        RenderHoverAndSelection();
     }
 
     /// <summary>
@@ -281,7 +283,7 @@ public class TileGrid : SizedWidget
                 {
                     dragging = true;
                     draggingTileIndex = XYToTile(x, y);
-                    DrawTileImage(draggingTileIndex, HoverImagePreviewScale);
+                    DrawTileImage(draggingTileIndex, TooltipImagePreviewScale);
                     OnDrag(draggingTileIndex);
                     ImGui.EndDragDropSource();
 
@@ -311,10 +313,10 @@ public class TileGrid : SizedWidget
 
             if (ImGui.IsItemHovered() && draggingTileIndex == -1)
             {
-                if (HoverImagePreview)
+                if (TooltipImagePreview)
                 {
                     ImGui.BeginTooltip();
-                    DrawTileImage(tile, HoverImagePreviewScale);
+                    DrawTileImage(tile, TooltipImagePreviewScale);
                     ImGui.EndTooltip();
                 }
                 OnHover?.Invoke(tile);
@@ -334,8 +336,10 @@ public class TileGrid : SizedWidget
     ///
     /// Should be called after RenderTileGrid.
     /// </summary>
-    public void RenderHoverAndSelection(Brush<int> brush)
+    public void RenderHoverAndSelection()
     {
+        RenderBrushPreview();
+
         int mouseIndex = -1;
         if (isHovered)
             mouseIndex = CoordToTile(base.GetRelativeMousePos());
@@ -344,10 +348,10 @@ public class TileGrid : SizedWidget
         {
             int hoverWidth = 1, hoverHeight = 1;
 
-            if (brush != null)
+            if (BrushInterfacer != null)
             {
-                hoverWidth = brush.BrushWidth;
-                hoverHeight = brush.BrushHeight;
+                hoverWidth = BrushInterfacer.BrushWidth;
+                hoverHeight = BrushInterfacer.BrushHeight;
             }
 
             if (mouseIndex != -1 && mouseIndex < MaxIndex && draggingTileIndex == -1)
@@ -458,14 +462,17 @@ public class TileGrid : SizedWidget
     /// <summary>
     /// Renders the transparent preview of what will be drawn at the current position with the given brush
     /// </summary>
-    public void RenderBrushPreview<T>(Brush<T> brush, Action<T> tileDrawer)
+    public void RenderBrushPreview()
     {
-        var previewDrawFunc = (int x, int y, T i) =>
+        if (BrushInterfacer == null)
+            return;
+
+        var prepTile = (int x, int y) =>
         {
             if (!XYValid(x, y))
-                return;
+                return false;
             ImGui.SetCursorScreenPos(origin + TileToCoord(XYToTile(x, y)));
-            tileDrawer(i);
+            return true;
         };
 
         if (SelectingRectangle)
@@ -475,7 +482,7 @@ public class TileGrid : SizedWidget
             var (topLeft, bottomRight) = GetSelectRectBounds();
             var (x1, y1) = (topLeft.X, topLeft.Y);
             var (x2, y2) = (bottomRight.X, bottomRight.Y);
-            brush.Draw(previewDrawFunc, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+            BrushInterfacer.Draw(prepTile, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
         }
         else if (isHovered)
         {
@@ -483,7 +490,7 @@ public class TileGrid : SizedWidget
             if (mouseIndex == -1)
                 return;
 
-            brush.Draw(previewDrawFunc, mouseIndex % Width, mouseIndex / Width, brush.BrushWidth, brush.BrushHeight);
+            BrushInterfacer.Draw(prepTile, mouseIndex % Width, mouseIndex / Width, BrushInterfacer.BrushWidth, BrushInterfacer.BrushHeight);
         }
     }
 

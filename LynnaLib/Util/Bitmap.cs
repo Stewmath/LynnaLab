@@ -111,6 +111,7 @@ namespace LynnaLib
         {
             Dispose(true);
             DisposedEvent?.Invoke(this);
+            DisposedEvent = null;
             GC.SuppressFinalize(this);
         }
 
@@ -124,6 +125,7 @@ namespace LynnaLib
                 if (surface != null)
                     surface.Dispose();
                 surface = null;
+                ModifiedEvent = null;
             }
 
             if (pixelsPointer != 0)

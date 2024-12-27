@@ -21,6 +21,11 @@ public class RoomLayoutEditor : TileGrid
         base.TileHeight = 16;
         base.Scale = 2;
         base.RenderOffset = new Vector2(8, 8) * Scale;
+        base.BrushInterfacer = BrushInterfacer.Create(brush, (index) =>
+        {
+            if (Workspace.ShowBrushPreview)
+                RoomEditor.TilesetViewer.DrawTileImage(index, Scale, !SelectingRectangle);
+        });
 
         // Register mouse buttons for tile selection & placement
         RegisterTilePlacementInputs(
@@ -323,16 +328,8 @@ public class RoomLayoutEditor : TileGrid
 
         if (hoveringComponent == null && !draggingComponent)
         {
-            if (Workspace.ShowBrushPreview)
-            {
-                base.RenderBrushPreview(Brush, (index) =>
-                {
-                    RoomEditor.TilesetViewer.DrawTileImage(index, Scale, !SelectingRectangle);
-                });
-            }
-
             if (!SuppressTileSelection)
-                base.RenderHoverAndSelection(Brush);
+                base.RenderHoverAndSelection();
         }
 
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))

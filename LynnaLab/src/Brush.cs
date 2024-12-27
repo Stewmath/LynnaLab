@@ -106,3 +106,103 @@ public class Brush<T>
     // Private methods
     // ================================================================================
 }
+
+/// <summary>
+/// Provides a non-generic interface for getting some data from the Brush class.
+/// I made this so that the TileGrid class could access Brush fields without being a generic class itself.
+/// </summary>
+public class BrushInterfacer
+{
+    // ================================================================================
+    // Constructors
+    // ================================================================================
+
+    /// <summary>
+    /// Create a BrushInterfacer. "tileDrawer(index)" is a function which draws the given tile
+    /// index, assuming that the ImGui cursor is already at the correct position before calling it.
+    /// </summary>
+    public static BrushInterfacer Create<T>(Brush<T> brush, Action<T> tileDrawer)
+    {
+        BrushInterfacer interfacer = Initialize(brush);
+
+        var prepAndDraw = (int x, int y, T i, Func<int, int, bool> prepTile) =>
+        {
+            if (prepTile(x, y))
+                tileDrawer(i);
+        };
+
+        // This is a pretty complicated lambda. The gist of it is to create a lambda which "cancels
+        // out" the template parameter T so that "drawAll" can be a class field. (This class is not
+        // generic, so we can't store "brush" or the "tileDrawer" lambda in class fields.)
+        interfacer.drawAll = (prepTile, x1, y1, x2, y2) => brush.Draw((x, y, i) => prepAndDraw(x, y, i, prepTile), x1, y1, x2, y2);
+
+        return interfacer;
+    }
+
+    /// <summary>
+    /// Create a BrushInterfacer, using an image to draw the preview instead of a per-tile drawer function.
+    /// </summary>
+    public static BrushInterfacer Create<T>(Brush<T> brush)
+    {
+        BrushInterfacer interfacer = Initialize(brush);
+        return interfacer;
+    }
+
+    static BrushInterfacer Initialize<T>(Brush<T> brush)
+    {
+        BrushInterfacer interfacer = new BrushInterfacer
+        {
+            getWidth = () => brush.BrushWidth,
+            getHeight = () => brush.BrushHeight,
+        };
+        return interfacer;
+    }
+
+    // ================================================================================
+    // Variables
+    // ================================================================================
+
+    Func<int> getWidth, getHeight;
+
+    // Only one of these should be non-null. This determines how the image will be drawn.
+    Action<Func<int, int, bool>, int, int, int, int> drawAll;
+    Image previewImage;
+
+    // ================================================================================
+    // Properties
+    // ================================================================================
+
+    public int BrushWidth { get { return getWidth(); } }
+    public int BrushHeight { get { return getHeight(); } }
+
+    // ================================================================================
+    // Methods
+    // ================================================================================
+
+    /// <summary>
+    /// prepTile(x, y): Function called immediately before drawing each tile; should set ImGui's
+    /// render position to the position at which it should be drawn, or return false if the (x, y)
+    /// position is invalid.
+    /// </summary>
+    public void Draw(Func<int, int, bool> prepTile, int x1, int y1, int x2, int y2)
+    {
+        if (previewImage != null)
+        {
+            if (!prepTile(x1, y1))
+                return;
+            // TODO: Adjust to dimensions
+            ImGuiX.DrawImage(previewImage);
+        }
+        else if (drawAll != null)
+            drawAll(prepTile, x1, y1, x2, y2);
+    }
+
+    /// <summary>
+    /// Sets the preview image, disposing of the previous one if it exists.
+    /// </summary>
+    public void SetPreviewImage(Image image)
+    {
+        previewImage?.Dispose();
+        previewImage = image;
+    }
+}

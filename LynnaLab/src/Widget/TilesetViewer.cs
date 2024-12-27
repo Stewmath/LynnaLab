@@ -18,7 +18,7 @@ public class TilesetViewer : TileGrid
         base.Width = 16;
         base.Height = 16;
         base.Selectable = true;
-        base.HoverImagePreview = true;
+        base.TooltipImagePreview = true;
 
         base.OnHover = (tile) =>
         {

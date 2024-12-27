@@ -59,6 +59,12 @@ public class ScratchPadGrid : TileGrid
         base.Width = width;
         base.Height = height;
 
+        base.BrushInterfacer = BrushInterfacer.Create(brush, (index) =>
+        {
+            if (Workspace.ShowBrushPreview)
+                ReferenceGrid.DrawTileImage(index, Scale, !SelectingRectangle);
+        });
+
         this.Workspace = workspace;
         this.ReferenceGrid = referenceGrid;
         this.Brush = brush;
@@ -106,14 +112,7 @@ public class ScratchPadGrid : TileGrid
     public override void Render()
     {
         base.RenderTileGrid();
-        if (Workspace.ShowBrushPreview)
-        {
-            base.RenderBrushPreview(Brush, (index) =>
-            {
-                ReferenceGrid.DrawTileImage(index, Scale, !SelectingRectangle);
-            });
-        }
-        base.RenderHoverAndSelection(Brush);
+        base.RenderHoverAndSelection();
     }
 
     // ================================================================================
