@@ -2,13 +2,6 @@ namespace LynnaLab;
 
 public class TilesetEditor : Frame
 {
-    enum BrushMode
-    {
-        Normal = 0,
-        Palette = 1,
-        Subtile = 2,
-    }
-
     // ================================================================================
     // Constructors
     // ================================================================================
@@ -19,7 +12,7 @@ public class TilesetEditor : Frame
         tilesetViewer = new TilesetViewer(Workspace);
         subTileViewer = new SubTileViewer(this);
         tileEditor = new TileEditor(this);
-        subtileBrush = new Brush();
+        subtileBrush = new Brush<SubTile>(new SubTile());
 
         tilesetViewer.SelectedEvent += (selectedIndex) =>
         {
@@ -41,7 +34,7 @@ public class TilesetEditor : Frame
 
     BrushMode brushMode;
     int selectedPalette; // Palette to set when in palette brush mode
-    Brush subtileBrush; // Brush to use when in subtile brush mode
+    Brush<SubTile> subtileBrush; // Brush to use when in subtile brush mode
 
     // ================================================================================
     // Properties
@@ -147,12 +140,16 @@ public class TilesetEditor : Frame
         tileEditor.SetTile(Tileset, tilesetViewer.SelectedIndex);
     }
 
-    void SubTileDrawer(int x, int y, int tile)
+    /// <summary>
+    /// Called when drawing on position (x,y) in subtile brush mode
+    /// </summary>
+    void SubTileDrawer(int x, int y, SubTile subTile)
     {
         if (!tilesetViewer.XYValid(x, y))
             return;
         var (t, tx, ty) = tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
-        Tileset.SetSubTileIndex(t, tx, ty, (byte)tile);
+        Tileset.SetSubTileIndex(t, tx, ty, (byte)subTile.subtile);
+        Tileset.SetSubTileFlags(t, tx, ty, subTile.GetFlags());
     }
 
     void RegisterMouseActions()
@@ -248,12 +245,46 @@ public class TilesetEditor : Frame
                         subtileBrush.SetTiles(tilesetViewer, args.RectArray((x, y) =>
                         {
                             var (t, x2, y2) = tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
-                            return tilesetViewer.Tileset.GetSubTileIndex(t, x2, y2);
+                            byte flags = tilesetViewer.Tileset.GetSubTileFlags(t, x2, y2);
+                            return new SubTile{
+                                subtile = tilesetViewer.Tileset.GetSubTileIndex(t, x2, y2),
+                                palette = tilesetViewer.Tileset.GetSubTilePalette(t, x2, y2),
+                                flipX = (flags & 0x20) != 0,
+                                flipY = (flags & 0x40) != 0,
+                                priority = (flags & 0x80) != 0,
+                                };
                         }));
                     }
                 },
                 name: "Subtile Brush RightClick"
             );
+        }
+    }
+
+    // ================================================================================
+    // Nested structs/enums
+    // ================================================================================
+
+    enum BrushMode
+    {
+        Normal = 0,
+        Palette = 1,
+        Subtile = 2,
+    }
+
+    /// <summary>
+    /// Struct used as the "tile" template class in "Brush" containing all the info that we want to
+    /// be able to copy from one subtile to another. So, not just the tile index itself but also the
+    /// palette, etc.
+    /// </summary>
+    struct SubTile
+    {
+        public int subtile, palette;
+        public bool flipX, flipY, priority;
+
+        public byte GetFlags()
+        {
+            return (byte)(palette | 0x08 | (flipX ? 0x20 : 0) | (flipY ? 0x40 : 0) | (priority ? 0x80 : 0));
         }
     }
 }

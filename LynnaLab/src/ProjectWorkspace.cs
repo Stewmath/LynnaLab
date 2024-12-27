@@ -22,7 +22,7 @@ public class ProjectWorkspace
         roomImageCacher = new RoomImageCacher(this);
         mapImageCacher = new MapImageCacher(this);
 
-        this.Brush = new Brush();
+        this.Brush = new Brush<int>(0);
 
         linkImage = TopLevel.ImageFromBitmap(project.LinkBitmap);
 
@@ -85,7 +85,7 @@ public class ProjectWorkspace
     // ================================================================================
     public Project Project { get; private set; }
     public QuickstartData QuickstartData { get; set; } = new QuickstartData();
-    public Brush Brush { get; private set; }
+    public Brush<int> Brush { get; private set; }
     public bool ShowBrushPreview { get; private set; } = true;
 
     // Togglable settings that affect other modules (really just minimaps right now)

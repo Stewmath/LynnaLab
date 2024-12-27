@@ -334,7 +334,7 @@ public class TileGrid : SizedWidget
     ///
     /// Should be called after RenderTileGrid.
     /// </summary>
-    public void RenderHoverAndSelection(Brush brush)
+    public void RenderHoverAndSelection(Brush<int> brush)
     {
         int mouseIndex = -1;
         if (isHovered)
@@ -458,9 +458,9 @@ public class TileGrid : SizedWidget
     /// <summary>
     /// Renders the transparent preview of what will be drawn at the current position with the given brush
     /// </summary>
-    public void RenderBrushPreview(Brush brush, Action<int> tileDrawer)
+    public void RenderBrushPreview<T>(Brush<T> brush, Action<T> tileDrawer)
     {
-        var previewDrawFunc = (int x, int y, int i) =>
+        var previewDrawFunc = (int x, int y, T i) =>
         {
             if (!XYValid(x, y))
                 return;
@@ -585,10 +585,10 @@ public class TileGrid : SizedWidget
     /// <summary>
     /// Register mouse inputs used by RoomLayoutEditor and ScratchPad for drawing tiles
     /// </summary>
-    public void RegisterTilePlacementInputs(
-        Brush brush,
-        Func<int, int, int> tileGetter,
-        Action<int, int, int> tileSetter,
+    public void RegisterTilePlacementInputs<T>(
+        Brush<T> brush,
+        Func<int, int, T> tileGetter,
+        Action<int, int, T> tileSetter,
         Func<int> maxX,
         Func<int> maxY)
     {
@@ -890,12 +890,12 @@ public struct TileGridEventArgs
 
     /// <summary>
     /// For rectangle selections, returns the grid of selected tiles as a 2d array.
-    /// Takes a function which converts the X/Y coordinates to an int value (which should be a tile
-    /// index of some kind).
+    /// Takes a function which converts the X/Y coordinates to some other arbitrary value (usually
+    /// an int representing the tile index).
     /// </summary>
-    public int[,] RectArray(Func<int, int, int> tileGetter)
+    public T[,] RectArray<T>(Func<int, int, T> tileGetter)
     {
-        int[,] array = new int[SelectedWidth, SelectedHeight];
+        T[,] array = new T[SelectedWidth, SelectedHeight];
 
         for (int x = 0; x < SelectedWidth; x++)
         {

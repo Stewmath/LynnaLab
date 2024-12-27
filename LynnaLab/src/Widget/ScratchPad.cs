@@ -8,7 +8,7 @@ public class ScratchPad : Frame
     // ================================================================================
     // Constructors
     // ================================================================================
-    public ScratchPad(ProjectWorkspace workspace, string name, TileGrid referenceGrid, Brush brush)
+    public ScratchPad(ProjectWorkspace workspace, string name, TileGrid referenceGrid, Brush<int> brush)
         : base(name)
     {
         this.brush = brush;
@@ -21,7 +21,7 @@ public class ScratchPad : Frame
     // Variables
     // ================================================================================
 
-    Brush brush;
+    Brush<int> brush;
 
     // ================================================================================
     // Properties
@@ -51,7 +51,7 @@ public class ScratchPadGrid : TileGrid
     // ================================================================================
     // Constructors
     // ================================================================================
-    public ScratchPadGrid(ProjectWorkspace workspace, string name, Brush brush, TileGrid referenceGrid, int width, int height)
+    public ScratchPadGrid(ProjectWorkspace workspace, string name, Brush<int> brush, TileGrid referenceGrid, int width, int height)
         : base(name)
     {
         base.TileWidth = referenceGrid.TileWidth;
@@ -86,7 +86,7 @@ public class ScratchPadGrid : TileGrid
 
     ProjectWorkspace Workspace { get; set; }
 
-    Brush Brush { get; set; }
+    Brush<int> Brush { get; set; }
 
     /// <summary>
     /// A TileGrid where each tile index provides the image to use for that value.

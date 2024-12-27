@@ -10,7 +10,7 @@ public class RoomLayoutEditor : TileGrid
     // ================================================================================
     // Constructors
     // ================================================================================
-    public RoomLayoutEditor(ProjectWorkspace workspace, RoomEditor roomEditor, Brush brush)
+    public RoomLayoutEditor(ProjectWorkspace workspace, RoomEditor roomEditor, Brush<int> brush)
         : base("Room Layout Editor")
     {
         this.Workspace = workspace;
@@ -88,7 +88,7 @@ public class RoomLayoutEditor : TileGrid
     public Room Room { get { return RoomLayout?.Room; } }
     public RoomLayout RoomLayout { get; private set; }
     public QuickstartData QuickstartData { get { return Workspace.QuickstartData; } }
-    public Brush Brush { get; private set; }
+    public Brush<int> Brush { get; private set; }
 
     public ObjectDefinition SelectedObject { get { return (selectedRoomComponent as ObjectRoomComponent)?.obj; } }
     public Warp SelectedWarpSource { get { return (selectedRoomComponent as WarpSourceRoomComponent)?.warp; } }

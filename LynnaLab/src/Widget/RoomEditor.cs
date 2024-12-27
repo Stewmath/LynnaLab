@@ -165,7 +165,7 @@ public class RoomEditor : Frame
 
     public TilesetViewer TilesetViewer { get { return tilesetViewer; } }
 
-    public Brush Brush { get { return Workspace.Brush; } }
+    public Brush<int> Brush { get { return Workspace.Brush; } }
 
     public bool ObjectTabActive { get { return ActiveLeftTabName == "Objects"; } }
     public bool WarpTabActive { get { return ActiveLeftTabName == "Warps"; } }

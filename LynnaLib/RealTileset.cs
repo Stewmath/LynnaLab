@@ -151,6 +151,9 @@ public class RealTileset : Tileset
     {
         VerifySubTileParams(index, x, y);
 
+        if ((value & 0x08) == 0)
+            LogHelper.GetLogger().Warn($"Tileset {Index:X2} tile {index:X2}: Wrote subtile flags with bank bit unset");
+
         if (Project.Config.ExpandedTilesets)
         {
             MemoryFileStream stream = GetExpandedMappingsFile();
