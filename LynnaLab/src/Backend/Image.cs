@@ -22,7 +22,6 @@ public abstract class Image : IDisposable
     // ================================================================================
     public abstract int Width { get; }
     public abstract int Height { get; }
-    public abstract Interpolation Interpolation { get; }
 
     /// <summary>
     /// Invoked when the image is modified
@@ -46,17 +45,12 @@ public abstract class Image : IDisposable
     /// <summary>
     /// Returns an image binding usable with ImGui.Image().
     /// </summary>
-    public abstract IntPtr GetBinding(Interpolation? interpolation = null, float? alpha = null);
+    public abstract IntPtr GetBinding();
 
     /// <summary>
     /// Draw this image onto another image
     /// </summary>
     public abstract void DrawOn(Image destImage, Point srcPos, Point destPos, Point size);
-
-    /// <summary>
-    /// Sets the interpolation mode for the image.
-    /// </summary>
-    public abstract void SetInterpolation(Interpolation interpolation);
 
     /// <summary>
     /// Replaces the contents of the image with the given bitmap.

@@ -24,7 +24,7 @@ public class RoomLayoutEditor : TileGrid
         base.BrushInterfacer = BrushInterfacer.Create(brush, (index) =>
         {
             if (Workspace.ShowBrushPreview)
-                RoomEditor.TilesetViewer.DrawTileImage(index, Scale, !SelectingRectangle);
+                RoomEditor.TilesetViewer.DrawTileImage(index, Scale);
         });
 
         // Register mouse buttons for tile selection & placement

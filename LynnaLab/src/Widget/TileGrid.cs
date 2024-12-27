@@ -492,23 +492,28 @@ public class TileGrid : SizedWidget
             return true;
         };
 
+        ImGuiX.PushAlpha(0.5f);
+
         if (SelectingRectangle)
         {
-            if (!activeRectSelectAction.brushPreview)
-                return;
-            var (topLeft, bottomRight) = GetSelectRectBounds();
-            var (x1, y1) = (topLeft.X, topLeft.Y);
-            var (x2, y2) = (bottomRight.X, bottomRight.Y);
-            BrushInterfacer.Draw(prepTile, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+            if (activeRectSelectAction.brushPreview)
+            {
+                var (topLeft, bottomRight) = GetSelectRectBounds();
+                var (x1, y1) = (topLeft.X, topLeft.Y);
+                var (x2, y2) = (bottomRight.X, bottomRight.Y);
+                BrushInterfacer.Draw(prepTile, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+            }
         }
         else if (isHovered)
         {
             int mouseIndex = CoordToTile(base.GetRelativeMousePos());
-            if (mouseIndex == -1)
-                return;
-
-            BrushInterfacer.Draw(prepTile, mouseIndex % Width, mouseIndex / Width, BrushInterfacer.BrushWidth, BrushInterfacer.BrushHeight);
+            if (mouseIndex != -1)
+            {
+                BrushInterfacer.Draw(prepTile, mouseIndex % Width, mouseIndex / Width, BrushInterfacer.BrushWidth, BrushInterfacer.BrushHeight);
+            }
         }
+
+        ImGuiX.PopAlpha();
     }
 
     public void AddMouseAction(MouseButton button, MouseModifier mod, MouseAction mouseAction,
@@ -597,13 +602,13 @@ public class TileGrid : SizedWidget
     /// Helper function to draw a tile from the current image. Can be used in various contexts, ie.
     /// in tooltips, not just internally.
     /// </summary>
-    public void DrawTileImage(int index, float scale, bool transparent = false)
+    public void DrawTileImage(int index, float scale)
     {
         var tilePos = new Vector2((index % Width) * TileWidth,
                                   (index / Height) * TileHeight);
         var tileSize = new Vector2(TileWidth, TileHeight);
 
-        ImGuiX.DrawImage(Image, scale, tilePos, tilePos + tileSize, alpha: transparent ? 0.5f : 1.0f);
+        ImGuiX.DrawImage(Image, scale, tilePos, tilePos + tileSize);
     }
 
     /// <summary>

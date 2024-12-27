@@ -1,6 +1,5 @@
 using Veldrid;
 
-using Interpolation = LynnaLab.Interpolation;
 using Image = LynnaLab.Image;
 using ImageModifiedEventArgs = LynnaLab.ImageModifiedEventArgs;
 
@@ -9,18 +8,17 @@ namespace VeldridBackend;
 // TODO: Should this implement IDisposable?
 public class VeldridImage : Image
 {
-    private VeldridImage(ImGuiController controller, Interpolation interpolation)
+    private VeldridImage(ImGuiController controller)
     {
         this.controller = controller;
         this.gd = controller.GraphicsDevice;
-        this.interpolation = interpolation;
     }
 
     /// <summary>
     /// Image from bitmap
     /// </summary>
-    public VeldridImage(ImGuiController controller, Interpolation interpolation, Bitmap bitmap, float alpha)
-        : this(controller, interpolation)
+    public VeldridImage(ImGuiController controller, Bitmap bitmap, float alpha)
+        : this(controller)
     {
         var (sizeInBytes, pixelFormat) = GetBitmapFormat(bitmap);
 
@@ -53,8 +51,8 @@ public class VeldridImage : Image
     /// <summary>
     /// Blank image
     /// </summary>
-    public VeldridImage(ImGuiController controller, Interpolation interpolation, int width, int height, float alpha)
-        : this(controller, interpolation)
+    public VeldridImage(ImGuiController controller, int width, int height, float alpha)
+        : this(controller)
     {
         var pixelFormat = PixelFormat.B8_G8_R8_A8_UNorm;
 
@@ -73,27 +71,12 @@ public class VeldridImage : Image
         this.Alpha = alpha;
     }
 
-    /// <summary>
-    /// Reference to another image with different interpolation/alpha
-    /// </summary>
-    public VeldridImage(VeldridImage image, Interpolation interpolation, float newAlpha)
-    {
-        this.controller = image.controller;
-        this.gd = image.gd;
-        this.texture = image.texture;
-        this.interpolation = interpolation;
-        this.width = image.width;
-        this.height = image.height;
-        this.Alpha = newAlpha;
-    }
-
     // ================================================================================
     // Variables
     // ================================================================================
     ImGuiController controller;
     GraphicsDevice gd;
     Texture texture; // May be shared with other Image instances (see constructor)
-    Interpolation interpolation;
 
     int width, height;
 
@@ -104,7 +87,6 @@ public class VeldridImage : Image
     // ================================================================================
     public override int Width { get { return width; } }
     public override int Height { get { return height; } }
-    public override Interpolation Interpolation { get { return interpolation; } }
 
     public Texture Texture { get { return texture; } }
     public float Alpha { get; private set; }
@@ -114,9 +96,9 @@ public class VeldridImage : Image
     // ================================================================================
 
     // Draw command functions (return a handle usable with ImGui.Image())
-    public override IntPtr GetBinding(Interpolation? interpolation, float? alpha)
+    public override IntPtr GetBinding()
     {
-        return controller.GetOrCreateImGuiBinding(this, interpolation, alpha);
+        return controller.GetOrCreateImGuiBinding(this);
     }
 
     public override void DrawOn(Image _destImage, Point srcPos, Point destPos, Point size)
@@ -136,11 +118,6 @@ public class VeldridImage : Image
                        1);
 
         destImage.modifiedEvent.Invoke(destImage, new ImageModifiedEventArgs { });
-    }
-
-    public override void SetInterpolation(Interpolation interpolation)
-    {
-        this.interpolation = interpolation;
     }
 
     public override void Dispose()

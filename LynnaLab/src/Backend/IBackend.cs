@@ -34,16 +34,9 @@ public interface IBackend
     /// Creates an image from the given bitmap. The image tracks changes from the bitmap as long as
     /// the bitmap is not Disposed.
     /// </summary>
-    public Image ImageFromBitmap(Bitmap bitmap,
-                                 Interpolation interpolation = Interpolation.Nearest);
-    /// <summary>
-    /// Creates an image which is a reference to another image. Contents will be the same but
-    /// interpolation & alpha values used for rendering can be different.
-    /// </summary>
-    public Image ImageFromImage(Image image, Interpolation interpolation, float alpha);
-    public Image ImageFromFile(string filename, Interpolation interpolation);
-    public Image CreateImage(int width, int height,
-                             Interpolation interpolation = Interpolation.Nearest);
+    public Image ImageFromBitmap(Bitmap bitmap);
+    public Image ImageFromFile(string filename);
+    public Image CreateImage(int width, int height);
 
     public void RecreateFontTexture();
 }

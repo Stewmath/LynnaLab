@@ -82,8 +82,6 @@ public class Minimap : TileGrid
 
             base.Scale = MIN_SCALE + (minimapScale / (float)MAX_SCALE_SLIDER) * (MAX_SCALE - MIN_SCALE);
 
-            image.SetInterpolation(Workspace.MinimapInterpolation);
-
             ImGui.PopItemWidth();
         }
 
@@ -99,7 +97,9 @@ public class Minimap : TileGrid
             flags |= ImGuiWindowFlags.NoScrollWithMouse;
         ImGui.BeginChild("MinimapChild", Vector2.Zero, 0, flags);
 
+        ImGuiX.PushInterpolation(Workspace.MinimapInterpolation);
         base.RenderTileGrid();
+        ImGuiX.PopInterpolation();
 
         if (Workspace.DarkenUsedDungeonRooms && !(map is Dungeon) && map.RoomWidth == 15)
         {

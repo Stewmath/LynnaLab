@@ -100,7 +100,7 @@ public static class ImGuiX
 
     public static unsafe T? AcceptDragDropPayload<T>(string type) where T : unmanaged
     {
-        var payload = ImGui.AcceptDragDropPayload(type);
+        ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload(type);
         if (payload.NativePtr == null)
             return null;
         Debug.Assert(payload.DataSize == sizeof(T));
@@ -109,6 +109,52 @@ public static class ImGuiX
         return Marshal.PtrToStructure<T>(ptr);
     }
 
+    public static unsafe void AddCallback<T>(ImGuiXCallback callbackType, T payload) where T : unmanaged
+    {
+        IntPtr ptr = Marshal.AllocHGlobal(sizeof(T));
+        Marshal.StructureToPtr(payload, ptr, false);
+        ImDrawListPtr drawList = ImGui.GetWindowDrawList();
+        drawList.AddCallback((nint)callbackType, ptr);
+    }
+
+    /// <summary>
+    /// All subsequent images will have this alpha (transparency) applied to them when drawn
+    /// </summary>
+    public static void PushAlpha(float alpha)
+    {
+        alphaStack.Push(alpha);
+        AddCallback<float>(ImGuiXCallback.SetAlpha, alpha);
+    }
+
+    public static void PopAlpha()
+    {
+        alphaStack.Pop();
+        float alpha = 1.0f;
+        if (alphaStack.Count != 0)
+            alpha = alphaStack.Peek();
+        AddCallback<float>(ImGuiXCallback.SetAlpha, alpha);
+    }
+
+    /// <summary>
+    /// All subsequent images will be rendered with this interpolation mode
+    /// </summary>
+    public static void PushInterpolation(Interpolation mode)
+    {
+        interpolationStack.Push(mode);
+        AddCallback<int>(ImGuiXCallback.SetInterpolation, (int)mode);
+    }
+
+    public static void PopInterpolation()
+    {
+        interpolationStack.Pop();
+        Interpolation mode = Interpolation.Nearest; // Default interpolation mode
+        if (interpolationStack.Count != 0)
+            mode = interpolationStack.Peek();
+        AddCallback<int>(ImGuiXCallback.SetInterpolation, (int)mode);
+    }
+
+    static Stack<float> alphaStack = new Stack<float>();
+    static Stack<Interpolation> interpolationStack = new Stack<Interpolation>();
 
     // ================================================================================
     // Custom widgets
@@ -117,8 +163,7 @@ public static class ImGuiX
     /// <summary>
     /// Convenience method for rendering images
     /// </summary>
-    public static void DrawImage(Image image, float scale = 1.0f,
-                                 Vector2? topLeft = null, Vector2? bottomRight = null, float alpha = 1.0f)
+    public static void DrawImage(Image image, float scale = 1.0f, Vector2? topLeft = null, Vector2? bottomRight = null)
     {
         if (bottomRight == null)
         {
@@ -127,7 +172,7 @@ public static class ImGuiX
         }
         Vector2 drawSize = (Vector2)(bottomRight - topLeft);
         Vector2 totalSize = new Vector2(image.Width, image.Height);
-        ImGui.Image(image.GetBinding(alpha: alpha), drawSize * scale,
+        ImGui.Image(image.GetBinding(), drawSize * scale,
                     (Vector2)topLeft / totalSize, (Vector2)bottomRight / totalSize);
     }
 
@@ -363,4 +408,10 @@ public static class ImGuiX
         if (ToggleImageButton(name, textureID, size, ref toggled))
             onToggled(toggled);
     }
+}
+
+public enum ImGuiXCallback
+{
+    SetAlpha = 1,
+    SetInterpolation = 2,
 }

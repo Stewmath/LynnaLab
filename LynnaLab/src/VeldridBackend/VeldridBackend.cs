@@ -98,24 +98,20 @@ public class VeldridBackend : IBackend
         _window.Close();
     }
 
-    public Image ImageFromBitmap(Bitmap bitmap, Interpolation interpolation)
+    public Image ImageFromBitmap(Bitmap bitmap)
     {
-        return new VeldridImage(_controller, interpolation, bitmap, 1.0f);
+        return new VeldridImage(_controller, bitmap, 1.0f);
     }
-    public Image ImageFromImage(Image image, Interpolation interpolation, float alpha)
-    {
-        return new VeldridImage(image as VeldridImage, interpolation, alpha);
-    }
-    public Image ImageFromFile(string filename, Interpolation interpolation)
+    public Image ImageFromFile(string filename)
     {
         Bitmap bitmap = new Bitmap(filename);
-        Image image = ImageFromBitmap(bitmap, interpolation);
+        Image image = ImageFromBitmap(bitmap);
         bitmap.Dispose();
         return image;
     }
-    public Image CreateImage(int width, int height, Interpolation interpolation)
+    public Image CreateImage(int width, int height)
     {
-        return new VeldridImage(_controller, interpolation, width, height, 1.0f);
+        return new VeldridImage(_controller, width, height, 1.0f);
     }
 
     public void RecreateFontTexture()
