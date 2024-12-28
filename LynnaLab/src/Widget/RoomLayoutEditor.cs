@@ -353,9 +353,12 @@ public class RoomLayoutEditor : TileGrid
             if ((com as ObjectRoomComponent)?.obj == obj)
             {
                 SetSelectedRoomComponent(com);
-                break;
+                return;
             }
         }
+
+        // Not fonud
+        SetSelectedRoomComponent(null);
     }
 
     /// <summary>
