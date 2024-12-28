@@ -128,6 +128,7 @@ public class TilesetEditor : Frame
         {
             ImGui.SameLine();
             ImGui.Checkbox("Copy palettes", ref copyPalettes);
+            ImGuiX.TooltipOnHover("Whether to copy palettes from the selection or leave palettes unchanged when drawing.");
         }
 
         ImGui.BeginChild("Tileset Viewer Panel", new Vector2(tilesetViewer.WidgetSize.X, HEIGHT));
