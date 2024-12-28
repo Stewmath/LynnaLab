@@ -527,6 +527,8 @@ public class TileGrid : SizedWidget
                     // Check mouse actions
                     foreach (TileGridAction action in actionList)
                     {
+                        args.gridAction = GridAction.Select;
+
                         // suppressCurrentClick is an override telling us to ignore all mouse
                         // actions until the mouse is released and clicked again
                         if (suppressCurrentClick)
@@ -588,6 +590,7 @@ public class TileGrid : SizedWidget
             {
                 // Released the button
                 var args = new TileGridEventArgs(this);
+                args.gridAction = activeRectSelectAction.action;
                 (args.topLeft, args.bottomRight) = GetSelectRectBounds();
 
                 activeRectSelectAction.callback(this, args);
@@ -1091,6 +1094,7 @@ public struct TileGridEventArgs
     }
 
     // For all actions
+    public GridAction gridAction;
     public int gridWidth, gridHeight;
 
     // For GridAction.Callback (selected one tile)
@@ -1104,23 +1108,37 @@ public struct TileGridEventArgs
 
     public void Foreach(System.Action<int, int> action)
     {
-        for (int x = topLeft.X; x <= bottomRight.X; x++)
+        if (gridAction == GridAction.SelectRangeCallback)
         {
-            for (int y = topLeft.Y; y <= bottomRight.Y; y++)
+            for (int x = topLeft.X; x <= bottomRight.X; x++)
             {
-                action(x, y);
+                for (int y = topLeft.Y; y <= bottomRight.Y; y++)
+                {
+                    action(x, y);
+                }
             }
+        }
+        else
+        {
+            action(selectedIndex % gridWidth, selectedIndex / gridWidth);
         }
     }
 
     public void Foreach(System.Action<int> action)
     {
-        for (int x = topLeft.X; x <= bottomRight.X; x++)
+        if (gridAction == GridAction.SelectRangeCallback)
         {
-            for (int y = topLeft.Y; y <= bottomRight.Y; y++)
+            for (int x = topLeft.X; x <= bottomRight.X; x++)
             {
-                action(x + y * gridWidth);
+                for (int y = topLeft.Y; y <= bottomRight.Y; y++)
+                {
+                    action(x + y * gridWidth);
+                }
             }
+        }
+        else
+        {
+            action(selectedIndex);
         }
     }
 

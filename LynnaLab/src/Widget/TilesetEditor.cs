@@ -91,7 +91,7 @@ public class TilesetEditor : Frame
         if (ImGui.BeginCombo("##Brush Mode", BrushModeString(BrushMode)))
         {
             string[] tooltips = {
-                "Select from Tileset (left), drag subtiles from Subtile viewer (right) to Tile editor (center)",
+                "Select from Tileset (left), drag subtiles from Subtile viewer (right) to Tile preview (center)",
                 "Draw palette assignments directly onto the tileset",
                 "Draw subtiles directly onto the tileset; select by right-clicking on the tileset or subtile viewer",
                 "Draw collision data directly onto the tileset (left-click to set, right-click to clear)",
@@ -456,9 +456,7 @@ public class TilesetEditor : Frame
     void SetSubTileCollision(int viewerTile, bool enabled)
     {
         var (tile, x, y) = tilesetViewer.ToSubTileIndex(viewerTile);
-        if (Tileset.GetTileCollision(tile) >= 0x10)
-            return;
-        Tileset.SetSubTileBasicCollision(tile, x, y, enabled);
+        TrySetSubTileCollision(Tileset, tile, x, y, enabled);
     }
 
     // ================================================================================
@@ -482,6 +480,12 @@ public class TilesetEditor : Frame
         }
     }
 
+    public static void TrySetSubTileCollision(Tileset tileset, int t, int tx, int ty, bool enabled)
+    {
+        if (tileset.GetTileCollision(t) >= 0x10)
+            return;
+        tileset.SetSubTileBasicCollision(t, tx, ty, enabled);
+    }
 
     // ================================================================================
     // Nested structs/enums
@@ -639,12 +643,6 @@ class TileEditor : TileGrid
                 DrawTile();
         });
 
-        base.OnDrag = (index) =>
-        {
-            var (x, y) = TileToXY(index);
-            SubTileViewer.DragSubTile(Tileset.GetSubTileIndex(TileIndex, x, y));
-        };
-
         base.OnDrop = () =>
         {
             int? value = ImGuiX.AcceptDragDropPayload<int>("SubTile Index");
@@ -655,6 +653,33 @@ class TileEditor : TileGrid
             int y = tile / 2;
             Tileset.SetSubTileIndex(TileIndex, x, y, (byte)(value ^ 0x80));
         };
+
+        var trySetCollision = (TileGridEventArgs args, bool enable) =>
+        {
+            if (parent.BrushMode != BrushMode.Collision)
+                return;
+            args.Foreach((index) =>
+            {
+                int t = TileIndex;
+                int tx = index % 2;
+                int ty = index / 2;
+                TilesetEditor.TrySetSubTileCollision(Tileset, t, tx, ty, enable);
+            });
+        };
+
+        // Register mouse actions for setting collisions with the mouse
+        base.AddMouseAction(
+            MouseButton.LeftClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
+            (_, args) => trySetCollision(args, true));
+        base.AddMouseAction(
+            MouseButton.LeftClick, MouseModifier.Ctrl, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
+            (_, args) => trySetCollision(args, true));
+        base.AddMouseAction(
+            MouseButton.RightClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
+            (_, args) => trySetCollision(args, false));
+        base.AddMouseAction(
+            MouseButton.RightClick, MouseModifier.Ctrl, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
+            (_, args) => trySetCollision(args, false));
 
         base.AfterRenderTileGrid += (_, _) =>
         {
