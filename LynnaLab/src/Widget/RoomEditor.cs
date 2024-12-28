@@ -459,6 +459,18 @@ public class RoomEditor : Frame
         roomLayoutEditor.UpdateRoomComponents(); // This line only necessary if dest room is same as source room
     }
 
+    public void SetInterpolation(Interpolation interpolation)
+    {
+        overworldMinimap.Interpolation = interpolation;
+        dungeonMinimap.Interpolation = interpolation;
+    }
+
+    public void SetScrollToZoom(bool scrollToZoom)
+    {
+        overworldMinimap.ScrollToZoom = scrollToZoom;
+        dungeonMinimap.ScrollToZoom = scrollToZoom;
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================

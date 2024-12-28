@@ -34,6 +34,9 @@ public class ProjectWorkspace
         documentationDialog = new DocumentationDialog(this, "Documentation Dialog");
         scratchpad = new ScratchPad(this, "Scratchpad", roomEditor.TilesetViewer, Brush);
 
+        roomEditor.SetInterpolation(bicubicScaling ? Interpolation.Bicubic : Interpolation.Nearest);
+        roomEditor.SetScrollToZoom(scrollToZoom);
+
         frames.AddRange(new Frame[] {
                 roomEditor,
                 dungeonEditor,
@@ -90,8 +93,6 @@ public class ProjectWorkspace
 
     // Togglable settings that affect other modules (really just minimaps right now)
     public bool DarkenUsedDungeonRooms { get { return darkenUsedDungeonRooms; } }
-    public bool ScrollToZoom { get { return scrollToZoom; } }
-    public Interpolation MinimapInterpolation { get { return bicubicScaling ? Interpolation.Bicubic : Interpolation.Nearest; } }
 
     // ================================================================================
     // Public methods
@@ -149,9 +150,16 @@ public class ProjectWorkspace
             }
             if (ImGui.BeginMenu("Minimap"))
             {
-                ImGuiX.MenuItemCheckbox("Scroll to Zoom", ref scrollToZoom);
+                if (ImGuiX.MenuItemCheckbox("Scroll to Zoom", ref scrollToZoom))
+                {
+                    roomEditor.SetScrollToZoom(scrollToZoom);
+                }
                 ImGuiX.MenuItemCheckbox("Darken used dungeon rooms (overworld tab)", ref darkenUsedDungeonRooms);
-                ImGuiX.MenuItemCheckbox("Bicubic scaling", ref bicubicScaling);
+                if (ImGuiX.MenuItemCheckbox("Bicubic scaling", ref bicubicScaling))
+                {
+                    Interpolation interp = bicubicScaling ? Interpolation.Bicubic : Interpolation.Nearest;
+                    roomEditor.SetInterpolation(interp);
+                }
                 ImGui.EndMenu();
             }
             if (ImGui.BeginMenu("Misc"))

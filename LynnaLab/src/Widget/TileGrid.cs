@@ -33,6 +33,12 @@ public class TileGrid : SizedWidget
     TileGridAction activeRectSelectAction = null;
     int rectSelectStart, rectSelectEnd; // Always have valid values as long as activeRectSelectAction != null
 
+    // Used for scrolling operations to keep zoom focused around point of interest
+    Vector2? lastMousePos = null;
+    Vector2? centerScaledPos = null; // Position relative to internal window (Scaling + scroll applied)
+    Vector2? centerUnscaledPos = null; // No scaling/scroll applied
+    Vector2 lastFrameScroll;
+
     // ================================================================================
     // Events
     // ================================================================================
@@ -42,12 +48,38 @@ public class TileGrid : SizedWidget
     /// </summary>
     public event Action<int> SelectedEvent;
 
+    /// <summary>
+    /// Invoked between RenderTileGrid() and RenderHoverAndSelection(). Use this to render stuff on
+    /// top of the TileGrid but behind any cursors.
+    /// </summary>
+    public event EventHandler<EventArgs> AfterRenderTileGrid;
+
     // ================================================================================
     // Properties
     // ================================================================================
 
     // Widget overrides
     public override Vector2 WidgetSize
+    {
+        get
+        {
+            if (InChildWindow)
+            {
+                if (ViewportSize != Vector2.Zero)
+                    return ViewportSize;
+                else
+                {
+                    // This could change a lot when zooming is enabled. Preferable to set
+                    // ViewportSize so that WidgetSize is something fairly static and predictable.
+                    return CanvasSize;
+                }
+            }
+            else
+                return CanvasSize;
+        }
+    }
+
+    public Vector2 CanvasSize
     {
         get
         {
@@ -71,7 +103,15 @@ public class TileGrid : SizedWidget
     public float PaddedTileWidth { get { return TileWidth + TilePaddingX; } }
     public float PaddedTileHeight { get { return TileHeight + TilePaddingY; } }
 
+    // Variables related to zooming. If "InChildWindow" is true, then the TileGrid is rendered
+    // within a scrollable window. Otherwise only the "Scale" variable is really relevant.
     public float Scale { get; set; } = 1.0f;
+    public float MaxScale { get; set; } = 1.0f;
+    public float MinScale { get; set; } = 1.0f;
+    public bool InChildWindow { get; set; } // If true, this is rendered in a child window with scrollbars
+    public bool ScrollToZoom { get; set; } = true; // If false, scrollwheel moves scrollbars rather than zooming
+    public Interpolation Interpolation { get; set; } = Interpolation.Bicubic;
+    public Vector2 ViewportSize { get; set; } // Size of window; if this gets any bigger scrollbars will appear
 
     public BrushInterfacer BrushInterfacer { get; set; }
 
@@ -241,8 +281,105 @@ public class TileGrid : SizedWidget
 
     public virtual void Render()
     {
+        // Start position of window containing the scrollbars
+        var scrollOrigin = ImGui.GetCursorScreenPos();
+        // Mouse position "above" the scroll widget (not affected by scrolling)
+        var topLevelMousePos = ImGui.GetIO().MousePos - scrollOrigin;
+
+        // Check whether to stick this in a scrollable child window
+        if (InChildWindow)
+        {
+            UpdateScroll();
+
+            ImGuiWindowFlags flags = ImGuiWindowFlags.HorizontalScrollbar;
+            if (ScrollToZoom)
+                flags |= ImGuiWindowFlags.NoScrollWithMouse;
+            ImGui.BeginChild("TileGrid Child", ViewportSize, 0, flags);
+
+            var interp = Interpolation;
+            if (Scale == Math.Floor(Scale)) // Always use nearest-neighbor interpolation for integer scaling
+                interp = Interpolation.Nearest;
+            ImGuiX.PushInterpolation(interp);
+        }
+
         RenderTileGrid();
+        AfterRenderTileGrid?.Invoke(this, null);
         RenderHoverAndSelection();
+
+        if (InChildWindow)
+        {
+            ImGuiX.PopInterpolation();
+
+            if (isHovered && ImGui.IsMouseDown(ImGuiMouseButton.Middle))
+            {
+                if (lastMousePos != null)
+                {
+                    Vector2 delta = topLevelMousePos - (Vector2)lastMousePos;
+                    var scroll = ImGuiX.GetScroll();
+                    scroll -= delta;
+                    ImGuiX.SetScroll(scroll);
+                }
+
+                this.lastMousePos = topLevelMousePos;
+            }
+            else
+            {
+                this.lastMousePos = null;
+            }
+
+            if (ScrollToZoom && isHovered)
+            {
+                float offset = ImGui.GetIO().MouseWheel * 0.1f;
+                if (offset != 0.0f)
+                {
+                    // Keep the view centered around the mouse cursor
+                    this.centerScaledPos = topLevelMousePos;
+                    this.centerUnscaledPos = (centerScaledPos + ImGuiX.GetScroll()) / Scale;
+
+                    Scale += offset;
+                    if (Scale >= MaxScale)
+                        Scale = MaxScale;
+                    if (Scale <= MinScale)
+                        Scale = MinScale;
+                }
+            }
+
+            lastFrameScroll = ImGuiX.GetScroll();
+
+            ImGui.EndChild();
+        }
+    }
+
+    /// <summary>
+    /// Render the scroll bar that controls the zoom level (this is optional). This must be called
+    /// sometime before Render(). The reason for being a separate function is so that it can be
+    /// embedded in some other control widget.
+    /// </summary>
+    public void RenderScrollBar()
+    {
+        if (!InChildWindow)
+            throw new Exception("Can't call RenderScrollBar when InChildWindow == false");
+
+        const int MAX_SLIDER_VALUE = 100;
+
+        int minimapScale = (int)(((Scale - MinScale) / (MaxScale - MinScale)) * 100);
+
+        ImGui.PushItemWidth(200);
+        ImGui.SameLine(); // Same line as whatever came before this (World/Season selector buttons)
+        bool scaleChangedFromUI = ImGui.SliderInt("Scale", ref minimapScale, 0, MAX_SLIDER_VALUE);
+
+        if (scaleChangedFromUI)
+        {
+            // Keep the view centered around the selected tile
+            this.centerUnscaledPos = new Vector2(
+                SelectedX * TileWidth + TileWidth / 2.0f,
+                SelectedY * TileHeight + TileHeight / 2.0f);
+            this.centerScaledPos = centerUnscaledPos * Scale - lastFrameScroll;
+
+            Scale = MinScale + (minimapScale / (float)MAX_SLIDER_VALUE) * (MaxScale - MinScale);
+        }
+
+        ImGui.PopItemWidth();
     }
 
     /// <summary>
@@ -765,6 +902,30 @@ public class TileGrid : SizedWidget
         );
 
         return (topLeft, bottomRight);
+    }
+
+    /// <summary>
+    /// Updates the scrollbar. Deals with smoothly zooming in and out relative to a particular
+    /// point.
+    /// Must be called just before the BeginChild containing the scrollable area.
+    /// </summary>
+    void UpdateScroll()
+    {
+        ImGui.SetNextWindowContentSize(new Vector2(CanvasWidth, CanvasHeight));
+
+        if (centerScaledPos != null)
+        {
+            // centerUnscaledPos is the unscaled position within the TileGridViewer that must be
+            // placed at centerScaledPos (above the scrollbar window) in order for the zooming
+            // to focus on the point of interest.
+            // These variables should have been calculated before the Scale was updated. We now
+            // calculate the new scroll value using the updated Scale.
+            var scroll = centerUnscaledPos * Scale - centerScaledPos;
+
+            ImGui.SetNextWindowScroll((Vector2)scroll);
+            centerScaledPos = null;
+            centerUnscaledPos = null;
+        }
     }
 
 
