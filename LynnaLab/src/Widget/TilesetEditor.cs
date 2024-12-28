@@ -16,6 +16,9 @@ public class TilesetEditor : Frame
         tileEditor = new TileEditor(this);
         subtileBrush = new Brush<SubTile>(new SubTile());
 
+        tilesetViewer.InChildWindow = true;
+        tilesetViewer.MaxScale = 3.0f;
+        tilesetViewer.ViewportSize = tilesetViewer.CanvasSize;
         tilesetViewer.SelectedEvent += (selectedIndex) =>
         {
             if (brushMode == BrushMode.Normal)
@@ -159,6 +162,7 @@ public class TilesetEditor : Frame
             tileEditor.SetTile(Tileset, tilesetViewer.SelectedIndex);
         else
             tileEditor.SetTile(Tileset, 0);
+        UpdateSubTilePreviewImage();
     }
 
     /// <summary>
@@ -347,7 +351,7 @@ public class TilesetEditor : Frame
             );
             bitmap.Unlock();
             Image image = TopLevel.Backend.ImageFromBitmap(bitmap);
-            subtileBrushInterfacer.SetPreviewImage(image);
+            subtileBrushInterfacer.SetPreviewImage(image, 8);
             tilesetViewer.TooltipImagePreview = subtileBrush.IsSingleTile;
         }
     }

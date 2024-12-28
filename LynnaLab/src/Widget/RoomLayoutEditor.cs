@@ -21,10 +21,10 @@ public class RoomLayoutEditor : TileGrid
         base.TileHeight = 16;
         base.Scale = 2;
         base.RenderOffset = new Vector2(8, 8) * Scale;
-        base.BrushInterfacer = BrushInterfacer.Create(brush, (index) =>
+        base.BrushInterfacer = BrushInterfacer.Create(brush, (index, scale) =>
         {
             if (Workspace.ShowBrushPreview)
-                RoomEditor.TilesetViewer.DrawTileImage(index, Scale);
+                RoomEditor.TilesetViewer.DrawTileImage(index, scale);
         });
 
         // Register mouse buttons for tile selection & placement

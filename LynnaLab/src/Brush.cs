@@ -121,20 +121,20 @@ public class BrushInterfacer
     /// Create a BrushInterfacer. "tileDrawer(index)" is a function which draws the given tile
     /// index, assuming that the ImGui cursor is already at the correct position before calling it.
     /// </summary>
-    public static BrushInterfacer Create<T>(Brush<T> brush, Action<T> tileDrawer)
+    public static BrushInterfacer Create<T>(Brush<T> brush, Action<T, float> tileDrawer)
     {
         BrushInterfacer interfacer = Initialize(brush);
 
-        var prepAndDraw = (int x, int y, T i, Func<int, int, bool> prepTile) =>
+        var prepAndDraw = (int x, int y, T i, float s, Func<int, int, bool> prepTile) =>
         {
             if (prepTile(x, y))
-                tileDrawer(i);
+                tileDrawer(i, s);
         };
 
         // This is a pretty complicated lambda. The gist of it is to create a lambda which "cancels
         // out" the template parameter T so that "drawAll" can be a class field. (This class is not
         // generic, so we can't store "brush" or the "tileDrawer" lambda in class fields.)
-        interfacer.drawAll = (prepTile, x1, y1, w, h) => brush.Draw((x, y, i) => prepAndDraw(x, y, i, prepTile), x1, y1, w, h);
+        interfacer.drawAll = (prepTile, x1, y1, w, h, s) => brush.Draw((x, y, i) => prepAndDraw(x, y, i, s, prepTile), x1, y1, w, h);
 
         return interfacer;
     }
@@ -165,8 +165,9 @@ public class BrushInterfacer
     Func<int> getWidth, getHeight;
 
     // Only one of these should be non-null. This determines how the image will be drawn.
-    Action<Func<int, int, bool>, int, int, int, int> drawAll;
+    Action<Func<int, int, bool>, int, int, int, int, float> drawAll;
     Image previewImage;
+    int tileSize; // used with previewImage
 
     // ================================================================================
     // Properties
@@ -184,7 +185,7 @@ public class BrushInterfacer
     /// render position to the position at which it should be drawn, or return false if the (x, y)
     /// position is invalid.
     /// </summary>
-    public void Draw(Func<int, int, bool> prepTile, int x1, int y1, int width, int height)
+    public void Draw(Func<int, int, bool> prepTile, int x1, int y1, int width, int height, float scale)
     {
         if (previewImage != null)
         {
@@ -194,22 +195,22 @@ public class BrushInterfacer
                 {
                     if (!prepTile(x, y))
                         continue;
-                    int tileSize = 8; // Not good to hardcode this
                     Vector2 offset = new Vector2((x - x1) % BrushWidth, (y - y1) % BrushHeight) * tileSize;
-                    ImGuiX.DrawImage(previewImage, topLeft: offset, bottomRight: offset + new Vector2(tileSize, tileSize));
+                    ImGuiX.DrawImage(previewImage, scale, topLeft: offset, bottomRight: offset + new Vector2(tileSize, tileSize));
                 }
             }
         }
         else if (drawAll != null)
-            drawAll(prepTile, x1, y1, width, height);
+            drawAll(prepTile, x1, y1, width, height, scale);
     }
 
     /// <summary>
     /// Sets the preview image, disposing of the previous one if it exists.
     /// </summary>
-    public void SetPreviewImage(Image image)
+    public void SetPreviewImage(Image image, int tileSize)
     {
         previewImage?.Dispose();
         previewImage = image;
+        this.tileSize = tileSize;
     }
 }

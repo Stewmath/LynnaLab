@@ -59,10 +59,10 @@ public class ScratchPadGrid : TileGrid
         base.Width = width;
         base.Height = height;
 
-        base.BrushInterfacer = BrushInterfacer.Create(brush, (index) =>
+        base.BrushInterfacer = BrushInterfacer.Create(brush, (index, scale) =>
         {
             if (Workspace.ShowBrushPreview)
-                ReferenceGrid.DrawTileImage(index, Scale);
+                ReferenceGrid.DrawTileImage(index, scale);
         });
 
         this.Workspace = workspace;

@@ -638,7 +638,7 @@ public class TileGrid : SizedWidget
                 var (topLeft, bottomRight) = GetSelectRectBounds();
                 var (x1, y1) = (topLeft.X, topLeft.Y);
                 var (x2, y2) = (bottomRight.X, bottomRight.Y);
-                BrushInterfacer.Draw(prepTile, x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+                BrushInterfacer.Draw(prepTile, x1, y1, x2 - x1 + 1, y2 - y1 + 1, Scale);
             }
         }
         else if (isHovered)
@@ -646,7 +646,8 @@ public class TileGrid : SizedWidget
             int mouseIndex = CoordToTile(base.GetRelativeMousePos());
             if (mouseIndex != -1)
             {
-                BrushInterfacer.Draw(prepTile, mouseIndex % Width, mouseIndex / Width, BrushInterfacer.BrushWidth, BrushInterfacer.BrushHeight);
+                BrushInterfacer.Draw(prepTile, mouseIndex % Width, mouseIndex / Width,
+                                     BrushInterfacer.BrushWidth, BrushInterfacer.BrushHeight, Scale);
             }
         }
 
