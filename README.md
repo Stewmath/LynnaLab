@@ -111,6 +111,11 @@ either.
   
 ## Controls
 
+### Global hotkeys
+
+* F4: Toggle quickstart
+* F5: Build & run game
+
 ### Tileset viewer (left)
 
 * Left/right click: Select a tile (drag to select a range of tiles)
@@ -129,16 +134,40 @@ either.
 ### Minimap (right)
 
 * Left click: Select a room to edit
-* Right click + drag: Scroll through overworld (when zoomed in)
+* Middle click + drag: Scroll through overworld (when zoomed in)
 * Scroll wheel:
   * Zoom in & out (if "scroll to zoom" is ON)
   * Scroll vertically (if "scroll to zoom" is OFF)
     * Hold shift to scroll horizontally. (Can also apply to other windows that are horizontally scrollable)
+    
+### Tileset editor
 
-### Global hotkeys
-
-* F4: Toggle quickstart
-* F5: Build & run game
+* All modes:
+  * Scroll on tileset: Zoom in
+  * Middle click + drag: Scroll through tileset (when zoomed in)
+  * Palettes:
+    * Right-click: Open copy/paste menu
+    * Can also drag one palette onto another to copy it
+* Brush modes (palette brush, subtile brush, collision brush):
+  * Hover over the tileset and press a number key to toggle tile properties:
+    * 1: Toggle Flip X
+    * 2: Toggle Flip Y
+    * 3: Toggle Priority
+* Selection mode
+  * Left-click on tileset: Select tile to inspect in the tile preview (bottom-right)
+  * Left-click on tile preview: Select a subtile to inspect
+  * Drag tiles from subtile viewer (top-right) to tile preview (bottom-right): Assign subtile to the
+    tile (also works in other modes)
+* Palette brush mode
+  * Right-click on tileset: Copy palette
+  * Left-click on tileset: Assign palettes (hold Ctrl for rectangle fill)
+* Subtile brush mode
+  * Right-click on tileset or subtile viewer: Copy subtile (ctrl+click to copy range)
+  * Left-click on tileset: Assign subtiles (hold Ctrl for rectangle fill)
+* Collision brush mode
+  * Right-click on tileset or tile preview: Disable collision
+  * Left-click on tileset or tile preview: Enable collision
+  * Use Ctrl for rectangle fill in both cases
 
 ## For more information
 
