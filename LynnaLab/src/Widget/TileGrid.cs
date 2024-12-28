@@ -336,14 +336,14 @@ public class TileGrid : SizedWidget
 
             if (ScrollToZoom && isHovered)
             {
-                float offset = ImGui.GetIO().MouseWheel * 0.1f;
+                float offset = ImGui.GetIO().MouseWheel;
                 if (offset != 0.0f)
                 {
                     // Keep the view centered around the mouse cursor
                     this.centerScaledPos = topLevelMousePos;
                     this.centerUnscaledPos = (centerScaledPos + ImGuiX.GetScroll()) / Scale;
 
-                    Scale += offset;
+                    Scale *= 1.0f + (offset * 0.2f); // Adjust size by 20% per tick
                     if (Scale >= MaxScale)
                         Scale = MaxScale;
                     if (Scale <= MinScale)
