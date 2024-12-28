@@ -7,8 +7,6 @@ global using ImGuiNET;
 global using LynnaLib;
 global using Util;
 
-global using Point = Cairo.Point;
-
 
 using System.Runtime.InteropServices;
 

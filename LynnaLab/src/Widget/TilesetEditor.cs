@@ -711,7 +711,7 @@ class TileEditor : TileGrid
     public Tileset Tileset { get; private set; }
     public int TileIndex { get; private set; } // Should never be -1
 
-    protected override Image Image { get { return image; } }
+    public override Image Image { get { return image; } }
 
     // ================================================================================
     // Public methods

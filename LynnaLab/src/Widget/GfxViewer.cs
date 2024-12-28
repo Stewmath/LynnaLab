@@ -34,7 +34,7 @@ public class GfxViewer : TileGrid
 
     public ProjectWorkspace Workspace { get; private set; }
 
-    protected override Image Image
+    public override Image Image
     {
         get { return image; }
     }

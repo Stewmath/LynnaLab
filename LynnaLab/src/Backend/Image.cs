@@ -14,8 +14,9 @@ public abstract class Image : IDisposable
     // Variables
     // ================================================================================
 
-    protected LockableEvent<ImageModifiedEventArgs> modifiedEvent
-        = new LockableEvent<ImageModifiedEventArgs>();
+    event EventHandler<ImageModifiedEventArgs> modifiedEvent;
+    int modifiedEventLocked;
+    bool modifiedEventInvoked;
 
     // ================================================================================
     // Properties
@@ -65,12 +66,33 @@ public abstract class Image : IDisposable
     /// </summary>
     public void BeginAtomicOperation()
     {
-        modifiedEvent.Lock();
+        modifiedEventLocked++;
     }
 
     public void EndAtomicOperation()
     {
-        modifiedEvent.Unlock();
+        modifiedEventLocked--;
+        if (modifiedEventLocked == 0 && modifiedEventInvoked)
+        {
+            modifiedEventInvoked = false;
+            modifiedEvent?.Invoke(this, new ImageModifiedEventArgs {});
+        }
+    }
+
+    // ================================================================================
+    // Protected methods
+    // ================================================================================
+
+    protected void InvokeModifiedHandler()
+    {
+        if (modifiedEventLocked == 0)
+        {
+            modifiedEvent?.Invoke(this, new ImageModifiedEventArgs { });
+        }
+        else
+        {
+            modifiedEventInvoked = true;
+        }
     }
 }
 

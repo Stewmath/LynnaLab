@@ -60,6 +60,7 @@ public class TilesetImageCacher : ImageCacher<Tileset>
 
     void RedrawAll(Image image, Tileset tileset)
     {
+        image.BeginAtomicOperation();
         for (int x = 0; x < 16; x++)
         {
             for (int y = 0; y < 16; y++)
@@ -67,6 +68,7 @@ public class TilesetImageCacher : ImageCacher<Tileset>
                 DrawTile(image, tileset, x, y);
             }
         }
+        image.EndAtomicOperation();
     }
 
     void DrawTile(Image image, Tileset tileset, int x, int y)

@@ -83,7 +83,7 @@ public class TilesetViewer : TileGrid
         }
     }
 
-    protected override Image Image
+    public override Image Image
     {
         get
         {

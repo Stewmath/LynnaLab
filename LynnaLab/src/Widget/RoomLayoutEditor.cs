@@ -110,7 +110,7 @@ public class RoomLayoutEditor : TileGrid
         }
     }
 
-    protected override Image Image { get { return image; } }
+    public override Image Image { get { return image; } }
 
     // Private properties
 

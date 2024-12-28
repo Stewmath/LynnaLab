@@ -91,9 +91,10 @@ public class TileGrid : SizedWidget
     public int Width { get; protected set; }
     public int Height { get; protected set; }
 
-    // Size of tiles on each axis (not accounting for scale)
+    // Size of tiles on each axis in pixels (not accounting for scale)
     public int TileWidth { get; protected set; }
     public int TileHeight { get; protected set; }
+    public Point TileSize { get { return new Point(TileWidth, TileHeight); } }
 
     // Padding = # of pixels for gap between tiles (usually 0).
     // Also applied to space before the first tile and after the last tile.
@@ -279,7 +280,7 @@ public class TileGrid : SizedWidget
     /// A derived class should override either the Image get operator or the TileDrawer function in
     /// order to supply the image to draw.
     /// </summary>
-    protected virtual Image Image { get { return null; } }
+    public virtual Image Image { get { return null; } }
 
     // ================================================================================
     // Public methods

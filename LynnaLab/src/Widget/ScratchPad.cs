@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace LynnaLab;
 
 /// <summary>
@@ -12,7 +14,6 @@ public class ScratchPad : Frame
         : base(name)
     {
         this.brush = brush;
-        base.WindowFlags = ImGuiWindowFlags.HorizontalScrollbar;
 
         Grid = new ScratchPadGrid(workspace, "Grid", brush, referenceGrid, 32, 32);
     }
@@ -59,14 +60,17 @@ public class ScratchPadGrid : TileGrid
         base.Width = width;
         base.Height = height;
 
+        base.InChildWindow = true;
+        base.MinScale = 1.0f;
+        base.MaxScale = 2.0f;
+
         base.BrushInterfacer = BrushInterfacer.Create(brush, (index, scale) =>
         {
             if (Workspace.ShowBrushPreview)
-                ReferenceGrid.DrawTileImage(index, scale);
+                this.referenceGrid.DrawTileImage(index, scale);
         });
 
         this.Workspace = workspace;
-        this.ReferenceGrid = referenceGrid;
         this.Brush = brush;
 
         tileGrid = new int[Width, Height];
@@ -78,6 +82,18 @@ public class ScratchPadGrid : TileGrid
             (x, y, t) => SetTile(x, y, t),
             () => Width,
             () => Height);
+
+        // Redraw this whole image when the reference image is modified. Not the most efficient -
+        // will cause a lot of redraws to occur when using the tileset editor.
+        referenceImageEventWrapper = new EventWrapper<Image>();
+        referenceImageEventWrapper.Bind<ImageModifiedEventArgs>(
+            "ModifiedEvent",
+            (_, _) => Redraw(),
+            weak: false
+        );
+
+        image = TopLevel.Backend.CreateImage(Width * TileWidth, Height * TileHeight);
+        SetReferenceGrid(referenceGrid);
     }
 
     // ================================================================================
@@ -85,20 +101,25 @@ public class ScratchPadGrid : TileGrid
     // ================================================================================
 
     int[,] tileGrid;
-
-    // ================================================================================
-    // Properties
-    // ================================================================================
-
-    ProjectWorkspace Workspace { get; set; }
-
-    Brush<int> Brush { get; set; }
+    Image image;
+    Image referenceImage;
+    EventWrapper<Image> referenceImageEventWrapper;
 
     /// <summary>
     /// A TileGrid where each tile index provides the image to use for that value.
     /// It must override the Image property rather than the TileDrawer function for this to work.
     /// </summary>
-    TileGrid ReferenceGrid { get; set; }
+    TileGrid referenceGrid;
+
+    // ================================================================================
+    // Properties
+    // ================================================================================
+
+    public override Image Image { get { return image; } }
+
+    ProjectWorkspace Workspace { get; set; }
+
+    Brush<int> Brush { get; set; }
 
     // ================================================================================
     // Public methods
@@ -107,22 +128,17 @@ public class ScratchPadGrid : TileGrid
     public void SetTile(int x, int y, int value)
     {
         tileGrid[x, y] = value;
+        RedrawTile(XYToTile(x, y));
     }
 
     public override void Render()
     {
-        base.RenderTileGrid();
-        base.RenderHoverAndSelection();
-    }
+        // Our event handlers don't cover the case where the referenceGrid changes its image (occurs
+        // when changing the tileset assigned to the room), so we check that here
+        if (referenceImage != referenceGrid.Image)
+            SetReferenceGrid(referenceGrid);
 
-    // ================================================================================
-    // Protected methods
-    // ================================================================================
-
-    protected override void TileDrawer(int index)
-    {
-        int value = GetTile(index);
-        ReferenceGrid.DrawTileImage(value, Scale);
+        base.Render();
     }
 
     // ================================================================================
@@ -141,5 +157,40 @@ public class ScratchPadGrid : TileGrid
     int GetTile(int x, int y)
     {
         return tileGrid[x, y];
+    }
+
+    void Redraw()
+    {
+        // Ensure there's no funny business with changing the grid size
+        Debug.Assert(Image.Width == Width * TileWidth);
+        Debug.Assert(Image.Height == Height * TileHeight);
+
+        image.BeginAtomicOperation();
+        for (int i=0; i<MaxIndex; i++)
+        {
+            RedrawTile(i);
+        }
+        image.EndAtomicOperation();
+    }
+
+    void RedrawTile(int index)
+    {
+        int tile = GetTile(index);
+        var (x, y) = referenceGrid.TileToXY(tile);
+        var srcPos = new Point(x * TileWidth, y * TileHeight);
+        var destPos = new Point(index % Width * TileWidth, index / Width * TileHeight);
+        var size = referenceGrid.TileSize;
+        referenceGrid.Image.DrawOn(image, srcPos, destPos, size);
+    }
+
+    void SetReferenceGrid(TileGrid grid)
+    {
+        if (referenceGrid != grid || referenceGrid.Image != referenceImage)
+        {
+            referenceGrid = grid;
+            referenceImage = referenceGrid.Image;
+            referenceImageEventWrapper.ReplaceEventSource(grid.Image);
+            Redraw();
+        }
     }
 }

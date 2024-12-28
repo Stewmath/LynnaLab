@@ -2,6 +2,7 @@ using Veldrid;
 
 using Image = LynnaLab.Image;
 using ImageModifiedEventArgs = LynnaLab.ImageModifiedEventArgs;
+using Point = Util.Point; // Don't care about Veldrid.Point
 
 namespace VeldridBackend;
 
@@ -117,7 +118,7 @@ public class VeldridImage : Image
                        (uint)size.X, (uint)size.Y, 1,
                        1);
 
-        destImage.modifiedEvent.Invoke(destImage, new ImageModifiedEventArgs { });
+        destImage.InvokeModifiedHandler();
     }
 
     public override void Dispose()
@@ -149,7 +150,7 @@ public class VeldridImage : Image
         gd.UpdateTexture(texture, pixelData, sizeInBytes, 0, 0, 0,
                          (uint)bitmap.Width, (uint)bitmap.Height, 1, 0, 0);
 
-        modifiedEvent.Invoke(this, new ImageModifiedEventArgs { });
+        base.InvokeModifiedHandler();
     }
 
     (uint, PixelFormat) GetBitmapFormat(Bitmap bitmap)

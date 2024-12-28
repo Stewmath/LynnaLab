@@ -47,7 +47,7 @@ public class Minimap : TileGrid
     // Properties
     // ================================================================================
 
-    protected override Image Image
+    public override Image Image
     {
         get
         {
