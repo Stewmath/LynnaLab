@@ -17,7 +17,9 @@ public class TilesetEditor : Frame
         subtileBrush = new Brush<SubTile>(new SubTile());
 
         tilesetViewer.InChildWindow = true;
+        tilesetViewer.MinScale = 2.0f;
         tilesetViewer.MaxScale = 3.0f;
+        tilesetViewer.Scale = 2.0f;
         tilesetViewer.ViewportSize = tilesetViewer.CanvasSize;
 
         tilesetViewer.SelectedEvent += (selectedIndex) =>
@@ -91,7 +93,7 @@ public class TilesetEditor : Frame
         if (ImGui.BeginCombo("##Brush Mode", BrushModeString(BrushMode)))
         {
             string[] tooltips = {
-                "Select from Tileset (left), drag subtiles from Subtile viewer (right) to Tile preview (center)",
+                "Select from Tileset (left), drag subtiles from Subtile viewer (top-right) to Tile preview (bottom-right)",
                 "Draw palette assignments directly onto the tileset",
                 "Draw subtiles directly onto the tileset; select by right-clicking on the tileset or subtile viewer",
                 "Draw collision data directly onto the tileset (left-click to set, right-click to clear)",
@@ -164,15 +166,11 @@ public class TilesetEditor : Frame
         ImGui.EndChild();
 
         ImGui.SameLine();
-        ImGui.BeginChild("Tile Editor Panel", new Vector2(100.0f, HEIGHT));
-        ImGui.SeparatorText($"Tile {tileEditor.TileIndex:X2}");
-        tileEditor.Render();
-        ImGui.EndChild();
-
-        ImGui.SameLine();
         ImGui.BeginChild("SubTile Panel", new Vector2(subTileViewer.WidgetSize.X, HEIGHT));
         ImGui.SeparatorText($"SubTiles");
         subTileViewer.Render();
+        ImGui.SeparatorText($"Tile {tileEditor.TileIndex:X2}");
+        tileEditor.Render();
         ImGui.EndChild();
 
         ImGui.SameLine();
@@ -180,8 +178,10 @@ public class TilesetEditor : Frame
         ImGuiLL.RenderPaletteHeader(Tileset.PaletteHeaderGroup, BrushMode == BrushMode.Palette ? selectedPalette : -1, Workspace);
         ImGui.EndChild();
 
-        ImGui.SeparatorText("Tileset Properties");
-        ImGuiLL.RenderTilesetFields(Tileset, Workspace.ShowDocumentation);
+        if (ImGui.CollapsingHeader("Tileset Properties"))
+        {
+            ImGuiLL.RenderTilesetFields(Tileset, Workspace.ShowDocumentation);
+        }
     }
 
     public void SetTileset(int index, int season)
@@ -729,6 +729,12 @@ class TileEditor : TileGrid
         if (ImGui.IsItemHovered())
             previewIndex = CoordToTile(GetRelativeMousePos());
 
+        // Get an estimate of excess horizontal space to help with roughly centering the input fields
+        float freeSpace = ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize("Subtile: FF").X;
+        freeSpace = Math.Max(freeSpace, 0.0f);
+        ImGuiX.ShiftCursorScreenPos(freeSpace / 2, 0.0f);
+        ImGui.BeginChild("Text fields");
+
         if (parent.BrushMode == BrushMode.Collision)
         {
             // In collision brush mode, instead of rendering subtile properties, just show the
@@ -771,6 +777,7 @@ class TileEditor : TileGrid
 
             // Not showing "bank" bit (0x08) which should always be set
         }
+        ImGui.EndChild();
         ImGui.EndGroup();
     }
 
