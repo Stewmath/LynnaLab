@@ -53,7 +53,7 @@ namespace LynnaLib
         {
             get { return width; }
         }
-        public Tileset Tileset
+        public RealTileset Tileset
         {
             get
             {

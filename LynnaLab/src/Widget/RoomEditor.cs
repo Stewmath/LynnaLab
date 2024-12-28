@@ -234,6 +234,10 @@ public class RoomEditor : Frame
             {
                 tilesetViewer.Render();
                 ImGuiX.InputHex("Tileset", new Accessor<int>(() => Room.TilesetIndex));
+                if (ImGui.Button("Open Tileset Editor"))
+                {
+                    Workspace.OpenTilesetEditor(RoomLayout.Tileset);
+                }
                 ImGui.EndTabItem();
             }
             if (TrackedTabItem("Objects"))

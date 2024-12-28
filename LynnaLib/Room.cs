@@ -276,7 +276,7 @@ namespace LynnaLib
             return layouts[season];
         }
 
-        public Tileset GetTileset(int season)
+        public RealTileset GetTileset(int season)
         {
             if (season == -1)
             {

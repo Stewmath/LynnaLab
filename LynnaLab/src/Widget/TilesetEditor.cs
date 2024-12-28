@@ -184,11 +184,7 @@ public class TilesetEditor : Frame
         ImGuiLL.RenderTilesetFields(Tileset, Workspace.ShowDocumentation);
     }
 
-    // ================================================================================
-    // Private methods
-    // ================================================================================
-
-    void SetTileset(int index, int season)
+    public void SetTileset(int index, int season)
     {
         if (Tileset != null && Tileset.Index == index && Tileset.Season == season)
             return;
@@ -203,7 +199,7 @@ public class TilesetEditor : Frame
         SetTileset(Project.GetTileset(index, season));
     }
 
-    void SetTileset(RealTileset t)
+    public void SetTileset(RealTileset t)
     {
         if (t == Tileset)
             return;
@@ -216,6 +212,10 @@ public class TilesetEditor : Frame
             tileEditor.SetTile(Tileset, 0);
         UpdateSubTilePreviewImage();
     }
+
+    // ================================================================================
+    // Private methods
+    // ================================================================================
 
     /// <summary>
     /// Called when drawing on position (x,y) in subtile brush mode

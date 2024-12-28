@@ -283,6 +283,12 @@ public class ProjectWorkspace
         documentationDialog.Focus();
     }
 
+    public void OpenTilesetEditor(RealTileset tileset)
+    {
+        tilesetEditor.SetTileset(tileset);
+        tilesetEditor.Focus();
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================
