@@ -158,7 +158,7 @@ public class ProjectWorkspace
                 {
                     roomEditor.SetScrollToZoom(scrollToZoom);
                 }
-                ImGuiX.MenuItemCheckbox("Darken used dungeon rooms (overworld tab)", ref darkenUsedDungeonRooms);
+                ImGuiX.MenuItemCheckbox("Darken used dungeon rooms & duplicate rooms", ref darkenUsedDungeonRooms);
                 if (ImGuiX.MenuItemCheckbox("Bicubic scaling", ref bicubicScaling))
                 {
                     Interpolation interp = bicubicScaling ? Interpolation.Bicubic : Interpolation.Nearest;

@@ -18,15 +18,16 @@ public class Minimap : TileGrid
 
         base.AfterRenderTileGrid += (_, _) =>
         {
-            // Darken rooms which are already used in a dungeon (effectively highlights any rooms
-            // that are not used in dungeons)
-            if (Workspace.DarkenUsedDungeonRooms && !(map is Dungeon) && map.RoomWidth == 15)
+            // Darken rooms which are already used in a dungeon, or rooms considered "duplicates"
+            // (not the main version of the room). These both have the effect of discouraging
+            // interacting with these rooms as there is a more canonical version of it somewhere.
+            if (Workspace.DarkenUsedDungeonRooms && !(map is Dungeon))
             {
                 for (int tile = 0; tile < MaxIndex; tile++)
                 {
                     int x = tile % Width, y = tile / Width;
                     Room room = map.GetRoom(x, y);
-                    if (Project.RoomUsedInDungeon(room.Index))
+                    if (Project.RoomUsedInDungeon(room.Index) || room.Index != room.ExpectedIndex)
                     {
                         var rect = base.TileRect(tile);
                         base.AddRectFilled(rect, Color.FromRgba(0, 0, 0, 0xa0));
