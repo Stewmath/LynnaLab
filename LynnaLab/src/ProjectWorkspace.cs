@@ -50,7 +50,6 @@ public class ProjectWorkspace
 
         // Default active windows
         roomEditor.Active = true;
-        scratchpad.Active = true;
     }
 
     // ================================================================================
