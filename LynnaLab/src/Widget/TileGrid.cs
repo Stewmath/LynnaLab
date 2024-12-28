@@ -629,8 +629,6 @@ public class TileGrid : SizedWidget
             return true;
         };
 
-        ImGuiX.PushAlpha(0.5f);
-
         if (SelectingRectangle)
         {
             if (activeRectSelectAction.brushPreview)
@@ -638,7 +636,9 @@ public class TileGrid : SizedWidget
                 var (topLeft, bottomRight) = GetSelectRectBounds();
                 var (x1, y1) = (topLeft.X, topLeft.Y);
                 var (x2, y2) = (bottomRight.X, bottomRight.Y);
+                ImGuiX.PushAlpha(1.0f);
                 BrushInterfacer.Draw(prepTile, x1, y1, x2 - x1 + 1, y2 - y1 + 1, Scale);
+                ImGuiX.PopAlpha();
             }
         }
         else if (isHovered)
@@ -646,12 +646,13 @@ public class TileGrid : SizedWidget
             int mouseIndex = CoordToTile(base.GetRelativeMousePos());
             if (mouseIndex != -1)
             {
+                ImGuiX.PushAlpha(0.5f);
                 BrushInterfacer.Draw(prepTile, mouseIndex % Width, mouseIndex / Width,
                                      BrushInterfacer.BrushWidth, BrushInterfacer.BrushHeight, Scale);
+                ImGuiX.PopAlpha();
             }
         }
 
-        ImGuiX.PopAlpha();
     }
 
     public void AddMouseAction(MouseButton button, MouseModifier mod, MouseAction mouseAction,
