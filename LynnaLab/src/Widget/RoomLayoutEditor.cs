@@ -244,7 +244,7 @@ public class RoomLayoutEditor : TileGrid
 
             if (com is ObjectRoomComponent ocom)
             {
-                ObjectBox.ObjectPopupMenu(ocom.obj, Workspace.ShowDocumentation);
+                ObjectBox.ObjectPopupMenu(ocom.obj, Room, Workspace);
             }
             else if (com is WarpSourceRoomComponent wcom)
             {

@@ -49,6 +49,7 @@ public class ObjectBox : SelectionBox
     // ================================================================================
 
     public ObjectGroupEditor ObjectGroupEditor { get; private set; }
+    public ProjectWorkspace Workspace { get { return ObjectGroupEditor.Workspace; } }
     public ObjectGroup ObjectGroup { get; private set; }
 
     // ================================================================================
@@ -65,7 +66,7 @@ public class ObjectBox : SelectionBox
         {
             if (ImGui.BeginPopup("ObjectPopupMenu"))
             {
-                ObjectPopupMenu(GetSelectedObject(), ObjectGroupEditor.Workspace.ShowDocumentation);
+                ObjectPopupMenu(GetSelectedObject(), ObjectGroupEditor.RoomEditor.Room, ObjectGroupEditor.Workspace);
                 ImGui.EndPopup();
             }
         }
@@ -120,17 +121,23 @@ public class ObjectBox : SelectionBox
             ObjectType.ItemDrop,
         };
 
-        ImGui.Text("Add Object...");
-        ImGui.Separator();
-
-        foreach (var objType in objectTypes)
+        if (ImGui.Selectable("Paste", false, Workspace.CopiedObject == null ? ImGuiSelectableFlags.Disabled: 0))
         {
-            var name = ObjectGroupEditor.ObjectNames[(int)objType];
+            ObjectGroup.AddObjectClone(Workspace.CopiedObject);
+        }
 
-            if (ImGui.Selectable(name))
+        if (ImGui.BeginMenu("Add Object..."))
+        {
+            foreach (var objType in objectTypes)
             {
-                SelectedIndex = ObjectGroup.AddObject(objType);
+                var name = ObjectGroupEditor.ObjectNames[(int)objType];
+
+                if (ImGui.MenuItem(name))
+                {
+                    SelectedIndex = ObjectGroup.AddObject(objType);
+                }
             }
+            ImGui.EndMenu();
         }
 
         ImGui.EndPopup();
@@ -187,17 +194,32 @@ public class ObjectBox : SelectionBox
     // Static methods
     // ================================================================================
 
-    public static void ObjectPopupMenu(ObjectDefinition def, Action<Documentation> showDoc)
+    public static void ObjectPopupMenu(ObjectDefinition def, Room room, ProjectWorkspace workspace)
     {
         if (ImGui.Selectable("Info"))
         {
-            showDoc(def.GetIDDocumentation());
+            workspace.ShowDocumentation(def.GetIDDocumentation());
+        }
+        if (ImGui.Selectable("Copy"))
+        {
+            workspace.CopiedObject = def;
+        }
+        if (ImGui.BeginMenu("Move to..."))
+        {
+            foreach (ObjectGroup group in room.GetObjectGroup().GetAllGroups())
+            {
+                var (name, _) = ObjectGroupEditor.GetGroupName(group);
+                if (ImGui.MenuItem(name))
+                {
+                    group.AddObjectClone(def);
+                    def.Remove();
+                }
+            }
+            ImGui.EndMenu();
         }
         if (ImGui.Selectable("Clone"))
         {
-            int i = def.ObjectGroup.AddObject(def.GetObjectType());
-            ObjectDefinition newObj = def.ObjectGroup.GetObject(i);
-            newObj.CopyFrom(def);
+            int i = def.ObjectGroup.AddObjectClone(def);
         }
         if (ImGui.Selectable("Delete"))
         {

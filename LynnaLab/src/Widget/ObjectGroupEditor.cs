@@ -8,9 +8,9 @@ public class ObjectGroupEditor : Frame
     // ================================================================================
     // Constructors
     // ================================================================================
-    public ObjectGroupEditor(ProjectWorkspace workspace, string name, ObjectGroup group) : base(name)
+    public ObjectGroupEditor(RoomEditor roomEditor, string name, ObjectGroup group) : base(name)
     {
-        this.Workspace = workspace;
+        this.RoomEditor = roomEditor;
 
         SetObjectGroup(group);
     }
@@ -70,7 +70,8 @@ public class ObjectGroupEditor : Frame
     // Properties
     // ================================================================================
 
-    public ProjectWorkspace Workspace { get; private set; }
+    public RoomEditor RoomEditor { get; private set; }
+    public ProjectWorkspace Workspace { get { return RoomEditor.Workspace; } }
     Project Project { get { return Workspace.Project; } }
 
     // The TOP-LEVEL object group for this room.
@@ -354,7 +355,7 @@ public class ObjectGroupEditor : Frame
         return Color.White; // End, EndPointer, Garbage types should never be drawn
     }
 
-    static (String, String) GetGroupName(ObjectGroup group)
+    public static (String, String) GetGroupName(ObjectGroup group)
     {
         ObjectGroupType type = group.GetGroupType();
 

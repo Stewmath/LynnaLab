@@ -45,7 +45,7 @@ public class RoomEditor : Frame
 
         overworldMinimap = new Minimap(this.Workspace);
         dungeonMinimap = new Minimap(this.Workspace);
-        objectGroupEditor = new ObjectGroupEditor(this.Workspace, "Object Group Editor", Room.GetObjectGroup());
+        objectGroupEditor = new ObjectGroupEditor(this, "Object Group Editor", Room.GetObjectGroup());
         warpEditor = new WarpEditor(this, "Warp Editor", Room.GetWarpGroup());
 
         SetRoom(0, 0);

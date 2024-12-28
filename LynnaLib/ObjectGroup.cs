@@ -217,26 +217,26 @@ namespace LynnaLib
             return children;
         }
 
+        /// <summary>
+        /// Adds a new object, returns the index of the newly created object. (Or at least, returns
+        /// the index of the last object in the list, or -1. In theory, event handlers could modify
+        /// the object list again before this returns.)
+        /// </summary>
         public int AddObject(ObjectType type)
         {
-            if (IsStub())
-            {
-                Debug.Assert(parents.Count == 1);
-                parents[0].UnstubChild(this);
-            }
-            Isolate();
-
-            rawObjectGroup.InsertObject(rawObjectGroup.GetNumObjects(), type);
-
-            ObjectStruct st = new ObjectStruct();
-            st.rawIndex = rawObjectGroup.GetNumObjects() - 1;
-            st.data = rawObjectGroup.GetObjectData(st.rawIndex);
-            st.def = new ObjectDefinition(this, st.data, objectList.Count);
-            objectList.Add(st);
-
-            UpdateRawIndices();
+            AddObjectToEnd(type);
             ModifiedHandler(this, null);
+            return GetNumObjects() - 1;
+        }
 
+        /// <summary>
+        /// Adds a clone of an existing object, returns the last object in the last like above.
+        /// </summary>
+        public int AddObjectClone(ObjectDefinition obj)
+        {
+            ObjectDefinition newObj = AddObjectToEnd(obj.GetObjectType());
+            newObj.CopyFrom(obj);
+            ModifiedHandler(this, null);
             return GetNumObjects() - 1;
         }
 
@@ -377,6 +377,31 @@ namespace LynnaLib
         void AddParent(ObjectGroup group)
         {
             parents.Add(group);
+        }
+
+        /// <summary>
+        /// Internal helper method. Caller must invoke "ModifiedHandler()" at some point after this.
+        /// </summary>
+        ObjectDefinition AddObjectToEnd(ObjectType type)
+        {
+            if (IsStub())
+            {
+                Debug.Assert(parents.Count == 1);
+                parents[0].UnstubChild(this);
+            }
+            Isolate();
+
+            rawObjectGroup.InsertObject(rawObjectGroup.GetNumObjects(), type);
+
+            ObjectStruct st = new ObjectStruct();
+            st.rawIndex = rawObjectGroup.GetNumObjects() - 1;
+            st.data = rawObjectGroup.GetObjectData(st.rawIndex);
+            st.def = new ObjectDefinition(this, st.data, objectList.Count);
+            objectList.Add(st);
+
+            UpdateRawIndices();
+
+            return st.def;
         }
 
         // Call this whenever the ordering of objects in objectList changes

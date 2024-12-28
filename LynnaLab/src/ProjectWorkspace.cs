@@ -91,6 +91,10 @@ public class ProjectWorkspace
     public Brush<int> Brush { get; private set; }
     public bool ShowBrushPreview { get; private set; } = true;
 
+    // For copy/pasting. This may or may not exist in the game (it may have been deleted), but it
+    // should be copiable regardless.
+    public ObjectDefinition CopiedObject { get; set; }
+
     // Togglable settings that affect other modules (really just minimaps right now)
     public bool DarkenUsedDungeonRooms { get { return darkenUsedDungeonRooms; } }
 
