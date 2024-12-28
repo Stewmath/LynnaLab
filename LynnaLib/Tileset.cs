@@ -281,11 +281,15 @@ namespace LynnaLib
             byte i = (byte)(1 << (3 - (x + y * 2)));
             return (b & i) != 0;
         }
+        /// <summary>
+        /// Sets the "basic collision" of a subtile. If the collision value >= 0x10, then this
+        /// discards the upper bits. One should probably avoid calling this in that situation.
+        /// </summary>
         public void SetSubTileBasicCollision(int index, int x, int y, bool val)
         {
             VerifySubTileParams(index, x, y);
 
-            byte b = GetTileCollision(index);
+            byte b = (byte)(GetTileCollision(index) & 0x0f);
             byte i = (byte)(1 << (3 - (x + y * 2)));
             b = (byte)(b & ~i);
             if (val)

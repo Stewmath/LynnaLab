@@ -70,6 +70,7 @@ public class TilesetEditor : Frame
     public Project Project { get { return Workspace.Project; } }
     public RealTileset Tileset { get; private set; }
     public BrushMode BrushMode { get; private set;  }
+    public bool EditAllSeasons { get; private set; } = true; // Whether modifying one season should affect other seasons
 
     // ================================================================================
     // Public methods
@@ -87,6 +88,13 @@ public class TilesetEditor : Frame
         if (ImGui.Button("Open Cloner"))
         {
             Workspace.OpenTilesetCloner(Tileset, Tileset);
+        }
+
+        if (Project.Game == Game.Seasons)
+        {
+            ImGui.SameLine();
+            ImGuiX.Checkbox("Edit all seasons", new Accessor<bool>(() => EditAllSeasons));
+            ImGuiX.TooltipOnHover("Changes to tiles affect all seasons, not just the current selected one.");
         }
 
         ImGui.PushItemWidth(200.0f);
@@ -144,7 +152,7 @@ public class TilesetEditor : Frame
                 var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
                 byte flags = Tileset.GetSubTileFlags(t, tx, ty);
                 flags ^= 0x20;
-                Tileset.SetSubTileFlags(t, tx, ty, flags);
+                ForAllSeasons((tileset) => tileset.SetSubTileFlags(t, tx, ty, flags));
             }
             // Change flip Y
             if (ImGui.IsKeyPressed(ImGuiKey._2))
@@ -152,7 +160,7 @@ public class TilesetEditor : Frame
                 var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
                 byte flags = Tileset.GetSubTileFlags(t, tx, ty);
                 flags ^= 0x40;
-                Tileset.SetSubTileFlags(t, tx, ty, flags);
+                ForAllSeasons((tileset) => tileset.SetSubTileFlags(t, tx, ty, flags));
             }
             // Change priority
             if (ImGui.IsKeyPressed(ImGuiKey._3))
@@ -160,7 +168,7 @@ public class TilesetEditor : Frame
                 var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
                 byte flags = Tileset.GetSubTileFlags(t, tx, ty);
                 flags ^= 0x80;
-                Tileset.SetSubTileFlags(t, tx, ty, flags);
+                ForAllSeasons((tileset) => tileset.SetSubTileFlags(t, tx, ty, flags));
             }
         }
         ImGui.EndChild();
@@ -213,6 +221,24 @@ public class TilesetEditor : Frame
         UpdateSubTilePreviewImage();
     }
 
+    /// <summary>
+    /// Do an action on either the current selected tilesets, or on all seasonal variants of the
+    /// tileset, if "editAllSeasons" is true.
+    /// </summary>
+    public void ForAllSeasons(Action<RealTileset> action)
+    {
+        if (EditAllSeasons && Tileset.IsSeasonal)
+        {
+            for (int s=0; s<4; s++)
+            {
+                RealTileset t = Project.GetTileset(Tileset.Index, s);
+                action(t);
+            }
+        }
+        else
+            action(Tileset);
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================
@@ -224,12 +250,15 @@ public class TilesetEditor : Frame
     {
         if (!tilesetViewer.XYValid(x, y))
             return;
-        var (t, tx, ty) = tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
-        Tileset.SetSubTileIndex(t, tx, ty, (byte)subTile.subtile);
-        if (subTile.palette == -1 || !copyPalettes)
-            Tileset.SetSubTileFlags(t, tx, ty, subTile.GetFlags(Tileset.GetSubTilePalette(t, tx, ty)));
-        else
-            Tileset.SetSubTileFlags(t, tx, ty, subTile.GetFlags());
+        ForAllSeasons((tileset) =>
+        {
+            var (t, tx, ty) = tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
+            tileset.SetSubTileIndex(t, tx, ty, (byte)subTile.subtile);
+            if (subTile.palette == -1 || !copyPalettes)
+                tileset.SetSubTileFlags(t, tx, ty, subTile.GetFlags(tileset.GetSubTilePalette(t, tx, ty)));
+            else
+                tileset.SetSubTileFlags(t, tx, ty, subTile.GetFlags());
+        });
     }
 
     void RegisterMouseActions()
@@ -245,6 +274,32 @@ public class TilesetEditor : Frame
 
         subTileViewer.RemoveMouseAction("Subtile Viewer RightClick");
 
+        // Helper function for palette brush mode
+        var paletteSetter = (TileGridEventArgs args) =>
+        {
+            ForAllSeasons((tileset) =>
+            {
+                args.Foreach((tile) =>
+                {
+                    var (t, x, y) = tilesetViewer.ToSubTileIndex(tile);
+                    tileset.SetSubTilePalette(t, x, y, selectedPalette);
+                });
+            });
+        };
+
+        // Helper function for collision brush mode
+        var collisionSetter = (TileGridEventArgs args, bool enable) =>
+        {
+            ForAllSeasons((tileset) =>
+            {
+                args.Foreach((tile) =>
+                {
+                    var (t, x, y) = tilesetViewer.ToSubTileIndex(tile);
+                    TrySetSubTileCollision(tileset, t, x, y, enable);
+                });
+            });
+        };
+
         if (BrushMode != BrushMode.Normal)
         {
             // Left click: Draw when in a brush mode
@@ -256,7 +311,7 @@ public class TilesetEditor : Frame
 
                     if (BrushMode == BrushMode.Palette)
                     {
-                        Tileset.SetSubTilePalette(t, x, y, selectedPalette);
+                        paletteSetter(args);
                     }
                     else if (BrushMode == BrushMode.Subtile)
                     {
@@ -268,8 +323,7 @@ public class TilesetEditor : Frame
                     }
                     else if (BrushMode == BrushMode.Collision)
                     {
-                        SetSubTileCollision(args.selectedIndex, true);
-                        tileEditor.SetTile(Tileset, t);
+                        collisionSetter(args, true);
                     }
 
                     tileEditor.SetTile(Tileset, t);
@@ -284,12 +338,7 @@ public class TilesetEditor : Frame
                 {
                     if (BrushMode == BrushMode.Palette)
                     {
-                        args.Foreach((x1, y1) =>
-                        {
-                            int tile = x1 + y1 * tilesetViewer.Width;
-                            var (t, x, y) = tilesetViewer.ToSubTileIndex(tile);
-                            Tileset.SetSubTilePalette(t, x, y, selectedPalette);
-                        });
+                        paletteSetter(args);
                     }
                     else if (BrushMode == BrushMode.Subtile)
                     {
@@ -302,10 +351,7 @@ public class TilesetEditor : Frame
                     }
                     else if (BrushMode == BrushMode.Collision)
                     {
-                        args.Foreach((x, y) =>
-                        {
-                            SetSubTileCollision(x + y * tilesetViewer.Width, true);
-                        });
+                        collisionSetter(args, true);
                     }
                 },
                 brushPreview: true,
@@ -395,7 +441,7 @@ public class TilesetEditor : Frame
                 MouseButton.RightClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
                 (_, args) =>
                 {
-                    SetSubTileCollision(args.selectedIndex, false);
+                    collisionSetter(args, false);
                     var (t, _, _) = tilesetViewer.ToSubTileIndex(args.selectedIndex);
                     tileEditor.SetTile(Tileset, t);
                 },
@@ -406,10 +452,7 @@ public class TilesetEditor : Frame
                 MouseButton.RightClick, MouseModifier.Ctrl, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
                 (_, args) =>
                 {
-                    args.Foreach((tile) =>
-                    {
-                        SetSubTileCollision(tile, false);
-                    });
+                    collisionSetter(args, false);
                 },
                 name: "Collision Brush Ctrl+RightClick"
             );
@@ -447,16 +490,6 @@ public class TilesetEditor : Frame
             subtileBrushInterfacer.SetPreviewImage(image, 8);
             tilesetViewer.TooltipImagePreview = subtileBrush.IsSingleTile;
         }
-    }
-
-    /// <summary>
-    /// Modifies the tile collision value ONLY if it's a "basic collision", otherwise leaves the
-    /// collision value untouched.
-    /// </summary>
-    void SetSubTileCollision(int viewerTile, bool enabled)
-    {
-        var (tile, x, y) = tilesetViewer.ToSubTileIndex(viewerTile);
-        TrySetSubTileCollision(Tileset, tile, x, y, enabled);
     }
 
     // ================================================================================
@@ -651,19 +684,25 @@ class TileEditor : TileGrid
             int tile = CoordToTile(GetRelativeMousePos());
             int x = tile % 2;
             int y = tile / 2;
-            Tileset.SetSubTileIndex(TileIndex, x, y, (byte)(value ^ 0x80));
+            ForAllSeasons((tileset) =>
+            {
+                tileset.SetSubTileIndex(TileIndex, x, y, (byte)(value ^ 0x80));
+            });
         };
 
         var trySetCollision = (TileGridEventArgs args, bool enable) =>
         {
             if (parent.BrushMode != BrushMode.Collision)
                 return;
-            args.Foreach((index) =>
+            ForAllSeasons((tileset) =>
             {
-                int t = TileIndex;
-                int tx = index % 2;
-                int ty = index / 2;
-                TilesetEditor.TrySetSubTileCollision(Tileset, t, tx, ty, enable);
+                args.Foreach((index) =>
+                {
+                    int t = TileIndex;
+                    int tx = index % 2;
+                    int ty = index / 2;
+                    TilesetEditor.TrySetSubTileCollision(tileset, t, tx, ty, enable);
+                });
             });
         };
 
@@ -708,7 +747,7 @@ class TileEditor : TileGrid
     // Properties
     // ================================================================================
 
-    public Tileset Tileset { get; private set; }
+    public RealTileset Tileset { get; private set; }
     public int TileIndex { get; private set; } // Should never be -1
 
     public override Image Image { get { return image; } }
@@ -743,7 +782,7 @@ class TileEditor : TileGrid
             ImGui.Text("Collision:");
             ImGuiX.InputHex("##Collision", Tileset.GetTileCollision(TileIndex), (c) =>
             {
-                Tileset.SetTileCollision(TileIndex, (byte)c);
+                ForAllSeasons((tileset) => tileset.SetTileCollision(TileIndex, (byte)c));
             });
             ImGui.PopItemWidth();
         }
@@ -759,7 +798,7 @@ class TileEditor : TileGrid
                     byte newFlags = (byte)(flags & ~bitmask);
                     if (v)
                         newFlags |= bitmask;
-                    Tileset.SetSubTileFlags(TileIndex, x, y, newFlags);
+                    ForAllSeasons((tileset) => tileset.SetSubTileFlags(TileIndex, x, y, newFlags));
                 });
             };
 
@@ -781,7 +820,7 @@ class TileEditor : TileGrid
         ImGui.EndGroup();
     }
 
-    public void SetTile(Tileset t, int index)
+    public void SetTile(RealTileset t, int index)
     {
         Debug.Assert(index != -1);
         Tileset = t;
@@ -797,5 +836,13 @@ class TileEditor : TileGrid
     void DrawTile()
     {
         image = TopLevel.ImageFromBitmap(Tileset.GetTileBitmap(TileIndex));
+    }
+
+    /// <summary>
+    /// Just like the ForAllSeasons function in TileEditor class
+    /// </summary>
+    void ForAllSeasons(Action<RealTileset> action)
+    {
+        parent.ForAllSeasons(action);
     }
 }
