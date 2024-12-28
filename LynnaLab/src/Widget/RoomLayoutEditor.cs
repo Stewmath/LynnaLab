@@ -161,7 +161,7 @@ public class RoomLayoutEditor : TileGrid
             // Draw background box
             if (com.BoxColor != null)
             {
-                base.AddRectFilled(com.BoxRectangle * Scale, com.BoxColor);
+                base.AddRectFilled(com.BoxRectangle * Scale, (Color)com.BoxColor);
             }
 
             // Draw it
@@ -617,7 +617,7 @@ public class RoomLayoutEditor : TileGrid
         // Properties
         // ================================================================================
 
-        public abstract Color BoxColor { get; }
+        public abstract Color? BoxColor { get; }
 
         public abstract bool Deletable { get; }
         public abstract bool HasXY { get; }
@@ -689,7 +689,7 @@ public class RoomLayoutEditor : TileGrid
             this.quickstart = data;
         }
 
-        public override Color BoxColor
+        public override Color? BoxColor
         {
             get { return null; }
         }
@@ -755,7 +755,7 @@ public class RoomLayoutEditor : TileGrid
 
         Project Project { get { return chest.Project; } }
 
-        public override Color BoxColor
+        public override Color? BoxColor
         {
             get
             {
@@ -821,7 +821,7 @@ public class RoomLayoutEditor : TileGrid
         }
 
 
-        public override Color BoxColor
+        public override Color? BoxColor
         {
             get
             {
@@ -903,7 +903,7 @@ public class RoomLayoutEditor : TileGrid
         }
 
 
-        public override Color BoxColor
+        public override Color? BoxColor
         {
             get
             {
@@ -991,7 +991,7 @@ public class RoomLayoutEditor : TileGrid
         }
 
 
-        public override Color BoxColor
+        public override Color? BoxColor
         {
             get
             {

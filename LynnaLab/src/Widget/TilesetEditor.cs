@@ -177,7 +177,7 @@ public class TilesetEditor : Frame
 
         ImGui.SameLine();
         ImGui.BeginChild("Palette Panel", new Vector2(0.0f, HEIGHT));
-        ImGuiLL.RenderPaletteHeader(Tileset.PaletteHeaderGroup, BrushMode == BrushMode.Palette ? selectedPalette : -1);
+        ImGuiLL.RenderPaletteHeader(Tileset.PaletteHeaderGroup, BrushMode == BrushMode.Palette ? selectedPalette : -1, Workspace);
         ImGui.EndChild();
 
         ImGui.SeparatorText("Tileset Properties");

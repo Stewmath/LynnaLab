@@ -93,6 +93,7 @@ public class ProjectWorkspace
     // For copy/pasting. This may or may not exist in the game (it may have been deleted), but it
     // should be copiable regardless.
     public ObjectDefinition CopiedObject { get; set; }
+    public Color? CopiedColor { get; set; }
 
     // Togglable settings that affect other modules (really just minimaps right now)
     public bool DarkenUsedDungeonRooms { get { return darkenUsedDungeonRooms; } }

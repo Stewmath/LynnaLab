@@ -159,10 +159,11 @@ public class ImGuiLL
     /// Render all palettes in a palette header group as buttons that can be clicked to change them.
     /// Note: PaletteHeaderData.GetColor() is inefficient, not great to call it every frame
     /// </summary>
-    public static void RenderPaletteHeader(PaletteHeaderGroup phg, int paletteToHighlight)
+    public static void RenderPaletteHeader(PaletteHeaderGroup phg, int paletteToHighlight, ProjectWorkspace workspace)
     {
         const float COLUMN_WIDTH = 30.0f;
         int callCount = 0;
+        bool openRightClickPopup = false;
 
         var displayPalette = (PaletteHeaderData data) =>
         {
@@ -205,6 +206,13 @@ public class ImGuiLL
                             {
                                 data.SetColor(p, i, color);
                             });
+                            if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Right))
+                            {
+                                openRightClickPopup = true;
+                                paletteButtonPopupData = data;
+                                paletteButtonPopupPalette = p;
+                                paletteButtonPopupIndex = i;
+                            }
                         }
                         else
                         {
@@ -243,7 +251,27 @@ public class ImGuiLL
 
         ImGui.EndGroup();
         ImGui.EndGroup();
+
+        // Right-click popup menu
+        if (openRightClickPopup)
+            ImGui.OpenPopup("Palette Button Popup");
+        if (ImGui.BeginPopup("Palette Button Popup"))
+        {
+            if (ImGui.Selectable("Copy"))
+            {
+                workspace.CopiedColor = paletteButtonPopupData.GetColor(paletteButtonPopupPalette, paletteButtonPopupIndex);
+            }
+            if (ImGui.Selectable("Paste", false, workspace.CopiedColor == null ? ImGuiSelectableFlags.Disabled : 0))
+            {
+                paletteButtonPopupData.SetColor(paletteButtonPopupPalette, paletteButtonPopupIndex, (Color)workspace.CopiedColor);
+            }
+            ImGui.EndPopup();
+        }
     }
+
+    static PaletteHeaderData paletteButtonPopupData;
+    static int paletteButtonPopupPalette;
+    static int paletteButtonPopupIndex;
 
     static readonly HashSet<string> tilesetPropsLineBreaks = new HashSet<string>(
         "Dungeon Index".Split(","));

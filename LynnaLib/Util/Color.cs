@@ -3,7 +3,7 @@ using System.Numerics;
 namespace LynnaLib
 {
     /// I don't like Cairo.Color (it uses doubles) so I made this
-    public class Color
+    public struct Color
     {
         int r, g, b, a;
 
@@ -23,8 +23,6 @@ namespace LynnaLib
         {
             get { return a; }
         }
-
-        private Color() { }
 
         public static Color FromRgb(int r, int g, int b)
         {
