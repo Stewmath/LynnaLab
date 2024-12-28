@@ -53,8 +53,12 @@ public class TilesetEditor : Frame
     SubTileViewer subTileViewer;
     TileEditor tileEditor;
 
-    int selectedPalette; // Palette to set when in palette brush mode
-    Brush<SubTile> subtileBrush; // Brush to use when in subtile brush mode
+    // For palette brush mode
+    int selectedPalette; // Palette to set
+
+    // For subtile brush mode
+    bool copyPalettes = true; // Whether to copy palettes
+    Brush<SubTile> subtileBrush; // Brush to use
     BrushInterfacer subtileBrushInterfacer;
 
     // ================================================================================
@@ -119,6 +123,11 @@ public class TilesetEditor : Frame
             ImGui.SameLine();
             ImGuiX.InputHex("Palette index", ref selectedPalette, digits: 1, max: 7);
             ImGui.PopItemWidth();
+        }
+        else if (BrushMode == BrushMode.Subtile)
+        {
+            ImGui.SameLine();
+            ImGui.Checkbox("Copy palettes", ref copyPalettes);
         }
 
         ImGui.BeginChild("Tileset Viewer Panel", new Vector2(tilesetViewer.WidgetSize.X, HEIGHT));
@@ -216,7 +225,7 @@ public class TilesetEditor : Frame
             return;
         var (t, tx, ty) = tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
         Tileset.SetSubTileIndex(t, tx, ty, (byte)subTile.subtile);
-        if (subTile.palette == -1)
+        if (subTile.palette == -1 || !copyPalettes)
             Tileset.SetSubTileFlags(t, tx, ty, subTile.GetFlags(Tileset.GetSubTilePalette(t, tx, ty)));
         else
             Tileset.SetSubTileFlags(t, tx, ty, subTile.GetFlags());
