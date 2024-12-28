@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace LynnaLab;
 
 public class TilesetEditor : Frame
@@ -168,7 +170,10 @@ public class TilesetEditor : Frame
             return;
         var (t, tx, ty) = tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
         Tileset.SetSubTileIndex(t, tx, ty, (byte)subTile.subtile);
-        Tileset.SetSubTileFlags(t, tx, ty, subTile.GetFlags());
+        if (subTile.palette == -1)
+            Tileset.SetSubTileFlags(t, tx, ty, subTile.GetFlags(Tileset.GetSubTilePalette(t, tx, ty)));
+        else
+            Tileset.SetSubTileFlags(t, tx, ty, subTile.GetFlags());
     }
 
     void RegisterMouseActions()
@@ -179,6 +184,8 @@ public class TilesetEditor : Frame
         tilesetViewer.RemoveMouseAction("Brush Ctrl+LeftClick");
         tilesetViewer.RemoveMouseAction("Palette Brush RightClick");
         tilesetViewer.RemoveMouseAction("Subtile Brush RightClick");
+
+        subTileViewer.RemoveMouseAction("Subtile Viewer RightClick");
 
         if (brushMode != BrushMode.Normal)
         {
@@ -276,27 +283,7 @@ public class TilesetEditor : Frame
                                 };
                         }));
 
-                        // Render the preview image
-                        using (Bitmap bitmap = new Bitmap(subtileBrush.BrushWidth * 8, subtileBrush.BrushHeight * 8))
-                        {
-                            bitmap.Lock();
-                            subtileBrush.Draw(
-                                (x, y, subtile) =>
-                                {
-                                    SubTileDescription desc = new SubTileDescription(
-                                        Tileset.GetSubTileGfxBytes(subtile.subtile), subtile.GetFlags());
-                                    GbGraphics.RenderRawTile(bitmap, x * 8, y * 8,
-                                                             desc.graphics,
-                                                             Tileset.GraphicsState.GetBackgroundPalettes()[desc.flags & 7],
-                                                             desc.flags);
-                                },
-                                0, 0, subtileBrush.BrushWidth, subtileBrush.BrushHeight
-                            );
-                            bitmap.Unlock();
-                            Image image = TopLevel.Backend.ImageFromBitmap(bitmap);
-                            subtileBrushInterfacer.SetPreviewImage(image);
-                            tilesetViewer.TooltipImagePreview = subtileBrush.IsSingleTile;
-                        }
+                        UpdateSubTilePreviewImage();
 
                         // If we selected just one tile, select it in the tile editor widget
                         if (subtileBrush.IsSingleTile)
@@ -308,6 +295,60 @@ public class TilesetEditor : Frame
                 },
                 name: "Subtile Brush RightClick"
             );
+
+            // Subtile viewer: Right click + drag to select tiles (subtile brush mode only)
+            subTileViewer.AddMouseAction(
+                MouseButton.RightClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
+                (_, args) =>
+                {
+                    subtileBrush.SetTiles(tileEditor, args.RectArray((x, y) =>
+                    {
+                        return new SubTile {
+                            subtile = (x + y * subTileViewer.Width) ^ 0x80,
+                            palette = -1, // Use pre-existing palettes when drawn
+                            flipX = false,
+                            flipY = false,
+                            priority = false,
+                        };
+                    }));
+
+                    UpdateSubTilePreviewImage();
+                },
+                name: "Subtile Viewer RightClick"
+            );
+        }
+    }
+
+    /// <summary>
+    /// Render the preview image for the subtileBrush, typically called after the brush is updated.
+    /// </summary>
+    void UpdateSubTilePreviewImage()
+    {
+        using (Bitmap bitmap = new Bitmap(subtileBrush.BrushWidth * 8, subtileBrush.BrushHeight * 8))
+        {
+            bitmap.Lock();
+            subtileBrush.Draw(
+                (x, y, subtile) =>
+                {
+                    Color[] palette;
+                    if (subtile.palette == -1)
+                        palette = GbGraphics.GrayPalette;
+                    else
+                        palette = Tileset.GraphicsState.GetBackgroundPalettes()[subtile.palette & 7];
+
+                    byte flags = subtile.GetFlags(0);
+
+                    GbGraphics.RenderRawTile(bitmap, x * 8, y * 8,
+                                             Tileset.GetSubTileGfxBytes(subtile.subtile),
+                                             palette,
+                                             flags);
+                },
+                0, 0, subtileBrush.BrushWidth, subtileBrush.BrushHeight
+            );
+            bitmap.Unlock();
+            Image image = TopLevel.Backend.ImageFromBitmap(bitmap);
+            subtileBrushInterfacer.SetPreviewImage(image);
+            tilesetViewer.TooltipImagePreview = subtileBrush.IsSingleTile;
         }
     }
 
@@ -340,12 +381,17 @@ public class TilesetEditor : Frame
     /// </summary>
     struct SubTile
     {
-        public int subtile, palette;
+        public int subtile, palette; // palette can be -1 for "undetermined"
         public bool flipX, flipY, priority;
 
-        public byte GetFlags()
+        public byte GetFlags(int paletteOverride = -1)
         {
-            return (byte)(palette | 0x08 | (flipX ? 0x20 : 0) | (flipY ? 0x40 : 0) | (priority ? 0x80 : 0));
+            Debug.Assert(paletteOverride >= -1 && paletteOverride <= 7);
+            if (paletteOverride == -1)
+                paletteOverride = palette;
+            if (paletteOverride == -1)
+                throw new Exception("SubTile.GetFlags(): Palette undefined");
+            return (byte)(paletteOverride | 0x08 | (flipX ? 0x20 : 0) | (flipY ? 0x40 : 0) | (priority ? 0x80 : 0));
         }
     }
 }
