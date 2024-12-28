@@ -505,7 +505,7 @@ public class TileGrid : SizedWidget
                 int mouseX = mouseIndex % Width;
                 int mouseY = mouseIndex / Width;
 
-                TileGridEventArgs args = new TileGridEventArgs();
+                TileGridEventArgs args = new TileGridEventArgs(this);
                 args.selectedIndex = mouseIndex;
 
                 // This only executes if not currently doing a rectangle select
@@ -587,7 +587,7 @@ public class TileGrid : SizedWidget
             else
             {
                 // Released the button
-                var args = new TileGridEventArgs();
+                var args = new TileGridEventArgs(this);
                 (args.topLeft, args.bottomRight) = GetSelectRectBounds();
 
                 activeRectSelectAction.callback(this, args);
@@ -824,6 +824,18 @@ public class TileGrid : SizedWidget
         return x >= 0 && y >= 0 && x < Width && y < Height && x + y * Width < MaxIndex;
     }
 
+    /// <summary>
+    /// Gets the bounds of a tile in a rectangle.
+    /// </summary>
+    public FRect TileRect(int tileIndex)
+    {
+        var (x, y) = TileToXY(tileIndex);
+
+        Vector2 tl = new Vector2((TilePaddingX + x * PaddedTileWidth) * Scale,
+                                 (TilePaddingY + y * PaddedTileHeight) * Scale);
+        return new FRect(tl.X, tl.Y, TileWidth * Scale, TileHeight * Scale);
+    }
+
     // ================================================================================
     // Protected methods
     // ================================================================================
@@ -833,18 +845,6 @@ public class TileGrid : SizedWidget
     /// supply its image tile-by-tile.
     /// </summary>
     protected virtual void TileDrawer(int index) {}
-
-    /// <summary>
-    /// Gets the bounds of a tile in a rectangle.
-    /// </summary>
-    protected FRect TileRect(int tileIndex)
-    {
-        var (x, y) = TileToXY(tileIndex);
-
-        Vector2 tl = new Vector2((TilePaddingX + x * PaddedTileWidth) * Scale,
-                                 (TilePaddingY + y * PaddedTileHeight) * Scale);
-        return new FRect(tl.X, tl.Y, TileWidth * Scale, TileHeight * Scale);
-    }
 
     /// <summary>
     /// Gets the bounds of a range of tiles in a rectangle.
@@ -1084,6 +1084,15 @@ public enum GridAction
 
 public struct TileGridEventArgs
 {
+    public TileGridEventArgs(TileGrid grid)
+    {
+        this.gridWidth = grid.Width;
+        this.gridHeight = grid.Height;
+    }
+
+    // For all actions
+    public int gridWidth, gridHeight;
+
     // For GridAction.Callback (selected one tile)
     public int selectedIndex;
 
@@ -1100,6 +1109,17 @@ public struct TileGridEventArgs
             for (int y = topLeft.Y; y <= bottomRight.Y; y++)
             {
                 action(x, y);
+            }
+        }
+    }
+
+    public void Foreach(System.Action<int> action)
+    {
+        for (int x = topLeft.X; x <= bottomRight.X; x++)
+        {
+            for (int y = topLeft.Y; y <= bottomRight.Y; y++)
+            {
+                action(x + y * gridWidth);
             }
         }
     }
