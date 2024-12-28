@@ -186,6 +186,12 @@ public class TileGrid : SizedWidget
     public int SelectedY { get { return selectedIndex / Width; } }
 
     /// <summary>
+    /// This is only set to a valid value if a single tile is being hovered over. (Set to -1 if not
+    /// hovering or if hovering with a rectangle pattern.)
+    /// </summary>
+    public int HoveredTile { get; private set; }
+
+    /// <summary>
     /// This is 1 + the maximum index value which can be hovered over or selected. Set to "0" to
     /// disable hovering & selection entirely.
     /// This always returns a valid value. If maxIndexOverride is -1 then this is determined by the
@@ -476,6 +482,8 @@ public class TileGrid : SizedWidget
     /// </summary>
     public void RenderHoverAndSelection()
     {
+        HoveredTile = -1;
+
         RenderBrushPreview();
 
         int mouseIndex = -1;
@@ -503,8 +511,14 @@ public class TileGrid : SizedWidget
                 // This only executes if not currently doing a rectangle select
                 if (activeRectSelectAction == null)
                 {
+                    if (hoverWidth == 1 && hoverHeight == 1)
+                    {
+                        HoveredTile = XYToTile(mouseX, mouseY);
+                        if (HoveredTile >= MaxIndex)
+                            HoveredTile = -1;
+                    }
+
                     // Draw hover rectangle
-                    //FRect r = TileRect(mouseIndex);
                     FRect r = TileRangeRect(mouseIndex, XYToTile(
                                                 Math.Min(mouseX + hoverWidth - 1, Width - 1),
                                                 Math.Min(mouseY + hoverHeight - 1, Height - 1)));

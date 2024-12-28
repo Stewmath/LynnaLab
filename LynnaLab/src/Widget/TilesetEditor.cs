@@ -109,6 +109,33 @@ public class TilesetEditor : Frame
         ImGui.BeginChild("Tileset Viewer Panel", new Vector2(tilesetViewer.WidgetSize.X, HEIGHT));
         ImGui.SeparatorText("Tileset");
         tilesetViewer.Render();
+        if (tilesetViewer.SubTileMode && tilesetViewer.HoveredTile != -1)
+        {
+            // Change flip X
+            if (ImGui.IsKeyPressed(ImGuiKey._1))
+            {
+                var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
+                byte flags = Tileset.GetSubTileFlags(t, tx, ty);
+                flags ^= 0x20;
+                Tileset.SetSubTileFlags(t, tx, ty, flags);
+            }
+            // Change flip Y
+            if (ImGui.IsKeyPressed(ImGuiKey._2))
+            {
+                var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
+                byte flags = Tileset.GetSubTileFlags(t, tx, ty);
+                flags ^= 0x40;
+                Tileset.SetSubTileFlags(t, tx, ty, flags);
+            }
+            // Change priority
+            if (ImGui.IsKeyPressed(ImGuiKey._3))
+            {
+                var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
+                byte flags = Tileset.GetSubTileFlags(t, tx, ty);
+                flags ^= 0x80;
+                Tileset.SetSubTileFlags(t, tx, ty, flags);
+            }
+        }
         ImGui.EndChild();
 
         ImGui.SameLine();

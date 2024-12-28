@@ -32,7 +32,7 @@ public class TilesetViewer : TileGrid
                 ImGui.Text($"Palette {Tileset.GetSubTilePalette(t, x, y)}");
                 ImGuiX.Checkbox("Flip X", (Tileset.GetSubTileFlags(t, x, y) & 0x20) != 0, (_) => {});
                 ImGuiX.Checkbox("Flip Y", (Tileset.GetSubTileFlags(t, x, y) & 0x40) != 0, (_) => {});
-                ImGuiX.Checkbox("Priority", (Tileset.GetSubTileFlags(t, x, y) & 0x40) != 0, (_) => {});
+                ImGuiX.Checkbox("Priority", (Tileset.GetSubTileFlags(t, x, y) & 0x80) != 0, (_) => {});
             }
             else
             {
