@@ -71,6 +71,7 @@ public class ProjectWorkspace
     bool showDebugWindow;
     bool showImGuiDemoWindow;
     bool lightMode, scrollToZoom = true, darkenUsedDungeonRooms = true, bicubicScaling = true;
+    bool autoAdjustGroupNumber = true;
 
     Image linkImage;
     BuildDialog buildDialog;
@@ -97,6 +98,7 @@ public class ProjectWorkspace
 
     // Togglable settings that affect other modules (really just minimaps right now)
     public bool DarkenUsedDungeonRooms { get { return darkenUsedDungeonRooms; } }
+    public bool AutoAdjustGroupNumber { get { return autoAdjustGroupNumber; } }
 
     // ================================================================================
     // Public methods
@@ -158,7 +160,10 @@ public class ProjectWorkspace
                 {
                     roomEditor.SetScrollToZoom(scrollToZoom);
                 }
+
                 ImGuiX.MenuItemCheckbox("Darken used dungeon rooms & duplicate rooms", ref darkenUsedDungeonRooms);
+                ImGuiX.TooltipOnHover("Rooms which are darkened have a more \"canonical\" version somewhere else, either on the dungeon tab or in a different world index. Duplicate rooms may be missing their warp data.");
+
                 if (ImGuiX.MenuItemCheckbox("Bicubic scaling", ref bicubicScaling))
                 {
                     Interpolation interp = bicubicScaling ? Interpolation.Bicubic : Interpolation.Nearest;
@@ -168,6 +173,9 @@ public class ProjectWorkspace
             }
             if (ImGui.BeginMenu("Misc"))
             {
+                ImGuiX.MenuItemCheckbox("Auto-Adjust World Number", ref autoAdjustGroupNumber);
+                ImGuiX.TooltipOnHover("The subrosia map & dungeons have duplicates in the World tab. Check this box to auto-adjust the group number to its expected value when selecting these rooms.");
+
                 if (ImGuiX.MenuItemCheckbox("Light Mode", ref lightMode))
                 {
                     if (lightMode)

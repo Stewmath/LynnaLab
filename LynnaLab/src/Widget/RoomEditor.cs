@@ -64,7 +64,12 @@ public class RoomEditor : Frame
             if (suppressEvents != 0)
                 return;
 
-            SetRoomLayout(overworldMinimap.Map.GetRoomLayout(overworldMinimap.SelectedX, overworldMinimap.SelectedY), 0);
+            RoomLayout roomLayout = overworldMinimap.Map.GetRoomLayout(overworldMinimap.SelectedX, overworldMinimap.SelectedY);
+            if (Workspace.AutoAdjustGroupNumber && roomLayout.Room.Index != roomLayout.Room.ExpectedIndex)
+            {
+                roomLayout = Project.GetIndexedDataType<Room>(roomLayout.Room.ExpectedIndex).GetLayout(roomLayout.Season);
+            }
+            SetRoomLayout(roomLayout, 1);
         };
 
         dungeonMinimap.SelectedEvent += (selectedIndex) =>
@@ -408,10 +413,6 @@ public class RoomEditor : Frame
     /// </summary>
     public void SetRoom(Room room, int updateMinimap)
     {
-        // Adjust the room index to its "expected" value, accounting for duplicates.
-        if (room.ExpectedIndex != room.Index)
-            room = Project.GetIndexedDataType<Room>(room.ExpectedIndex);
-
         if (Room == room)
             return;
         SetRoomLayout(room.GetLayout(Season), updateMinimap);

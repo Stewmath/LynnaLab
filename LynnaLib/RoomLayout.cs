@@ -42,8 +42,6 @@ namespace LynnaLib
         // Properties from "Room" class
         public Project Project { get { return Room.Project; } }
         public int Group { get { return Room.Group; } }
-        public int ExpectedGroup { get { return Room.ExpectedGroup; } }
-        public int ExpectedIndex { get { return Room.ExpectedIndex; } }
 
         public int Height
         {
