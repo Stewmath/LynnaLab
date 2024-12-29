@@ -271,15 +271,16 @@ public static class TopLevel
             ImGui.EndPopup();
         }
 
-        // File chooser to open project
+        // File chooser to open project.
+        // Nothing is actually drawn in the modal. Instead, the NativeFileDialog library opens a
+        // file dialog, which does not return until there is a result.
         if (ImGui.BeginPopupModal("Open Project", ImGuiWindowFlags.AlwaysAutoResize))
         {
-            var picker = FilePicker.GetFolderPicker("Open", Path.Combine(Environment.CurrentDirectory));
-            picker.OnlyAllowFolders = true;
-            picker.RootFolder = "/";
-            if (picker.Draw())
+            var result = NativeFileDialogSharp.Dialog.FolderPicker();
+
+            if (result.IsOk)
             {
-                projectDirectoryToOpen = picker.SelectedFile;
+                projectDirectoryToOpen = result.Path;
                 ProjectConfig config = ProjectConfig.Load(projectDirectoryToOpen);
 
                 if (config == null)
@@ -288,28 +289,42 @@ public static class TopLevel
                 }
                 else if (config.EditingGameIsValid())
                 {
-                    OpenProject(picker.SelectedFile, config.EditingGame);
+                    OpenProject(projectDirectoryToOpen, config.EditingGame);
                 }
                 else
                 {
                     nextPopup = "Select Game";
                 }
             }
-
-            // Check if FilePicker code closed the modal (may or may not have selected a file)
-            if (picker.Closed)
+            else if (result.IsCancelled)
             {
-                FilePicker.RemoveFilePicker("Open");
-                closeCurrentModal();
+                nextPopup = null;
+            }
+            else if (result.IsError)
+            {
+                nextPopup = "Display Message|ERROR: " + result.ErrorMessage;
             }
 
+            closeCurrentModal();
+            ImGui.EndPopup();
+        }
+
+        if (ImGui.BeginPopupModal("Display Message", ImGuiWindowFlags.AlwaysAutoResize))
+        {
+            // We're abusing "nextPopup" to have it contain the message instead of a popup name
+            ImGui.Text(nextPopup);
+            if (ImGui.Selectable("OK"))
+            {
+                nextPopup = null;
+                closeCurrentModal();
+            }
             ImGui.EndPopup();
         }
 
         // Notification that the directory selected was not a valid project
         if (ImGui.BeginPopupModal("Invalid Project", ImGuiWindowFlags.AlwaysAutoResize))
         {
-            ImGui.Text("Couldn't open project config file. Select the root of the oracles-disasm folder.");
+            ImGui.Text("Couldn't open project config file. Please select the \"oracles-disasm\" folder to open.");
             if (ImGui.Button("OK"))
                 closeCurrentModal();
             ImGui.EndPopup();
