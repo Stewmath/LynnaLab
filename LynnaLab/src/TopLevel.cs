@@ -61,8 +61,7 @@ public static class TopLevel
     static Queue<Func<bool>> idleFunctions = new Queue<Func<bool>>();
 
     // Vars related to modal windows
-    static string activeModal;
-    static string nextPopup;
+    static Queue<ModalStruct> modalQueue = new Queue<ModalStruct>();
     static bool rememberGameChoice;
     static string projectDirectoryToOpen;
 
@@ -105,7 +104,7 @@ public static class TopLevel
             if (backend.CloseRequested)
             {
                 if (Workspace != null)
-                    OpenModal("Close Project");
+                    CloseProjectModal();
                 else
                     backend.Close();
             }
@@ -153,7 +152,7 @@ public static class TopLevel
                 {
                     if (ImGui.MenuItem("Open"))
                     {
-                        OpenModal("Open Project");
+                        OpenProjectModal();
                     }
                     ImGui.EndMenu();
                 }
@@ -169,12 +168,12 @@ public static class TopLevel
     }
 
     /// <summary>
-    /// If another modal is active when this is called it won't open until that one gets closed, if
-    /// at all
+    /// Open a modal window with the given name, using the given function to render its contents.
+    /// It will be opened after any other modal windows have been closed.
     /// </summary>
-    public static void OpenModal(string name)
+    public static void OpenModal(string name, Func<bool> renderFunc)
     {
-        nextPopup = name;
+        modalQueue.Enqueue(new ModalStruct { name = name, renderFunc = renderFunc });
     }
 
     /// <summary>
@@ -183,182 +182,23 @@ public static class TopLevel
     /// </summary>
     public static void RenderModals()
     {
-        Func<string, (string, string)> splitPopupString = (string s) =>
+        if (modalQueue.Count != 0)
         {
-            int splitIndex = s.IndexOf('|');
-            string first = splitIndex == -1 ? s : s.Substring(0, splitIndex);
-            string rest = splitIndex == -1 ? null : s.Substring(splitIndex + 1);
-            return (first, rest);
-        };
+            ModalStruct modal = (ModalStruct)modalQueue.Peek();
 
-        Action closeCurrentModal = () =>
-        {
-            ImGui.CloseCurrentPopup();
-            activeModal = null;
-        };
+            // TODO: OK to call this repeatedly?
+            ImGui.OpenPopup(modal.name);
 
-        if (activeModal == null && nextPopup != null)
-        {
-            var (first, rest) = splitPopupString(nextPopup);
-            ImGui.OpenPopup(first);
-            activeModal = first;
-            nextPopup = rest;
-        }
-
-        var beginModal = (string name) =>
-        {
-            bool ret = ImGui.BeginPopupModal(name, ImGuiWindowFlags.AlwaysAutoResize);
-            return ret;
-        };
-
-        // Offer to save the project before closing. Pops up when attempting to close the window, or
-        // "Project -> Close" (slightly different things)
-        if (ImGui.BeginPopupModal("Close Project", ImGuiWindowFlags.AlwaysAutoResize))
-        {
-            ImGui.Text("Save project before closing?");
-
-            // Close either the project or the entire window, depending on the context
-            var close = () =>
+            if (ImGui.BeginPopupModal(modal.name, ImGuiWindowFlags.AlwaysAutoResize))
             {
-                if (backend.CloseRequested)
+                if (modal.renderFunc())
                 {
-                    backend.Close();
-                    backend.CloseRequested = false;
+                    modalQueue.Dequeue();
+                    ImGui.CloseCurrentPopup();
                 }
-                else if (nextPopup == "Switch Game")
-                {
-                    string path = Workspace.Project.BaseDirectory;
-                    string game = Workspace.Project.Game == Game.Ages ? "seasons" : "ages";
-                    Workspace.Close();
-                    Workspace = null;
-                    OpenProject(path, game);
-                    nextPopup = null;
-                }
-                else if (nextPopup == "Reload Project")
-                {
-                    string path = Workspace.Project.BaseDirectory;
-                    string game = Workspace.Project.GameString;
-                    Workspace.Close();
-                    Workspace = null;
-                    OpenProject(path, game);
-                    nextPopup = null;
-                }
-                else
-                {
-                    Workspace.Close();
-                    Workspace = null;
-                }
-                closeCurrentModal();
-            };
-
-            if (ImGui.Button("Save"))
-            {
-                Workspace.Project.Save();
-                close();
+                ImGui.EndPopup();
             }
-            ImGui.SameLine();
-            if (ImGui.Button("Don't save"))
-            {
-                close();
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Cancel"))
-            {
-                backend.CloseRequested = false;
-                nextPopup = null; // Don't show subsequent popup windows, if any
-                closeCurrentModal();
-            }
-            ImGui.EndPopup();
-        }
-
-        // File chooser to open project.
-        // Nothing is actually drawn in the modal. Instead, the NativeFileDialog library opens a
-        // file dialog, which does not return until there is a result.
-        if (ImGui.BeginPopupModal("Open Project", ImGuiWindowFlags.AlwaysAutoResize))
-        {
-            var result = NativeFileDialogSharp.Dialog.FolderPicker();
-
-            if (result.IsOk)
-            {
-                projectDirectoryToOpen = result.Path;
-                ProjectConfig config = ProjectConfig.Load(projectDirectoryToOpen);
-
-                if (config == null)
-                {
-                    nextPopup = "Invalid Project";
-                }
-                else if (config.EditingGameIsValid())
-                {
-                    OpenProject(projectDirectoryToOpen, config.EditingGame);
-                }
-                else
-                {
-                    nextPopup = "Select Game";
-                }
-            }
-            else if (result.IsCancelled)
-            {
-                nextPopup = null;
-            }
-            else if (result.IsError)
-            {
-                nextPopup = "Display Message|ERROR: " + result.ErrorMessage;
-            }
-
-            closeCurrentModal();
-            ImGui.EndPopup();
-        }
-
-        if (ImGui.BeginPopupModal("Display Message", ImGuiWindowFlags.AlwaysAutoResize))
-        {
-            // We're abusing "nextPopup" to have it contain the message instead of a popup name
-            ImGui.Text(nextPopup);
-            if (ImGui.Selectable("OK"))
-            {
-                nextPopup = null;
-                closeCurrentModal();
-            }
-            ImGui.EndPopup();
-        }
-
-        // Notification that the directory selected was not a valid project
-        if (ImGui.BeginPopupModal("Invalid Project", ImGuiWindowFlags.AlwaysAutoResize))
-        {
-            ImGui.Text("Couldn't open project config file. Please select the \"oracles-disasm\" folder to open.");
-            if (ImGui.Button("OK"))
-                closeCurrentModal();
-            ImGui.EndPopup();
-        }
-
-        // Deciding which game to edit after selecting a project
-        if (ImGui.BeginPopupModal("Select Game", ImGuiWindowFlags.AlwaysAutoResize))
-        {
-            string gameChoice = null;
-
-            ImGui.Text("Which game to edit?");
-            if (ImGui.Button("Ages"))
-                gameChoice = "ages";
-            ImGui.SameLine();
-            if (ImGui.Button("Seasons"))
-                gameChoice = "seasons";
-            ImGui.Checkbox("Remember my choice", ref rememberGameChoice);
-
-            if (gameChoice != null)
-            {
-                closeCurrentModal();
-
-                if (rememberGameChoice)
-                {
-                    ProjectConfig config = ProjectConfig.Load(projectDirectoryToOpen);
-                    config.SetEditingGame(gameChoice);
-                }
-                OpenProject(projectDirectoryToOpen, gameChoice);
-
-                projectDirectoryToOpen = null;
-                rememberGameChoice = false;
-            }
-
-            ImGui.EndPopup();
+            return;
         }
     }
 
@@ -405,12 +245,7 @@ public static class TopLevel
         LazyInvoke(() => { function(); return false; });
     }
 
-
-    // ================================================================================
-    // Private methods
-    // ================================================================================
-
-    static void OpenProject(string path, string game)
+    public static void OpenProject(string path, string game)
     {
         if (Workspace != null)
         {
@@ -425,5 +260,141 @@ public static class TopLevel
 
         var project = new Project(path, game, config);
         Workspace = new ProjectWorkspace(project);
+    }
+
+    // ================================================================================
+    // Modal windows
+    // ================================================================================
+
+    public static void CloseProjectModal(Action callback = null)
+    {
+        // Offer to save the project before closing. Pops up when attempting to close the window, or
+        // "Project -> Close" (slightly different things)
+        OpenModal("Close Project", () =>
+        {
+            ImGui.Text("Save project before closing?");
+
+            // Close either the project or the entire window, depending on the context
+            var close = () =>
+            {
+                if (backend.CloseRequested)
+                {
+                    backend.Close();
+                    backend.CloseRequested = false;
+                }
+                else
+                {
+                    Workspace.Close();
+                    Workspace = null;
+                }
+                if (callback != null)
+                    callback();
+            };
+
+            if (ImGui.Button("Save"))
+            {
+                Workspace.Project.Save();
+                close();
+                return true;
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Don't save"))
+            {
+                close();
+                return true;
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Cancel"))
+            {
+                backend.CloseRequested = false;
+                return true;
+            }
+            return false;
+        });
+    }
+
+    // Not an ImGui modal, but functions similarly.
+    public static void OpenProjectModal()
+    {
+        var result = NativeFileDialogSharp.Dialog.FolderPicker();
+
+        if (result.IsOk)
+        {
+            projectDirectoryToOpen = result.Path;
+            ProjectConfig config = ProjectConfig.Load(projectDirectoryToOpen);
+
+            if (config == null)
+            {
+                DisplayMessageModal("Error", "Couldn't open project config file. Please select the \"oracles-disasm\" folder to open.");
+            }
+            else if (config.EditingGameIsValid())
+            {
+                OpenProject(projectDirectoryToOpen, config.EditingGame);
+            }
+            else
+            {
+                TopLevel.SelectGameModal();
+            }
+        }
+        else if (result.IsCancelled)
+        {
+        }
+        else if (result.IsError)
+        {
+            DisplayMessageModal("Error", result.ErrorMessage);
+        }
+    }
+
+    public static void DisplayMessageModal(string title, string message)
+    {
+        OpenModal(title, () =>
+        {
+            ImGui.Text(message);
+            return ImGui.Button("OK");
+        });
+    }
+
+    public static void SelectGameModal()
+    {
+        // Deciding which game to edit after selecting a project
+        OpenModal("Select Game", () =>
+        {
+            string gameChoice = null;
+
+            ImGui.Text("Which game to edit?");
+            if (ImGui.Button("Ages"))
+                gameChoice = "ages";
+            ImGui.SameLine();
+            if (ImGui.Button("Seasons"))
+                gameChoice = "seasons";
+            ImGui.Checkbox("Remember my choice", ref rememberGameChoice);
+
+            if (gameChoice != null)
+            {
+                if (rememberGameChoice)
+                {
+                    ProjectConfig config = ProjectConfig.Load(projectDirectoryToOpen);
+                    config.SetEditingGame(gameChoice);
+                }
+                OpenProject(projectDirectoryToOpen, gameChoice);
+
+                projectDirectoryToOpen = null;
+                rememberGameChoice = false;
+                return true;
+            }
+
+            return false;
+        });
+    }
+
+
+    // ================================================================================
+    // Nested structs
+    // ================================================================================
+
+    struct ModalStruct
+    {
+        public string name;
+        public Func<bool> renderFunc;
     }
 }

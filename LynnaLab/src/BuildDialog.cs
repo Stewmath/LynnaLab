@@ -216,24 +216,46 @@ public class BuildDialog : Frame
 
         processView.AppendText("\nBuild completed successfully!\n", "success");
 
-        string runCommand = GlobalConfig.EmulatorCommand;
-
-        if (runCommand == null)
+        if (GlobalConfig.EmulatorCommand != null)
         {
-            // TODO: Emulator prompt
-            // string emulatorPrompt = null;
-            // if ((emulatorPrompt = mainWindow.PromptForEmulator(true)) == null)
-            // {
-            //     processView.AppendText($"Emulator not configured, couldn't run {Project.GameString}.gbc.", "error");
-            //     return;
-            // }
-            // runCommand = emulatorPrompt;
-            throw new NotImplementedException();
+            RunGame(GlobalConfig.EmulatorCommand);
+            return;
         }
+
+        // Open a modal telling the user to select an emulator, then open the file chooser dialog
+        TopLevel.OpenModal(
+            "Select Emulator",
+            () =>
+            {
+                ImGui.Text($"Your gameboy emulator path has not been configured.\nSelect your emulator executable file now to run {Project.GameString}.gbc.");
+                if (ImGui.Button("OK"))
+                {
+                    string runCommand = SelectEmulator();
+
+                    if (runCommand == null)
+                    {
+                        processView.AppendText($"Emulator not configured, couldn't run {Project.GameString}.gbc.", "error");
+                    }
+                    else
+                    {
+                        RunGame(runCommand);
+                    }
+
+                    return true;
+                }
+
+                return false;
+            });
+    }
+
+    void RunGame(string runCommand)
+    {
+        if (runCommand == null)
+            throw new Exception("RunGame(): runCommand not specified");
 
         var (fileName, arguments) = SubstituteString(runCommand);
 
-        processView.AppendText("Attempting to run with the following command (reconfigure with File -> Select Emulator)...");
+        processView.AppendText("Attempting to run with the following command (reconfigure with Misc -> Select Emulator)...");
         processView.AppendText($"\"{fileName}\" " + arguments + '\n', "code");
 
         ProcessStartInfo startInfo = new ProcessStartInfo
@@ -298,5 +320,28 @@ public class BuildDialog : Frame
         {
             Close();
         }
+    }
+
+    // ================================================================================
+    // Static methods
+    // ================================================================================
+
+    public static string SelectEmulator()
+    {
+        string filterList = null;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            filterList = "exe";
+
+        var result = NativeFileDialogSharp.Dialog.FileOpen(filterList);
+
+        if (result.IsOk)
+            return result.Path + " | {GAME}.gbc";
+        else if (result.IsError)
+        {
+            TopLevel.DisplayMessageModal("Error", result.ErrorMessage);
+            return null;
+        }
+        else
+            return null;
     }
 }

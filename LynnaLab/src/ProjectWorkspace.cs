@@ -116,7 +116,7 @@ public class ProjectWorkspace
             {
                 if (ImGui.MenuItem("Open"))
                 {
-                    TopLevel.OpenModal("Close Project|Open Project");
+                    TopLevel.CloseProjectModal(() => TopLevel.OpenProjectModal());
                 }
                 if (ImGui.MenuItem("Save"))
                 {
@@ -124,15 +124,19 @@ public class ProjectWorkspace
                 }
                 if (ImGui.MenuItem("Close"))
                 {
-                    TopLevel.OpenModal("Close Project");
+                    TopLevel.CloseProjectModal();
                 }
                 if (ImGui.MenuItem("Reload"))
                 {
-                    TopLevel.OpenModal("Close Project|Reload Project");
+                    TopLevel.CloseProjectModal(() => TopLevel.OpenProject(Project.BaseDirectory, Project.GameString));
                 }
                 if (ImGui.MenuItem("Switch Game"))
                 {
-                    TopLevel.OpenModal("Close Project|Switch Game");
+                    TopLevel.CloseProjectModal(() =>
+                    {
+                        string gameString = Project.Game == Game.Seasons ? "ages" : "seasons";
+                        TopLevel.OpenProject(Project.BaseDirectory, gameString);
+                    });
                 }
                 if (ImGui.MenuItem("Run"))
                 {
@@ -187,6 +191,14 @@ public class ProjectWorkspace
                     "Hover preview",
                     new Accessor<bool>(() => ShowBrushPreview
                     ));
+
+                if (ImGui.MenuItem("Choose emulator path..."))
+                {
+                    string cmd = BuildDialog.SelectEmulator();
+                    if (cmd != null)
+                        TopLevel.GlobalConfig.EmulatorCommand = cmd;
+                }
+
                 ImGui.EndMenu();
             }
             if (ImGui.BeginMenu("Debug"))
@@ -316,6 +328,7 @@ public class ProjectWorkspace
     {
         Project.Save();
         buildDialog.BeginCompile();
+        buildDialog.Focus();
     }
 }
 
