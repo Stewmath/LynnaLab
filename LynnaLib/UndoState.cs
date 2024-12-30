@@ -96,12 +96,11 @@ public class UndoState
         }
     }
 
-    public void RecordChange(Object source, Func<TransactionDelta> deltaInitializer)
+    public void RecordChange(Undoable source)
     {
         if (constructingTransaction.deltas.ContainsKey(source))
             return;
-
-        TransactionDelta delta = deltaInitializer();
+        var delta = new TransactionStateHolder<Undoable>(source);
         constructingTransaction.deltas[source] = delta;
     }
 
@@ -178,8 +177,11 @@ public class Transaction
 }
 
 /// <summary>
-/// Interface for "Delta" classes which can capture state of an object at a given time and can move
-/// between the initial and subsequent state on undo/redo operations.
+/// Interface for  classes which can capture state of an object at a given time and can move between
+/// the initial and subsequent state on undo/redo operations.
+/// At this time the only implementer is "TransactionStateHolder". Perhaps TransactionDelta could be
+/// used again in the future for more efficiently storing the deltas rather than always storing the
+/// complete initial & final states.
 /// </summary>
 public interface TransactionDelta
 {
@@ -188,35 +190,53 @@ public interface TransactionDelta
     public void InvokeModifiedEvents();
 }
 
-public class ComponentStateDelta : TransactionDelta
+/// <summary>
+/// Implementation of "TransactionDelta" that works by storing the complete initial and final states.
+/// </summary>
+class TransactionStateHolder<C> : TransactionDelta where C : Undoable
 {
-    public ComponentStateDelta(FileComponent component)
-    {
-        this.component = component;
-        this.initialState = component.GetState();
-    }
+    C instance;
+    TransactionState initialState, finalState;
 
-    public FileComponent component;
-    public FileComponentState initialState, finalState;
+    public TransactionStateHolder(C instance)
+    {
+        this.instance = instance;
+        initialState = instance.GetState().Copy();
+    }
 
     public void CaptureFinalState()
     {
-        finalState = component.GetState();
+        finalState = instance.GetState().Copy();
     }
 
     public void Rewind()
     {
-        Debug.Assert(component.StateEquals(finalState),
-                     $"Expected:\n{ObjectDumper.Dump(finalState)}\nActual:\n{ObjectDumper.Dump(component.GetState())}");
-        component.ApplyState(initialState);
+        Debug.Assert(finalState.Compare(instance.GetState()),
+                     $"Expected:\n{ObjectDumper.Dump(finalState)}\nActual:\n{ObjectDumper.Dump(instance.GetState())}");
+        instance.SetState(initialState);
     }
 
     public void InvokeModifiedEvents()
     {
-        if (component is Data data)
-        {
-            // Don't bother trying to figure out exactly which values were changed, send -1 for "all"
-            data.InvokeModifiedEvent(new DataModifiedEventArgs(-1));
-        }
+        instance.InvokeModifiedEvent();
     }
+}
+
+/// <summary>
+/// A class whose state can be controlled by the undo/redo mechanism through a "TransactionState" object
+/// </summary>
+public interface Undoable
+{
+    public TransactionState GetState();
+    public void SetState(TransactionState state);
+    public void InvokeModifiedEvent();
+}
+
+/// <summary>
+/// Base class for state holders, used by classes that implement "Undoable".
+/// </summary>
+public abstract class TransactionState
+{
+    public abstract TransactionState Copy();
+    public abstract bool Compare(TransactionState state);
 }

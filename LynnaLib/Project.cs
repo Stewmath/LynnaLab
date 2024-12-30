@@ -8,7 +8,7 @@ using Util;
 
 namespace LynnaLib
 {
-    public class Project
+    public class Project : Undoable
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(
                 System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -45,21 +45,22 @@ namespace LynnaLib
         /// That being said there is a lot more state that is kept track of in other classes
         /// (FileComponent, FileParser, etc).
         /// </summary>
-        struct State
+        class State : TransactionState
         {
-            public State() {}
-            public State(State s)
-            {
-                labelDictionary = new Dictionary<string, FileParser>(s.labelDictionary);
-                definesDictionary = new Dictionary<string, string>(s.definesDictionary);
-            }
-
             // Maps label to file which contains it
             public Dictionary<string, FileParser> labelDictionary = new Dictionary<string, FileParser>();
             // Dictionary of .DEFINE's
             public Dictionary<string, string> definesDictionary = new Dictionary<string, string>();
 
-            public override bool Equals(object o)
+            public override State Copy()
+            {
+                State s = new State();
+                s.labelDictionary = new Dictionary<string, FileParser>(labelDictionary);
+                s.definesDictionary = new Dictionary<string, string>(definesDictionary);
+                return s;
+            }
+
+            public override bool Compare(TransactionState o)
             {
                 if (!(o is State p))
                     return false;
@@ -1096,6 +1097,24 @@ namespace LynnaLib
         }
 
         // ================================================================================
+        // Undoable interface functions
+        // ================================================================================
+
+        public TransactionState GetState()
+        {
+            return state;
+        }
+
+        public void SetState(TransactionState s)
+        {
+            state = (State)s.Copy();
+        }
+
+        public void InvokeModifiedEvent()
+        {
+        }
+
+        // ================================================================================
         // Private methods
         // ================================================================================
 
@@ -1125,40 +1144,6 @@ namespace LynnaLib
             leftBitmap.Dispose();
             rightBitmap.Dispose();
             return fullBitmap;
-        }
-
-        /// <summary>
-        /// State changes for undo/redo operations affecting fields in the Project class
-        /// </summary>
-        public class StateDelta : TransactionDelta
-        {
-            public StateDelta(Project project)
-            {
-                this.project = project;
-                this.initialState = new State(project.state);
-            }
-
-            public readonly Project project;
-
-            private State initialState;
-            private State finalState;
-
-
-            public void CaptureFinalState()
-            {
-                finalState = new State(project.state);
-            }
-
-            public void Rewind()
-            {
-                Debug.Assert(finalState.Equals(project.state));
-                project.state = new State(initialState);
-            }
-
-            public void InvokeModifiedEvents()
-            {
-                // No modified events listen to the Project directly, nothing to do here
-            }
         }
     }
 

@@ -137,7 +137,7 @@ namespace LynnaLib
             }
             set
             {
-                Project.BeginTransaction($"Change Tileset#{Index:X3}");
+                Project.BeginTransaction($"Change Tileset#{Index:X3}", true);
                 ValueReferenceGroup.SetValue("Tileset", value);
                 Project.EndTransaction();
             }

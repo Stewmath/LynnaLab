@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text.RegularExpressions;
-using System.Linq;
-using Util;
+﻿using System.IO;
 
 namespace LynnaLib
 {
@@ -26,7 +21,7 @@ namespace LynnaLib
         }
     }
 
-    public class FileParser
+    public class FileParser : Undoable
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -48,16 +43,8 @@ namespace LynnaLib
         /// FileParser state fields that are "undoable". Everything outside of here is not affected
         /// by undo/redo.
         /// </summary>
-        struct State
+        class State : TransactionState
         {
-            public State() { }
-            public State(State s)
-            {
-                fileStructure = new DictionaryLinkedList<FileComponent>(s.fileStructure);
-                labelDictionary = new Dictionary<string, Label>(s.labelDictionary);
-                definesDictionary = new Dictionary<string, Tuple<string, DocumentationFileComponent>>(s.definesDictionary);
-            }
-
             public DictionaryLinkedList<FileComponent> fileStructure = new DictionaryLinkedList<FileComponent>();
             public Dictionary<string, Label> labelDictionary = new Dictionary<string, Label>();
 
@@ -66,9 +53,18 @@ namespace LynnaLib
             public Dictionary<string, Tuple<string, DocumentationFileComponent>> definesDictionary =
                 new Dictionary<string, Tuple<string, DocumentationFileComponent>>();
 
-            public override bool Equals(Object o)
+            public override State Copy()
             {
-                if (!(o is State state))
+                State s = new State();
+                s.fileStructure = new DictionaryLinkedList<FileComponent>(fileStructure);
+                s.labelDictionary = new Dictionary<string, Label>(labelDictionary);
+                s.definesDictionary = new Dictionary<string, Tuple<string, DocumentationFileComponent>>(definesDictionary);
+                return s;
+            }
+
+            public override bool Compare(TransactionState obj)
+            {
+                if (!(obj is State state))
                     return false;
                 return fileStructure.SequenceEqual(state.fileStructure)
                     && labelDictionary.SequenceEqual(state.labelDictionary)
@@ -1304,7 +1300,7 @@ namespace LynnaLib
         /// </summary>
         public void RecordChange()
         {
-            Project.UndoState.RecordChange(this, () => new StateDelta(this));
+            Project.UndoState.RecordChange(this);
 
             // This is a bit weird. We need to record the project's changes as well, but the fields
             // in the project class that we care about (just defines & labels) are only ever changed
@@ -1312,46 +1308,28 @@ namespace LynnaLib
             // change.
             // This feels wrong. Something probably needs to be refactored to make the project's
             // state management cleaner.
-            Project.UndoState.RecordChange(Project, () => new Project.StateDelta(Project));
+            Project.UndoState.RecordChange(Project);
 
             Modified = true;
         }
 
+        // ================================================================================
+        // Undoable interface functions
+        // ================================================================================
 
-        /// <summary>
-        /// State changes for undo/redo operations on a FileParser
-        /// </summary>
-        public class StateDelta : TransactionDelta
+        public TransactionState GetState()
         {
-            public StateDelta(FileParser parser)
-            {
-                this.parser = parser;
-                this.initialState = new State(parser.state);
-            }
+            return state;
+        }
 
-            public readonly FileParser parser; // Parser that was changed
+        public void SetState(TransactionState s)
+        {
+            this.state = (State)s.Copy();
+            Modified = true;
+        }
 
-            private State initialState;
-            private State finalState;
-
-
-            public void CaptureFinalState()
-            {
-                finalState = new State(parser.state);
-            }
-
-            public void Rewind()
-            {
-                Debug.Assert(finalState.Equals(parser.state));
-                parser.state = new State(initialState);
-
-                parser.Modified = true;
-            }
-
-            public void InvokeModifiedEvents()
-            {
-                // No modified events listen to the FileParser directly, nothing to do here
-            }
+        public void InvokeModifiedEvent()
+        {
         }
     }
 }

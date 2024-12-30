@@ -7,7 +7,7 @@ namespace LynnaLib
     ///  This usually corresponds to a line in a file, but it can generally also be a logical unit
     ///  (ie. a documentation block).
     /// </summary>
-    public abstract class FileComponent
+    public abstract class FileComponent : Undoable
     {
         protected FileComponentState state;
         protected int suppressUndoRecording = 0;
@@ -70,7 +70,7 @@ namespace LynnaLib
             set { state.spacing = value; }
         }
 
-        public FileComponent(FileParser parser, IList<string> spacing, Func<FileComponentState> stateConstructor)
+        protected FileComponent(FileParser parser, IList<string> spacing, Func<FileComponentState> stateConstructor)
         {
             state = stateConstructor();
             state.constructorFunc = stateConstructor;
@@ -119,39 +119,82 @@ namespace LynnaLib
             FileParser.InsertComponentBefore(reference, this);
         }
 
-        public void ApplyState(FileComponentState state)
+        protected void SetProject(Project p)
         {
-            this.state.CopyFrom(state);
-            _modified = true;
-        }
-
-        public FileComponentState GetState()
-        {
-            return state.Copy();
-        }
-
-        public bool StateEquals(FileComponentState state)
-        {
-            return this.state.Equals(state);
+            _project = p;
         }
 
         /// <summary>
         /// Always call this BEFORE any change is made that affects the state object. It will record
         /// the state before the change is made in order to be able to undo it.
         /// </summary>
-        public void RecordChange()
+        protected void RecordChange()
         {
             if (suppressUndoRecording != 0)
                 return;
-            Project.UndoState.RecordChange(this, () => new ComponentStateDelta(this));
+            Project.UndoState.RecordChange(this);
             Modified = true;
             if (FileParser != null)
                 FileParser.Modified = true;
         }
 
-        protected void SetProject(Project p)
+        // ================================================================================
+        // Undoable interface functions
+        // ================================================================================
+
+        public TransactionState GetState()
         {
-            _project = p;
+            return state;
+        }
+
+        public void SetState(TransactionState state)
+        {
+            this.state = (FileComponentState)state.Copy();
+            Modified = true;
+            if (FileParser != null)
+                FileParser.Modified = true;
+        }
+
+        public virtual void InvokeModifiedEvent()
+        {
+        }
+
+        /// <summary>
+        /// Holds the state of a FileComponent. Can be easily replaced for undo/redo actions.
+        /// </summary>
+        protected class FileComponentState : TransactionState
+        {
+            public FileParser parser;
+            public List<string> spacing;
+            public bool endsLine;
+            public bool fake;
+            public Func<FileComponentState> constructorFunc; // Constructs an instance of the derived class
+
+            public virtual void CopyFrom(FileComponentState state)
+            {
+                parser = state.parser;
+                spacing = new List<string>(state.spacing);
+                endsLine = state.endsLine;
+                fake = state.fake;
+                constructorFunc = state.constructorFunc;
+            }
+
+            public override FileComponentState Copy()
+            {
+                FileComponentState copy = constructorFunc();
+                copy.CopyFrom(this);
+                return copy;
+            }
+
+            public override bool Compare(TransactionState obj)
+            {
+                if (!(obj is FileComponentState state))
+                    return false;
+                return parser == state.parser
+                    && spacing.SequenceEqual(state.spacing)
+                    && endsLine == state.endsLine
+                    && fake == state.fake;
+            }
         }
     }
 
@@ -168,7 +211,7 @@ namespace LynnaLib
         }
 
         // Properties
-        public StringFileComponentState State { get { return base.state as StringFileComponentState; } }
+        StringFileComponentState State { get { return base.state as StringFileComponentState; } }
 
         // Methods
 
@@ -181,6 +224,24 @@ namespace LynnaLib
         {
             RecordChange();
             State.str = s;
+        }
+
+        class StringFileComponentState : FileComponentState
+        {
+            public string str;
+
+            public override void CopyFrom(FileComponentState state)
+            {
+                str = (state as StringFileComponentState).str;
+                base.CopyFrom(state);
+            }
+
+            public override bool Compare(TransactionState obj)
+            {
+                if (!(obj is StringFileComponentState state))
+                    return false;
+                return base.Compare(obj) && str == state.str;
+            }
         }
     }
 
@@ -210,65 +271,4 @@ namespace LynnaLib
             return Spacing[0] + name + ":" + Spacing[1];
         }
     }
-
-    /// <summary>
-    /// Holds the state of a FileComponent. Can be easily replaced for undo/redo actions.
-    /// </summary>
-    public class FileComponentState
-    {
-        public FileParser parser;
-        public List<string> spacing;
-        public bool endsLine;
-        public bool fake;
-        public Func<FileComponentState> constructorFunc; // Constructs an instance of the derived class
-
-        public virtual void CopyFrom(FileComponentState state)
-        {
-            parser = state.parser;
-            spacing = new List<string>(state.spacing);
-            endsLine = state.endsLine;
-            fake = state.fake;
-        }
-
-        public virtual FileComponentState Copy()
-        {
-            FileComponentState copy = constructorFunc();
-            copy.CopyFrom(this);
-            return copy;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (!(obj is FileComponentState state))
-                return false;
-            return parser == state.parser
-                && spacing.SequenceEqual(state.spacing)
-                && endsLine == state.endsLine
-                && fake == state.fake;
-        }
-
-        public override int GetHashCode()
-        {
-            return spacing.GetHashCode() + endsLine.GetHashCode() + fake.GetHashCode();
-        }
-    }
-
-    public class StringFileComponentState : FileComponentState
-    {
-        public string str;
-
-        public override void CopyFrom(FileComponentState state)
-        {
-            str = (state as StringFileComponentState).str;
-            base.CopyFrom(state);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (!(obj is StringFileComponentState state))
-                return false;
-            return base.Equals(obj) && str == state.str;
-        }
-    }
-
 }

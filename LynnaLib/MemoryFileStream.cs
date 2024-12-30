@@ -4,12 +4,11 @@ using System.IO;
 namespace LynnaLib
 {
     /// Like a FileStream but it's buffered in memory. Can be written to and saved.
-    public class MemoryFileStream : Stream
+    public class MemoryFileStream : Stream, Undoable
     {
         // Arguments for modification callback
         public class ModifiedEventArgs
         {
-
             public readonly long modifiedRangeStart; // First changed address (inclusive)
             public readonly long modifiedRangeEnd;   // Last changed address (exclusive)
 
@@ -24,6 +23,26 @@ namespace LynnaLib
                 return position >= modifiedRangeStart && position < modifiedRangeEnd;
             }
         }
+
+        class State : TransactionState
+        {
+            public byte[] data;
+
+            public override State Copy()
+            {
+                State s = new State();
+                s.data = (byte[])data.Clone();
+                return s;
+            }
+
+            public override bool Compare(TransactionState o)
+            {
+                if (!(o is State state))
+                    return false;
+                return data.SequenceEqual(state.data);
+            }
+        }
+
 
         public Project Project { get; private set; }
 
@@ -58,9 +77,11 @@ namespace LynnaLib
             get { return filename; }
         }
 
+        private byte[] Data { get { return state.data; } }
+
+        State state = new State();
         long _length;
         long _position;
-        byte[] data;
         bool modified = false;
         string filename;
 
@@ -78,10 +99,10 @@ namespace LynnaLib
             FileStream input = new FileStream(filename, FileMode.Open);
             _length = input.Length;
 
-            data = new byte[Length];
+            state.data = new byte[Length];
             _position = 0;
             modified = false;
-            input.Read(data, 0, (int)Length);
+            input.Read(Data, 0, (int)Length);
             input.Close();
 
             modifiedEvent += (sender, args) => { if (ModifiedEvent != null) ModifiedEvent(sender, args); };
@@ -92,7 +113,7 @@ namespace LynnaLib
             if (modified)
             {
                 FileStream output = new FileStream(filename, FileMode.Open);
-                output.Write(data, 0, (int)Length);
+                output.Write(Data, 0, (int)Length);
                 output.Close();
                 modified = false;
             }
@@ -140,7 +161,7 @@ namespace LynnaLib
             int size = count;
             if (Position + count > Length)
                 size = (int)(Length - Position);
-            Array.Copy(data, Position, buffer, offset, size);
+            Array.Copy(Data, Position, buffer, offset, size);
             Position = Position + size;
             return size;
         }
@@ -149,7 +170,7 @@ namespace LynnaLib
             RecordChange();
             if (Position + count > Length)
                 SetLength(Position + count);
-            Array.Copy(buffer, offset, data, Position, count);
+            Array.Copy(buffer, offset, Data, Position, count);
             Position = Position + count;
             if (Position > Length)
                 Position = Length;
@@ -159,14 +180,14 @@ namespace LynnaLib
 
         public override int ReadByte()
         {
-            int ret = data[Position];
+            int ret = Data[Position];
             Position++;
             return ret;
         }
         public override void WriteByte(byte value)
         {
             RecordChange();
-            data[Position] = value;
+            Data[Position] = value;
             Position++;
             modified = true;
             modifiedEvent.Invoke(this, new ModifiedEventArgs(Position - 1, Position));
@@ -176,7 +197,7 @@ namespace LynnaLib
 
         public int GetByte(int position)
         {
-            return data[position];
+            return Data[position];
         }
 
 
@@ -200,40 +221,27 @@ namespace LynnaLib
 
         public void RecordChange()
         {
-            Project.UndoState.RecordChange(this, () => new Delta(this));
+            Project.UndoState.RecordChange(this);
         }
 
-        /// <summary>
-        /// Keeps track of difference between an initial and subsequent state for undo handling
-        /// </summary>
-        public class Delta : TransactionDelta
+        // ================================================================================
+        // Undoable interface functions
+        // ================================================================================
+
+        public TransactionState GetState()
         {
-            public Delta(MemoryFileStream stream)
-            {
-                this.stream = stream;
-                initialState = (byte[])stream.data.Clone();
-            }
+            return state;
+        }
 
-            MemoryFileStream stream;
-            byte[] initialState, finalState;
+        public void SetState(TransactionState state)
+        {
+            this.state = (State)state.Copy();
+            modified = true;
+        }
 
-            public void CaptureFinalState()
-            {
-                finalState = (byte[])stream.data.Clone();
-            }
-
-            public void Rewind()
-            {
-                Debug.Assert(finalState.SequenceEqual(stream.data),
-                             $"Expected:\n{ObjectDumper.Dump(finalState)}\nActual:\n{ObjectDumper.Dump(stream.data)}");
-                stream.data = (byte[])initialState.Clone();
-                stream.modified = true;
-            }
-
-            public void InvokeModifiedEvents()
-            {
-                stream.modifiedEvent?.Invoke(stream, new ModifiedEventArgs(0, stream.Length));
-            }
+        public void InvokeModifiedEvent()
+        {
+            modifiedEvent?.Invoke(this, new ModifiedEventArgs(0, Length));
         }
     }
 }

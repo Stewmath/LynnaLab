@@ -255,9 +255,9 @@ namespace LynnaLib
             return FileParser.GetData(this, offset);
         }
 
-        public void InvokeModifiedEvent(DataModifiedEventArgs args)
+        public override void InvokeModifiedEvent()
         {
-            dataModifiedEvent.Invoke(this, args);
+            dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(-1));
         }
 
 
@@ -272,6 +272,32 @@ namespace LynnaLib
         public void ThrowException(Exception e)
         {
             throw e;
+        }
+
+        class DataState : FileComponent.FileComponentState
+        {
+            public string command;
+            public List<string> values;
+            public bool printCommand;
+
+            public override void CopyFrom(FileComponentState state)
+            {
+                DataState ds = state as DataState;
+                command = ds.command;
+                values = new List<string>(ds.values);
+                printCommand = ds.printCommand;
+                base.CopyFrom(state);
+            }
+
+            public override bool Compare(TransactionState obj)
+            {
+                if (!(obj is DataState state))
+                    return false;
+                return base.Compare(obj)
+                    && command == state.command
+                    && values.SequenceEqual(state.values)
+                    && printCommand == state.printCommand;
+            }
         }
     }
 
@@ -298,32 +324,6 @@ namespace LynnaLib
         public RgbData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
             : base(p, command, values, 2, parser, spacing)
         {
-        }
-    }
-
-    public class DataState : FileComponentState
-    {
-        public string command;
-        public List<string> values;
-        public bool printCommand;
-
-        public override void CopyFrom(FileComponentState state)
-        {
-            DataState ds = state as DataState;
-            command = ds.command;
-            values = new List<string>(ds.values);
-            printCommand = ds.printCommand;
-            base.CopyFrom(state);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (!(obj is DataState state))
-                return false;
-            return base.Equals(obj)
-                && command == state.command
-                && values.SequenceEqual(state.values)
-                && printCommand == state.printCommand;
         }
     }
 }
