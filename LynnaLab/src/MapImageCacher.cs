@@ -86,14 +86,34 @@ public class MapImageCacher : ImageCacher<(Map map, int floor)>
             };
             EventHandler<EventArgs> floorsChangedHandler = (_, args) =>
             {
-                // Added or removed a floor: Just invalidate all floors to keep things simple.
-                Redraw(image, key);
-                RegenerateImageWatchers(image, key, imageEventWrappers);
+                // Added or removed a floor: Just invalidate all floors to keep things simple. Also
+                // must check whether the floor in question was deleted.
+                if (key.floor >= dungeon.NumFloors)
+                {
+                    DisposeImage(key);
+                }
+                else
+                {
+                    Redraw(image, key);
+                    RegenerateImageWatchers(image, key, imageEventWrappers);
+                }
             };
 
             dungeon.RoomChangedEvent += roomChangedHandler;
             dungeon.FloorsChangedEvent += floorsChangedHandler;
+
+            image.DisposedEvent += (_, _) =>
+            {
+                dungeon.RoomChangedEvent -= roomChangedHandler;
+                dungeon.FloorsChangedEvent -= floorsChangedHandler;
+            };
         }
+
+        image.DisposedEvent += (_, _) =>
+        {
+            foreach (EventWrapper<Image> wrapper in imageEventWrappers.Values)
+                wrapper.UnbindAll();
+        };
 
         RegenerateImageWatchers(image, key, imageEventWrappers);
         Redraw(image, key);

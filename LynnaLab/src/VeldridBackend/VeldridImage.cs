@@ -132,6 +132,8 @@ public class VeldridImage : Image
             unsubscribeFromBitmapChanges();
             unsubscribeFromBitmapChanges = null;
         }
+
+        InvokeDisposedHandler();
     }
 
     // ================================================================================

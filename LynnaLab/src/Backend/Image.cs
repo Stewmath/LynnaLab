@@ -14,9 +14,16 @@ public abstract class Image : IDisposable
     // Variables
     // ================================================================================
 
-    event EventHandler<ImageModifiedEventArgs> modifiedEvent;
     int modifiedEventLocked;
     bool modifiedEventInvoked;
+
+    // ================================================================================
+    // Events
+    // ================================================================================
+
+    public event EventHandler<EventArgs> DisposedEvent;
+
+    event EventHandler<ImageModifiedEventArgs> modifiedEvent;
 
     // ================================================================================
     // Properties
@@ -93,6 +100,11 @@ public abstract class Image : IDisposable
         {
             modifiedEventInvoked = true;
         }
+    }
+
+    protected void InvokeDisposedHandler()
+    {
+        DisposedEvent?.Invoke(this, null);
     }
 }
 

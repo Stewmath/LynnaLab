@@ -30,20 +30,13 @@ namespace LynnaLib
     /// called. That's annoying to do when floors can be added and deleted though.
     public class Dungeon : Map
     {
-        // The start of the data, at the "dungeonDataXX" label
-        readonly Data dataStart;
-
-        // TODO: Track the following with undos
-
-        // roomsUsed[i] = # of times room "i" is used in this dungeon
-        int[] roomsUsed;
-
-        int _mainGroup;
-
+        // ================================================================================
+        // Constructors
+        // ================================================================================
 
         internal Dungeon(Project p, int i) : base(p)
         {
-            this.Index = i;
+            this.index = i;
 
             FileParser dungeonDataFile = Project.GetFileWithLabel("dungeonDataTable");
             Data pointerData = dungeonDataFile.GetData("dungeonDataTable", Index * 2);
@@ -56,6 +49,24 @@ namespace LynnaLib
             GenerateValueReferenceGroup();
         }
 
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        // The start of the data, at the "dungeonDataXX" label
+        readonly Data dataStart;
+        readonly int index;
+
+        // TODO: Track the following with undos
+
+        // roomsUsed[i] = # of times room "i" is used in this dungeon
+        int[] roomsUsed;
+
+        int _mainGroup;
+
+        // ================================================================================
+        // Events
+        // ================================================================================
 
         // Event invoked when a room number changes (not including things that trigger FloorChangedEvent)
         public event EventHandler<DungeonRoomChangedEventArgs> RoomChangedEvent;
@@ -63,6 +74,9 @@ namespace LynnaLib
         // Event invoked when a floor is added or removed
         public event EventHandler<EventArgs> FloorsChangedEvent;
 
+        // ================================================================================
+        // Properties
+        // ================================================================================
 
         public ValueReferenceGroup ValueReferenceGroup { get; private set; }
 
@@ -132,7 +146,7 @@ namespace LynnaLib
 
         // Other properties
 
-        public int Index { get; private set; }
+        public int Index { get { return index; } }
 
 
         public void SetRoom(int x, int y, int floor, int room)
