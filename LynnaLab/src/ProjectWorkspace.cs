@@ -156,16 +156,17 @@ public class ProjectWorkspace
                     renderUndoButton = () => ImGui.Selectable("Undo: " + Project.UndoState.GetUndoDescription());
                 else
                     renderUndoButton = () => ImGui.Selectable("Undo", false, ImGuiSelectableFlags.Disabled);
-                if (renderUndoButton())
-                {
-                    Project.UndoState.Undo();
-                }
 
                 Func<bool> renderRedoButton;
                 if (Project.UndoState.RedoAvailable)
                     renderRedoButton = () => ImGui.Selectable("Redo: " + Project.UndoState.GetRedoDescription());
                 else
                     renderRedoButton = () => ImGui.Selectable("Redo", false, ImGuiSelectableFlags.Disabled);
+
+                if (renderUndoButton())
+                {
+                    Project.UndoState.Undo();
+                }
                 if (renderRedoButton())
                 {
                     Project.UndoState.Redo();
@@ -279,6 +280,8 @@ public class ProjectWorkspace
             RunGame();
         if (ImGui.IsKeyChordPressed(ImGuiKey.ModCtrl | ImGuiKey.Z))
             Project.UndoState.Undo();
+        if (ImGui.IsKeyChordPressed(ImGuiKey.ModCtrl | ImGuiKey.ModShift | ImGuiKey.Z))
+            Project.UndoState.Redo();
     }
 
     /// <summary>
