@@ -33,6 +33,7 @@ public class ProjectWorkspace
         buildDialog = new BuildDialog(this, "Build");
         documentationDialog = new DocumentationDialog(this, "Documentation Dialog");
         scratchpad = new ScratchPad(this, "Scratchpad", roomEditor.TilesetViewer, Brush);
+        undoDialog = new UndoDialog(this, "Undo History");
 
         roomEditor.SetInterpolation(bicubicScaling ? Interpolation.Bicubic : Interpolation.Nearest);
         roomEditor.SetScrollToZoom(scrollToZoom);
@@ -45,11 +46,13 @@ public class ProjectWorkspace
                 scratchpad,
                 buildDialog,
                 documentationDialog,
+                undoDialog,
             });
         frames.Sort((f1, f2) => f1.Name.CompareTo(f2.Name));
 
         // Default active windows
         roomEditor.Active = true;
+        undoDialog.Active = true;
     }
 
     // ================================================================================
@@ -67,6 +70,10 @@ public class ProjectWorkspace
     TilesetEditor tilesetEditor;
     TilesetCloner tilesetCloner;
     ScratchPad scratchpad;
+    BuildDialog buildDialog;
+    DocumentationDialog documentationDialog;
+    UndoDialog undoDialog;
+
     List<Frame> frames = new List<Frame>();
     bool showDebugWindow;
     bool showImGuiDemoWindow;
@@ -74,8 +81,6 @@ public class ProjectWorkspace
     bool autoAdjustGroupNumber = true;
 
     Image linkImage;
-    BuildDialog buildDialog;
-    DocumentationDialog documentationDialog;
 
     TilesetImageCacher tilesetImageCacher;
     RoomImageCacher roomImageCacher;
@@ -141,6 +146,19 @@ public class ProjectWorkspace
                 if (ImGui.MenuItem("Run"))
                 {
                     RunGame();
+                }
+                ImGui.EndMenu();
+            }
+            if (ImGui.BeginMenu("Edit"))
+            {
+                Func<bool> renderUndoButton;
+                if (Project.UndoState.UndoAvailable)
+                    renderUndoButton = () => ImGui.Selectable("Undo: " + Project.UndoState.GetLastTransactionDescription());
+                else
+                    renderUndoButton = () => ImGui.Selectable("Undo", false, ImGuiSelectableFlags.Disabled);
+                if (renderUndoButton())
+                {
+                    Project.UndoState.Undo();
                 }
                 ImGui.EndMenu();
             }
@@ -247,8 +265,10 @@ public class ProjectWorkspace
 
         if (ImGui.IsKeyPressed(ImGuiKey.F4))
             ToggleQuickstart(!QuickstartData.Enabled);
-        else if (ImGui.IsKeyPressed(ImGuiKey.F5))
+        if (ImGui.IsKeyPressed(ImGuiKey.F5))
             RunGame();
+        if (ImGui.IsKeyChordPressed(ImGuiKey.ModCtrl | ImGuiKey.Z))
+            Project.UndoState.Undo();
     }
 
     /// <summary>

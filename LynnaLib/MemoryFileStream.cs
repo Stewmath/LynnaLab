@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace Util
+namespace LynnaLib
 {
     /// Like a FileStream but it's buffered in memory. Can be written to and saved.
     public class MemoryFileStream : Stream
@@ -24,6 +24,8 @@ namespace Util
                 return position >= modifiedRangeStart && position < modifiedRangeEnd;
             }
         }
+
+        public Project Project { get; private set; }
 
         public override bool CanRead
         {
@@ -68,8 +70,9 @@ namespace Util
         public event EventHandler<ModifiedEventArgs> ModifiedEvent;
 
 
-        public MemoryFileStream(string filename)
+        public MemoryFileStream(Project project, string filename)
         {
+            this.Project = project;
             this.filename = filename;
 
             FileStream input = new FileStream(filename, FileMode.Open);
@@ -143,6 +146,7 @@ namespace Util
         }
         public override void Write(byte[] buffer, int offset, int count)
         {
+            RecordChange();
             if (Position + count > Length)
                 SetLength(Position + count);
             Array.Copy(buffer, offset, data, Position, count);
@@ -161,6 +165,7 @@ namespace Util
         }
         public override void WriteByte(byte value)
         {
+            RecordChange();
             data[Position] = value;
             Position++;
             modified = true;
@@ -191,6 +196,44 @@ namespace Util
         public void UnlockEvents()
         {
             modifiedEvent.Unlock();
+        }
+
+        public void RecordChange()
+        {
+            Project.UndoState.RecordChange(this, () => new Delta(this));
+        }
+
+        /// <summary>
+        /// Keeps track of difference between an initial and subsequent state for undo handling
+        /// </summary>
+        public class Delta : TransactionDelta
+        {
+            public Delta(MemoryFileStream stream)
+            {
+                this.stream = stream;
+                initialState = (byte[])stream.data.Clone();
+            }
+
+            MemoryFileStream stream;
+            byte[] initialState, finalState;
+
+            public void CaptureFinalState()
+            {
+                finalState = (byte[])stream.data.Clone();
+            }
+
+            public void Rewind()
+            {
+                Debug.Assert(finalState.SequenceEqual(stream.data),
+                             $"Expected:\n{ObjectDumper.Dump(finalState)}\nActual:\n{ObjectDumper.Dump(stream.data)}");
+                stream.data = (byte[])initialState.Clone();
+                stream.modified = true;
+            }
+
+            public void InvokeModifiedEvents()
+            {
+                stream.modifiedEvent?.Invoke(stream, new ModifiedEventArgs(0, stream.Length));
+            }
         }
     }
 }

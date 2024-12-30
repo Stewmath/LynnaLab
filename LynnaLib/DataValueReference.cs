@@ -167,10 +167,13 @@ public class DataValueReference : ValueReference
     // This has the same caveat as "GetStringValue".
     public override void SetValue(string s)
     {
+        base.BeginTransaction();
         Data.SetValue(valueIndex, s);
+        base.EndTransaction();
     }
     public override void SetValue(int i)
     {
+        base.BeginTransaction();
         if (i > MaxValue)
         {
             log.Warn(string.Format("Tried to set value  to {0} (max value is {1})", i, MaxValue));
@@ -186,6 +189,7 @@ public class DataValueReference : ValueReference
             }
 
             SetValue(ConstantsMapping.ByteToString(i));
+            base.EndTransaction();
             return;
         }
 
@@ -221,18 +225,21 @@ public class DataValueReference : ValueReference
                 }
                 break;
         }
+        base.EndTransaction();
+
         // Shouldn't need to invoke modifiedEvent here because a handler is installed on the
         // underlying data.
     }
 
     public override void Initialize()
     {
+        base.BeginTransaction();
         if (valueIndex >= Data.GetNumValues())
             Data.SetNumValues(valueIndex + 1, "$00");
         Data.SetValue(valueIndex, defaultDataValues[(int)dataType]);
         RaiseModifiedEvent(null);
+        base.EndTransaction();
     }
-
 
     // ================================================================================
     // Private methods
@@ -243,8 +250,8 @@ public class DataValueReference : ValueReference
     {
         if (sender != _data)
             throw new Exception("DataValueReference.OnDataModified: Wrong data object?");
-        else if (args.ValueIndex == valueIndex)
-        { // NOTE: Doesn't check for "size change" events (value -1).
+        else if (args.ValueIndex == valueIndex || args.ValueIndex == -1)
+        {
             RaiseModifiedEvent(null);
         }
     }

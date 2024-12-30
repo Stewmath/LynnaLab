@@ -92,6 +92,8 @@ public class StreamValueReference : ValueReference
         if (GetIntValue() == i)
             return;
 
+        base.BeginTransaction();
+
         stream.Seek(offset, SeekOrigin.Begin);
 
         switch (dataType)
@@ -127,6 +129,7 @@ public class StreamValueReference : ValueReference
         }
 
         RaiseModifiedEvent(null);
+        base.EndTransaction();
     }
 
     public override void Initialize()

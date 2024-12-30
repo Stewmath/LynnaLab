@@ -187,10 +187,6 @@ namespace LynnaLib
             InitializeValueReferenceGroup();
 
             ExpandParameters(last);
-
-            // We "modified" the data but only for internal purposes, it doesn't need to be saved
-            // unless something else modifies it.
-            base.Modified = false;
         }
 
         // Creates a new ObjectData instance, not based on existing data.
@@ -275,6 +271,10 @@ namespace LynnaLib
         // loaded, and is only undone temporarily while saving.
         void ExpandParameters(ObjectData last)
         {
+            // We're "modifying" the data but only for internal purposes, it doesn't need to be
+            // marked as modified just for doing this.
+            suppressUndoRecording++;
+
             // For types which can reuse the first type, get and remember that value.
             if (IsShortened())
             {
@@ -301,11 +301,15 @@ namespace LynnaLib
                     base.SetValue(3, Wla.ToHex(x, 2));
                 }
             }
+
+            suppressUndoRecording--;
         }
 
         // The opposite of ExpandParameters; called while saving.
         void ContractParameters(ObjectData last)
         {
+            suppressUndoRecording++;
+
             // For types which can reuse the first type, get and remember that value.
             if (GetObjectType() == ObjectType.SpecificEnemyA || GetObjectType() == ObjectType.ItemDrop)
             {
@@ -342,6 +346,8 @@ namespace LynnaLib
                     base.SetValue(2, Wla.ToHex(yx, 2));
                 }
             }
+
+            suppressUndoRecording--;
         }
 
         // This finds the last "ObjectData" before this one. However, if there is a label between

@@ -12,9 +12,9 @@ namespace LynnaLib
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         readonly Dictionary<string, string> documentationParams;
-        string origString;
+        readonly string origString;
 
-        List<string> _keys; // Maintained separately from documentationParams to preserve original case
+        readonly List<string> _keys; // Maintained separately from documentationParams to preserve original case
 
 
         // Default field values
@@ -26,7 +26,8 @@ namespace LynnaLib
             get { return _keys; }
         }
 
-        public DocumentationFileComponent(FileParser parser, string str) : base(parser, null)
+        public DocumentationFileComponent(FileParser parser, string str)
+            : base(parser, null, () => new FileComponentState())
         {
             // Setup default fields
             defaultFields["postype"] = "normal";

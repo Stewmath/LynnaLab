@@ -46,7 +46,7 @@ public abstract class ValueReference
     // ================================================================================
 
     ConstantsMapping constantsMapping;
-
+    string transactionDescription;
 
     // ================================================================================
     // Properties
@@ -96,6 +96,32 @@ public abstract class ValueReference
         ModifiedEvent?.Invoke(this, args);
     }
 
+
+    /// <summary>
+    /// Modifications to this ValueReference will register transactions with the given name. For undo/redo.
+    /// </summary>
+    public void EnableTransactions(string transactionDescription)
+    {
+        this.transactionDescription = transactionDescription;
+    }
+
     // Sets the value to its default.
     public abstract void Initialize();
+
+
+    // ================================================================================
+    // Protected methods
+    // ================================================================================
+
+    protected void BeginTransaction()
+    {
+        if (transactionDescription != null)
+            Project.BeginTransaction(transactionDescription);
+    }
+
+    protected void EndTransaction()
+    {
+        if (transactionDescription != null)
+            Project.EndTransaction();
+    }
 }

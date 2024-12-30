@@ -8,7 +8,8 @@ namespace LynnaLib
     // Args passed by the "AddModifiedEventHandler" function.
     public class DataModifiedEventArgs
     {
-        // The index of the value changed (starting at 0), or -1 if a size-changing operation occurred.
+        // The index of the value changed (starting at 0), or -1 if potentially all values changed
+        // (or size-changing events).
         public readonly int ValueIndex;
 
         public DataModifiedEventArgs(int valueIndex)
@@ -24,11 +25,7 @@ namespace LynnaLib
 
         // Size in bytes
         // -1 if indeterminate? (consider getting rid of this, it's unreliable)
-        protected int size;
-
-        // Command is like .db, .dw, or a macro.
-        string command;
-        List<string> values;
+        readonly int size;
 
         // Event invoked whenever data is modified
         LockableEvent<DataModifiedEventArgs> dataModifiedEvent = new LockableEvent<DataModifiedEventArgs>();
@@ -41,34 +38,51 @@ namespace LynnaLib
         public event EventHandler<EventArgs> ResolveEvent;
 
 
-        // Properties
+        // State (things that undo/redo can affect)
 
+        private DataState State { get { return base.state as DataState; } }
+
+        // Command is like .db, .dw, or a macro.
         public string Command
         {
-            get { return command; }
-            set { command = value; }
+            get { return State.command; }
+            set { State.command = value; }
         }
+        private List<string> Values
+        {
+            get { return State.values; }
+            set { State.values = value; }
+        }
+        // If false, don't output the command, only the values
+        public bool PrintCommand
+        {
+            get { return State.printCommand; }
+            set { State.printCommand = value; }
+        }
+
+
+
+        // Properties
+
         public string CommandLowerCase
         {
-            get { return command.ToLower(); }
+            get { return Command.ToLower(); }
         }
         public int Size
         {
             get { return size; }
         }
 
-        public bool PrintCommand { get; set; } // If false, don't output the command, only the values
-
         public Data NextData
         {
             get
             {
-                if (parser == null)
+                if (FileParser == null)
                     return null;
                 FileComponent c = this;
                 do
                 {
-                    c = parser.GetNextFileComponent(c);
+                    c = FileParser.GetNextFileComponent(c);
                     if (c is Data) return c as Data;
                 } while (c != null);
                 return c as Data;
@@ -78,12 +92,12 @@ namespace LynnaLib
         {
             get
             {
-                if (parser == null)
+                if (FileParser == null)
                     return null;
                 FileComponent c = this;
                 do
                 {
-                    c = parser.GetPrevFileComponent(c);
+                    c = FileParser.GetPrevFileComponent(c);
                     if (c is Data) return c as Data;
                 } while (c != null);
                 return c as Data;
@@ -93,20 +107,21 @@ namespace LynnaLib
 
         // Constructor
 
-        public Data(Project p, string command, IEnumerable<string> values, int size, FileParser parser, IList<string> spacing) : base(parser, spacing)
+        public Data(Project p, string command, IEnumerable<string> values, int size, FileParser parser, IList<string> spacing)
+            : base(parser, spacing, () => new DataState())
         {
             base.SetProject(p);
-            this.command = command;
+            this.Command = command;
             if (values == null)
-                this.values = new List<string>();
+                this.Values = new List<string>();
             else
-                this.values = new List<string>(values);
+                this.Values = new List<string>(values);
             this.size = size;
 
-            if (this.spacing == null)
-                this.spacing = new List<string>();
-            while (this.spacing.Count < this.values.Count + 2)
-                this.spacing.Add("");
+            if (this.Spacing == null)
+                this.Spacing = new List<string>();
+            while (this.Spacing.Count < this.Values.Count + 2)
+                this.Spacing.Add("");
 
             PrintCommand = true;
 
@@ -118,7 +133,7 @@ namespace LynnaLib
         {
             if (i >= GetNumValues())
                 throw new InvalidLookupException("Value " + i + " is out of range in Data object.");
-            return values[i];
+            return Values[i];
         }
         public int GetIntValue(int i)
         {
@@ -135,16 +150,16 @@ namespace LynnaLib
 
         public virtual int GetNumValues()
         {
-            return values.Count;
+            return Values.Count;
         }
 
 
         public virtual void SetValue(int i, string value)
         {
-            if (values[i] != value)
+            if (Values[i] != value)
             {
-                values[i] = value;
-                Modified = true;
+                RecordChange();
+                Values[i] = value;
                 dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(i));
             }
         }
@@ -174,27 +189,27 @@ namespace LynnaLib
 
         public void SetNumValues(int n, string defaultValue)
         {
-            while (values.Count < n)
+            while (Values.Count < n)
             {
-                InsertValue(values.Count, defaultValue);
+                InsertValue(Values.Count, defaultValue);
             }
-            while (values.Count > n)
-                RemoveValue(values.Count - 1);
+            while (Values.Count > n)
+                RemoveValue(Values.Count - 1);
         }
 
         // Removes a value, deletes the spacing prior to it
         public void RemoveValue(int i)
         {
-            values.RemoveAt(i);
-            spacing.RemoveAt(i + 1);
-            Modified = true;
+            RecordChange();
+            Values.RemoveAt(i);
+            Spacing.RemoveAt(i + 1);
             dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(-1));
         }
         public void InsertValue(int i, string value, string priorSpaces = " ")
         {
-            values.Insert(i, value);
-            spacing.Insert(i + 1, priorSpaces);
-            Modified = true;
+            RecordChange();
+            Values.Insert(i, value);
+            Spacing.Insert(i + 1, priorSpaces);
             dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(-1));
         }
 
@@ -207,10 +222,10 @@ namespace LynnaLib
                 s = GetSpacingIndex(0) + Command;
 
             int spacingIndex = 1;
-            for (int i = 0; i < values.Count; i++)
+            for (int i = 0; i < Values.Count; i++)
             {
                 s += GetSpacingIndex(spacingIndex++);
-                s += values[i];
+                s += Values[i];
             }
             s += GetSpacingIndex(spacingIndex++);
 
@@ -240,12 +255,17 @@ namespace LynnaLib
             return FileParser.GetData(this, offset);
         }
 
+        public void InvokeModifiedEvent(DataModifiedEventArgs args)
+        {
+            dataModifiedEvent.Invoke(this, args);
+        }
+
 
         // Helper function for GetString
         string GetSpacingIndex(int i)
         {
-            string space = spacing[i];
-            if (space.Length == 0 && i != 0 && i != values.Count + 1) space = " ";
+            string space = Spacing[i];
+            if (space.Length == 0 && i != 0 && i != Values.Count + 1) space = " ";
             return space;
         }
 
@@ -278,6 +298,32 @@ namespace LynnaLib
         public RgbData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
             : base(p, command, values, 2, parser, spacing)
         {
+        }
+    }
+
+    public class DataState : FileComponentState
+    {
+        public string command;
+        public List<string> values;
+        public bool printCommand;
+
+        public override void CopyFrom(FileComponentState state)
+        {
+            DataState ds = state as DataState;
+            command = ds.command;
+            values = new List<string>(ds.values);
+            printCommand = ds.printCommand;
+            base.CopyFrom(state);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is DataState state))
+                return false;
+            return base.Equals(obj)
+                && command == state.command
+                && values.SequenceEqual(state.values)
+                && printCommand == state.printCommand;
         }
     }
 }

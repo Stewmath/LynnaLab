@@ -26,9 +26,10 @@ namespace LynnaLib
         public event EventHandler<ValueModifiedEventArgs> TreasureModifiedEvent;
 
 
-        internal Chest(Data dataStart)
+        internal Chest(Data dataStart, int group)
         {
             this.dataStart = dataStart;
+            this.Group = group;
             GenerateValueReferenceGroup();
 
             ValueReferenceGroup.ModifiedEvent += (sender, args) =>
@@ -119,6 +120,14 @@ namespace LynnaLib
             {
                 TreasureIndex = (value.ID << 8) | value.SubID;
             }
+        }
+
+        public int Group { get; private set; }
+        public int RoomIndex { get { return (Group << 8) | ValueReferenceGroup.GetIntValue("Room"); } }
+
+        public string TransactionIdentifier
+        {
+            get { return $"Chest-{RoomIndex:X3}"; }
         }
 
         public Project Project { get { return dataStart.Project; } }

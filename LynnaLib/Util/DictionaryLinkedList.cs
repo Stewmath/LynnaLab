@@ -21,6 +21,14 @@ namespace Util
         {
         }
 
+        public DictionaryLinkedList(IEnumerable<T> enumerable)
+        {
+            foreach (T element in enumerable)
+            {
+                AddLast(element);
+            }
+        }
+
         public void AddAfter(LinkedListNode<T> node, LinkedListNode<T> newNode)
         {
             if (dict.ContainsKey(newNode.Value))

@@ -13,6 +13,12 @@ namespace LynnaLib
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(
                 System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
+        log4net.Appender.RollingFileAppender logAppender;
+
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
         public readonly ConstantsMapping UniqueGfxMapping;
         public readonly ConstantsMapping MainGfxMapping;
         public readonly ConstantsMapping PaletteHeaderMapping;
@@ -31,20 +37,47 @@ namespace LynnaLib
         public readonly ConstantsMapping TreasureGrabModeMapping;
         public readonly ConstantsMapping TreasureObjectMapping;
 
-        log4net.Appender.RollingFileAppender logAppender;
+        readonly string baseDirectory;
 
-        string baseDirectory;
 
+        /// <summary>
+        /// Project state fields that are "undoable". Everything outside of here is not affected by undo/redo.
+        /// That being said there is a lot more state that is kept track of in other classes
+        /// (FileComponent, FileParser, etc).
+        /// </summary>
+        struct State
+        {
+            public State() {}
+            public State(State s)
+            {
+                labelDictionary = new Dictionary<string, FileParser>(s.labelDictionary);
+                definesDictionary = new Dictionary<string, string>(s.definesDictionary);
+            }
+
+            // Maps label to file which contains it
+            public Dictionary<string, FileParser> labelDictionary = new Dictionary<string, FileParser>();
+            // Dictionary of .DEFINE's
+            public Dictionary<string, string> definesDictionary = new Dictionary<string, string>();
+
+            public override bool Equals(object o)
+            {
+                if (!(o is State p))
+                    return false;
+                return labelDictionary.SequenceEqual(p.labelDictionary)
+                    && definesDictionary.SequenceEqual(p.definesDictionary);
+            }
+        }
+
+        State state = new State();
+
+        UndoState undoState = new UndoState();
+
+        // string -> FileParser
         Dictionary<string, FileParser> fileParserDictionary = new Dictionary<string, FileParser>();
-
-        // Maps label to file which contains it
-        Dictionary<string, FileParser> labelDictionary = new Dictionary<string, FileParser>();
-        // Dict of opened binary files
+        // string -> MemoryFileStream (binary file)
         Dictionary<string, MemoryFileStream> binaryFileDictionary = new Dictionary<string, MemoryFileStream>();
-        // Dict of opened .PNG files
+        // string -> GfxStream
         Dictionary<string, PngGfxStream> pngGfxStreamDictionary = new Dictionary<string, PngGfxStream>();
-        // Dictionary of .DEFINE's
-        Dictionary<string, string> definesDictionary = new Dictionary<string, string>();
 
         Dictionary<Tuple<int, int>, RealTileset> tilesetCache
             = new Dictionary<Tuple<int, int>, RealTileset>();
@@ -57,13 +90,16 @@ namespace LynnaLib
         Dictionary<string, ProjectDataType> dataStructDictionary = new Dictionary<string, ProjectDataType>();
         Dictionary<string, ObjectGroup> objectGroupDictionary = new Dictionary<string, ObjectGroup>();
 
-        int numTilesets;
+        readonly int numTilesets;
 
         // See "GetStandardSpritePalettes"
         Color[][] _standardSpritePalettes;
 
         ProjectConfig config;
 
+        // ================================================================================
+        // Constructors
+        // ================================================================================
 
         public Project(string d, string gameToLoad, ProjectConfig config)
         {
@@ -94,20 +130,20 @@ namespace LynnaLib
 
             // Before parsing anything, create the "ROM_AGES" or "ROM_SEASONS" definition for ifdefs
             // to work
-            definesDictionary.Add("ROM_" + GameString.ToUpper(), "");
+            DefinesDictionary.Add("ROM_" + GameString.ToUpper(), "");
 
             // And other things from "version.s" (which LynnaLib can't parse right now). Most of
             // these aren't really important, but I've been known to use the bugfix flags in data
             // files, so LynnaLab should know about them.
-            definesDictionary.Add("REGION_US", "");
-            definesDictionary.Add("ENABLE_US_BUGFIXES", "");
+            DefinesDictionary.Add("REGION_US", "");
+            DefinesDictionary.Add("ENABLE_US_BUGFIXES", "");
 
             // Hack-base only
             if (Config.ExpandedTilesets)
             {
-                definesDictionary.Add("ENABLE_EU_BUGFIXES", "");
-                definesDictionary.Add("ENABLE_BUGFIXES", "");
-                definesDictionary.Add("AGES_ENGINE", "");
+                DefinesDictionary.Add("ENABLE_EU_BUGFIXES", "");
+                DefinesDictionary.Add("ENABLE_BUGFIXES", "");
+                DefinesDictionary.Add("AGES_ENGINE", "");
             }
 
             // version.s contains some important defines that should be visible everywhere
@@ -290,8 +326,12 @@ namespace LynnaLib
             }
         }
 
-
+        // ================================================================================
         // Properties
+        // ================================================================================
+
+        public Dictionary<string, FileParser> LabelDictionary { get { return state.labelDictionary; } }
+        public Dictionary<string, string> DefinesDictionary { get { return state.definesDictionary; } }
 
         public ProjectConfig Config
         {
@@ -316,6 +356,8 @@ namespace LynnaLib
         {
             get { return GameString == "ages" ? Game.Ages : Game.Seasons; }
         }
+
+        public UndoState UndoState { get { return undoState; } }
 
         public int NumDungeons
         {
@@ -391,7 +433,9 @@ namespace LynnaLib
         public Action<Func<bool>> LazyInvoke { get; set; }
 
 
-        // Methods
+        // ================================================================================
+        // Public/internal methods
+        // ================================================================================
 
         internal FileParser GetFileParser(string filename)
         {
@@ -412,7 +456,7 @@ namespace LynnaLib
             MemoryFileStream stream = null;
             if (!binaryFileDictionary.TryGetValue(filename, out stream))
             {
-                stream = new MemoryFileStream(filename);
+                stream = new MemoryFileStream(this, filename);
                 binaryFileDictionary[filename] = stream;
             }
             return stream;
@@ -705,32 +749,32 @@ namespace LynnaLib
         // Adds a definition to definesDictionary. Don't confuse with the "SetDefinition" method.
         public void AddDefinition(string name, string value, bool replace = false)
         {
-            if (definesDictionary.ContainsKey(name))
+            if (DefinesDictionary.ContainsKey(name))
             {
                 if (!replace)
                     log.Warn("\"" + name + "\" defined multiple times");
             }
-            definesDictionary[name] = value;
+            DefinesDictionary[name] = value;
         }
         public void AddLabel(string label, FileParser source)
         {
-            if (labelDictionary.ContainsKey(label))
+            if (LabelDictionary.ContainsKey(label))
                 throw new DuplicateLabelException("Label \"" + label + "\" defined for a second time.");
-            labelDictionary.Add(label, source);
+            LabelDictionary.Add(label, source);
         }
         public void RemoveLabel(string label)
         {
             FileParser f;
-            if (!labelDictionary.TryGetValue(label, out f))
+            if (!LabelDictionary.TryGetValue(label, out f))
                 return;
-            labelDictionary.Remove(label);
+            LabelDictionary.Remove(label);
             f.RemoveLabel(label);
         }
         public FileParser GetFileWithLabel(string label)
         {
             try
             {
-                return labelDictionary[label];
+                return LabelDictionary[label];
             }
             catch (KeyNotFoundException)
             {
@@ -741,7 +785,7 @@ namespace LynnaLib
         {
             try
             {
-                return labelDictionary[label].GetLabel(label);
+                return LabelDictionary[label].GetLabel(label);
             }
             catch (KeyNotFoundException)
             {
@@ -752,7 +796,7 @@ namespace LynnaLib
         {
             try
             {
-                FileParser p = labelDictionary[label];
+                FileParser p = LabelDictionary[label];
                 return true;
             }
             catch (KeyNotFoundException)
@@ -794,7 +838,7 @@ namespace LynnaLib
         public string GetDefinition(string val)
         {
             string mapping;
-            if (definesDictionary.TryGetValue(val, out mapping))
+            if (DefinesDictionary.TryGetValue(val, out mapping))
                 return mapping;
             return null;
         }
@@ -805,7 +849,7 @@ namespace LynnaLib
             val = val.Trim();
 
             string mapping;
-            if (definesDictionary.TryGetValue(val, out mapping))
+            if (DefinesDictionary.TryGetValue(val, out mapping))
                 return mapping;
             return val;
         }
@@ -1024,11 +1068,36 @@ namespace LynnaLib
 
         public Dictionary<string, string> GetDefinesDictionary()
         {
-            return definesDictionary;
+            return DefinesDictionary;
         }
 
+        /// <summary>
+        /// Mark the current state of the project as the starting point for an undo-able operation.
+        /// If a "transaction" is already active when this called, the first one gets priority.
+        ///
+        /// Each BeginTransaction call MUST be paired with an EndTransaction call.
+        ///
+        /// If merge=true, merge the upcoming transaction with the previous transaction if their
+        /// descriptions match. In this case, the description has semantic meaning. If the character
+        /// "#" is included in the description string, the remainder of the string will not be
+        /// displayed, but will still be used for comparisons to determine whether to merge.
+        /// </summary>
+        public void BeginTransaction(string description, bool merge = false)
+        {
+            UndoState.BeginTransaction(description, merge);
+        }
 
+        /// <summary>
+        /// Mark the current state of the project as the ending point for an undo-able operation.
+        /// </summary>
+        public void EndTransaction()
+        {
+            UndoState.EndTransaction();
+        }
+
+        // ================================================================================
         // Private methods
+        // ================================================================================
 
         bool FileExists(string filename)
         {
@@ -1056,6 +1125,40 @@ namespace LynnaLib
             leftBitmap.Dispose();
             rightBitmap.Dispose();
             return fullBitmap;
+        }
+
+        /// <summary>
+        /// State changes for undo/redo operations affecting fields in the Project class
+        /// </summary>
+        public class StateDelta : TransactionDelta
+        {
+            public StateDelta(Project project)
+            {
+                this.project = project;
+                this.initialState = new State(project.state);
+            }
+
+            public readonly Project project;
+
+            private State initialState;
+            private State finalState;
+
+
+            public void CaptureFinalState()
+            {
+                finalState = new State(project.state);
+            }
+
+            public void Rewind()
+            {
+                Debug.Assert(finalState.Equals(project.state));
+                project.state = new State(initialState);
+            }
+
+            public void InvokeModifiedEvents()
+            {
+                // No modified events listen to the Project directly, nothing to do here
+            }
         }
     }
 

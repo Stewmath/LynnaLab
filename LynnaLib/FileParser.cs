@@ -44,21 +44,44 @@ namespace LynnaLib
             new Command("m_treasuresubid", 5, size: 4),
         };
 
-        private Project _project;
+        /// <summary>
+        /// FileParser state fields that are "undoable". Everything outside of here is not affected
+        /// by undo/redo.
+        /// </summary>
+        struct State
+        {
+            public State() { }
+            public State(State s)
+            {
+                fileStructure = new DictionaryLinkedList<FileComponent>(s.fileStructure);
+                labelDictionary = new Dictionary<string, Label>(s.labelDictionary);
+                definesDictionary = new Dictionary<string, Tuple<string, DocumentationFileComponent>>(s.definesDictionary);
+            }
 
-        string filename; // Relative to base directory
-        string fullFilename; // Full path
+            public DictionaryLinkedList<FileComponent> fileStructure = new DictionaryLinkedList<FileComponent>();
+            public Dictionary<string, Label> labelDictionary = new Dictionary<string, Label>();
 
-        Dictionary<string, Label> labelDictionary = new Dictionary<string, Label>();
+            // Maps a string (key) to a pair (v,d), where v is the value, and d is
+            // a DocumentationFileComponent (possible null).
+            public Dictionary<string, Tuple<string, DocumentationFileComponent>> definesDictionary =
+                new Dictionary<string, Tuple<string, DocumentationFileComponent>>();
 
-        // Maps a string (key) to a pair (v,d), where v is the value, and d is
-        // a DocumentationFileComponent (possible null).
-        Dictionary<string, Tuple<string, DocumentationFileComponent>> definesDictionary =
-            new Dictionary<string, Tuple<string, DocumentationFileComponent>>();
+            public override bool Equals(Object o)
+            {
+                if (!(o is State state))
+                    return false;
+                return fileStructure.SequenceEqual(state.fileStructure)
+                    && labelDictionary.SequenceEqual(state.labelDictionary)
+                    && definesDictionary.SequenceEqual(state.definesDictionary);
+            }
+        }
 
-        // Objects may be raw strings, or Data structures.
-        DictionaryLinkedList<FileComponent> fileStructure = new DictionaryLinkedList<FileComponent>();
+        readonly Project _project;
 
+        readonly string filename; // Relative to base directory
+        readonly string fullFilename; // Full path
+
+        State state = new State();
 
         // The following variables only used by ParseLine and related functions; they provide
         // context between lines when parsing.
@@ -109,7 +132,7 @@ namespace LynnaLib
             for (int i = 0; i < lines.Length; i++)
             {
                 currentLine = i;
-                ParseLine(lines[i], fileStructure);
+                ParseLine(lines[i], FileStructure);
             }
 
             context = "";
@@ -121,6 +144,10 @@ namespace LynnaLib
 
 
         // Properties
+
+        public DictionaryLinkedList<FileComponent> FileStructure { get { return state.fileStructure; } }
+        public Dictionary<string, Tuple<string, DocumentationFileComponent>> DefinesDictionary { get { return state.definesDictionary; } }
+        Dictionary<string, Label> LabelDictionary { get { return state.labelDictionary; } }
 
         public bool Modified { get; set; }
         public Project Project
@@ -155,16 +182,6 @@ namespace LynnaLib
                     return filename;
                 return filename.Substring(0, i);
             }
-        }
-
-        public Dictionary<string, Tuple<string, DocumentationFileComponent>> DefinesDictionary
-        {
-            get { return definesDictionary; }
-        }
-
-        public IEnumerable<FileComponent> FileComponents
-        {
-            get { return fileStructure; }
         }
 
 
@@ -881,33 +898,37 @@ namespace LynnaLib
             AddDefinition(def, value);
 
             DocumentationFileComponent doc = null;
-            if (fileStructure.Count >= 2)
-                doc = fileStructure.Last.Previous.Value as DocumentationFileComponent;
+            if (FileStructure.Count >= 2)
+                doc = FileStructure.Last.Previous.Value as DocumentationFileComponent;
 
             // Replace the value from the "AddDefinition" call
-            definesDictionary[def] = new Tuple<string, DocumentationFileComponent>(value, doc);
+            DefinesDictionary[def] = new Tuple<string, DocumentationFileComponent>(value, doc);
         }
 
         void AddDefinition(string def, string value, bool replace = false)
         {
+            // Don't add RecordChange() here as it would trigger during loading, not during
+            // modifications to data. Changes to the dictionary will still be seen because the data
+            // changes that trigger changes to the dictionary will call RecordChange() themselves.
             Project.AddDefinition(def, value, replace);
-            definesDictionary[def] = new Tuple<string, DocumentationFileComponent>(value, null);
+            DefinesDictionary[def] = new Tuple<string, DocumentationFileComponent>(value, null);
         }
 
         void AddLabelToDictionaries(Label label)
         {
-            labelDictionary.Add(label.Name, label);
+            // See above note about RecordChange().
+            LabelDictionary.Add(label.Name, label);
             Project.AddLabel(label.Name, this);
         }
 
         public Label GetLabel(string labelStr)
         {
-            return labelDictionary[labelStr];
+            return LabelDictionary[labelStr];
         }
 
         public Data GetData(string labelStr, int offset = 0)
         {
-            Label label = labelDictionary[labelStr];
+            Label label = LabelDictionary[labelStr];
             if (label == null)
                 throw new InvalidLookupException(string.Format("Label \"{0}\" could not be found.", labelStr));
             return GetData(label, offset);
@@ -957,13 +978,14 @@ namespace LynnaLib
         // refComponent is null.
         public FileComponent InsertComponentAfter(FileComponent refComponent, FileComponent newComponent)
         {
+            RecordChange();
             if (refComponent == null)
-                fileStructure.AddLast(newComponent);
+                FileStructure.AddLast(newComponent);
             else
             {
-                if (!fileStructure.Contains(refComponent))
+                if (!FileStructure.Contains(refComponent))
                     throw new Exception("Tried to insert after a FileComponent that's not in the FileParser.");
-                fileStructure.AddAfter(refComponent, newComponent);
+                FileStructure.AddAfter(refComponent, newComponent);
             }
             newComponent.Attach(this);
 
@@ -971,26 +993,25 @@ namespace LynnaLib
             // handle the labels as we add them, or else just use another function for adding to it.
             if (newComponent is Label)
                 AddLabelToDictionaries(newComponent as Label);
-            Modified = true;
             return newComponent;
         }
 
         // Insert at the beginning if refComponent is null.
         public FileComponent InsertComponentBefore(FileComponent refComponent, FileComponent newComponent)
         {
+            RecordChange();
             if (refComponent == null)
-                fileStructure.AddFirst(newComponent);
+                FileStructure.AddFirst(newComponent);
             else
             {
-                if (!fileStructure.Contains(refComponent))
+                if (!FileStructure.Contains(refComponent))
                     throw new Exception("Tried to insert before a FileComponent that's not in the FileParser.");
-                fileStructure.AddBefore(refComponent, newComponent);
+                FileStructure.AddBefore(refComponent, newComponent);
             }
             newComponent.Attach(this);
 
             if (newComponent is Label)
                 AddLabelToDictionaries(newComponent as Label);
-            Modified = true;
             return newComponent;
         }
 
@@ -998,6 +1019,7 @@ namespace LynnaLib
         // the end if refComponent is null). Returns the final inserted FileComponent.
         public FileComponent InsertParseableTextAfter(FileComponent refComponent, string[] text)
         {
+            RecordChange();
             context = "";
             var structure = new DictionaryLinkedList<FileComponent>();
 
@@ -1007,22 +1029,22 @@ namespace LynnaLib
                 ParseLine(text[i], structure);
             }
 
-            var node = fileStructure.Find(refComponent);
+            var node = FileStructure.Find(refComponent);
             foreach (FileComponent f in structure)
             {
                 var nextNode = new LinkedListNode<FileComponent>(f);
                 if (node == null)
-                    fileStructure.AddLast(nextNode);
+                    FileStructure.AddLast(nextNode);
                 else
-                    fileStructure.AddAfter(node, nextNode);
+                    FileStructure.AddAfter(node, nextNode);
                 node = nextNode;
             }
 
-            Modified = true;
             return structure.Last.Value;
         }
         public FileComponent InsertParseableTextBefore(FileComponent refComponent, string[] text)
         {
+            RecordChange();
             context = "";
             var structure = new DictionaryLinkedList<FileComponent>();
 
@@ -1032,51 +1054,49 @@ namespace LynnaLib
                 ParseLine(text[i], structure);
             }
 
-            var node = fileStructure.Find(refComponent);
+            var node = FileStructure.Find(refComponent);
             foreach (FileComponent f in structure.Reverse())
             {
                 var nextNode = new LinkedListNode<FileComponent>(f);
                 if (node == null)
-                    fileStructure.AddFirst(nextNode);
+                    FileStructure.AddFirst(nextNode);
                 else
-                    fileStructure.AddBefore(node, nextNode);
+                    FileStructure.AddBefore(node, nextNode);
                 node = nextNode;
             }
 
-            Modified = true;
             return structure.First.Value;
         }
 
         public FileComponent GetNextFileComponent(FileComponent reference)
         {
-            var node = fileStructure.Find(reference);
+            var node = FileStructure.Find(reference);
             return node.Next?.Value;
         }
         public FileComponent GetPrevFileComponent(FileComponent reference)
         {
-            var node = fileStructure.Find(reference);
+            var node = FileStructure.Find(reference);
             return node.Previous?.Value;
         }
 
         // Remove a FileComponent (Data, Label) from the fileStructure.
         public void RemoveFileComponent(FileComponent component)
         {
-            fileStructure.Remove(component);
+            RecordChange();
+            FileStructure.Remove(component);
 
             Label l = component as Label;
             if (l != null)
             {
-                labelDictionary.Remove(l.Name);
+                LabelDictionary.Remove(l.Name);
                 Project.RemoveLabel(l.Name);
             }
-
-            Modified = true;
         }
 
         public void RemoveLabel(string label)
         {
             Label l;
-            if (!labelDictionary.TryGetValue(label, out l))
+            if (!LabelDictionary.TryGetValue(label, out l))
                 return;
             RemoveFileComponent(l);
         }
@@ -1094,7 +1114,7 @@ namespace LynnaLib
 
             List<string> output = new List<string>();
             FileComponent lastComponent = null;
-            foreach (var d in fileStructure)
+            foreach (var d in FileStructure)
             {
                 string s = null;
 
@@ -1257,7 +1277,7 @@ namespace LynnaLib
         // No other methods of defining constants will work.
         public void SetDefinition(string constant, string value)
         {
-            foreach (StringFileComponent com in fileStructure)
+            foreach (StringFileComponent com in FileStructure)
             {
                 (var tokens, var spacing) = Tokenize(com.GetString());
                 if (tokens.Count >= 2 && tokens[0].ToLower() == ".define" && tokens[1] == constant)
@@ -1273,9 +1293,65 @@ namespace LynnaLib
         // Shouldn't really need to do anything in particular here, since the file isn't kept open
         public void Close()
         {
-            labelDictionary = null;
-            definesDictionary = null;
-            fileStructure = null;
+            state.labelDictionary = null;
+            state.definesDictionary = null;
+            state.fileStructure = null;
+        }
+
+        /// <summary>
+        /// Always call this BEFORE any change is made that affects the state. It will record the
+        /// state before the change is made in order to be able to undo it.
+        /// </summary>
+        public void RecordChange()
+        {
+            Project.UndoState.RecordChange(this, () => new StateDelta(this));
+
+            // This is a bit weird. We need to record the project's changes as well, but the fields
+            // in the project class that we care about (just defines & labels) are only ever changed
+            // due to changes to the FileParser. So this seems to be the best place to record that
+            // change.
+            // This feels wrong. Something probably needs to be refactored to make the project's
+            // state management cleaner.
+            Project.UndoState.RecordChange(Project, () => new Project.StateDelta(Project));
+
+            Modified = true;
+        }
+
+
+        /// <summary>
+        /// State changes for undo/redo operations on a FileParser
+        /// </summary>
+        public class StateDelta : TransactionDelta
+        {
+            public StateDelta(FileParser parser)
+            {
+                this.parser = parser;
+                this.initialState = new State(parser.state);
+            }
+
+            public readonly FileParser parser; // Parser that was changed
+
+            private State initialState;
+            private State finalState;
+
+
+            public void CaptureFinalState()
+            {
+                finalState = new State(parser.state);
+            }
+
+            public void Rewind()
+            {
+                Debug.Assert(finalState.Equals(parser.state));
+                parser.state = new State(initialState);
+
+                parser.Modified = true;
+            }
+
+            public void InvokeModifiedEvents()
+            {
+                // No modified events listen to the FileParser directly, nothing to do here
+            }
         }
     }
 }

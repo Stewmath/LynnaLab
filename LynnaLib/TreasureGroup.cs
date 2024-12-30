@@ -125,7 +125,7 @@ namespace LynnaLib
 
                 // We want to insert the data at the end of the file, but it must be within the
                 // section, so we need to check for the ".ends" directive and put it above there.
-                var sectionEnd = parser.FileComponents.Where((x) => x.GetString().Trim().ToLower() == ".ends");
+                var sectionEnd = parser.FileStructure.Where((x) => x.GetString().Trim().ToLower() == ".ends");
                 FileComponent insertPos = (sectionEnd.Count() == 0 ? null : sectionEnd.Last().Prev);
 
                 // Create label

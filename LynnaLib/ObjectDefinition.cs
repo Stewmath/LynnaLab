@@ -35,6 +35,7 @@ namespace LynnaLib
             }
 
             base.SetDescriptors(descriptors);
+            base.EnableTransactions("Edit Object");
         }
 
 

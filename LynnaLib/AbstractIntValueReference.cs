@@ -64,7 +64,9 @@ public class AbstractIntValueReference : ValueReference
     }
     public override void SetValue(string s)
     {
+        base.BeginTransaction();
         SetValue(Project.EvalToInt(s));
+        base.EndTransaction();
     }
     public override void SetValue(int i)
     {
@@ -75,8 +77,11 @@ public class AbstractIntValueReference : ValueReference
         }
         if (i == GetIntValue())
             return;
+
+        base.BeginTransaction();
         setter(i);
         RaiseModifiedEvent(null);
+        base.EndTransaction();
     }
 
     public override void Initialize()

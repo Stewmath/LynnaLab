@@ -8,6 +8,7 @@ public class ValueReferenceGroup
 {
     IList<ValueReferenceDescriptor> descriptors;
     LockableEvent<ValueModifiedEventArgs> lockableModifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
+    string transactionDescription;
 
 
     /// Constructor to let subclasses set valueReferences manually
@@ -77,11 +78,6 @@ public class ValueReferenceGroup
         throw new InvalidLookupException("Couldn't find ValueReference corresponding to \"" + name + "\".");
     }
 
-    public int GetNumValueReferences()
-    { // TODO: replace with "Count" property
-        return descriptors.Count;
-    }
-
     public int GetIndexOf(ValueReferenceDescriptor r)
     {
         int i = 0;
@@ -122,7 +118,6 @@ public class ValueReferenceGroup
     {
         ValueReferenceDescriptor desc = GetDescriptor(name);
         desc.SetValue(value);
-        return;
     }
 
     // TODO: remove these, use the public event instead
@@ -149,6 +144,7 @@ public class ValueReferenceGroup
 
     public void CopyFrom(ValueReferenceGroup vrg)
     {
+        BeginTransaction();
         BeginAtomicOperation();
 
         foreach (var desc in descriptors)
@@ -157,10 +153,20 @@ public class ValueReferenceGroup
         }
 
         EndAtomicOperation();
+        EndTransaction();
+    }
+
+    public void EnableTransactions(string description)
+    {
+        transactionDescription = description;
+        foreach (var desc in descriptors)
+            desc.ValueReference.EnableTransactions(description);
     }
 
 
-    // Protected
+    // ================================================================================
+    // Protected methods
+    // ================================================================================
 
     protected void SetDescriptors(IList<ValueReferenceDescriptor> refs)
     {
@@ -175,5 +181,21 @@ public class ValueReferenceGroup
             desc.ValueReference.AddValueModifiedHandler(
                 (sender, args) => lockableModifiedEvent?.Invoke(sender, args));
         }
+    }
+
+    // ================================================================================
+    // Private methods
+    // ================================================================================
+
+    void BeginTransaction()
+    {
+        if (transactionDescription != null)
+            Project.BeginTransaction(transactionDescription);
+    }
+
+    void EndTransaction()
+    {
+        if (transactionDescription != null)
+            Project.EndTransaction();
     }
 }

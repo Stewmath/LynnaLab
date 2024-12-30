@@ -137,7 +137,9 @@ namespace LynnaLib
             }
             set
             {
+                Project.BeginTransaction($"Change Tileset#{Index:X3}");
                 ValueReferenceGroup.SetValue("Tileset", value);
+                Project.EndTransaction();
             }
         }
 
@@ -530,7 +532,7 @@ namespace LynnaLib
             Data d = GetChestData();
             if (d == null)
                 return;
-            Chest = new Chest(d);
+            Chest = new Chest(d, Group);
             Chest.DeletedEvent += (sender, args) => { Chest = null; };
         }
     }

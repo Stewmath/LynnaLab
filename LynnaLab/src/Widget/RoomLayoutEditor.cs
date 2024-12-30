@@ -275,6 +275,8 @@ public class RoomLayoutEditor : TileGrid
 
             if (ImGui.IsMouseDown(ImGuiMouseButton.Left))
             {
+                Project.BeginTransaction("Move Object#" + com.GetTransactionIdentifier(), true);
+
                 // No XY: Can't move this at all by dragging.
                 if (!com.HasXY)
                 {
@@ -311,6 +313,8 @@ public class RoomLayoutEditor : TileGrid
                     com.X = snapTo(com.X, (int)Math.Round(mousePos.X));
                     com.Y = snapTo(com.Y, (int)Math.Round(mousePos.Y));
                 }
+
+                Project.EndTransaction();
             }
             else
             {
@@ -662,6 +666,11 @@ public class RoomLayoutEditor : TileGrid
 
         public virtual void OnDoubleClicked() {}
 
+        /// <summary>
+        /// Identifier used for uniquely identifying undo-able events.
+        /// </summary>
+        public abstract string GetTransactionIdentifier();
+
         // ================================================================================
         // Protected methods
         // ================================================================================
@@ -739,6 +748,11 @@ public class RoomLayoutEditor : TileGrid
         {
             Parent.Workspace.QuickstartData.Enabled = false;
         }
+
+        public override string GetTransactionIdentifier()
+        {
+            return "Quickstart";
+        }
     }
 
     /// <summary>
@@ -807,6 +821,11 @@ public class RoomLayoutEditor : TileGrid
         public override void Delete()
         {
             chest.Delete();
+        }
+
+        public override string GetTransactionIdentifier()
+        {
+            return chest.TransactionIdentifier;
         }
     }
 
@@ -884,6 +903,11 @@ public class RoomLayoutEditor : TileGrid
         public override void Delete()
         {
             obj.Remove();
+        }
+
+        public override string GetTransactionIdentifier()
+        {
+            return "Object"; // TODO
         }
     }
 
@@ -978,6 +1002,11 @@ public class RoomLayoutEditor : TileGrid
         {
             rect = new FRect(X - rect.Width / 2.0f, Y - rect.Height / 2.0f, rect.Width, rect.Height);
         }
+
+        public override string GetTransactionIdentifier()
+        {
+            return "Warp Source"; // TODO
+        }
     }
 
     // Represents the singular "warp destination" object that appears when in warp dest editing mode
@@ -1044,6 +1073,11 @@ public class RoomLayoutEditor : TileGrid
         public override bool Compare(RoomComponent com)
         {
             return warp == (com as WarpDestRoomComponent)?.warp;
+        }
+
+        public override string GetTransactionIdentifier()
+        {
+            return "Warp Dest"; // TODO
         }
     }
 }
