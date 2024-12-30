@@ -69,15 +69,36 @@ public class DungeonEditor : Frame
         {
             ImGui.BeginChild(
                 "Left panel",
-                new Vector2(300.0f, 0.0f),
+                new Vector2(370.0f, 0.0f),
                 ImGuiChildFlags.Border);
+
+            ImGui.SeparatorText("Dungeon properties");
+            ImGuiLL.RenderValueReferenceGroup(Dungeon.ValueReferenceGroup, null, Workspace.ShowDocumentation);
+
+            if (ImGui.Button("Add floor above"))
+            {
+                Dungeon.InsertFloor(floor + 1);
+                floor = floor + 1;
+                ReloadMap();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Add floor below"))
+            {
+                Dungeon.InsertFloor(floor);
+            }
+            if (ImGui.Button("Delete floor") && Dungeon.NumFloors > 1)
+            {
+                Dungeon.RemoveFloor(floor);
+                floor = Math.Min(floor, Dungeon.NumFloors - 1);
+                ReloadMap();
+            }
+
+            ImGui.SeparatorText("Room properties");
 
             ImGuiX.InputHex("Room", SelectedRoom.Index & 0xff, (newIndex) =>
             {
                 Dungeon.SetRoom(minimap.SelectedX, minimap.SelectedY, floor, newIndex);
             }, digits: 2, min: 0, max: 255);
-
-            ImGui.SeparatorText("Room properties");
 
             if (ImGui.BeginTable("Room property table", 2))
             {
@@ -92,21 +113,6 @@ public class DungeonEditor : Frame
                 ImGuiX.Checkbox("Boss", new Accessor<bool>(() => SelectedRoom.DungeonFlagBoss));
                 ImGuiX.Checkbox("Dark", new Accessor<bool>(() => SelectedRoom.DungeonFlagDark));
                 ImGui.EndTable();
-            }
-
-            if (ImGui.Button("Add floor above"))
-            {
-                Dungeon.InsertFloor(floor + 1);
-                floor = floor + 1;
-                ReloadMap();
-            }
-            if (ImGui.Button("Add floor below"))
-            {
-                Dungeon.InsertFloor(floor);
-            }
-            if (ImGui.Button("Delete floor"))
-            {
-                Dungeon.RemoveFloor(floor);
             }
 
             ImGui.EndChild();
