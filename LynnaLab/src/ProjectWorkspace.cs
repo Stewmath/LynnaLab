@@ -153,12 +153,22 @@ public class ProjectWorkspace
             {
                 Func<bool> renderUndoButton;
                 if (Project.UndoState.UndoAvailable)
-                    renderUndoButton = () => ImGui.Selectable("Undo: " + Project.UndoState.GetLastTransactionDescription());
+                    renderUndoButton = () => ImGui.Selectable("Undo: " + Project.UndoState.GetUndoDescription());
                 else
                     renderUndoButton = () => ImGui.Selectable("Undo", false, ImGuiSelectableFlags.Disabled);
                 if (renderUndoButton())
                 {
                     Project.UndoState.Undo();
+                }
+
+                Func<bool> renderRedoButton;
+                if (Project.UndoState.RedoAvailable)
+                    renderRedoButton = () => ImGui.Selectable("Redo: " + Project.UndoState.GetRedoDescription());
+                else
+                    renderRedoButton = () => ImGui.Selectable("Redo", false, ImGuiSelectableFlags.Disabled);
+                if (renderRedoButton())
+                {
+                    Project.UndoState.Redo();
                 }
                 ImGui.EndMenu();
             }

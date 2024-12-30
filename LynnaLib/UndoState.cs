@@ -20,7 +20,8 @@ public class UndoState
     // Variables
     // ================================================================================
 
-    Stack<Transaction> transactions = new Stack<Transaction>();
+    Stack<Transaction> undoStack = new();
+    Stack<Transaction> redoStack = new();
     public Transaction constructingTransaction = new Transaction();
 
     int beginTransactionCalls = 0;
@@ -29,9 +30,10 @@ public class UndoState
     // Properties
     // ================================================================================
 
-    public IEnumerable<Transaction> Transactions { get { return transactions; } }
+    public IEnumerable<Transaction> Transactions { get { return undoStack; } }
 
-    public bool UndoAvailable { get { return LastTransaction != null; } }
+    public bool UndoAvailable { get { return GetUndoDescription() != null; } }
+    public bool RedoAvailable { get { return GetRedoDescription() != null; } }
 
     Transaction LastTransaction
     {
@@ -39,8 +41,8 @@ public class UndoState
         {
             if (!constructingTransaction.Empty)
                 return constructingTransaction;
-            if (transactions.Count != 0)
-                return transactions.Peek();
+            if (undoStack.Count != 0)
+                return undoStack.Peek();
             else
                 return null;
         }
@@ -55,11 +57,26 @@ public class UndoState
         if (!constructingTransaction.Empty)
             FinalizeTransaction();
 
-        if (transactions.Count == 0)
+        if (undoStack.Count == 0)
             return false;
 
-        Transaction transaction = transactions.Pop();
+        Transaction transaction = undoStack.Pop();
         transaction.Undo();
+        redoStack.Push(transaction);
+
+        return true;
+    }
+
+    public bool Redo()
+    {
+        if (redoStack.Count == 0)
+            return false;
+
+        Debug.Assert(constructingTransaction.Empty);
+
+        Transaction transaction = redoStack.Pop();
+        transaction.Redo();
+        undoStack.Push(transaction);
 
         return true;
     }
@@ -70,16 +87,18 @@ public class UndoState
         {
             FinalizeTransaction();
 
-            if (merge && transactions.Count > 0 && transactions.Peek().description == description)
+            if (merge && undoStack.Count > 0 && undoStack.Peek().description == description)
             {
                 // Move the last commited transaction back into constructingTransaction so that
                 // upcoming changes are merged into it
-                constructingTransaction = transactions.Pop();
+                constructingTransaction = undoStack.Pop();
             }
             else
             {
                 constructingTransaction.description = description;
             }
+
+            redoStack.Clear();
         }
         beginTransactionCalls++;
     }
@@ -93,6 +112,7 @@ public class UndoState
         else if (beginTransactionCalls == 0)
         {
             FinalizeTransaction();
+            redoStack.Clear();
         }
     }
 
@@ -102,6 +122,7 @@ public class UndoState
             return;
         var delta = new TransactionStateHolder<Undoable>(source);
         constructingTransaction.deltas[source] = delta;
+        redoStack.Clear();
     }
 
     public void OnRewind(string desc, Action onUndo, Action onRedo)
@@ -109,13 +130,25 @@ public class UndoState
         Rewindable r = new(desc, onUndo, onRedo);
         constructingTransaction.rewindables.Add(r);
         onRedo();
+        redoStack.Clear();
     }
 
-    public string GetLastTransactionDescription()
+    public string GetUndoDescription()
     {
         if (LastTransaction == null)
             return null;
         string desc = LastTransaction.description;
+        if (desc.Contains("#"))
+            return desc.Substring(0, desc.IndexOf('#'));
+        else
+            return desc;
+    }
+
+    public string GetRedoDescription()
+    {
+        if (redoStack.Count == 0)
+            return null;
+        string desc = redoStack.Peek().description;
         if (desc.Contains("#"))
             return desc.Substring(0, desc.IndexOf('#'));
         else
@@ -136,7 +169,8 @@ public class UndoState
         if (!t.Empty)
         {
             t.CaptureFinalState();
-            transactions.Push(t);
+            undoStack.Push(t);
+            redoStack.Clear();
         }
         constructingTransaction = new Transaction();
     }
@@ -165,13 +199,26 @@ public class Transaction
     {
         // Update all states (no events should be triggered by these)
         foreach (TransactionDelta delta in deltas.Values)
-            delta.Rewind();
+            delta.Undo();
 
         // Trigger events, invoke callbacks for updating non-tracked states, etc
         foreach (TransactionDelta delta in deltas.Values)
             delta.InvokeModifiedEvents();
         foreach (Rewindable r in rewindables)
-            r.Rewind();
+            r.Undo();
+    }
+
+    public void Redo()
+    {
+        // Update all states (no events should be triggered by these)
+        foreach (TransactionDelta delta in deltas.Values)
+            delta.Redo();
+
+        // Trigger events, invoke callbacks for updating non-tracked states, etc
+        foreach (TransactionDelta delta in deltas.Values)
+            delta.InvokeModifiedEvents();
+        foreach (Rewindable r in rewindables)
+            r.Redo();
     }
 
     public void CaptureFinalState()
@@ -202,7 +249,8 @@ public class Transaction
 public interface TransactionDelta
 {
     public void CaptureFinalState();
-    public void Rewind();
+    public void Undo();
+    public void Redo();
     public void InvokeModifiedEvents();
 }
 
@@ -223,10 +271,16 @@ public class Rewindable
     Action onUndo, onRedo;
     string description;
 
-    public void Rewind()
+    public void Undo()
     {
         LogHelper.GetLogger().Info("Undo: " + description);
         onUndo();
+    }
+
+    public void Redo()
+    {
+        LogHelper.GetLogger().Info("Redo: " + description);
+        onRedo();
     }
 }
 
@@ -249,11 +303,18 @@ class TransactionStateHolder<C> : TransactionDelta where C : Undoable
         finalState = instance.GetState().Copy();
     }
 
-    public void Rewind()
+    public void Undo()
     {
         Debug.Assert(finalState.Compare(instance.GetState()),
                      $"Expected:\n{ObjectDumper.Dump(finalState)}\nActual:\n{ObjectDumper.Dump(instance.GetState())}");
         instance.SetState(initialState);
+    }
+
+    public void Redo()
+    {
+        Debug.Assert(initialState.Compare(instance.GetState()),
+                     $"Expected:\n{ObjectDumper.Dump(initialState)}\nActual:\n{ObjectDumper.Dump(instance.GetState())}");
+        instance.SetState(finalState);
     }
 
     public void InvokeModifiedEvents()
@@ -270,11 +331,6 @@ public interface Undoable
     public TransactionState GetState();
     public void SetState(TransactionState state);
     public void InvokeModifiedEvent();
-}
-
-public interface UndoListener
-{
-    public void AfterUndo();
 }
 
 /// <summary>
