@@ -125,11 +125,11 @@ public class UndoState
         redoStack.Clear();
     }
 
-    public void OnRewind(string desc, Action onUndo, Action onRedo)
+    public void OnRewind(string desc, Action onUndo, Action<bool> onRedo)
     {
         Rewindable r = new(desc, onUndo, onRedo);
         constructingTransaction.rewindables.Add(r);
-        onRedo();
+        onRedo(false);
         redoStack.Clear();
     }
 
@@ -185,7 +185,7 @@ public class Transaction
 {
     public Transaction() { }
 
-    public bool Empty { get { return deltas.Count == 0; } }
+    public bool Empty { get { return deltas.Count == 0 && rewindables.Count == 0; } }
 
     public string description = "Unlabelled";
 
@@ -204,7 +204,7 @@ public class Transaction
         // Trigger events, invoke callbacks for updating non-tracked states, etc
         foreach (TransactionDelta delta in deltas.Values)
             delta.InvokeModifiedEvents();
-        foreach (Rewindable r in rewindables)
+        foreach (Rewindable r in ((IEnumerable<Rewindable>)rewindables).Reverse())
             r.Undo();
     }
 
@@ -261,14 +261,15 @@ public interface TransactionDelta
 /// </summary>
 public class Rewindable
 {
-    public Rewindable(string description, Action u, Action r)
+    public Rewindable(string description, Action u, Action<bool> r)
     {
         this.description = description;
         onUndo = u;
         onRedo = r;
     }
 
-    Action onUndo, onRedo;
+    Action onUndo;
+    Action<bool> onRedo;
     string description;
 
     public void Undo()
@@ -280,7 +281,7 @@ public class Rewindable
     public void Redo()
     {
         LogHelper.GetLogger().Info("Redo: " + description);
-        onRedo();
+        onRedo(true);
     }
 }
 

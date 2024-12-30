@@ -12,6 +12,11 @@ public class DungeonEditor : Frame
 
         minimap = new Minimap(Workspace);
         SetDungeon(Project.GetDungeon(0));
+
+        dungeonEW.Bind<EventArgs>("FloorsChangedEvent", (_, _) =>
+        {
+            ReloadMap();
+        }, weak: false);
     }
 
     // ================================================================================
@@ -20,6 +25,7 @@ public class DungeonEditor : Frame
 
     Minimap minimap;
     int floor;
+    EventWrapper<Dungeon> dungeonEW = new();
 
     // ================================================================================
     // Properties
@@ -77,20 +83,20 @@ public class DungeonEditor : Frame
 
             if (ImGui.Button("Add floor above"))
             {
-                Dungeon.InsertFloor(floor + 1);
                 floor = floor + 1;
-                ReloadMap();
+                Dungeon.InsertFloor(floor);
+                // Dungeon floors changed event will trigger
             }
             ImGui.SameLine();
             if (ImGui.Button("Add floor below"))
             {
                 Dungeon.InsertFloor(floor);
+                // Dungeon floors changed event will trigger
             }
             if (ImGui.Button("Delete floor") && Dungeon.NumFloors > 1)
             {
                 Dungeon.RemoveFloor(floor);
-                floor = Math.Min(floor, Dungeon.NumFloors - 1);
-                ReloadMap();
+                // Dungeon floors changed event will trigger
             }
 
             ImGui.SeparatorText("Room properties");
@@ -137,6 +143,7 @@ public class DungeonEditor : Frame
     void SetDungeon(Dungeon dungeon)
     {
         Dungeon = dungeon;
+        dungeonEW.ReplaceEventSource(dungeon);
         ReloadMap();
     }
 

@@ -131,7 +131,7 @@ namespace LynnaLib
             Project.UndoState.OnRewind("Delete Chest", () =>
             { // On undo
                 room.ChestRevived(this);
-            }, () =>
+            }, (_) =>
             { // On redo / right now
                 InvokeDeletedEvent();
             });

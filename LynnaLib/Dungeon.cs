@@ -12,9 +12,9 @@ namespace LynnaLib
 
         // Otherwise the following values are filled out
         public int x, y, floor; // position in grid of changed room
-        public int oldRoom, newRoom;
     }
 
+    /// <summary>
     /// Represents a dungeon, which is really just an organized layout of rooms. Some "dungeons" are
     /// just collections of miscellaneous large rooms (like Ambi's Palace).
     ///
@@ -28,6 +28,7 @@ namespace LynnaLib
     /// Utmost flexibility to overcome the above limitations would involve installing handlers on
     /// the underlying data itself, rather than doing things when the "SetRoom" function, etc. is
     /// called. That's annoying to do when floors can be added and deleted though.
+    /// </summary>
     public class Dungeon : Map
     {
         // ================================================================================
@@ -43,8 +44,7 @@ namespace LynnaLib
             string label = pointerData.GetValue(0);
             dataStart = dungeonDataFile.GetData(label);
 
-            _mainGroup = GetDataIndex(0) - Project.EvalToInt(">wGroup4RoomFlags") + 4;
-
+            DetermineGroup();
             DetermineRoomsUsed();
             GenerateValueReferenceGroup();
         }
@@ -57,11 +57,8 @@ namespace LynnaLib
         readonly Data dataStart;
         readonly int index;
 
-        // TODO: Track the following with undos
-
         // roomsUsed[i] = # of times room "i" is used in this dungeon
         int[] roomsUsed;
-
         int _mainGroup;
 
         // ================================================================================
@@ -151,6 +148,8 @@ namespace LynnaLib
 
         public void SetRoom(int x, int y, int floor, int room)
         {
+            Project.BeginTransaction($"Change dungeon room#d{Index}x{x}y{y}f{floor}", true);
+
             int pos = y * 8 + x;
             if (pos >= 0x40)
                 throw new ArgumentException(string.Format("Arguments {0:X},{1:X} to 'SetRoom' too high.", x, y));
@@ -164,12 +163,28 @@ namespace LynnaLib
             d.SetByteValue(0, (byte)room);
             roomsUsed[(byte)room]++;
 
-            RoomChangedEvent?.Invoke(this, new DungeonRoomChangedEventArgs {
-                x = x,
-                y = y,
-                floor = floor,
-                oldRoom = oldRoom,
-                newRoom = room});
+            var invokeRoomChangedEvent = () =>
+            {
+                RoomChangedEvent?.Invoke(this, new DungeonRoomChangedEventArgs
+                {
+                    x = x,
+                    y = y,
+                    floor = floor,
+                });
+            };
+
+            Project.UndoState.OnRewind("Change dungeon room", () =>
+            { // On undo
+                DetermineRoomsUsed();
+                invokeRoomChangedEvent();
+            }, (isRedo) =>
+            { // On redo or right now
+                if (isRedo)
+                    DetermineRoomsUsed(); // Our updates to roomUsed[] above suffice unless this is a redo operation
+                invokeRoomChangedEvent();
+            });
+
+            Project.EndTransaction();
         }
 
         public bool RoomUsed(int roomIndex)
@@ -237,6 +252,8 @@ namespace LynnaLib
         /// inserted at the top.
         public void InsertFloor(int floorIndex)
         {
+            Project.BeginTransaction("Add dungeon floor");
+
             if (floorIndex < 0 || floorIndex > NumFloors)
                 throw new ArgumentException("Can't insert floor " + floorIndex + ".");
 
@@ -266,13 +283,24 @@ namespace LynnaLib
             }
 
             NumFloors++;
-            DetermineRoomsUsed();
 
-            FloorsChangedEvent?.Invoke(this, null);
+            Project.UndoState.OnRewind("Add dungeon floor", () =>
+            { // On undo
+                DetermineRoomsUsed();
+                FloorsChangedEvent?.Invoke(this, null);
+            }, (isRedo) =>
+            { // On redo or right now
+                DetermineRoomsUsed();
+                FloorsChangedEvent?.Invoke(this, null);
+            });
+
+            Project.EndTransaction();
         }
 
         public void RemoveFloor(int floorIndex)
         {
+            Project.BeginTransaction("Remove dungeon floor");
+
             if (floorIndex < 0 || floorIndex >= NumFloors)
                 throw new ArgumentException("Can't remove floor " + floorIndex + ": doesn't exist.");
             if (NumFloors <= 1)
@@ -294,9 +322,18 @@ namespace LynnaLib
                 parser.RemoveFileComponent(component);
 
             NumFloors--;
-            DetermineRoomsUsed();
 
-            FloorsChangedEvent?.Invoke(this, null);
+            Project.UndoState.OnRewind("Remove dungeon floor", () =>
+            { // On undo
+                DetermineRoomsUsed();
+                FloorsChangedEvent?.Invoke(this, null);
+            }, (isRedo) =>
+            { // On redo or right now
+                DetermineRoomsUsed();
+                FloorsChangedEvent?.Invoke(this, null);
+            });
+
+            Project.EndTransaction();
         }
 
 
@@ -369,14 +406,33 @@ namespace LynnaLib
 
         void SetGroup(int g)
         {
+            Project.BeginTransaction("Change dungeon group");
+
             if (!(g == 4 || g == 5))
                 throw new ArgumentException("Invalid group '" + g + "' for dungeon.");
             dataStart.SetValue(0, ">wGroup" + g.ToString() + "RoomFlags");
-            _mainGroup = g;
 
-            DetermineRoomsUsed();
+            var invokeRoomChangedEvent = () =>
+                RoomChangedEvent?.Invoke(this, new DungeonRoomChangedEventArgs { all = true });
 
-            RoomChangedEvent?.Invoke(this, new DungeonRoomChangedEventArgs { all = true });
+            Project.UndoState.OnRewind("Change dungeon group", () =>
+            { // On undo
+                DetermineGroup();
+                DetermineRoomsUsed();
+                invokeRoomChangedEvent();
+            }, (isRedo) =>
+            { // On redo or right now
+                DetermineGroup();
+                DetermineRoomsUsed();
+                invokeRoomChangedEvent();
+            });
+
+            Project.EndTransaction();
+        }
+
+        void DetermineGroup()
+        {
+            _mainGroup = GetDataIndex(0) - Project.EvalToInt(">wGroup4RoomFlags") + 4;
         }
     }
 }

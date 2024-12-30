@@ -371,7 +371,7 @@ namespace LynnaLib
                 Chest.InvokeDeletedEvent();
                 // We are subscribed to the chest deletion event so it should set Chest = null by this line.
                 Debug.Assert(Chest == null);
-            }, () =>
+            }, (_) =>
             { // On redo / right now
                 Debug.Assert(Chest == null);
                 UpdateChestRef();

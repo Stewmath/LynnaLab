@@ -35,6 +35,18 @@ public class Minimap : TileGrid
                 }
             }
         };
+
+        // Watch for dungeons removing a floor that we're currently looking at.
+        // This is enough to prevent crashes, though it won't update the selected room in the RoomEditor.
+        dungeonEW.Bind<EventArgs>("FloorsChangedEvent", (_, _) =>
+        {
+            if (!(map is Dungeon dungeon))
+                return;
+            if (floor >= dungeon.NumFloors)
+            {
+                SetMap(dungeon, dungeon.NumFloors - 1);
+            }
+        }, weak: false);
     }
 
     // ================================================================================
@@ -43,6 +55,7 @@ public class Minimap : TileGrid
     Map map;
     int floor;
     Image image;
+    EventWrapper<Dungeon> dungeonEW = new();
 
     // ================================================================================
     // Properties
@@ -90,14 +103,16 @@ public class Minimap : TileGrid
 
         this.image = null;
 
-        if (map == null)
-            return;
+        if (map != null)
+        {
+            base.TileWidth = map.RoomWidth * 16;
+            base.TileHeight = map.RoomHeight * 16;
+            base.Width = map.MapWidth;
+            base.Height = map.MapHeight;
 
-        base.TileWidth = map.RoomWidth * 16;
-        base.TileHeight = map.RoomHeight * 16;
-        base.Width = map.MapWidth;
-        base.Height = map.MapHeight;
+            this.image = Workspace.GetCachedMapImage((Map, floor));
+        }
 
-        this.image = Workspace.GetCachedMapImage((Map, floor));
+        dungeonEW.ReplaceEventSource(map as Dungeon);
     }
 }

@@ -269,11 +269,6 @@ public class ProjectWorkspace
             ImGui.PopFont();
         }
 
-        foreach (var frame in frames)
-        {
-            frame.RenderAsWindow();
-        }
-
         if (ImGui.IsKeyPressed(ImGuiKey.F4))
             ToggleQuickstart(!QuickstartData.Enabled);
         if (ImGui.IsKeyPressed(ImGuiKey.F5))
@@ -282,6 +277,14 @@ public class ProjectWorkspace
             Project.UndoState.Undo();
         if (ImGui.IsKeyChordPressed(ImGuiKey.ModCtrl | ImGuiKey.ModShift | ImGuiKey.Z))
             Project.UndoState.Redo();
+
+        // Rendering frames should be the last thing done. In particular, undo/redo operations
+        // should happen before this. They may delete resources (ImGui images) that the frames have
+        // requested to use already if the frames are rendered first.
+        foreach (var frame in frames)
+        {
+            frame.RenderAsWindow();
+        }
     }
 
     /// <summary>
