@@ -34,7 +34,7 @@ namespace LynnaLib
 
             _keys = new List<string>();
 
-            this.EndsLine = false;
+            state.endsLine = false;
             this.origString = str;
 
             documentationParams = ParseDoc(str, _keys);

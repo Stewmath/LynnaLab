@@ -2,18 +2,16 @@ namespace LynnaLib
 {
     // This class is an abstraction of WarpSourceData and WarpDestData, managed by the WarpGroup
     // class. It hides annoying details such as managing warp destination indices manually.
-    public class Warp
+    public class Warp : Undoable
     {
-        ValueReferenceGroup vrg;
-
-        LockableEvent<EventArgs> ModifiedEvent = new LockableEvent<EventArgs>();
-
-
+        // ================================================================================
         // Constructors
+        // ================================================================================
+
         internal Warp(WarpGroup group, WarpSourceData data)
         {
             SourceGroup = group;
-            SourceData = data;
+            state.warpSource = data;
 
             // Do not, repeat, do NOT install a modified handler onto the source data - not as long
             // as the "DestGroup" and "DestIndex" fields behave as they do currently; they should
@@ -25,6 +23,36 @@ namespace LynnaLib
             ConstructValueReferenceGroup();
         }
 
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        // Everything in the State class is affected by undo/redo
+        class State : TransactionState
+        {
+            public WarpSourceData warpSource;
+
+            public override TransactionState Copy()
+            {
+                State s = new State();
+                s.warpSource = warpSource;
+                return s;
+            }
+
+            public override bool Compare(TransactionState obj)
+            {
+                return (obj is State state) && warpSource == state.warpSource;
+            }
+        };
+
+        State state = new State();
+        ValueReferenceGroup vrg;
+        LockableEvent<EventArgs> ModifiedEvent = new LockableEvent<EventArgs>();
+
+
+        // ================================================================================
+        // Properties
+        // ================================================================================
 
         // Properties from warp source
 
@@ -43,102 +71,51 @@ namespace LynnaLib
 
         public bool TopLeft
         {
-            get
-            {
-                return vrg.GetIntValue("Top-Left") != 0;
-            }
-            set
-            {
-                vrg.SetValue("Top-Left", value ? 1 : 0);
-            }
+            get {return vrg.GetIntValue("Top-Left") != 0;}
+            set {vrg.SetValue("Top-Left", value ? 1 : 0);}
         }
         public bool TopRight
         {
-            get
-            {
-                return vrg.GetIntValue("Top-Right") != 0;
-            }
-            set
-            {
-                vrg.SetValue("Top-Right", value ? 1 : 0);
-            }
+            get {return vrg.GetIntValue("Top-Right") != 0;}
+            set {vrg.SetValue("Top-Right", value ? 1 : 0);}
         }
         public bool BottomLeft
         {
-            get
-            {
-                return vrg.GetIntValue("Bottom-Left") != 0;
-            }
-            set
-            {
-                vrg.SetValue("Bottom-Left", value ? 1 : 0);
-            }
+            get {return vrg.GetIntValue("Bottom-Left") != 0;}
+            set {vrg.SetValue("Bottom-Left", value ? 1 : 0);}
         }
         public bool BottomRight
         {
-            get
-            {
-                return vrg.GetIntValue("Bottom-Right") != 0;
-            }
-            set
-            {
-                vrg.SetValue("Bottom-Right", value ? 1 : 0);
-            }
+            get {return vrg.GetIntValue("Bottom-Right") != 0;}
+            set {vrg.SetValue("Bottom-Right", value ? 1 : 0);}
         }
         public int SourceTransition
         {
-            get
-            {
-                return vrg.GetIntValue("Src Transition");
-            }
-            set
-            {
-                vrg.SetValue("Src Transition", value);
-            }
+            get {return vrg.GetIntValue("Src Transition");}
+            set {vrg.SetValue("Src Transition", value);}
         }
         public int SourceX
         {
-            get
-            {
-                return vrg.GetIntValue("Source X");
-            }
-            set
-            {
-                vrg.SetValue("Source X", value);
-            }
+            get {return vrg.GetIntValue("Source X");}
+            set {vrg.SetValue("Source X", value);}
         }
         public int SourceY
         {
-            get
-            {
-                return vrg.GetIntValue("Source Y");
-            }
-            set
-            {
-                vrg.SetValue("Source Y", value);
-            }
+            get {return vrg.GetIntValue("Source Y");}
+            set {vrg.SetValue("Source Y", value);}
         }
 
         public Room SourceRoom
         {
-            get
-            {
-                return SourceGroup.Room;
-            }
+            get {return SourceGroup.Room;}
         }
 
         // Propreties from warp destination
 
         public int DestRoomIndex
         {
-            get
-            {
-                return vrg.GetIntValue("Dest Room");
-            }
-            set
-            {
-                vrg.SetValue("Dest Room", value);
-            }
+            get {return vrg.GetIntValue("Dest Room");}
+            set {vrg.SetValue("Dest Room", value);}
         }
 
         public Room DestRoom
@@ -149,58 +126,41 @@ namespace LynnaLib
 
         public int DestY
         {
-            get
-            {
-                return vrg.GetIntValue("Dest Y");
-            }
-            set
-            {
-                vrg.SetValue("Dest Y", value);
-            }
+            get {return vrg.GetIntValue("Dest Y");}
+            set {vrg.SetValue("Dest Y", value);}
         }
         public int DestX
         {
-            get
-            {
-                return vrg.GetIntValue("Dest X");
-            }
-            set
-            {
-                vrg.SetValue("Dest X", value);
-            }
+            get {return vrg.GetIntValue("Dest X");}
+            set {vrg.SetValue("Dest X", value);}
         }
         public int DestParameter
         {
-            get
-            {
-                return vrg.GetIntValue("Dest Parameter");
-            }
-            set
-            {
-                vrg.SetValue("Dest Parameter", value);
-            }
+            get {return vrg.GetIntValue("Dest Parameter");}
+            set {vrg.SetValue("Dest Parameter", value);}
         }
         public int DestTransition
         {
-            get
-            {
-                return vrg.GetIntValue("Dest Transition");
-            }
-            set
-            {
-                vrg.SetValue("Dest Transition", value);
-            }
+            get {return vrg.GetIntValue("Dest Transition");}
+            set {vrg.SetValue("Dest Transition", value);}
         }
 
         // Other properties
-
 
         public WarpGroup SourceGroup { get; private set; }
 
         // Underlying warp source data object. In general, manipulating this directly
         // isn't recommended; direct modifications to the base data don't trigger event handlers
         // set by the "AddModifiedHandler" function. Same with "DestData".
-        internal WarpSourceData SourceData { get; private set; }
+        internal WarpSourceData SourceData
+        {
+            get { return state.warpSource; }
+            set
+            {
+                Project.UndoState.RecordChange(this);
+                state.warpSource = value;
+            }
+        }
 
         WarpDestData DestData { get { return SourceData.GetReferencedDestData(); } }
 
@@ -223,6 +183,28 @@ namespace LynnaLib
             ModifiedEvent -= handler;
         }
 
+        // ================================================================================
+        // Undoable interface methods
+        // ================================================================================
+
+        public TransactionState GetState()
+        {
+            return state;
+        }
+
+        public void SetState(TransactionState state)
+        {
+            this.state = (State)state;
+        }
+
+        public void InvokeModifiedEvent()
+        {
+            ModifiedEvent?.Invoke(this, null);
+        }
+
+        // ================================================================================
+        // Private methods
+        // ================================================================================
 
         // ValueReferenceGroup for simpler editing based on a few named parameters.
         // All modifications to the underlying data should be done through the ValueReferenceGroup

@@ -20,6 +20,8 @@ namespace LynnaLib
         // Properties
 
         // True if a newline comes after this data
+        // Should probably add RecordChange() to the setter? But this breaks things... not so
+        // important as it's only ever written to during initial parsing...
         public bool EndsLine
         {
             get { return state.endsLine; }
@@ -103,10 +105,12 @@ namespace LynnaLib
                 return;
             if (state.parser != null)
                 throw new Exception("Must call 'Detach()' before calling 'Attach(parser)'.");
+            RecordChange();
             state.parser = p;
         }
         public void Detach()
         {
+            RecordChange();
             FileParser.RemoveFileComponent(this);
             state.parser = null;
         }
