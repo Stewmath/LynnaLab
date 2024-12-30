@@ -10,9 +10,9 @@ namespace LynnaLib
     /// treasure.
     public class TreasureObject
     {
-        TreasureGroup treasureGroup;
+        readonly TreasureGroup treasureGroup;
+        readonly Data baseData;
         ValueReferenceGroup vrg;
-        Data baseData;
 
         internal TreasureObject(TreasureGroup treasureGroup, int subid, Data baseData)
         {

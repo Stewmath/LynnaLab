@@ -9,9 +9,9 @@ namespace LynnaLib
     public class InteractionObject : GameObject
     {
 
-        Data objectData;
+        readonly Data objectData;
 
-        byte b0, b1, b2;
+        readonly byte b0, b1, b2;
 
         internal InteractionObject(Project p, int i) : base(p, i)
         {

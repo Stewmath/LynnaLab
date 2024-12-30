@@ -9,12 +9,12 @@ namespace LynnaLib
     public class EnemyObject : GameObject
     {
 
-        Data objectData;
+        readonly Data objectData;
 
-        byte _objectGfxHeaderIndex;
-        byte _collisionReactionSet;
-        byte _tileIndexBase;
-        byte _oamFlagsBase;
+        readonly byte _objectGfxHeaderIndex;
+        readonly byte _collisionReactionSet;
+        readonly byte _tileIndexBase;
+        readonly byte _oamFlagsBase;
 
         internal EnemyObject(Project p, int i) : base(p, i)
         {

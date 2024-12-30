@@ -10,6 +10,8 @@ namespace LynnaLib
     public class TreasureGroup : ProjectIndexedDataType
     {
         TreasureObject[] treasureObjectCache = new TreasureObject[256];
+
+        // TODO: Update with undo/redo
         Data dataStart;
 
 

@@ -9,11 +9,11 @@ namespace LynnaLib
     public class PartObject : GameObject
     {
 
-        Data objectData;
+        readonly Data objectData;
 
-        byte _objectGfxHeaderIndex;
-        byte _tileIndexBase;
-        byte _oamFlagsBase;
+        readonly byte _objectGfxHeaderIndex;
+        readonly byte _tileIndexBase;
+        readonly byte _oamFlagsBase;
 
         internal PartObject(Project p, int i) : base(p, i)
         {

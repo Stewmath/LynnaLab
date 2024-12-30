@@ -64,8 +64,8 @@ public class RealTileset : Tileset
     // These two Data's are the same unless it's a seasonal tileset.
     // In that case, parentData points to the table of seasonal tilesets.
     // (m_SeasonalTileset)
-    Data parentData;
-    Data tilesetData;
+    readonly Data parentData;
+    readonly Data tilesetData;
 
 
     // ================================================================================

@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
-using Util;
 
 namespace LynnaLib
 {
@@ -11,12 +8,13 @@ namespace LynnaLib
     {
         private static readonly log4net.ILog log = LogHelper.GetLogger();
 
-        // Actual width and height of room (note that width can differ from Stride, below)
+        // TODO: Update variables with undo/redo
+
+        // Actual width and height of room (note that width can differ from Stride, see properties)
         int width, height;
 
-        MemoryFileStream tileDataFile;
         Tileset loadedTileset;
-
+        MemoryFileStream tileDataFile;
         // List of positions where each tile index is used in the room
         List<(int,int)>[] tilePositions = new List<(int,int)>[256];
 

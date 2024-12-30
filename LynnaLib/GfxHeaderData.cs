@@ -11,9 +11,7 @@ namespace LynnaLib
     // Other types of gfx headers not supported here.
     public class GfxHeaderData : Data, IGfxHeader
     {
-        List<string> gfxDirectories = new List<string>();
-
-        Stream gfxStream;
+        readonly Stream gfxStream;
 
         public int DestAddr
         {

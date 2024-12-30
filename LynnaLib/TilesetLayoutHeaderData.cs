@@ -8,7 +8,7 @@ namespace LynnaLib
     public class TilesetLayoutHeaderData : Data
     {
 
-        Stream referencedData;
+        readonly Stream referencedData;
 
         public int DictionaryIndex
         {

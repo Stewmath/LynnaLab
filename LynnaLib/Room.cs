@@ -12,11 +12,13 @@ namespace LynnaLib
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 
-        MemoryFileStream dungeonFlagStream;
+        readonly MemoryFileStream dungeonFlagStream;
 
         // Different season layouts
-        List<RoomLayout> layouts;
+        readonly List<RoomLayout> layouts;
 
+        // TODO: Update on undo/redo
+        Chest chest;
 
         // Event invoked upon adding a chest. For removing a chest, use the event in the Chest
         // class.
@@ -117,7 +119,10 @@ namespace LynnaLib
             get { return layouts.Count == 4; }
         }
 
-        public Chest Chest { get; private set; }
+        public Chest Chest
+        {
+            get { return chest; }
+        }
 
         /// If true, tileset graphics are loaded after the screen transition instead of before.
         /// Often used in "buffer" rooms to transition between 2 tilesets.
@@ -532,8 +537,8 @@ namespace LynnaLib
             Data d = GetChestData();
             if (d == null)
                 return;
-            Chest = new Chest(d, Group);
-            Chest.DeletedEvent += (sender, args) => { Chest = null; };
+            chest = new Chest(d, Group);
+            Chest.DeletedEvent += (sender, args) => { chest = null; };
         }
     }
 }

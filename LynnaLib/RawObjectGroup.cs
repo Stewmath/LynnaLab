@@ -8,8 +8,10 @@ namespace LynnaLib
     // class instead.
     internal class RawObjectGroup : ProjectDataType
     {
+        readonly FileParser parser;
+
+        // TODO: Update with undo/redo
         List<ObjectData> objectDataList = new List<ObjectData>();
-        FileParser parser;
 
 
         internal RawObjectGroup(Project p, String id) : base(p, id)
@@ -67,6 +69,10 @@ namespace LynnaLib
             InsertObject(index, data);
         }
 
+        /// <summary>
+        /// Makes a copy of the object data at the end of the file and moves the label to reference
+        /// the new data. Useful if the data is being referenced by more than one pointer.
+        /// </summary>
         internal void Repoint()
         {
             parser.RemoveLabel(Identifier);

@@ -6,7 +6,7 @@ namespace LynnaLib
     /// PaletteHeaderGroups are identical (reference the same data).
     public class PaletteHeaderGroup : ProjectIndexedDataType
     {
-        PaletteHeaderData firstPaletteHeader;
+        readonly PaletteHeaderData firstPaletteHeader;
 
         public event EventHandler<EventArgs> ModifiedEvent;
 

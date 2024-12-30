@@ -31,7 +31,9 @@ namespace LynnaLib
     public class Dungeon : Map
     {
         // The start of the data, at the "dungeonDataXX" label
-        Data dataStart;
+        readonly Data dataStart;
+
+        // TODO: Track the following with undos
 
         // roomsUsed[i] = # of times room "i" is used in this dungeon
         int[] roomsUsed;

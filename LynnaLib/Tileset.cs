@@ -13,6 +13,8 @@ namespace LynnaLib
         // Variables
         // ================================================================================
 
+        // TODO: Update variables on undo/redo?
+
         AnimationGroup animationGroup;
 
         GraphicsState graphicsState;

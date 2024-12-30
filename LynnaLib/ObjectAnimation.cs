@@ -15,9 +15,9 @@ namespace LynnaLib
     /// </summary>
     public class ObjectAnimation
     {
-        GameObject _gameObject;
-        int _animationIndex;
-        Data _animationData;
+        readonly GameObject _gameObject;
+        readonly int _animationIndex;
+        readonly Data _animationData;
 
         List<ObjectAnimationFrame> loadedFrames = new List<ObjectAnimationFrame>();
 

@@ -49,11 +49,11 @@ namespace LynnaLib
         // rearranging objects). Not invoked when an object's data is modified.
         public event EventHandler<EventArgs> StructureModifiedEvent;
 
+        // TODO: Update variables with undo/redo
 
+        readonly ObjectGroupType type;
         // NOTE: this list may not be complete at any given time
         List<ObjectGroup> parents = new List<ObjectGroup>();
-
-        ObjectGroupType type;
 
         List<ObjectGroup.ObjectStruct> objectList;
         RawObjectGroup rawObjectGroup;

@@ -8,8 +8,7 @@ namespace LynnaLib
     // This class is only used when "ExpandedTilesets" is false in config.yaml.
     public class TilesetHeaderGroup : ProjectIndexedDataType
     {
-
-        Stream mappingsDataFile, collisionsDataFile;
+        readonly Stream mappingsDataFile, collisionsDataFile;
 
         internal TilesetHeaderGroup(Project p, int i) : base(p, i)
         {

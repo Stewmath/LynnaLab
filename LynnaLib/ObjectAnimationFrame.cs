@@ -14,8 +14,8 @@ namespace LynnaLib
     /// </summary>
     public class ObjectAnimationFrame
     {
-        ObjectAnimation _animation;
-        Data _animData;
+        readonly ObjectAnimation _animation;
+        readonly Data _animData;
         Data _oamData;
 
         public ObjectAnimationFrame(ObjectAnimation anim, Data animData)

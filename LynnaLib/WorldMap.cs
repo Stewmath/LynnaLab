@@ -5,7 +5,7 @@ namespace LynnaLib
 {
     public class WorldMap : Map
     {
-        int group, season;
+        readonly int group, season;
 
         internal WorldMap(Project p, int group, int season) : base(p)
         {

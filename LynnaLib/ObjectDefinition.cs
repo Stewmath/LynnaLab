@@ -3,9 +3,10 @@ namespace LynnaLib
     /// Public interface over the ObjectData class.
     public class ObjectDefinition : ValueReferenceGroup
     {
+        // TODO: Update with undo/redo
         ObjectGroup objectGroup;
         ObjectData objectData;
-
+        int index; // Index within the ObjectGroup
 
         // Constructors
 
@@ -42,7 +43,11 @@ namespace LynnaLib
         // Properties
 
         public ObjectGroup ObjectGroup { get { return objectGroup; } }
-        public int Index { get; private set; } // Index within the ObjectGroup
+        public int Index
+        {
+            get { return index; }
+            set { index = value; }
+        }
 
 
         // Public methods
