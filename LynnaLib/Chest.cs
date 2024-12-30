@@ -10,26 +10,16 @@ namespace LynnaLib
     /// </summary>
     public class Chest
     {
-        Data dataStart;
-        EventWrapper<ValueReferenceGroup> treasureModifiedEventWrapper
-            = new EventWrapper<ValueReferenceGroup>();
-
-
-        // Invoked when the chest is modified (but NOT if the TreasureObject contained in the chest
-        // is modified, see TreasureModifiedEvent)
-        public event EventHandler<ValueModifiedEventArgs> ModifiedEvent;
+        readonly Data dataStart;
+        readonly Room room;
 
         public event EventHandler<EventArgs> DeletedEvent;
 
-        /// This is a convenience event that always tracks changes to the underlying treasure, even
-        /// when the treasure index is changed.
-        public event EventHandler<ValueModifiedEventArgs> TreasureModifiedEvent;
 
-
-        internal Chest(Data dataStart, int group)
+        internal Chest(Room room, Data dataStart)
         {
+            this.room = room;
             this.dataStart = dataStart;
-            this.Group = group;
             GenerateValueReferenceGroup();
 
             ValueReferenceGroup.ModifiedEvent += (sender, args) =>
@@ -42,11 +32,7 @@ namespace LynnaLib
                     dataStart.ClearAndUnlockModifiedEvents();
                 }
                 UpdateTreasureEvents();
-                ModifiedEvent?.Invoke(sender, args);
             };
-
-            treasureModifiedEventWrapper.Bind<ValueModifiedEventArgs>("ModifiedEvent",
-                    (sender, args) => TreasureModifiedEvent?.Invoke(sender, args));
 
             UpdateTreasureEvents();
 
@@ -57,6 +43,8 @@ namespace LynnaLib
                 if (dataStart.Modified)
                     UpdateTreasureName();
             };
+
+            Debug.Assert((room.Index & 0xff) == ValueReferenceGroup.GetIntValue("Room"));
         }
 
 
@@ -122,26 +110,43 @@ namespace LynnaLib
             }
         }
 
-        public int Group { get; private set; }
-        public int RoomIndex { get { return (Group << 8) | ValueReferenceGroup.GetIntValue("Room"); } }
-
         public string TransactionIdentifier
         {
-            get { return $"Chest-{RoomIndex:X3}"; }
+            get { return $"Chest-{room.Index:X3}"; }
         }
 
         public Project Project { get { return dataStart.Project; } }
 
 
-        // Methods
+        // ================================================================================
+        // Public methods
+        // ================================================================================
 
         public void Delete()
         {
+            Project.BeginTransaction("Delete Chest");
+
             dataStart.Detach();
-            dataStart = null;
+
+            Project.UndoState.OnRewind("Delete Chest", () =>
+            { // On undo
+                room.ChestRevived(this);
+            }, () =>
+            { // On redo / right now
+                InvokeDeletedEvent();
+            });
+
+            Project.EndTransaction();
+        }
+
+        internal void InvokeDeletedEvent()
+        {
             DeletedEvent?.Invoke(this, null);
         }
 
+        // ================================================================================
+        // Private methods
+        // ================================================================================
 
         void GenerateValueReferenceGroup()
         {
@@ -205,7 +210,6 @@ namespace LynnaLib
 
         void UpdateTreasureEvents()
         {
-            treasureModifiedEventWrapper.ReplaceEventSource(Treasure?.ValueReferenceGroup);
         }
     }
 }

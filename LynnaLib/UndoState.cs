@@ -104,6 +104,13 @@ public class UndoState
         constructingTransaction.deltas[source] = delta;
     }
 
+    public void OnRewind(string desc, Action onUndo, Action onRedo)
+    {
+        Rewindable r = new(desc, onUndo, onRedo);
+        constructingTransaction.rewindables.Add(r);
+        onRedo();
+    }
+
     public string GetLastTransactionDescription()
     {
         if (LastTransaction == null)
@@ -147,15 +154,24 @@ public class Transaction
     public bool Empty { get { return deltas.Count == 0; } }
 
     public string description = "Unlabelled";
+
+    // TODO: "deltas" and "rewindables" should be one single list that can be traversed in the order
+    // of the changes that occurred
     public Dictionary<object, TransactionDelta> deltas = new Dictionary<object, TransactionDelta>();
+    public List<Rewindable> rewindables = new List<Rewindable>();
 
 
     public void Undo()
     {
+        // Update all states (no events should be triggered by these)
         foreach (TransactionDelta delta in deltas.Values)
             delta.Rewind();
+
+        // Trigger events, invoke callbacks for updating non-tracked states, etc
         foreach (TransactionDelta delta in deltas.Values)
             delta.InvokeModifiedEvents();
+        foreach (Rewindable r in rewindables)
+            r.Rewind();
     }
 
     public void CaptureFinalState()
@@ -177,7 +193,7 @@ public class Transaction
 }
 
 /// <summary>
-/// Interface for  classes which can capture state of an object at a given time and can move between
+/// Interface for classes which can capture state of an object at a given time and can move between
 /// the initial and subsequent state on undo/redo operations.
 /// At this time the only implementer is "TransactionStateHolder". Perhaps TransactionDelta could be
 /// used again in the future for more efficiently storing the deltas rather than always storing the
@@ -188,6 +204,30 @@ public interface TransactionDelta
     public void CaptureFinalState();
     public void Rewind();
     public void InvokeModifiedEvents();
+}
+
+/// <summary>
+/// Rewindable keeps track of actions to perform on undo and redo. Less frequently used than
+/// TransactionDelta. Handy for knowing that you should invoke certain events on undo/redo
+/// operations, for instance (ie. invoke a "chest added event" when undoing a chest removal).
+/// </summary>
+public class Rewindable
+{
+    public Rewindable(string description, Action u, Action r)
+    {
+        this.description = description;
+        onUndo = u;
+        onRedo = r;
+    }
+
+    Action onUndo, onRedo;
+    string description;
+
+    public void Rewind()
+    {
+        LogHelper.GetLogger().Info("Undo: " + description);
+        onUndo();
+    }
 }
 
 /// <summary>

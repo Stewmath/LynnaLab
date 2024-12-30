@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
-using Util;
 
 namespace LynnaLib
 {
@@ -11,19 +8,9 @@ namespace LynnaLib
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-
-        readonly MemoryFileStream dungeonFlagStream;
-
-        // Different season layouts
-        readonly List<RoomLayout> layouts;
-
-        // TODO: Update on undo/redo
-        Chest chest;
-
-        // Event invoked upon adding a chest. For removing a chest, use the event in the Chest
-        // class.
-        public event EventHandler<EventArgs> ChestAddedEvent;
-
+        // ================================================================================
+        // Constructors
+        // ================================================================================
 
         internal Room(Project p, int index) : base(p, index)
         {
@@ -32,8 +19,10 @@ namespace LynnaLib
             data = Project.GetData(data.GetValue(0));
             dungeonFlagStream = Project.GetBinaryFile("rooms/" + Project.GameString + "/" + data.GetValue(0));
 
+            chestEventWrapper.Bind<EventArgs>("DeletedEvent", (_, _) => OnChestDeleted(), weak: false);
+
             GenerateValueReferenceGroup();
-            InitializeChest();
+            UpdateChestRef();
 
             layouts = new List<RoomLayout>();
             if (Project.Game == Game.Seasons && Group == 0)
@@ -48,6 +37,29 @@ namespace LynnaLib
             UpdateTileset();
         }
 
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        readonly MemoryFileStream dungeonFlagStream;
+        // Different season layouts
+        readonly List<RoomLayout> layouts;
+
+        // Kept up-to-date via events, even through undos
+        Chest chest;
+        EventWrapper<Chest> chestEventWrapper = new();
+
+        // ================================================================================
+        // Events
+        // ================================================================================
+
+        // Event invoked upon adding a chest. For removing a chest, use the event in the Chest
+        // class.
+        public event EventHandler<EventArgs> ChestAddedEvent;
+
+        // ================================================================================
+        // Properties
+        // ================================================================================
 
         public int Group
         {
@@ -327,6 +339,8 @@ namespace LynnaLib
 
         public void AddChest()
         {
+            Project.BeginTransaction("Add Chest");
+
             if (Chest != null)
             {
                 log.Warn(string.Format("Tried to add chest data to room {0:x3} which already has chest data.", Index));
@@ -347,9 +361,20 @@ namespace LynnaLib
                 string.Format("\tm_ChestData $00, ${0:x2}, $0000", Index & 0xff)
             });
 
-            InitializeChest();
+            Project.UndoState.OnRewind("Add Chest", () =>
+            { // On undo
+                Chest.InvokeDeletedEvent();
+                // We are subscribed to the chest deletion event so it should set Chest = null by this line.
+                Debug.Assert(Chest == null);
+            }, () =>
+            { // On redo / right now
+                Debug.Assert(Chest == null);
+                UpdateChestRef();
+                Debug.Assert(Chest != null);
+                ChestAddedEvent?.Invoke(this, null);
+            });
 
-            ChestAddedEvent?.Invoke(this, null);
+            Project.EndTransaction();
         }
 
         public void DeleteChest()
@@ -372,6 +397,16 @@ namespace LynnaLib
                 return season == -1;
         }
 
+        /// <summary>
+        /// A chest which was previously deleted was brought back via an undo operation
+        /// </summary>
+        internal void ChestRevived(Chest chest)
+        {
+            Debug.Assert(Chest == null);
+            UpdateChestRef();
+            Debug.Assert(Chest != null);
+            ChestAddedEvent?.Invoke(this, null);
+        }
 
 
         // Private methods
@@ -530,15 +565,22 @@ namespace LynnaLib
             return null;
         }
 
-        void InitializeChest()
+        void UpdateChestRef()
         {
             if (Chest != null)
                 throw new Exception("Internal error");
             Data d = GetChestData();
             if (d == null)
-                return;
-            chest = new Chest(d, Group);
-            Chest.DeletedEvent += (sender, args) => { chest = null; };
+                chest = null;
+            else
+                chest = new Chest(this, d);
+            chestEventWrapper.ReplaceEventSource(chest);
+        }
+
+        void OnChestDeleted()
+        {
+            chest = null;
+            chestEventWrapper.ReplaceEventSource(null);
         }
     }
 }
