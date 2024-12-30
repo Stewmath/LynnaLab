@@ -40,7 +40,7 @@ namespace LynnaLib
             public WarpSourceData pointerWarp; // "m_PointerWarp" (can be null but should be unique)
             public WarpSourceData lastStandardWarp; // New data added goes after this (can be null)
 
-            public override TransactionState Copy()
+            public TransactionState Copy()
             {
                 State s = new State();
                 s.warpList = new List<Warp>(warpList);
@@ -51,7 +51,7 @@ namespace LynnaLib
                 return s;
             }
 
-            public override bool Compare(TransactionState obj)
+            public bool Compare(TransactionState obj)
             {
                 return (obj is State s)
                     && warpSourceDataList.SequenceEqual(s.warpSourceDataList) && warpList.SequenceEqual(s.warpList)

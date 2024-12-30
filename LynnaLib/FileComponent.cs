@@ -183,14 +183,14 @@ namespace LynnaLib
                 constructorFunc = state.constructorFunc;
             }
 
-            public override FileComponentState Copy()
+            public virtual TransactionState Copy()
             {
                 FileComponentState copy = constructorFunc();
                 copy.CopyFrom(this);
                 return copy;
             }
 
-            public override bool Compare(TransactionState obj)
+            public virtual bool Compare(TransactionState obj)
             {
                 if (!(obj is FileComponentState state))
                     return false;

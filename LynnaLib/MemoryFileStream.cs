@@ -28,14 +28,14 @@ namespace LynnaLib
         {
             public byte[] data;
 
-            public override State Copy()
+            public TransactionState Copy()
             {
                 State s = new State();
                 s.data = (byte[])data.Clone();
                 return s;
             }
 
-            public override bool Compare(TransactionState o)
+            public bool Compare(TransactionState o)
             {
                 if (!(o is State state))
                     return false;

@@ -53,7 +53,7 @@ namespace LynnaLib
             public Dictionary<string, Tuple<string, DocumentationFileComponent>> definesDictionary =
                 new Dictionary<string, Tuple<string, DocumentationFileComponent>>();
 
-            public override State Copy()
+            public TransactionState Copy()
             {
                 State s = new State();
                 s.fileStructure = new DictionaryLinkedList<FileComponent>(fileStructure);
@@ -62,7 +62,7 @@ namespace LynnaLib
                 return s;
             }
 
-            public override bool Compare(TransactionState obj)
+            public bool Compare(TransactionState obj)
             {
                 if (!(obj is State state))
                     return false;

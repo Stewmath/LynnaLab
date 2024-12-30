@@ -53,14 +53,14 @@ namespace LynnaLib
         {
             public List<WarpDestData> warpDestDataList = new List<WarpDestData>();
 
-            public override TransactionState Copy()
+            public TransactionState Copy()
             {
                 State s = new State();
                 s.warpDestDataList = new List<WarpDestData>(warpDestDataList);
                 return s;
             }
 
-            public override bool Compare(TransactionState obj)
+            public bool Compare(TransactionState obj)
             {
                 return (obj is State state) && warpDestDataList.SequenceEqual(state.warpDestDataList);
             }

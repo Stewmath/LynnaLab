@@ -232,11 +232,23 @@ public interface Undoable
     public void InvokeModifiedEvent();
 }
 
+public interface UndoListener
+{
+    public void AfterUndo();
+}
+
 /// <summary>
 /// Base class for state holders, used by classes that implement "Undoable".
+/// Default method implementations work well ONLY if the implementer is a value type (struct).
 /// </summary>
-public abstract class TransactionState
+public interface TransactionState
 {
-    public abstract TransactionState Copy();
-    public abstract bool Compare(TransactionState state);
+    public TransactionState Copy()
+    {
+        return this;
+    }
+    public bool Compare(TransactionState state)
+    {
+        return this.Equals(state);
+    }
 }

@@ -52,7 +52,7 @@ namespace LynnaLib
             // Dictionary of .DEFINE's
             public Dictionary<string, string> definesDictionary = new Dictionary<string, string>();
 
-            public override State Copy()
+            public TransactionState Copy()
             {
                 State s = new State();
                 s.labelDictionary = new Dictionary<string, FileParser>(labelDictionary);
@@ -60,7 +60,7 @@ namespace LynnaLib
                 return s;
             }
 
-            public override bool Compare(TransactionState o)
+            public bool Compare(TransactionState o)
             {
                 if (!(o is State p))
                     return false;

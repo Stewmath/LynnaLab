@@ -32,14 +32,14 @@ namespace LynnaLib
         {
             public WarpSourceData warpSource;
 
-            public override TransactionState Copy()
+            public TransactionState Copy()
             {
                 State s = new State();
                 s.warpSource = warpSource;
                 return s;
             }
 
-            public override bool Compare(TransactionState obj)
+            public bool Compare(TransactionState obj)
             {
                 return (obj is State state) && warpSource == state.warpSource;
             }
