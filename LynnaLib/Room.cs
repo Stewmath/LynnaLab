@@ -134,6 +134,11 @@ namespace LynnaLib
         public Chest Chest
         {
             get { return chest; }
+            set
+            {
+                chest = value;
+                chestEventWrapper.ReplaceEventSource(value);
+            }
         }
 
         /// If true, tileset graphics are loaded after the screen transition instead of before.
@@ -377,18 +382,6 @@ namespace LynnaLib
             Project.EndTransaction();
         }
 
-        public void DeleteChest()
-        {
-            if (Chest == null)
-            {
-                log.Warn(string.Format("Tried to remove chest data to room {0:x3} which doesn't have chest data.", Index));
-                return;
-            }
-
-            Chest.Delete();
-            // Deletion handler will set "chest" to null
-        }
-
         public bool IsValidSeason(int season)
         {
             if (HasSeasons)
@@ -403,8 +396,7 @@ namespace LynnaLib
         internal void ChestRevived(Chest chest)
         {
             Debug.Assert(Chest == null);
-            UpdateChestRef();
-            Debug.Assert(Chest != null);
+            Chest = chest;
             ChestAddedEvent?.Invoke(this, null);
         }
 
@@ -571,16 +563,14 @@ namespace LynnaLib
                 throw new Exception("Internal error");
             Data d = GetChestData();
             if (d == null)
-                chest = null;
+                Chest = null;
             else
-                chest = new Chest(this, d);
-            chestEventWrapper.ReplaceEventSource(chest);
+                Chest = new Chest(this, d);
         }
 
         void OnChestDeleted()
         {
-            chest = null;
-            chestEventWrapper.ReplaceEventSource(null);
+            Chest = null;
         }
     }
 }
