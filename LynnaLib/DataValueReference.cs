@@ -182,15 +182,13 @@ public class DataValueReference : ValueReference
 
         if (ConstantsMapping != null)
         {
-            if (dataType == DataValueType.ByteBits || dataType == DataValueType.WordBits
-                    || dataType == DataValueType.ByteBit)
+            // Use a constants mapping alias for the value if supported by the data type.
+            if (!(dataType == DataValueType.ByteBits || dataType == DataValueType.WordBits || dataType == DataValueType.ByteBit))
             {
-                throw new Exception("Can't use constant alias on this data type");
+                SetValue(ConstantsMapping.ByteToString(i));
+                base.EndTransaction();
+                return;
             }
-
-            SetValue(ConstantsMapping.ByteToString(i));
-            base.EndTransaction();
-            return;
         }
 
         switch (dataType)
