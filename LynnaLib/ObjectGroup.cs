@@ -281,11 +281,12 @@ namespace LynnaLib
         }
 
         // Returns a list of ObjectGroups representing each main group (Main, Enemy, BeforeEvent,
-        // AfterEvent) plus "Shared" groups if they exist. This should only be called on the "Main"
-        // type.
+        // AfterEvent) plus "Shared" groups if they exist. This includes itself.
+        // In most cases this should only be called on the "Main" type. For other types, typically
+        // this returns a list containing only itself. Though it is technically possible for child
+        // groups to contain children themselves, it is not normal.
         public IReadOnlyList<ObjectGroup> GetAllGroups()
         {
-            Debug.Assert(type == ObjectGroupType.Main);
             return Children;
         }
 
@@ -510,7 +511,10 @@ namespace LynnaLib
 
         public void InvokeModifiedEvent(TransactionState prevState)
         {
+            // Maybe not necessary to call this, it only validates data in the ObjectList (already
+            // tracked through undos)
             UpdateRawIndices();
+
             ModifiedHandler(this, null);
         }
 

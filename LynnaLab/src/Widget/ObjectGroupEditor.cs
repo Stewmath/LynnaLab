@@ -128,13 +128,17 @@ public class ObjectGroupEditor : Frame
         if (SelectedObject == null)
             childSize = new Vector2(0.0f, 0.0f);
 
+        ObjectGroup groupToDelete = null;
+
         if (ImGui.BeginChild(Name + " Object Boxes", childSize, ImGuiChildFlags.Border))
         {
             if (ImGui.BeginTable(Name + " Table", 1))
             {
                 int col = 0;
 
-                foreach (var box in objectBoxDict.Values)
+                // Iterate over a copy of objectBoxDict.Values. Not over the real thing because it
+                // may change through callbacks if we delete an object group!
+                foreach (var box in objectBoxDict.Values.ToArray())
                 {
                     if (col == 0)
                         ImGui.TableNextRow();
@@ -152,6 +156,16 @@ public class ObjectGroupEditor : Frame
                     }
                     ImGui.EndChild();
 
+                    if (box.ObjectGroup.GetGroupType() == ObjectGroupType.Shared)
+                    {
+                        if (ImGui.Button("Delete this"))
+                        {
+                            // Don't delete it while we're still rendering stuff - we're going to
+                            // change objectBoxDict which we're currently iterating over!
+                            groupToDelete = box.ObjectGroup;
+                        }
+                    }
+
                     if (++col == 1)
                         col = 0;
                 }
@@ -163,6 +177,12 @@ public class ObjectGroupEditor : Frame
 
         if (SelectedObject != null)
             ImGuiLL.RenderValueReferenceGroup(SelectedObject, null, Workspace.ShowDocumentation);
+
+        if (groupToDelete != null)
+        {
+            topObjectGroup.RemoveGroup(groupToDelete);
+            // Modified handler should cause objectBoxDict to get regenerated
+        }
     }
 
     public void SetObjectGroup(ObjectGroup topObjectGroup)
@@ -208,7 +228,7 @@ public class ObjectGroupEditor : Frame
 
     public void SelectObject(ObjectGroup group, ObjectDefinition obj)
     {
-        int index = group.GetObjects().IndexOf(obj);
+        int index = group.GetObjects().IndexOf(obj); // May return -1 (if object was deleted)
         SelectObject(group, index);
     }
 
@@ -238,13 +258,6 @@ public class ObjectGroupEditor : Frame
         activeObject = obj;
 
         ObjectSelectedEvent?.Invoke(this, null);
-
-        UpdateDocumentation();
-    }
-
-    void OnObjectDataModified()
-    {
-        UpdateDocumentation();
     }
 
     void ReloadObjectBoxes()
@@ -257,8 +270,7 @@ public class ObjectGroupEditor : Frame
 
         foreach (ObjectGroup group in topObjectGroup.GetAllGroups())
         {
-            // TODO: Is name ok
-            var objectBox = new ObjectBox(this, group.Identifier, group);
+            var objectBox = new ObjectBox(this, "ObjectBox-" + group.Identifier, group);
 
             objectBox.SelectedEvent += (index) =>
             {
@@ -274,53 +286,15 @@ public class ObjectGroupEditor : Frame
 
     void ObjectGroupModifiedHandler(object sender, EventArgs args)
     {
+        if (sender == topObjectGroup)
+        {
+            // Just in case a shared object group was deleted, regenerate object boxes.
+            // This will also unselect if something was selected.
+            ReloadObjectBoxes();
+        }
+
         if (selectedObjectGroup != null && activeObject != null)
             SelectObject(selectedObjectGroup, activeObject);
-    }
-
-    // TODO
-    void UpdateDocumentation()
-    {
-        // // Update tooltips in case ID has changed
-        // if (activeObject == null)
-        //     return;
-
-        // var editor = ObjectDataEditor;
-        // if (editor == null)
-        //     return;
-
-        // ValueReference r;
-        // try
-        // {
-        //     r = activeObject.GetValueReference("ID");
-        // }
-        // catch (InvalidLookupException)
-        // {
-        //     return;
-        // }
-
-        // if (r != null)
-        // {
-        //     activeObject.GetValueReference("SubID").Documentation = null; // Set it to null now, might replace it below
-        //     if (r.ConstantsMapping != null)
-        //     {
-        //         try
-        //         {
-        //             // Set tooltip based on ID field documentation
-        //             string objectName = r.ConstantsMapping.ByteToString((byte)r.GetIntValue());
-        //             string tooltip = objectName + "\n\n";
-        //             //tooltip += r.GetDocumentationField("desc");
-        //             editor.SetTooltip(r, tooltip.Trim());
-
-        //             Documentation doc = activeObject.GetIDDocumentation();
-        //             activeObject.GetValueReference("SubID").Documentation = doc;
-        //         }
-        //         catch (KeyNotFoundException)
-        //         {
-        //         }
-        //     }
-        // }
-        // editor.UpdateHelpButtons();
     }
 
     // ================================================================================

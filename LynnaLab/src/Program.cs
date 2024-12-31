@@ -7,6 +7,8 @@ global using ImGuiNET;
 global using LynnaLib;
 global using Util;
 
+global using Debug = System.Diagnostics.Debug;
+
 
 using System.Runtime.InteropServices;
 
