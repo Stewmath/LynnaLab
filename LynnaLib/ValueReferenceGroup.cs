@@ -8,7 +8,9 @@ public class ValueReferenceGroup
 {
     IList<ValueReferenceDescriptor> descriptors;
     LockableEvent<ValueModifiedEventArgs> lockableModifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
+
     string transactionDescription;
+    bool transactionMerge;
 
 
     /// Constructor to let subclasses set valueReferences manually
@@ -156,11 +158,15 @@ public class ValueReferenceGroup
         EndTransaction();
     }
 
-    public void EnableTransactions(string description)
+    public void EnableTransactions(string description, bool merge = false)
     {
-        transactionDescription = description;
-        foreach (var desc in descriptors)
-            desc.ValueReference.EnableTransactions(description);
+        transactionDescription = $"{description}#All fields";
+        transactionMerge = merge;
+        foreach (var descriptor in descriptors)
+        {
+            string desc = $"{description}#{descriptor.Name}";
+            descriptor.ValueReference.EnableTransactions(desc, merge);
+        }
     }
 
 
@@ -190,7 +196,7 @@ public class ValueReferenceGroup
     void BeginTransaction()
     {
         if (transactionDescription != null)
-            Project.BeginTransaction(transactionDescription);
+            Project.BeginTransaction(transactionDescription, transactionMerge);
     }
 
     void EndTransaction()

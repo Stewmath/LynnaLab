@@ -1,7 +1,3 @@
-using System;
-using System.IO;
-using System.Collections.Generic;
-
 namespace LynnaLib
 {
     public enum WarpSourceType
@@ -106,8 +102,8 @@ namespace LynnaLib
         // Private variables
         WarpDestData referencedDestData;
 
-        WarpSourceType _type;
-        ValueReferenceGroup vrg;
+        readonly WarpSourceType _type;
+        readonly ValueReferenceGroup vrg;
 
 
         // Properties

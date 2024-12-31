@@ -8,17 +8,21 @@ namespace LynnaLib
         // Constructors
         // ================================================================================
 
-        internal Warp(WarpGroup group, WarpSourceData data)
+        internal Warp(WarpGroup group, WarpSourceData data, int uniqueID)
         {
             SourceGroup = group;
             state.warpSource = data;
+            this.uniqueID = uniqueID;
 
             // Do not, repeat, do NOT install a modified handler onto the source data - not as long
             // as the "DestGroup" and "DestIndex" fields behave as they do currently; they should
             // behave as a single atomic field, but they don't. The handler would trigger when only
             // one, but not the other, has been modified, putting things into a invalid state.
-            // In any case there is NO NEED for a modified handler from the source data because it
-            // should never be modified except through this class.
+            //
+            // In any case there is generally NO NEED for a modified handler from the source data
+            // because it should never be modified except through this class.
+            //
+            // This does make undo/redo management a tad more complicated, but it's manageable.
 
             ConstructValueReferenceGroup();
         }
@@ -47,6 +51,8 @@ namespace LynnaLib
 
         State state = new State();
         ValueReferenceGroup vrg;
+        int uniqueID; // ID that's unique compared to any warp in this room
+
         LockableEvent<EventArgs> ModifiedEvent = new LockableEvent<EventArgs>();
 
 
@@ -167,6 +173,11 @@ namespace LynnaLib
         ValueReferenceGroup SourceVrg { get { return SourceData.ValueReferenceGroup; } }
         ValueReferenceGroup DestVrg { get { return DestData.ValueReferenceGroup; } }
 
+        string TransactionIdentifier { get { return $"R{SourceRoom.Index:X3}I{uniqueID}"; } }
+
+        // ================================================================================
+        // Public methods
+        // ================================================================================
 
         public void Remove()
         {
@@ -346,6 +357,7 @@ namespace LynnaLib
 
             vrg = new ValueReferenceGroup(descriptors);
             vrg.AddValueModifiedHandler((sender, args) => OnDataModified(sender, null));
+            vrg.EnableTransactions($"Edit warp data#{TransactionIdentifier}", true);
         }
 
 
@@ -355,6 +367,8 @@ namespace LynnaLib
         {
             if (newGroup == -1)
                 newGroup = SourceData.DestGroupIndex;
+
+            Debug.Assert(DestData.GetNumReferences() >= 1); // This warp references DestData
 
             WarpDestData oldDest = DestData;
             if (newGroup != SourceData.DestGroupIndex)
@@ -397,7 +411,15 @@ namespace LynnaLib
 
         void OnDataModified(object sender, DataModifiedEventArgs args)
         {
-            ModifiedEvent.Invoke(this, null);
+            // Because the ValueReferenceGroup is made up entirely of AbstractIntValueReferences, it
+            // does not have any listeners installed on the underlying data. This is done on
+            // purpose (see note in constructor). But it means that we do not see undo/redo events
+            // that change the underlying data. So we must notify the Undo system to do something.
+
+            Project.UndoState.OnRewind("Edit warp data", () =>
+            { // Action to do on undo, redo, and also now
+                ModifiedEvent.Invoke(this, null);
+            });
         }
     }
 }

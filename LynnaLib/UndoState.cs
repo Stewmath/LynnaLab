@@ -132,12 +132,30 @@ public class UndoState
         redoStack.Clear();
     }
 
+    /// <summary>
+    /// Registers a pair of functions that must be executed during an undo or redo.
+    /// The redo function is also called immediately with "false" as the boolean parameter.
+    /// This is not the main mechanism that undo/redo is implemented by, but it is quite useful for
+    /// ensuring that modified events are triggered on data that is not explicitly tracked as a
+    /// StateTransaction.
+    /// </summary>
     public void OnRewind(string desc, Action onUndo, Action<bool> onRedo)
     {
         Rewindable r = new(desc, onUndo, onRedo);
         constructingTransaction.rewindables.Add(r);
-        onRedo(false);
         redoStack.Clear();
+        onRedo(false);
+    }
+
+    /// <summary>
+    /// Like above, but only a single function is given for both undo & redo. It is called immediately.
+    /// </summary>
+    public void OnRewind(string desc, Action action)
+    {
+        Rewindable r = new(desc, action, (_) => action());
+        constructingTransaction.rewindables.Add(r);
+        redoStack.Clear();
+        action();
     }
 
     public string GetUndoDescription()

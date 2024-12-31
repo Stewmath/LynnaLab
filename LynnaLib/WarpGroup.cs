@@ -23,7 +23,7 @@ namespace LynnaLib
         internal WarpGroup(Project p, int id) : base(p, id)
         {
             fileParser = Project.GetFileWithLabel("warpSourcesTable");
-            RegenWarpSourceDataList();
+            RegenWarpSourceDataList(true);
         }
 
         // ================================================================================
@@ -59,7 +59,14 @@ namespace LynnaLib
             }
         };
 
+
+        readonly FileParser fileParser;
         State state = new State();
+        int uniqueIDCounter;
+
+        // ================================================================================
+        // Properties
+        // ================================================================================
 
         List<Warp> WarpList { get { return state.warpList; } }
         List<WarpSourceData> WarpSourceDataList { get { return state.warpSourceDataList; } }
@@ -78,14 +85,6 @@ namespace LynnaLib
             get { return state.lastStandardWarp; }
             set { state.lastStandardWarp = value; }
         }
-
-
-        readonly FileParser fileParser;
-
-
-        // ================================================================================
-        // Properties
-        // ================================================================================
 
         public int Group
         {
@@ -144,6 +143,11 @@ namespace LynnaLib
             return WarpList[index];
         }
 
+        public bool ContainsWarp(Warp warp)
+        {
+            return WarpList.Contains(warp);
+        }
+
         // Adds the given data to the group and inserts the data into the FileParser.
         // If "data" is of type "WarpSourceType.StandardWarp", this gets inserted before any
         // "PointerWarp" if such a warp exists.
@@ -153,6 +157,7 @@ namespace LynnaLib
         // Returns the index at which the new warp was placed.
         public int AddWarp(WarpSourceType type)
         {
+            Project.BeginTransaction("Add warp");
             Project.UndoState.RecordChange(this);
 
             Action<WarpSourceData> InsertInMainList = (d) =>
@@ -242,8 +247,10 @@ namespace LynnaLib
             data.GetReferencedDestData().Parameter = 0;
             data.GetReferencedDestData().Transition = 1;
 
-            RegenWarpSourceDataList();
+            RegenWarpSourceDataList(false);
             ModifiedEvent?.Invoke(this, null);
+
+            Project.EndTransaction();
 
             // TODO
             return 0;
@@ -253,12 +260,21 @@ namespace LynnaLib
         // handled automatically).
         public void RemoveWarp(Warp warp)
         {
+            Project.BeginTransaction("Delete warp");
             Project.UndoState.RecordChange(this);
 
-            warp.RemoveModifiedHandler(OnDataModified);
-
             WarpSourceData data = warp.SourceData;
-            data.GetReferencedDestData().RemoveReference(data);
+            WarpDestData destData = data.GetReferencedDestData();
+
+            Project.UndoState.OnRewind("Remove warp", () =>
+            { // On undo
+                warp.AddModifiedHandler(OnDataModified);
+                destData.AddReference(data);
+            }, (isRedo) =>
+            { // On redo or now
+                warp.RemoveModifiedHandler(OnDataModified);
+                destData.RemoveReference(data);
+            });
 
             if (data.WarpSourceType == WarpSourceType.Standard)
             {
@@ -290,8 +306,10 @@ namespace LynnaLib
             else
                 throw new ArgumentException("RemoveWarp doesn't support this warp source type.");
 
-            RegenWarpSourceDataList();
+            RegenWarpSourceDataList(false);
             ModifiedEvent?.Invoke(this, null);
+
+            Project.EndTransaction();
         }
 
         public void RemoveWarp(int index)
@@ -322,7 +340,7 @@ namespace LynnaLib
         // Private methods
         // ================================================================================
 
-        void RegenWarpSourceDataList()
+        void RegenWarpSourceDataList(bool inConstructor)
         {
             Data d = fileParser.GetData("warpSourcesTable", (Index >> 8) * 2);
 
@@ -398,9 +416,24 @@ namespace LynnaLib
                     }
                     if (!addedData)
                     {
-                        var warp = new Warp(this, dataToAdd);
-                        warp.AddModifiedHandler(OnDataModified);
+                        var warp = new Warp(this, dataToAdd, uniqueIDCounter++);
                         newWarpList.Add(warp);
+
+                        // Distinguish betwen calls from the constructor (initializing from
+                        // pre-existing data) and everywhere else (modifying something). Only in the
+                        // latter case should we be touching the undo history.
+                        if (inConstructor)
+                            warp.AddModifiedHandler(OnDataModified);
+                        else
+                        {
+                            Project.UndoState.OnRewind("Add warp", () =>
+                            { // On undo
+                                warp.RemoveModifiedHandler(OnDataModified);
+                            }, (isRedo) =>
+                            { // On redo or now
+                                warp.AddModifiedHandler(OnDataModified);
+                            });
+                        }
                     }
                 }
 

@@ -47,6 +47,7 @@ public abstract class ValueReference
 
     ConstantsMapping constantsMapping;
     string transactionDescription;
+    bool transactionMerge;
 
     // ================================================================================
     // Properties
@@ -100,9 +101,10 @@ public abstract class ValueReference
     /// <summary>
     /// Modifications to this ValueReference will register transactions with the given name. For undo/redo.
     /// </summary>
-    public void EnableTransactions(string transactionDescription)
+    public void EnableTransactions(string transactionDescription, bool merge = false)
     {
         this.transactionDescription = transactionDescription;
+        this.transactionMerge = merge;
     }
 
     // Sets the value to its default.
@@ -116,7 +118,7 @@ public abstract class ValueReference
     protected void BeginTransaction()
     {
         if (transactionDescription != null)
-            Project.BeginTransaction(transactionDescription);
+            Project.BeginTransaction(transactionDescription, transactionMerge);
     }
 
     protected void EndTransaction()

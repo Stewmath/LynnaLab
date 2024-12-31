@@ -126,6 +126,16 @@ public class RoomEditor : Frame
 
         warpEditor.SelectedWarpEvent += (s, a) => handleWarpSelection(warpEditor.SelectedWarp);
         roomLayoutEditor.ChangedSelectedRoomComponentEvent += (s, a) => handleWarpSelection(roomLayoutEditor.SelectedWarpSource);
+
+        // Watch for the destination warp we're handling being deleted under our nose (can happen
+        // with undo/redo)
+        warpDestEW.Bind<EventArgs>("ModifiedEvent", (sender, _) =>
+        {
+            if (!EditingWarpDestination.SourceGroup.ContainsWarp(EditingWarpDestination))
+            {
+                DisableWarpDestEditMode();
+            }
+        }, weak: false);
     }
 
     // ================================================================================
@@ -141,6 +151,9 @@ public class RoomEditor : Frame
 
     // Misc
     EventWrapper<RoomLayout> roomLayoutEventWrapper = new EventWrapper<RoomLayout>();
+
+    Warp _editingWarpDestination;
+    EventWrapper<WarpGroup> warpDestEW = new();
 
     int suppressEvents = 0;
     bool handlingObjectSelection, handlingWarpSelection;
@@ -176,7 +189,15 @@ public class RoomEditor : Frame
     public bool WarpTabActive { get { return ActiveLeftTabName == "Warps"; } }
     public bool ChestTabActive { get { return ActiveLeftTabName == "Chests"; } }
 
-    public Warp EditingWarpDestination { get; private set; }
+    public Warp EditingWarpDestination
+    {
+        get { return _editingWarpDestination; }
+        set
+        {
+            _editingWarpDestination = value;
+            warpDestEW.ReplaceEventSource(value?.SourceGroup);
+        }
+    }
 
 
     // Private properties
