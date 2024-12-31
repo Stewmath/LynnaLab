@@ -75,6 +75,8 @@ namespace LynnaLib
             }
         }
 
+        public string TransactionIdentifier { get { return $"treasureobject-{ID:X2}-{SubID:X2}"; } }
+
 
         Project Project { get { return treasureGroup.Project; } }
 
@@ -118,6 +120,8 @@ namespace LynnaLib
                         startBit: 3,
                         tooltip: "Sets a flag indicating that an item has been received in this room. In the case of chests, this will make the chest \"opened\" when you revisit the room. (Flag is named \"ROOMFLAG_ITEM\" in the disassembly.)"),
             });
+
+            vrg.EnableTransactions("Edit treasure object#" + TransactionIdentifier, true);
         }
     }
 }

@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using Util;
-
 namespace LynnaLib
 {
     /// <summary>
@@ -190,6 +185,7 @@ namespace LynnaLib
             };
 
             ValueReferenceGroup = new ValueReferenceGroup(list);
+            ValueReferenceGroup.EnableTransactions("Edit chest#" + TransactionIdentifier, true);
         }
 
         void UpdateTreasureName(int id = -1, int subid = -1)
