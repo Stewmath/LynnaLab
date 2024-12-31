@@ -159,7 +159,7 @@ namespace LynnaLib
                 FileParser.Modified = true;
         }
 
-        public virtual void InvokeModifiedEvent()
+        public virtual void InvokeModifiedEvent(TransactionState prevState)
         {
         }
 

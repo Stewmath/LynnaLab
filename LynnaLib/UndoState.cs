@@ -203,7 +203,7 @@ public class Transaction
 
         // Trigger events, invoke callbacks for updating non-tracked states, etc
         foreach (TransactionDelta delta in deltas.Values)
-            delta.InvokeModifiedEvents();
+            delta.InvokeModifiedEvents(true);
         foreach (Rewindable r in ((IEnumerable<Rewindable>)rewindables).Reverse())
             r.Undo();
     }
@@ -216,7 +216,7 @@ public class Transaction
 
         // Trigger events, invoke callbacks for updating non-tracked states, etc
         foreach (TransactionDelta delta in deltas.Values)
-            delta.InvokeModifiedEvents();
+            delta.InvokeModifiedEvents(false);
         foreach (Rewindable r in rewindables)
             r.Redo();
     }
@@ -251,7 +251,7 @@ public interface TransactionDelta
     public void CaptureFinalState();
     public void Undo();
     public void Redo();
-    public void InvokeModifiedEvents();
+    public void InvokeModifiedEvents(bool undo);
 }
 
 /// <summary>
@@ -318,9 +318,12 @@ class TransactionStateHolder<C> : TransactionDelta where C : Undoable
         instance.SetState(finalState);
     }
 
-    public void InvokeModifiedEvents()
+    public void InvokeModifiedEvents(bool undo)
     {
-        instance.InvokeModifiedEvent();
+        if (undo)
+            instance.InvokeModifiedEvent(finalState);
+        else
+            instance.InvokeModifiedEvent(initialState);
     }
 }
 
@@ -331,7 +334,7 @@ public interface Undoable
 {
     public TransactionState GetState();
     public void SetState(TransactionState state);
-    public void InvokeModifiedEvent();
+    public void InvokeModifiedEvent(TransactionState prevState);
 }
 
 /// <summary>

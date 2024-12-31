@@ -55,6 +55,18 @@ public class RealTileset : Tileset
 
         ConstructValueReferenceGroup();
 
+        if (Project.Config.ExpandedTilesets)
+        {
+            // Watch for changes to the tileset mappings (tile indices + flags)
+            var stream = GetExpandedMappingsFile();
+            stream.ModifiedEvent += (_, args) =>
+            {
+                for (int i = (int)args.modifiedRangeStart / 8; i < (args.modifiedRangeEnd + 7) / 8; i++)
+                    base.InvalidateTile(i);
+                base.GenerateUsedTileList();
+            };
+        }
+
         base.SubclassInitializationFinished();
     }
 
@@ -129,10 +141,11 @@ public class RealTileset : Tileset
             stream.WriteByte(value);
         }
         else
+        {
             TilesetHeaderGroup.SetMappingsData(index * 8 + y * 2 + x, value);
-
-        base.GenerateUsedTileList();
-        base.InvalidateTile(index);
+            base.GenerateUsedTileList();
+            base.InvalidateTile(index);
+        }
     }
     public override byte GetSubTileFlags(int index, int x, int y)
     {
@@ -163,8 +176,8 @@ public class RealTileset : Tileset
         else
         {
             TilesetHeaderGroup.SetMappingsData(index * 8 + y * 2 + x + 4, value);
+            base.InvalidateTile(index);
         }
-        base.InvalidateTile(index);
     }
 
     // Get the full collision byte for a tile.

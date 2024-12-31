@@ -313,7 +313,7 @@ namespace LynnaLib
             state = (State)s.Copy();
         }
 
-        public void InvokeModifiedEvent()
+        public void InvokeModifiedEvent(TransactionState prevState)
         {
             ModifiedEvent?.Invoke(this, null);
         }

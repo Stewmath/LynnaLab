@@ -239,9 +239,31 @@ namespace LynnaLib
             modified = true;
         }
 
-        public void InvokeModifiedEvent()
+        public void InvokeModifiedEvent(TransactionState prevState)
         {
-            modifiedEvent?.Invoke(this, new ModifiedEventArgs(0, Length));
+            State last = prevState as State;
+
+            if (last.data.Length == state.data.Length)
+            {
+                // Compare the new and old data to try to optimize which parts we mark as modified.
+                int start = 0, end = state.data.Length - 1;
+
+                while (start < state.data.Length && last.data[start] == state.data[start])
+                    start++;
+                if (start == state.data.Length)
+                    return;
+                while (last.data[end] == state.data[end])
+                    end--;
+                end++;
+                if (start >= end)
+                    return;
+                modifiedEvent?.Invoke(this, new ModifiedEventArgs(start, end));
+            }
+            else
+            {
+                // Just mark everything as modified
+                modifiedEvent?.Invoke(this, new ModifiedEventArgs(0, Length));
+            }
         }
     }
 }

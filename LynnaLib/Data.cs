@@ -255,7 +255,7 @@ namespace LynnaLib
             return FileParser.GetData(this, offset);
         }
 
-        public override void InvokeModifiedEvent()
+        public override void InvokeModifiedEvent(TransactionState prevState)
         {
             dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(-1));
         }

@@ -197,7 +197,7 @@ namespace LynnaLib
             this.state = (State)state;
         }
 
-        public void InvokeModifiedEvent()
+        public void InvokeModifiedEvent(TransactionState prevState)
         {
             ModifiedEvent?.Invoke(this, null);
         }

@@ -1328,7 +1328,7 @@ namespace LynnaLib
             Modified = true;
         }
 
-        public void InvokeModifiedEvent()
+        public void InvokeModifiedEvent(TransactionState prevState)
         {
         }
     }

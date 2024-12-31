@@ -13,11 +13,8 @@ namespace LynnaLib
         // Variables
         // ================================================================================
 
-        // TODO: Update variables on undo/redo?
-
-        AnimationGroup animationGroup;
-
-        GraphicsState graphicsState;
+        int inhibitRedraw = 0;
+        int inhibitUsedTileListUpdate = 0;
 
         Bitmap[] tileImagesCache = new Bitmap[256];
         bool[] tileImagesDrawn = new bool[256];
@@ -27,14 +24,18 @@ namespace LynnaLib
         EventWrapper<PaletteHeaderGroup> paletteEventWrapper
             = new EventWrapper<PaletteHeaderGroup>();
 
-        // For dynamically showing an animation
+        // TODO: This class is not fully undo-proofed. It works on the hack-base branch with the
+        // expanded tilesets patch which simplifies things.
+
+        GraphicsState graphicsState;
+
+        // Animation stuff below here - undo/redo not tested
+        AnimationGroup animationGroup;
+
         int[] animationPos = new int[4];
         int[] animationCounter = new int[4];
 
         List<byte>[] usedTileList = new List<byte>[256];
-
-        int inhibitRedraw = 0;
-        int inhibitUsedTileListUpdate = 0;
 
 
         // ================================================================================
@@ -47,7 +48,6 @@ namespace LynnaLib
         public event EventHandler<int> TileModifiedEvent;
 
         public event LayoutGroupModifiedHandler LayoutGroupModifiedEvent;
-        public event EventHandler<EventArgs> PaletteHeaderGroupModifiedEvent;
 
         public event Action<object> DisposedEvent;
 
@@ -627,7 +627,6 @@ namespace LynnaLib
         protected void OnPaletteHeaderChanged()
         {
             ReloadPalettes();
-            PaletteHeaderGroupModifiedEvent?.Invoke(this, null);
         }
 
         protected void OnTilesetLayoutChanged()
