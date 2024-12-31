@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using Util;
-
-namespace LynnaLib
+﻿namespace LynnaLib
 {
     /// <summary>
     ///  Takes a file from the constants folder and creates a 1:1 mapping between definitions and
     ///  values.
     /// </summary>
-    public class ConstantsMapping
+    public class ConstantsMapping : Undoable
     {
         /// <summary>
         ///  A string/byte pair.
@@ -32,20 +26,54 @@ namespace LynnaLib
 
         static log4net.ILog log = LogHelper.GetLogger();
 
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        // Anything undoable goes in here
+        class State : TransactionState
+        {
+            // This list is only necessary to preserve ordering
+            public List<string> stringList = new();
+
+            // Mappings in both directions
+            public Dictionary<string, Entry> stringToByte = new();
+            public Dictionary<int, Entry> byteToString = new();
+
+            public TransactionState Copy()
+            {
+                State s = new State();
+                s.stringList = new(stringList);
+                s.stringToByte = new(stringToByte);
+                s.byteToString = new(byteToString);
+                return s;
+            }
+
+            public bool Compare(TransactionState o)
+            {
+                return o is State s && s.stringList.SequenceEqual(stringList)
+                    && s.stringToByte.SequenceEqual(stringToByte)
+                    && s.byteToString.SequenceEqual(byteToString);
+            }
+        }
+
+        State state = new State();
 
         // This list is only necessary to preserve ordering
-        List<string> stringList = new List<string>();
+        List<string> StringList { get { return state.stringList; } }
+
+        readonly IList<string> prefixes;
+        readonly int maxValue;
+
+        Documentation _documentation;
+
+        // ================================================================================
+        // Properties
+        // ================================================================================
 
         // Mappings in both directions
-        Dictionary<string, Entry> stringToByte = new Dictionary<string, Entry>();
-        Dictionary<int, Entry> byteToString = new Dictionary<int, Entry>();
-
-        IList<string> prefixes;
-
-        private Documentation _documentation;
-
-        int maxValue;
-
+        Dictionary<string, Entry> StringToByteDict { get { return state.stringToByte; } }
+        Dictionary<int, Entry> ByteToStringDict { get { return state.byteToString; } }
 
         public Project Project { get; private set; }
 
@@ -69,6 +97,10 @@ namespace LynnaLib
                 return _documentation;
             }
         }
+
+        // ================================================================================
+        // Constructors
+        // ================================================================================
 
         /// If the optional "maxValue" parameter is passed, any constants with this value or above is
         /// ignored when generating the mapping.
@@ -148,7 +180,7 @@ namespace LynnaLib
 
                 if (acceptable)
                 {
-                    if (!stringToByte.ContainsKey(key))
+                    if (!StringToByteDict.ContainsKey(key))
                     {
                         try
                         {
@@ -165,7 +197,7 @@ namespace LynnaLib
                 }
 
                 if (alphabetical)
-                    stringList.Sort();
+                    StringList.Sort();
             }
         }
 
@@ -174,31 +206,33 @@ namespace LynnaLib
         {
             if (value >= maxValue)
                 return;
-            if (byteToString.ContainsKey(value))
+            if (ByteToStringDict.ContainsKey(value))
             {
-                log.Warn(string.Format($"Key {key} already existed in ConstantsMapping as {byteToString[value].str}."));
+                log.Warn(string.Format($"Key {key} already existed in ConstantsMapping as {ByteToStringDict[value].str}."));
                 return;
             }
-            if (stringToByte.ContainsKey(key))
+            if (StringToByteDict.ContainsKey(key))
             {
                 log.Warn(string.Format("Overwriting key {0} in ConstantsMapping", key));
             }
 
-            stringList.Add(key);
+            Project.UndoState.RecordChange(this);
+
+            StringList.Add(key);
 
             Documentation doc = null;
             if (docComponent != null)
                 doc = new Documentation(docComponent, key);
             Entry ent = new Entry(key, value, doc); // TODO: remove doc from here
 
-            stringToByte[key] = ent;
-            byteToString[value] = ent;
+            StringToByteDict[key] = ent;
+            ByteToStringDict[value] = ent;
         }
 
         // May throw KeyNotFoundException
         public int StringToByte(string key)
         {
-            return stringToByte[key].val;
+            return StringToByteDict[key].val;
         }
         // Will always return something (either the string, or the number in hex)
         // TODO: Rename to "ValueToString" or something
@@ -206,7 +240,7 @@ namespace LynnaLib
         {
             try
             {
-                return byteToString[key].str;
+                return ByteToStringDict[key].str;
             }
             catch (KeyNotFoundException)
             { // Fallback
@@ -235,27 +269,27 @@ namespace LynnaLib
 
         public int GetIndexByte(int i)
         {
-            return StringToByte(stringList[i]);
+            return StringToByte(StringList[i]);
         }
         public string GetIndexString(int i)
         {
-            return stringList[i];
+            return StringList[i];
         }
 
 
         public bool HasValue(int val)
         {
-            return byteToString.ContainsKey(val);
+            return ByteToStringDict.ContainsKey(val);
         }
         public bool HasString(string s)
         {
-            return stringToByte.ContainsKey(s);
+            return StringToByteDict.ContainsKey(s);
         }
 
 
         public IList<string> GetAllStrings()
         {
-            return stringList;
+            return StringList;
         }
 
 
@@ -266,9 +300,9 @@ namespace LynnaLib
         public IList<Tuple<string, string>> GetAllValuesWithDescriptions()
         {
             var list = new List<Tuple<string, string>>();
-            foreach (int key in byteToString.Keys)
+            foreach (int key in ByteToStringDict.Keys)
             {
-                string name = Wla.ToHex(key, 2) + ": " + RemovePrefix(byteToString[key].str);
+                string name = Wla.ToHex(key, 2) + ": " + RemovePrefix(ByteToStringDict[key].str);
                 string desc = GetDocumentationForValue(key)?.Description ?? "";
 
                 var tup = new Tuple<string, string>(name, desc);
@@ -303,7 +337,7 @@ namespace LynnaLib
         {
             try
             {
-                Documentation d = byteToString[b].documentation;
+                Documentation d = ByteToStringDict[b].documentation;
                 if (d == null)
                     return null;
                 return new Documentation(d);
@@ -317,7 +351,7 @@ namespace LynnaLib
         {
             try
             {
-                Documentation d = stringToByte[s].documentation;
+                Documentation d = StringToByteDict[s].documentation;
                 if (d == null)
                     return null;
                 return new Documentation(d);
@@ -326,6 +360,24 @@ namespace LynnaLib
             {
                 return null;
             }
+        }
+
+        // ================================================================================
+        // Undoable interface functions
+        // ================================================================================
+
+        public TransactionState GetState()
+        {
+            return state;
+        }
+
+        public void SetState(TransactionState s)
+        {
+            this.state = (State)s.Copy();
+        }
+
+        public void InvokeModifiedEvent(TransactionState prevState)
+        {
         }
     }
 }

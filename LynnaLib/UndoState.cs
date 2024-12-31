@@ -81,6 +81,13 @@ public class UndoState
         return true;
     }
 
+    public void ClearHistory()
+    {
+        undoStack.Clear();
+        redoStack.Clear();
+        constructingTransaction = new Transaction();
+    }
+
     public void BeginTransaction(string description, bool merge)
     {
         if (beginTransactionCalls == 0)

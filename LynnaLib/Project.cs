@@ -259,6 +259,11 @@ namespace LynnaLib
             numTilesets = determineNumTilesets();
 
             LinkBitmap = LoadLinkBitmap();
+
+            // Don't allow undos that go before our initialization!
+            // At the time of writing, only ConstantsMappings actually register undoable events in
+            // this constructor.
+            UndoState.ClearHistory();
         }
 
         /// <summary>
