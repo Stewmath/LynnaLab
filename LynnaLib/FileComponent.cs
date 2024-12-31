@@ -142,7 +142,7 @@ namespace LynnaLib
         {
             if (suppressUndoRecording != 0)
                 return;
-            Project.UndoState.RecordChange(this);
+            Project.UndoState.CaptureInitialState(this);
             Modified = true;
             if (FileParser != null)
                 FileParser.Modified = true;

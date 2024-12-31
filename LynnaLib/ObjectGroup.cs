@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
-using System.Diagnostics;
 
 namespace LynnaLib
 {
@@ -40,47 +36,33 @@ namespace LynnaLib
     //   - Some groups share their data (ie. groups 4/6 and 5/7 in both games, + seasons groups
     //     1-3). In this case, a label named, say, "group4Map00ObjectData" would also apply to group
     //     6 despite the name. This shouldn't cause any problems.
-    public class ObjectGroup : ProjectDataType
+    public class ObjectGroup : ProjectDataType, Undoable
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-
-        // Invoked when the structure of the object group is modified (ie. adding, deleting, or
-        // rearranging objects). Not invoked when an object's data is modified.
-        public event EventHandler<EventArgs> StructureModifiedEvent;
-
-        // TODO: Update variables with undo/redo
-
-        readonly ObjectGroupType type;
-        // NOTE: this list may not be complete at any given time
-        List<ObjectGroup> parents = new List<ObjectGroup>();
-
-        List<ObjectGroup.ObjectStruct> objectList;
-        RawObjectGroup rawObjectGroup;
-        List<ObjectGroup> children;
-
-
+        // ================================================================================
         // Constructors
+        // ================================================================================
 
         internal ObjectGroup(Project p, String id, ObjectGroupType type) : base(p, id)
         {
-            children = new List<ObjectGroup>();
-            children.Add(this);
+            Children = new List<ObjectGroup>();
+            Children.Add(this);
 
             this.type = type;
 
             if (!Project.HasLabel(id))
                 return; // This will be considered a "stub" type until data is given to it
 
-            rawObjectGroup = Project.GetDataType<RawObjectGroup>(Identifier);
+            RawObjectGroup = Project.GetDataType<RawObjectGroup>(Identifier);
 
             bool addedEnemyType = false;
 
-            objectList = new List<ObjectStruct>();
+            ObjectList = new List<ObjectStruct>();
 
-            for (int i = 0; i < rawObjectGroup.GetNumObjects(); i++)
+            for (int i = 0; i < RawObjectGroup.GetNumObjects(); i++)
             {
-                ObjectData obj = rawObjectGroup.GetObjectData(i);
+                ObjectData obj = RawObjectGroup.GetObjectData(i);
                 ObjectType objectType = obj.GetObjectType();
                 if (obj.IsPointerType())
                 {
@@ -106,16 +88,16 @@ namespace LynnaLib
                         throw new Exception("Unexpected thing happened");
 
                     ObjectGroup child = Project.GetObjectGroup(label, t);
-                    children.Add(child);
+                    Children.Add(child);
                     child.AddParent(this);
                 }
                 else
                 {
                     ObjectStruct st = new ObjectStruct();
                     st.rawIndex = i;
-                    st.def = new ObjectDefinition(this, obj, objectList.Count);
+                    st.def = new ObjectDefinition(this, obj, ObjectList.Count);
                     st.data = obj;
-                    objectList.Add(st);
+                    ObjectList.Add(st);
                 }
             }
 
@@ -139,7 +121,7 @@ namespace LynnaLib
 
                     System.Action<ObjectGroupType, string> AddGroupIfMissing = (t, basename) =>
                     {
-                        foreach (ObjectGroup group in children)
+                        foreach (ObjectGroup group in Children)
                         {
                             if (group.type == t)
                                 return;
@@ -154,7 +136,7 @@ namespace LynnaLib
                         else
                         {
                             ObjectGroup child = Project.GetObjectGroup(childId, t);
-                            children.Add(child);
+                            Children.Add(child);
                             child.AddParent(this);
                         }
                     };
@@ -165,11 +147,100 @@ namespace LynnaLib
                 }
             }
 
-            children.Sort((a, b) => a.type.CompareTo(b.type));
+            Children.Sort((a, b) => a.type.CompareTo(b.type));
         }
 
 
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        readonly ObjectGroupType type;
+
+        // Undo-able stuff goes here
+        class State : TransactionState
+        {
+            // The RawObjectGroup corresponding to this ObjectGroup. If null, it doesn't actually
+            // exist, but it can be created at any time.
+            // IE. A room with no enemy objects defined typically has its "enemy" object group as a
+            // stub, as there is no pointer to any enemy data in its "main" object group.
+            public RawObjectGroup rawObjectGroup;
+
+            public List<ObjectGroup.ObjectStruct> objectList = new();
+
+            // List of ObjectGroups that reference this ObjectGroup.
+            // NOTE: this list may not be complete at any given time. It depends on which ObjectGroups
+            // have been loaded.
+            // Typically though, aside from ObjectGroupType.Shared, there should be at most one parent
+            // if the assumptions outlined earlier are correct? Even if multiple top-level object groups
+            // point to the same data, said data should have multiple different labels which are
+            // represented as different ObjectGroup instances, each of which will point to its own
+            // parent. (This breaks down if they use the same label.)
+            public List<ObjectGroup> parents = new();
+
+            // List of ObjectGroups referenced by this ObjectGroup (includes self)
+            public List<ObjectGroup> children = new();
+
+            public TransactionState Copy()
+            {
+                State s = new State();
+                s.rawObjectGroup = rawObjectGroup;
+                s.objectList = new(objectList);
+                s.parents = new(parents);
+                s.children = new(children);
+                return s;
+            }
+
+            public bool Compare(TransactionState obj)
+            {
+                return obj is State s
+                    && s.rawObjectGroup == rawObjectGroup
+                    && s.objectList.SequenceEqual(objectList)
+                    && s.parents.SequenceEqual(parents)
+                    && s.children.SequenceEqual(children);
+            }
+        }
+
+        State state = new();
+
+        // ================================================================================
+        // Events
+        // ================================================================================
+
+        // Invoked when the structure of the object group is modified (ie. adding, deleting, or
+        // rearranging objects). Not invoked when an object's data is modified.
+        public event EventHandler<EventArgs> StructureModifiedEvent;
+
+        // ================================================================================
+        // Properties
+        // ================================================================================
+
+        RawObjectGroup RawObjectGroup
+        {
+            get { return state.rawObjectGroup; }
+            set { state.rawObjectGroup = value; }
+        }
+
+        List<ObjectGroup.ObjectStruct> ObjectList
+        {
+            get { return state.objectList; }
+            set { state.objectList = value; }
+        }
+
+        List<ObjectGroup> Parents
+        {
+            get { return state.parents; }
+            set { state.parents = value; }
+        }
+        List<ObjectGroup> Children
+        {
+            get { return state.children; }
+            set { state.children = value; }
+        }
+
+        // ================================================================================
         // Public methods
+        // ================================================================================
 
         public ObjectGroupType GetGroupType()
         {
@@ -182,28 +253,28 @@ namespace LynnaLib
         {
             if (IsStub())
                 return new List<ObjectDefinition>();
-            return new List<ObjectDefinition>(objectList.Select((ObjectStruct o) => o.def));
+            return new List<ObjectDefinition>(ObjectList.Select((ObjectStruct o) => o.def));
         }
 
         public int GetNumObjects()
         {
             if (IsStub())
                 return 0;
-            return objectList.Count;
+            return ObjectList.Count;
         }
 
         public ObjectDefinition GetObject(int index)
         {
             if (IsStub())
                 throw new IndexOutOfRangeException();
-            return objectList[index].def;
+            return ObjectList[index].def;
         }
 
         public int IndexOf(ObjectDefinition obj)
         {
-            for (int i = 0; i < objectList.Count; i++)
+            for (int i = 0; i < ObjectList.Count; i++)
             {
-                if (objectList[i].def == obj)
+                if (ObjectList[i].def == obj)
                     return i;
             }
             return -1;
@@ -214,7 +285,8 @@ namespace LynnaLib
         // type.
         public IReadOnlyList<ObjectGroup> GetAllGroups()
         {
-            return children;
+            Debug.Assert(type == ObjectGroupType.Main);
+            return Children;
         }
 
         /// <summary>
@@ -224,35 +296,67 @@ namespace LynnaLib
         /// </summary>
         public int AddObject(ObjectType type)
         {
+            Project.BeginTransaction("Add object");
+            Project.UndoState.CaptureInitialState(this);
+
             AddObjectToEnd(type);
             ModifiedHandler(this, null);
+
+            Project.EndTransaction();
+
             return GetNumObjects() - 1;
         }
 
         /// <summary>
-        /// Adds a clone of an existing object, returns the last object in the last like above.
+        /// Adds a clone of an existing object, returns the last object in the list like above.
         /// </summary>
         public int AddObjectClone(ObjectDefinition obj)
         {
+            Project.BeginTransaction("Clone object");
+            Project.UndoState.CaptureInitialState(this);
+
             ObjectDefinition newObj = AddObjectToEnd(obj.GetObjectType());
             newObj.CopyFrom(obj);
             ModifiedHandler(this, null);
+
+            Project.EndTransaction();
+
             return GetNumObjects() - 1;
         }
 
         public void RemoveObject(int index)
         {
-            if (IsStub() || index >= objectList.Count)
+            Project.BeginTransaction("Delete object");
+            Project.UndoState.CaptureInitialState(this);
+
+            if (IsStub() || index >= ObjectList.Count)
                 throw new ArgumentException("Argument index=" + index + " is too high.");
 
             Isolate();
 
-            rawObjectGroup.RemoveObject(objectList[index].rawIndex);
+            RawObjectGroup.RemoveObject(ObjectList[index].rawIndex);
 
-            objectList.RemoveAt(index);
+            ObjectList.RemoveAt(index);
 
             UpdateRawIndices();
             ModifiedHandler(this, null);
+
+            Project.EndTransaction();
+        }
+
+        public void RemoveObject(ObjectDefinition obj)
+        {
+            int i = 0;
+            foreach (var s in ObjectList)
+            {
+                if (s.def == obj)
+                {
+                    RemoveObject(i);
+                    return;
+                }
+                i++;
+            }
+            throw new Exception("Object to remove not found");
         }
 
         public void MoveObject(int oldIndex, int newIndex)
@@ -260,38 +364,46 @@ namespace LynnaLib
             if (oldIndex == newIndex)
                 return;
 
+            Project.BeginTransaction($"Rearrange objects#{Identifier}", true);
+            Project.UndoState.CaptureInitialState(this);
+
             Isolate();
 
-            ObjectStruct oldSt = objectList[oldIndex];
-            ObjectStruct newSt = objectList[newIndex];
+            ObjectStruct oldSt = ObjectList[oldIndex];
+            ObjectStruct newSt = ObjectList[newIndex];
 
             int oldRaw = oldSt.rawIndex;
             int newRaw = newSt.rawIndex;
 
-            ObjectData data = rawObjectGroup.GetObjectData(oldRaw);
-            rawObjectGroup.RemoveObject(oldRaw);
-            rawObjectGroup.InsertObject(newRaw, data);
+            ObjectData data = RawObjectGroup.GetObjectData(oldRaw);
+            RawObjectGroup.RemoveObject(oldRaw);
+            RawObjectGroup.InsertObject(newRaw, data);
 
-            objectList.RemoveAt(oldIndex);
-            objectList.Insert(newIndex, oldSt);
+            ObjectList.RemoveAt(oldIndex);
+            ObjectList.Insert(newIndex, oldSt);
 
             UpdateRawIndices();
             ModifiedHandler(this, null);
+
+            Project.EndTransaction();
         }
 
         public void RemoveGroup(ObjectGroup group)
         {
-            if (!children.Contains(group) || group.type != ObjectGroupType.Shared)
+            if (!Children.Contains(group) || group.type != ObjectGroupType.Shared)
                 throw new Exception("Tried to remove an invalid object group.");
+
+            Project.BeginTransaction("Delete object group");
+            Project.UndoState.CaptureInitialState(this);
 
             bool foundGroup = false;
 
-            for (int i = 0; i < rawObjectGroup.GetNumObjects(); i++)
+            for (int i = 0; i < RawObjectGroup.GetNumObjects(); i++)
             {
-                ObjectData data = rawObjectGroup.GetObjectData(i);
+                ObjectData data = RawObjectGroup.GetObjectData(i);
                 if (data.IsPointerType() && data.GetValue(0) == group.Identifier)
                 {
-                    rawObjectGroup.RemoveObject(i);
+                    RawObjectGroup.RemoveObject(i);
                     foundGroup = true;
                     break;
                 }
@@ -302,14 +414,18 @@ namespace LynnaLib
 
             Isolate();
 
-            children.Remove(group);
+            Children.Remove(group);
 
             UpdateRawIndices();
             ModifiedHandler(this, null);
+
+            Project.EndTransaction();
         }
 
 
+        // ================================================================================
         // Internal methods
+        // ================================================================================
 
         // Calling this ensures that all of the data pointed to by this ObjectGroup is not shared
         // with anything else. The only exception is pointers to ObjectGroupType "Shared". These
@@ -325,9 +441,16 @@ namespace LynnaLib
             if (type == ObjectGroupType.Shared) // We don't try to make these unique
                 return;
 
+            // This assertion may actually fail on the master branch due to breakage of our
+            // assumptions (see notes at top of file). This implementation of Isolate() only works
+            // if unique labels are used for every room, even if said labels reference the same
+            // data - resulting in unique ObjectGroup instances for each reference to the data (each
+            // of which has only one parent, instead of a single instance with multiple parents).
+            Debug.Assert(Parents.Count <= 1);
+
             beganIsolate = true;
 
-            foreach (var parent in parents)
+            foreach (var parent in Parents)
             {
                 parent.Isolate();
             }
@@ -336,12 +459,12 @@ namespace LynnaLib
 
             if (!IsIsolated(out firstToDelete))
             {
-                rawObjectGroup.Repoint();
+                RawObjectGroup.Repoint();
 
                 // ObjectData has been cloned in the RawObjectGroup, so reload it
-                foreach (ObjectStruct st in objectList)
+                foreach (ObjectStruct st in ObjectList)
                 {
-                    st.data = rawObjectGroup.GetObjectData(st.rawIndex);
+                    st.data = RawObjectGroup.GetObjectData(st.rawIndex);
                     st.def.SetObjectData(st.data);
                 }
 
@@ -371,12 +494,33 @@ namespace LynnaLib
             beganIsolate = false;
         }
 
+        // ================================================================================
+        // Undoable interface functions
+        // ================================================================================
 
+        public TransactionState GetState()
+        {
+            return state;
+        }
+
+        public void SetState(TransactionState s)
+        {
+            this.state = (State)s.Copy();
+        }
+
+        public void InvokeModifiedEvent(TransactionState prevState)
+        {
+            UpdateRawIndices();
+            ModifiedHandler(this, null);
+        }
+
+        // ================================================================================
         // Private methods
+        // ================================================================================
 
         void AddParent(ObjectGroup group)
         {
-            parents.Add(group);
+            Parents.Add(group);
         }
 
         /// <summary>
@@ -386,18 +530,18 @@ namespace LynnaLib
         {
             if (IsStub())
             {
-                Debug.Assert(parents.Count == 1);
-                parents[0].UnstubChild(this);
+                Debug.Assert(Parents.Count == 1);
+                Parents[0].UnstubChild(this);
             }
             Isolate();
 
-            rawObjectGroup.InsertObject(rawObjectGroup.GetNumObjects(), type);
+            RawObjectGroup.InsertObject(RawObjectGroup.GetNumObjects(), type);
 
             ObjectStruct st = new ObjectStruct();
-            st.rawIndex = rawObjectGroup.GetNumObjects() - 1;
-            st.data = rawObjectGroup.GetObjectData(st.rawIndex);
-            st.def = new ObjectDefinition(this, st.data, objectList.Count);
-            objectList.Add(st);
+            st.rawIndex = RawObjectGroup.GetNumObjects() - 1;
+            st.data = RawObjectGroup.GetObjectData(st.rawIndex);
+            st.def = new ObjectDefinition(this, st.data, ObjectList.Count);
+            ObjectList.Add(st);
 
             UpdateRawIndices();
 
@@ -407,14 +551,21 @@ namespace LynnaLib
         // Call this whenever the ordering of objects in objectList changes
         void UpdateRawIndices()
         {
-            Dictionary<ObjectData, int> dict = new Dictionary<ObjectData, int>();
-            for (int i = 0; i < rawObjectGroup.GetNumObjects(); i++)
-                dict.Add(rawObjectGroup.GetObjectData(i), i);
+            // RawObjectGroup may be null here if a previously stubbed group was unstubbed, then
+            // undone (turned into a stub again)
+            if (RawObjectGroup == null)
+            {
+                Debug.Assert(ObjectList.Count == 0);
+                return;
+            }
 
-            foreach (ObjectStruct st in objectList)
+            Dictionary<ObjectData, int> dict = new Dictionary<ObjectData, int>();
+            for (int i = 0; i < RawObjectGroup.GetNumObjects(); i++)
+                dict.Add(RawObjectGroup.GetObjectData(i), i);
+
+            foreach (ObjectStruct st in ObjectList)
             {
                 st.rawIndex = dict[st.data];
-                st.def.UpdateIndex();
             }
         }
 
@@ -426,7 +577,7 @@ namespace LynnaLib
         {
             firstToDelete = null;
 
-            FileComponent d = rawObjectGroup.GetObjectData(0);
+            FileComponent d = RawObjectGroup.GetObjectData(0);
 
             // Search for shared data before this label
 
@@ -465,7 +616,7 @@ namespace LynnaLib
 
             // Search for shared data after this label
 
-            d = rawObjectGroup.GetObjectData(0);
+            d = RawObjectGroup.GetObjectData(0);
             firstToDelete = d;
 
             while (true)
@@ -494,24 +645,24 @@ namespace LynnaLib
 
         void ModifiedHandler(object sender, ValueModifiedEventArgs args)
         {
-            StructureModifiedEvent?.Invoke(this, null);
-            foreach (var parent in parents)
+            StructureModifiedEvent?.Invoke(sender, args);
+            foreach (var parent in Parents)
                 parent.ModifiedHandler(sender, args);
         }
 
         bool IsStub()
         {
-            return rawObjectGroup == null;
+            return RawObjectGroup == null;
         }
 
         // Create a new pointer to a child ObjectGroup and give it blank data.
         void UnstubChild(ObjectGroup child)
         {
-            Debug.Assert(children.Contains(child));
+            Debug.Assert(Children.Contains(child));
 
             Isolate();
 
-            FileParser parentParser = rawObjectGroup.GetObjectData(0).FileParser;
+            FileParser parentParser = RawObjectGroup.GetObjectData(0).FileParser;
             FileParser childParser = Project.GetDefaultEnemyObjectFile();
             if (childParser == null)
             {
@@ -528,8 +679,8 @@ namespace LynnaLib
                     "\tobj_EndPointer"
                     });
 
-            child.rawObjectGroup = new RawObjectGroup(Project, child.Identifier);
-            child.objectList = new List<ObjectStruct>();
+            child.RawObjectGroup = new RawObjectGroup(Project, child.Identifier);
+            child.ObjectList = new List<ObjectStruct>();
 
 
             // Create the pointer to the new data
@@ -547,13 +698,17 @@ namespace LynnaLib
 
             ObjectData pointerData = new ObjectData(Project, parentParser, objType);
             pointerData.SetValue(0, child.Identifier);
-            rawObjectGroup.InsertObject(rawObjectGroup.GetNumObjects(), pointerData);
+            RawObjectGroup.InsertObject(RawObjectGroup.GetNumObjects(), pointerData);
         }
 
 
         class ObjectStruct
         {
+            // Index in the RawObjectGroup corresponding to this object. It is different because the
+            // raw object group contains entries for pointer types, while this doesn't.
             public int rawIndex;
+
+            // The ObjectDefinition is an abstraction around the corresponding ObjectData.
             public ObjectDefinition def;
             public ObjectData data;
         }

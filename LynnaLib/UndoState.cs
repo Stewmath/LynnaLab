@@ -123,7 +123,16 @@ public class UndoState
         }
     }
 
-    public void RecordChange(Undoable source)
+    /// <summary>
+    /// Call this whenever an Undoable's state is about to change, so that we have a chance to
+    /// record its initial state to roll it back later.
+    /// In principle, we could do without this by storing the initial state of everything and
+    /// checking for changes when a transaction is completed. But, this allows us to maintain a list
+    /// of _exactly_ what has changed during the current transaction instead of having to check the
+    /// state of every single Undoable in the project.
+    /// If called multiple times within the same transaction, subsequent calls do nothing.
+    /// </summary>
+    public void CaptureInitialState(Undoable source)
     {
         if (constructingTransaction.deltas.ContainsKey(source))
             return;

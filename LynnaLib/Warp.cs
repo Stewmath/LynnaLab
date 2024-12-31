@@ -163,7 +163,7 @@ namespace LynnaLib
             get { return state.warpSource; }
             set
             {
-                Project.UndoState.RecordChange(this);
+                Project.UndoState.CaptureInitialState(this);
                 state.warpSource = value;
             }
         }

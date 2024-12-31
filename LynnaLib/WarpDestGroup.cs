@@ -100,7 +100,7 @@ namespace LynnaLib
         // Adds a new WarpDestData to the end of the group, returns the index
         public WarpDestData AddDestData()
         {
-            Project.UndoState.RecordChange(this);
+            Project.UndoState.CaptureInitialState(this);
 
             WarpDestData newData = new WarpDestData(Project,
                     WarpDestData.WarpCommand,

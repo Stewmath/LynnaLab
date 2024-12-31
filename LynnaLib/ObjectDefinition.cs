@@ -1,24 +1,20 @@
 namespace LynnaLib
 {
     /// Public interface over the ObjectData class.
-    public class ObjectDefinition : ValueReferenceGroup
+    public class ObjectDefinition : ValueReferenceGroup, Undoable
     {
-        // TODO: Update with undo/redo
-        ObjectGroup objectGroup;
-        ObjectData objectData;
-        int index; // Index within the ObjectGroup
-
+        // ================================================================================
         // Constructors
+        // ================================================================================
 
         public ObjectDefinition(ObjectGroup group, ObjectData od, int index)
         {
             this.objectGroup = group;
-            this.objectData = od;
-            this.Index = index;
+            this.ObjectData = od;
 
             var descriptors = new List<ValueReferenceDescriptor>();
 
-            foreach (var desc in objectData.ValueReferenceGroup.GetDescriptors())
+            foreach (var desc in ObjectData.ValueReferenceGroup.GetDescriptors())
             {
                 string name = desc.Name;
                 var vref = desc.ValueReference;
@@ -30,7 +26,7 @@ namespace LynnaLib
                         vref,
                         maxValue: vref.MaxValue,
                         minValue: vref.MinValue,
-                        getter: () => objectData.ValueReferenceGroup.GetIntValue(name),
+                        getter: () => ObjectData.ValueReferenceGroup.GetIntValue(name),
                         setter: (v) => OnValueSet(name, v));
                 descriptors.Add(new ValueReferenceDescriptor(newVref, name));
             }
@@ -39,22 +35,41 @@ namespace LynnaLib
             base.EnableTransactions("Edit Object");
         }
 
+        // ================================================================================
+        // Variables
+        // ================================================================================
 
+        // Undo-able stuff goes here
+        struct State : TransactionState
+        {
+            public ObjectData objectData;
+
+            // No need to implement Copy/Compare for a value type
+        }
+
+        readonly ObjectGroup objectGroup;
+        State state = new();
+
+        // ================================================================================
         // Properties
+        // ================================================================================
 
         public ObjectGroup ObjectGroup { get { return objectGroup; } }
-        public int Index
+
+        ObjectData ObjectData
         {
-            get { return index; }
-            set { index = value; }
+            get { return state.objectData; }
+            set { state.objectData = value; }
         }
 
 
+        // ================================================================================
         // Public methods
+        // ================================================================================
 
         public ObjectType GetObjectType()
         {
-            return objectData.GetObjectType();
+            return ObjectData.GetObjectType();
         }
 
         /// <summary>
@@ -178,22 +193,37 @@ namespace LynnaLib
         // Remove self from the parent ObjectGroup.
         public void Remove()
         {
-            objectGroup.RemoveObject(Index);
+            objectGroup.RemoveObject(this);
         }
 
 
         internal void SetObjectData(ObjectData data)
         {
-            objectData = data;
+            Project.UndoState.CaptureInitialState(this);
+            ObjectData = data;
         }
 
-        internal void UpdateIndex()
+        // ================================================================================
+        // Undoable interface functions
+        // ================================================================================
+
+        public TransactionState GetState()
         {
-            Index = objectGroup.IndexOf(this);
-            if (Index == -1)
-                throw new Exception("Unexpected thing happened");
+            return state;
         }
 
+        public void SetState(TransactionState s)
+        {
+            this.state = (State)s.Copy();
+        }
+
+        public void InvokeModifiedEvent(TransactionState prevState)
+        {
+        }
+
+        // ================================================================================
+        // Private methods
+        // ================================================================================
 
         // Returns true if the object's type causes the XY values to have 4 bits rather than 8.
         // (DOES NOT account for "@postype" parameter which can set interactions to have both Y/X
@@ -207,10 +237,10 @@ namespace LynnaLib
 
         void OnValueSet(string name, int value)
         {
-            if (objectData.ValueReferenceGroup.GetIntValue(name) == value)
+            if (ObjectData.ValueReferenceGroup.GetIntValue(name) == value)
                 return;
             objectGroup.Isolate();
-            objectData.ValueReferenceGroup.SetValue(name, value);
+            ObjectData.ValueReferenceGroup.SetValue(name, value);
         }
     }
 }

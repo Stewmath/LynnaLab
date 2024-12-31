@@ -1301,7 +1301,7 @@ namespace LynnaLib
         /// </summary>
         public void RecordChange()
         {
-            Project.UndoState.RecordChange(this);
+            Project.UndoState.CaptureInitialState(this);
 
             // This is a bit weird. We need to record the project's changes as well, but the fields
             // in the project class that we care about (just defines & labels) are only ever changed
@@ -1309,7 +1309,7 @@ namespace LynnaLib
             // change.
             // This feels wrong. Something probably needs to be refactored to make the project's
             // state management cleaner.
-            Project.UndoState.RecordChange(Project);
+            Project.UndoState.CaptureInitialState(Project);
 
             Modified = true;
         }

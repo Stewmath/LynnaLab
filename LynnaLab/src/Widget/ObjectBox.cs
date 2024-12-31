@@ -18,7 +18,7 @@ public class ObjectBox : SelectionBox
 
         objectGroupEventWrapper.Bind<EventArgs>(
             "StructureModifiedEvent",
-            (sender, _) => SetObjectGroup(sender as ObjectGroup),
+            (sender, _) => ReloadObjectGroup(),
             weak: false);
         SetObjectGroup(group);
 
@@ -77,16 +77,7 @@ public class ObjectBox : SelectionBox
         ObjectGroup = group;
         objectGroupEventWrapper.ReplaceEventSource(group);
 
-        if (ObjectGroup.GetNumObjects() == 0)
-        {
-            base.MaxIndex = 0;
-            base.Selectable = false;
-        }
-        else
-        {
-            base.MaxIndex = ObjectGroup.GetNumObjects();
-            base.Selectable = true;
-        }
+        ReloadObjectGroup();
     }
 
     public ObjectDefinition GetSelectedObject()
@@ -187,6 +178,20 @@ public class ObjectBox : SelectionBox
             {
                 // Error parsing an animation
             }
+        }
+    }
+
+    void ReloadObjectGroup()
+    {
+        if (ObjectGroup.GetNumObjects() == 0)
+        {
+            base.MaxIndex = 0;
+            base.Selectable = false;
+        }
+        else
+        {
+            base.MaxIndex = ObjectGroup.GetNumObjects();
+            base.Selectable = true;
         }
     }
 

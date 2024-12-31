@@ -216,7 +216,7 @@
                 log.Warn(string.Format("Overwriting key {0} in ConstantsMapping", key));
             }
 
-            Project.UndoState.RecordChange(this);
+            Project.UndoState.CaptureInitialState(this);
 
             StringList.Add(key);
 

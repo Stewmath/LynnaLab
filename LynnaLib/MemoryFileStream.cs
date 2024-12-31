@@ -221,7 +221,7 @@ namespace LynnaLib
 
         public void RecordChange()
         {
-            Project.UndoState.RecordChange(this);
+            Project.UndoState.CaptureInitialState(this);
         }
 
         // ================================================================================

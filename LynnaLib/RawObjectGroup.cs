@@ -1,18 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace LynnaLib
+﻿namespace LynnaLib
 {
     // This class provides an interface to edit an "object group" (list of object data ending with
     // "obj_End" or "obj_EndPointer"). For most cases it's recommended to use the "ObjectGroup"
     // class instead.
-    internal class RawObjectGroup : ProjectDataType
+    internal class RawObjectGroup : ProjectDataType, Undoable
     {
-        readonly FileParser parser;
-
-        // TODO: Update with undo/redo
-        List<ObjectData> objectDataList = new List<ObjectData>();
-
+        // ================================================================================
+        // Constructor
+        // ================================================================================
 
         internal RawObjectGroup(Project p, String id) : base(p, id)
         {
@@ -26,41 +21,80 @@ namespace LynnaLib
                 if (data.GetObjectType() == ObjectType.Garbage) // Delete these (they do nothing anyway)
                     data.Detach();
                 else
-                    objectDataList.Add(data);
+                    ObjectDataList.Add(data);
 
                 data = next;
             }
-            objectDataList.Add(data);
+            ObjectDataList.Add(data);
         }
+
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        // Undoable stuff goes here
+        class State : TransactionState
+        {
+            public List<ObjectData> objectDataList = new();
+
+            public TransactionState Copy()
+            {
+                State s = new State();
+                s.objectDataList = new(objectDataList);
+                return s;
+            }
+
+            public bool Compare(TransactionState obj)
+            {
+                return obj is State s && objectDataList.SequenceEqual(s.objectDataList);
+            }
+        }
+
+        readonly FileParser parser;
+        State state = new();
+
+        // ================================================================================
+        // Properties
+        // ================================================================================
+
+        List<ObjectData> ObjectDataList
+        {
+            get { return state.objectDataList; }
+            set { state.objectDataList = value; }
+        }
+
+        // ================================================================================
+        // Public methods
+        // ================================================================================
 
         public ObjectData GetObjectData(int index)
         {
-            return objectDataList[index];
-        }
-        public IList<ObjectData> GetObjectDataList()
-        {
-            return new List<ObjectData>(objectDataList);
+            return ObjectDataList[index];
         }
         public int GetNumObjects()
         {
-            return objectDataList.Count - 1; // Not counting InteracEnd
+            return ObjectDataList.Count - 1; // Not counting InteracEnd
         }
 
         public void RemoveObject(int index)
         {
-            if (index >= objectDataList.Count - 1)
+            if (index >= ObjectDataList.Count - 1)
                 throw new Exception("Array index out of bounds.");
 
-            ObjectData data = objectDataList[index];
+            Project.UndoState.CaptureInitialState(this);
+
+            ObjectData data = ObjectDataList[index];
             data.Detach();
-            objectDataList.RemoveAt(index);
+            ObjectDataList.RemoveAt(index);
         }
 
         public void InsertObject(int index, ObjectData data)
         {
+            Project.UndoState.CaptureInitialState(this);
+
             data.Attach(parser);
-            data.InsertIntoParserBefore(objectDataList[index]);
-            objectDataList.Insert(index, data);
+            data.InsertIntoParserBefore(ObjectDataList[index]);
+            ObjectDataList.Insert(index, data);
         }
 
         public void InsertObject(int index, ObjectType type)
@@ -75,6 +109,8 @@ namespace LynnaLib
         /// </summary>
         internal void Repoint()
         {
+            Project.UndoState.CaptureInitialState(this);
+
             parser.RemoveLabel(Identifier);
 
             FileComponent lastComponent;
@@ -84,7 +120,7 @@ namespace LynnaLib
             parser.InsertComponentAfter(null, lastComponent);
 
             List<ObjectData> newList = new List<ObjectData>();
-            foreach (ObjectData old in objectDataList)
+            foreach (ObjectData old in ObjectDataList)
             {
                 ObjectData newData = new ObjectData(old);
                 newList.Add(newData);
@@ -92,17 +128,25 @@ namespace LynnaLib
                 lastComponent = newData;
             }
 
-            objectDataList = newList;
+            ObjectDataList = newList;
         }
 
+        // ================================================================================
+        // Undoable interface functions
+        // ================================================================================
 
-        // Used to be public, now considering deleting this
-        void ReplaceObjects(IList<ObjectData> objectList)
+        public TransactionState GetState()
         {
-            while (GetNumObjects() > 0)
-                RemoveObject(0);
-            foreach (ObjectData o in objectList)
-                InsertObject(GetNumObjects(), o);
+            return state;
+        }
+
+        public void SetState(TransactionState s)
+        {
+            this.state = (State)s.Copy();
+        }
+
+        public void InvokeModifiedEvent(TransactionState prevState)
+        {
         }
     }
 }
