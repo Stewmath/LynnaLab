@@ -8,13 +8,19 @@ namespace LynnaLib
     {
         private static readonly log4net.ILog log = LogHelper.GetLogger();
 
-        // TODO: Update variables with undo/redo
+        // TODO: Class is not entirely undo-proofed, but should work on hack-base.
+        // Variables "width", "height", and "tileDataFile" should never change on the hack-base
+        // branch due to the expanded tilesets patch, so it is not critical to undo-proof these.
+        // Fully accounting for "layout groups" in order to support undos on the master branch would
+        // be a fair bit more complicated.
 
         // Actual width and height of room (note that width can differ from Stride, see properties)
         int width, height;
-
-        Tileset loadedTileset;
         MemoryFileStream tileDataFile;
+
+        // Tied to the ValueReference through an event handler - undo-proof
+        Tileset loadedTileset;
+
         // List of positions where each tile index is used in the room
         List<(int,int)>[] tilePositions = new List<(int,int)>[256];
 
@@ -77,22 +83,6 @@ namespace LynnaLib
             return output;
         }
 
-        public void SetLayout(byte[] layout)
-        {
-            if (layout.Length != Stride * Height)
-                throw new Exception($"Tried to write a layout of invalid size to room {Room.Index:x3}");
-
-            tileDataFile.LockEvents();
-            tileDataFile.Position = 0;
-            tileDataFile.Write(layout, 0, Stride * Height);
-            // Modifying the data will trigger the callback to the TileDataModified function when
-            // events are unlocked
-
-            CalculateTilePositions();
-
-            tileDataFile.UnlockEvents();
-        }
-
         public int GetTile(int x, int y)
         {
             tileDataFile.Position = y * Stride + x;
@@ -100,6 +90,8 @@ namespace LynnaLib
         }
         public void SetTile(int x, int y, int value)
         {
+            Project.BeginTransaction($"Modify room layout#r{Room.Index:X3}s{Season}", true);
+
             int oldTile = GetTile(x, y);
             if (oldTile != value)
             {
@@ -109,34 +101,17 @@ namespace LynnaLib
                 tileDataFile.WriteByte((byte)value);
                 // Modifying the data will trigger the callback to the TileDataModified function
             }
-        }
 
-        // Shift room tiles by given values
-        public void ShiftTiles(int xshift, int yshift)
-        {
-            byte[] oldLayout = GetLayout();
-            byte[] newLayout = (byte[])oldLayout.Clone();
+            Project.UndoState.OnRewind("Modify room layout", () =>
+            { // On undo
+                CalculateTilePositions();
+            }, (isRedo) =>
+            { // On redo or right now
+                if (isRedo)
+                    CalculateTilePositions();
+            });
 
-            for (int x=0; x<Width; x++)
-            {
-                for (int y=0; y<Height; y++)
-                {
-                    Func<int, int, int> normalize = (val, max) =>
-                    {
-                        while (val < 0)
-                            val += max;
-                        while (val >= max)
-                            val -= max;
-                        return val;
-                    };
-                    int oldX = normalize(x - xshift, Width);
-                    int oldY = normalize(y - yshift, Height);
-
-                    newLayout[y * Stride + x] = oldLayout[oldY * Stride + oldX];
-                }
-            }
-
-            SetLayout(newLayout);
+            Project.EndTransaction();
         }
 
         /// <summary>
@@ -148,6 +123,10 @@ namespace LynnaLib
         }
 
 
+        /// <summary>
+        /// Tied to the Room's ValueReference for the tileset assignment. This means that this
+        /// should be invoked in all cases the tileset changes, including undo/redo.
+        /// </summary>
         internal void UpdateTileset()
         {
             if (loadedTileset != Tileset)

@@ -124,11 +124,11 @@ namespace LynnaLib
 
         public void Delete()
         {
-            Project.BeginTransaction("Delete Chest");
+            Project.BeginTransaction("Delete chest");
 
             dataStart.Detach();
 
-            Project.UndoState.OnRewind("Delete Chest", () =>
+            Project.UndoState.OnRewind("Delete chest", () =>
             { // On undo
                 room.ChestRevived(this);
             }, (_) =>

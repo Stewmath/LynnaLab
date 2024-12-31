@@ -275,7 +275,7 @@ public class RoomLayoutEditor : TileGrid
 
             if (ImGui.IsMouseDown(ImGuiMouseButton.Left))
             {
-                Project.BeginTransaction("Move Object#" + com.GetTransactionIdentifier(), true);
+                Project.BeginTransaction("Move object#" + com.GetTransactionIdentifier(), true);
 
                 // No XY: Can't move this at all by dragging.
                 if (!com.HasXY)
