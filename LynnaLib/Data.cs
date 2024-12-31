@@ -213,10 +213,13 @@ namespace LynnaLib
             dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(-1));
         }
 
-        public override string GetString()
+        public override void AboutToSave()
         {
             ResolveEvent?.Invoke(this, null);
+        }
 
+        public override string GetString()
+        {
             string s = "";
             if (PrintCommand)
                 s = GetSpacingIndex(0) + Command;

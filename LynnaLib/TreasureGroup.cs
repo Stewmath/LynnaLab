@@ -7,13 +7,11 @@ namespace LynnaLib
 {
     /// Represents an "INTERACID_TREASURE" value (1 byte). This can be used to lookup
     /// a "TreasureObject" which has an additional subID.
-    public class TreasureGroup : ProjectIndexedDataType
+    public class TreasureGroup : ProjectIndexedDataType, Undoable
     {
-        TreasureObject[] treasureObjectCache = new TreasureObject[256];
-
-        // TODO: Update with undo/redo
-        Data dataStart;
-
+        // ================================================================================
+        // Constructors
+        // ================================================================================
 
         internal TreasureGroup(Project p, int index) : base(p, index)
         {
@@ -24,13 +22,51 @@ namespace LynnaLib
             DetermineDataStart();
         }
 
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        // Undoable state goes here
+        class State : TransactionState
+        {
+            public TreasureObject[] treasureObjectCache = new TreasureObject[256];
+            public Data dataStart;
+
+            public TransactionState Copy()
+            {
+                State s = new State();
+                s.treasureObjectCache = (TreasureObject[])treasureObjectCache.Clone();
+                s.dataStart = dataStart;
+                return s;
+            }
+
+            public bool Compare(TransactionState obj)
+            {
+                if (!(obj is State s))
+                    return false;
+                return treasureObjectCache.SequenceEqual(s.treasureObjectCache) && s.dataStart == dataStart;
+            }
+        };
+
+        State state = new State();
+
+        // ================================================================================
         // Properties
+        // ================================================================================
+
+        TreasureObject[] TreasureObjectCache { get { return state.treasureObjectCache; } }
+
+        Data DataStart
+        {
+            get { return state.dataStart; }
+            set { state.dataStart = value; }
+        }
 
         public int NumTreasureObjectSubids
         {
             get
             {
-                Data data = dataStart;
+                Data data = DataStart;
                 if (!UsesPointer)
                     return 1;
                 try
@@ -47,22 +83,23 @@ namespace LynnaLib
 
         bool UsesPointer
         {
-            get { return dataStart.CommandLowerCase == "m_treasurepointer"; }
+            get { return DataStart.CommandLowerCase == "m_treasurepointer"; }
         }
 
-
+        // ================================================================================
         // Methods
+        // ================================================================================
 
         public TreasureObject GetTreasureObject(int subid)
         {
-            if (treasureObjectCache[subid] == null)
+            if (TreasureObjectCache[subid] == null)
             {
                 Data data = GetSubidBaseData(subid);
                 if (data == null)
                     return null;
-                treasureObjectCache[subid] = new TreasureObject(this, subid, data);
+                TreasureObjectCache[subid] = new TreasureObject(this, subid, data);
             }
-            return treasureObjectCache[subid];
+            return TreasureObjectCache[subid];
         }
 
         public TreasureObject AddTreasureObjectSubid()
@@ -92,19 +129,25 @@ namespace LynnaLib
                     return "\t" + prefix + "m_TreasureSubid   " + body;
             };
 
+            Project.BeginTransaction("Create treasure object");
+            Project.UndoState.RecordChange(this);
+
             if (NumTreasureObjectSubids == 0)
             {
                 // This should only happen when the treasure is using "m_treasurepointer", but has
                 // a null pointer. So rewrite that line with a blank treasure.
-                dataStart.FileParser.InsertParseableTextAfter(dataStart, new string[] {
+                DataStart.FileParser.InsertParseableTextAfter(DataStart, new string[] {
                     ConstructTreasureSubidString(0, false, null)
                 });
-                dataStart.Detach();
+                DataStart.Detach();
 
                 // Update dataStart (since the old data was deleted)
                 DetermineDataStart();
 
-                return GetTreasureObject(0);
+                TreasureObject retval2 = GetTreasureObject(0);
+
+                Project.EndTransaction();
+                return retval2;
             }
 
             // Otherwise, a previous subid existed, so let's copy over some parameters from it
@@ -116,14 +159,14 @@ namespace LynnaLib
                 // of the list. Be careful to ensure that the old data objects are moved, and not
                 // deleted, so that we don't break the TreasureObject's that were built on them.
                 // Create pointer
-                FileParser parser = dataStart.FileParser;
+                FileParser parser = DataStart.FileParser;
                 string labelName = Project.GetUniqueLabelName(
                         string.Format("treasureObjectData{0:x2}", Index));
-                parser.InsertParseableTextBefore(dataStart, new string[] { string.Format(
+                parser.InsertParseableTextBefore(DataStart, new string[] { string.Format(
                     "\t/* ${0:x2} */ m_TreasurePointer {1}", Index, labelName)
                 });
 
-                dataStart.Detach();
+                DataStart.Detach();
 
                 // We want to insert the data at the end of the file, but it must be within the
                 // section, so we need to check for the ".ends" directive and put it above there.
@@ -139,11 +182,11 @@ namespace LynnaLib
                 });
 
                 // Move old data to after the label
-                insertPos = parser.InsertComponentAfter(insertPos, dataStart);
+                insertPos = parser.InsertComponentAfter(insertPos, DataStart);
 
                 // Adjust spacing since it's a bit different in the subid table
-                dataStart.SetSpacing(0, "\t");
-                dataStart.SetSpacing(1, "");
+                DataStart.SetSpacing(0, "\t");
+                DataStart.SetSpacing(1, "");
 
                 // Insert newline after the new subid table
                 insertPos = parser.InsertParseableTextAfter(insertPos, new string[] { "" });
@@ -154,18 +197,43 @@ namespace LynnaLib
 
 
             // Pointer either existed already or was just created. Insert new subid's data.
-            Data lastSubidData = Project.GetData(dataStart.GetValue(0));
+            Data lastSubidData = Project.GetData(DataStart.GetValue(0));
             TraverseSubidData(ref lastSubidData, NumTreasureObjectSubids - 1);
 
-            dataStart.FileParser.InsertParseableTextAfter(lastSubidData,
+            DataStart.FileParser.InsertParseableTextAfter(lastSubidData,
                     new string[] { ConstructTreasureSubidString(NumTreasureObjectSubids, true, lastSubid) });
-            return GetTreasureObject(NumTreasureObjectSubids - 1);
+
+            TreasureObject retval = GetTreasureObject(NumTreasureObjectSubids - 1);
+
+            Project.EndTransaction();
+            return retval;
         }
 
+        // ================================================================================
+        // Undoable interface functions
+        // ================================================================================
+
+        public TransactionState GetState()
+        {
+            return state;
+        }
+
+        public void SetState(TransactionState s)
+        {
+            this.state = (State)s.Copy();
+        }
+
+        public void InvokeModifiedEvent(TransactionState prevState)
+        {
+        }
+
+        // ================================================================================
+        // Private methods
+        // ================================================================================
 
         Data GetSubidBaseData(int subid)
         {
-            Data data = dataStart;
+            Data data = DataStart;
 
             if (!UsesPointer)
             {
@@ -218,7 +286,7 @@ namespace LynnaLib
 
         void DetermineDataStart()
         {
-            dataStart = Project.GetData("treasureObjectData", Index * 4);
+            DataStart = Project.GetData("treasureObjectData", Index * 4);
         }
     }
 }

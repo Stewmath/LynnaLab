@@ -96,6 +96,12 @@ namespace LynnaLib
             Spacing[index] = space;
         }
 
+        /// <summary>
+        /// Called immediately before "GetString()" when the FileComponent is about to be written
+        /// back to the file.
+        /// </summary>
+        public virtual void AboutToSave() {}
+
         public abstract string GetString();
 
         // Attaching/detaching from a parser object

@@ -1124,6 +1124,7 @@ namespace LynnaLib
                         s = output[output.Count - 1];
                         output.RemoveAt(output.Count - 1);
                     }
+                    d.AboutToSave();
                     s += d.GetString();
                 }
 

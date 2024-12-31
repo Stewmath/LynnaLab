@@ -16,7 +16,6 @@ namespace LynnaLib
         {
             get { return identifier; }
         }
-        public bool Modified { get; set; }
 
         internal ProjectDataType(Project p, string identifier)
         {
