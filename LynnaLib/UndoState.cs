@@ -25,6 +25,8 @@ public class UndoState
     public Transaction constructingTransaction = new Transaction();
 
     int beginTransactionCalls = 0;
+    bool barrierOn = false;
+    bool doInProgress = false;
 
     // ================================================================================
     // Properties
@@ -54,23 +56,33 @@ public class UndoState
 
     public bool Undo()
     {
+        Debug.Assert(!doInProgress);
+
         if (!constructingTransaction.Empty)
             FinalizeTransaction();
 
         if (undoStack.Count == 0)
             return false;
 
+        doInProgress = true;
+
         Transaction transaction = undoStack.Pop();
         transaction.Undo();
         redoStack.Push(transaction);
 
+        barrierOn = true;
+        doInProgress = false;
         return true;
     }
 
     public bool Redo()
     {
+        Debug.Assert(!doInProgress);
+
         if (redoStack.Count == 0)
             return false;
+
+        doInProgress = true;
 
         Debug.Assert(constructingTransaction.Empty);
 
@@ -78,23 +90,42 @@ public class UndoState
         transaction.Redo();
         undoStack.Push(transaction);
 
+        barrierOn = true;
+        doInProgress = false;
         return true;
+    }
+
+    /// <summary>
+    /// Any two transactions immediately before and after calling this cannot be merged. Helps to
+    /// split up multiple undo-able operations that would normally be merged into one operation.
+    /// </summary>
+    public void InsertBarrier()
+    {
+        Debug.Assert(!doInProgress);
+        Debug.Assert(beginTransactionCalls == 0);
+        barrierOn = true;
     }
 
     public void ClearHistory()
     {
+        Debug.Assert(!doInProgress);
+        Debug.Assert(beginTransactionCalls == 0);
+
         undoStack.Clear();
         redoStack.Clear();
         constructingTransaction = new Transaction();
+        barrierOn = false;
     }
 
     public void BeginTransaction(string description, bool merge)
     {
+        Debug.Assert(!doInProgress);
+
         if (beginTransactionCalls == 0)
         {
             FinalizeTransaction();
 
-            if (merge && undoStack.Count > 0 && undoStack.Peek().description == description)
+            if (merge && !barrierOn && undoStack.Count > 0 && undoStack.Peek().description == description)
             {
                 // Move the last commited transaction back into constructingTransaction so that
                 // upcoming changes are merged into it
@@ -112,6 +143,8 @@ public class UndoState
 
     public void EndTransaction()
     {
+        Debug.Assert(!doInProgress);
+
         beginTransactionCalls--;
 
         if (beginTransactionCalls < 0)
@@ -119,7 +152,6 @@ public class UndoState
         else if (beginTransactionCalls == 0)
         {
             FinalizeTransaction();
-            redoStack.Clear();
         }
     }
 
@@ -134,6 +166,8 @@ public class UndoState
     /// </summary>
     public void CaptureInitialState(Undoable source)
     {
+        Debug.Assert(!doInProgress);
+
         if (constructingTransaction.deltas.ContainsKey(source))
             return;
         var delta = new TransactionStateHolder<Undoable>(source);
@@ -150,6 +184,8 @@ public class UndoState
     /// </summary>
     public void OnRewind(string desc, Action onUndo, Action<bool> onRedo)
     {
+        Debug.Assert(!doInProgress);
+
         Rewindable r = new(desc, onUndo, onRedo);
         constructingTransaction.rewindables.Add(r);
         redoStack.Clear();
@@ -161,6 +197,8 @@ public class UndoState
     /// </summary>
     public void OnRewind(string desc, Action action)
     {
+        Debug.Assert(!doInProgress);
+
         Rewindable r = new(desc, action, (_) => action());
         constructingTransaction.rewindables.Add(r);
         redoStack.Clear();
@@ -205,6 +243,7 @@ public class UndoState
             t.CaptureFinalState();
             undoStack.Push(t);
             redoStack.Clear();
+            barrierOn = false; // Safe to disable the barrier once the undo stack has an additional entry
         }
         constructingTransaction = new Transaction();
     }

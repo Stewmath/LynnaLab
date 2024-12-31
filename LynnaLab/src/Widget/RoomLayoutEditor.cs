@@ -275,7 +275,7 @@ public class RoomLayoutEditor : TileGrid
 
             if (ImGui.IsMouseDown(ImGuiMouseButton.Left))
             {
-                Project.BeginTransaction("Move object#" + com.GetTransactionIdentifier(), true);
+                Project.BeginTransaction("Move " + com.GetTransactionIdentifier(), true);
 
                 // No XY: Can't move this at all by dragging.
                 if (!com.HasXY)
@@ -318,6 +318,8 @@ public class RoomLayoutEditor : TileGrid
             }
             else
             {
+                // Released the component
+                Project.UndoState.InsertBarrier();
                 draggingComponent = false;
             }
         }
@@ -751,7 +753,7 @@ public class RoomLayoutEditor : TileGrid
 
         public override string GetTransactionIdentifier()
         {
-            return "Quickstart";
+            return "quickstart";
         }
     }
 
@@ -825,7 +827,7 @@ public class RoomLayoutEditor : TileGrid
 
         public override string GetTransactionIdentifier()
         {
-            return chest.TransactionIdentifier;
+            return "chest#" + chest.TransactionIdentifier;
         }
     }
 
@@ -907,7 +909,7 @@ public class RoomLayoutEditor : TileGrid
 
         public override string GetTransactionIdentifier()
         {
-            return "Object"; // TODO
+            return "object#" + obj.TransactionIdentifier;
         }
     }
 
@@ -1005,7 +1007,7 @@ public class RoomLayoutEditor : TileGrid
 
         public override string GetTransactionIdentifier()
         {
-            return "Warp Source"; // TODO
+            return "warp#" + warp.TransactionIdentifier;
         }
     }
 
@@ -1077,7 +1079,7 @@ public class RoomLayoutEditor : TileGrid
 
         public override string GetTransactionIdentifier()
         {
-            return "Warp Dest"; // TODO
+            return "warp dest#" + warp.TransactionIdentifier;
         }
     }
 }

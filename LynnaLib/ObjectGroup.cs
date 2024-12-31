@@ -95,7 +95,7 @@ namespace LynnaLib
                 {
                     ObjectStruct st = new ObjectStruct();
                     st.rawIndex = i;
-                    st.def = new ObjectDefinition(this, obj, ObjectList.Count);
+                    st.def = new ObjectDefinition(this, obj, uniqueIDCounter++);
                     st.data = obj;
                     ObjectList.Add(st);
                 }
@@ -202,6 +202,7 @@ namespace LynnaLib
         }
 
         State state = new();
+        int uniqueIDCounter = 0;
 
         // ================================================================================
         // Events
@@ -544,7 +545,7 @@ namespace LynnaLib
             ObjectStruct st = new ObjectStruct();
             st.rawIndex = RawObjectGroup.GetNumObjects() - 1;
             st.data = RawObjectGroup.GetObjectData(st.rawIndex);
-            st.def = new ObjectDefinition(this, st.data, ObjectList.Count);
+            st.def = new ObjectDefinition(this, st.data, uniqueIDCounter++);
             ObjectList.Add(st);
 
             UpdateRawIndices();

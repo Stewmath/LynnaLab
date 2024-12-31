@@ -7,10 +7,11 @@ namespace LynnaLib
         // Constructors
         // ================================================================================
 
-        public ObjectDefinition(ObjectGroup group, ObjectData od, int index)
+        public ObjectDefinition(ObjectGroup group, ObjectData od, int uniqueID)
         {
             this.objectGroup = group;
             this.ObjectData = od;
+            this.uniqueID = uniqueID;
 
             var descriptors = new List<ValueReferenceDescriptor>();
 
@@ -32,7 +33,7 @@ namespace LynnaLib
             }
 
             base.SetDescriptors(descriptors);
-            base.EnableTransactions("Edit Object");
+            base.EnableTransactions($"Edit Object#{TransactionIdentifier}", true);
         }
 
         // ================================================================================
@@ -48,6 +49,8 @@ namespace LynnaLib
         }
 
         readonly ObjectGroup objectGroup;
+        readonly int uniqueID; // Value that's unique compared to other ObjectDefinitions in this ObjectGrou
+
         State state = new();
 
         // ================================================================================
@@ -55,6 +58,8 @@ namespace LynnaLib
         // ================================================================================
 
         public ObjectGroup ObjectGroup { get { return objectGroup; } }
+
+        public string TransactionIdentifier { get { return $"obj-{ObjectGroup.Identifier}-i{uniqueID}"; } }
 
         ObjectData ObjectData
         {

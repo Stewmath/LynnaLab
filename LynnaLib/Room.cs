@@ -344,7 +344,7 @@ namespace LynnaLib
 
         public void AddChest()
         {
-            Project.BeginTransaction("Add Chest");
+            Project.BeginTransaction("Add chest");
 
             if (Chest != null)
             {
@@ -366,7 +366,7 @@ namespace LynnaLib
                 string.Format("\tm_ChestData $00, ${0:x2}, $0000", Index & 0xff)
             });
 
-            Project.UndoState.OnRewind("Add Chest", () =>
+            Project.UndoState.OnRewind("Add chest", () =>
             { // On undo
                 Chest.InvokeDeletedEvent();
                 // We are subscribed to the chest deletion event so it should set Chest = null by this line.

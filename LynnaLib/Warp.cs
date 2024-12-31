@@ -155,6 +155,8 @@ namespace LynnaLib
 
         public WarpGroup SourceGroup { get; private set; }
 
+        public string TransactionIdentifier { get { return $"warp-r{SourceRoom.Index:X3}i{uniqueID}"; } }
+
         // Underlying warp source data object. In general, manipulating this directly
         // isn't recommended; direct modifications to the base data don't trigger event handlers
         // set by the "AddModifiedHandler" function. Same with "DestData".
@@ -172,8 +174,6 @@ namespace LynnaLib
 
         ValueReferenceGroup SourceVrg { get { return SourceData.ValueReferenceGroup; } }
         ValueReferenceGroup DestVrg { get { return DestData.ValueReferenceGroup; } }
-
-        string TransactionIdentifier { get { return $"R{SourceRoom.Index:X3}I{uniqueID}"; } }
 
         // ================================================================================
         // Public methods

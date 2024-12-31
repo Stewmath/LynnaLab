@@ -112,7 +112,7 @@ namespace LynnaLib
 
         public string TransactionIdentifier
         {
-            get { return $"Chest-{room.Index:X3}"; }
+            get { return $"chest-r{room.Index:X3}"; }
         }
 
         public Project Project { get { return dataStart.Project; } }
