@@ -54,9 +54,9 @@ public class BuildDialog : Frame
         }
         ImGui.EndChild();
 
-        ImGuiX.Checkbox("Close dialog with emulator",
+        ImGuiX.Checkbox("Closing emulator closes dialog",
                         new Accessor<bool>(() => GlobalConfig.CloseRunDialogWithEmulator));
-        ImGuiX.Checkbox("Close emulator with dialog",
+        ImGuiX.Checkbox("Closing dialog closes emulator",
                         new Accessor<bool>(() => GlobalConfig.CloseEmulatorWithRunDialog));
 
         ImGui.PopFont();
