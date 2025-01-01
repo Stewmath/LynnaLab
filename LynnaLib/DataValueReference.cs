@@ -34,7 +34,7 @@ public class DataValueReference : ValueReference
         "$0",
         "$00",
         "$0000",
-        "0",
+        "$00",
         "$00",
         "$0000",
     };

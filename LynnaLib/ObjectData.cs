@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-using Util;
-
-namespace LynnaLib
+﻿namespace LynnaLib
 {
     public enum ObjectType
     {
@@ -190,8 +185,6 @@ namespace LynnaLib
         }
 
         // Creates a new ObjectData instance, not based on existing data.
-        // Unlike above, this initialized based on the "ObjectType" enum instead of
-        // "ObjectDefinitionType".
         public ObjectData(Project p, FileParser parser, ObjectType type)
             : base(p, "", null, -1, parser, new string[] { "\t" })
         {
@@ -206,6 +199,9 @@ namespace LynnaLib
 
             foreach (ValueReferenceDescriptor desc in vrg.GetDescriptors())
                 desc.ValueReference.Initialize();
+
+            if (type == ObjectType.RandomEnemy)
+                base.SetValue(0, "$20"); // Set default quantity to 1 instead of 0
 
             base.ClearAndUnlockModifiedEvents();
         }
