@@ -255,14 +255,17 @@ public class RoomEditor : Frame
         ImGui.BeginChild("Left Panel", new Vector2(tilesetViewer.WidgetSize.X + X_OFFSET + 20.0f, 0.0f));
         if (ImGui.BeginTabBar("##Left Panel Tabs"))
         {
-            if (TrackedTabItem("Tileset"))
+            if (TrackedTabItem("Room"))
             {
+                ImGui.SeparatorText("Tileset");
                 tilesetViewer.Render();
-                ImGuiX.InputHex("Tileset", new Accessor<int>(() => Room.TilesetIndex));
                 if (ImGui.Button("Open Tileset Editor"))
                 {
                     Workspace.OpenTilesetEditor(RoomLayout.Tileset);
                 }
+
+                ImGui.SeparatorText("Room properties");
+                ImGuiLL.RenderValueReferenceGroup(Room.ValueReferenceGroup, null, Workspace.ShowDocumentation);
                 ImGui.EndTabItem();
             }
             if (TrackedTabItem("Objects"))

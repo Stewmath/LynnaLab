@@ -276,6 +276,8 @@ namespace LynnaLib
         /// Alternative interface for accessing certain properties
         public ValueReferenceGroup ValueReferenceGroup { get; private set; }
 
+        public string TransactionIdentifier { get { return $"room-{Index:X3}"; } }
+
         /// Whether a room pack value exists or not (only exists for the main overworld groups)
         bool HasRoomPack
         {
@@ -285,6 +287,9 @@ namespace LynnaLib
             }
         }
 
+        // ================================================================================
+        // Public methods
+        // ================================================================================
 
         /// Gets a RoomLayout object corresponding to the season. Pass -1 if seasons are not
         /// expected to exist.
@@ -503,12 +508,6 @@ namespace LynnaLib
 
             var descriptors = new ValueReferenceDescriptor[] {
                 StreamValueReference.Descriptor(Project,
-                        stream: GetMusicFile(),
-                        name: "Music",
-                        offset: Index & 0xff,
-                        type: DataValueType.Byte,
-                        constantsMappingString: "MusicMapping"),
-                StreamValueReference.Descriptor(Project,
                         stream: GetTilesetMappingFile(),
                         name: "Tileset",
                         offset: Index & 0xff,
@@ -516,6 +515,12 @@ namespace LynnaLib
                         maxValue: Project.NumTilesets-1,
                         startBit: 0,
                         endBit: 6),
+                StreamValueReference.Descriptor(Project,
+                        stream: GetMusicFile(),
+                        name: "Music",
+                        offset: Index & 0xff,
+                        type: DataValueType.Byte,
+                        constantsMappingString: "MusicMapping"),
                 roomPackDesc,
                 StreamValueReference.Descriptor(Project,
                         stream: GetTilesetMappingFile(),
@@ -532,6 +537,8 @@ namespace LynnaLib
             {
                 UpdateTileset();
             });
+
+            ValueReferenceGroup.EnableTransactions($"Edit room property#{TransactionIdentifier}", true);
         }
 
         // Find the data corresponding to the chest for this room, or "null" if it doesn't exist.
