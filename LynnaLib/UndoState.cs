@@ -20,7 +20,9 @@ public class UndoState
     // Variables
     // ================================================================================
 
-    Stack<Transaction> undoStack = new();
+    const int MAX_UNDOS = 256;
+
+    CircularStack<Transaction> undoStack = new(MAX_UNDOS);
     Stack<Transaction> redoStack = new();
     public Transaction constructingTransaction = new Transaction();
 
