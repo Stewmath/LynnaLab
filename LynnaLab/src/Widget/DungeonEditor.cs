@@ -108,6 +108,8 @@ public class DungeonEditor : Frame
 
             if (ImGui.BeginTable("Room property table", 2))
             {
+                Project.BeginTransaction($"Edit dungeon room property#{Dungeon.TransactionIdentifier}r{SelectedRoom.Index:X3}");
+
                 ImGui.TableNextColumn();
                 ImGuiX.Checkbox("Up", new Accessor<bool>(() => SelectedRoom.DungeonFlagUp));
                 ImGuiX.Checkbox("Right", new Accessor<bool>(() => SelectedRoom.DungeonFlagRight));
@@ -119,6 +121,8 @@ public class DungeonEditor : Frame
                 ImGuiX.Checkbox("Boss", new Accessor<bool>(() => SelectedRoom.DungeonFlagBoss));
                 ImGuiX.Checkbox("Dark", new Accessor<bool>(() => SelectedRoom.DungeonFlagDark));
                 ImGui.EndTable();
+
+                Project.EndTransaction();
             }
 
             ImGui.EndChild();

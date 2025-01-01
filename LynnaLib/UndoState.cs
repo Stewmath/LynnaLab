@@ -136,7 +136,10 @@ public class UndoState
                 constructingTransaction.description = description;
             }
 
-            redoStack.Clear();
+            // Don't clear redoStack here. There is code that calls BeginTransaction even when it's
+            // likely that nothing will actually happen. The redo stack should only be cleared in
+            // CaptureInitialState() and similar functions where, for sure, we have triggered an
+            // undo-able event.
         }
         beginTransactionCalls++;
     }
@@ -242,7 +245,6 @@ public class UndoState
         {
             t.CaptureFinalState();
             undoStack.Push(t);
-            redoStack.Clear();
             barrierOn = false; // Safe to disable the barrier once the undo stack has an additional entry
         }
         constructingTransaction = new Transaction();

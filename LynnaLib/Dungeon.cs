@@ -1,8 +1,3 @@
-using System;
-using System.IO;
-using System.Collections.Generic;
-using Util;
-
 namespace LynnaLib
 {
     // Invoked when something changes the layout of rooms in a dungeon.
@@ -60,6 +55,12 @@ namespace LynnaLib
         // roomsUsed[i] = # of times room "i" is used in this dungeon
         int[] roomsUsed;
         int _mainGroup;
+
+        // ================================================================================
+        // Properties
+        // ================================================================================
+
+        public string TransactionIdentifier { get { return $"dungeon-{Index:X2}"; } }
 
         // ================================================================================
         // Events
@@ -372,6 +373,7 @@ namespace LynnaLib
             };
 
             ValueReferenceGroup = new ValueReferenceGroup(list);
+            ValueReferenceGroup.EnableTransactions($"Edit dungeon property#{TransactionIdentifier}", true);
         }
 
         void DetermineRoomsUsed()
@@ -406,8 +408,6 @@ namespace LynnaLib
 
         void SetGroup(int g)
         {
-            Project.BeginTransaction("Change dungeon group");
-
             if (!(g == 4 || g == 5))
                 throw new ArgumentException("Invalid group '" + g + "' for dungeon.");
             dataStart.SetValue(0, ">wGroup" + g.ToString() + "RoomFlags");
@@ -426,8 +426,6 @@ namespace LynnaLib
                 DetermineRoomsUsed();
                 invokeRoomChangedEvent();
             });
-
-            Project.EndTransaction();
         }
 
         void DetermineGroup()
