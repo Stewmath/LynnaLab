@@ -52,7 +52,6 @@ public class ProjectWorkspace
 
         // Default active windows
         roomEditor.Active = true;
-        undoDialog.Active = true;
     }
 
     // ================================================================================
