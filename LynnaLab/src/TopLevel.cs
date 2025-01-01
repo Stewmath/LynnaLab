@@ -13,7 +13,7 @@ namespace LynnaLab;
 /// </summary>
 public static class TopLevel
 {
-    public static void Load(IBackend backend, string path = "", string game = "seasons")
+    public static void Load(IBackend backend, string path = "", string game = null)
     {
         TopLevel.backend = backend;
 
@@ -63,7 +63,6 @@ public static class TopLevel
     // Vars related to modal windows
     static Queue<ModalStruct> modalQueue = new Queue<ModalStruct>();
     static bool rememberGameChoice;
-    static string projectDirectoryToOpen;
 
     // ================================================================================
     // Properties
@@ -249,7 +248,11 @@ public static class TopLevel
         LazyInvoke(() => { function(); return false; });
     }
 
-    public static void OpenProject(string path, string game)
+    /// <summary>
+    /// Opens the project at the specified path. If game == null, this either checks the project
+    /// config to decide which game to load, or shows a prompt to let the user decide.
+    /// </summary>
+    public static void OpenProject(string path, string gameOverride = null)
     {
         if (Workspace != null)
         {
@@ -259,11 +262,33 @@ public static class TopLevel
         // Try to load project config
         ProjectConfig config = ProjectConfig.Load(path);
 
-        if (config == null)
-            return;
+        var loadProject = (string game) =>
+        {
+            var project = new Project(path, game, config);
+            Workspace = new ProjectWorkspace(project);
+        };
 
-        var project = new Project(path, game, config);
-        Workspace = new ProjectWorkspace(project);
+        if (config == null)
+        {
+            DisplayMessageModal("Error", $"Error opening directory: {path}\n\nCouldn't find project config file (config.yaml). Please select the \"oracles-disasm\" folder to open.");
+        }
+        else if (gameOverride != null)
+        {
+            loadProject(gameOverride);
+        }
+        else if (config.EditingGameIsValid())
+        {
+            loadProject(config.EditingGame);
+        }
+        else
+        {
+            TopLevel.SelectGameModal((game, rememberGameChoice) =>
+            {
+                if (rememberGameChoice)
+                    config.SetEditingGame(game);
+                loadProject(game);
+            });
+        }
     }
 
     // ================================================================================
@@ -315,21 +340,7 @@ public static class TopLevel
 
         if (result.IsOk)
         {
-            projectDirectoryToOpen = result.Path;
-            ProjectConfig config = ProjectConfig.Load(projectDirectoryToOpen);
-
-            if (config == null)
-            {
-                DisplayMessageModal("Error", "Couldn't open project config file. Please select the \"oracles-disasm\" folder to open.");
-            }
-            else if (config.EditingGameIsValid())
-            {
-                OpenProject(projectDirectoryToOpen, config.EditingGame);
-            }
-            else
-            {
-                TopLevel.SelectGameModal();
-            }
+            OpenProject(result.Path);
         }
         else if (result.IsCancelled)
         {
@@ -349,7 +360,7 @@ public static class TopLevel
         });
     }
 
-    public static void SelectGameModal()
+    public static void SelectGameModal(Action<string, bool> onSelected)
     {
         // Deciding which game to edit after selecting a project
         OpenModal("Select Game", () =>
@@ -366,14 +377,8 @@ public static class TopLevel
 
             if (gameChoice != null)
             {
-                if (rememberGameChoice)
-                {
-                    ProjectConfig config = ProjectConfig.Load(projectDirectoryToOpen);
-                    config.SetEditingGame(gameChoice);
-                }
-                OpenProject(projectDirectoryToOpen, gameChoice);
+                onSelected(gameChoice, rememberGameChoice);
 
-                projectDirectoryToOpen = null;
                 rememberGameChoice = false;
                 return true;
             }
