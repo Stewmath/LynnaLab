@@ -84,14 +84,7 @@ namespace LynnaLib
         public string GetField(string field)
         {
             field = field.ToLower();
-            try
-            {
-                return _fieldDict[field];
-            }
-            catch (KeyNotFoundException)
-            {
-                return null;
-            }
+            return _fieldDict.GetValueOrDefault(field);
         }
 
         public void SetField(string field, string value)

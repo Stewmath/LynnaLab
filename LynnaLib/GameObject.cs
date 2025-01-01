@@ -90,16 +90,12 @@ namespace LynnaLib
 
         public ObjectAnimation GetAnimation(int i)
         {
-            try
-            {
+            if (_animations.ContainsKey(i))
                 return _animations[i];
-            }
-            catch (KeyNotFoundException)
-            {
-                var anim = new ObjectAnimation(this, i);
-                _animations[i] = anim;
-                return anim;
-            }
+
+            var anim = new ObjectAnimation(this, i);
+            _animations[i] = anim;
+            return anim;
         }
 
         /// <summary>

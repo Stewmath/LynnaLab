@@ -237,32 +237,18 @@
         // TODO: Rename to "ValueToString" or something
         public string ByteToString(int key)
         {
-            try
-            {
+            if (ByteToStringDict.ContainsKey(key))
                 return ByteToStringDict[key].str;
-            }
-            catch (KeyNotFoundException)
-            { // Fallback
-                return Wla.ToHex(key, 2);
-            }
+
+            // Fallback
+            return Wla.ToHex(key, 2);
         }
 
-        // These functions return -1 if values aren't found
+        // Returns -1 if values aren't found
         public int IndexOf(string key)
         {
             var list = GetAllStrings();
             return list.IndexOf(key); // TODO: optimize
-        }
-        public int IndexOf(int val)
-        {
-            try
-            {
-                return IndexOf(ByteToString(val));
-            }
-            catch (KeyNotFoundException)
-            {
-                return -1;
-            }
         }
 
 
@@ -334,31 +320,21 @@
         ///  </summary>
         public Documentation GetDocumentationForValue(int b)
         {
-            try
-            {
-                Documentation d = ByteToStringDict[b].documentation;
-                if (d == null)
-                    return null;
-                return new Documentation(d);
-            }
-            catch (KeyNotFoundException)
-            {
+            if (!ByteToStringDict.ContainsKey(b))
                 return null;
-            }
+            Documentation d = ByteToStringDict[b].documentation;
+            if (d == null)
+                return null;
+            return new Documentation(d);
         }
         public Documentation GetDocumentationForValue(string s)
         {
-            try
-            {
-                Documentation d = StringToByteDict[s].documentation;
-                if (d == null)
-                    return null;
-                return new Documentation(d);
-            }
-            catch (KeyNotFoundException)
-            {
+            if (!StringToByteDict.ContainsKey(s))
                 return null;
-            }
+            Documentation d = StringToByteDict[s].documentation;
+            if (d == null)
+                return null;
+            return new Documentation(d);
         }
 
         // ================================================================================
