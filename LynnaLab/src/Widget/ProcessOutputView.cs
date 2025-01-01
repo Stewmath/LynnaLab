@@ -65,7 +65,7 @@ public class ProcessOutputView
                 break;
             case "system":
             default:
-                color = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+                color = new Vector4(0.7f, 0.7f, 0.7f, 1.0f);
                 break;
         }
         this.textList.Add(new TextEntry { text = StripAnsiCodes(text), color = color });
