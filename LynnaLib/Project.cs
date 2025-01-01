@@ -1142,6 +1142,11 @@ namespace LynnaLib
             UndoState.EndTransaction();
         }
 
+        public bool FileExists(string filename)
+        {
+            return File.Exists(BaseDirectory + filename);
+        }
+
         // ================================================================================
         // Undoable interface functions
         // ================================================================================
@@ -1163,11 +1168,6 @@ namespace LynnaLib
         // ================================================================================
         // Private methods
         // ================================================================================
-
-        bool FileExists(string filename)
-        {
-            return File.Exists(BaseDirectory + filename);
-        }
 
         Bitmap LoadLinkBitmap()
         {

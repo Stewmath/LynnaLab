@@ -191,24 +191,17 @@ namespace LynnaLib
             {
                 throw new AssemblyErrorException("Expected label \"" + label + "\" to be followed by the m_RoomLayoutData macro.");
             }
+
             string roomString = data.GetValue(0) + ".bin";
-            try
-            {
-                tileDataFile = Project.GetBinaryFile(
-                        "rooms/" + Project.GameString + "/small/" + roomString);
-            }
-            catch (FileNotFoundException)
-            {
-                try
-                {
-                    tileDataFile = Project.GetBinaryFile(
-                            "rooms/" + Project.GameString + "/large/" + roomString);
-                }
-                catch (FileNotFoundException)
-                {
-                    throw new AssemblyErrorException("Couldn't find \"" + roomString + "\" in \"rooms/small\" or \"rooms/large\".");
-                }
-            }
+            string smallFileName = "rooms/" + Project.GameString + "/small/" + roomString;
+            string largeFileName = "rooms/" + Project.GameString + "/large/" + roomString;
+
+            if (Project.FileExists(smallFileName))
+                tileDataFile = Project.GetBinaryFile(smallFileName);
+            else if (Project.FileExists(largeFileName))
+                tileDataFile = Project.GetBinaryFile(largeFileName);
+            else
+                throw new AssemblyErrorException("Couldn't find \"" + roomString + "\" in \"rooms/small\" or \"rooms/large\".");
 
             tileDataFile.AddModifiedEventHandler(TileDataModified);
 

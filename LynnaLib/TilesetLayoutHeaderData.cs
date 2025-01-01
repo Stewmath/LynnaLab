@@ -46,6 +46,7 @@ namespace LynnaLib
             {
                 // Default is to copy from 00 I guess
                 // TODO: copy this into its own file?
+                LogHelper.GetLogger().Warn("Missing tileset layout file: " + GetValue(1));
                 string filename = GetValue(1).Substring(0, GetValue(1).Length - 2);
                 referencedData = Project.GetBinaryFile("tileset_layouts/" + Project.GameString + "/" + filename + "00.bin");
             }
