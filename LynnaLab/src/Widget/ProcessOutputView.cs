@@ -17,7 +17,7 @@ public class ProcessOutputView
     // Variables
     // ================================================================================
 
-    bool jumpToBottom;
+    int jumpToBottom;
     Process process;
     List<TextEntry> textList = new List<TextEntry>();
 
@@ -43,10 +43,10 @@ public class ProcessOutputView
                 ImGui.TextWrapped(entry.text);
         }
 
-        if (jumpToBottom)
+        if (jumpToBottom != 0)
         {
             ImGui.SetScrollY(ImGui.GetScrollMaxY());
-            jumpToBottom = false;
+            jumpToBottom--;
         }
     }
 
@@ -69,7 +69,7 @@ public class ProcessOutputView
                 break;
         }
         this.textList.Add(new TextEntry { text = StripAnsiCodes(text), color = color });
-        jumpToBottom = true;
+        jumpToBottom = 2;
     }
 
     /// <summary>

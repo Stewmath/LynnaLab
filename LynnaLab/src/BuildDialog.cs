@@ -45,8 +45,9 @@ public class BuildDialog : Frame
     {
         ImGui.PushFont(TopLevel.DefaultFont);
 
-        if (ImGui.BeginChild("Build Dialog ProcessView",
-                             new Vector2(0.0f, -40.0f)))
+        ImGui.TextWrapped("Building oracles-disasm. The first time will take several minutes.");
+
+        if (ImGui.BeginChild("Build Dialog ProcessView", new Vector2(0.0f, -50.0f), ImGuiChildFlags.FrameStyle))
         {
             processView?.Render();
         }
