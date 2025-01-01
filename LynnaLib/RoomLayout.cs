@@ -90,17 +90,17 @@ namespace LynnaLib
         }
         public void SetTile(int x, int y, int value)
         {
+            int oldTile = GetTile(x, y);
+            if (oldTile == value)
+                return;
+
             Project.BeginTransaction($"Modify room layout#r{Room.Index:X3}s{Season}", true);
 
-            int oldTile = GetTile(x, y);
-            if (oldTile != value)
-            {
-                tilePositions[oldTile].Remove((x, y));
-                tilePositions[value].Add((x, y));
-                tileDataFile.Position = y * Stride + x;
-                tileDataFile.WriteByte((byte)value);
-                // Modifying the data will trigger the callback to the TileDataModified function
-            }
+            tilePositions[oldTile].Remove((x, y));
+            tilePositions[value].Add((x, y));
+            tileDataFile.Position = y * Stride + x;
+            tileDataFile.WriteByte((byte)value);
+            // Modifying the data will trigger the callback to the TileDataModified function
 
             Project.UndoState.OnRewind("Modify room layout", () =>
             { // On undo

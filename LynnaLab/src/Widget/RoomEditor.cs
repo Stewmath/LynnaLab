@@ -40,7 +40,6 @@ public class RoomEditor : Frame
             (sender, args) =>
             {
                 Brush.SetTiles(tilesetViewer, args.RectArray((x, y) => x + y * 16));
-                tilesetViewer.SelectedIndex = -1;
             });
 
         overworldMinimap = new Minimap(this.Workspace);

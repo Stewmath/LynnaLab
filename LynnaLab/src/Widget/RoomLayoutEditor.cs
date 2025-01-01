@@ -33,7 +33,8 @@ public class RoomLayoutEditor : TileGrid
             (x, y) => RoomLayout.GetTile(x, y),
             (x, y, tile) => RoomLayout.SetTile(x, y, tile),
             () => RoomLayout.Width,
-            () => RoomLayout.Height);
+            () => RoomLayout.Height,
+            () => Project.UndoState.InsertBarrier());
 
         QuickstartData.enableToggledEvent += (s, a) => UpdateQuickstartRoomComponent();
         RoomEditor.TabChangedEvent += (s, a) => UpdateRoomComponents();
@@ -186,7 +187,7 @@ public class RoomLayoutEditor : TileGrid
         // modified through mouse dragging until the mouse is released and clicked again. Prevents
         // accidental tile grid modifications in some situations, ie. when clicking outside a
         // right-click popup menu.
-        if (!isWindowHovered && ImGui.IsMouseDown(ImGuiMouseButton.Left))
+        if (!isWindowHovered && ImGui.IsMouseDown(ImGuiMouseButton.Left) && !SelectingRectangle)
             suppressCurrentClick = true;
 
         // Draw hover outline if something is being hovered over

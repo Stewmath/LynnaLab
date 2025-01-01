@@ -483,31 +483,24 @@ public class TileGrid : SizedWidget
     /// </summary>
     public void RenderHoverAndSelection()
     {
+        // Determine hovered tile
         HoveredTile = -1;
 
-        RenderBrushPreview();
+        int hoverWidth = 1, hoverHeight = 1;
+        if (BrushInterfacer != null)
+        {
+            hoverWidth = BrushInterfacer.BrushWidth;
+            hoverHeight = BrushInterfacer.BrushHeight;
+        }
 
         int mouseIndex = -1;
         if (isHovered)
-            mouseIndex = CoordToTile(base.GetRelativeMousePos());
-
-        if (isHovered)
         {
-            int hoverWidth = 1, hoverHeight = 1;
-
-            if (BrushInterfacer != null)
-            {
-                hoverWidth = BrushInterfacer.BrushWidth;
-                hoverHeight = BrushInterfacer.BrushHeight;
-            }
-
-            if (mouseIndex != -1 && mouseIndex < MaxIndex && draggingTileIndex == -1)
+            mouseIndex = CoordToTile(base.GetRelativeMousePos());
+            if (mouseIndex != -1 && draggingTileIndex == -1)
             {
                 int mouseX = mouseIndex % Width;
                 int mouseY = mouseIndex / Width;
-
-                TileGridEventArgs args = new TileGridEventArgs(this);
-                args.selectedIndex = mouseIndex;
 
                 // This only executes if not currently doing a rectangle select
                 if (activeRectSelectAction == null)
@@ -518,103 +511,128 @@ public class TileGrid : SizedWidget
                         if (HoveredTile >= MaxIndex)
                             HoveredTile = -1;
                     }
-
-                    // Draw hover rectangle
-                    FRect r = TileRangeRect(mouseIndex, XYToTile(
-                                                Math.Min(mouseX + hoverWidth - 1, Width - 1),
-                                                Math.Min(mouseY + hoverHeight - 1, Height - 1)));
-                    base.AddRect(r, HoverColor, thickness: RectThickness);
-
-                    // Check mouse actions
-                    foreach (TileGridAction action in actionList)
-                    {
-                        args.gridAction = GridAction.Select;
-
-                        // suppressCurrentClick is an override telling us to ignore all mouse
-                        // actions until the mouse is released and clicked again
-                        if (suppressCurrentClick)
-                        {
-                            if (!ImGui.IsMouseDown(ImGuiMouseButton.Left) && !ImGui.IsMouseDown(ImGuiMouseButton.Right))
-                                suppressCurrentClick = false;
-                            break;
-                        }
-
-                        if (action.ActionTriggered())
-                        {
-                            if (action.action == GridAction.Callback)
-                            {
-                                action.callback(this, args);
-                            }
-                            else if (action.action == GridAction.SelectRangeCallback)
-                            {
-                                // We're just starting the rectangle selection
-                                activeRectSelectAction = action;
-                                rectSelectStart = mouseIndex;
-                                rectSelectEnd = rectSelectStart;
-                            }
-                            else if (action.action == GridAction.Select)
-                            {
-                                if (SelectedIndex == mouseIndex && Unselectable)
-                                {
-                                    SelectedIndex = -1;
-                                }
-                                else if (Selectable)
-                                {
-                                    SelectedIndex = mouseIndex;
-                                }
-                            }
-                            else
-                                throw new NotImplementedException();
-                        }
-                    }
                 }
             }
         }
 
-        // Currently selecting a rectangle region
-        if (SelectingRectangle)
+        bool isMousePosValid = isHovered && mouseIndex != -1 && draggingTileIndex == -1;
+        bool selectingRectangleThisFrame = SelectingRectangle;
+
+        // Check mouse actions
+        foreach (TileGridAction action in actionList)
         {
-            if (activeRectSelectAction.ActionTriggered())
-            {
-                // Button still being held
-                if (mouseIndex != -1)
-                    rectSelectEnd = mouseIndex;
+            TileGridEventArgs args = new TileGridEventArgs(this);
+            args.selectedIndex = mouseIndex;
 
-                // If clicked the alternate button, cancel the rectangle selection without doing anything
-                if (ImGui.IsMouseClicked(activeRectSelectAction.GetCancelButton()))
-                {
-                    suppressCurrentClick = true;
-                    activeRectSelectAction = null;
-                }
+            bool actionTriggered = action.ActionTriggered();
+            bool activeThisFrame = actionTriggered && isMousePosValid;
+
+            // suppressCurrentClick is an override telling us to ignore all mouse
+            // actions until the mouse is released and clicked again
+            if (suppressCurrentClick)
+            {
+                if (!ImGui.IsMouseDown(ImGuiMouseButton.Left) && !ImGui.IsMouseDown(ImGuiMouseButton.Right))
+                    suppressCurrentClick = false;
+                activeThisFrame = false;
             }
-            else
+
+            // Rectangle select actions override others
+            if (selectingRectangleThisFrame && action != activeRectSelectAction)
+                activeThisFrame = false;
+
+            if (activeThisFrame)
             {
-                // Released the button
-                var args = new TileGridEventArgs(this);
-                args.gridAction = activeRectSelectAction.action;
-                (args.topLeft, args.bottomRight) = GetSelectRectBounds();
+                // Code here may execute once (for "click" actions) or many times (for "clickdrag" actions)
 
-                activeRectSelectAction.callback(this, args);
-
-                if (Selectable)
+                if (action.action == GridAction.Callback)
                 {
-                    int width = args.bottomRight.X - args.topLeft.X + 1;
-                    int height = args.bottomRight.Y - args.topLeft.Y + 1;
-                    if (width == 1 && height == 1)
+                    action.callback(this, args);
+                }
+                else if (action.action == GridAction.SelectRangeCallback)
+                {
+                    if (!action.activatedLastFrame)
                     {
-                        // Only one tile was selected, just set the selectedIndex to that.
-                        // TODO: Is this wise? Not all callers may want this. They can set the
-                        // callback themselves...
-                        SelectedIndex = args.topLeft.X + args.topLeft.Y * Width;
+                        activeRectSelectAction = action;
+                        rectSelectStart = mouseIndex;
+                        rectSelectEnd = mouseIndex;
                     }
                     else
                     {
-                        RectangleSelected = true;
+                        // Button still being held
+                        if (mouseIndex != -1)
+                            rectSelectEnd = mouseIndex;
+
+                        // If clicked the alternate button, cancel the rectangle selection without doing anything
+                        if (ImGui.IsMouseClicked(activeRectSelectAction.GetCancelButton()))
+                        {
+                            suppressCurrentClick = true;
+                            activeRectSelectAction = null;
+                        }
                     }
                 }
+                else if (action.action == GridAction.Select)
+                {
+                    if (SelectedIndex == mouseIndex && Unselectable)
+                    {
+                        SelectedIndex = -1;
+                    }
+                    else if (Selectable)
+                    {
+                        SelectedIndex = mouseIndex;
+                    }
+                }
+                else
+                    throw new NotImplementedException();
 
-                activeRectSelectAction = null;
+                action.activatedLastFrame = true;
             }
+
+            // Allow rectangle select action to remain active even when we move out of the window
+            bool actionJustEnded = !activeThisFrame && action.activatedLastFrame
+                && !(action == activeRectSelectAction && actionTriggered);
+
+            if (actionJustEnded)
+            {
+                // Action ended (usually means the mouse button was released)
+                action.activatedLastFrame = false;
+
+                if (action == activeRectSelectAction)
+                {
+                    args = new TileGridEventArgs(this);
+                    args.gridAction = activeRectSelectAction.action;
+                    (args.topLeft, args.bottomRight) = GetSelectRectBounds();
+
+                    if (Selectable)
+                    {
+                        int width = args.bottomRight.X - args.topLeft.X + 1;
+                        int height = args.bottomRight.Y - args.topLeft.Y + 1;
+
+                        // Could consider just setting SelectedIndex if width == height == 1...
+                        RectangleSelected = true;
+                        selectedIndex = -1;
+                    }
+
+                    activeRectSelectAction.callback(this, args);
+                    activeRectSelectAction = null;
+                }
+
+                action.onRelease?.Invoke();
+            }
+        }
+
+        // Finally, do hover rendering
+
+        RenderBrushPreview();
+
+        if (isMousePosValid && !SelectingRectangle)
+        {
+            // Draw hover rectangle
+            int hoverX = mouseIndex % Width;
+            int hoverY = mouseIndex / Width;
+            FRect r = TileRangeRect(mouseIndex, XYToTile(
+                                        Math.Min(hoverX + hoverWidth - 1, Width - 1),
+                                        Math.Min(hoverY + hoverHeight - 1, Height - 1)));
+            base.AddRect(r, HoverColor, thickness: RectThickness);
         }
 
         if (RectangleSelected || SelectingRectangle)
@@ -674,7 +692,8 @@ public class TileGrid : SizedWidget
     }
 
     public void AddMouseAction(MouseButton button, MouseModifier mod, MouseAction mouseAction,
-        GridAction action, TileGridEventHandler callback = null, bool brushPreview = false, string name = null)
+        GridAction action, TileGridEventHandler callback = null, bool brushPreview = false, string name = null,
+        Action onRelease = null)
     {
         TileGridAction act;
         if (action == GridAction.Callback || action == GridAction.SelectRangeCallback)
@@ -688,7 +707,7 @@ public class TileGrid : SizedWidget
                 throw new Exception("This action doesn't take a callback.");
         }
 
-        act = new TileGridAction(button, mod, mouseAction, action, callback, brushPreview, name);
+        act = new TileGridAction(button, mod, mouseAction, action, callback, brushPreview, name, onRelease);
 
         // Insert at front of list; newest actions get highest priority
         actionList.Insert(0, act);
@@ -776,14 +795,13 @@ public class TileGrid : SizedWidget
         Func<int, int, T> tileGetter,
         Action<int, int, T> tileSetter,
         Func<int> maxX,
-        Func<int> maxY)
+        Func<int> maxY,
+        Action setterFinishedAction = null)
     {
+
         // Left click to set tile
         AddMouseAction(
-            MouseButton.LeftClick,
-            MouseModifier.None,
-            MouseAction.ClickDrag,
-            GridAction.Callback,
+            MouseButton.LeftClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
             (sender, args) =>
             {
                 int x = args.selectedIndex % Width;
@@ -794,26 +812,23 @@ public class TileGrid : SizedWidget
                         return;
                     tileSetter(x2, y2, t);
                 }, x, y, brush.BrushWidth, brush.BrushHeight);
-            });
+            },
+            onRelease: setterFinishedAction
+        );
 
         // Ctrl+Left click to set range of tiles
         AddMouseAction(
-            MouseButton.LeftClick,
-            MouseModifier.Ctrl,
-            MouseAction.ClickDrag,
-            GridAction.SelectRangeCallback,
+            MouseButton.LeftClick, MouseModifier.Ctrl, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
             (sender, args) =>
             {
                 brush.Draw(tileSetter, args.topLeft.X, args.topLeft.Y, args.SelectedWidth, args.SelectedHeight);
+                setterFinishedAction?.Invoke();
             },
             brushPreview: true);
 
         // Right-click to select a tile or a range of tiles
         AddMouseAction(
-            MouseButton.RightClick,
-            MouseModifier.None,
-            MouseAction.ClickDrag,
-            GridAction.SelectRangeCallback,
+            MouseButton.RightClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
             (_, args) =>
             {
                 brush.SetTiles(this, args.RectArray((x2, y2) => tileGetter(x2, y2)));
@@ -972,9 +987,12 @@ public class TileGrid : SizedWidget
         // Action to perform when conditions are cleared
         public readonly GridAction action;
         public readonly TileGridEventHandler callback;
+        public readonly Action onRelease;
+
+        public bool activatedLastFrame = false;
 
         public TileGridAction(MouseButton button, MouseModifier mod, MouseAction mouseAction,
-                              GridAction action, TileGridEventHandler callback, bool brushPreview, string name)
+                              GridAction action, TileGridEventHandler callback, bool brushPreview, string name, Action onRelease)
         {
             this.button = button;
             this.mod = mod;
@@ -983,6 +1001,7 @@ public class TileGrid : SizedWidget
             this.callback = callback;
             this.brushPreview = brushPreview;
             this.name = name;
+            this.onRelease = onRelease;
         }
 
         /// <summary>
