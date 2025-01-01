@@ -72,9 +72,14 @@ namespace LynnaLib
             set { _position = value; }
         }
 
-        public string Name
+        public string FilePath
         {
-            get { return filename; }
+            get { return filepath; }
+        }
+
+        public string RelativeFilePath
+        {
+            get { return System.IO.Path.GetRelativePath(Project.BaseDirectory, filepath); }
         }
 
         private byte[] Data { get { return state.data; } }
@@ -83,7 +88,7 @@ namespace LynnaLib
         long _length;
         long _position;
         bool modified = false;
-        string filename;
+        string filepath;
 
         LockableEvent<ModifiedEventArgs> modifiedEvent = new LockableEvent<ModifiedEventArgs>();
 
@@ -94,7 +99,7 @@ namespace LynnaLib
         public MemoryFileStream(Project project, string filename)
         {
             this.Project = project;
-            this.filename = filename;
+            this.filepath = filename;
 
             FileStream input = new FileStream(filename, FileMode.Open);
             _length = input.Length;
@@ -112,7 +117,7 @@ namespace LynnaLib
         {
             if (modified)
             {
-                FileStream output = new FileStream(filename, FileMode.Open);
+                FileStream output = new FileStream(filepath, FileMode.Open);
                 output.Write(Data, 0, (int)Length);
                 output.Close();
                 modified = false;

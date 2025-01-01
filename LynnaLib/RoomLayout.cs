@@ -223,7 +223,7 @@ namespace LynnaLib
                 height = 0xb;
             }
             else
-                throw new AssemblyErrorException("Size of file \"" + tileDataFile.Name + "\" was invalid!");
+                throw new AssemblyErrorException("Size of file \"" + tileDataFile.FilePath + "\" was invalid!");
 
             CalculateTilePositions();
         }

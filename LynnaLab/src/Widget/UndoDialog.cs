@@ -44,7 +44,7 @@ public class UndoDialog : Frame
             DrawTransaction(UndoState.constructingTransaction, -1);
         }
 
-        ImGui.Text("Committed transactions:");
+        ImGui.Text("Undo stack:");
 
         int index = 0;
         foreach (var transaction in UndoState.Transactions)
@@ -64,43 +64,19 @@ public class UndoDialog : Frame
         string keyString = "###Transaction" + index;
         if (ImGui.CollapsingHeader(t.description + keyString + "A"))
         {
-            var pos = ImGui.GetCursorScreenPos();
-            ImGuiX.ShiftCursorScreenPos(10.0f, 0.0f);
-            if (ImGui.BeginChild(keyString + "Child"))
+            foreach (object obj in t.deltas.Keys)
             {
-                ImGui.Text("Deltas: " + t.deltas.Count);
+                string text = obj.GetType().ToString();
 
-                if (ImGui.CollapsingHeader("FileComponents"))
-                {
-                    foreach (object obj in t.deltas.Keys)
-                    {
-                        if (obj is FileComponent com)
-                            ImGui.Text(com.GetString());
-                    }
-                }
-                if (ImGui.CollapsingHeader("FileParsers"))
-                {
-                    foreach (object obj in t.deltas.Keys)
-                    {
-                        if (obj is FileParser parser)
-                            ImGui.Text(parser.Filename);
-                    }
-                }
-                if (ImGui.CollapsingHeader("Binary files"))
-                {
-                    foreach (object obj in t.deltas.Keys)
-                    {
-                        if (obj is MemoryFileStream stream)
-                            ImGui.Text(stream.Name);
-                    }
-                }
-                if (t.deltas.Keys.Contains(Project))
-                    ImGui.Text("+Project");
+                if (obj is FileComponent com)
+                    text += ": " + com.GetString();
+                else if (obj is FileParser p)
+                    text += ": " + p.Filename;
+                else if (obj is MemoryFileStream stream)
+                    text += ": " + stream.RelativeFilePath;
 
-                pos.Y = ImGui.GetCursorScreenPos().Y;
+                ImGui.Text("- " + text);
             }
-            ImGui.EndChild();
-            ImGui.SetCursorScreenPos(pos);
         }
     }
 }
