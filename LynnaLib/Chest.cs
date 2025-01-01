@@ -164,7 +164,7 @@ namespace LynnaLib
                     editable: false);
             var v4 = AbstractIntValueReference.Descriptor(Project,
                     name: "ID",
-                    getter: () => { return Project.EvalToInt(dataStart.GetValue(2)) >> 8; },
+                    getter: () => { return Project.Eval(dataStart.GetValue(2)) >> 8; },
                     setter: (v) =>
                     {
                         UpdateTreasureName(v, -1);
@@ -173,7 +173,7 @@ namespace LynnaLib
                     constantsMappingString: "TreasureMapping");
             var v5 = AbstractIntValueReference.Descriptor(Project,
                     name: "SubID",
-                    getter: () => { return Project.EvalToInt(dataStart.GetValue(2)) & 0xff; },
+                    getter: () => { return Project.Eval(dataStart.GetValue(2)) & 0xff; },
                     setter: (v) =>
                     {
                         UpdateTreasureName(-1, v);

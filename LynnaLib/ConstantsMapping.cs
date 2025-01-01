@@ -182,17 +182,16 @@
                 {
                     if (!StringToByteDict.ContainsKey(key))
                     {
-                        try
-                        {
-                            string valStr = definesDictionary[key];
-                            DocumentationFileComponent docComponent = null;
-                            documentationDictionary?.TryGetValue(key, out docComponent);
+                        string valStr = definesDictionary[key];
+                        DocumentationFileComponent docComponent = null;
+                        documentationDictionary?.TryGetValue(key, out docComponent);
 
-                            int val = Project.EvalToInt(valStr);
+                        int val;
 
+                        if (Project.TryEval(valStr, out val))
                             AddKeyValuePair(key, val, docComponent);
-                        }
-                        catch (FormatException) { }
+                        else
+                            Console.WriteLine("ConstantsMapping: " + valStr);
                     }
                 }
 

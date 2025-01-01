@@ -27,12 +27,12 @@ namespace LynnaLib
 
                 Stream dataFile = headerData.ReferencedData;
                 dataFile.Position = 0;
-                if (headerData.DestAddress == Project.EvalToInt("w3TileMappingIndices"))
+                if (headerData.DestAddress == Project.Eval("w3TileMappingIndices"))
                 {
                     // Mappings
                     mappingsDataFile = dataFile;
                 }
-                else if (headerData.DestAddress == Project.EvalToInt("w3TileCollisions"))
+                else if (headerData.DestAddress == Project.Eval("w3TileCollisions"))
                 {
                     // Collisions
                     collisionsDataFile = dataFile;

@@ -39,7 +39,7 @@ namespace LynnaLib
         {
             get {
                 if (GetNumValues() >= 3)
-                    return Project.EvalToInt(GetValue(2));
+                    return Project.Eval(GetValue(2));
                 else
                     return (int)gfxStream.Length / 16;
             }

@@ -39,11 +39,11 @@ namespace LynnaLib
         }
         public int FirstPalette
         {
-            get { return Project.EvalToInt(GetValue(0)); }
+            get { return Project.Eval(GetValue(0)); }
         }
         public int NumPalettes
         {
-            get { return Project.EvalToInt(GetValue(1)); }
+            get { return Project.Eval(GetValue(1)); }
         }
         public string PointerName
         {
@@ -62,15 +62,9 @@ namespace LynnaLib
             : base(p, command, values, 3, parser, spacing)
         {
 
-            int dest = -1;
-            try
-            {
-                dest = Project.EvalToInt(GetValue(2));
-            }
-            catch (FormatException)
-            {
+            int dest;
+            if (!Project.TryEval(GetValue(2), out dest))
                 dest = -1;
-            }
 
             string labelName = GetValue(2);
             if (dest != -1 || !Project.HasLabel(labelName))

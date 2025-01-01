@@ -21,7 +21,7 @@ namespace LynnaLib
             string label = pointer.GetValue(0);
 
             Data data = parser.GetData(label);
-            int b1 = Project.EvalToInt(data.GetValue(0));
+            int b1 = Project.Eval(data.GetValue(0));
             data = data.NextData;
             int bits = b1 & 0xf;
 

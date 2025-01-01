@@ -12,7 +12,7 @@ namespace LynnaLib
 
         public int DictionaryIndex
         {
-            get { return Project.EvalToInt(GetValue(0)); }
+            get { return Project.Eval(GetValue(0)); }
         }
         public Stream ReferencedData
         {
@@ -23,15 +23,15 @@ namespace LynnaLib
         }
         public int DestAddress
         {
-            get { return Project.EvalToInt(GetValue(2)); }
+            get { return Project.Eval(GetValue(2)); }
         }
         public int DestBank
         {
-            get { return Project.EvalToInt(":" + GetValue(2)); }
+            get { return Project.Eval(":" + GetValue(2)); }
         }
         public int DataSize
         {
-            get { return Project.EvalToInt(GetValue(3)); }
+            get { return Project.Eval(GetValue(3)); }
         }
 
 
@@ -53,7 +53,7 @@ namespace LynnaLib
 
         public bool ShouldHaveNext()
         {
-            return (Project.EvalToInt(GetValue(4)) & 0x80) == 0x80;
+            return (Project.Eval(GetValue(4)) & 0x80) == 0x80;
         }
     }
 

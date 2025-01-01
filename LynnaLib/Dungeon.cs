@@ -430,7 +430,7 @@ namespace LynnaLib
 
         void DetermineGroup()
         {
-            _mainGroup = GetDataIndex(0) - Project.EvalToInt(">wGroup4RoomFlags") + 4;
+            _mainGroup = GetDataIndex(0) - Project.Eval(">wGroup4RoomFlags") + 4;
         }
     }
 }

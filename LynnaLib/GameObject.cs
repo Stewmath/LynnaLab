@@ -81,15 +81,11 @@ namespace LynnaLib
             string field = GetSubIDDocumentation()?.GetField("palette");
             if (field == null)
                 return null;
-            try
-            {
-                int paletteIndex = Project.EvalToInt(field);
-                return Project.GetIndexedDataType<PaletteHeaderGroup>(paletteIndex).GetObjPalettes();
-            }
-            catch (System.FormatException)
-            {
+
+            int paletteIndex;
+            if (!Project.TryEval(field, out paletteIndex))
                 return null;
-            }
+            return Project.GetIndexedDataType<PaletteHeaderGroup>(paletteIndex).GetObjPalettes();
         }
 
         public ObjectAnimation GetAnimation(int i)

@@ -346,7 +346,7 @@ namespace LynnaLib
                     {
                         for (int addr = header.DestAddr;
                                 addr < header.DestAddr +
-                                (Project.EvalToInt(header.GetValue(2)) + 1) * 16;
+                                (Project.Eval(header.GetValue(2)) + 1) * 16;
                                 addr++)
                         {
                             int tile = (addr - 0x8800) / 16;

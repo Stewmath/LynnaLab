@@ -20,11 +20,11 @@ namespace LynnaLib
             Data data = parser.GetData(label);
             while (data != null && data.CommandLowerCase == ".db")
             {
-                counters.Add(Project.EvalToInt(data.GetValue(0)));
+                counters.Add(Project.Eval(data.GetValue(0)));
                 data = data.NextData;
                 if (data.CommandLowerCase != ".db")
                     throw new Exception("Malformatted animation data");
-                gfxHeaderIndices.Add(Project.EvalToInt(data.GetValue(0)));
+                gfxHeaderIndices.Add(Project.Eval(data.GetValue(0)));
                 data = data.NextData;
             }
         }

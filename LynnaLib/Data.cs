@@ -135,17 +135,18 @@ namespace LynnaLib
                 throw new InvalidLookupException("Value " + i + " is out of range in Data object.");
             return Values[i];
         }
+
+        public bool TryGetIntValue(int i, out int output)
+        {
+            return Project.TryEval(GetValue(i), out output);
+        }
+
+        /// <summary>
+        /// Like TryGetIntValue but throws FormatException on error
+        /// </summary>
         public int GetIntValue(int i)
         {
-            // TODO: error handling
-            try
-            {
-                return Project.EvalToInt(GetValue(i));
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            return Project.Eval(GetValue(i));
         }
 
         public virtual int GetNumValues()
@@ -312,9 +313,9 @@ namespace LynnaLib
             get
             {
                 return Color.FromRgb(
-                        Project.EvalToInt(GetValue(0)) * 8,
-                        Project.EvalToInt(GetValue(1)) * 8,
-                        Project.EvalToInt(GetValue(2)) * 8);
+                        Project.Eval(GetValue(0)) * 8,
+                        Project.Eval(GetValue(1)) * 8,
+                        Project.Eval(GetValue(2)) * 8);
             }
             set
             {

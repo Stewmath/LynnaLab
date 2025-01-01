@@ -293,12 +293,12 @@ namespace LynnaLib
                     case "dsb":
                         if (context != "RAMSECTION" && context != "ENUM")
                             goto default;
-                        address += Project.EvalToInt(fTokens[1]);
+                        address += Project.Eval(fTokens[1]);
                         break;
                     case "dsw":
                         if (context != "RAMSECTION" && context != "ENUM")
                             goto default;
-                        address += Project.EvalToInt(fTokens[1]) * 2;
+                        address += Project.Eval(fTokens[1]) * 2;
                         break;
 
                     case "instanceof":
@@ -362,7 +362,7 @@ namespace LynnaLib
                             AddDefinitionWhileParsing(fTokens[2], fTokens[1]);
 
                             // Label is defined in the macro, so we need to handle that manually
-                            int index = Project.EvalToInt(fTokens[2]);
+                            int index = Project.Eval(fTokens[2]);
                             string labelName;
                             if (commandLower == "m_gfxheaderstart")
                                 labelName = "gfxHeader";
@@ -394,7 +394,7 @@ namespace LynnaLib
                             AddDefinitionWhileParsing(fTokens[2], fTokens[1]);
 
                             // Label is defined in the macro, so we need to handle that manually
-                            int index = Project.EvalToInt(fTokens[2]);
+                            int index = Project.Eval(fTokens[2]);
                             string labelName;
                             labelName = "paletteHeader" + index.ToString("x2");
                             Label l = new Label(this, labelName);
@@ -701,13 +701,13 @@ namespace LynnaLib
                                 if (tokens[tokenIndex] == "BANK")
                                 {
                                     tokenIndex++;
-                                    bank = Project.EvalToInt(tokens[tokenIndex++]);
+                                    bank = Project.Eval(tokens[tokenIndex++]);
                                 }
                                 else if (tokens[tokenIndex] == "SLOT")
                                 {
                                     tokenIndex++;
                                     string slotString = tokens[tokenIndex++];
-                                    int slot = Project.EvalToInt(slotString);
+                                    int slot = Project.Eval(slotString);
                                     if (slot == 2)
                                         address = 0xc000;
                                     else
@@ -728,7 +728,7 @@ namespace LynnaLib
 
                     case ".enum":
                         context = "ENUM";
-                        address = Project.EvalToInt(tokens[1]);
+                        address = Project.Eval(tokens[1]);
                         break;
                     // Not supported: "DESC" (descreasing order)
 

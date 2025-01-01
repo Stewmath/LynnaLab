@@ -148,7 +148,7 @@ public class DataValueReference : ValueReference
     }
     public override int GetIntValue()
     {
-        int intValue = Project.EvalToInt(GetStringValue());
+        int intValue = Project.Eval(GetStringValue());
         switch (dataType)
         {
             case DataValueType.ByteBits:
@@ -207,7 +207,7 @@ public class DataValueReference : ValueReference
             case DataValueType.WordBits:
                 {
                     int andValue = ((1 << (endBit - startBit + 1)) - 1);
-                    int value = Project.EvalToInt(GetStringValue()) & (~(andValue << startBit));
+                    int value = Project.Eval(GetStringValue()) & (~(andValue << startBit));
                     value |= ((i & andValue) << startBit);
                     if (dataType == DataValueType.ByteBits)
                         SetValue(Wla.ToByte((byte)value));
@@ -217,7 +217,7 @@ public class DataValueReference : ValueReference
                 break;
             case DataValueType.ByteBit:
                 {
-                    int value = Project.EvalToInt(GetStringValue()) & ~(1 << startBit);
+                    int value = Project.Eval(GetStringValue()) & ~(1 << startBit);
                     value |= ((i & 1) << startBit);
                     SetValue(Wla.ToByte((byte)value));
                 }

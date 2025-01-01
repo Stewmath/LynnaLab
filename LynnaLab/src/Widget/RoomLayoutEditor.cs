@@ -801,7 +801,7 @@ public class RoomLayoutEditor : TileGrid
             if (chest.Treasure == null)
                 return;
             GameObject obj = Project.GetIndexedDataType<InteractionObject>(
-                    Project.EvalToInt("INTERAC_TREASURE") * 256 + chest.Treasure.Graphics);
+                    Project.Eval("INTERAC_TREASURE") * 256 + chest.Treasure.Graphics);
             try
             {
                 obj.DefaultAnimation.GetFrame(0).Draw(base.SpriteDrawer);
