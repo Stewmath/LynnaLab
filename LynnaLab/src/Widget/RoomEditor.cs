@@ -16,6 +16,7 @@ public class RoomEditor : Frame
     public RoomEditor(ProjectWorkspace workspace)
         : base("Room Editor")
     {
+        base.DefaultSize = new Vector2(1420.0f, 620.0f);
         this.Workspace = workspace;
 
         roomLayoutEditor = new RoomLayoutEditor(this.Workspace, this, Brush);

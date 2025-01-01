@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace LynnaLab;
 
 public class TilesetEditor : Frame
@@ -10,7 +8,9 @@ public class TilesetEditor : Frame
     public TilesetEditor(ProjectWorkspace workspace, string name)
         : base(name)
     {
-        Workspace = workspace;
+        base.DefaultSize = new Vector2(1050, 900);
+        this.Workspace = workspace;
+
         tilesetViewer = new TilesetViewer(Workspace);
         subTileViewer = new SubTileViewer(this);
         tileEditor = new TileEditor(this);

@@ -1,7 +1,3 @@
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-
 namespace LynnaLab;
 
 public class UndoDialog : Frame
@@ -13,6 +9,7 @@ public class UndoDialog : Frame
         : base(name)
     {
         this.Workspace = workspace;
+        base.DefaultSize = new Vector2(350, 400);
     }
 
     // ================================================================================

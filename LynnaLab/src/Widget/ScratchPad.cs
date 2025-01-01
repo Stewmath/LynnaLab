@@ -13,6 +13,7 @@ public class ScratchPad : Frame
     public ScratchPad(ProjectWorkspace workspace, string name, TileGrid referenceGrid, Brush<int> brush)
         : base(name)
     {
+        base.DefaultSize = new Vector2(560, 560);
         this.brush = brush;
 
         Grid = new ScratchPadGrid(workspace, "Grid", brush, referenceGrid, 32, 32);

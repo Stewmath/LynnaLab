@@ -9,6 +9,8 @@ public class DocumentationDialog : Frame
         : base(name)
     {
         this.Workspace = workspace;
+        base.DisplayName = "Documentation";
+        base.DefaultSize = new Vector2(700, 700);
     }
 
     // ================================================================================

@@ -9,6 +9,7 @@ public class DungeonEditor : Frame
         : base(name)
     {
         this.Workspace = workspace;
+        base.DefaultSize = new Vector2(800, 500);
 
         minimap = new Minimap(Workspace);
         SetDungeon(Project.GetDungeon(0));

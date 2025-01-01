@@ -8,7 +8,9 @@ public class TilesetCloner : Frame
     public TilesetCloner(ProjectWorkspace workspace, string name)
         : base(name)
     {
+        base.WindowFlags = ImGuiWindowFlags.AlwaysAutoResize;
         this.Workspace = workspace;
+
         sourceViewer = new TilesetViewer(workspace);
         previewViewer = new TilesetViewer(workspace);
 

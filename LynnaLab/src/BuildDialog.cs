@@ -13,6 +13,7 @@ public class BuildDialog : Frame
         : base(name)
     {
         this.Workspace = workspace;
+        base.DefaultSize = new Vector2(500, 600);
 
         base.ClosedEvent += (_, _) => Close();
     }

@@ -51,6 +51,8 @@ public abstract class Frame
         }
     }
 
+    public Vector2 DefaultSize { get; set; } = Vector2.Zero;
+
     // Name is the name used for ImGui's internal window tracking. DisplayName, if set, changes only
     // the name as displayed to the user.
     public string Name { get; private set; }
@@ -74,6 +76,8 @@ public abstract class Frame
         {
             if (grabFocus)
                 ImGui.SetNextWindowFocus();
+
+            ImGui.SetNextWindowSize(DefaultSize, ImGuiCond.FirstUseEver);
 
             string name = DisplayName == null ? Name : $"{DisplayName}###{Name}";
             if (ImGui.Begin(name, ref active, WindowFlags))
