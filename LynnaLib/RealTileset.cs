@@ -87,6 +87,8 @@ public class RealTileset : Tileset
     public int Index { get; private set; }
     public int Season { get; private set; } // Tilesets with the same index but different season differ
 
+    public override string TransactionIdentifier { get { return $"tileset-i{Index:X2}-s{Season}"; } }
+
     public string SeasonName
     {
         get

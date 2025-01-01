@@ -186,6 +186,11 @@ namespace LynnaLib
         }
         public override void WriteByte(byte value)
         {
+            if (Data[Position] == value)
+            {
+                Position++;
+                return;
+            }
             RecordChange();
             Data[Position] = value;
             Position++;

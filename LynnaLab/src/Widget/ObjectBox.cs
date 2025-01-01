@@ -214,10 +214,12 @@ public class ObjectBox : SelectionBox
             foreach (ObjectGroup group in room.GetObjectGroup().GetAllGroups())
             {
                 var (name, _) = ObjectGroupEditor.GetGroupName(group);
-                if (ImGui.MenuItem(name))
+                if (group != def.ObjectGroup && ImGui.MenuItem(name))
                 {
+                    room.Project.BeginTransaction("Move object");
                     group.AddObjectClone(def);
                     def.Remove();
+                    room.Project.EndTransaction();
                 }
             }
             ImGui.EndMenu();

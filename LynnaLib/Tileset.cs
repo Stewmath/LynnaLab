@@ -117,6 +117,8 @@ namespace LynnaLib
             }
         }
 
+        public abstract string TransactionIdentifier { get; }
+
         protected TilesetHeaderGroup TilesetHeaderGroup { get; private set; }
 
         // ================================================================================
@@ -162,7 +164,7 @@ namespace LynnaLib
         // Clear all tile image caches. This is called when certain major fields of the tileset are
         // modified. This will trigger an asynchronous redraw of the tileset image (unless called
         // from the constructor), which is costly.
-        public void InvalidateAllTiles()
+        internal void InvalidateAllTiles()
         {
             if (inhibitRedraw != 0)
                 return;
@@ -764,6 +766,7 @@ namespace LynnaLib
             addDescriptor(AnimationIndex, "Animation Index", true, null);
 
             ValueReferenceGroup = new ValueReferenceGroup(descList);
+            ValueReferenceGroup.EnableTransactions($"Edit tileset#{TransactionIdentifier}", true);
         }
 
         /// <summary>

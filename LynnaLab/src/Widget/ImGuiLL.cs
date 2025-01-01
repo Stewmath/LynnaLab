@@ -164,6 +164,7 @@ public class ImGuiLL
         const float COLUMN_WIDTH = 30.0f;
         int callCount = 0;
         bool openRightClickPopup = false;
+        Project project = workspace.Project;
 
         var displayPalette = (PaletteHeaderData data) =>
         {
@@ -204,7 +205,9 @@ public class ImGuiLL
                             string label = $"{t}-{p}-{i} ({name})##{callCount}";
                             ImGuiX.ColorEdit(label, data.GetColor(p, i), (color) =>
                             {
+                                project.BeginTransaction($"Set color#{name}-{t}-{p}-{i}-{callCount}", true);
                                 data.SetColor(p, i, color);
+                                project.EndTransaction();
                             });
                             if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Right))
                             {
@@ -263,7 +266,9 @@ public class ImGuiLL
             }
             if (ImGui.Selectable("Paste", false, workspace.CopiedColor == null ? ImGuiSelectableFlags.Disabled : 0))
             {
+                project.BeginTransaction("Copy palette");
                 paletteButtonPopupData.SetColor(paletteButtonPopupPalette, paletteButtonPopupIndex, (Color)workspace.CopiedColor);
+                project.EndTransaction();
             }
             ImGui.EndPopup();
         }

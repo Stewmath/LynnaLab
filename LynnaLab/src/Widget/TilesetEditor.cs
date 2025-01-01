@@ -149,26 +149,32 @@ public class TilesetEditor : Frame
             // Change flip X
             if (ImGui.IsKeyPressed(ImGuiKey._1))
             {
+                Project.BeginTransaction("Toggle flip X");
                 var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
                 byte flags = Tileset.GetSubTileFlags(t, tx, ty);
                 flags ^= 0x20;
                 ForAllSeasons((tileset) => tileset.SetSubTileFlags(t, tx, ty, flags));
+                Project.EndTransaction();
             }
             // Change flip Y
             if (ImGui.IsKeyPressed(ImGuiKey._2))
             {
+                Project.BeginTransaction("Toggle flip Y");
                 var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
                 byte flags = Tileset.GetSubTileFlags(t, tx, ty);
                 flags ^= 0x40;
                 ForAllSeasons((tileset) => tileset.SetSubTileFlags(t, tx, ty, flags));
+                Project.EndTransaction();
             }
             // Change priority
             if (ImGui.IsKeyPressed(ImGuiKey._3))
             {
+                Project.BeginTransaction("Toggle priority");
                 var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
                 byte flags = Tileset.GetSubTileFlags(t, tx, ty);
                 flags ^= 0x80;
                 ForAllSeasons((tileset) => tileset.SetSubTileFlags(t, tx, ty, flags));
+                Project.EndTransaction();
             }
         }
         ImGui.EndChild();
@@ -250,6 +256,9 @@ public class TilesetEditor : Frame
     {
         if (!tilesetViewer.XYValid(x, y))
             return;
+
+        Project.BeginTransaction($"Draw subtiles#{Tileset.TransactionIdentifier}", true);
+
         ForAllSeasons((tileset) =>
         {
             var (t, tx, ty) = tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
@@ -259,6 +268,8 @@ public class TilesetEditor : Frame
             else
                 tileset.SetSubTileFlags(t, tx, ty, subTile.GetFlags());
         });
+
+        Project.EndTransaction();
     }
 
     void RegisterMouseActions()
@@ -277,6 +288,8 @@ public class TilesetEditor : Frame
         // Helper function for palette brush mode
         var paletteSetter = (TileGridEventArgs args) =>
         {
+            Project.BeginTransaction($"Draw palettes#{Tileset.TransactionIdentifier}", true);
+
             ForAllSeasons((tileset) =>
             {
                 args.Foreach((tile) =>
@@ -285,11 +298,15 @@ public class TilesetEditor : Frame
                     tileset.SetSubTilePalette(t, x, y, selectedPalette);
                 });
             });
+
+            Project.EndTransaction();
         };
 
         // Helper function for collision brush mode
         var collisionSetter = (TileGridEventArgs args, bool enable) =>
         {
+            Project.BeginTransaction($"Draw collisions#{Tileset.TransactionIdentifier}", true);
+
             ForAllSeasons((tileset) =>
             {
                 args.Foreach((tile) =>
@@ -298,6 +315,8 @@ public class TilesetEditor : Frame
                     TrySetSubTileCollision(tileset, t, x, y, enable);
                 });
             });
+
+            Project.EndTransaction();
         };
 
         if (BrushMode != BrushMode.Normal)
@@ -328,7 +347,8 @@ public class TilesetEditor : Frame
 
                     tileEditor.SetTile(Tileset, t);
                 },
-                name: "Brush LeftClick"
+                name: "Brush LeftClick",
+                onRelease: Project.UndoState.InsertBarrier
             );
 
             // Ctrl + left click: Rectangle fill when in a brush mode
@@ -355,7 +375,8 @@ public class TilesetEditor : Frame
                     }
                 },
                 brushPreview: true,
-                name: "Brush Ctrl+LeftClick"
+                name: "Brush Ctrl+LeftClick",
+                onRelease: Project.UndoState.InsertBarrier
             );
         }
 
@@ -445,7 +466,8 @@ public class TilesetEditor : Frame
                     var (t, _, _) = tilesetViewer.ToSubTileIndex(args.selectedIndex);
                     tileEditor.SetTile(Tileset, t);
                 },
-                name: "Collision Brush RightClick"
+                name: "Collision Brush RightClick",
+                onRelease: Project.UndoState.InsertBarrier
             );
             // Right click + drag: Unset collision range when in collision brush mode
             tilesetViewer.AddMouseAction(
@@ -454,7 +476,8 @@ public class TilesetEditor : Frame
                 {
                     collisionSetter(args, false);
                 },
-                name: "Collision Brush Ctrl+RightClick"
+                name: "Collision Brush Ctrl+RightClick",
+                onRelease: Project.UndoState.InsertBarrier
             );
         }
     }
@@ -684,16 +707,24 @@ class TileEditor : TileGrid
             int tile = CoordToTile(GetRelativeMousePos());
             int x = tile % 2;
             int y = tile / 2;
+
+            Project.BeginTransaction("Set subtile");
+
             ForAllSeasons((tileset) =>
             {
                 tileset.SetSubTileIndex(TileIndex, x, y, (byte)(value ^ 0x80));
             });
+
+            Project.EndTransaction();
         };
 
         var trySetCollision = (TileGridEventArgs args, bool enable) =>
         {
             if (parent.BrushMode != BrushMode.Collision)
                 return;
+
+            Project.BeginTransaction($"Draw collisions#{Tileset.TransactionIdentifier}-t{TileIndex:X2}", true);
+
             ForAllSeasons((tileset) =>
             {
                 args.Foreach((index) =>
@@ -704,6 +735,8 @@ class TileEditor : TileGrid
                     TilesetEditor.TrySetSubTileCollision(tileset, t, tx, ty, enable);
                 });
             });
+
+            Project.EndTransaction();
         };
 
         // Register mouse actions for setting collisions with the mouse
@@ -747,6 +780,7 @@ class TileEditor : TileGrid
     // Properties
     // ================================================================================
 
+    public Project Project { get { return parent.Project; } }
     public RealTileset Tileset { get; private set; }
     public int TileIndex { get; private set; } // Should never be -1
 
@@ -782,7 +816,9 @@ class TileEditor : TileGrid
             ImGui.Text("Collision:");
             ImGuiX.InputHex("##Collision", Tileset.GetTileCollision(TileIndex), (c) =>
             {
+                Project.BeginTransaction($"Set collision#{Tileset.TransactionIdentifier}-t{TileIndex:X2}", true);
                 ForAllSeasons((tileset) => tileset.SetTileCollision(TileIndex, (byte)c));
+                Project.EndTransaction();
             });
             ImGui.PopItemWidth();
         }
@@ -798,7 +834,10 @@ class TileEditor : TileGrid
                     byte newFlags = (byte)(flags & ~bitmask);
                     if (v)
                         newFlags |= bitmask;
+
+                    Project.BeginTransaction("Toggle " + name);
                     ForAllSeasons((tileset) => tileset.SetSubTileFlags(TileIndex, x, y, newFlags));
+                    Project.EndTransaction();
                 });
             };
 
