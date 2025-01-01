@@ -59,6 +59,7 @@ public static class TopLevel
     static IBackend backend;
     static Dictionary<Bitmap, Image> imageDict = new Dictionary<Bitmap, Image>();
     static Queue<Func<bool>> idleFunctions = new Queue<Func<bool>>();
+    static Queue<Action> actionsForNextFrame = new();
 
     // Vars related to modal windows
     static Queue<ModalStruct> modalQueue = new Queue<ModalStruct>();
@@ -114,6 +115,13 @@ public static class TopLevel
 
             if (backend.Exited)
                 break;
+
+            {
+                var actions = actionsForNextFrame.ToArray();
+                actionsForNextFrame.Clear();
+                foreach (Action act in actions)
+                    act();
+            }
 
             TopLevel.Render(lastDeltaTime);
 
@@ -192,7 +200,10 @@ public static class TopLevel
             // TODO: OK to call this repeatedly?
             ImGui.OpenPopup(modal.name);
 
-            if (ImGui.BeginPopupModal(modal.name, ImGuiWindowFlags.AlwaysAutoResize))
+            // Put it in the center of the screen
+            ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), 0, new Vector2(0.5f, 0.5f));
+
+            if (ImGui.BeginPopupModal(modal.name, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar))
             {
                 if (modal.renderFunc())
                 {
@@ -264,8 +275,11 @@ public static class TopLevel
 
         var loadProject = (string game) =>
         {
-            var project = new Project(path, game, config);
-            Workspace = new ProjectWorkspace(project);
+            LoadingModal("Loading project...", () =>
+            {
+                var project = new Project(path, game, config);
+                Workspace = new ProjectWorkspace(project);
+            });
         };
 
         if (config == null)
@@ -289,6 +303,11 @@ public static class TopLevel
                 loadProject(game);
             });
         }
+    }
+
+    public static void DoNextFrame(Action action)
+    {
+        actionsForNextFrame.Enqueue(action);
     }
 
     // ================================================================================
@@ -336,19 +355,45 @@ public static class TopLevel
     // Not an ImGui modal, but functions similarly.
     public static void OpenProjectModal()
     {
-        var result = NativeFileDialogSharp.Dialog.FolderPicker();
+        LoadingModal("Waiting for file dialog...", () =>
+        {
+            var result = NativeFileDialogSharp.Dialog.FolderPicker();
 
-        if (result.IsOk)
+            if (result.IsOk)
+            {
+                OpenProject(result.Path);
+            }
+            else if (result.IsCancelled)
+            {
+            }
+            else if (result.IsError)
+            {
+                DisplayMessageModal("Error", result.ErrorMessage);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Dispays a modal for a single frame. Call this when performing some action that interrupts
+    /// ImGui rendering for an extended period of time and you want to set up a modal before
+    /// starting the action.
+    /// </summary>
+    public static void LoadingModal(string message, Action action)
+    {
+        int frameCounter = 0;
+
+        OpenModal("Loading", () =>
         {
-            OpenProject(result.Path);
-        }
-        else if (result.IsCancelled)
-        {
-        }
-        else if (result.IsError)
-        {
-            DisplayMessageModal("Error", result.ErrorMessage);
-        }
+            ImGui.Text(message);
+
+            if (frameCounter == 2)
+            {
+                action();
+                return true;
+            }
+            frameCounter++;
+            return false;
+        });
     }
 
     public static void DisplayMessageModal(string title, string message)
