@@ -103,10 +103,14 @@ public static class TopLevel
 
             if (backend.CloseRequested)
             {
-                if (Workspace != null)
-                    CloseProjectModal();
-                else
+                if (Workspace == null)
                     backend.Close();
+                else
+                {
+                    CloseProjectModal(() => { backend.Close(); });
+                }
+
+                backend.CloseRequested = false;
             }
 
             if (backend.Exited)
@@ -277,16 +281,8 @@ public static class TopLevel
             // Close either the project or the entire window, depending on the context
             var close = () =>
             {
-                if (backend.CloseRequested)
-                {
-                    backend.Close();
-                    backend.CloseRequested = false;
-                }
-                else
-                {
-                    Workspace.Close();
-                    Workspace = null;
-                }
+                Workspace.Close();
+                Workspace = null;
                 if (callback != null)
                     callback();
             };
@@ -306,7 +302,6 @@ public static class TopLevel
             ImGui.SameLine();
             if (ImGui.Button("Cancel"))
             {
-                backend.CloseRequested = false;
                 return true;
             }
             return false;
