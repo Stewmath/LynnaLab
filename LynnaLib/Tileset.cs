@@ -462,9 +462,32 @@ namespace LynnaLib
         /// </summary>
         public void LoadGraphics(Tileset source)
         {
-            GfxFileStream = source.GfxFileStream;
-            LoadAllGfxData();
-            InvalidateAllTiles();
+            if (GfxFileStream != source.GfxFileStream)
+            {
+                Stream origStream = GfxFileStream;
+                Stream newStream = source.GfxFileStream;
+
+                if (this is RealTileset) // Only real tilesets matter to the undo system
+                {
+                    Project.UndoState.OnRewind("Load tileset graphics", () =>
+                    { // On undo
+                        GfxFileStream = origStream;
+                        LoadAllGfxData();
+                        InvalidateAllTiles();
+                    }, (isRedo) => // On redo / right now
+                    {
+                        GfxFileStream = newStream;
+                        LoadAllGfxData();
+                        InvalidateAllTiles();
+                    });
+                }
+                else
+                {
+                    GfxFileStream = newStream;
+                    LoadAllGfxData();
+                    InvalidateAllTiles();
+                }
+            }
         }
 
         /// <summary>

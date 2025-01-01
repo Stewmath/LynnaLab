@@ -95,7 +95,7 @@ public class TilesetCloner : Frame
         };
 
         copyButton("Copy Graphics", ref copyGraphics, previewTileset.LoadGraphics,
-                   "Copy graphics (PNG file contents).\n\nHack-base expands tileset graphics such that no two tilesets reuse any graphical data.");
+                   "Copy graphics (PNG file contents).\n\nHack-base expands tileset graphics such that no two tilesets reuse any graphical data.\n\nTHIS DOESN'T GET SAVED! For now you'll need to copy the PNG files manually (see folder oracles-disasm/gfx/).");
         copyButton("Copy Tilemap/flags",
                    ref copyTileMap,
                    (t) =>
@@ -117,7 +117,9 @@ public class TilesetCloner : Frame
         ImGui.Separator();
         if (ImGui.Button("Apply Tileset Changes"))
         {
+            Project.BeginTransaction("Copy tileset");
             destTileset.LoadFrom(previewTileset);
+            Project.EndTransaction();
         }
         if (ImGui.IsItemHovered())
         {
