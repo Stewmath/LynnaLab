@@ -145,7 +145,11 @@ public class TilesetCloner : Frame
 
     void ReloadPreview()
     {
-        previewTileset?.Dispose();
+        // Don't dispose the previous previewTileset immediately as its image may be needed for
+        // rendering this frame.
+        if (previewTileset != null)
+            Workspace.DoNextFrame(previewTileset.Dispose);
+
         previewTileset = new FakeTileset(destTileset);
         previewViewer.SetTileset(previewTileset);
     }

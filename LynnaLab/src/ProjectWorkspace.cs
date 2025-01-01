@@ -75,6 +75,7 @@ public class ProjectWorkspace
     UndoDialog undoDialog;
 
     List<Frame> frames = new List<Frame>();
+    Queue<Action> actionsForNextFrame = new();
     bool showDebugWindow;
     bool showImGuiDemoWindow;
     bool lightMode, scrollToZoom = true, darkenUsedDungeonRooms = true, bicubicScaling = true;
@@ -113,6 +114,10 @@ public class ProjectWorkspace
     {
         if (Project == null)
             return;
+
+        foreach (Action act in actionsForNextFrame)
+            act();
+        actionsForNextFrame.Clear();
 
         float menuBarHeight = 0.0f;
         if (ImGui.BeginMainMenuBar())
@@ -318,7 +323,7 @@ public class ProjectWorkspace
     {
         tilesetCloner.SetSourceTileset(source);
         tilesetCloner.SetDestTileset(dest);
-        tilesetCloner.Active = true;
+        tilesetCloner.Focus();
     }
 
     /// <summary>
@@ -344,6 +349,11 @@ public class ProjectWorkspace
     {
         tilesetEditor.SetTileset(tileset);
         tilesetEditor.Focus();
+    }
+
+    public void DoNextFrame(Action action)
+    {
+        actionsForNextFrame.Enqueue(action);
     }
 
     // ================================================================================
