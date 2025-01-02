@@ -21,10 +21,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Glade\*.ui" />
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Include="version.txt" />
     <EmbeddedResource Include="ZeldaOracles.ttf" />
 
