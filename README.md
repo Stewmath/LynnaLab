@@ -121,6 +121,8 @@ either.
 
 * F4: Toggle quickstart
 * F5: Build & run game
+* Ctrl-Z: Undo
+* Ctrl-Shift-Z: Redo
 
 ### Tileset viewer (left)
 
