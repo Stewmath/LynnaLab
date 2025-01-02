@@ -75,7 +75,7 @@ public class TilesetImageCacher : ImageCacher<Tileset>
     {
         int index = x + y * 16;
         var bitmap = tileset.GetTileBitmap(index);
-        var bitmapImage = TopLevel.ImageFromBitmap(bitmap);
+        var bitmapImage = TopLevel.ImageFromBitmapTracked(bitmap);
 
         bitmapImage.DrawOn(image,
                            new Point(0, 0),

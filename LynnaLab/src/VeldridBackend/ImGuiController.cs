@@ -206,8 +206,8 @@ public class ImGuiController : IDisposable
         {
             _ownedResources.Remove(rsi.ResourceSet);
             _ownedResources.Remove(rsi.TextureView);
-            rsi.ResourceSet.Dispose();
-            rsi.TextureView.Dispose();
+            _gd.DisposeWhenIdle(rsi.ResourceSet);
+            _gd.DisposeWhenIdle(rsi.TextureView);
             _setsByImage.Remove(image);
             _viewsById.Remove(rsi.ImGuiBinding);
         }
@@ -269,8 +269,8 @@ public class ImGuiController : IDisposable
         var rsi = _setsByImage[image];
         _ownedResources.Remove(rsi.TextureView);
         _ownedResources.Remove(rsi.ResourceSet);
-        rsi.TextureView.Dispose();
-        rsi.ResourceSet.Dispose();
+        _gd.DisposeWhenIdle(rsi.TextureView);
+        _gd.DisposeWhenIdle(rsi.ResourceSet);
         _viewsById.Remove(rsi.ImGuiBinding);
         _setsByImage.Remove(image);
     }

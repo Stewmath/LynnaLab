@@ -24,7 +24,7 @@ public class ProjectWorkspace
 
         this.Brush = new Brush<int>(0);
 
-        linkImage = TopLevel.ImageFromBitmap(project.LinkBitmap);
+        linkImage = TopLevel.ImageFromBitmapTracked(project.LinkBitmap);
 
         roomEditor = new RoomEditor(this);
         dungeonEditor = new DungeonEditor(this, "Dungeon Editor");

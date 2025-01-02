@@ -143,7 +143,7 @@ public class RoomImageCacher : ImageCacher<RoomLayout>
     {
         int tileIndex = layout.GetTile(x, y);
         var tileBitmap = layout.Tileset.GetTileBitmap(tileIndex);
-        var tileImage = TopLevel.ImageFromBitmap(tileBitmap);
+        var tileImage = TopLevel.ImageFromBitmapTracked(tileBitmap);
 
         tileImage.DrawOn(image,
                          new Point(0, 0),

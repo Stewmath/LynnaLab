@@ -874,7 +874,7 @@ class TileEditor : TileGrid
 
     void DrawTile()
     {
-        image = TopLevel.ImageFromBitmap(Tileset.GetTileBitmap(TileIndex));
+        image = TopLevel.ImageFromBitmapTracked(Tileset.GetTileBitmap(TileIndex));
     }
 
     /// <summary>

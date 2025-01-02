@@ -685,7 +685,7 @@ public class RoomLayoutEditor : TileGrid
         {
             var origin = ImGui.GetCursorScreenPos();
             var offset = new Vector2(X + xOffset, Y + yOffset);
-            Image image = TopLevel.ImageFromBitmap(sprite);
+            Image image = TopLevel.ImageFromBitmapTracked(sprite);
             ImGui.SetCursorScreenPos(origin + offset * Parent.Scale);
             ImGuiX.DrawImage(image, Parent.Scale);
             ImGui.SetCursorScreenPos(origin);
@@ -738,7 +738,7 @@ public class RoomLayoutEditor : TileGrid
             Vector2 size = new Vector2(BoxWidth, BoxHeight) * Parent.Scale;
 
             ImGuiX.ShiftCursorScreenPos(pos - size / 2);
-            var linkImage = TopLevel.ImageFromBitmap(Parent.Project.LinkBitmap);
+            var linkImage = TopLevel.ImageFromBitmapTracked(Parent.Project.LinkBitmap);
             ImGuiX.DrawImage(linkImage, Parent.Scale);
         }
 

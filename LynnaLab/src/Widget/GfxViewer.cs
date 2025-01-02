@@ -113,11 +113,12 @@ public class GfxViewer : TileGrid
 
         using (Bitmap _subImage = GbGraphics.RawTileToBitmap(data))
         {
-            Image subImage = TopLevel.ImageFromBitmap(_subImage);
+            Image subImage = TopLevel.Backend.ImageFromBitmap(_subImage);
             subImage.DrawOn(image,
                             new Point(0, 0),
                             new Point(x * 8, y * 8),
                             new Point(8, 8));
+            subImage.Dispose();
         }
     }
 }

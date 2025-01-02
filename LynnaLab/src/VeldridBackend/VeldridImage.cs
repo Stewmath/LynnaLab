@@ -40,12 +40,15 @@ public class VeldridImage : Image
         OnBitmapModified(bitmap);
 
         var modifiedEventHandler = () => OnBitmapModified(bitmap);
-        bitmap.ModifiedEvent += modifiedEventHandler;
-        this.unsubscribeFromBitmapChanges = () => bitmap.ModifiedEvent -= modifiedEventHandler;
+        var disposedEventHandler = (object _) => OnBitmapDisposed(bitmap);
 
-        bitmap.DisposedEvent += (_) =>
+        bitmap.ModifiedEvent += modifiedEventHandler;
+        bitmap.DisposedEvent += disposedEventHandler;
+
+        this.unsubscribeFromBitmapChanges = () =>
         {
-            this.unsubscribeFromBitmapChanges = null;
+            bitmap.ModifiedEvent -= modifiedEventHandler;
+            bitmap.DisposedEvent -= disposedEventHandler;
         };
     }
 
@@ -123,8 +126,10 @@ public class VeldridImage : Image
 
     public override void Dispose()
     {
+        Debug.Assert(texture != null);
+
         controller.UnbindImage(this);
-        texture.Dispose();
+        gd.DisposeWhenIdle(texture);
         texture = null;
 
         if (unsubscribeFromBitmapChanges != null)
@@ -153,6 +158,12 @@ public class VeldridImage : Image
                          (uint)bitmap.Width, (uint)bitmap.Height, 1, 0, 0);
 
         base.InvokeModifiedHandler();
+    }
+
+    void OnBitmapDisposed(Bitmap bitmap)
+    {
+        unsubscribeFromBitmapChanges();
+        unsubscribeFromBitmapChanges = null;
     }
 
     (uint, PixelFormat) GetBitmapFormat(Bitmap bitmap)

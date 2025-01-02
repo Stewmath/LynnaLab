@@ -222,8 +222,10 @@ public static class TopLevel
     /// <summary>
     /// Turns a Bitmap (cpu) into an Image (gpu), or looks up the existing Image if one exists
     /// in the cache for that Bitmap already.
+    /// The resulting Image is tied to the Bitmap, updating when the bitmap updates and being
+    /// deleted when the bitmap is deleted.
     /// </summary>
-    public static Image ImageFromBitmap(Bitmap bitmap)
+    public static Image ImageFromBitmapTracked(Bitmap bitmap)
     {
         Image image;
         if (imageDict.TryGetValue(bitmap, out image))
