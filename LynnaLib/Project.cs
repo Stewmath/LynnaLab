@@ -339,6 +339,8 @@ namespace LynnaLib
         public Dictionary<string, FileParser> LabelDictionary { get { return state.labelDictionary; } }
         public Dictionary<string, string> DefinesDictionary { get { return state.definesDictionary; } }
 
+        public bool Modified { get; private set; }
+
         public ProjectConfig Config
         {
             get
@@ -516,6 +518,8 @@ namespace LynnaLib
             {
                 file.Flush();
             }
+
+            Modified = false;
         }
 
         public void Close()
@@ -1147,6 +1151,11 @@ namespace LynnaLib
             return File.Exists(BaseDirectory + filename);
         }
 
+        public void MarkModified()
+        {
+            Modified = true;
+        }
+
         // ================================================================================
         // Undoable interface functions
         // ================================================================================
@@ -1163,6 +1172,7 @@ namespace LynnaLib
 
         public void InvokeModifiedEvent(TransactionState prevState)
         {
+            MarkModified();
         }
 
         // ================================================================================

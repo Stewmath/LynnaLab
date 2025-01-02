@@ -3,9 +3,7 @@ using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
 
 using IBackend = LynnaLab.IBackend;
-using Interpolation = LynnaLab.Interpolation;
 using Image = LynnaLab.Image;
-using System.IO;
 
 namespace VeldridBackend;
 

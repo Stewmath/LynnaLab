@@ -317,22 +317,30 @@ public static class TopLevel
     // Modal windows
     // ================================================================================
 
+    // Offer to save the project before closing. Pops up when attempting to close the window, or
+    // "Project -> Close" (slightly different things).
+    // If the project is not modified then it is immediately closed.
     public static void CloseProjectModal(Action callback = null)
     {
-        // Offer to save the project before closing. Pops up when attempting to close the window, or
-        // "Project -> Close" (slightly different things)
+        Debug.Assert(Workspace != null);
+
+        var close = () =>
+        {
+            Workspace.Close();
+            Workspace = null;
+            if (callback != null)
+                callback();
+        };
+
+        if (!Workspace.Project.Modified)
+        {
+            DoNextFrame(close);
+            return;
+        }
+
         OpenModal("Close Project", () =>
         {
             ImGui.Text("Save project before closing?");
-
-            // Close either the project or the entire window, depending on the context
-            var close = () =>
-            {
-                Workspace.Close();
-                Workspace = null;
-                if (callback != null)
-                    callback();
-            };
 
             if (ImGui.Button("Save"))
             {

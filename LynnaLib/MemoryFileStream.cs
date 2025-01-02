@@ -82,12 +82,23 @@ namespace LynnaLib
             get { return System.IO.Path.GetRelativePath(Project.BaseDirectory, filepath); }
         }
 
+        public bool Modified
+        {
+            get { return _modified; }
+            set
+            {
+                _modified = value;
+                if (value)
+                    Project.MarkModified();
+            }
+        }
+
         private byte[] Data { get { return state.data; } }
 
         State state = new State();
         long _length;
         long _position;
-        bool modified = false;
+        bool _modified;
         string filepath;
 
         LockableEvent<ModifiedEventArgs> modifiedEvent = new LockableEvent<ModifiedEventArgs>();
@@ -106,7 +117,6 @@ namespace LynnaLib
 
             state.data = new byte[Length];
             _position = 0;
-            modified = false;
             input.Read(Data, 0, (int)Length);
             input.Close();
 
@@ -115,12 +125,12 @@ namespace LynnaLib
 
         public override void Flush()
         {
-            if (modified)
+            if (Modified)
             {
                 FileStream output = new FileStream(filepath, FileMode.Open);
                 output.Write(Data, 0, (int)Length);
                 output.Close();
-                modified = false;
+                Modified = false;
             }
         }
 
@@ -179,7 +189,7 @@ namespace LynnaLib
             Position = Position + count;
             if (Position > Length)
                 Position = Length;
-            modified = true;
+            Modified = true;
             modifiedEvent.Invoke(this, new ModifiedEventArgs(offset, offset + count));
         }
 
@@ -199,7 +209,7 @@ namespace LynnaLib
             RecordChange();
             Data[Position] = value;
             Position++;
-            modified = true;
+            Modified = true;
             modifiedEvent.Invoke(this, new ModifiedEventArgs(Position - 1, Position));
         }
 
@@ -246,7 +256,7 @@ namespace LynnaLib
         public void SetState(TransactionState state)
         {
             this.state = (State)state.Copy();
-            modified = true;
+            Modified = true;
         }
 
         public void InvokeModifiedEvent(TransactionState prevState)

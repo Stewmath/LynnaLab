@@ -78,6 +78,7 @@ namespace LynnaLib
         readonly string fullFilename; // Full path
 
         State state = new State();
+        bool _modified;
 
         // The following variables only used by ParseLine and related functions; they provide
         // context between lines when parsing.
@@ -145,7 +146,16 @@ namespace LynnaLib
         public Dictionary<string, Tuple<string, DocumentationFileComponent>> DefinesDictionary { get { return state.definesDictionary; } }
         Dictionary<string, Label> LabelDictionary { get { return state.labelDictionary; } }
 
-        public bool Modified { get; set; }
+        public bool Modified
+        {
+            get { return _modified; }
+            set
+            {
+                _modified = value;
+                if (value)
+                    Project.MarkModified();
+            }
+        }
         public Project Project
         {
             get { return _project; }
