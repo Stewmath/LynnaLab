@@ -114,9 +114,7 @@ public class VeldridBackend : IBackend
 
     public void RecreateFontTexture()
     {
-        // This may be overkill, but the commented line below doesn't work for some reason
-        _controller.CreateDeviceResources(_gd, _gd.MainSwapchain.Framebuffer.OutputDescription);
-        //_controller.RecreateFontDeviceTexture(_gd);
+        _controller.RecreateFontDeviceTexture(_gd);
     }
 
     public void SetIcon(string path)

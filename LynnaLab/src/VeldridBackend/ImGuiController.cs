@@ -27,6 +27,7 @@ public class ImGuiController : IDisposable
     private DeviceBuffer _vertexBuffer;
     private DeviceBuffer _indexBuffer;
     private DeviceBuffer _imageFragBuffer;
+    private DeviceBuffer _fontFragBuffer;
     private DeviceBuffer _projMatrixBuffer;
     private Texture _fontTexture;
     private TextureView _fontTextureView;
@@ -123,7 +124,6 @@ public class ImGuiController : IDisposable
         _vertexBuffer.Name = "ImGui.NET Vertex Buffer";
         _indexBuffer = factory.CreateBuffer(new BufferDescription(2000, BufferUsage.IndexBuffer | BufferUsage.Dynamic));
         _indexBuffer.Name = "ImGui.NET Index Buffer";
-        RecreateFontDeviceTexture(gd);
 
         _projMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
         _projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
@@ -169,13 +169,13 @@ public class ImGuiController : IDisposable
 
         // Default uniform buffer for font textures, also applies to stuff like rectangle rendering?
         // (Even though it's not in the mainResourceSet?)
-        var defaultFragBuf = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
+        _fontFragBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
         var defaultFragUniformStruct = new FragUniformStruct
         {
             InterpolationMode = (int)Interpolation.Nearest,
             alpha = 1.0f
         };
-        _gd.UpdateBuffer(defaultFragBuf, 0, defaultFragUniformStruct);
+        _gd.UpdateBuffer(_fontFragBuffer, 0, defaultFragUniformStruct);
 
         // Uniform buffer for images. This will be updated frequently, but we set the initial values here.
         imageFragStruct.alpha = 1.0f;
@@ -188,12 +188,7 @@ public class ImGuiController : IDisposable
             _projMatrixBuffer,
             gd.PointSampler));
 
-        // Resource set for rendering fonts
-        _fontTextureResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
-            _textureLayout,
-            _fontTextureView,
-            _gd.PointSampler,
-            defaultFragBuf));
+        RecreateFontDeviceTexture(gd);
     }
 
     /// <summary>
@@ -360,6 +355,13 @@ public class ImGuiController : IDisposable
         // Store our identifier
         io.Fonts.SetTexID(_fontAtlasID);
 
+        if (_fontTextureResourceSet != null)
+            _gd.DisposeWhenIdle(_fontTextureResourceSet);
+        if (_fontTexture != null)
+            _gd.DisposeWhenIdle(_fontTexture);
+        if (_fontTextureView != null)
+            _gd.DisposeWhenIdle(_fontTextureView);
+
         _fontTexture = gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
             (uint)width,
             (uint)height,
@@ -381,6 +383,12 @@ public class ImGuiController : IDisposable
             0,
             0);
         _fontTextureView = gd.ResourceFactory.CreateTextureView(_fontTexture);
+
+        _fontTextureResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
+            _textureLayout,
+            _fontTextureView,
+            _gd.PointSampler,
+            _fontFragBuffer));
 
         io.Fonts.ClearTexData();
     }
