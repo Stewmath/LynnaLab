@@ -13,14 +13,15 @@ namespace LynnaLab;
 /// </summary>
 public static class TopLevel
 {
-    public static void Load(IBackend backend, string path = "", string game = null)
+    public static void Load(string path = null, string game = null)
     {
-        TopLevel.backend = backend;
+        string versionString = new StreamReader(Helper.GetResourceStream("LynnaLab.version.txt")).ReadToEnd();
+        backend = new VeldridBackend.VeldridBackend("LynnaLab " + versionString);
 
         ImageDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/Images/";
-        PegasusSeedImage = backend.ImageFromFile(ImageDir + "Pegasus_Seed_OOX.png");
 
         backend.SetIcon(ImageDir + "icon.bmp");
+        PegasusSeedImage = backend.ImageFromFile(ImageDir + "Pegasus_Seed_OOX.png");
 
         Helper.mainThreadInvokeFunction = TopLevel.LazyInvoke;
 
@@ -44,7 +45,7 @@ public static class TopLevel
 
         backend.RecreateFontTexture();
 
-        if (path != "")
+        if (path != null)
             TopLevel.OpenProject(path, game);
     }
 

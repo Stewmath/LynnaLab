@@ -14,10 +14,10 @@ public class VeldridBackend : IBackend
     // ================================================================================
     // Constructors
     // ================================================================================
-    public VeldridBackend()
+    public VeldridBackend(string title)
     {
         VeldridStartup.CreateWindowAndGraphicsDevice(
-            new WindowCreateInfo(50, 50, 1280, 720, WindowState.Maximized, "LynnaLab"),
+            new WindowCreateInfo(50, 50, 1280, 720, WindowState.Maximized, title),
             new GraphicsDeviceOptions(true, null, true, ResourceBindingModel.Improved, true, true),
             GraphicsBackend.OpenGL,
             out _window,
