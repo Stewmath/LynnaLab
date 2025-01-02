@@ -18,7 +18,7 @@ public static class TopLevel
         string versionString = new StreamReader(Helper.GetResourceStream("LynnaLab.version.txt")).ReadToEnd();
         backend = new VeldridBackend.VeldridBackend("LynnaLab " + versionString);
 
-        ImageDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/Images/";
+        ImageDir = Path.GetDirectoryName(System.AppContext.BaseDirectory) + "/Images/";
 
         backend.SetIcon(ImageDir + "icon.bmp");
         PegasusSeedImage = backend.ImageFromFile(ImageDir + "Pegasus_Seed_OOX.png");
