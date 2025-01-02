@@ -287,7 +287,7 @@ public static class TopLevel
 
         if (config == null)
         {
-            DisplayMessageModal("Error", $"Error opening directory: {path}\n\nCouldn't find project config file (config.yaml). Please select the \"oracles-disasm\" folder to open.");
+            DisplayMessageModal("Error", $"Error opening directory: {path}\n\nCouldn't find project config file (config.yaml). Please select the \"oracles-disasm\" folder to open.\n\nIf you're on Windows, you may need to execute the \"windows-setup.bat\" file first.");
         }
         else if (gameOverride != null)
         {
