@@ -26,11 +26,12 @@ dotnet publish "$projectfile" /p:PublishProfile="$profiledir/win-x64.pubxml"
 gitversion=$(cat "$versionfile")
 zipname="$publishbasedir/LynnaLab-$gitversion-win64.zip"
 
-# Copy over Windows GTK libraries. For other platforms (linux, mac) GTK must be pre-installed.
+# Copy over cairo library & associated dependencies from a windows GTK installation.
+# (Would be nice to eliminate this dependency later.)
 echo "Copying GTK libraries to release directory..."
-cp -R "$gtkdir"/*.dll "$gtkdir/etc" "$gtkdir/gtk3-runtime" "$gtkdir/lib" \
-    "$gtkdir/share" "$gtkdir/ssl" \
-   "$publishdirname/"
+cp "$gtkdir"/libcairo-2.dll "$gtkdir"/libgcc_s_seh-1.dll "$gtkdir"/libfontconfig-1.dll \
+    "$gtkdir"/libfreetype-6.dll "$gtkdir"/libpixman-1-0.dll "$gtkdir"/libpng16-16.dll \
+    "$gtkdir"/zlib1.dll "$publishdirname/"
 
 # Zip it
 echo "Compressing the archive..."
