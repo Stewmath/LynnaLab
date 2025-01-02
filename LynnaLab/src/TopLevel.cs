@@ -20,6 +20,8 @@ public static class TopLevel
         ImageDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/Images/";
         PegasusSeedImage = backend.ImageFromFile(ImageDir + "Pegasus_Seed_OOX.png");
 
+        backend.SetIcon(ImageDir + "icon.bmp");
+
         Helper.mainThreadInvokeFunction = TopLevel.LazyInvoke;
 
         GlobalConfig = GlobalConfig.Load();

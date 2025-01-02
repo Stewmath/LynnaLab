@@ -121,6 +121,11 @@ public class VeldridBackend : IBackend
         //_controller.RecreateFontDeviceTexture(_gd);
     }
 
+    public void SetIcon(string path)
+    {
+        ApplicationIcon.SetWindowIcon(_window.SdlWindowHandle, path);
+    }
+
 
     // ================================================================================
     // Private methods

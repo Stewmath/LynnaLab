@@ -39,6 +39,7 @@ public interface IBackend
     public Image CreateImage(int width, int height);
 
     public void RecreateFontTexture();
+    public void SetIcon(string path);
 }
 
 public enum Interpolation
