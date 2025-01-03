@@ -103,34 +103,11 @@ public static class TopLevel
             stopwatch.Restart();
 
             backend.HandleEvents(lastDeltaTime);
-
-            if (backend.CloseRequested)
-            {
-                if (Workspace == null)
-                    backend.Close();
-                else
-                {
-                    CloseProjectModal(() => { backend.Close(); });
-                }
-
-                backend.CloseRequested = false;
-            }
-
-            if (backend.Exited)
-                break;
-
-            {
-                var actions = actionsForNextFrame.ToArray();
-                actionsForNextFrame.Clear();
-                foreach (Action act in actions)
-                    act();
-            }
-
             TopLevel.Render(lastDeltaTime);
 
             // Call the "idle functions", used for lazy drawing.
             // Do this before backend.Render() as that triggers vsync and messes up our timer.
-            while (idleFunctions.Count != 0)
+            while (idleFunctions.Count != 0 && Program.handlingException == null)
             {
                 var func = idleFunctions.Peek();
                 if (!func())
@@ -146,6 +123,24 @@ public static class TopLevel
             }
 
             backend.Render();
+
+            if (backend.CloseRequested)
+            {
+                if (Workspace == null)
+                    backend.Close();
+                else
+                    CloseProjectModal(() => { backend.Close(); });
+
+                backend.CloseRequested = false;
+            }
+
+            if (Program.handlingException == null)
+            {
+                var actions = actionsForNextFrame.ToArray();
+                actionsForNextFrame.Clear();
+                foreach (Action act in actions)
+                    act();
+            }
         }
     }
 
@@ -175,7 +170,10 @@ public static class TopLevel
         }
         else
         {
-            Workspace.Render(deltaTime);
+            // Don't render the workspace if we're handling an exception right now, because it is
+            // probably something in Workspace.Render that caused the excepiton in the first place.
+            if (Program.handlingException == null)
+                Workspace.Render(deltaTime);
         }
 
         ImGui.PopFont();
@@ -365,7 +363,6 @@ public static class TopLevel
         });
     }
 
-    // Not an ImGui modal, but functions similarly.
     public static void OpenProjectModal()
     {
         LoadingModal("Waiting for file dialog...", () =>
@@ -415,6 +412,54 @@ public static class TopLevel
         {
             ImGui.Text(message);
             return ImGui.Button("OK");
+        });
+    }
+
+    public static void DisplayExceptionModal(Exception e)
+    {
+        modalQueue.Clear();
+        OpenModal("Exception", () =>
+        {
+            ImGui.PushFont(TopLevel.DefaultFont);
+
+            ImGui.Text("An unhandled exception occurred!\n\nYou can attempt to resume LynnaLab, but the program may be in an invalid state.\n\nException details:");
+
+            Vector2 exceptionViewSize = ImGui.GetMainViewport().Size * 0.8f;
+
+            if (ImGui.BeginChild("Exception details", exceptionViewSize, ImGuiChildFlags.FrameStyle))
+            {
+                ImGui.Text(e.ToString());
+            }
+            ImGui.EndChild();
+
+            bool retval = false;
+
+            if (ImGui.Button("Attempt to resume"))
+            {
+                Program.handlingException = null;
+                retval = true;
+            }
+
+            if (Workspace != null)
+            {
+                ImGui.SameLine();
+                if (ImGui.Button("Save project and quit"))
+                {
+                    Workspace.Project.Save();
+                    Environment.Exit(1);
+                    retval = true;
+                }
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Button("Quit without saving"))
+            {
+                Environment.Exit(1);
+                retval = true;
+            }
+
+            ImGui.PopFont();
+            return retval;
         });
     }
 

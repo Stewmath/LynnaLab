@@ -18,6 +18,8 @@ namespace LynnaLab;
 
 class Program
 {
+    public static Exception handlingException;
+
     static void Main(string[] args)
     {
         if (args.Length >= 2)
@@ -35,6 +37,24 @@ class Program
                 TopLevel.Load();
         }
 
-        TopLevel.Run();
+        while (true)
+        {
+            try
+            {
+                TopLevel.Run();
+            }
+            catch (Exception e)
+            {
+                // If we end up here twice then something must be wrong with our exception handler,
+                // so just give up and throw it.
+                if (handlingException != null)
+                    throw handlingException;
+
+                handlingException = e;
+                Console.WriteLine("Unhandled exception occurred!");
+                Console.WriteLine(e);
+                TopLevel.DisplayExceptionModal(e);
+            }
+        }
     }
 }
