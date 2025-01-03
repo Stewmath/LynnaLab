@@ -278,7 +278,7 @@ public static class TopLevel
 
         var loadProject = (string game) =>
         {
-            LoadingModal("Loading project...", () =>
+            LoadingModal($"Loading project: {path} ({game})...", () =>
             {
                 var project = new Project(path, game, config);
                 Workspace = new ProjectWorkspace(project);
@@ -299,7 +299,7 @@ public static class TopLevel
         }
         else
         {
-            TopLevel.SelectGameModal((game, rememberGameChoice) =>
+            TopLevel.SelectGameModal(path, (game, rememberGameChoice) =>
             {
                 if (rememberGameChoice)
                     config.SetEditingGame(game);
@@ -463,13 +463,14 @@ public static class TopLevel
         });
     }
 
-    public static void SelectGameModal(Action<string, bool> onSelected)
+    public static void SelectGameModal(string path, Action<string, bool> onSelected)
     {
         // Deciding which game to edit after selecting a project
         OpenModal("Select Game", () =>
         {
             string gameChoice = null;
 
+            ImGui.Text("Opening project at: " + path + "\n\n");
             ImGui.Text("Which game to edit?");
             if (ImGui.Button("Ages"))
                 gameChoice = "ages";
