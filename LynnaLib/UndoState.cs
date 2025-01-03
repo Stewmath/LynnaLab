@@ -29,6 +29,7 @@ public class UndoState
     int beginTransactionCalls = 0;
     bool barrierOn = false;
     bool doInProgress = false;
+    bool mergeCurrentTransaction;
 
     // ================================================================================
     // Properties
@@ -138,6 +139,8 @@ public class UndoState
                 constructingTransaction.description = description;
             }
 
+            mergeCurrentTransaction = merge;
+
             // Don't clear redoStack here. There is code that calls BeginTransaction even when it's
             // likely that nothing will actually happen. The redo stack should only be cleared in
             // CaptureInitialState() and similar functions where, for sure, we have triggered an
@@ -156,7 +159,8 @@ public class UndoState
             throw new Exception("EndTransaction called without a corresponding BeginTransaction");
         else if (beginTransactionCalls == 0)
         {
-            FinalizeTransaction();
+            if (FinalizeTransaction() && !mergeCurrentTransaction)
+                barrierOn = true;
         }
     }
 
@@ -240,16 +244,19 @@ public class UndoState
     /// Moves constructingTransactions into transactions list if it is non-empty. When this returns,
     /// constructingTransactions is guaranteed to be empty.
     /// </summary>
-    void FinalizeTransaction()
+    bool FinalizeTransaction()
     {
         var t = constructingTransaction;
+        bool pushed = false;
         if (!t.Empty)
         {
             t.CaptureFinalState();
             undoStack.Push(t);
             barrierOn = false; // Safe to disable the barrier once the undo stack has an additional entry
+            pushed = true;
         }
         constructingTransaction = new Transaction();
+        return pushed;
     }
 }
 

@@ -216,7 +216,7 @@ public class ObjectBox : SelectionBox
                 var (name, _) = ObjectGroupEditor.GetGroupName(group);
                 if (group != def.ObjectGroup && ImGui.MenuItem(name))
                 {
-                    room.Project.BeginTransaction("Move object");
+                    room.Project.BeginTransaction("Change object's group");
                     group.AddObjectClone(def);
                     def.Remove();
                     room.Project.EndTransaction();
