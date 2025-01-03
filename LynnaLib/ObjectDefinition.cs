@@ -240,6 +240,10 @@ namespace LynnaLib
             return GetObjectType() == ObjectType.ItemDrop;
         }
 
+        /// <summary>
+        /// Maps writes from our ValueReferenceGroup (implemented with AbstractValueReferences) to
+        /// the underlying ObjectData instance that this is wrapping over.
+        /// </summary>
         void OnValueSet(string name, int value)
         {
             if (ObjectData.ValueReferenceGroup.GetIntValue(name) == value)

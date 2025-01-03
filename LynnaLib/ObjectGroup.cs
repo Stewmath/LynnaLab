@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace LynnaLib
@@ -93,10 +94,12 @@ namespace LynnaLib
                 }
                 else
                 {
-                    ObjectStruct st = new ObjectStruct();
-                    st.rawIndex = i;
-                    st.def = new ObjectDefinition(this, obj, uniqueIDCounter++);
-                    st.data = obj;
+                    ObjectStruct st = new ObjectStruct
+                    {
+                        rawIndex = i,
+                        def = new ObjectDefinition(this, obj, uniqueIDCounter++),
+                        data = obj
+                    };
                     ObjectList.Add(st);
                 }
             }
@@ -148,6 +151,9 @@ namespace LynnaLib
             }
 
             Children.Sort((a, b) => a.type.CompareTo(b.type));
+
+            // Sanity check
+            UpdateRawIndices(verify: true);
         }
 
 
@@ -176,6 +182,9 @@ namespace LynnaLib
             // point to the same data, said data should have multiple different labels which are
             // represented as different ObjectGroup instances, each of which will point to its own
             // parent. (This breaks down if they use the same label.)
+            // Honestly, it is weird to be tracking this in the State class! An undo would undo the
+            // discovery of a new parent because of a newly loaded ObjectGroup... this needs to be
+            // rethought. But it shouldn't matter in most cases.
             public List<ObjectGroup> parents = new();
 
             // List of ObjectGroups referenced by this ObjectGroup (includes self)
@@ -461,12 +470,14 @@ namespace LynnaLib
 
             if (!IsIsolated(out firstToDelete))
             {
+                Project.UndoState.CaptureInitialState(this);
+
                 RawObjectGroup.Repoint();
 
                 // ObjectData has been cloned in the RawObjectGroup, so reload it
-                foreach (ObjectStruct st in ObjectList)
+                foreach (ref ObjectStruct st in CollectionsMarshal.AsSpan(ObjectList))
                 {
-                    st.data = RawObjectGroup.GetObjectData(st.rawIndex);
+                    st = st with { data = RawObjectGroup.GetObjectData(st.rawIndex) };
                     st.def.SetObjectData(st.data);
                 }
 
@@ -512,9 +523,7 @@ namespace LynnaLib
 
         public void InvokeModifiedEvent(TransactionState prevState)
         {
-            // Maybe not necessary to call this, it only validates data in the ObjectList (already
-            // tracked through undos)
-            UpdateRawIndices();
+            UpdateRawIndices(verify: true);
 
             ModifiedHandler(this, null);
         }
@@ -542,10 +551,15 @@ namespace LynnaLib
 
             RawObjectGroup.InsertObject(RawObjectGroup.GetNumObjects(), type);
 
-            ObjectStruct st = new ObjectStruct();
-            st.rawIndex = RawObjectGroup.GetNumObjects() - 1;
-            st.data = RawObjectGroup.GetObjectData(st.rawIndex);
-            st.def = new ObjectDefinition(this, st.data, uniqueIDCounter++);
+            int rawIndex = RawObjectGroup.GetNumObjects() - 1;
+            ObjectData data = RawObjectGroup.GetObjectData(rawIndex);
+
+            ObjectStruct st = new ObjectStruct
+            {
+                rawIndex = rawIndex,
+                data = data,
+                def = new ObjectDefinition(this, data, uniqueIDCounter++),
+            };
             ObjectList.Add(st);
 
             UpdateRawIndices();
@@ -554,7 +568,7 @@ namespace LynnaLib
         }
 
         // Call this whenever the ordering of objects in objectList changes
-        void UpdateRawIndices()
+        void UpdateRawIndices(bool verify = false)
         {
             // RawObjectGroup may be null here if a previously stubbed group was unstubbed, then
             // undone (turned into a stub again)
@@ -568,9 +582,12 @@ namespace LynnaLib
             for (int i = 0; i < RawObjectGroup.GetNumObjects(); i++)
                 dict.Add(RawObjectGroup.GetObjectData(i), i);
 
-            foreach (ObjectStruct st in ObjectList)
+            foreach (ref ObjectStruct st in CollectionsMarshal.AsSpan(ObjectList))
             {
-                st.rawIndex = dict[st.data];
+                if (verify)
+                    Debug.Assert(st.rawIndex == dict[st.data]);
+                else
+                    st = st with { rawIndex = dict[st.data] };
             }
         }
 
@@ -707,15 +724,19 @@ namespace LynnaLib
         }
 
 
-        class ObjectStruct
+        // The "record" type has value equality (like structs) but is a reference type (like classes).
+        // By making it immutable, we don't need to worry about writing and using copy constructors.
+        // The bottom line is we can use this in our "State" class without worrying about overriding
+        // equality or copy operations.
+        record ObjectStruct
         {
             // Index in the RawObjectGroup corresponding to this object. It is different because the
             // raw object group contains entries for pointer types, while this doesn't.
-            public int rawIndex;
+            public required int rawIndex { get; init; }
 
             // The ObjectDefinition is an abstraction around the corresponding ObjectData.
-            public ObjectDefinition def;
-            public ObjectData data;
+            public required ObjectDefinition def { get; init; }
+            public required ObjectData data { get; init; }
         }
     }
 }

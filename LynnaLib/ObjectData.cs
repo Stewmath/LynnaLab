@@ -161,7 +161,7 @@
         }
 
 
-        private ObjectType objectType;
+        private readonly ObjectType objectType;
         private ValueReferenceGroup vrg;
 
 
@@ -302,6 +302,8 @@
         }
 
         // The opposite of ExpandParameters; called while saving.
+        // DO NOT call this before ExpandParameters has been called at least once! This assumes that
+        // it is in the expanded state at the moment it is called.
         void ContractParameters(ObjectData last)
         {
             suppressUndoRecording++;
