@@ -500,6 +500,11 @@ public class RoomEditor : Frame
         dungeonMinimap.ScrollToZoom = scrollToZoom;
     }
 
+    public void UpdateRoomComponents()
+    {
+        roomLayoutEditor.UpdateRoomComponents();
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================

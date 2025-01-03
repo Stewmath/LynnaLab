@@ -126,8 +126,8 @@ public class RoomLayoutEditor : TileGrid
         }
     }
 
-    bool DrawObjects { get { return RoomEditor.ObjectTabActive && RoomEditor.EditingWarpDestination == null; } }
-    bool DrawWarps { get { return RoomEditor.WarpTabActive && RoomEditor.EditingWarpDestination == null; } }
+    bool DrawObjects { get { return (Workspace.ViewObjects || RoomEditor.ObjectTabActive) && RoomEditor.EditingWarpDestination == null; } }
+    bool DrawWarps { get { return (Workspace.ViewWarps || RoomEditor.WarpTabActive) && RoomEditor.EditingWarpDestination == null; } }
     bool DrawChests { get { return RoomEditor.ChestTabActive && Room.Chest != null; } }
 
 

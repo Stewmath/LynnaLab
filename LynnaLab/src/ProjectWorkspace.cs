@@ -93,7 +93,10 @@ public class ProjectWorkspace
     public Project Project { get; private set; }
     public QuickstartData QuickstartData { get; set; } = new QuickstartData();
     public Brush<int> Brush { get; private set; }
+
     public bool ShowBrushPreview { get; private set; } = true;
+    public bool ViewObjects { get; private set; }
+    public bool ViewWarps { get; private set; }
 
     // For copy/pasting. This may or may not exist in the game (it may have been deleted), but it
     // should be copiable regardless.
@@ -170,6 +173,16 @@ public class ProjectWorkspace
                 {
                     Project.UndoState.Redo();
                 }
+                ImGui.EndMenu();
+            }
+            if (ImGui.BeginMenu("View"))
+            {
+                ImGuiX.MenuItemCheckbox("View objects",
+                                        new Accessor<bool>(() => ViewObjects),
+                                        (_) => roomEditor.UpdateRoomComponents());
+                ImGuiX.MenuItemCheckbox("View warps",
+                                        new Accessor<bool>(() => ViewWarps),
+                                        (_) => roomEditor.UpdateRoomComponents());
                 ImGui.EndMenu();
             }
             if (ImGui.BeginMenu("Windows"))

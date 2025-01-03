@@ -270,12 +270,15 @@ public static class ImGuiX
     /// <summary>
     /// Menu item that behaves as a checkbox, with an accessor for the value
     /// </summary>
-    public static void MenuItemCheckbox(string name, Accessor<bool> accessor)
+    public static void MenuItemCheckbox(string name, Accessor<bool> accessor, Action<bool> onChanged = null)
     {
         bool value = accessor.Get();
         bool changed = ImGui.MenuItem(name, null, ref value);
         if (changed)
+        {
             accessor.Set(value);
+            onChanged?.Invoke(value);
+        }
     }
 
     /// <summary>
