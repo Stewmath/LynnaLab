@@ -434,27 +434,27 @@ public static class TopLevel
 
             bool retval = false;
 
-            if (ImGui.Button("Attempt to resume"))
-            {
-                Program.handlingException = null;
-                retval = true;
-            }
-
             if (Workspace != null)
             {
-                ImGui.SameLine();
                 if (ImGui.Button("Save project and quit"))
                 {
                     Workspace.Project.Save();
                     Environment.Exit(1);
                     retval = true;
                 }
+                ImGui.SameLine();
             }
 
-            ImGui.SameLine();
             if (ImGui.Button("Quit without saving"))
             {
                 Environment.Exit(1);
+                retval = true;
+            }
+            ImGui.SameLine();
+
+            if (ImGui.Button("Attempt to resume (not recommended)"))
+            {
+                Program.handlingException = null;
                 retval = true;
             }
 
