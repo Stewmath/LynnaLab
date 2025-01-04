@@ -577,6 +577,7 @@ public class RoomEditor : Frame
                 {
                     dungeonMinimap.SetMap(dungeon, floor);
                     dungeonMinimap.SelectedIndex = y * dungeon.MapWidth + x;
+                    ActiveFloor = dungeonMinimap.Floor;
                 }
             }
         }

@@ -74,6 +74,8 @@ public class Minimap : TileGrid
 
     public Map Map { get { return map; } }
 
+    public int Floor { get { return floor; } }
+
     public RoomLayout SelectedRoomLayout
     {
         get { return map.GetRoomLayout(SelectedX, SelectedY, 0); }
