@@ -13,7 +13,7 @@ setup instructions!
 You can edit a room by drawing a single tile at the desired position, or copying a range of tiles at
 a time.
 
-![](images/preview-brush.mp4)
+![](images/preview-brush.gif)
 
 ### Quickstart & Run
 
