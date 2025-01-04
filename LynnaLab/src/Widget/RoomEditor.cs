@@ -323,7 +323,7 @@ public class RoomEditor : Frame
                     // changed programmatically.
                     ActiveMinimap = minimap;
                     SetRoomLayout(
-                        ActiveMap.GetRoomLayout(ActiveMinimap.SelectedX, ActiveMinimap.SelectedY),
+                        ActiveMinimap.GetRoomLayout(ActiveMinimap.SelectedX, ActiveMinimap.SelectedY),
                         0);
                 }
 

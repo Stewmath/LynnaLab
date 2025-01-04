@@ -117,4 +117,9 @@ public class Minimap : TileGrid
 
         dungeonEW.ReplaceEventSource(map as Dungeon);
     }
+
+    public RoomLayout GetRoomLayout(int x, int y)
+    {
+        return map.GetRoomLayout(x, y, floor);
+    }
 }
