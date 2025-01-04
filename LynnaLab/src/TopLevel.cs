@@ -438,6 +438,7 @@ public static class TopLevel
             {
                 if (ImGui.Button("Save project and quit"))
                 {
+                    Program.handlingException = null;
                     Workspace.Project.Save();
                     Environment.Exit(1);
                     retval = true;
