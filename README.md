@@ -8,10 +8,12 @@ setup instructions!
 
 ## Features
 
-### Edit all of the things
+### Easy room layout editing
 
-Room layouts, object placement, tilesets, dungeons, palettes - all of the
-essentials can be edited through LynnaLab.
+You can edit a room by drawing a single tile at the desired position, or copying a range of tiles at
+a time.
+
+![](images/preview-brush.webm)
 
 ### Quickstart & Run
 
@@ -40,7 +42,14 @@ destination.
 
 ### ...And much more
 
-LynnaLab is built on top of the
+- Chest editing
+- Tileset editor & cloner tools
+- Dungeon editor
+- Scratchpad window
+- Undo/redo functionality
+- Documentation for most objects
+
+On top of all of this, LynnaLab is built on top of the
 [oracles disassembly](https://github.com/stewmath/oracles-disasm), making the
 entirety of the game's codebase available to modify as you please. Custom events
 can be created using the game's native scripting language paired with assembly
@@ -142,7 +151,7 @@ either.
 ### Minimap (right)
 
 * Left click: Select a room to edit
-* Middle click + drag: Scroll through overworld (when zoomed in)
+* Middle click + drag: Pan through overworld (when zoomed in)
 * Scroll wheel:
   * Zoom in & out (if "scroll to zoom" is ON)
   * Scroll vertically (if "scroll to zoom" is OFF)
@@ -152,7 +161,7 @@ either.
 
 * All modes:
   * Scroll on tileset: Zoom in
-  * Middle click + drag: Scroll through tileset (when zoomed in)
+  * Middle click + drag: Pan through tileset (when zoomed in)
   * Palettes:
     * Right-click: Open copy/paste menu
     * Can also drag one palette onto another to copy it
@@ -170,7 +179,7 @@ either.
   * Right-click on tileset: Copy palette
   * Left-click on tileset: Assign palettes (hold Ctrl for rectangle fill)
 * Subtile brush mode
-  * Right-click on tileset or subtile viewer: Copy subtile (ctrl+click to copy range)
+  * Right-click on tileset or subtile viewer: Copy subtile (right click+drag to copy range)
   * Left-click on tileset: Assign subtiles (hold Ctrl for rectangle fill)
 * Collision brush mode
   * Right-click on tileset or tile preview: Disable collision
