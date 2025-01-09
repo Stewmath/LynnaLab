@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 
@@ -61,8 +62,12 @@ public static class TopLevel
 
     static IBackend backend;
     static Dictionary<Bitmap, Image> imageDict = new Dictionary<Bitmap, Image>();
-    static Queue<Func<bool>> idleFunctions = new Queue<Func<bool>>();
+
     static Queue<Action> actionsForNextFrame = new();
+
+    // This must be thread-safe - signals that come from other threads (ie. emulator process exit
+    // signal) may want to schedule actions to perform on the main thread.
+    static ConcurrentQueue<Func<bool>> idleFunctions = new();
 
     // Vars related to modal windows
     static Queue<ModalStruct> modalQueue = new Queue<ModalStruct>();
@@ -107,11 +112,12 @@ public static class TopLevel
 
             // Call the "idle functions", used for lazy drawing.
             // Do this before backend.Render() as that triggers vsync and messes up our timer.
-            while (idleFunctions.Count != 0 && Program.handlingException == null)
+            while (Program.handlingException == null)
             {
-                var func = idleFunctions.Peek();
-                if (!func())
-                    idleFunctions.Dequeue();
+                if (!idleFunctions.TryDequeue(out Func<bool> func))
+                    break;
+                if (func())
+                    idleFunctions.Enqueue(func);
 
                 // Maximum frame time up to which we can run another idle function.
                 // At 60fps, 1 frame = 0.016 seconds. So we keep this a bit under that.
@@ -250,7 +256,8 @@ public static class TopLevel
     /// <summary>
     /// Queues the given function to run when some free time is available.
     /// The function will be repeatedly called until it returns false.
-    /// Modeled after GLib.IdleHandler.
+    /// THIS MAY BE CALLED FROM OTHER THREADS! Ensure that no race conditions occur. The
+    /// "idleFunctions" queue is a thread-safe type.
     /// </summary>
     public static void LazyInvoke(Func<bool> function)
     {
