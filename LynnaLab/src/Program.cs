@@ -37,7 +37,7 @@ class Program
                 TopLevel.Load();
         }
 
-        while (true)
+        while (!TopLevel.Backend.Exited)
         {
             try
             {

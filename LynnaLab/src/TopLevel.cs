@@ -46,6 +46,8 @@ public static class TopLevel
 
         backend.RecreateFontTexture();
 
+        stopwatch = Stopwatch.StartNew();
+
         if (path != null)
             TopLevel.OpenProject(path, game);
     }
@@ -61,6 +63,8 @@ public static class TopLevel
     // ================================================================================
 
     static IBackend backend;
+    static Stopwatch stopwatch;
+
     static Dictionary<Bitmap, Image> imageDict = new Dictionary<Bitmap, Image>();
 
     static Queue<Action> actionsForNextFrame = new();
@@ -95,58 +99,52 @@ public static class TopLevel
     // ================================================================================
 
     /// <summary>
-    /// Main loop
+    /// Main loop (called repeatedly)
     /// </summary>
     public static void Run()
     {
-        var stopwatch = Stopwatch.StartNew();
+        float lastDeltaTime = stopwatch.ElapsedTicks / (float)Stopwatch.Frequency;
+        stopwatch.Restart();
 
-        // Main application loop
-        while (!backend.Exited)
+        backend.HandleEvents(lastDeltaTime);
+        TopLevel.Render(lastDeltaTime);
+
+        // Call the "idle functions", used for lazy drawing.
+        // Do this before backend.Render() as that triggers vsync and messes up our timer.
+        while (Program.handlingException == null)
         {
-            float lastDeltaTime = stopwatch.ElapsedTicks / (float)Stopwatch.Frequency;
-            stopwatch.Restart();
+            if (!idleFunctions.TryDequeue(out Func<bool> func))
+                break;
+            if (func())
+                idleFunctions.Enqueue(func);
 
-            backend.HandleEvents(lastDeltaTime);
-            TopLevel.Render(lastDeltaTime);
+            // Maximum frame time up to which we can run another idle function.
+            // At 60fps, 1 frame = 0.016 seconds. So we keep this a bit under that.
+            const float MAX_FRAME_TIME = 0.01f;
 
-            // Call the "idle functions", used for lazy drawing.
-            // Do this before backend.Render() as that triggers vsync and messes up our timer.
-            while (Program.handlingException == null)
-            {
-                if (!idleFunctions.TryDequeue(out Func<bool> func))
-                    break;
-                if (func())
-                    idleFunctions.Enqueue(func);
+            float deltaTime = stopwatch.ElapsedTicks / (float)Stopwatch.Frequency;
+            if (deltaTime >= MAX_FRAME_TIME)
+                break;
+        }
 
-                // Maximum frame time up to which we can run another idle function.
-                // At 60fps, 1 frame = 0.016 seconds. So we keep this a bit under that.
-                const float MAX_FRAME_TIME = 0.01f;
+        backend.Render();
 
-                float deltaTime = stopwatch.ElapsedTicks / (float)Stopwatch.Frequency;
-                if (deltaTime >= MAX_FRAME_TIME)
-                    break;
-            }
+        if (backend.CloseRequested)
+        {
+            if (Workspace == null)
+                backend.Close();
+            else
+                CloseProjectModal(() => { backend.Close(); });
 
-            backend.Render();
+            backend.CloseRequested = false;
+        }
 
-            if (backend.CloseRequested)
-            {
-                if (Workspace == null)
-                    backend.Close();
-                else
-                    CloseProjectModal(() => { backend.Close(); });
-
-                backend.CloseRequested = false;
-            }
-
-            if (Program.handlingException == null)
-            {
-                var actions = actionsForNextFrame.ToArray();
-                actionsForNextFrame.Clear();
-                foreach (Action act in actions)
-                    act();
-            }
+        if (Program.handlingException == null)
+        {
+            var actions = actionsForNextFrame.ToArray();
+            actionsForNextFrame.Clear();
+            foreach (Action act in actions)
+                act();
         }
     }
 
