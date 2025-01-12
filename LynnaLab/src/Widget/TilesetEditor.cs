@@ -509,8 +509,8 @@ public class TilesetEditor : Frame
                 0, 0, subtileBrush.BrushWidth, subtileBrush.BrushHeight
             );
             bitmap.Unlock();
-            Image image = TopLevel.Backend.ImageFromBitmap(bitmap);
-            subtileBrushInterfacer.SetPreviewImage(image, 8);
+            Texture image = TopLevel.Backend.TextureFromBitmap(bitmap);
+            subtileBrushInterfacer.SetPreviewTexture(image, 8);
             tilesetViewer.TooltipImagePreview = subtileBrush.IsSingleTile;
         }
     }
@@ -773,7 +773,7 @@ class TileEditor : TileGrid
     // ================================================================================
 
     TilesetEditor parent;
-    Image image;
+    Texture image;
     EventWrapper<Tileset> tilesetEventWrapper;
 
     // ================================================================================
@@ -784,7 +784,7 @@ class TileEditor : TileGrid
     public RealTileset Tileset { get; private set; }
     public int TileIndex { get; private set; } // Should never be -1
 
-    public override Image Image { get { return image; } }
+    public override Texture Texture { get { return image; } }
 
     // ================================================================================
     // Public methods
@@ -874,7 +874,7 @@ class TileEditor : TileGrid
 
     void DrawTile()
     {
-        image = TopLevel.ImageFromBitmapTracked(Tileset.GetTileBitmap(TileIndex));
+        image = TopLevel.TextureFromBitmapTracked(Tileset.GetTileBitmap(TileIndex));
     }
 
     /// <summary>

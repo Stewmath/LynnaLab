@@ -140,7 +140,7 @@ public class BrushInterfacer
     }
 
     /// <summary>
-    /// Create a BrushInterfacer, using an image to draw the preview instead of a per-tile drawer function.
+    /// Create a BrushInterfacer, using a texture to draw the preview instead of a per-tile drawer function.
     /// </summary>
     public static BrushInterfacer Create<T>(Brush<T> brush)
     {
@@ -166,8 +166,8 @@ public class BrushInterfacer
 
     // Only one of these should be non-null. This determines how the image will be drawn.
     Action<Func<int, int, bool>, int, int, int, int, float> drawAll;
-    Image previewImage;
-    int tileSize; // used with previewImage
+    Texture previewTexture;
+    int tileSize; // used with previewTexture
 
     // ================================================================================
     // Properties
@@ -187,7 +187,7 @@ public class BrushInterfacer
     /// </summary>
     public void Draw(Func<int, int, bool> prepTile, int x1, int y1, int width, int height, float scale)
     {
-        if (previewImage != null)
+        if (previewTexture != null)
         {
             for (int x=x1; x<x1+width; x++)
             {
@@ -196,7 +196,7 @@ public class BrushInterfacer
                     if (!prepTile(x, y))
                         continue;
                     Vector2 offset = new Vector2((x - x1) % BrushWidth, (y - y1) % BrushHeight) * tileSize;
-                    ImGuiX.DrawImage(previewImage, scale, topLeft: offset, bottomRight: offset + new Vector2(tileSize, tileSize));
+                    ImGuiX.DrawImage(previewTexture, scale, topLeft: offset, bottomRight: offset + new Vector2(tileSize, tileSize));
                 }
             }
         }
@@ -205,12 +205,12 @@ public class BrushInterfacer
     }
 
     /// <summary>
-    /// Sets the preview image, disposing of the previous one if it exists.
+    /// Sets the preview texture, disposing of the previous one if it exists.
     /// </summary>
-    public void SetPreviewImage(Image image, int tileSize)
+    public void SetPreviewTexture(Texture texture, int tileSize)
     {
-        previewImage?.Dispose();
-        previewImage = image;
+        previewTexture?.Dispose();
+        previewTexture = texture;
         this.tileSize = tileSize;
     }
 }

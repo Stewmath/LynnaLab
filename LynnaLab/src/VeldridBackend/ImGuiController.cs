@@ -26,7 +26,7 @@ public class ImGuiController : IDisposable
     // Veldrid objects
     private DeviceBuffer _vertexBuffer;
     private DeviceBuffer _indexBuffer;
-    private DeviceBuffer _imageFragBuffer;
+    private DeviceBuffer _textureFragBuffer;
     private DeviceBuffer _fontFragBuffer;
     private DeviceBuffer _projMatrixBuffer;
     private Texture _fontTexture;
@@ -45,12 +45,12 @@ public class ImGuiController : IDisposable
     private int _windowHeight;
     private Vector2 _scaleFactor = Vector2.One;
 
-    // To be copied directly to _imageFragBuffer
-    FragUniformStruct imageFragStruct;
+    // To be copied directly to _textureFragBuffer
+    FragUniformStruct textureFragStruct;
 
-    // Image trackers
-    private readonly Dictionary<VeldridImage, ResourceSetInfo> _setsByImage
-        = new Dictionary<VeldridImage, ResourceSetInfo>();
+    // Texture trackers
+    private readonly Dictionary<VeldridTextureWrapper, ResourceSetInfo> _setsByTexture
+        = new Dictionary<VeldridTextureWrapper, ResourceSetInfo>();
     private readonly Dictionary<IntPtr, ResourceSetInfo> _viewsById = new Dictionary<IntPtr, ResourceSetInfo>();
 
     private readonly List<IDisposable> _ownedResources = new List<IDisposable>();
@@ -128,8 +128,8 @@ public class ImGuiController : IDisposable
         _projMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
         _projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
 
-        _imageFragBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
-        _imageFragBuffer.Name = "ImGui.NET Uniform buffer for image fragment shaders";
+        _textureFragBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+        _textureFragBuffer.Name = "ImGui.NET Uniform buffer for texture fragment shaders";
 
         byte[] vertexShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-vertex", ShaderStages.Vertex);
         byte[] fragmentShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-frag", ShaderStages.Fragment);
@@ -177,10 +177,10 @@ public class ImGuiController : IDisposable
         };
         _gd.UpdateBuffer(_fontFragBuffer, 0, defaultFragUniformStruct);
 
-        // Uniform buffer for images. This will be updated frequently, but we set the initial values here.
-        imageFragStruct.alpha = 1.0f;
-        imageFragStruct.InterpolationMode = (int)Interpolation.Nearest;
-        _gd.UpdateBuffer(_imageFragBuffer, 0, imageFragStruct);
+        // Uniform buffer for textures. This will be updated frequently, but we set the initial values here.
+        textureFragStruct.alpha = 1.0f;
+        textureFragStruct.InterpolationMode = (int)Interpolation.Nearest;
+        _gd.UpdateBuffer(_textureFragBuffer, 0, textureFragStruct);
 
         // Resource set for rendering imgui components
         _mainResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
@@ -195,15 +195,15 @@ public class ImGuiController : IDisposable
     /// Gets or creates a handle for a texture to be drawn with ImGui.
     /// Pass the returned handle to Image() or ImageButton().
     /// </summary>
-    private IntPtr RegenerateImageBinding(VeldridImage image)
+    private IntPtr RegenerateTextureBinding(VeldridTextureWrapper texture)
     {
-        if (_setsByImage.TryGetValue(image, out ResourceSetInfo rsi))
+        if (_setsByTexture.TryGetValue(texture, out ResourceSetInfo rsi))
         {
             _ownedResources.Remove(rsi.ResourceSet);
             _ownedResources.Remove(rsi.TextureView);
             _gd.DisposeWhenIdle(rsi.ResourceSet);
             _gd.DisposeWhenIdle(rsi.TextureView);
-            _setsByImage.Remove(image);
+            _setsByTexture.Remove(texture);
             _viewsById.Remove(rsi.ImGuiBinding);
         }
 
@@ -211,31 +211,31 @@ public class ImGuiController : IDisposable
         Sampler sampler;
         ResourceSet resourceSet;
 
-        if (imageFragStruct.InterpolationMode == (int)Interpolation.Nearest)
+        if (textureFragStruct.InterpolationMode == (int)Interpolation.Nearest)
         {
             sampler = _gd.PointSampler;
         }
-        else if (imageFragStruct.InterpolationMode == (int)Interpolation.Bicubic)
+        else if (textureFragStruct.InterpolationMode == (int)Interpolation.Bicubic)
         {
             // This seems to have some effect, but the bulk of the work is in the shader
             sampler = _gd.LinearSampler;
         }
         else
         {
-            throw new Exception($"Interpolation method {imageFragStruct.InterpolationMode} unknown");
+            throw new Exception($"Interpolation method {textureFragStruct.InterpolationMode} unknown");
         }
 
-        var textureView = factory.CreateTextureView(image.Texture);
+        var textureView = factory.CreateTextureView(texture.Texture);
 
         resourceSet = factory.CreateResourceSet(
             new ResourceSetDescription(_textureLayout,
                                        textureView,
                                        sampler,
-                                       _imageFragBuffer));
+                                       _textureFragBuffer));
 
-        rsi = new ResourceSetInfo(GetNextImGuiBindingID(), resourceSet, image, textureView);
+        rsi = new ResourceSetInfo(GetNextImGuiBindingID(), resourceSet, texture, textureView);
 
-        _setsByImage.Add(image, rsi);
+        _setsByTexture.Add(texture, rsi);
         _viewsById.Add(rsi.ImGuiBinding, rsi);
         _ownedResources.Add(textureView);
         _ownedResources.Add(resourceSet);
@@ -247,27 +247,27 @@ public class ImGuiController : IDisposable
     /// Gets or creates a handle for a texture to be drawn with ImGui.
     /// Pass the returned handle to Image() or ImageButton().
     /// </summary>
-    public IntPtr GetOrCreateImGuiBinding(VeldridImage image)
+    public IntPtr GetOrCreateImGuiBinding(VeldridTextureWrapper texture)
     {
-        if (!_setsByImage.TryGetValue(image, out ResourceSetInfo rsi))
+        if (!_setsByTexture.TryGetValue(texture, out ResourceSetInfo rsi))
         {
-            return RegenerateImageBinding(image);
+            return RegenerateTextureBinding(texture);
         }
 
         return rsi.ImGuiBinding;
     }
 
-    public void UnbindImage(VeldridImage image)
+    public void UnbindTexture(VeldridTextureWrapper texture)
     {
-        if (!_setsByImage.ContainsKey(image))
+        if (!_setsByTexture.ContainsKey(texture))
             return;
-        var rsi = _setsByImage[image];
+        var rsi = _setsByTexture[texture];
         _ownedResources.Remove(rsi.TextureView);
         _ownedResources.Remove(rsi.ResourceSet);
         _gd.DisposeWhenIdle(rsi.TextureView);
         _gd.DisposeWhenIdle(rsi.ResourceSet);
         _viewsById.Remove(rsi.ImGuiBinding);
-        _setsByImage.Remove(image);
+        _setsByTexture.Remove(texture);
     }
 
     private IntPtr GetNextImGuiBindingID()
@@ -279,7 +279,7 @@ public class ImGuiController : IDisposable
     /// <summary>
     /// Retrieves the shader texture binding for the given helper handle.
     /// </summary>
-    private ResourceSetInfo GetImageResourceSetInfo(IntPtr imGuiBinding)
+    private ResourceSetInfo GetTextureResourceSetInfo(IntPtr imGuiBinding)
     {
         if (!_viewsById.TryGetValue(imGuiBinding, out ResourceSetInfo tvi))
         {
@@ -297,7 +297,7 @@ public class ImGuiController : IDisposable
         }
 
         _ownedResources.Clear();
-        _setsByImage.Clear();
+        _setsByTexture.Clear();
         _viewsById.Clear();
         _lastAssignedID = 100;
     }
@@ -606,13 +606,13 @@ public class ImGuiController : IDisposable
                     {
                         case ImGuiXCallback.SetAlpha:
                             float alpha = Marshal.PtrToStructure<float>(pcmd.UserCallbackData);
-                            imageFragStruct.alpha = alpha;
-                            cl.UpdateBuffer(_imageFragBuffer, 0, imageFragStruct);
+                            textureFragStruct.alpha = alpha;
+                            cl.UpdateBuffer(_textureFragBuffer, 0, textureFragStruct);
                             break;
                         case ImGuiXCallback.SetInterpolation:
                             int interp = Marshal.PtrToStructure<int>(pcmd.UserCallbackData);
-                            imageFragStruct.InterpolationMode = interp;
-                            cl.UpdateBuffer(_imageFragBuffer, 0, imageFragStruct);
+                            textureFragStruct.InterpolationMode = interp;
+                            cl.UpdateBuffer(_textureFragBuffer, 0, textureFragStruct);
                             break;
                         default:
                             throw new NotImplementedException();
@@ -630,7 +630,7 @@ public class ImGuiController : IDisposable
                         }
                         else
                         {
-                            var rsi = GetImageResourceSetInfo(pcmd.TextureId);
+                            var rsi = GetTextureResourceSetInfo(pcmd.TextureId);
                             cl.SetGraphicsResourceSet(1, rsi.ResourceSet);
                         }
                     }
@@ -677,15 +677,15 @@ public class ImGuiController : IDisposable
     {
         public readonly IntPtr ImGuiBinding;
         public readonly ResourceSet ResourceSet;
-        public readonly VeldridImage Image;
+        public readonly VeldridTextureWrapper Texture;
         public readonly TextureView TextureView;
 
         public ResourceSetInfo(IntPtr imGuiBinding, ResourceSet resourceSet,
-                               VeldridImage image, TextureView textureView)
+                               VeldridTextureWrapper texture, TextureView textureView)
         {
             ImGuiBinding = imGuiBinding;
             ResourceSet = resourceSet;
-            Image = image;
+            Texture = texture;
             TextureView = textureView;
         }
     }

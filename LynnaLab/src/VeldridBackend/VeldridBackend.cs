@@ -3,7 +3,7 @@ using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
 
 using IBackend = LynnaLab.IBackend;
-using Image = LynnaLab.Image;
+using Texture = LynnaLab.Texture; // Don't care about Veldrid.Texture here
 
 namespace VeldridBackend;
 
@@ -96,20 +96,20 @@ public class VeldridBackend : IBackend
         _window.Close();
     }
 
-    public Image ImageFromBitmap(Bitmap bitmap)
+    public Texture TextureFromBitmap(Bitmap bitmap)
     {
-        return new VeldridImage(_controller, bitmap, 1.0f);
+        return new VeldridTextureWrapper(_controller, bitmap, 1.0f);
     }
-    public Image ImageFromFile(string filename)
+    public Texture TextureFromFile(string filename)
     {
         Bitmap bitmap = new Bitmap(filename);
-        Image image = ImageFromBitmap(bitmap);
+        Texture tx = TextureFromBitmap(bitmap);
         bitmap.Dispose();
-        return image;
+        return tx;
     }
-    public Image CreateImage(int width, int height)
+    public Texture CreateTexture(int width, int height)
     {
-        return new VeldridImage(_controller, width, height, 1.0f);
+        return new VeldridTextureWrapper(_controller, width, height, 1.0f);
     }
 
     public void RecreateFontTexture()

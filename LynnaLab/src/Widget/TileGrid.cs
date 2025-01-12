@@ -275,10 +275,10 @@ public class TileGrid : SizedWidget
     public bool SelectingRectangle { get { return activeRectSelectAction != null; } }
 
     /// <summary>
-    /// A derived class should override either the Image get operator or the TileDrawer function in
-    /// order to supply the image to draw.
+    /// A derived class should override either the Texture get operator or the TileDrawer function in
+    /// order to supply the texture to draw.
     /// </summary>
-    public virtual Image Image { get { return null; } }
+    public virtual Texture Texture { get { return null; } }
 
     // ================================================================================
     // Public methods
@@ -395,9 +395,9 @@ public class TileGrid : SizedWidget
         base.RenderPrep();
         ImGui.BeginGroup();
 
-        if (Image != null)
+        if (Texture != null)
         {
-            ImGuiX.DrawImage(Image, scale: Scale);
+            ImGuiX.DrawImage(Texture, scale: Scale);
         }
 
         bool dragging = false;
@@ -407,7 +407,7 @@ public class TileGrid : SizedWidget
             var (x, y) = TileToXY(tile);
 
             // Use per-tile drawing method if no image was supplied
-            if (Image == null)
+            if (Texture == null)
             {
                 ImGui.SetCursorScreenPos(origin + TileToCoord(tile));
                 TileDrawer(tile);
@@ -773,8 +773,8 @@ public class TileGrid : SizedWidget
     }
 
     /// <summary>
-    /// Helper function to draw a tile from the current image. Can be used in various contexts, ie.
-    /// in tooltips, not just internally.
+    /// Helper function to draw a tile from the current texture. Can be used in various contexts,
+    /// ie. in tooltips, not just internally.
     /// </summary>
     public void DrawTileImage(int index, float scale)
     {
@@ -782,7 +782,7 @@ public class TileGrid : SizedWidget
                                   (index / Height) * TileHeight);
         var tileSize = new Vector2(TileWidth, TileHeight);
 
-        ImGuiX.DrawImage(Image, scale, tilePos, tilePos + tileSize);
+        ImGuiX.DrawImage(Texture, scale, tilePos, tilePos + tileSize);
     }
 
     /// <summary>
@@ -858,8 +858,8 @@ public class TileGrid : SizedWidget
     // ================================================================================
 
     /// <summary>
-    /// A derived class may choose to override TileDrawer instead of the Image property in order to
-    /// supply its image tile-by-tile.
+    /// A derived class may choose to override TileDrawer instead of the Texture property in order
+    /// to supply its image tile-by-tile.
     /// </summary>
     protected virtual void TileDrawer(int index) {}
 

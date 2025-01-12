@@ -67,7 +67,7 @@ public class RoomLayoutEditor : TileGrid
     // ================================================================================
     // Variables
     // ================================================================================
-    Image image;
+    Texture texture;
     RoomComponent selectedRoomComponent;
     List<RoomComponent> roomComponents;
     bool draggingComponent;
@@ -111,7 +111,7 @@ public class RoomLayoutEditor : TileGrid
         }
     }
 
-    public override Image Image { get { return image; } }
+    public override Texture Texture { get { return texture; } }
 
     // Private properties
 
@@ -420,7 +420,7 @@ public class RoomLayoutEditor : TileGrid
     /// </summary>
     void OnRoomChanged()
     {
-        image = Workspace.GetCachedRoomImage(RoomLayout);
+        texture = Workspace.GetCachedRoomTexture(RoomLayout);
 
         base.Width = RoomLayout.Width;
         base.Height = RoomLayout.Height;
@@ -685,9 +685,9 @@ public class RoomLayoutEditor : TileGrid
         {
             var origin = ImGui.GetCursorScreenPos();
             var offset = new Vector2(X + xOffset, Y + yOffset);
-            Image image = TopLevel.ImageFromBitmapTracked(sprite);
+            Texture texture = TopLevel.TextureFromBitmapTracked(sprite);
             ImGui.SetCursorScreenPos(origin + offset * Parent.Scale);
-            ImGuiX.DrawImage(image, Parent.Scale);
+            ImGuiX.DrawImage(texture, Parent.Scale);
             ImGui.SetCursorScreenPos(origin);
         }
     }
@@ -738,8 +738,8 @@ public class RoomLayoutEditor : TileGrid
             Vector2 size = new Vector2(BoxWidth, BoxHeight) * Parent.Scale;
 
             ImGuiX.ShiftCursorScreenPos(pos - size / 2);
-            var linkImage = TopLevel.ImageFromBitmapTracked(Parent.Project.LinkBitmap);
-            ImGuiX.DrawImage(linkImage, Parent.Scale);
+            Texture linkTexture = TopLevel.TextureFromBitmapTracked(Parent.Project.LinkBitmap);
+            ImGuiX.DrawImage(linkTexture, Parent.Scale);
         }
 
         public override bool Compare(RoomComponent com)

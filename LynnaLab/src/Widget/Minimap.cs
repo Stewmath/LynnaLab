@@ -54,14 +54,14 @@ public class Minimap : TileGrid
     // ================================================================================
     Map map;
     int floor;
-    Image image;
+    Texture image;
     EventWrapper<Dungeon> dungeonEW = new();
 
     // ================================================================================
     // Properties
     // ================================================================================
 
-    public override Image Image
+    public override Texture Texture
     {
         get
         {
@@ -112,7 +112,7 @@ public class Minimap : TileGrid
             base.Width = map.MapWidth;
             base.Height = map.MapHeight;
 
-            this.image = Workspace.GetCachedMapImage((Map, floor));
+            this.image = Workspace.GetCachedMapTexture((Map, floor));
         }
 
         dungeonEW.ReplaceEventSource(map as Dungeon);

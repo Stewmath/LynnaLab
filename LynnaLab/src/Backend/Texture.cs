@@ -1,14 +1,14 @@
 namespace LynnaLab;
 
 /// <summary>
-/// An Image is used by the graphics backend (Veldrid) to render stuff with Imgui. It is stored
-/// on the GPU so can be drawn efficiently.
+/// A Texture is used by the graphics backend (Veldrid) to render stuff with Imgui. It is stored on
+/// the GPU so can be drawn efficiently.
 ///
-/// Contrast with LynnaLib.Bitmap which is a Cairo surface used within LynnaLib rendered on the
-/// cpu side. This is converted to an Image through IBackend.ImageFromBitmap so that it can be
-/// rendered to the screen.
+/// Contrast with LynnaLib.Bitmap which is an image used within LynnaLib rendered on the cpu side.
+/// This is converted to a Texture through IBackend.TextureFromBitmap so that it can be rendered to
+/// the screen.
 /// </summary>
-public abstract class Image : IDisposable
+public abstract class Texture : IDisposable
 {
     // ================================================================================
     // Variables
@@ -23,7 +23,7 @@ public abstract class Image : IDisposable
 
     public event EventHandler<EventArgs> DisposedEvent;
 
-    event EventHandler<ImageModifiedEventArgs> modifiedEvent;
+    event EventHandler<TextureModifiedEventArgs> modifiedEvent;
 
     // ================================================================================
     // Properties
@@ -32,9 +32,9 @@ public abstract class Image : IDisposable
     public abstract int Height { get; }
 
     /// <summary>
-    /// Invoked when the image is modified
+    /// Invoked when the texture is modified
     /// </summary>
-    public event EventHandler<ImageModifiedEventArgs> ModifiedEvent
+    public event EventHandler<TextureModifiedEventArgs> ModifiedEvent
     {
         add
         {
@@ -56,14 +56,9 @@ public abstract class Image : IDisposable
     public abstract IntPtr GetBinding();
 
     /// <summary>
-    /// Draw this image onto another image
+    /// Draw this texture onto another texture
     /// </summary>
-    public abstract void DrawOn(Image destImage, Point srcPos, Point destPos, Point size);
-
-    /// <summary>
-    /// Replaces the contents of the image with the given bitmap.
-    /// </summary>
-    //public abstract void UpdateFromBitmap(LynnaLib.Bitmap bitmap);
+    public abstract void DrawOn(Texture destTexture, Point srcPos, Point destPos, Point size);
 
     public abstract void Dispose();
 
@@ -82,7 +77,7 @@ public abstract class Image : IDisposable
         if (modifiedEventLocked == 0 && modifiedEventInvoked)
         {
             modifiedEventInvoked = false;
-            modifiedEvent?.Invoke(this, new ImageModifiedEventArgs {});
+            modifiedEvent?.Invoke(this, new TextureModifiedEventArgs {});
         }
     }
 
@@ -94,7 +89,7 @@ public abstract class Image : IDisposable
     {
         if (modifiedEventLocked == 0)
         {
-            modifiedEvent?.Invoke(this, new ImageModifiedEventArgs { });
+            modifiedEvent?.Invoke(this, new TextureModifiedEventArgs { });
         }
         else
         {
@@ -109,4 +104,4 @@ public abstract class Image : IDisposable
 }
 
 // stub in case we need it later
-public struct ImageModifiedEventArgs { }
+public struct TextureModifiedEventArgs { }

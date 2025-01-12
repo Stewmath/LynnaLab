@@ -22,7 +22,7 @@ public static class TopLevel
         ImageDir = Path.GetDirectoryName(System.AppContext.BaseDirectory) + "/Images/";
 
         backend.SetIcon(ImageDir + "icon.bmp");
-        PegasusSeedImage = backend.ImageFromFile(ImageDir + "Pegasus_Seed_OOX.png");
+        PegasusSeedTexture = backend.TextureFromFile(ImageDir + "Pegasus_Seed_OOX.png");
 
         Helper.mainThreadInvokeFunction = TopLevel.LazyInvoke;
 
@@ -65,7 +65,7 @@ public static class TopLevel
     static IBackend backend;
     static Stopwatch stopwatch;
 
-    static Dictionary<Bitmap, Image> imageDict = new Dictionary<Bitmap, Image>();
+    static Dictionary<Bitmap, Texture> imageDict = new Dictionary<Bitmap, Texture>();
 
     static Queue<Action> actionsForNextFrame = new();
 
@@ -89,7 +89,7 @@ public static class TopLevel
     public static ImFontPtr OraclesFont { get; private set; }
     public static ImFontPtr OraclesFont24px { get; private set; }
 
-    public static Image PegasusSeedImage { get; private set; }
+    public static Texture PegasusSeedTexture { get; private set; }
 
     // Private properties
     private static ProjectWorkspace Workspace { get; set; }
@@ -222,19 +222,19 @@ public static class TopLevel
     }
 
     /// <summary>
-    /// Turns a Bitmap (cpu) into an Image (gpu), or looks up the existing Image if one exists
+    /// Turns a Bitmap (cpu) into an Texture (gpu), or looks up the existing Texture if one exists
     /// in the cache for that Bitmap already.
-    /// The resulting Image is tied to the Bitmap, updating when the bitmap updates and being
+    /// The resulting Texture is tied to the Bitmap, updating when the bitmap updates and being
     /// deleted when the bitmap is deleted.
     /// </summary>
-    public static Image ImageFromBitmapTracked(Bitmap bitmap)
+    public static Texture TextureFromBitmapTracked(Bitmap bitmap)
     {
-        Image image;
-        if (imageDict.TryGetValue(bitmap, out image))
-            return image;
+        Texture texture;
+        if (imageDict.TryGetValue(bitmap, out texture))
+            return texture;
 
-        image = backend.ImageFromBitmap(bitmap);
-        imageDict[bitmap] = image;
+        texture = backend.TextureFromBitmap(bitmap);
+        imageDict[bitmap] = texture;
 
         bitmap.DisposedEvent += (sender) =>
         {
@@ -242,7 +242,7 @@ public static class TopLevel
             imageDict.Remove(sender as Bitmap);
             image.Dispose();
         };
-        return image;
+        return texture;
     }
 
     public static void UnregisterBitmap(Bitmap bitmap)

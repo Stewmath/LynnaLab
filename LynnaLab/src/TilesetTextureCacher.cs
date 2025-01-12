@@ -1,14 +1,14 @@
 namespace LynnaLab;
 
 /// <summary>
-/// Caches images for tilesets arranged in a 16x16 configuration.
+/// Caches textures for tilesets arranged in a 16x16 configuration.
 /// </summary>
-public class TilesetImageCacher : ImageCacher<Tileset>
+public class TilesetTextureCacher : TextureCacher<Tileset>
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public TilesetImageCacher(ProjectWorkspace workspace)
+    public TilesetTextureCacher(ProjectWorkspace workspace)
         : base(workspace)
     {
 
@@ -30,27 +30,27 @@ public class TilesetImageCacher : ImageCacher<Tileset>
     // Protected methods
     // ================================================================================
 
-    protected override Image GenerateImage(Tileset tileset)
+    protected override Texture GenerateTexture(Tileset tileset)
     {
-        Image image = TopLevel.Backend.CreateImage(16 * 16, 16 * 16);
+        Texture texture = TopLevel.Backend.CreateTexture(16 * 16, 16 * 16);
 
-        RedrawAll(image, tileset);
+        RedrawAll(texture, tileset);
 
         tileset.TileModifiedEvent += (sender, tile) =>
         {
-            Image image = base.CacheLookup(sender as Tileset);
+            Texture texture = base.CacheLookup(sender as Tileset);
             if (tile == -1)
-                RedrawAll(image, sender as Tileset);
+                RedrawAll(texture, sender as Tileset);
             else
-                DrawTile(image, sender as Tileset, tile % 16, tile / 16);
+                DrawTile(texture, sender as Tileset, tile % 16, tile / 16);
         };
 
         tileset.DisposedEvent += (sender) =>
         {
-            base.DisposeImage(sender as Tileset);
+            base.DisposeTexture(sender as Tileset);
         };
 
-        return image;
+        return texture;
     }
 
 
@@ -58,26 +58,26 @@ public class TilesetImageCacher : ImageCacher<Tileset>
     // Private methods
     // ================================================================================
 
-    void RedrawAll(Image image, Tileset tileset)
+    void RedrawAll(Texture texture, Tileset tileset)
     {
-        image.BeginAtomicOperation();
+        texture.BeginAtomicOperation();
         for (int x = 0; x < 16; x++)
         {
             for (int y = 0; y < 16; y++)
             {
-                DrawTile(image, tileset, x, y);
+                DrawTile(texture, tileset, x, y);
             }
         }
-        image.EndAtomicOperation();
+        texture.EndAtomicOperation();
     }
 
-    void DrawTile(Image image, Tileset tileset, int x, int y)
+    void DrawTile(Texture texture, Tileset tileset, int x, int y)
     {
         int index = x + y * 16;
         var bitmap = tileset.GetTileBitmap(index);
-        var bitmapImage = TopLevel.ImageFromBitmapTracked(bitmap);
+        var bitmapTexture = TopLevel.TextureFromBitmapTracked(bitmap);
 
-        bitmapImage.DrawOn(image,
+        bitmapTexture.DrawOn(texture,
                            new Point(0, 0),
                            new Point(x * 16, y * 16),
                            new Point(16, 16));

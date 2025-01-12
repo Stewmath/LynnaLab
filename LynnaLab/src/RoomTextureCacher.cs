@@ -1,20 +1,18 @@
-using System.Diagnostics;
-
 namespace LynnaLab;
 
 /// <summary>
-/// Caches images for room layouts.
+/// Caches textures for room layouts.
 ///
-/// Actually, most of the code here is making a lot of effort to not draw the image immediately,
-/// instead waiting for the tileset to update its tile images. And also listening on various
-/// events that could change the resultant image.
+/// Actually, most of the code here is making a lot of effort to not draw the texture immediately,
+/// instead waiting for the tileset to update its tile textures. And also listening on various
+/// events that could change the resultant texture.
 /// </summary>
-public class RoomImageCacher : ImageCacher<RoomLayout>
+public class RoomTextureCacher : TextureCacher<RoomLayout>
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public RoomImageCacher(ProjectWorkspace workspace)
+    public RoomTextureCacher(ProjectWorkspace workspace)
         : base(workspace)
     {
 
@@ -39,10 +37,10 @@ public class RoomImageCacher : ImageCacher<RoomLayout>
     // Protected methods
     // ================================================================================
 
-    protected override Image GenerateImage(RoomLayout layout)
+    protected override Texture GenerateTexture(RoomLayout layout)
     {
-        // Create the blank image
-        Image image = TopLevel.Backend.CreateImage(layout.Width * 16, layout.Height * 16);
+        // Create the blank texture
+        Texture texture = TopLevel.Backend.CreateTexture(layout.Width * 16, layout.Height * 16);
 
         // Watch for changes to the tileset's tiles.
         // This will be invoked as the tiles get rendered lazily, or when tileset edits occur.
@@ -53,7 +51,7 @@ public class RoomImageCacher : ImageCacher<RoomLayout>
 
             if (tileIndex == -1) // Must redraw everything
             {
-                LazyRedraw(image, layout);
+                LazyRedraw(texture, layout);
                 return;
             }
 
@@ -61,12 +59,12 @@ public class RoomImageCacher : ImageCacher<RoomLayout>
 
             TopLevel.LazyInvoke(() =>
             {
-                image.BeginAtomicOperation();
+                texture.BeginAtomicOperation();
                 foreach ((int x, int y) in tilePositions)
                 {
-                    DrawTile(image, layout, x, y);
+                    DrawTile(texture, layout, x, y);
                 }
-                image.EndAtomicOperation();
+                texture.EndAtomicOperation();
             });
         };
 
@@ -82,17 +80,17 @@ public class RoomImageCacher : ImageCacher<RoomLayout>
         EventHandler<RoomLayoutChangedEventArgs> onLayoutModified = (sender, args) =>
         {
             // We want immediate feedback from editing the room, so no lazy drawing
-            Redraw(image, layout);
+            Redraw(texture, layout);
         };
         layout.LayoutChangedEvent += onLayoutModified;
 
         // Draw all tile images that are already rendered
-        LazyRedraw(image, layout, cachedOnly: true);
+        LazyRedraw(texture, layout, cachedOnly: true);
 
         // Request that all undrawn tiles from the tileset be drawn
         layout.Tileset.RequestRedraw();
 
-        return image;
+        return texture;
     }
 
 
@@ -111,41 +109,41 @@ public class RoomImageCacher : ImageCacher<RoomLayout>
             throw new Exception("Internal error: tilesetEventWrapper missing");
 
         tilesetEventWrapper.ReplaceEventSource(args.newTileset);
-        LazyRedraw(base.GetImage(layout), layout);
+        LazyRedraw(base.GetTexture(layout), layout);
     }
 
-    void Redraw(Image image, RoomLayout layout, bool cachedOnly = false)
+    void Redraw(Texture texture, RoomLayout layout, bool cachedOnly = false)
     {
         Tileset tileset = layout.Tileset;
-        image.BeginAtomicOperation();
+        texture.BeginAtomicOperation();
         for (int x = 0; x < layout.Width; x++)
         {
             for (int y = 0; y < layout.Height; y++)
             {
                 int tile = layout.GetTile(x, y);
                 if (!cachedOnly || tileset.TileIsRendered(tile))
-                    DrawTile(image, layout, x, y);
+                    DrawTile(texture, layout, x, y);
             }
         }
-        image.EndAtomicOperation();
+        texture.EndAtomicOperation();
     }
 
-    void LazyRedraw(Image image, RoomLayout layout, bool cachedOnly = false)
+    void LazyRedraw(Texture texture, RoomLayout layout, bool cachedOnly = false)
     {
-        TopLevel.LazyInvoke(() => Redraw(image, layout, cachedOnly));
+        TopLevel.LazyInvoke(() => Redraw(texture, layout, cachedOnly));
     }
 
     /// <summary>
     /// Draw a tile onto the room.
-    /// Inexpensive unless the tile image has not been loaded onto the GPU yet.
+    /// Inexpensive unless the tile texture has not been loaded onto the GPU yet.
     /// </summary>
-    void DrawTile(Image image, RoomLayout layout, int x, int y)
+    void DrawTile(Texture texture, RoomLayout layout, int x, int y)
     {
         int tileIndex = layout.GetTile(x, y);
         var tileBitmap = layout.Tileset.GetTileBitmap(tileIndex);
-        var tileImage = TopLevel.ImageFromBitmapTracked(tileBitmap);
+        var tileTexture = TopLevel.TextureFromBitmapTracked(tileBitmap);
 
-        tileImage.DrawOn(image,
+        tileTexture.DrawOn(texture,
                          new Point(0, 0),
                          new Point(x * 16, y * 16),
                          new Point(16, 16));

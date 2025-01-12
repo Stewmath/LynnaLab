@@ -1,24 +1,23 @@
 using Veldrid;
 
-using Image = LynnaLab.Image;
-using ImageModifiedEventArgs = LynnaLab.ImageModifiedEventArgs;
 using Point = Util.Point; // Don't care about Veldrid.Point
 
 namespace VeldridBackend;
 
+// Extends LynnaLab.Texture, not to be confused with Veldrid.Texture.
 // TODO: Should this implement IDisposable?
-public class VeldridImage : Image
+public class VeldridTextureWrapper : LynnaLab.Texture
 {
-    private VeldridImage(ImGuiController controller)
+    private VeldridTextureWrapper(ImGuiController controller)
     {
         this.controller = controller;
         this.gd = controller.GraphicsDevice;
     }
 
     /// <summary>
-    /// Image from bitmap
+    /// Texture from bitmap
     /// </summary>
-    public VeldridImage(ImGuiController controller, Bitmap bitmap, float alpha)
+    public VeldridTextureWrapper(ImGuiController controller, Bitmap bitmap, float alpha)
         : this(controller)
     {
         var (sizeInBytes, pixelFormat) = GetBitmapFormat(bitmap);
@@ -53,9 +52,9 @@ public class VeldridImage : Image
     }
 
     /// <summary>
-    /// Blank image
+    /// Blank texture
     /// </summary>
-    public VeldridImage(ImGuiController controller, int width, int height, float alpha)
+    public VeldridTextureWrapper(ImGuiController controller, int width, int height, float alpha)
         : this(controller)
     {
         var pixelFormat = PixelFormat.B8_G8_R8_A8_UNorm;
@@ -80,7 +79,7 @@ public class VeldridImage : Image
     // ================================================================================
     ImGuiController controller;
     GraphicsDevice gd;
-    Texture texture; // May be shared with other Image instances (see constructor)
+    Veldrid.Texture texture;
 
     int width, height;
 
@@ -92,7 +91,7 @@ public class VeldridImage : Image
     public override int Width { get { return width; } }
     public override int Height { get { return height; } }
 
-    public Texture Texture { get { return texture; } }
+    public Veldrid.Texture Texture { get { return texture; } }
     public float Alpha { get; private set; }
 
     // ================================================================================
@@ -105,30 +104,30 @@ public class VeldridImage : Image
         return controller.GetOrCreateImGuiBinding(this);
     }
 
-    public override void DrawOn(Image _destImage, Point srcPos, Point destPos, Point size)
+    public override void DrawOn(LynnaLab.Texture _destTexture, Point srcPos, Point destPos, Point size)
     {
-        VeldridImage destImage = (VeldridImage)_destImage;
+        VeldridTextureWrapper destTexture = (VeldridTextureWrapper)_destTexture;
         var cl = controller.Backend.CommandList;
 
         cl.CopyTexture(texture,
                        (uint)srcPos.X, (uint)srcPos.Y, 0,
                        0,
                        0,
-                       destImage.texture,
+                       destTexture.texture,
                        (uint)destPos.X, (uint)destPos.Y, 0,
                        0,
                        0,
                        (uint)size.X, (uint)size.Y, 1,
                        1);
 
-        destImage.InvokeModifiedHandler();
+        destTexture.InvokeModifiedHandler();
     }
 
     public override void Dispose()
     {
         Debug.Assert(texture != null);
 
-        controller.UnbindImage(this);
+        controller.UnbindTexture(this);
         gd.DisposeWhenIdle(texture);
         texture = null;
 

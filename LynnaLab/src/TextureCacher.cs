@@ -1,18 +1,18 @@
 namespace LynnaLab;
 
 /// <summary>
-/// Interface for caching images based on a LynnaLib class. It is assumed that, whatever class
+/// Interface for caching textures based on a LynnaLib class. It is assumed that, whatever class
 /// is used as the KeyClass, there is only one unique instance of that class representing the
 /// given data (ie. only one Tileset class ever exists per actual tileset). Most LynnaLib
 /// classes are designed with this in mind already.
 /// </summary>
-public abstract class ImageCacher<KeyClass> : IDisposable
+public abstract class TextureCacher<KeyClass> : IDisposable
 {
     // ================================================================================
     // Constructors
     // ================================================================================
 
-    public ImageCacher(ProjectWorkspace workspace)
+    public TextureCacher(ProjectWorkspace workspace)
     {
         this.Workspace = workspace;
     }
@@ -21,7 +21,7 @@ public abstract class ImageCacher<KeyClass> : IDisposable
     // Variables
     // ================================================================================
 
-    Dictionary<KeyClass, Image> imageCache = new Dictionary<KeyClass, Image>();
+    Dictionary<KeyClass, Texture> textureCache = new Dictionary<KeyClass, Texture>();
 
     // ================================================================================
     // Properties
@@ -34,43 +34,43 @@ public abstract class ImageCacher<KeyClass> : IDisposable
     // Public methods
     // ================================================================================
 
-    public Image GetImage(KeyClass key)
+    public Texture GetTexture(KeyClass key)
     {
-        Image image;
-        if (imageCache.TryGetValue(key, out image))
-            return image;
+        Texture tx;
+        if (textureCache.TryGetValue(key, out tx))
+            return tx;
 
-        image = GenerateImage(key);
-        imageCache[key] = image;
-        return image;
+        tx = GenerateTexture(key);
+        textureCache[key] = tx;
+        return tx;
     }
 
-    public void DisposeImage(KeyClass key)
+    public void DisposeTexture(KeyClass key)
     {
-        var image = imageCache[key];
-        image.Dispose();
-        imageCache.Remove(key);
+        var tx = textureCache[key];
+        tx.Dispose();
+        textureCache.Remove(key);
     }
 
     public void Dispose()
     {
-        foreach (KeyClass key in imageCache.Keys)
+        foreach (KeyClass key in textureCache.Keys)
         {
-            DisposeImage(key);
+            DisposeTexture(key);
         }
-        imageCache = null;
+        textureCache = null;
     }
 
     // ================================================================================
     // Protected methods
     // ================================================================================
 
-    protected Image CacheLookup(KeyClass key)
+    protected Texture CacheLookup(KeyClass key)
     {
-        return imageCache[key];
+        return textureCache[key];
     }
 
-    protected abstract Image GenerateImage(KeyClass key);
+    protected abstract Texture GenerateTexture(KeyClass key);
 
 
     // ================================================================================

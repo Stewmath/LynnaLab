@@ -34,9 +34,9 @@ public interface IBackend
     /// Creates an image from the given bitmap. The image tracks changes from the bitmap as long as
     /// the bitmap is not Disposed.
     /// </summary>
-    public Image ImageFromBitmap(Bitmap bitmap);
-    public Image ImageFromFile(string filename);
-    public Image CreateImage(int width, int height);
+    public Texture TextureFromBitmap(Bitmap bitmap);
+    public Texture TextureFromFile(string filename);
+    public Texture CreateTexture(int width, int height);
 
     public void RecreateFontTexture();
     public void SetIcon(string path);

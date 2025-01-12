@@ -163,16 +163,16 @@ public static class ImGuiX
     /// <summary>
     /// Convenience method for rendering images
     /// </summary>
-    public static void DrawImage(Image image, float scale = 1.0f, Vector2? topLeft = null, Vector2? bottomRight = null)
+    public static void DrawImage(Texture texture, float scale = 1.0f, Vector2? topLeft = null, Vector2? bottomRight = null)
     {
         if (bottomRight == null)
         {
             topLeft = new Vector2(0, 0);
-            bottomRight = new Vector2(image.Width, image.Height);
+            bottomRight = new Vector2(texture.Width, texture.Height);
         }
         Vector2 drawSize = (Vector2)(bottomRight - topLeft);
-        Vector2 totalSize = new Vector2(image.Width, image.Height);
-        ImGui.Image(image.GetBinding(), drawSize * scale,
+        Vector2 totalSize = new Vector2(texture.Width, texture.Height);
+        ImGui.Image(texture.GetBinding(), drawSize * scale,
                     (Vector2)topLeft / totalSize, (Vector2)bottomRight / totalSize);
     }
 

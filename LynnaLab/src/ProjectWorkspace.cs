@@ -18,13 +18,13 @@ public class ProjectWorkspace
 
         Project.LazyInvoke = TopLevel.LazyInvoke;
 
-        tilesetImageCacher = new TilesetImageCacher(this);
-        roomImageCacher = new RoomImageCacher(this);
-        mapImageCacher = new MapImageCacher(this);
+        tilesetTextureCacher = new TilesetTextureCacher(this);
+        roomTextureCacher = new RoomTextureCacher(this);
+        mapTextureCacher = new MapTextureCacher(this);
 
         this.Brush = new Brush<int>(0);
 
-        linkImage = TopLevel.ImageFromBitmapTracked(project.LinkBitmap);
+        linkTexture = TopLevel.TextureFromBitmapTracked(project.LinkBitmap);
 
         roomEditor = new RoomEditor(this);
         dungeonEditor = new DungeonEditor(this, "Dungeon Editor");
@@ -79,11 +79,11 @@ public class ProjectWorkspace
     bool lightMode, scrollToZoom = true, darkenUsedDungeonRooms = true, bicubicScaling = true;
     bool autoAdjustGroupNumber = true;
 
-    Image linkImage;
+    Texture linkTexture;
 
-    TilesetImageCacher tilesetImageCacher;
-    RoomImageCacher roomImageCacher;
-    MapImageCacher mapImageCacher;
+    TilesetTextureCacher tilesetTextureCacher;
+    RoomTextureCacher roomTextureCacher;
+    MapTextureCacher mapTextureCacher;
 
     Process emulatorProcess;
 
@@ -254,14 +254,14 @@ public class ProjectWorkspace
 
         if (ImGuiX.BeginToolbar("Toolbar", menuBarHeight, 50.0f))
         {
-            if (ImGui.ImageButton("Run", TopLevel.PegasusSeedImage.GetBinding(), TOOLBAR_BUTTON_SIZE))
+            if (ImGui.ImageButton("Run", TopLevel.PegasusSeedTexture.GetBinding(), TOOLBAR_BUTTON_SIZE))
             {
                 RunGame();
             }
             ImGuiX.TooltipOnHover("Run (F5)");
 
             ImGui.SameLine();
-            ImGuiX.ToggleImageButton("Quickstart", linkImage.GetBinding(), TOOLBAR_BUTTON_SIZE,
+            ImGuiX.ToggleImageButton("Quickstart", linkTexture.GetBinding(), TOOLBAR_BUTTON_SIZE,
                     QuickstartData.Enabled, ToggleQuickstart);
             ImGuiX.TooltipOnHover("Toggle Quickstart (F4)");
         }
@@ -305,25 +305,25 @@ public class ProjectWorkspace
     public void Close()
     {
         Project.Close();
-        linkImage.Dispose();
-        tilesetImageCacher.Dispose();
-        roomImageCacher.Dispose();
-        mapImageCacher.Dispose();
+        linkTexture.Dispose();
+        tilesetTextureCacher.Dispose();
+        roomTextureCacher.Dispose();
+        mapTextureCacher.Dispose();
     }
 
-    public Image GetCachedTilesetImage(Tileset tileset)
+    public Texture GetCachedTilesetTexture(Tileset tileset)
     {
-        return tilesetImageCacher.GetImage(tileset);
+        return tilesetTextureCacher.GetTexture(tileset);
     }
 
-    public Image GetCachedRoomImage(RoomLayout layout)
+    public Texture GetCachedRoomTexture(RoomLayout layout)
     {
-        return roomImageCacher.GetImage(layout);
+        return roomTextureCacher.GetTexture(layout);
     }
 
-    public Image GetCachedMapImage((Map map, int floor) key)
+    public Texture GetCachedMapTexture((Map map, int floor) key)
     {
-        return mapImageCacher.GetImage(key);
+        return mapTextureCacher.GetTexture(key);
     }
 
     public void OpenTilesetCloner(RealTileset source, RealTileset dest)

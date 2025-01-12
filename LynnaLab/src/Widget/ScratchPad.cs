@@ -84,16 +84,16 @@ public class ScratchPadGrid : TileGrid
             () => Width,
             () => Height);
 
-        // Redraw this whole image when the reference image is modified. Not the most efficient -
-        // will cause a lot of redraws to occur when using the tileset editor.
-        referenceImageEventWrapper = new EventWrapper<Image>();
-        referenceImageEventWrapper.Bind<ImageModifiedEventArgs>(
+        // Redraw this whole texture when the reference texture is modified. Not the most efficient
+        // - will cause a lot of redraws to occur when using the tileset editor.
+        referenceTextureEventWrapper = new EventWrapper<Texture>();
+        referenceTextureEventWrapper.Bind<TextureModifiedEventArgs>(
             "ModifiedEvent",
             (_, _) => Redraw(),
             weak: false
         );
 
-        image = TopLevel.Backend.CreateImage(Width * TileWidth, Height * TileHeight);
+        texture = TopLevel.Backend.CreateTexture(Width * TileWidth, Height * TileHeight);
         SetReferenceGrid(referenceGrid);
     }
 
@@ -102,13 +102,13 @@ public class ScratchPadGrid : TileGrid
     // ================================================================================
 
     int[,] tileGrid;
-    Image image;
-    Image referenceImage;
-    EventWrapper<Image> referenceImageEventWrapper;
+    Texture texture;
+    Texture referenceTexture;
+    EventWrapper<Texture> referenceTextureEventWrapper;
 
     /// <summary>
-    /// A TileGrid where each tile index provides the image to use for that value.
-    /// It must override the Image property rather than the TileDrawer function for this to work.
+    /// A TileGrid where each tile index provides the texture to use for that value.
+    /// It must override the Texture property rather than the TileDrawer function for this to work.
     /// </summary>
     TileGrid referenceGrid;
 
@@ -116,7 +116,7 @@ public class ScratchPadGrid : TileGrid
     // Properties
     // ================================================================================
 
-    public override Image Image { get { return image; } }
+    public override Texture Texture { get { return texture; } }
 
     ProjectWorkspace Workspace { get; set; }
 
@@ -134,9 +134,9 @@ public class ScratchPadGrid : TileGrid
 
     public override void Render()
     {
-        // Our event handlers don't cover the case where the referenceGrid changes its image (occurs
-        // when changing the tileset assigned to the room), so we check that here
-        if (referenceImage != referenceGrid.Image)
+        // Our event handlers don't cover the case where the referenceGrid changes its texture
+        // (occurs when changing the tileset assigned to the room), so we check that here
+        if (referenceTexture != referenceGrid.Texture)
             SetReferenceGrid(referenceGrid);
 
         base.Render();
@@ -163,15 +163,15 @@ public class ScratchPadGrid : TileGrid
     void Redraw()
     {
         // Ensure there's no funny business with changing the grid size
-        Debug.Assert(Image.Width == Width * TileWidth);
-        Debug.Assert(Image.Height == Height * TileHeight);
+        Debug.Assert(Texture.Width == Width * TileWidth);
+        Debug.Assert(Texture.Height == Height * TileHeight);
 
-        image.BeginAtomicOperation();
+        texture.BeginAtomicOperation();
         for (int i=0; i<MaxIndex; i++)
         {
             RedrawTile(i);
         }
-        image.EndAtomicOperation();
+        texture.EndAtomicOperation();
     }
 
     void RedrawTile(int index)
@@ -181,16 +181,16 @@ public class ScratchPadGrid : TileGrid
         var srcPos = new Point(x * TileWidth, y * TileHeight);
         var destPos = new Point(index % Width * TileWidth, index / Width * TileHeight);
         var size = referenceGrid.TileSize;
-        referenceGrid.Image.DrawOn(image, srcPos, destPos, size);
+        referenceGrid.Texture.DrawOn(texture, srcPos, destPos, size);
     }
 
     void SetReferenceGrid(TileGrid grid)
     {
-        if (referenceGrid != grid || referenceGrid.Image != referenceImage)
+        if (referenceGrid != grid || referenceGrid.Texture != referenceTexture)
         {
             referenceGrid = grid;
-            referenceImage = referenceGrid.Image;
-            referenceImageEventWrapper.ReplaceEventSource(grid.Image);
+            referenceTexture = referenceGrid.Texture;
+            referenceTextureEventWrapper.ReplaceEventSource(grid.Texture);
             Redraw();
         }
     }
