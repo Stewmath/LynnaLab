@@ -17,7 +17,7 @@ public class VeldridTextureWrapper : LynnaLab.Texture
     /// <summary>
     /// Texture from bitmap (changes to the bitmap are tracked)
     /// </summary>
-    public VeldridTextureWrapper(ImGuiController controller, Bitmap bitmap, float alpha)
+    public VeldridTextureWrapper(ImGuiController controller, Bitmap bitmap)
         : this(controller)
     {
         var (sizeInBytes, pixelFormat) = GetBitmapFormat(bitmap);
@@ -34,7 +34,6 @@ public class VeldridTextureWrapper : LynnaLab.Texture
 
         this.width = bitmap.Width;
         this.height = bitmap.Height;
-        this.Alpha = alpha;
 
         OnBitmapModified(bitmap);
 
@@ -54,7 +53,7 @@ public class VeldridTextureWrapper : LynnaLab.Texture
     /// <summary>
     /// Blank texture
     /// </summary>
-    public VeldridTextureWrapper(ImGuiController controller, int width, int height, float alpha)
+    public VeldridTextureWrapper(ImGuiController controller, int width, int height)
         : this(controller)
     {
         var pixelFormat = PixelFormat.R8_G8_B8_A8_UNorm;
@@ -71,7 +70,6 @@ public class VeldridTextureWrapper : LynnaLab.Texture
 
         this.width = width;
         this.height = height;
-        this.Alpha = alpha;
     }
 
     // ================================================================================
@@ -92,7 +90,6 @@ public class VeldridTextureWrapper : LynnaLab.Texture
     public override int Height { get { return height; } }
 
     public Veldrid.Texture Texture { get { return texture; } }
-    public float Alpha { get; private set; }
 
     // ================================================================================
     // Public methods

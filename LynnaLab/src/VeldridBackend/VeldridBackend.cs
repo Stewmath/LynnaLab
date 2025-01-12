@@ -98,7 +98,7 @@ public class VeldridBackend : IBackend
 
     public Texture TextureFromBitmap(Bitmap bitmap)
     {
-        return new VeldridTextureWrapper(_controller, bitmap, 1.0f);
+        return new VeldridTextureWrapper(_controller, bitmap);
     }
     public Texture TextureFromFile(string filename)
     {
@@ -109,7 +109,7 @@ public class VeldridBackend : IBackend
     }
     public Texture CreateTexture(int width, int height)
     {
-        return new VeldridTextureWrapper(_controller, width, height, 1.0f);
+        return new VeldridTextureWrapper(_controller, width, height);
     }
 
     public void RecreateFontTexture()
