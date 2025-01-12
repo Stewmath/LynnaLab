@@ -59,7 +59,7 @@ public abstract class SizedWidget
         drawList.AddRect(
             origin + new Vector2(rect.X, rect.Y),
             origin + new Vector2(rect.X + rect.Width, rect.Y + rect.Height),
-            ImGuiX.ToImGuiColor(color),
+            color.ToUInt(),
             0,
             0,
             thickness);
@@ -70,7 +70,7 @@ public abstract class SizedWidget
         drawList.AddRectFilled(
             origin + new Vector2(rect.X, rect.Y),
             origin + new Vector2(rect.X + rect.Width, rect.Y + rect.Height),
-            ImGuiX.ToImGuiColor(color));
+            color.ToUInt());
     }
 
     // ================================================================================

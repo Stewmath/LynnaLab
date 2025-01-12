@@ -15,7 +15,7 @@ public class VeldridTextureWrapper : LynnaLab.Texture
     }
 
     /// <summary>
-    /// Texture from bitmap
+    /// Texture from bitmap (changes to the bitmap are tracked)
     /// </summary>
     public VeldridTextureWrapper(ImGuiController controller, Bitmap bitmap, float alpha)
         : this(controller)
@@ -57,7 +57,7 @@ public class VeldridTextureWrapper : LynnaLab.Texture
     public VeldridTextureWrapper(ImGuiController controller, int width, int height, float alpha)
         : this(controller)
     {
-        var pixelFormat = PixelFormat.B8_G8_R8_A8_UNorm;
+        var pixelFormat = PixelFormat.R8_G8_B8_A8_UNorm;
 
         TextureDescription textureDescription = TextureDescription.Texture2D(
             (uint)width,
@@ -146,16 +146,14 @@ public class VeldridTextureWrapper : LynnaLab.Texture
 
     void OnBitmapModified(Bitmap bitmap)
     {
-        Cairo.ImageSurface surface = (Cairo.ImageSurface)bitmap;
-
-        surface.Flush();
-        IntPtr pixelData = surface.DataPtr;
+        IntPtr pixelData = bitmap.Lock();
         var (sizeInBytes, _) = GetBitmapFormat(bitmap);
 
         // Update the texture with the pixel data
         gd.UpdateTexture(texture, pixelData, sizeInBytes, 0, 0, 0,
                          (uint)bitmap.Width, (uint)bitmap.Height, 1, 0, 0);
 
+        bitmap.Unlock();
         base.InvokeModifiedHandler();
     }
 
@@ -167,20 +165,9 @@ public class VeldridTextureWrapper : LynnaLab.Texture
 
     (uint, PixelFormat) GetBitmapFormat(Bitmap bitmap)
     {
-        Cairo.ImageSurface surface = (Cairo.ImageSurface)bitmap;
-
-        uint sizeInBytes;
-        PixelFormat pixelFormat;
-
-        switch (surface.Format)
-        {
-            case Cairo.Format.ARGB32:
-                pixelFormat = PixelFormat.B8_G8_R8_A8_UNorm;
-                sizeInBytes = (uint)(4 * bitmap.Height * bitmap.Width);
-                break;
-            default:
-                throw new Exception("Couldn't convert Cairo image format: " + surface.Format);
-        }
+        // All bitmaps use this format
+        uint sizeInBytes = (uint)(4 * bitmap.Height * bitmap.Width);
+        PixelFormat pixelFormat = PixelFormat.R8_G8_B8_A8_UNorm;
 
         return (sizeInBytes, pixelFormat);
     }

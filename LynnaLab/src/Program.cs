@@ -8,7 +8,7 @@ global using LynnaLib;
 global using Util;
 
 global using Debug = System.Diagnostics.Debug;
-
+global using ImageSharp = SixLabors.ImageSharp;
 
 using System.Runtime.InteropServices;
 

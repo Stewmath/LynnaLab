@@ -58,7 +58,7 @@ public abstract class SelectionBox : TileGrid
     {
         // Grey rectangle in background
         var pos = ImGui.GetCursorScreenPos();
-        ImGui.GetWindowDrawList().AddRectFilled(pos, pos + WidgetSize, ImGuiX.ToImGuiColor(Color.FromRgb(0x40, 0x40, 0x40)));
+        ImGui.GetWindowDrawList().AddRectFilled(pos, pos + WidgetSize, Color.FromRgb(0x40, 0x40, 0x40).ToUInt());
 
         base.Render();
 

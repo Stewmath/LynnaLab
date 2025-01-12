@@ -1,8 +1,13 @@
 using System.Numerics;
 
+using PixelFormats = SixLabors.ImageSharp.PixelFormats;
+
 namespace LynnaLib
 {
-    /// I don't like Cairo.Color (it uses doubles) so I made this
+    /// <summary>
+    /// Represents a color. Immutable. Supports implicit conversion to and from
+    /// ImageSharp.PixelFormats.Rgba32 (used by the Bitmap class) and Vector4 (used by ImGui).
+    /// </summary>
     public struct Color
     {
         int r, g, b, a;
@@ -54,6 +59,11 @@ namespace LynnaLib
             return c;
         }
 
+        public override string ToString()
+        {
+            return $"R: {R}, G: {G}, B: {B}, A: {A}";
+        }
+
         // ================================================================================
         // Conversion
         // ================================================================================
@@ -64,14 +74,14 @@ namespace LynnaLib
             return (uint)(R | (G<<8) | (B<<16) | (A<<24));
         }
 
-        public static Color FromCairo(Cairo.Color c)
+        public static implicit operator PixelFormats.Rgba32(Color c)
         {
-            return FromRgbaDbl(c.R, c.G, c.B, c.A);
+            return new PixelFormats.Rgba32((Vector4)c);
         }
 
-        public static implicit operator Cairo.Color(Color c)
+        public static implicit operator Color(PixelFormats.Rgba32 c)
         {
-            return new Cairo.Color(c.r / 255.0, c.g / 255.0, c.b / 255.0, c.a / 255.0);
+            return Color.FromRgba(c.R, c.G, c.B, c.A);
         }
 
         public static implicit operator Vector4(Color c)

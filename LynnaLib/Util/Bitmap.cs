@@ -1,175 +1,166 @@
-using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+using SixLabors.ImageSharp;
+using PixelFormats = SixLabors.ImageSharp.PixelFormats;
 
-namespace LynnaLib
+namespace LynnaLib;
+
+/// <summary>
+/// Represents an image. The underlying type has shifted over time, from System.Drawing.Bitmap
+/// (now deprecated), to Cairo.ImageSurface, and now finally ImageSharp.Image.
+/// </summary>
+public class Bitmap : System.IDisposable
 {
-    /// Thin wrapper over Cairo.ImageSurface. Called "Bitmap" due to baggage
-    /// from using the deprecated System.Drawing.Common.Bitmap.
-    public class Bitmap : System.IDisposable
+    static Bitmap()
     {
-        /// Constructor for blank surface
-        public Bitmap(int width, int height, Cairo.Format format = Cairo.Format.Argb32)
+        // Set this ImageSharp option to make it possible for us to access an image's raw pixel
+        // buffers in most cases. This is needed to be able to convert our images to Veldrid
+        // textures efficiently.
+        // The ImageSharp docs recommend against doing this because it makes large image handling
+        // less efficient. But that's not really a concern for LynnaLab.
+        // See: https://docs.sixlabors.com/articles/imagesharp/memorymanagement.html
+        Configuration.Default.PreferContiguousImageBuffers = true;
+    }
+
+    // ================================================================================
+    // Constructors
+    // ================================================================================
+
+    /// <summary>
+    /// Constructor for blank surface
+    /// </summary>
+    public Bitmap(int width, int height)
+    {
+        image = new(width, height);
+    }
+
+    /// <summary>
+    /// Constructor from file
+    /// </summary>
+    public unsafe Bitmap(string filename)
+    {
+        image = Image.Load<PixelFormats.Rgba32>(filename);
+    }
+
+    ~Bitmap()
+    {
+        Dispose(false);
+    }
+
+    // ================================================================================
+    // Variables
+    // ================================================================================
+
+    Image<PixelFormats.Rgba32> image;
+    System.Buffers.MemoryHandle memoryHandle;
+    int lockCount;
+
+    public event Action ModifiedEvent;
+    public event Action<object> DisposedEvent;
+
+    // ================================================================================
+    // Properties
+    // ================================================================================
+
+    public int Width
+    {
+        get { return image.Width; }
+    }
+
+    public int Height
+    {
+        get { return image.Height; }
+    }
+
+    public unsafe int Stride
+    {
+        get { return sizeof(PixelFormats.Rgba32) * Width; }
+    }
+
+    // ================================================================================
+    // Public methods
+    // ================================================================================
+
+    public unsafe Color GetPixel(int x, int y)
+    {
+        return image[x, y];
+    }
+
+    /// <summary>
+    /// Prepares the bitmap for writing directly to the pixel array, returns the pointer to said array
+    /// </summary>
+    public unsafe nint Lock()
+    {
+        if (lockCount == 0)
         {
-            surface = new Cairo.ImageSurface(format, width, height);
+            // This operation should succeed for small images. See note in static constructor.
+            if (!image.DangerousTryGetSinglePixelMemory(out var memory))
+                throw new Exception("Couldn't get raw pointer to Image object");
+            memoryHandle = memory.Pin();
         }
+        lockCount++;
+        return (nint)memoryHandle.Pointer;
+    }
 
-        /// Constructor from pixel data.
-        /// Input "pixels" array must be unmanaged memory. Will be disposed of by this class when
-        /// finished with it.
-        public Bitmap(IntPtr pixels, Cairo.Format format, int width, int height, int stride)
+    /// <summary>
+    /// Pair with a previous call to Lock to mark the pixel drawing operation as completed.
+    /// </summary>
+    public void Unlock()
+    {
+        lockCount--;
+        if (lockCount == 0)
         {
-            this.surface = new Cairo.ImageSurface((IntPtr)pixels, format, width, height, stride);
-            pixelsPointer = pixels;
+            memoryHandle.Dispose();
+            memoryHandle = default;
         }
+    }
 
-        /// Constructor from file
-        public Bitmap(string filename)
+    /// <summary>
+    /// Draw this image onto the destination image at the given position.
+    /// </summary>
+    public void DrawOn(Bitmap dest, int drawX, int drawY)
+    {
+        dest.image.ProcessPixelRows(image, (destAccessor, sourceAccessor) =>
         {
-            this.surface = new Cairo.ImageSurface(filename);
-        }
-
-        ~Bitmap()
-        {
-            Dispose(false);
-        }
-
-
-        Cairo.ImageSurface surface;
-        IntPtr pixelsPointer;
-        int lockCount;
-
-        public event Action ModifiedEvent;
-        public event Action<object> DisposedEvent;
-
-
-        public int Width
-        {
-            get { return surface.Width; }
-        }
-
-        public int Height
-        {
-            get { return surface.Height; }
-        }
-
-        public int Stride { get { return surface.Stride; } }
-
-
-        public Cairo.Context CreateContext()
-        {
-            return new Cairo.Context(surface);
-        }
-
-        public unsafe Color GetPixel(int x, int y)
-        {
-            // Ensure the coordinates are within the surface bounds
-            if (x < 0 || x >= surface.Width || y < 0 || y >= surface.Height)
+            for (int y=0; y<Height; y++)
             {
-                throw new ArgumentOutOfRangeException("Coordinates are out of bounds.");
+                var sourceRow = sourceAccessor.GetRowSpan(y);
+                var destRow = destAccessor.GetRowSpan(y + drawY);
+
+                for (int x=0; x<Width; x++)
+                {
+                    destRow[x + drawX] = sourceRow[x];
+                }
             }
+        });
+    }
 
-            // Get the pixel data
-            surface.Flush();
+    public void Dispose()
+    {
+        Dispose(true);
+        DisposedEvent?.Invoke(this);
+        DisposedEvent = null;
+        GC.SuppressFinalize(this);
+    }
 
-            byte* data = (byte*)surface.DataPtr;
-            int stride = surface.Stride;
+    public virtual void Dispose(bool disposing)
+    {
+        if (image == null)
+            return;
 
-            if (surface.Format == Cairo.Format.Argb32)
-            {
-                // Calculate the offset for the pixel
-                int offset = y * stride + x * 4;
+        Debug.Assert(lockCount == 0);
 
-                // Read the pixel data (ARGB format)
-                byte b = data[offset];
-                byte g = data[offset + 1];
-                byte r = data[offset + 2];
-                byte a = data[offset + 3];
-
-                // Convert to Color
-                return Color.FromRgba(r, g, b, a);
-            }
-            else if (surface.Format == Cairo.Format.Rgb24)
-            {
-                // Calculate the offset for the pixel
-                int offset = y * stride + x * 4;
-
-                Debug.Assert(offset + 2 < stride * surface.Height);
-
-                // Read the pixel data (ARGB format)
-                byte b = data[offset];
-                byte g = data[offset + 1];
-                byte r = data[offset + 2];
-
-                // Convert to Color
-                return Color.FromRgb(r, g, b);
-            }
-            else
-            {
-                throw new Exception("Unsupported Cairo.Surface format: " + surface.Format);
-            }
-        }
-
-        /// <summary>
-        /// Prepares the bitmap for writing directly to the pixel array, returns the pointer to said array
-        /// </summary>
-        public nint Lock()
+        if (disposing)
         {
-            if (lockCount == 0)
-                surface.Flush();
-            lockCount++;
-            return surface.DataPtr;
+            if (image != null)
+                image.Dispose();
+            image = null;
+            ModifiedEvent = null;
         }
+    }
 
-        /// <summary>
-        /// Pair with a previous call to Lock to mark the pixel drawing operation as completed.
-        /// </summary>
-        public void Unlock()
-        {
-            lockCount--;
-            if (lockCount == 0)
-                surface.MarkDirty();
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            DisposedEvent?.Invoke(this);
-            DisposedEvent = null;
-            GC.SuppressFinalize(this);
-        }
-
-        public virtual void Dispose(bool disposing)
-        {
-            if (surface == null)
-                return;
-
-            if (disposing)
-            {
-                if (surface != null)
-                    surface.Dispose();
-                surface = null;
-                ModifiedEvent = null;
-            }
-
-            if (pixelsPointer != 0)
-            {
-                Marshal.FreeHGlobal(pixelsPointer);
-                pixelsPointer = 0;
-            }
-        }
-
-        // Should call this after modifying the surface, otherwise ImGui may not receive the update
-        public void MarkModified()
-        {
-            if (ModifiedEvent != null)
-                ModifiedEvent();
-        }
-
-        /// Implicit conversion to Cairo.ImageSurface, should be seamless
-        public static implicit operator Cairo.ImageSurface(Bitmap b)
-        {
-            return b.surface;
-        }
+    // Should call this after modifying the surface, otherwise ImGui may not receive the update
+    public void MarkModified()
+    {
+        if (ModifiedEvent != null)
+            ModifiedEvent();
     }
 }

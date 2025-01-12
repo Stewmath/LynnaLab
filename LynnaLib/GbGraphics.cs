@@ -14,8 +14,8 @@ namespace LynnaLib
         };
 
         /// <summary>
-        /// Renders a tile onto the given Cairo.Context. (Supports 8x8 or 8x16 tiles; 8x16 are
-        /// treated as sprites.)
+        /// Renders a tile onto the given bitmap. (Supports 8x8 or 8x16 tiles; 8x16 are treated as
+        /// sprites.)
         /// Caller should probably invoke Bitmap.MarkModified() after calling this.
         /// </summary>
         public static unsafe void RenderRawTile(Bitmap bitmap, int xO, int yO, ReadOnlySpan<byte> data, IList<Color> palette = null, int flags = 0)
@@ -70,9 +70,9 @@ namespace LynnaLib
                     bool transparent = sprite && color == 0;
                     Color c = (transparent ? transparentColor : palette[color]);
 
-                    pixels[row + realX * bytesPerPixel + 0] = (byte)c.B;
+                    pixels[row + realX * bytesPerPixel + 0] = (byte)c.R;
                     pixels[row + realX * bytesPerPixel + 1] = (byte)c.G;
-                    pixels[row + realX * bytesPerPixel + 2] = (byte)c.R;
+                    pixels[row + realX * bytesPerPixel + 2] = (byte)c.B;
                     pixels[row + realX * bytesPerPixel + 3] = (byte)c.A;
                 }
             }
@@ -90,7 +90,7 @@ namespace LynnaLib
             bool sprite = (data.Length == 32);
             int height = (sprite ? 16 : 8);
 
-            Bitmap bitmap = new Bitmap(8, height, Cairo.Format.ARGB32);
+            Bitmap bitmap = new Bitmap(8, height);
             RenderRawTile(bitmap, 0, 0, data, palette, flags);
             return bitmap;
         }
@@ -102,23 +102,19 @@ namespace LynnaLib
         {
             Debug.Assert(palettes.Length == 8);
 
-            var renderSubTile = (Cairo.Context cr, SubTileDescription desc, IList<Color>[] palettes, int x, int y) =>
+            var renderSubTile = (Bitmap dest, SubTileDescription desc, IList<Color>[] palettes, int x, int y) =>
             {
                 using (Bitmap subtile = RawTileToBitmap(desc.graphics, palettes[desc.flags & 7], desc.flags))
                 {
-                    cr.SetSourceSurface(subtile, x, y);
-                    cr.Paint();
+                    subtile.DrawOn(dest, x, y);
                 }
             };
 
             bitmap.Lock();
-            using (Cairo.Context cr = bitmap.CreateContext())
-            {
-                renderSubTile(cr, tileDesc.tileTL, palettes, xO + 0, yO + 0);
-                renderSubTile(cr, tileDesc.tileTR, palettes, xO + 8, yO + 0);
-                renderSubTile(cr, tileDesc.tileBL, palettes, xO + 0, yO + 8);
-                renderSubTile(cr, tileDesc.tileBR, palettes, xO + 8, yO + 8);
-            }
+            renderSubTile(bitmap, tileDesc.tileTL, palettes, xO + 0, yO + 0);
+            renderSubTile(bitmap, tileDesc.tileTR, palettes, xO + 8, yO + 0);
+            renderSubTile(bitmap, tileDesc.tileBL, palettes, xO + 0, yO + 8);
+            renderSubTile(bitmap, tileDesc.tileBR, palettes, xO + 8, yO + 8);
             bitmap.Unlock();
         }
     }
