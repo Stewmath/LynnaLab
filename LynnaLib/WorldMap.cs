@@ -61,9 +61,15 @@ namespace LynnaLib
         {
             return Project.GetIndexedDataType<Room>(group * 0x100 + x + y * 16);
         }
+        public override IEnumerable<(int x, int y, int floor)> GetRoomPositions(Room room)
+        {
+            if (room.Group != group)
+                return new List<(int, int, int)>();
+            return new List<(int, int, int)> { (room.Index % 16, (room.Index & 0xff) / 16, 0 ) };
+        }
         public override bool GetRoomPosition(Room room, out int x, out int y, out int floor)
         {
-            if (room.Index / 0x100 != group)
+            if (room.Group != group)
             {
                 // Not in this group
                 x = -1;

@@ -8,7 +8,14 @@ global using LynnaLib;
 global using Util;
 
 global using Debug = System.Diagnostics.Debug;
-global using ImageSharp = SixLabors.ImageSharp;
+
+// Veldrid backend stuff
+global using Interpolation = VeldridBackend.Interpolation;
+global using Palette = VeldridBackend.VeldridPalette;
+global using TextureBase = VeldridBackend.VeldridTextureBase;
+global using RgbaTexture = VeldridBackend.VeldridRgbaTexture;
+global using TextureWindow = VeldridBackend.VeldridTextureWindow;
+global using TextureModifiedEventArgs = VeldridBackend.TextureModifiedEventArgs;
 
 using System.Runtime.InteropServices;
 

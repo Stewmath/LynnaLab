@@ -502,7 +502,7 @@ public class TilesetEditor : Frame
                 0, 0, subtileBrush.BrushWidth, subtileBrush.BrushHeight
             );
             bitmap.Unlock();
-            Texture image = TopLevel.Backend.TextureFromBitmap(bitmap);
+            TextureBase image = TopLevel.Backend.TextureFromBitmap(bitmap);
             subtileBrushInterfacer.SetPreviewTexture(image, 8);
             tilesetViewer.TooltipImagePreview = subtileBrush.IsSingleTile;
         }
@@ -766,7 +766,7 @@ class TileEditor : TileGrid
     // ================================================================================
 
     TilesetEditor parent;
-    Texture image;
+    TextureBase image;
     EventWrapper<Tileset> tilesetEventWrapper;
 
     // ================================================================================
@@ -777,7 +777,7 @@ class TileEditor : TileGrid
     public RealTileset Tileset { get; private set; }
     public int TileIndex { get; private set; } // Should never be -1
 
-    public override Texture Texture { get { return image; } }
+    public override TextureBase Texture { get { return image; } }
 
     // ================================================================================
     // Public methods
@@ -867,6 +867,8 @@ class TileEditor : TileGrid
 
     void DrawTile()
     {
+        // This uses CPU rendering to get the tile, unlike most of our rendering code. Might as well
+        // leave like this to ensure that path is still working.
         image = TopLevel.TextureFromBitmapTracked(Tileset.GetTileBitmap(TileIndex));
     }
 

@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 
+using Backend = VeldridBackend.VeldridBackend;
+
 namespace LynnaLab;
 
 /// <summary>
@@ -62,10 +64,10 @@ public static class TopLevel
     // Variables
     // ================================================================================
 
-    static IBackend backend;
+    static Backend backend;
     static Stopwatch stopwatch;
 
-    static Dictionary<Bitmap, Texture> imageDict = new Dictionary<Bitmap, Texture>();
+    static Dictionary<Bitmap, RgbaTexture> imageDict = new Dictionary<Bitmap, RgbaTexture>();
 
     static Queue<Action> actionsForNextFrame = new();
 
@@ -81,7 +83,7 @@ public static class TopLevel
     // Properties
     // ================================================================================
 
-    public static IBackend Backend { get { return backend; } }
+    public static Backend Backend { get { return backend; } }
     public static GlobalConfig GlobalConfig { get; private set; }
     public static string ImageDir { get; private set; }
 
@@ -89,7 +91,7 @@ public static class TopLevel
     public static ImFontPtr OraclesFont { get; private set; }
     public static ImFontPtr OraclesFont24px { get; private set; }
 
-    public static Texture PegasusSeedTexture { get; private set; }
+    public static RgbaTexture PegasusSeedTexture { get; private set; }
 
     // Private properties
     private static ProjectWorkspace Workspace { get; set; }
@@ -175,7 +177,7 @@ public static class TopLevel
         else
         {
             // Don't render the workspace if we're handling an exception right now, because it is
-            // probably something in Workspace.Render that caused the excepiton in the first place.
+            // probably something in Workspace.Render that caused the exception in the first place.
             if (Program.handlingException == null)
                 Workspace.Render(deltaTime);
         }
@@ -202,7 +204,7 @@ public static class TopLevel
         {
             ModalStruct modal = (ModalStruct)modalQueue.Peek();
 
-            // TODO: OK to call this repeatedly?
+            // There seems to be no harm in calling this repeatedly instead of just once
             ImGui.OpenPopup(modal.name);
 
             // Put it in the center of the screen
@@ -217,19 +219,18 @@ public static class TopLevel
                 }
                 ImGui.EndPopup();
             }
-            return;
         }
     }
 
     /// <summary>
-    /// Turns a Bitmap (cpu) into an Texture (gpu), or looks up the existing Texture if one exists
-    /// in the cache for that Bitmap already.
+    /// Turns a Bitmap (cpu) into a Texture (gpu), or looks up the existing Texture if one exists in
+    /// the cache for that Bitmap already.
     /// The resulting Texture is tied to the Bitmap, updating when the bitmap updates and being
     /// deleted when the bitmap is deleted.
     /// </summary>
-    public static Texture TextureFromBitmapTracked(Bitmap bitmap)
+    public static RgbaTexture TextureFromBitmapTracked(Bitmap bitmap)
     {
-        Texture texture;
+        RgbaTexture texture;
         if (imageDict.TryGetValue(bitmap, out texture))
             return texture;
 

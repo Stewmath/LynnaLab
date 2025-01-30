@@ -278,7 +278,7 @@ public class TileGrid : SizedWidget
     /// A derived class should override either the Texture get operator or the TileDrawer function in
     /// order to supply the texture to draw.
     /// </summary>
-    public virtual Texture Texture { get { return null; } }
+    public virtual TextureBase Texture { get { return null; } }
 
     // ================================================================================
     // Public methods

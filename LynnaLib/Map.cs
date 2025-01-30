@@ -28,15 +28,33 @@ namespace LynnaLib
             Project = p;
         }
 
+        /// <summary>
+        /// Gets the Room at the given position.
+        /// </summary>
         public abstract Room GetRoom(int x, int y, int floor = 0);
+
+        /// <summary>
+        /// Get all locations of a room on the map. Returns an empty list if it's not on the map.
+        /// </summary>
+        public abstract IEnumerable<(int x, int y, int floor)> GetRoomPositions(Room room);
+
+        /// <summary>
+        /// Gets just one location of a room on a map. Returns false if it's not on the map.
+        /// </summary>
         public abstract bool GetRoomPosition(Room room, out int x, out int y, out int floor);
 
+        /// <summary>
+        /// Gets just one location of a room on a map. Returns false if it's not on the map.
+        /// </summary>
         public bool GetRoomPosition(Room room, out int x, out int y)
         {
             int f;
             return GetRoomPosition(room, out x, out y, out f);
         }
 
+        /// <summary>
+        /// Gets the RoomLayout at the given position.
+        /// </summary>
         public RoomLayout GetRoomLayout(int x, int y, int floor = 0)
         {
             return GetRoom(x, y, floor).GetLayout(Season);

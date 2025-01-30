@@ -67,7 +67,7 @@ public class RoomLayoutEditor : TileGrid
     // ================================================================================
     // Variables
     // ================================================================================
-    Texture texture;
+    TextureBase texture;
     RoomComponent selectedRoomComponent;
     List<RoomComponent> roomComponents;
     bool draggingComponent;
@@ -111,7 +111,7 @@ public class RoomLayoutEditor : TileGrid
         }
     }
 
-    public override Texture Texture { get { return texture; } }
+    public override TextureBase Texture { get { return texture; } }
 
     // Private properties
 
@@ -685,7 +685,7 @@ public class RoomLayoutEditor : TileGrid
         {
             var origin = ImGui.GetCursorScreenPos();
             var offset = new Vector2(X + xOffset, Y + yOffset);
-            Texture texture = TopLevel.TextureFromBitmapTracked(sprite);
+            TextureBase texture = TopLevel.TextureFromBitmapTracked(sprite);
             ImGui.SetCursorScreenPos(origin + offset * Parent.Scale);
             ImGuiX.DrawImage(texture, Parent.Scale);
             ImGui.SetCursorScreenPos(origin);
@@ -738,7 +738,7 @@ public class RoomLayoutEditor : TileGrid
             Vector2 size = new Vector2(BoxWidth, BoxHeight) * Parent.Scale;
 
             ImGuiX.ShiftCursorScreenPos(pos - size / 2);
-            Texture linkTexture = TopLevel.TextureFromBitmapTracked(Parent.Project.LinkBitmap);
+            TextureBase linkTexture = TopLevel.TextureFromBitmapTracked(Parent.Project.LinkBitmap);
             ImGuiX.DrawImage(linkTexture, Parent.Scale);
         }
 

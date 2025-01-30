@@ -18,9 +18,16 @@ public class ProjectWorkspace
 
         Project.LazyInvoke = TopLevel.LazyInvoke;
 
-        tilesetTextureCacher = new TilesetTextureCacher(this);
-        roomTextureCacher = new RoomTextureCacher(this);
-        mapTextureCacher = new MapTextureCacher(this);
+        tilesetTextureCacher = new((tileset) => new TilesetTextureCacher(this, tileset));
+        roomTextureCacher = new((layout) => new RoomTextureCacher(this, layout));
+        mapTextureCacher = new((tup) => new MapTextureCacher(this, tup.map, tup.floor));
+
+        // Create all world map cachers immediately because we need them available as a canvas to
+        // draw room layouts (even if we're not displaying the maps themselves right away).
+        for (int g=0; g<Project.NumGroups; g++)
+        {
+            Project.ForEachSeason(g, (s) => mapTextureCacher.GetOrCreate((Project.GetWorldMap(g, s), 0)));
+        }
 
         this.Brush = new Brush<int>(0);
 
@@ -52,6 +59,8 @@ public class ProjectWorkspace
 
         // Default active windows
         roomEditor.Active = true;
+
+        WatchForRoomChanges();
     }
 
     // ================================================================================
@@ -79,11 +88,11 @@ public class ProjectWorkspace
     bool lightMode, scrollToZoom = true, darkenUsedDungeonRooms = true, bicubicScaling = true;
     bool autoAdjustGroupNumber = true;
 
-    Texture linkTexture;
+    TextureBase linkTexture;
 
-    TilesetTextureCacher tilesetTextureCacher;
-    RoomTextureCacher roomTextureCacher;
-    MapTextureCacher mapTextureCacher;
+    Cacher<Tileset, TilesetTextureCacher> tilesetTextureCacher;
+    Cacher<RoomLayout, RoomTextureCacher> roomTextureCacher;
+    Cacher<(Map map, int floor), MapTextureCacher> mapTextureCacher;
 
     Process emulatorProcess;
 
@@ -246,6 +255,10 @@ public class ProjectWorkspace
             {
                 ImGuiX.MenuItemCheckbox("Debug Window", ref showDebugWindow);
                 ImGuiX.MenuItemCheckbox("ImGui Demo Window", ref showImGuiDemoWindow);
+                #if DEBUG
+                if (ImGui.MenuItem("RenderDoc: Launch UI"))
+                    TopLevel.Backend.RenderDocUI();
+                #endif
                 ImGui.EndMenu();
             }
             menuBarHeight = ImGui.GetWindowHeight();
@@ -297,6 +310,8 @@ public class ProjectWorkspace
         {
             frame.RenderAsWindow();
         }
+
+        RedrawTextures();
     }
 
     /// <summary>
@@ -311,19 +326,19 @@ public class ProjectWorkspace
         mapTextureCacher.Dispose();
     }
 
-    public Texture GetCachedTilesetTexture(Tileset tileset)
+    public TextureBase GetCachedTilesetTexture(Tileset tileset)
     {
-        return tilesetTextureCacher.GetTexture(tileset);
+        return tilesetTextureCacher.GetOrCreate(tileset).GetTexture();
     }
 
-    public Texture GetCachedRoomTexture(RoomLayout layout)
+    public TextureBase GetCachedRoomTexture(RoomLayout layout)
     {
-        return roomTextureCacher.GetTexture(layout);
+        return roomTextureCacher.GetOrCreate(layout).GetTexture();
     }
 
-    public Texture GetCachedMapTexture((Map map, int floor) key)
+    public RgbaTexture GetCachedMapTexture((Map map, int floor) key)
     {
-        return mapTextureCacher.GetTexture(key);
+        return mapTextureCacher.GetOrCreate(key).GetTexture();
     }
 
     public void OpenTilesetCloner(RealTileset source, RealTileset dest)
@@ -377,6 +392,96 @@ public class ProjectWorkspace
         Project.Save();
         buildDialog.BeginCompile();
         buildDialog.Focus();
+    }
+
+    HashSet<RoomLayout> modifiedRoomLayouts = new();
+
+    /// <summary>
+    /// Checks for modified tileset & overworld images, and updates textures as needed.
+    /// </summary>
+    void RedrawTextures()
+    {
+        foreach (var ts in tilesetTextureCacher.Values)
+            ts.UpdateFrame();
+
+        var redrawRoom = (RoomLayout layout) =>
+        {
+            int roomX = layout.Room.Index % 16;
+            int roomY = (layout.Room.Index % 256) / 16;
+
+            // Redraw on overworld
+            Map map = Project.GetWorldMap(layout.Group, layout.Season);
+            var worldMapCache = mapTextureCacher.GetOrCreate((map, 0)); // This creates the cacher if it doesn't exist
+            worldMapCache.RedrawRoom(layout);
+
+            // Redraw in dungeons.
+            // To reduce the number of CopyTexture calls, this redraws using the updated version
+            // from the world map we just drew, rather than doing another tile-by-tile rendering of
+            // the room. This should be fast enough even for the dungeon room "00" that would need
+            // to be redrawn on many different maps each time a tile is changed.
+            for (int d=0; d<Project.NumDungeons; d++)
+            {
+                Dungeon dungeon = Project.GetDungeon(d);
+                for (int f=0; f<dungeon.NumFloors; f++)
+                {
+                    if (mapTextureCacher.TryGetValue((dungeon, f), out var mapCache))
+                    {
+                        mapCache.RedrawRoomFrom(layout, worldMapCache, roomX, roomY);
+                    }
+                }
+            }
+        };
+
+        foreach (var layout in modifiedRoomLayouts)
+        {
+            redrawRoom(layout);
+        }
+
+        modifiedRoomLayouts.Clear();
+    }
+
+    /// <summary>
+    /// Install event handlers on all rooms so that the appropriate rooms will be redrawn later.
+    /// </summary>
+    void WatchForRoomChanges()
+    {
+        // Install modified handlers for a particular season
+        var installHandlers = (Room room, Season s) =>
+        {
+            RoomLayout layout = room.GetLayout(s);
+
+            EventWrapper<Tileset> tilesetEventWrapper = new();
+            tilesetEventWrapper.ReplaceEventSource(layout.Tileset);
+
+            var modifiedHandler = () => modifiedRoomLayouts.Add(layout);
+
+            // Tile layout modified
+            layout.LayoutChangedEvent += (_, _) => modifiedHandler();
+
+            // Tileset tile modified
+            tilesetEventWrapper.Bind<int>("TileModifiedEvent", (_, _) => modifiedHandler());
+
+            // Tileset index changed
+            layout.TilesetChangedEvent += (_, _) =>
+            {
+                tilesetEventWrapper.ReplaceEventSource(layout.Tileset);
+                modifiedHandler();
+            };
+        };
+
+        // Iterate through all seasons
+        for (int r=0; r<Project.NumRooms; r++)
+        {
+            Room room = Project.GetIndexedDataType<Room>(r);
+
+            if (room.HasSeasons)
+            {
+                for (int s=0; s<4; s++)
+                    installHandlers(room, (Season)s);
+            }
+            else
+                installHandlers(room, Season.None);
+        }
     }
 }
 

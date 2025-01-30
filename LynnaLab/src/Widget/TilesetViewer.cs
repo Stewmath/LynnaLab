@@ -46,7 +46,7 @@ public class TilesetViewer : TileGrid
     // Variables
     // ================================================================================
     Tileset tileset;
-    Texture image;
+    TextureBase image;
     bool subTileMode; // If true, we select subtiles (1/4th of a tile) instead of whole tiles
 
     // ================================================================================
@@ -83,7 +83,7 @@ public class TilesetViewer : TileGrid
         }
     }
 
-    public override Texture Texture
+    public override TextureBase Texture
     {
         get
         {

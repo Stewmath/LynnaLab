@@ -3,99 +3,98 @@ namespace LynnaLab;
 /// <summary>
 /// Caches textures for maps. Key is a tuple: (Map, int) where the int is the floor index.
 ///
-/// The code here is quite simple compared to RoomTextureCacher because the RoomTextureCacher
-/// accounts for almost anything that would affect a minimap's texture. So this class only needs
-/// to watch for changes to the room textures.
+/// The world maps hold the versions of the room images that are used by the "RoomTextureCacher"
+/// class. Room rendering logic is actually in here. (It seemed more optimal to render everything at
+/// once onto one large texture.)
 /// </summary>
-public class MapTextureCacher : TextureCacher<(Map map, int floor)>
+public class MapTextureCacher : IDisposeNotifier
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public MapTextureCacher(ProjectWorkspace workspace)
-        : base(workspace)
+    public MapTextureCacher(ProjectWorkspace workspace, Map map, int floor)
     {
+        this.Workspace = workspace;
+        this.Map = map;
+        this.Floor = floor;
 
+        GenerateTexture();
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
 
+    RgbaTexture texture;
+
     // ================================================================================
     // Properties
     // ================================================================================
+
+    public Map Map { get; private set; }
+    public int Floor { get; private set; }
+
+    ProjectWorkspace Workspace { get; set; }
+
+    // ================================================================================
+    // Events
+    // ================================================================================
+
+    public event EventHandler DisposedEvent;
 
     // ================================================================================
     // Public methods
     // ================================================================================
 
+    public RgbaTexture GetTexture()
+    {
+        return texture;
+    }
+
+    // Will be called when a dungeon floor is deleted.
+    public void Dispose()
+    {
+        texture.Dispose();
+        texture = null;
+        DisposedEvent?.Invoke(this, null);
+    }
+
     // ================================================================================
     // Protected methods
     // ================================================================================
 
-    protected override Texture GenerateTexture((Map map, int floor) key)
+    protected void GenerateTexture()
     {
-        Texture texture = TopLevel.Backend.CreateTexture(
-            key.map.MapWidth * key.map.RoomWidth * 16,
-            key.map.MapHeight * key.map.RoomHeight * 16);
+        texture = TopLevel.Backend.CreateTexture(
+            Map.MapWidth * Map.RoomWidth * 16,
+            Map.MapHeight * Map.RoomHeight * 16);
 
-        // EventWrappers for each position in the map, managing events to invoke when those
-        // specific room textures have been modified.
-        var textureEventWrappers = new Dictionary<(int, int), EventWrapper<Texture>>();
+        // Watch for room assignment changes (dungeons only)
 
-        // Set up the event handlers for room texture modification. They will be bound to the
-        // relevant room later, in the "RegenerateTextureWatchers" function.
-        for (int x = 0; x < key.map.MapWidth; x++)
+        if (Map is Dungeon dungeon)
         {
-            for (int y = 0; y < key.map.MapHeight; y++)
-            {
-                int tileX = x, tileY = y; // New variables for closure
-                EventHandler<TextureModifiedEventArgs> handler = (_, args) =>
-                {
-                    DrawTile(texture, key, tileX, tileY);
-                };
-
-                var wrapper = new EventWrapper<Texture>();
-                wrapper.Bind<TextureModifiedEventArgs>("ModifiedEvent", handler, weak: false);
-                textureEventWrappers[(x, y)] = wrapper;
-            }
-        }
-
-        // Watch for changes to the dungeon layout (for dungeons only)
-        if (key.map is Dungeon)
-        {
-            var dungeon = key.map as Dungeon;
-
             EventHandler<DungeonRoomChangedEventArgs> roomChangedHandler = (_, args) =>
             {
                 if (args.all)
                 {
-                    Redraw(texture, key);
-                    RegenerateTextureWatchers(texture, key, textureEventWrappers);
+                    Redraw();
                 }
-                else if (args.floor != key.floor)
+                else if (args.floor == Floor)
                 {
-                    return;
-                }
-                else
-                {
-                    DrawTile(texture, key, args.x, args.y);
-                    RegenerateTextureWatchers(texture, key, textureEventWrappers);
+                    DrawTile(args.x, args.y);
                 }
             };
             EventHandler<EventArgs> floorsChangedHandler = (_, args) =>
             {
                 // Added or removed a floor: Just invalidate all floors to keep things simple. Also
                 // must check whether the floor in question was deleted.
-                if (key.floor >= dungeon.NumFloors)
+                if (Floor >= dungeon.NumFloors)
                 {
-                    DisposeTexture(key);
+                    Dispose();
                 }
                 else
                 {
-                    Redraw(texture, key);
-                    RegenerateTextureWatchers(texture, key, textureEventWrappers);
+                    Redraw();
                 }
             };
 
@@ -109,16 +108,41 @@ public class MapTextureCacher : TextureCacher<(Map map, int floor)>
             };
         }
 
-        texture.DisposedEvent += (_, _) =>
+        Redraw();
+    }
+
+    /// <summary>
+    /// Redraw all instances of the given room layout in this map. (Does a tile-by-tile rendering of
+    /// the room with many CopyTexture calls.)
+    /// </summary>
+    public void RedrawRoom(RoomLayout layout)
+    {
+        if (layout.Season != Map.Season)
+            return;
+
+        foreach (var (x, y, f) in Map.GetRoomPositions(layout.Room))
         {
-            foreach (EventWrapper<Texture> wrapper in textureEventWrappers.Values)
-                wrapper.UnbindAll();
-        };
+            if (f == Floor)
+                DrawTile(x, y);
+        }
+    }
 
-        RegenerateTextureWatchers(texture, key, textureEventWrappers);
-        Redraw(texture, key);
+    /// <summary>
+    /// Redraw from a pre-rendered version of the image (from another instance of MapTextureCacher).
+    /// </summary>
+    public void RedrawRoomFrom(RoomLayout layout, MapTextureCacher source, int srcX, int srcY)
+    {
+        if (layout.Season != Map.Season)
+            return;
 
-        return texture;
+        Point roomSize = new Point(Map.RoomWidth, Map.RoomHeight) * 16;
+        foreach (var (x, y, f) in Map.GetRoomPositions(layout.Room))
+        {
+            if (f == Floor)
+            {
+                texture.DrawFrom(source.texture, new Point(srcX, srcY) * roomSize, new Point(x, y) * roomSize, roomSize);
+            }
+        }
     }
 
 
@@ -126,47 +150,35 @@ public class MapTextureCacher : TextureCacher<(Map map, int floor)>
     // Private methods
     // ================================================================================
 
-    /// <summary>
-    /// Register event handlers for room textures being modified
-    /// </summary>
-    void RegenerateTextureWatchers(Texture texture, (Map map, int floor) key,
-                                 Dictionary<(int, int), EventWrapper<Texture>> textureEventWrappers)
+    void Redraw()
     {
-        for (int x = 0; x < key.map.MapWidth; x++)
+        for (int x = 0; x < Map.MapWidth; x++)
         {
-            for (int y = 0; y < key.map.MapHeight; y++)
+            for (int y = 0; y < Map.MapHeight; y++)
             {
-                var layout = key.map.GetRoomLayout(x, y, key.floor);
-                Texture roomTexture = Workspace.GetCachedRoomTexture(layout);
-
-                // EventWrapper that should trigger when the room at this position is modified.
-                // The event handler has been registered already but we need to update the event
-                // source here.
-                var wrapper = textureEventWrappers[(x, y)];
-                wrapper.ReplaceEventSource(roomTexture);
+                DrawTile(x, y);
             }
         }
     }
 
-    void Redraw(Texture texture, (Map map, int floor) key)
+    void DrawTile(int x, int y)
     {
-        for (int x = 0; x < key.map.MapWidth; x++)
+        Point roomSize = new Point(Map.RoomWidth, Map.RoomHeight) * 16;
+        var layout = Map.GetRoomLayout(x, y, Floor);
+
+        var tilesetTexture = Workspace.GetCachedTilesetTexture(layout.Tileset);
+
+        for (int i = 0; i < layout.Width; i++)
         {
-            for (int y = 0; y < key.map.MapHeight; y++)
+            for (int j = 0; j < layout.Height; j++)
             {
-                DrawTile(texture, key, x, y);
+                int tile = layout.GetTile(i, j);
+
+                // This is not terribly fast on the Vulkan backend, possibly because Veldrid
+                // always calls vkCmdCopyImage with a size of 1 and sends them as separate
+                // commands. Seems ok with OpenGL (but maybe depends on the driver).
+                texture.DrawFrom(tilesetTexture, new Point(tile % 16, tile / 16) * 16, new Point(x, y) * roomSize + new Point(i, j) * 16, new Point(16, 16));
             }
         }
-    }
-
-    void DrawTile(Texture texture, (Map map, int floor) key, int x, int y)
-    {
-        RoomLayout layout = key.map.GetRoomLayout(x, y, key.floor);
-        Texture roomTexture = Workspace.GetCachedRoomTexture(layout);
-
-        roomTexture.DrawOn(texture,
-                         new Point(0, 0),
-                         new Point(x * key.map.RoomWidth * 16, y * key.map.RoomHeight * 16),
-                         new Point(layout.Width * 16, layout.Height * 16));
     }
 }

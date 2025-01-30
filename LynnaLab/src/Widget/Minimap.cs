@@ -54,14 +54,14 @@ public class Minimap : TileGrid
     // ================================================================================
     Map map;
     int floor;
-    Texture image;
+    TextureBase image;
     EventWrapper<Dungeon> dungeonEW = new();
 
     // ================================================================================
     // Properties
     // ================================================================================
 
-    public override Texture Texture
+    public override TextureBase Texture
     {
         get
         {

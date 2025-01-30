@@ -6,6 +6,8 @@ namespace LynnaLib;
 /// <summary>
 /// Represents an image. The underlying type has shifted over time, from System.Drawing.Bitmap
 /// (now deprecated), to Cairo.ImageSurface, and now finally ImageSharp.Image.
+///
+/// Contrast with Textures, which are used for gpu-based rendering (this is cpu-based).
 /// </summary>
 public class Bitmap : System.IDisposable
 {

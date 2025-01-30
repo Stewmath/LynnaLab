@@ -12,6 +12,14 @@ layout (binding = 0) uniform ProjectionMatrixBuffer
     mat4 projection_matrix;
 };
 
+// Determines the window of the source texture to read from.
+// Normally, topLeft=(0, 0), bottomRight=(1, 1) to read the whole texture.
+layout (set = 1, binding = 3) uniform SourceViewportBuffer
+{
+    vec2 topLeft;
+    vec2 bottomRight;
+};
+
 layout (location = 0) out vec4 color;
 layout (location = 1) out vec2 texCoord;
 
@@ -24,5 +32,6 @@ void main()
 {
     gl_Position = projection_matrix * vec4(in_position, 0, 1);
     color = in_color;
-    texCoord = in_texCoord;
+
+    texCoord = in_texCoord * (bottomRight - topLeft) + topLeft;
 }

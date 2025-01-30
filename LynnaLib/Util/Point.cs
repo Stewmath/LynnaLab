@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace Util;
 
 public struct Point
@@ -26,11 +28,26 @@ public struct Point
     // Public methods
     // ================================================================================
 
+    public Vector2 AsVector2()
+    {
+        return new Vector2(X, Y);
+    }
+
     // ================================================================================
     // Implicit operators
     // ================================================================================
     public static Point operator+(Point p1, Point p2)
     {
         return new Point(p1.X + p2.X, p1.Y + p2.Y);
+    }
+
+    public static Point operator*(Point p1, int mult)
+    {
+        return new Point(p1.X * mult, p1.Y * mult);
+    }
+
+    public static Point operator*(Point p1, Point p2)
+    {
+        return new Point(p1.X * p2.X, p1.Y * p2.Y);
     }
 }

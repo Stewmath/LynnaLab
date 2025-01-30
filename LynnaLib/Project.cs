@@ -706,6 +706,20 @@ namespace LynnaLib
                 return season == Season.None;
         }
 
+        /// <summary>
+        /// Perform an action for every valid season in a given group.
+        /// </summary>
+        public void ForEachSeason(int group, Action<Season> action)
+        {
+            if (group == 0 && Game == Game.Seasons)
+            {
+                for (int s=0; s<4; s++)
+                    action((Season)s);
+            }
+            else
+                action(Season.None);
+        }
+
         public IList<Tileset> GetAllTilesets()
         {
             var list = new List<Tileset>();

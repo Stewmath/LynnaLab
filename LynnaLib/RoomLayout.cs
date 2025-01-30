@@ -55,6 +55,11 @@ namespace LynnaLib
         {
             get { return width; }
         }
+        public Point Size
+        {
+            get { return new Point(width, height); }
+        }
+
         public RealTileset Tileset
         {
             get

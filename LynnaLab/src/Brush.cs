@@ -166,7 +166,7 @@ public class BrushInterfacer
 
     // Only one of these should be non-null. This determines how the image will be drawn.
     Action<Func<int, int, bool>, int, int, int, int, float> drawAll;
-    Texture previewTexture;
+    TextureBase previewTexture;
     int tileSize; // used with previewTexture
 
     // ================================================================================
@@ -207,7 +207,7 @@ public class BrushInterfacer
     /// <summary>
     /// Sets the preview texture, disposing of the previous one if it exists.
     /// </summary>
-    public void SetPreviewTexture(Texture texture, int tileSize)
+    public void SetPreviewTexture(TextureBase texture, int tileSize)
     {
         previewTexture?.Dispose();
         previewTexture = texture;

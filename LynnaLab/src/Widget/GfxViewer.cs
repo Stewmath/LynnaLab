@@ -23,7 +23,7 @@ public class GfxViewer : TileGrid
     // Variables
     // ================================================================================
 
-    Texture texture;
+    RgbaTexture texture;
 
     GraphicsState graphicsState;
     int offsetStart, offsetEnd;
@@ -34,7 +34,7 @@ public class GfxViewer : TileGrid
 
     public ProjectWorkspace Workspace { get; private set; }
 
-    public override Texture Texture
+    public override TextureBase Texture
     {
         get { return texture; }
     }
@@ -74,6 +74,7 @@ public class GfxViewer : TileGrid
         TileHeight = 8;
         Scale = scale;
 
+        // NOTE: Should dispose this at some point
         texture = TopLevel.Backend.CreateTexture(Width * TileWidth, Height * TileHeight);
 
         RedrawAll();
@@ -113,7 +114,7 @@ public class GfxViewer : TileGrid
 
         using (Bitmap _subImage = GbGraphics.RawTileToBitmap(data))
         {
-            Texture subTexture = TopLevel.Backend.TextureFromBitmap(_subImage);
+            RgbaTexture subTexture = TopLevel.Backend.TextureFromBitmap(_subImage);
             subTexture.DrawOn(texture,
                             new Point(0, 0),
                             new Point(x * 8, y * 8),

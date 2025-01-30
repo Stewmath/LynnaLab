@@ -1,151 +1,76 @@
 namespace LynnaLab;
 
 /// <summary>
-/// Caches textures for room layouts.
-///
-/// Actually, most of the code here is making a lot of effort to not draw the texture immediately,
-/// instead waiting for the tileset to update its tile textures. And also listening on various
-/// events that could change the resultant texture.
+/// Caches textures for room layouts. Actually just reads off the cached overworld map image with
+/// the desired room in it.
 /// </summary>
-public class RoomTextureCacher : TextureCacher<RoomLayout>
+public class RoomTextureCacher : IDisposeNotifier
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public RoomTextureCacher(ProjectWorkspace workspace)
-        : base(workspace)
+    public RoomTextureCacher(ProjectWorkspace workspace, RoomLayout layout)
     {
+        Workspace = workspace;
+        Layout = layout;
 
+        GenerateTexture();
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
 
+    /*
     Dictionary<RoomLayout, EventWrapper<Tileset>> tilesetEventWrappers
         = new Dictionary<RoomLayout, EventWrapper<Tileset>>();
+        */
+
+    TextureBase roomTexture;
+    RgbaTexture mapTexture; // Retrieved from MapTextureCacher
 
     // ================================================================================
     // Properties
     // ================================================================================
 
+    public ProjectWorkspace Workspace { get; private set; }
+    public RoomLayout Layout { get; private set; }
+
+    // ================================================================================
+    // Events
+    // ================================================================================
+
+    public event EventHandler DisposedEvent;
+
     // ================================================================================
     // Public methods
     // ================================================================================
+
+    public TextureBase GetTexture()
+    {
+        return roomTexture;
+    }
+
+    // Should never be called except when closing a project.
+    public void Dispose()
+    {
+        roomTexture.Dispose();
+        roomTexture = null;
+        // Don't dispose mapTexture as we're not the owner
+        DisposedEvent?.Invoke(this, null);
+    }
 
     // ================================================================================
     // Protected methods
     // ================================================================================
 
-    protected override Texture GenerateTexture(RoomLayout layout)
+    void GenerateTexture()
     {
-        // Create the blank texture
-        Texture texture = TopLevel.Backend.CreateTexture(layout.Width * 16, layout.Height * 16);
-
-        // Watch for changes to the tileset's tiles.
-        // This will be invoked as the tiles get rendered lazily, or when tileset edits occur.
-        EventHandler<int> OnTileModified = (sender, tileIndex) =>
-        {
-            Tileset tileset = sender as Tileset;
-            Debug.Assert(tileset == layout.Tileset);
-
-            if (tileIndex == -1) // Must redraw everything
-            {
-                LazyRedraw(texture, layout);
-                return;
-            }
-
-            var tilePositions = layout.GetTilePositions(tileIndex);
-
-            TopLevel.LazyInvoke(() =>
-            {
-                texture.BeginAtomicOperation();
-                foreach ((int x, int y) in tilePositions)
-                {
-                    DrawTile(texture, layout, x, y);
-                }
-                texture.EndAtomicOperation();
-            });
-        };
-
-        // Register tile modified handler
-        var tilesetEventWrapper = new EventWrapper<Tileset>(layout.Tileset);
-        tilesetEventWrappers[layout] = tilesetEventWrapper;
-        tilesetEventWrapper.Bind<int>("TileModifiedEvent", OnTileModified);
-
-        // Watch for changes to the room's tileset index
-        layout.TilesetChangedEvent += TilesetChanged;
-
-        // Watch for changes to the room layout
-        EventHandler<RoomLayoutChangedEventArgs> onLayoutModified = (sender, args) =>
-        {
-            // We want immediate feedback from editing the room, so no lazy drawing
-            Redraw(texture, layout);
-        };
-        layout.LayoutChangedEvent += onLayoutModified;
-
-        // Draw all tile images that are already rendered
-        LazyRedraw(texture, layout, cachedOnly: true);
-
-        // Request that all undrawn tiles from the tileset be drawn
-        layout.Tileset.RequestRedraw();
-
-        return texture;
-    }
-
-
-    // ================================================================================
-    // Private methods
-    // ================================================================================
-
-    /// <summary>
-    /// Invoked when the RoomLayout's tileset index has changed.
-    /// </summary>
-    void TilesetChanged(object sender, RoomTilesetChangedEventArgs args)
-    {
-        var layout = sender as RoomLayout;
-
-        if (!tilesetEventWrappers.TryGetValue(layout, out var tilesetEventWrapper))
-            throw new Exception("Internal error: tilesetEventWrapper missing");
-
-        tilesetEventWrapper.ReplaceEventSource(args.newTileset);
-        LazyRedraw(base.GetTexture(layout), layout);
-    }
-
-    void Redraw(Texture texture, RoomLayout layout, bool cachedOnly = false)
-    {
-        Tileset tileset = layout.Tileset;
-        texture.BeginAtomicOperation();
-        for (int x = 0; x < layout.Width; x++)
-        {
-            for (int y = 0; y < layout.Height; y++)
-            {
-                int tile = layout.GetTile(x, y);
-                if (!cachedOnly || tileset.TileIsRendered(tile))
-                    DrawTile(texture, layout, x, y);
-            }
-        }
-        texture.EndAtomicOperation();
-    }
-
-    void LazyRedraw(Texture texture, RoomLayout layout, bool cachedOnly = false)
-    {
-        TopLevel.LazyInvoke(() => Redraw(texture, layout, cachedOnly));
-    }
-
-    /// <summary>
-    /// Draw a tile onto the room.
-    /// Inexpensive unless the tile texture has not been loaded onto the GPU yet.
-    /// </summary>
-    void DrawTile(Texture texture, RoomLayout layout, int x, int y)
-    {
-        int tileIndex = layout.GetTile(x, y);
-        var tileBitmap = layout.Tileset.GetTileBitmap(tileIndex);
-        var tileTexture = TopLevel.TextureFromBitmapTracked(tileBitmap);
-
-        tileTexture.DrawOn(texture,
-                         new Point(0, 0),
-                         new Point(x * 16, y * 16),
-                         new Point(16, 16));
+        // Get the overworld map image with the room we want
+        int x = Layout.Room.Index % 16;
+        int y = (Layout.Room.Index % 256) / 16;
+        var roomSize = Layout.Size * 16;
+        this.mapTexture = Workspace.GetCachedMapTexture((Workspace.Project.GetWorldMap(Layout.Room.Group, Layout.Season), 0));
+        roomTexture = TopLevel.Backend.CreateTextureWindow(mapTexture, new Point(x, y) * roomSize, roomSize);
     }
 }

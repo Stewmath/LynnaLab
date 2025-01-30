@@ -147,7 +147,7 @@ public static class ImGuiX
     /// <summary>
     /// Convenience method for rendering images
     /// </summary>
-    public static void DrawImage(Texture texture, float scale = 1.0f, Vector2? topLeft = null, Vector2? bottomRight = null)
+    public static void DrawImage(TextureBase texture, float scale = 1.0f, Vector2? topLeft = null, Vector2? bottomRight = null)
     {
         if (bottomRight == null)
         {

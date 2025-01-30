@@ -52,8 +52,8 @@ namespace LynnaLib
         readonly Data dataStart;
         readonly int index;
 
-        // roomsUsed[i] = # of times room "i" is used in this dungeon
-        int[] roomsUsed;
+        // roomsLookup[i] = a list of positions in the map where room "i" is used.
+        List<(int x, int y, int floor)>[] roomLookup;
         int _mainGroup;
 
         // ================================================================================
@@ -92,6 +92,15 @@ namespace LynnaLib
 
         // Map properties
 
+        /// <summary>
+        /// Group management is confusing. Most dungeon rooms use groups 4/5, but sidescrolling rooms
+        /// use groups 6/7 instead. So there is no one single "group number" that any given dungeon
+        /// uses, there are actually two: "MainGroup" and "SidescrollGroup".
+        ///
+        /// This means there is a "fake" version of each dungeon room, the one with the wrong group
+        /// number. It can be recognized by the fact that warp data is usually missing. LynnaLab
+        /// tries to hide it by auto-adjusting the group number of the room to show.
+        /// </summary>
         public override int MainGroup
         {
             get
@@ -100,7 +109,6 @@ namespace LynnaLib
             }
         }
 
-        // I don't know why, but sidescrolling rooms use groups 6/7 instead of 4/5
         public int SidescrollGroup
         {
             get
@@ -160,9 +168,10 @@ namespace LynnaLib
             Data d = GetFloorLayoutData(floor).GetDataAtOffset(y * 8 + x);
             int oldRoom = d.GetIntValue(0);
 
-            roomsUsed[oldRoom]--;
             d.SetByteValue(0, (byte)room);
-            roomsUsed[(byte)room]++;
+
+            Debug.Assert(roomLookup[oldRoom].Remove((x, y, floor)));
+            roomLookup[(byte)room].Add((x, y, floor));
 
             var invokeRoomChangedEvent = () =>
             {
@@ -193,7 +202,7 @@ namespace LynnaLib
             int group = roomIndex >> 8;
             if (group != MainGroup && group != SidescrollGroup)
                 return false;
-            return roomsUsed[roomIndex & 0xff] > 0;
+            return roomLookup[roomIndex & 0xff].Count > 0;
         }
 
         // Map methods
@@ -218,6 +227,13 @@ namespace LynnaLib
             return room;
         }
 
+        public override IEnumerable<(int x, int y, int floor)> GetRoomPositions(Room room)
+        {
+            if (room.Group != MainGroup && room.Group != SidescrollGroup)
+                return new List<(int, int, int)>();
+            return roomLookup[room.Index & 0xff];
+        }
+
         public override bool GetRoomPosition(Room room, out int x, out int y, out int floor)
         {
             x = -1;
@@ -226,27 +242,15 @@ namespace LynnaLib
 
             if (room.Group != MainGroup && room.Group != SidescrollGroup)
                 return false;
-            if (roomsUsed[room.Index & 0xff] == 0)
+            if (roomLookup[room.Index & 0xff].Count == 0)
                 return false;
 
-            for (int f = 0; f < NumFloors; f++)
-            {
-                for (int j = 0; j < MapHeight; j++)
-                {
-                    for (int i = 0; i < MapWidth; i++)
-                    {
-                        if (GetRoom(i, j, f) == room)
-                        {
-                            x = i;
-                            y = j;
-                            floor = f;
-                            return true;
-                        }
-                    }
-                }
-            }
+            var tup = roomLookup[room.Index & 0xff][0];
+            x = tup.x;
+            y = tup.y;
+            floor = tup.floor;
 
-            return false;
+            return true;
         }
 
         /// Insert a floor below "floorIndex". If "floorIndex == NumFloors" then the floor is
@@ -378,14 +382,17 @@ namespace LynnaLib
 
         void DetermineRoomsUsed()
         {
-            roomsUsed = new int[256];
+            roomLookup = new List<(int, int, int)>[256];
+            for (int i=0; i<256; i++)
+                roomLookup[i] = new List<(int,int,int)>();
             for (int f = 0; f < NumFloors; f++)
             {
                 for (int x = 0; x < MapWidth; x++)
                 {
                     for (int y = 0; y < MapHeight; y++)
                     {
-                        roomsUsed[GetRoom(x, y, f).Index & 0xff]++;
+                        int room = GetRoom(x, y, f).Index & 0xff;
+                        roomLookup[room].Add((x, y, f));
                     }
                 }
             }

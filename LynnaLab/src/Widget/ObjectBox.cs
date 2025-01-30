@@ -164,7 +164,7 @@ public class ObjectBox : SelectionBox
                 var spriteDrawer = (Bitmap sprite, int xOffset, int yOffset) =>
                 {
                     var offset = new Vector2(x + xOffset, y + yOffset);
-                    Texture image = TopLevel.TextureFromBitmapTracked(sprite);
+                    TextureBase image = TopLevel.TextureFromBitmapTracked(sprite);
                     ImGui.SetCursorScreenPos(topLeft + offset * Scale);
                     ImGuiX.DrawImage(image, Scale);
                 };

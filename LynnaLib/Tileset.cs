@@ -49,6 +49,7 @@ namespace LynnaLib
 
         public event LayoutGroupModifiedHandler LayoutGroupModifiedEvent;
 
+        // This is mainly used by FakeTileset instances
         public event Action<object> DisposedEvent;
 
 
@@ -171,68 +172,14 @@ namespace LynnaLib
             for (int i = 0; i < 256; i++) {
                 tileImagesDrawn[i] = false;
             }
-            RequestRedraw();
+            TileModifiedEvent?.Invoke(this, -1);
         }
 
-        // Trigger asynchronous redraw of all tiles that are marked as needing to be redrawn
-        public void RequestRedraw()
+        /// <summary>
+        /// Returns a TileDescription struct that has all the data needed to render a tile.
+        /// </summary>
+        public TileDescription GetTileDescription(int index)
         {
-            if (Disposed || inhibitRedraw > 0)
-                return;
-
-            // Don't add handler again if it's already in progress
-            if (tileUpdaterIndex != 256)
-            {
-                tileUpdaterIndex = 0;
-                return;
-            }
-
-            tileUpdaterIndex = 0;
-            Project.LazyInvoke(TileUpdater);
-        }
-
-        int tileUpdaterIndex = 256;
-
-        // TileUpdater is called by the idle handler, which just calls this "when it has time".
-        bool TileUpdater()
-        {
-            if (Disposed)
-                return false;
-
-            if (tileUpdaterIndex == 256)
-            {
-                TileModifiedEvent?.Invoke(this, -1);
-                return false;
-            }
-            int numDrawnTiles = 0;
-            while (tileUpdaterIndex < 256 && numDrawnTiles < 16)
-            {
-                if (!tileImagesDrawn[tileUpdaterIndex])
-                {
-                    numDrawnTiles++;
-                    // Generate the image if it's not cached
-                    GetTileBitmap(tileUpdaterIndex, invokeModifiedEvent:false);
-
-                    // Do not invoke TileModifiedEvent here. We would not be in this function in the
-                    // first place if we weren't updating many tiles at once. So only invoke it when
-                    // all tiles are finished updating, with parameter -1, indicating that all tiles
-                    // were redrawn.
-                }
-                tileUpdaterIndex++;
-            }
-
-            // Return true to indicate to GLib that it should call this again later
-            return true;
-        }
-
-        // This returns an image for the specified tile index.
-        public Bitmap GetTileBitmap(int index, bool invokeModifiedEvent=true)
-        {
-            if (tileImagesDrawn[index])
-                return tileImagesCache[index];
-
-            var image = tileImagesCache[index];
-
             // Draw the tile
             var getSubTileDescription = (int index, int x, int y) =>
             {
@@ -246,13 +193,26 @@ namespace LynnaLib
             SubTileDescription bl = getSubTileDescription(index, 0, 1);
             SubTileDescription br = getSubTileDescription(index, 1, 1);
 
-            TileDescription desc = new TileDescription(tl, tr, bl, br);
+            return new TileDescription(tl, tr, bl, br);
+        }
+
+        /// <summary>
+        /// This returns an image for the specified tile index. This used to be the basis for
+        /// rendering in LynnaLab, but now a lot of stuff is done GPU-side, whereas this is
+        /// CPU-based.
+        /// </summary>
+        public Bitmap GetTileBitmap(int index)
+        {
+            if (tileImagesDrawn[index])
+                return tileImagesCache[index];
+
+            var image = tileImagesCache[index];
+
+            TileDescription desc = GetTileDescription(index);
             GbGraphics.RenderTile(image, 0, 0, desc, GraphicsState.GetBackgroundPalettes());
 
             tileImagesDrawn[index] = true;
             image.MarkModified();
-            if (invokeModifiedEvent)
-                TileModifiedEvent?.Invoke(this, index);
 
             return image;
         }
@@ -261,6 +221,38 @@ namespace LynnaLib
         {
             int tileOffset = 0x1000 + ((sbyte)subTileIndex) * 16;
             return graphicsState.VramBuffer[1].AsSpan().Slice(tileOffset, 16);
+        }
+
+        public byte[] GetTileMapBytes()
+        {
+            return GetTileData(false);
+        }
+        public byte[] GetTileFlagBytes()
+        {
+            return GetTileData(true);
+        }
+        private byte[] GetTileData(bool flags)
+        {
+            byte[] data = new byte[32 * 32];
+
+            for (int t=0; t<256; t++)
+            {
+                int tx = t % 16;
+                int ty = t / 16;
+
+                for (int x=0; x<2; x++)
+                {
+                    for (int y=0; y<2; y++)
+                    {
+                        if (flags)
+                            data[(ty * 2 + y) * 32 + (tx * 2 + x)] = GetSubTileFlags(t, x, y);
+                        else
+                            data[(ty * 2 + y) * 32 + (tx * 2 + x)] = GetSubTileIndex(t, x, y);
+                    }
+                }
+            }
+
+            return data;
         }
 
         // Functions dealing with subtiles
@@ -319,6 +311,7 @@ namespace LynnaLib
 
 
         // Returns a list of tiles which have changed
+        // NOTE: This code is stale, won't work with new gpu-based rendering
         public IList<byte> UpdateAnimations(int frames)
         {
             HashSet<byte> changedTiles = new HashSet<byte>();
@@ -561,7 +554,6 @@ namespace LynnaLib
             if (inhibitRedraw != 0)
                 return;
             tileImagesDrawn[index] = false;
-            GetTileBitmap(index); // Redraw tile image
             TileModifiedEvent?.Invoke(this, index);
         }
 

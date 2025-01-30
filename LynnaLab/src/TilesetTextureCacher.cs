@@ -3,81 +3,106 @@ namespace LynnaLab;
 /// <summary>
 /// Caches textures for tilesets arranged in a 16x16 configuration.
 /// </summary>
-public class TilesetTextureCacher : TextureCacher<Tileset>
+public class TilesetTextureCacher : IDisposeNotifier
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public TilesetTextureCacher(ProjectWorkspace workspace)
-        : base(workspace)
+    public TilesetTextureCacher(ProjectWorkspace workspace, Tileset tileset)
     {
+        Workspace = workspace;
+        Tileset = tileset;
 
+        GenerateTexture();
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
 
+    RgbaTexture tilesetTexture;
+    bool modified = false;
+
     // ================================================================================
     // Properties
     // ================================================================================
+
+    public ProjectWorkspace Workspace { get; private set; }
+    public Tileset Tileset { get; private set; }
+
+    // ================================================================================
+    // Events
+    // ================================================================================
+
+    public event EventHandler DisposedEvent;
 
     // ================================================================================
     // Public methods
     // ================================================================================
 
-    // ================================================================================
-    // Protected methods
-    // ================================================================================
-
-    protected override Texture GenerateTexture(Tileset tileset)
+    public TextureBase GetTexture()
     {
-        Texture texture = TopLevel.Backend.CreateTexture(16 * 16, 16 * 16);
-
-        RedrawAll(texture, tileset);
-
-        tileset.TileModifiedEvent += (sender, tile) =>
-        {
-            Texture texture = base.CacheLookup(sender as Tileset);
-            if (tile == -1)
-                RedrawAll(texture, sender as Tileset);
-            else
-                DrawTile(texture, sender as Tileset, tile % 16, tile / 16);
-        };
-
-        tileset.DisposedEvent += (sender) =>
-        {
-            base.DisposeTexture(sender as Tileset);
-        };
-
-        return texture;
+        return tilesetTexture;
     }
 
+    /// <summary>
+    /// Called once per frame. Renders anything that was queued up.
+    /// </summary>
+    public void UpdateFrame()
+    {
+        if (modified)
+            Render();
+        modified = false;
+    }
+
+    public void Dispose()
+    {
+        tilesetTexture.Dispose();
+        tilesetTexture = null;
+        DisposedEvent?.Invoke(this, null);
+    }
 
     // ================================================================================
     // Private methods
     // ================================================================================
 
-    void RedrawAll(Texture texture, Tileset tileset)
+    void GenerateTexture()
     {
-        texture.BeginAtomicOperation();
-        for (int x = 0; x < 16; x++)
+        tilesetTexture = TopLevel.Backend.CreateTexture(256, 256, renderTarget: true);
+        Render();
+
+        Tileset.TileModifiedEvent += (sender, tile) =>
         {
-            for (int y = 0; y < 16; y++)
-            {
-                DrawTile(texture, tileset, x, y);
-            }
-        }
-        texture.EndAtomicOperation();
+            modified = true;
+        };
+
+        Tileset.DisposedEvent += (sender) =>
+        {
+            Dispose();
+        };
     }
 
-    void DrawTile(Texture texture, Tileset tileset, int x, int y)
+
+    void Render()
+    {
+        TopLevel.Backend.RenderTileset(tilesetTexture, Tileset);
+    }
+
+    /// <summary>
+    /// This redraws a single tile using software rendering.
+    ///
+    /// Our GPU pipeline is only capable of redrawing the entire tileset at once. Even so, that
+    /// works well enough, so this function is unused. (Anyway, there could be annoying cases where
+    /// this gets called multiple times for the same tile in a single frame - so it's not ideal
+    /// anyway.)
+    /// </summary>
+    void DrawTile(int x, int y)
     {
         int index = x + y * 16;
-        var bitmap = tileset.GetTileBitmap(index);
+        var bitmap = Tileset.GetTileBitmap(index);
         var bitmapTexture = TopLevel.TextureFromBitmapTracked(bitmap);
 
-        bitmapTexture.DrawOn(texture,
+        bitmapTexture.DrawOn(tilesetTexture,
                            new Point(0, 0),
                            new Point(x * 16, y * 16),
                            new Point(16, 16));

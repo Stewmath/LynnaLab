@@ -86,13 +86,14 @@ public class ScratchPadGrid : TileGrid
 
         // Redraw this whole texture when the reference texture is modified. Not the most efficient
         // - will cause a lot of redraws to occur when using the tileset editor.
-        referenceTextureEventWrapper = new EventWrapper<Texture>();
+        referenceTextureEventWrapper = new EventWrapper<TextureBase>();
         referenceTextureEventWrapper.Bind<TextureModifiedEventArgs>(
             "ModifiedEvent",
             (_, _) => Redraw(),
             weak: false
         );
 
+        // NOTE: Should dispose this at some point
         texture = TopLevel.Backend.CreateTexture(Width * TileWidth, Height * TileHeight);
         SetReferenceGrid(referenceGrid);
     }
@@ -102,9 +103,9 @@ public class ScratchPadGrid : TileGrid
     // ================================================================================
 
     int[,] tileGrid;
-    Texture texture;
-    Texture referenceTexture;
-    EventWrapper<Texture> referenceTextureEventWrapper;
+    RgbaTexture texture;
+    TextureBase referenceTexture;
+    EventWrapper<TextureBase> referenceTextureEventWrapper;
 
     /// <summary>
     /// A TileGrid where each tile index provides the texture to use for that value.
@@ -116,7 +117,7 @@ public class ScratchPadGrid : TileGrid
     // Properties
     // ================================================================================
 
-    public override Texture Texture { get { return texture; } }
+    public override TextureBase Texture { get { return texture; } }
 
     ProjectWorkspace Workspace { get; set; }
 
@@ -181,7 +182,9 @@ public class ScratchPadGrid : TileGrid
         var srcPos = new Point(x * TileWidth, y * TileHeight);
         var destPos = new Point(index % Width * TileWidth, index / Width * TileHeight);
         var size = referenceGrid.TileSize;
-        referenceGrid.Texture.DrawOn(texture, srcPos, destPos, size);
+
+        // NOTE: ReferenceGrid must be using an RgbaTexture.
+        (referenceGrid.Texture as RgbaTexture).DrawOn(texture, srcPos, destPos, size);
     }
 
     void SetReferenceGrid(TileGrid grid)

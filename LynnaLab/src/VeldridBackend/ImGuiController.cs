@@ -3,61 +3,68 @@ using System.IO;
 using Veldrid;
 using System.Runtime.CompilerServices;
 
-using Interpolation = LynnaLab.Interpolation;
 using ImGuiXCallback = LynnaLab.ImGuiXCallback;
 using System.Runtime.InteropServices;
+
+using Point = Util.Point;
 
 
 namespace VeldridBackend;
 
 /// <summary>
-/// A modified version of Veldrid.ImGui's ImGuiRenderer.
-/// Manages input for ImGui and handles rendering ImGui's DrawLists with Veldrid.
+/// A modified version of Veldrid.ImGui's ImGuiRenderer. Manages input for ImGui, and handles all
+/// rendering with Veldrid.
 ///
-/// It's not clear why this is a different class from VeldridBackend, but I feel like there's a
-/// reason.
+/// Closely coupled with VeldridBackend. But I try to keep only rendering stuff in here.
 /// </summary>
 public class ImGuiController : IDisposable
 {
-    private VeldridBackend _backend;
-    private GraphicsDevice _gd;
-    private bool _frameBegun;
+    VeldridBackend _backend;
+    GraphicsDevice _gd;
+    CommandList cl;
+    bool _frameBegun;
 
-    // Veldrid objects
-    private DeviceBuffer _vertexBuffer;
-    private DeviceBuffer _indexBuffer;
-    private DeviceBuffer _textureFragBuffer;
-    private DeviceBuffer _fontFragBuffer;
-    private DeviceBuffer _projMatrixBuffer;
-    private Texture _fontTexture;
-    private TextureView _fontTextureView;
-    private Shader _vertexShader;
-    private Shader _fragmentShader;
-    private ResourceLayout _layout;
-    private ResourceLayout _textureLayout;
-    private Pipeline _pipeline;
-    private ResourceSet _mainResourceSet;
-    private ResourceSet _fontTextureResourceSet;
+    // Uniform buffers for fragment shaders
+    DeviceBuffer _fontFragBuffer;
+    DeviceBuffer _textureGlobalsBuffer;
+    FragGlobalsStruct textureGlobalsStruct; // Used during imgui rendering
 
-    private IntPtr _fontAtlasID = (IntPtr)1;
+    // Other DeviceBuffers
+    DeviceBuffer _projMatrixBuffer;
+    DeviceBuffer _vertexBuffer;
+    DeviceBuffer renderTilesetVertexBuffer;
+    DeviceBuffer _indexBuffer;
+    DeviceBuffer fullSourceViewportBuffer;
 
-    private int _windowWidth;
-    private int _windowHeight;
-    private Vector2 _scaleFactor = Vector2.One;
+    // More veldrid objects
+    Texture _fontTexture;
+    TextureView _fontTextureView;
+    ResourceLayout _layout;
+    ResourceLayout _textureLayout;
+    ResourceLayout _renderTilesetLayout;
+    Pipeline _pipeline, renderTilesetPipeline;
+    ResourceSet _mainResourceSet;
+    ResourceSet _fontTextureResourceSet;
 
-    // To be copied directly to _textureFragBuffer
-    FragUniformStruct textureFragStruct;
+    // Whether we've set up the render-to-texture pipeline this frame (gets reset when regular
+    // rendering resumes).
+    bool renderToTilesetPipelineSetup = false;
+
+    IntPtr _fontAtlasID = (IntPtr)1;
+
+    int _windowWidth;
+    int _windowHeight;
+    Vector2 _scaleFactor = Vector2.One;
 
     // Texture trackers
-    private readonly Dictionary<VeldridTextureWrapper, ResourceSetInfo> _setsByTexture
-        = new Dictionary<VeldridTextureWrapper, ResourceSetInfo>();
-    private readonly Dictionary<IntPtr, ResourceSetInfo> _viewsById = new Dictionary<IntPtr, ResourceSetInfo>();
+    readonly Dictionary<VeldridTextureBase, ResourceSetInfo> _setsByTexture = new ();
+    readonly Dictionary<IntPtr, ResourceSetInfo> _viewsById = new();
 
-    private readonly List<IDisposable> _ownedResources = new List<IDisposable>();
-    private int _lastAssignedID = 100;
+    readonly List<IDisposable> _ownedResources = new();
+    int _lastAssignedID = 100;
 
 
-    struct FragUniformStruct
+    struct FragGlobalsStruct
     {
         public int InterpolationMode;
         public float alpha;
@@ -72,18 +79,29 @@ public class ImGuiController : IDisposable
         }
 
         public override bool Equals(object obj) {
-            return obj is FragUniformStruct other
+            return obj is FragGlobalsStruct other
                 && other.InterpolationMode == InterpolationMode
                 && other.alpha == alpha;
         }
     }
 
+    struct ImageTypeStruct
+    {
+        public int imageType;
+    }
+
+    struct SourceViewportBufferStruct
+    {
+        public Vector2 topLeft, bottomRight;
+    }
+
     /// <summary>
     /// Constructs a new ImGuiController.
     /// </summary>
-    public ImGuiController(VeldridBackend backend, OutputDescription outputDescription, int width, int height)
+    public ImGuiController(VeldridBackend backend, CommandList cl, OutputDescription outputDescription, int width, int height)
     {
         _backend = backend;
+        this.cl = cl;
         _gd = backend.GraphicsDevice;
 
         _windowWidth = width;
@@ -104,6 +122,7 @@ public class ImGuiController : IDisposable
 
     public VeldridBackend Backend { get { return _backend; } }
     public GraphicsDevice GraphicsDevice { get { return _gd; } }
+    public CommandList CommandList { get { return cl; } }
 
     public void WindowResized(int width, int height)
     {
@@ -122,19 +141,19 @@ public class ImGuiController : IDisposable
         ResourceFactory factory = gd.ResourceFactory;
         _vertexBuffer = factory.CreateBuffer(new BufferDescription(10000, BufferUsage.VertexBuffer | BufferUsage.Dynamic));
         _vertexBuffer.Name = "ImGui.NET Vertex Buffer";
+        renderTilesetVertexBuffer = factory.CreateBuffer(new BufferDescription(10000, BufferUsage.VertexBuffer | BufferUsage.Dynamic));
+        renderTilesetVertexBuffer.Name = "ImGui.NET Vertex Buffer 2";
         _indexBuffer = factory.CreateBuffer(new BufferDescription(2000, BufferUsage.IndexBuffer | BufferUsage.Dynamic));
         _indexBuffer.Name = "ImGui.NET Index Buffer";
 
         _projMatrixBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
         _projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
 
-        _textureFragBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
-        _textureFragBuffer.Name = "ImGui.NET Uniform buffer for texture fragment shaders";
+        _textureGlobalsBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+        _textureGlobalsBuffer.Name = "ImGui.NET Uniform buffer for texture fragment shaders";
 
-        byte[] vertexShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-vertex", ShaderStages.Vertex);
-        byte[] fragmentShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-frag", ShaderStages.Fragment);
-        _vertexShader = factory.CreateShader(new ShaderDescription(ShaderStages.Vertex, vertexShaderBytes, gd.BackendType == GraphicsBackend.Metal ? "VS" : "main"));
-        _fragmentShader = factory.CreateShader(new ShaderDescription(ShaderStages.Fragment, fragmentShaderBytes, gd.BackendType == GraphicsBackend.Metal ? "FS" : "main"));
+        Shader vertexShader = LoadShader(gd.ResourceFactory, "imgui-vertex", ShaderStages.Vertex);
+        Shader fragmentShader = LoadShader(gd.ResourceFactory, "imgui-frag", ShaderStages.Fragment);
 
         VertexLayoutDescription[] vertexLayouts = new VertexLayoutDescription[]
         {
@@ -144,6 +163,8 @@ public class ImGuiController : IDisposable
                     new VertexElementDescription("in_color", VertexElementSemantic.Color, VertexElementFormat.Byte4_Norm))
         };
 
+        var shaderSetDescription = new ShaderSetDescription(vertexLayouts, new[] { vertexShader, fragmentShader });
+
         // Layout for rendering imgui components
         _layout = factory.CreateResourceLayout(new ResourceLayoutDescription(
             new ResourceLayoutElementDescription("ProjectionMatrixBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
@@ -152,16 +173,18 @@ public class ImGuiController : IDisposable
 
         // Layout for rendering textures (including font)
         _textureLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
-            new ResourceLayoutElementDescription("MainTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+            new ResourceLayoutElementDescription("Texture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
             new ResourceLayoutElementDescription("MainSampler", ResourceKind.Sampler, ShaderStages.Fragment),
-            new ResourceLayoutElementDescription("FragUniformBuffer", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
+            new ResourceLayoutElementDescription("FragGlobalsStruct", ResourceKind.UniformBuffer, ShaderStages.Fragment),
+            new ResourceLayoutElementDescription("SourceViewportBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex)
+                                                      ));
 
         GraphicsPipelineDescription pd = new GraphicsPipelineDescription(
             BlendStateDescription.SingleAlphaBlend,
             new DepthStencilStateDescription(false, false, ComparisonKind.Always),
             new RasterizerStateDescription(FaceCullMode.None, PolygonFillMode.Solid, FrontFace.Clockwise, false, true),
             PrimitiveTopology.TriangleList,
-            new ShaderSetDescription(vertexLayouts, new[] { _vertexShader, _fragmentShader }),
+            shaderSetDescription,
             new ResourceLayout[] { _layout, _textureLayout },
             outputDescription,
             ResourceBindingModel.Default);
@@ -170,17 +193,25 @@ public class ImGuiController : IDisposable
         // Default uniform buffer for font textures, also applies to stuff like rectangle rendering?
         // (Even though it's not in the mainResourceSet?)
         _fontFragBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
-        var defaultFragUniformStruct = new FragUniformStruct
+        var defaultFragUniformStruct = new FragGlobalsStruct
         {
             InterpolationMode = (int)Interpolation.Nearest,
-            alpha = 1.0f
+            alpha = 1.0f,
         };
         _gd.UpdateBuffer(_fontFragBuffer, 0, defaultFragUniformStruct);
 
         // Uniform buffer for textures. This will be updated frequently, but we set the initial values here.
-        textureFragStruct.alpha = 1.0f;
-        textureFragStruct.InterpolationMode = (int)Interpolation.Nearest;
-        _gd.UpdateBuffer(_textureFragBuffer, 0, textureFragStruct);
+        textureGlobalsStruct.alpha = 1.0f;
+        textureGlobalsStruct.InterpolationMode = (int)Interpolation.Nearest;
+        _gd.UpdateBuffer(_textureGlobalsBuffer, 0, textureGlobalsStruct);
+
+        // Default viewport for textures encompasses the whole thing
+        fullSourceViewportBuffer = _gd.ResourceFactory.CreateBuffer(
+            new BufferDescription((uint)Unsafe.SizeOf<SourceViewportBufferStruct>(), BufferUsage.UniformBuffer));
+        SourceViewportBufferStruct viewport = new();
+        viewport.topLeft = Vector2.Zero;
+        viewport.bottomRight = Vector2.One;
+        _gd.UpdateBuffer(fullSourceViewportBuffer, 0, viewport);
 
         // Resource set for rendering imgui components
         _mainResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
@@ -189,20 +220,21 @@ public class ImGuiController : IDisposable
             gd.PointSampler));
 
         RecreateFontDeviceTexture(gd);
+
+        _ownedResources.Add(vertexShader);
+        _ownedResources.Add(fragmentShader);
     }
 
     /// <summary>
     /// Gets or creates a handle for a texture to be drawn with ImGui.
     /// Pass the returned handle to Image() or ImageButton().
     /// </summary>
-    private IntPtr RegenerateTextureBinding(VeldridTextureWrapper texture)
+    private ResourceSetInfo RegenerateTextureBinding(VeldridTextureBase texture)
     {
         if (_setsByTexture.TryGetValue(texture, out ResourceSetInfo rsi))
         {
             _ownedResources.Remove(rsi.ResourceSet);
-            _ownedResources.Remove(rsi.TextureView);
             _gd.DisposeWhenIdle(rsi.ResourceSet);
-            _gd.DisposeWhenIdle(rsi.TextureView);
             _setsByTexture.Remove(texture);
             _viewsById.Remove(rsi.ImGuiBinding);
         }
@@ -211,60 +243,90 @@ public class ImGuiController : IDisposable
         Sampler sampler;
         ResourceSet resourceSet;
 
-        if (textureFragStruct.InterpolationMode == (int)Interpolation.Nearest)
+        // TODO: Maybe just stick to one sampler - updates to textureGlobalsStruct won't affect this later
+        if (textureGlobalsStruct.InterpolationMode == (int)Interpolation.Nearest)
         {
             sampler = _gd.PointSampler;
         }
-        else if (textureFragStruct.InterpolationMode == (int)Interpolation.Bicubic)
+        else if (textureGlobalsStruct.InterpolationMode == (int)Interpolation.Bicubic)
         {
             // This seems to have some effect, but the bulk of the work is in the shader
             sampler = _gd.LinearSampler;
         }
         else
         {
-            throw new Exception($"Interpolation method {textureFragStruct.InterpolationMode} unknown");
+            throw new Exception($"Interpolation method {textureGlobalsStruct.InterpolationMode} unknown");
         }
 
-        var textureView = factory.CreateTextureView(texture.Texture);
+        Texture baseTexture = null;
+        DeviceBuffer sourceViewportBuffer = fullSourceViewportBuffer;
+
+        if (texture is VeldridRgbaTexture t1)
+        {
+            baseTexture = t1.Texture;
+        }
+        else if (texture is VeldridTextureWindow t4)
+        {
+            baseTexture = t4.Texture;
+
+            Vector2 textureSize = new Vector2(baseTexture.Width, baseTexture.Height);
+
+            // References a portion of the texture
+            sourceViewportBuffer = _gd.ResourceFactory.CreateBuffer(
+                       new BufferDescription((uint)Unsafe.SizeOf<SourceViewportBufferStruct>(), BufferUsage.UniformBuffer));
+            SourceViewportBufferStruct viewport = new();
+            viewport.topLeft = t4.TopLeft.AsVector2() / textureSize;
+            viewport.bottomRight = (t4.TopLeft + t4.Size).AsVector2() / textureSize;
+            _gd.UpdateBuffer(sourceViewportBuffer, 0, viewport);
+
+            _ownedResources.Add(sourceViewportBuffer);
+        }
+        else {
+            throw new Exception("Unrecognized texture type: " + texture);
+        }
 
         resourceSet = factory.CreateResourceSet(
             new ResourceSetDescription(_textureLayout,
-                                       textureView,
+                                       baseTexture,
                                        sampler,
-                                       _textureFragBuffer));
+                                       _textureGlobalsBuffer,
+                                       sourceViewportBuffer
+            ));
 
-        rsi = new ResourceSetInfo(GetNextImGuiBindingID(), resourceSet, texture, textureView);
+        rsi = new ResourceSetInfo(GetNextImGuiBindingID(), resourceSet, texture);
 
         _setsByTexture.Add(texture, rsi);
         _viewsById.Add(rsi.ImGuiBinding, rsi);
-        _ownedResources.Add(textureView);
         _ownedResources.Add(resourceSet);
 
-        return rsi.ImGuiBinding;
+        return rsi;
     }
 
     /// <summary>
     /// Gets or creates a handle for a texture to be drawn with ImGui.
     /// Pass the returned handle to Image() or ImageButton().
     /// </summary>
-    public IntPtr GetOrCreateImGuiBinding(VeldridTextureWrapper texture)
+    public IntPtr GetOrCreateImGuiBinding(VeldridTextureBase texture)
+    {
+        return GetOrCreateResourceSet(texture).ImGuiBinding;
+    }
+
+    private ResourceSetInfo GetOrCreateResourceSet(VeldridTextureBase texture)
     {
         if (!_setsByTexture.TryGetValue(texture, out ResourceSetInfo rsi))
         {
             return RegenerateTextureBinding(texture);
         }
 
-        return rsi.ImGuiBinding;
+        return rsi;
     }
 
-    public void UnbindTexture(VeldridTextureWrapper texture)
+    public void UnbindTexture(VeldridTextureBase texture)
     {
         if (!_setsByTexture.ContainsKey(texture))
             return;
         var rsi = _setsByTexture[texture];
-        _ownedResources.Remove(rsi.TextureView);
         _ownedResources.Remove(rsi.ResourceSet);
-        _gd.DisposeWhenIdle(rsi.TextureView);
         _gd.DisposeWhenIdle(rsi.ResourceSet);
         _viewsById.Remove(rsi.ImGuiBinding);
         _setsByTexture.Remove(texture);
@@ -302,33 +364,53 @@ public class ImGuiController : IDisposable
         _lastAssignedID = 100;
     }
 
-    private byte[] LoadEmbeddedShaderCode(ResourceFactory factory, string name, ShaderStages stage)
+    private Shader LoadShader(ResourceFactory factory, string name, ShaderStages stage)
     {
+        byte[] bytes;
+
         switch (factory.BackendType)
         {
             case GraphicsBackend.Direct3D11:
                 {
                     string resourceName = name + ".hlsl.bytes";
-                    return GetEmbeddedResourceBytes(resourceName);
+                    bytes = GetEmbeddedResourceBytes(resourceName);
+                    break;
                 }
             case GraphicsBackend.OpenGL:
                 {
                     string resourceName = name + ".glsl";
-                    return GetEmbeddedResourceBytes(resourceName);
+                    bytes = GetEmbeddedResourceBytes(resourceName);
+                    break;
                 }
             case GraphicsBackend.Vulkan:
                 {
                     string resourceName = name + ".spv";
-                    return GetEmbeddedResourceBytes(resourceName);
+                    bytes = GetEmbeddedResourceBytes(resourceName);
+                    break;
                 }
             case GraphicsBackend.Metal:
                 {
                     string resourceName = name + ".metallib";
-                    return GetEmbeddedResourceBytes(resourceName);
+                    bytes = GetEmbeddedResourceBytes(resourceName);
+                    break;
                 }
             default:
                 throw new NotImplementedException();
         }
+
+        string entryPoint = "main";
+
+        // Metal backend is untested
+        if (_gd.BackendType == GraphicsBackend.Metal)
+        {
+            if (stage == ShaderStages.Vertex)
+                entryPoint = "VS";
+            else if (stage == ShaderStages.Fragment)
+                entryPoint = "FS";
+            else
+                throw new NotImplementedException();
+        }
+        return _gd.ResourceFactory.CreateShader(new ShaderDescription(stage, bytes, entryPoint));
     }
 
     private byte[] GetEmbeddedResourceBytes(string resourceName)
@@ -388,7 +470,8 @@ public class ImGuiController : IDisposable
             _textureLayout,
             _fontTextureView,
             _gd.PointSampler,
-            _fontFragBuffer));
+            _fontFragBuffer,
+            fullSourceViewportBuffer));
 
         io.Fonts.ClearTexData();
     }
@@ -400,13 +483,13 @@ public class ImGuiController : IDisposable
     /// the existing buffers.
     /// A <see cref="CommandList"/> is needed to submit drawing and resource update commands.
     /// </summary>
-    public void Render(GraphicsDevice gd, CommandList cl)
+    public void Render(GraphicsDevice gd)
     {
         if (_frameBegun)
         {
             _frameBegun = false;
             ImGui.Render();
-            RenderImDrawData(ImGui.GetDrawData(), gd, cl);
+            RenderImDrawData(ImGui.GetDrawData(), gd);
         }
     }
 
@@ -528,7 +611,7 @@ public class ImGuiController : IDisposable
         }
     }
 
-    private void RenderImDrawData(ImDrawDataPtr draw_data, GraphicsDevice gd, CommandList cl)
+    private void RenderImDrawData(ImDrawDataPtr draw_data, GraphicsDevice gd)
     {
         uint vertexOffsetInVertices = 0;
         uint indexOffsetInElements = 0;
@@ -537,6 +620,8 @@ public class ImGuiController : IDisposable
         {
             return;
         }
+
+        cl.UpdateBuffer(_textureGlobalsBuffer, 0, textureGlobalsStruct);
 
         uint totalVBSize = (uint)(draw_data.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
         if (totalVBSize > _vertexBuffer.SizeInBytes)
@@ -582,11 +667,12 @@ public class ImGuiController : IDisposable
             -1.0f,
             1.0f);
 
-        _gd.UpdateBuffer(_projMatrixBuffer, 0, ref mvp);
+        cl.UpdateBuffer(_projMatrixBuffer, 0, ref mvp);
 
         cl.SetVertexBuffer(0, _vertexBuffer);
         cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
         cl.SetPipeline(_pipeline);
+        cl.SetFramebuffer(_gd.MainSwapchain.Framebuffer);
         cl.SetGraphicsResourceSet(0, _mainResourceSet);
 
         draw_data.ScaleClipRects(io.DisplayFramebufferScale);
@@ -602,20 +688,25 @@ public class ImGuiController : IDisposable
                 ImDrawCmdPtr pcmd = cmd_list.CmdBuffer[cmd_i];
                 if (pcmd.UserCallback != IntPtr.Zero)
                 {
-                    switch ((ImGuiXCallback)pcmd.UserCallback)
+                    // This doesn't play nice with Vulkan. I think it's because I'm not supposed to
+                    // use UpdateBuffer in the middle of a render pass?
+                    if (_gd.BackendType != GraphicsBackend.Vulkan)
                     {
-                        case ImGuiXCallback.SetAlpha:
-                            float alpha = Marshal.PtrToStructure<float>(pcmd.UserCallbackData);
-                            textureFragStruct.alpha = alpha;
-                            cl.UpdateBuffer(_textureFragBuffer, 0, textureFragStruct);
-                            break;
-                        case ImGuiXCallback.SetInterpolation:
-                            int interp = Marshal.PtrToStructure<int>(pcmd.UserCallbackData);
-                            textureFragStruct.InterpolationMode = interp;
-                            cl.UpdateBuffer(_textureFragBuffer, 0, textureFragStruct);
-                            break;
-                        default:
-                            throw new NotImplementedException();
+                        switch ((ImGuiXCallback)pcmd.UserCallback)
+                        {
+                            case ImGuiXCallback.SetAlpha:
+                                float alpha = Marshal.PtrToStructure<float>(pcmd.UserCallbackData);
+                                textureGlobalsStruct.alpha = alpha;
+                                cl.UpdateBuffer(_textureGlobalsBuffer, 0, textureGlobalsStruct);
+                                break;
+                            case ImGuiXCallback.SetInterpolation:
+                                int interp = Marshal.PtrToStructure<int>(pcmd.UserCallbackData);
+                                textureGlobalsStruct.InterpolationMode = interp;
+                                cl.UpdateBuffer(_textureGlobalsBuffer, 0, textureGlobalsStruct);
+                                break;
+                            default:
+                                throw new NotImplementedException();
+                        }
                     }
 
                     Marshal.FreeHGlobal(pcmd.UserCallbackData);
@@ -635,12 +726,15 @@ public class ImGuiController : IDisposable
                         }
                     }
 
-                    cl.SetScissorRect(
+                    if (pcmd.ClipRect.X >= 0 && pcmd.ClipRect.Y >= 0)
+                    {
+                        cl.SetScissorRect(
                         0,
                         (uint)pcmd.ClipRect.X,
                         (uint)pcmd.ClipRect.Y,
                         (uint)(pcmd.ClipRect.Z - pcmd.ClipRect.X),
                         (uint)(pcmd.ClipRect.W - pcmd.ClipRect.Y));
+                    }
 
                     cl.DrawIndexed(pcmd.ElemCount, 1, pcmd.IdxOffset + (uint)idx_offset, (int)pcmd.VtxOffset + vtx_offset, 0);
                 }
@@ -660,11 +754,10 @@ public class ImGuiController : IDisposable
         _projMatrixBuffer.Dispose();
         _fontTexture.Dispose();
         _fontTextureView.Dispose();
-        _vertexShader.Dispose();
-        _fragmentShader.Dispose();
         _layout.Dispose();
         _textureLayout.Dispose();
         _pipeline.Dispose();
+        renderTilesetPipeline.Dispose();
         _mainResourceSet.Dispose();
 
         foreach (IDisposable resource in _ownedResources)
@@ -673,20 +766,150 @@ public class ImGuiController : IDisposable
         }
     }
 
+    void SetupRenderTilesetPipeline(OutputDescription outputDescription)
+    {
+        Shader vertexShader = LoadShader(_gd.ResourceFactory, "tileset-vertex", ShaderStages.Vertex);
+        Shader fragmentShader = LoadShader(_gd.ResourceFactory, "tileset-frag", ShaderStages.Fragment);
+
+        VertexLayoutDescription[] vertexLayouts = new VertexLayoutDescription[]
+        {
+                new VertexLayoutDescription(
+                    new VertexElementDescription("in_position", VertexElementSemantic.Position, VertexElementFormat.Float2))
+        };
+
+        var shaderSet = new ShaderSetDescription(vertexLayouts, new[] { vertexShader, fragmentShader });
+
+        // Layout for rendering a tileset
+        _renderTilesetLayout = _gd.ResourceFactory.CreateResourceLayout(new ResourceLayoutDescription(
+            new ResourceLayoutElementDescription("TilesetGfx", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+            new ResourceLayoutElementDescription("TilesetMap", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+            new ResourceLayoutElementDescription("TilesetFlags", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+            new ResourceLayoutElementDescription("TilesetPalette", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+            new ResourceLayoutElementDescription("PointSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
+
+        GraphicsPipelineDescription pipelineDesc = new GraphicsPipelineDescription
+        {
+            BlendState = BlendStateDescription.SingleAlphaBlend,
+            DepthStencilState = DepthStencilStateDescription.Disabled,
+            RasterizerState = RasterizerStateDescription.CullNone,
+            PrimitiveTopology = PrimitiveTopology.TriangleStrip,
+            ResourceLayouts = new[] { _layout, _renderTilesetLayout },
+            ShaderSet = shaderSet,
+            Outputs = outputDescription,
+            ResourceBindingModel = ResourceBindingModel.Default
+        };
+
+        renderTilesetPipeline = _gd.ResourceFactory.CreateGraphicsPipeline(ref pipelineDesc);
+
+        _gd.UpdateBuffer(renderTilesetVertexBuffer, 0, new Vector2[] {
+            new Vector2(-1.0f, -1.0f),
+            new Vector2(1.0f, -1.0f),
+            new Vector2(-1.0f, 1.0f),
+            new Vector2(1.0f, 1.0f)
+        });
+
+        _ownedResources.Add(vertexShader);
+        _ownedResources.Add(fragmentShader);
+    }
+
+    /// <summary>
+    /// This renders a tileset using a custom shader (tileset-frag.glsl) which takes in some raw
+    /// tileset data and draws it to a texture.
+    /// </summary>
+    public unsafe void RenderTileset(VeldridRgbaTexture dest, Tileset tileset)
+    {
+        // Framebuffer to destination texture
+        Framebuffer fb = dest.GetFramebuffer();
+
+        if (renderTilesetPipeline == null)
+            SetupRenderTilesetPipeline(fb.OutputDescription);
+
+        cl.SetPipeline(renderTilesetPipeline);
+        cl.SetVertexBuffer(0, renderTilesetVertexBuffer);
+        cl.SetGraphicsResourceSet(0, _mainResourceSet);
+        cl.SetFramebuffer(fb);
+
+        // Texture inputs to shader
+        Veldrid.Texture tilesetGfxTexture = null;
+        Veldrid.Texture tilesetMapTexture = null;
+        Veldrid.Texture tilesetFlagsTexture = null;
+        VeldridPalette tilesetPalette = null;
+
+        // Get raw tileset graphics data
+        fixed (byte* ptr = tileset.GraphicsState.VramBuffer[1])
+        {
+            Debug.Assert(tileset.GraphicsState.VramBuffer[1].Length == 0x2000);
+
+            TextureDescription textureDescription = TextureDescription.Texture2D(
+                (uint)1,
+                (uint)0x800,
+                mipLevels: 1,
+                arrayLayers: 1,
+                PixelFormat.R16_UInt,
+                TextureUsage.Sampled);
+
+            tilesetGfxTexture = _gd.ResourceFactory.CreateTexture(ref textureDescription);
+            _gd.UpdateTexture(tilesetGfxTexture, (nint)(ptr + 0x800), 0x800 * 8, 0, 0, 0,
+                             1, 0x800, 1, 0, 0);
+        }
+
+        var createMapTexture = (byte[] data) =>
+        {
+            TextureDescription textureDescription = TextureDescription.Texture2D(
+                (uint)32,
+                (uint)32,
+                mipLevels: 1,
+                arrayLayers: 1,
+                PixelFormat.R8_UInt,
+                TextureUsage.Sampled);
+
+            var texture = _gd.ResourceFactory.CreateTexture(ref textureDescription);
+            _gd.UpdateTexture(texture, data, 0, 0, 0,
+                             32, 32, 1, 0, 0);
+            return texture;
+        };
+
+        // Tilemap, flags textures
+        byte[] mapData = tileset.GetTileMapBytes();
+        byte[] flagData = tileset.GetTileFlagBytes();
+        tilesetMapTexture = createMapTexture(mapData);
+        tilesetFlagsTexture = createMapTexture(flagData);
+
+        // Palette texture
+        var palette = tileset.GraphicsState.GetPalettes(PaletteType.Background).SelectMany(x => x).ToArray();
+        tilesetPalette = new VeldridPalette(this, palette, transparentIndex: -1);
+
+        var resourceSet = _gd.ResourceFactory.CreateResourceSet(
+            new ResourceSetDescription(_renderTilesetLayout,
+                                       tilesetGfxTexture,
+                                       tilesetMapTexture,
+                                       tilesetFlagsTexture,
+                                       tilesetPalette.PaletteTexture,
+                                       _gd.PointSampler));
+
+        cl.SetGraphicsResourceSet(1, resourceSet);
+
+        cl.Draw(4, 1, 0, 0);
+
+        // Would be more optimal to cache and reuse these when possible
+        _gd.DisposeWhenIdle(tilesetGfxTexture);
+        _gd.DisposeWhenIdle(tilesetMapTexture);
+        _gd.DisposeWhenIdle(tilesetFlagsTexture);
+        _gd.DisposeWhenIdle(tilesetPalette);
+        _gd.DisposeWhenIdle(resourceSet);
+    }
+
     private struct ResourceSetInfo
     {
         public readonly IntPtr ImGuiBinding;
         public readonly ResourceSet ResourceSet;
-        public readonly VeldridTextureWrapper Texture;
-        public readonly TextureView TextureView;
+        public readonly VeldridTextureBase Texture;
 
-        public ResourceSetInfo(IntPtr imGuiBinding, ResourceSet resourceSet,
-                               VeldridTextureWrapper texture, TextureView textureView)
+        public ResourceSetInfo(IntPtr imGuiBinding, ResourceSet resourceSet, VeldridTextureBase texture)
         {
             ImGuiBinding = imGuiBinding;
             ResourceSet = resourceSet;
             Texture = texture;
-            TextureView = textureView;
         }
     }
 }
