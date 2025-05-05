@@ -289,25 +289,30 @@ public class ImGuiLL
     /// <summary>
     /// Fields to choose a tileset (index + season).
     /// </summary>
-    public static void TilesetChooser(Project project, string name, int index, int season, Action<int, int> onChanged)
+    public static void TilesetChooser(Project project, string name, int index, Season season, Action<int, Season> onChanged)
     {
         ImGui.BeginGroup();
         ImGui.PushItemWidth(ENTRY_ITEM_WIDTH);
 
+        var handleChanged = (int index, Season season) =>
+        {
+            onChanged(index, project.ValidateTilesetSeason(index, season, autoCorrect: true));
+        };
+
         ImGuiX.InputHex($"##{name}-Tileset-Index", index, (value) =>
         {
-            onChanged(value, season);
+            handleChanged(value, season);
         }, max: project.NumTilesets-1);
 
         if (project.TilesetIsSeasonal(index))
         {
             ImGui.SameLine();
 
-            int newSeason = season;
+            int newSeason = (int)season;
             ComboBoxFromConstants($"##{name}-Tileset-Season", project.SeasonMapping, ref newSeason,
                                   withIntInput: false, omitPrefix: true);
-            if (newSeason != season)
-                onChanged(index, newSeason);
+            if (newSeason != (int)season)
+                handleChanged(index, (Season)newSeason);
         }
 
         ImGui.PopItemWidth();

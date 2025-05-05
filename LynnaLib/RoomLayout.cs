@@ -31,7 +31,7 @@ namespace LynnaLib
         public event EventHandler<RoomLayoutChangedEventArgs> LayoutChangedEvent;
 
 
-        internal RoomLayout(Room room, int season)
+        internal RoomLayout(Room room, Season season)
         {
             Room = room;
             Season = season;
@@ -41,7 +41,7 @@ namespace LynnaLib
 
 
         public Room Room { get; private set; }
-        public int Season { get; private set; }
+        public Season Season { get; private set; }
 
         // Properties from "Room" class
         public Project Project { get { return Room.Project; } }

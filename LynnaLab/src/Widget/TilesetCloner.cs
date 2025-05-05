@@ -14,8 +14,8 @@ public class TilesetCloner : Frame
         sourceViewer = new TilesetViewer(workspace);
         previewViewer = new TilesetViewer(workspace);
 
-        SetSourceTileset(Project.GetTileset(0, 0));
-        SetDestTileset(Project.GetTileset(0, 3));
+        SetSourceTileset(Project.GetTileset(0, Season.Spring, autoCorrect: true));
+        SetDestTileset(Project.GetTileset(0, Season.Winter, autoCorrect: true));
 
         sourceViewer.Selectable = false;
         previewViewer.Selectable = false;

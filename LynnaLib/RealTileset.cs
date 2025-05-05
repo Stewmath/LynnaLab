@@ -16,7 +16,7 @@ public class RealTileset : Tileset
     // ================================================================================
     // Constructors
     // ================================================================================
-    internal RealTileset(Project p, int i, int season)
+    internal RealTileset(Project p, int i, Season season)
         : base(p)
     {
         Index = i;
@@ -25,11 +25,11 @@ public class RealTileset : Tileset
         parentData = Project.GetData("tilesetData", Index * 8);
         tilesetData = parentData;
 
-        if (IsSeasonal && Season == -1)
+        if (IsSeasonal && Season == Season.None)
         {
             throw new ProjectErrorException("Specified season for non-seasonal tileset");
         }
-        else if (!IsSeasonal && Season != -1)
+        else if (!IsSeasonal && Season != Season.None)
         {
             throw new ProjectErrorException("No season specified for seasonal tileset");
         }
@@ -38,7 +38,7 @@ public class RealTileset : Tileset
         // expected, but instead to an "m_SeasonalData" macro.
         if (IsSeasonal)
         {
-            tilesetData = Project.GetData(parentData.GetValue(0), Season * 8);
+            tilesetData = Project.GetData(parentData.GetValue(0), (int)Season * 8);
         }
 
         {
@@ -85,7 +85,7 @@ public class RealTileset : Tileset
     // ================================================================================
 
     public int Index { get; private set; }
-    public int Season { get; private set; } // Tilesets with the same index but different season differ
+    public Season Season { get; private set; } // Tilesets with the same index but different season differ
 
     public override string TransactionIdentifier { get { return $"tileset-i{Index:X2}-s{Season}"; } }
 
@@ -95,13 +95,13 @@ public class RealTileset : Tileset
         {
             switch (Season)
             {
-                case 0:
+                case Season.Spring:
                     return "spring";
-                case 1:
+                case Season.Summer:
                     return "summer";
-                case 2:
+                case Season.Autumn:
                     return "autumn";
-                case 3:
+                case Season.Winter:
                     return "winter";
                 default:
                     throw new ProjectErrorException("Invalid season: " + Season);

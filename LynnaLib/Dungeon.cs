@@ -127,19 +127,19 @@ namespace LynnaLib
         {
             get
             {
-                return GetRoom(0, 0).GetLayout(-1).Width;
+                return GetRoom(0, 0).GetLayout(Season.None, autoCorrect: true).Width;
             }
         }
         public override int RoomHeight
         {
             get
             {
-                return GetRoom(0, 0).GetLayout(-1).Height;
+                return GetRoom(0, 0).GetLayout(Season.None, autoCorrect: true).Height;
             }
         }
-        public override int Season
+        public override Season Season
         {
-            get { return -1; }
+            get { return Season.None; }
         }
 
         // Other properties
@@ -212,7 +212,7 @@ namespace LynnaLib
             // Change the group if the room is sidescrolling. As a result, the group number of
             // sidescrolling rooms in a dungeon will be different from other rooms, which will look
             // weird, but that's the way it works apparently...
-            if (room.GetTileset(-1).SidescrollFlag)
+            if (room.GetTileset(Season.None).SidescrollFlag)
                 room = Project.GetIndexedDataType<Room>(roomIndex + SidescrollGroup * 0x100);
 
             return room;

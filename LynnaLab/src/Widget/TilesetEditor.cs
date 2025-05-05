@@ -45,7 +45,7 @@ public class TilesetEditor : Frame
 
         RegisterMouseActions();
 
-        SetTileset(0, 1);
+        SetTileset(0, Season.Summer);
     }
 
     // ================================================================================
@@ -198,19 +198,12 @@ public class TilesetEditor : Frame
         }
     }
 
-    public void SetTileset(int index, int season)
+    public void SetTileset(int index, Season season)
     {
         if (Tileset != null && Tileset.Index == index && Tileset.Season == season)
             return;
 
-        bool isSeasonal = Project.TilesetIsSeasonal(index);
-
-        if (isSeasonal && (season < 0 || season > 3))
-            season = 0;
-        if (!isSeasonal && season != -1)
-            season = -1;
-
-        SetTileset(Project.GetTileset(index, season));
+        SetTileset(Project.GetTileset(index, season, autoCorrect: true));
     }
 
     public void SetTileset(RealTileset t)
@@ -237,7 +230,7 @@ public class TilesetEditor : Frame
         {
             for (int s=0; s<4; s++)
             {
-                RealTileset t = Project.GetTileset(Tileset.Index, s);
+                RealTileset t = Project.GetTileset(Tileset.Index, (Season)s);
                 action(t);
             }
         }

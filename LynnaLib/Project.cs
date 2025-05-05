@@ -80,11 +80,10 @@ namespace LynnaLib
         // string -> GfxStream
         Dictionary<string, PngGfxStream> pngGfxStreamDictionary = new Dictionary<string, PngGfxStream>();
 
-        Dictionary<Tuple<int, int>, RealTileset> tilesetCache
-            = new Dictionary<Tuple<int, int>, RealTileset>();
+        Dictionary<Tuple<int, Season>, RealTileset> tilesetCache = new();
         Dictionary<int, bool> tilesetSeasonalCache = new Dictionary<int, bool>();
         Dictionary<int, Dungeon> dungeonCache = new Dictionary<int, Dungeon>();
-        Dictionary<Tuple<int, int>, WorldMap> worldMapCache = new Dictionary<Tuple<int, int>, WorldMap>();
+        Dictionary<Tuple<int, Season>, WorldMap> worldMapCache = new();
 
 
         // Data structures which should be linked to a particular project
@@ -624,36 +623,31 @@ namespace LynnaLib
         }
 
 
+        /// <summary>
         /// Always load Tileset objects through this function. We do not want duplicate Tileset
         /// objects referring to the same data.
-        public RealTileset GetTileset(int index, int season)
+        /// </summary>
+        public RealTileset GetTileset(int index, Season season, bool autoCorrect = false)
         {
             Debug.Assert(index >= 0 && index < NumTilesets);
-            Debug.Assert(season >= -1 && season <= 3);
 
-            if (TilesetIsSeasonal(index))
-            {
-                if (season == -1)
-                    season = 0;
-            }
-            else
-            {
-                season = -1;
-            }
+            season = ValidateTilesetSeason(index, season, autoCorrect);
 
             RealTileset retval;
-            tilesetCache.TryGetValue(new Tuple<int, int>(index, season), out retval);
+            tilesetCache.TryGetValue(new Tuple<int, Season>(index, season), out retval);
             if (retval == null)
             {
                 retval = new RealTileset(this, index, season);
-                tilesetCache[new Tuple<int, int>(index, season)] = retval;
+                tilesetCache[new Tuple<int, Season>(index, season)] = retval;
             }
             return retval;
         }
 
+        /// <summary>
         /// This function checks if a tileset is seasonal without instantiating a Tileset object. We
         /// do not want to call the constructor for Tileset objects with an invalid season
         /// parameter.
+        /// </summary>
         public bool TilesetIsSeasonal(int index)
         {
             Debug.Assert(index >= 0 && index < NumTilesets);
@@ -672,6 +666,46 @@ namespace LynnaLib
             return value;
         }
 
+        /// <summary>
+        /// Check if the season value is valid for this tileset.
+        /// </summary>
+        public bool TilesetSeasonIsValid(int index, Season season)
+        {
+            if (TilesetIsSeasonal(index))
+                return (int)season >= 0 && (int)season <= 3;
+            else
+                return season == Season.None;
+        }
+
+        /// <summary>
+        /// Checks if the season value for the tileset is valid, then either throws an exception or
+        /// returns an acceptable value.
+        /// </summary>
+        public Season ValidateTilesetSeason(int index, Season season, bool autoCorrect = false)
+        {
+            if (!TilesetSeasonIsValid(index, season))
+            {
+                if (autoCorrect)
+                    return TilesetIsSeasonal(index) ? Season.Spring : Season.None;
+                else
+                    throw new ProjectErrorException($"Invalid season {season} for tileset {index:X2}");
+            }
+            return season;
+        }
+
+        /// <summary>
+        /// Check if the season value is valid for this group. (World maps and the rooms inside of
+        /// them are considered "seasonal" by their index number, NOT based on the tilesets they
+        /// use. Non-seasonal tilesets can be used on seasonal maps.)
+        /// </summary>
+        public bool GroupSeasonIsValid(int group, Season season)
+        {
+            if (Game == Game.Seasons && group == 0)
+                return (int)season >= 0 && (int)season <= 3;
+            else
+                return season == Season.None;
+        }
+
         public IList<Tileset> GetAllTilesets()
         {
             var list = new List<Tileset>();
@@ -679,11 +713,11 @@ namespace LynnaLib
             for (int i=0; i<NumTilesets; i++)
             {
                 if (!TilesetIsSeasonal(i))
-                    list.Add(GetTileset(i, -1));
+                    list.Add(GetTileset(i, Season.None));
                 else
                 {
                     for (int s=0; s<4; s++)
-                        list.Add(GetTileset(i, s));
+                        list.Add(GetTileset(i, (Season)s));
                 }
             }
 
@@ -703,16 +737,16 @@ namespace LynnaLib
             return retval;
         }
 
-        public WorldMap GetWorldMap(int index, int season)
+        public WorldMap GetWorldMap(int index, Season season)
         {
-            if (Game == Game.Ages || index != 0)
-                season = -1;
+            if (!GroupSeasonIsValid(index, season))
+                throw new ProjectErrorException($"Invalid season {season} for group {index}.");
             WorldMap retval;
-            worldMapCache.TryGetValue(new Tuple<int, int>(index, season), out retval);
+            worldMapCache.TryGetValue(new Tuple<int, Season>(index, season), out retval);
             if (retval == null)
             {
                 retval = new WorldMap(this, index, season);
-                worldMapCache[new Tuple<int, int>(index, season)] = retval;
+                worldMapCache[new Tuple<int, Season>(index, season)] = retval;
             }
             return retval;
         }
@@ -1075,7 +1109,7 @@ namespace LynnaLib
         // This function gets the expected "layout group" for a given "group". On the hack-base
         // branch, which changes how things work, this actually determines which layout group will
         // be used. On the master branch, a warning will be shown to a user if there's a mismatch.
-        public int GetCanonicalLayoutGroup(int group, int season)
+        public int GetCanonicalLayoutGroup(int group, Season season)
         {
             if (GameString == "ages")
             {
@@ -1093,7 +1127,7 @@ namespace LynnaLib
             else if (GameString == "seasons")
             {
                 if (group == 0)
-                    return season;
+                    return (int)season;
                 else if (group == 1 || group == 2 || group == 3)
                     return 4;
                 else if (group == 4 || group == 5)

@@ -20,11 +20,13 @@ public class RoomEditor : Frame
         this.Workspace = workspace;
 
         roomLayoutEditor = new RoomLayoutEditor(this.Workspace, this, Brush);
-        roomLayoutEditor.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(-1));
+
+        // Need to load some room, any room to avoid null pointer exceptions
+        roomLayoutEditor.SetRoomLayout(Project.GetIndexedDataType<Room>(0x100).GetLayout(Season.None));
 
         tilesetViewer = new TilesetViewer(this.Workspace);
         tilesetViewer.Unselectable = true;
-        tilesetViewer.SetTileset(roomLayoutEditor.Room.GetTileset(-1));
+        tilesetViewer.SetTileset(roomLayoutEditor.Room.GetTileset(Season.None, autoCorrect: true));
 
         // Tileset viewer: Selecting a single tile
         tilesetViewer.SelectedEvent += (index) =>
@@ -50,7 +52,7 @@ public class RoomEditor : Frame
 
         SetRoom(0, 0);
 
-        overworldMinimap.SetMap(Project.GetWorldMap(0, 0));
+        overworldMinimap.SetMap(Project.GetWorldMap(0, Project.Game == Game.Seasons ? Season.Spring : Season.None));
         dungeonMinimap.SetMap(Project.GetDungeon(0));
 
         ActiveMinimap = overworldMinimap;
@@ -179,7 +181,7 @@ public class RoomEditor : Frame
 
     public RoomLayout RoomLayout { get { return roomLayoutEditor.RoomLayout; } }
     public Room Room { get { return RoomLayout.Room; } }
-    public int Season { get { return RoomLayout.Season; } }
+    public Season Season { get { return RoomLayout.Season; } }
 
     public TilesetViewer TilesetViewer { get { return tilesetViewer; } }
 
@@ -355,19 +357,22 @@ public class RoomEditor : Frame
                 {
                     if (worldIndex >= 0 && worldIndex < Project.NumGroups)
                     {
-                        int s = -1;
-                        if (worldIndex == 0)
-                            s = 0;
+                        Season s = Season.None;
+                        if (worldIndex == 0 && Project.Game == Game.Seasons)
+                            s = Season.Spring;
                         SetMap(Project.GetWorldMap(worldIndex, s));
                     }
                 }
 
-                ImGui.SameLine();
-                int season = RoomLayout.Season;
-                if (ImGuiX.InputHex("Season", ref season, 1))
+                if (ActiveMap.Season != Season.None)
                 {
-                    if (Room.IsValidSeason(season))
-                        SetRoomLayout(Room.GetLayout(season), 1);
+                    ImGui.SameLine();
+                    int season = (int)RoomLayout.Season;
+                    if (ImGuiX.InputHex("Season", ref season, 1))
+                    {
+                        if (Room.IsValidSeason((Season)season))
+                            SetRoomLayout(Room.GetLayout((Season)season), 1);
+                    }
                 }
 
                 ImGui.PopItemWidth();
@@ -439,7 +444,7 @@ public class RoomEditor : Frame
     {
         if (Room == room)
             return;
-        SetRoomLayout(room.GetLayout(Season), updateMinimap);
+        SetRoomLayout(room.GetLayout(Season, autoCorrect: true), updateMinimap);
     }
 
     /// <summary>

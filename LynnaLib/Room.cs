@@ -2,6 +2,15 @@ using System.IO;
 
 namespace LynnaLib
 {
+    public enum Season
+    {
+        None = -1,
+        Spring = 0,
+        Summer = 1,
+        Autumn = 2,
+        Winter = 3,
+    }
+
     /// Provides an interface for accessing various room properties, or to get related classes, ie.
     /// relating to room layout variants, warps or objects.
     public partial class Room : ProjectIndexedDataType
@@ -12,6 +21,10 @@ namespace LynnaLib
         // Constructors
         // ================================================================================
 
+        /// <summary>
+        /// Access rooms with "Project.GetIndexedDataType" instead of this constructor to avoid
+        /// duplicate instances.
+        /// </summary>
         internal Room(Project p, int index) : base(p, index)
         {
             // Get dungeon flag file
@@ -25,15 +38,15 @@ namespace LynnaLib
             UpdateChestRef();
 
             layouts = new List<RoomLayout>();
-            if (Project.Game == Game.Seasons && Group == 0)
+            if (HasSeasons)
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    layouts.Add(new RoomLayout(this, i));
+                    layouts.Add(new RoomLayout(this, (Season)i));
                 }
             }
             else
-                layouts.Add(new RoomLayout(this, 0));
+                layouts.Add(new RoomLayout(this, Season.None));
             UpdateTileset();
         }
 
@@ -80,7 +93,7 @@ namespace LynnaLib
                     else if (Group < 8)
                     {
                         int g = 4 + (Group % 2);
-                        if (GetTileset(0).SidescrollFlag)
+                        if (GetTileset(Season.None).SidescrollFlag)
                             return g + 2;
                         else
                             return g;
@@ -94,11 +107,11 @@ namespace LynnaLib
                         return Group;
                     else if (Group < 4)
                     {
-                        if (GetTileset(0).SubrosiaFlag)
+                        if (GetTileset(Season.None).SubrosiaFlag)
                             return 1;
-                        else if (GetTileset(0).MakuTreeFlag)
+                        else if (GetTileset(Season.None).MakuTreeFlag)
                             return 2;
-                        else if (GetTileset(0).SmallIndoorFlag)
+                        else if (GetTileset(Season.None).SmallIndoorFlag)
                             return 3;
                         else
                             return Group;
@@ -106,7 +119,7 @@ namespace LynnaLib
                     else if (Group < 8)
                     {
                         int g = 4 + (Group % 2);
-                        if (GetTileset(0).SidescrollFlag)
+                        if (GetTileset(Season.None).SidescrollFlag)
                             return g + 2;
                         else
                             return g;
@@ -123,12 +136,16 @@ namespace LynnaLib
             get { return ExpectedGroup << 8 | (Index & 0xff); }
         }
 
-        public int Width { get { return GetLayout(0).Width; } }
-        public int Height { get { return GetLayout(0).Height; } }
+        public int Width { get { return GetLayout(Season.None, true).Width; } }
+        public int Height { get { return GetLayout(Season.None, true).Height; } }
 
+        /// <summary>
+        /// If "HasSeasons" is true then the tileset should also be seasonal, although since it's
+        /// easy to change the tileset, there's no guarantee of that.
+        /// </summary>
         public bool HasSeasons
         {
-            get { return layouts.Count == 4; }
+            get { return Project.Game == Game.Seasons && Group == 0; }
         }
 
         public Chest Chest
@@ -293,28 +310,21 @@ namespace LynnaLib
 
         /// Gets a RoomLayout object corresponding to the season. Pass -1 if seasons are not
         /// expected to exist.
-        public RoomLayout GetLayout(int season)
+        public RoomLayout GetLayout(Season season, bool autoCorrect = false)
         {
-            if (season == -1)
-            {
-                if (layouts.Count != 1)
-                    throw new ProjectErrorException(string.Format(
-                                "Room {0:x3} wasn't expected to have seasons.", Index));
-                season = 0;
-            }
-            return layouts[season];
+            season = ValidateSeason(season, autoCorrect);
+            if (season == Season.None)
+                return layouts[0];
+            else
+                return layouts[(int)season];
         }
 
-        public RealTileset GetTileset(int season)
+        public RealTileset GetTileset(Season season, bool autoCorrect = false)
         {
-            if (season == -1)
-            {
-                if (layouts.Count != 1)
-                    throw new ProjectErrorException(string.Format(
-                                "Room {0:x3} wasn't expected to have seasons.", Index));
-                season = 0;
-            }
-            return Project.GetTileset(TilesetIndex, season);
+            season = ValidateSeason(season, autoCorrect);
+            // Always autocorrect the season when fetching the tileset, just in case the room is
+            // considered "seasonal" while the tileset isn't. (See Samasa Desert!)
+            return Project.GetTileset(TilesetIndex, season, autoCorrect: true);
         }
 
         // These 2 functions may be deprecated later if I switch to using
@@ -387,12 +397,12 @@ namespace LynnaLib
             Project.EndTransaction();
         }
 
-        public bool IsValidSeason(int season)
+        public bool IsValidSeason(Season season)
         {
             if (HasSeasons)
-                return season >= 0 && season <= 3;
+                return (int)season >= 0 && (int)season <= 3;
             else
-                return season == -1;
+                return season == Season.None;
         }
 
         /// <summary>
@@ -578,6 +588,30 @@ namespace LynnaLib
         void OnChestDeleted()
         {
             Chest = null;
+        }
+
+        /// <summary>
+        /// Checks if the given season is valid for this room. If it's not, this either produces an
+        /// exception or returns a valid season (Season.None or Season.Spring).
+        /// </summary>
+        Season ValidateSeason(Season season, bool autoCorrect)
+        {
+            var handleError = () =>
+            {
+                if (autoCorrect)
+                    return HasSeasons ? Season.Spring : Season.None;
+                else
+                    throw new ProjectErrorException($"Invalid season '{season}' in room {Index:X3}");
+            };
+
+            if (!Enum.IsDefined<Season>(season))
+                return handleError();
+            else if (season == Season.None && HasSeasons)
+                return handleError();
+            else if (season != Season.None && !HasSeasons)
+                return handleError();
+
+            return season;
         }
     }
 }

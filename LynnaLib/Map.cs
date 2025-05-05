@@ -21,7 +21,7 @@ namespace LynnaLib
         public abstract int MapHeight { get; }
         public abstract int RoomWidth { get; }
         public abstract int RoomHeight { get; }
-        public abstract int Season { get; }
+        public abstract Season Season { get; }
 
         internal Map(Project p)
         {

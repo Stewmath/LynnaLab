@@ -5,9 +5,10 @@ namespace LynnaLib
 {
     public class WorldMap : Map
     {
-        readonly int group, season;
+        readonly int group;
+        readonly Season season;
 
-        internal WorldMap(Project p, int group, int season) : base(p)
+        internal WorldMap(Project p, int group, Season season) : base(p)
         {
             this.group = group;
             this.season = season;
@@ -51,7 +52,7 @@ namespace LynnaLib
                 return GetRoom(0, 0).Height;
             }
         }
-        public override int Season { get { return season; } }
+        public override Season Season { get { return season; } }
 
 
         // Map methods
