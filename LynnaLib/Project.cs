@@ -830,37 +830,19 @@ namespace LynnaLib
         }
         public FileParser GetFileWithLabel(string label)
         {
-            try
-            {
-                return LabelDictionary[label];
-            }
-            catch (KeyNotFoundException)
-            {
+            if (!HasLabel(label))
                 throw new InvalidLookupException("Label \"" + label + "\" was needed but could not be located!");
-            }
+            return LabelDictionary[label];
         }
         public Label GetLabel(string label)
         {
-            try
-            {
-                return LabelDictionary[label].GetLabel(label);
-            }
-            catch (KeyNotFoundException)
-            {
+            if (!HasLabel(label))
                 throw new InvalidLookupException("Label \"" + label + "\" was needed but could not be located!");
-            }
+            return LabelDictionary[label].GetLabel(label);
         }
         public bool HasLabel(string label)
         {
-            try
-            {
-                FileParser p = LabelDictionary[label];
-                return true;
-            }
-            catch (KeyNotFoundException)
-            {
-                return false;
-            }
+            return LabelDictionary.ContainsKey(label);
         }
 
         // Returns "name" if the label is already unique, otherwise this calls
