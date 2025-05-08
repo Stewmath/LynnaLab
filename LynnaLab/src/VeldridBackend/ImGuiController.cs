@@ -825,17 +825,19 @@ public class ImGuiController : IDisposable
         {
             Debug.Assert(tileset.GraphicsState.VramBuffer[1].Length == 0x2000);
 
+            uint height = 0x800;
+
             TextureDescription textureDescription = TextureDescription.Texture2D(
                 (uint)1,
-                (uint)0x800,
+                (uint)height,
                 mipLevels: 1,
                 arrayLayers: 1,
                 PixelFormat.R16_UInt,
                 TextureUsage.Sampled);
 
             tilesetGfxTexture = _gd.ResourceFactory.CreateTexture(ref textureDescription);
-            _gd.UpdateTexture(tilesetGfxTexture, (nint)(ptr + 0x800), 0x800 * 8, 0, 0, 0,
-                             1, 0x800, 1, 0, 0);
+            _gd.UpdateTexture(tilesetGfxTexture, (nint)(ptr + 0x800), 0x1000, 0, 0, 0,
+                             1, height, 1, 0, 0);
         }
 
         var createMapTexture = (byte[] data) =>
