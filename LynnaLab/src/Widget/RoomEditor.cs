@@ -292,13 +292,13 @@ public class RoomEditor : Frame
 
         ImGui.SameLine();
         ImGui.BeginChild("Middle Panel", new Vector2(roomLayoutEditor.WidgetSize.X + X_OFFSET, 0.0f),
-                         ImGuiChildFlags.Border);
+                         ImGuiChildFlags.Borders);
         ImGui.SeparatorText("Room");
         roomLayoutEditor.Render();
         ImGui.EndChild();
 
         ImGui.SameLine();
-        ImGui.BeginChild("Right Panel", Vector2.Zero, ImGuiChildFlags.Border);
+        ImGui.BeginChild("Right Panel", Vector2.Zero, ImGuiChildFlags.Borders);
 
         ImGui.SeparatorText("Map Selector");
 

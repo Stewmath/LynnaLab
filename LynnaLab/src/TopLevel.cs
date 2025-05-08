@@ -155,6 +155,7 @@ public static class TopLevel
     /// </summary>
     public static void Render(float deltaTime)
     {
+        ImGui.NewFrame();
         ImGui.PushFont(OraclesFont);
 
         RenderModals();

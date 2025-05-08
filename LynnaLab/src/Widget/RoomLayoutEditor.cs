@@ -331,8 +331,6 @@ public class RoomLayoutEditor : TileGrid
                 selectedRoomComponent.Delete();
         }
 
-        ImGui.SetCursorScreenPos(endPos);
-
         if (hoveringComponent == null && !draggingComponent)
         {
             if (!SuppressTileSelection)

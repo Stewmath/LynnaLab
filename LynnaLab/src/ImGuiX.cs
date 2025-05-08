@@ -35,6 +35,7 @@ public static class ImGuiX
     {
         var pos = ImGui.GetCursorScreenPos() + delta;
         ImGui.SetCursorScreenPos(pos);
+        ImGui.Dummy(new Vector2(0, 0)); // This forces the window to extend if necessary
     }
 
     public static void ShiftCursorScreenPos(float x, float y)
@@ -332,7 +333,7 @@ public static class ImGuiX
     }
 
     /// <summary>
-    /// A toolbar at the top of the main window
+    /// A toolbar at the top of the main window. Use with ImGui.End().
     /// </summary>
     public static bool BeginToolbar(string name, float offset, float height)
     {
@@ -386,7 +387,6 @@ public static class ImGuiX
 
         ImGui.SetCursorScreenPos(startPos + framePadding);
         ImGui.Image(textureID, size);
-        ImGui.SetCursorScreenPos(finalPos);
         return clicked;
     }
 

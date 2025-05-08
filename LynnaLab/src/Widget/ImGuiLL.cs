@@ -67,7 +67,6 @@ public class ImGuiLL
             ImGui.EndCombo();
         }
 
-        ImGuiX.ShiftCursorScreenPos(-horizontalShift, 0.0f);
         ImGui.PopItemWidth();
         ImGui.EndGroup();
         ImGui.PopItemWidth();

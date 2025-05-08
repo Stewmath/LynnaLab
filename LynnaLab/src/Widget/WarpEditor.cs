@@ -90,7 +90,7 @@ public class WarpEditor : Frame
 
         if (ImGui.BeginChild("WarpSourceBox Frame",
                              warpSourceBox.WidgetSize + new Vector2(12.0f, 16.0f),
-                             ImGuiChildFlags.Border))
+                             ImGuiChildFlags.Borders))
         {
             warpSourceBox.Render();
         }

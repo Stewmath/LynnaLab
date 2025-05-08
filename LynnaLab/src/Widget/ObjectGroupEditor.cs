@@ -130,7 +130,7 @@ public class ObjectGroupEditor : Frame
 
         ObjectGroup groupToDelete = null;
 
-        if (ImGui.BeginChild(Name + " Object Boxes", childSize, ImGuiChildFlags.Border))
+        if (ImGui.BeginChild(Name + " Object Boxes", childSize, ImGuiChildFlags.Borders))
         {
             if (ImGui.BeginTable(Name + " Table", 1))
             {
@@ -150,7 +150,7 @@ public class ObjectGroupEditor : Frame
 
                     if (ImGui.BeginChild(box.ObjectGroup.Identifier + " frame",
                                          box.WidgetSize + new Vector2(12.0f, 16.0f),
-                                         ImGuiChildFlags.Border))
+                                         ImGuiChildFlags.Borders))
                     {
                         box.Render();
                     }

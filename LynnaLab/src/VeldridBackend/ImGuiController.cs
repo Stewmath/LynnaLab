@@ -22,7 +22,6 @@ public class ImGuiController : IDisposable
     VeldridBackend _backend;
     GraphicsDevice _gd;
     CommandList cl;
-    bool _frameBegun;
 
     // Uniform buffers for fragment shaders
     DeviceBuffer _fontFragBuffer;
@@ -116,8 +115,6 @@ public class ImGuiController : IDisposable
 
         CreateDeviceResources(_gd, outputDescription);
         SetPerFrameImGuiData(1f / 60f);
-        ImGui.NewFrame();
-        _frameBegun = true;
     }
 
     public VeldridBackend Backend { get { return _backend; } }
@@ -485,12 +482,8 @@ public class ImGuiController : IDisposable
     /// </summary>
     public void Render(GraphicsDevice gd)
     {
-        if (_frameBegun)
-        {
-            _frameBegun = false;
-            ImGui.Render();
-            RenderImDrawData(ImGui.GetDrawData(), gd);
-        }
+        ImGui.Render();
+        RenderImDrawData(ImGui.GetDrawData(), gd);
     }
 
     /// <summary>
@@ -498,16 +491,8 @@ public class ImGuiController : IDisposable
     /// </summary>
     public void Update(float deltaSeconds, InputSnapshot snapshot)
     {
-        if (_frameBegun)
-        {
-            ImGui.Render();
-        }
-
         SetPerFrameImGuiData(deltaSeconds);
         UpdateImGuiInput(snapshot);
-
-        _frameBegun = true;
-        ImGui.NewFrame();
     }
 
     /// <summary>

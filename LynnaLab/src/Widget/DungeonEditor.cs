@@ -77,7 +77,7 @@ public class DungeonEditor : Frame
             ImGui.BeginChild(
                 "Left panel",
                 new Vector2(370.0f, 0.0f),
-                ImGuiChildFlags.Border);
+                ImGuiChildFlags.Borders);
 
             ImGui.SeparatorText("Dungeon properties");
             ImGuiLL.RenderValueReferenceGroup(Dungeon.ValueReferenceGroup, null, Workspace.ShowDocumentation);
