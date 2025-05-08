@@ -26,31 +26,31 @@ public class VeldridBackend
             new WindowCreateInfo(50, 50, 1280, 720, WindowState.Maximized, title),
             new GraphicsDeviceOptions(true, null, true, ResourceBindingModel.Improved, true, true),
             GraphicsBackend.OpenGL,
-            out _window,
-            out _gd);
+            out window,
+            out gd);
 
-        _window.Resized += () =>
+        window.Resized += () =>
         {
-            _gd.MainSwapchain.Resize((uint)_window.Width, (uint)_window.Height);
-            _controller.WindowResized(_window.Width, _window.Height);
+            gd.MainSwapchain.Resize((uint)window.Width, (uint)window.Height);
+            controller.WindowResized(window.Width, window.Height);
         };
 
-        _window.SetCloseRequestedHandler(CloseRequestedHandler);
+        window.SetCloseRequestedHandler(CloseRequestedHandler);
 
-        _cl = _gd.ResourceFactory.CreateCommandList();
-        _cl.Begin();
-        _controller = new ImGuiController(this, _cl, _gd.MainSwapchain.Framebuffer.OutputDescription, _window.Width, _window.Height);
+        cl = gd.ResourceFactory.CreateCommandList();
+        cl.Begin();
+        controller = new ImGuiController(this, cl, gd.MainSwapchain.Framebuffer.OutputDescription, window.Width, window.Height);
 
-        GreyscalePalette = new VeldridPalette(_controller, GbGraphics.GrayPalette, transparentIndex: -1);
+        GreyscalePalette = new VeldridPalette(controller, GbGraphics.GrayPalette, transparentIndex: -1);
     }
 
     ~VeldridBackend()
     {
         // Clean up Veldrid resources
-        _gd.WaitForIdle();
-        _controller.Dispose();
-        _cl.Dispose();
-        _gd.Dispose();
+        gd.WaitForIdle();
+        controller.Dispose();
+        cl.Dispose();
+        gd.Dispose();
     }
 
     // ================================================================================
@@ -60,21 +60,21 @@ public class VeldridBackend
     Veldrid.RenderDoc rd;
     #endif
 
-    static Sdl2Window _window;
-    static GraphicsDevice _gd;
-    static CommandList _cl;
-    static ImGuiController _controller;
-    static Vector3 _clearColor = new Vector3(0.45f, 0.55f, 0.6f);
+    static Sdl2Window window;
+    static GraphicsDevice gd;
+    static CommandList cl;
+    static ImGuiController controller;
+    static Vector3 clearColor = new Vector3(0.45f, 0.55f, 0.6f);
     bool forceWindowClose;
 
 
     // ================================================================================
     // Properties
     // ================================================================================
-    public bool Exited { get { return !_window.Exists; } }
+    public bool Exited { get { return !window.Exists; } }
     public bool CloseRequested { get; set; }
-    public GraphicsDevice GraphicsDevice { get { return _gd; } }
-    public CommandList CommandList { get { return _cl; } }
+    public GraphicsDevice GraphicsDevice { get { return gd; } }
+    public CommandList CommandList { get { return cl; } }
 
     internal VeldridPalette GreyscalePalette { get; private set; }
 
@@ -87,13 +87,13 @@ public class VeldridBackend
     /// </summary>
     public void HandleEvents(float deltaTime)
     {
-        InputSnapshot snapshot = _window.PumpEvents();
+        InputSnapshot snapshot = window.PumpEvents();
 
-        if (!_window.Exists)
+        if (!window.Exists)
             return;
 
         // Feed the input events to our ImGui controller, which passes them through to ImGui.
-        _controller.Update(deltaTime, snapshot);
+        controller.Update(deltaTime, snapshot);
     }
 
     /// <summary>
@@ -101,20 +101,20 @@ public class VeldridBackend
     /// </summary>
     public void Render()
     {
-        _cl.SetFramebuffer(_gd.MainSwapchain.Framebuffer);
-        _cl.ClearColorTarget(0, new RgbaFloat(_clearColor.X, _clearColor.Y, _clearColor.Z, 1f));
-        _controller.Render(_gd);
-        _cl.End();
+        cl.SetFramebuffer(gd.MainSwapchain.Framebuffer);
+        cl.ClearColorTarget(0, new RgbaFloat(clearColor.X, clearColor.Y, clearColor.Z, 1f));
+        controller.Render();
+        cl.End();
 
-        _gd.SubmitCommands(_cl);
-        _gd.SwapBuffers(_gd.MainSwapchain);
+        gd.SubmitCommands(cl);
+        gd.SwapBuffers(gd.MainSwapchain);
 
         #if DEBUG
         if (rd != null && rd.IsFrameCapturing())
             rd.EndFrameCapture();
         #endif
 
-        _cl.Begin();
+        cl.Begin();
     }
 
     /// <summary>
@@ -123,7 +123,7 @@ public class VeldridBackend
     public void Close()
     {
         forceWindowClose = true;
-        _window.Close();
+        window.Close();
     }
 
     /// <summary>
@@ -132,7 +132,7 @@ public class VeldridBackend
     /// </summary>
     public VeldridRgbaTexture TextureFromBitmap(Bitmap bitmap)
     {
-        return new VeldridRgbaTexture(_controller, bitmap);
+        return new VeldridRgbaTexture(controller, bitmap);
     }
     public VeldridRgbaTexture TextureFromFile(string filename)
     {
@@ -147,27 +147,27 @@ public class VeldridBackend
     /// </summary>
     public VeldridRgbaTexture CreateTexture(int width, int height, bool renderTarget = false)
     {
-        return new VeldridRgbaTexture(_controller, width, height, renderTarget);
+        return new VeldridRgbaTexture(controller, width, height, renderTarget);
     }
 
     public VeldridTextureWindow CreateTextureWindow(RgbaTexture source, Point topLeft, Point size)
     {
-        return new VeldridTextureWindow(_controller, source, topLeft, size);
+        return new VeldridTextureWindow(controller, source, topLeft, size);
     }
 
     public void RenderTileset(RgbaTexture dest, Tileset tileset)
     {
-        _controller.RenderTileset(dest, tileset);
+        controller.RenderTileset(dest, tileset);
     }
 
     public void RecreateFontTexture()
     {
-        _controller.RecreateFontDeviceTexture(_gd);
+        controller.RecreateFontDeviceTexture();
     }
 
     public void SetIcon(string path)
     {
-        ApplicationIcon.SetWindowIcon(_window.SdlWindowHandle, path);
+        ApplicationIcon.SetWindowIcon(window.SdlWindowHandle, path);
     }
 
     #if DEBUG
