@@ -4,7 +4,7 @@ using Num = System.Numerics;
 namespace LynnaLab;
 
 // Based on: https://gist.github.com/prime31/91d1582624eb2635395417393018016e
-// No longer using this in favor of the NativeFileDialog library.
+// No longer using this in favor of SDL3's file dialog functions.
 public class FilePicker
 {
     static readonly Dictionary<object, FilePicker> _filePickers = new Dictionary<object, FilePicker>();

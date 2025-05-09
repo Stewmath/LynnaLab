@@ -232,16 +232,17 @@ public class BuildDialog : Frame
                 ImGui.Text($"Your gameboy emulator path has not been configured.\nSelect your emulator executable file now to run {Project.GameString}.gbc.");
                 if (ImGui.Button("OK"))
                 {
-                    string runCommand = SelectEmulator();
-
-                    if (runCommand == null)
+                    SelectEmulatorDialog((runCommand) =>
                     {
-                        processView.AppendText($"Emulator not configured, couldn't run {Project.GameString}.gbc.", "error");
-                    }
-                    else
-                    {
-                        RunGame(runCommand);
-                    }
+                        if (runCommand == null)
+                        {
+                            processView.AppendText($"Emulator not configured, couldn't run {Project.GameString}.gbc.", "error");
+                        }
+                        else
+                        {
+                            RunGame(runCommand);
+                        }
+                    });
 
                     return true;
                 }
@@ -328,22 +329,44 @@ public class BuildDialog : Frame
     // Static methods
     // ================================================================================
 
-    public static string SelectEmulator()
+    public static void SelectEmulatorDialog(Action<string> onSelected)
     {
-        string filterList = null;
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            filterList = "exe";
+        bool callbackReceived = false;
+        string runCommand = null;
 
-        var result = NativeFileDialogSharp.Dialog.FileOpen(filterList);
-
-        if (result.IsOk)
-            return result.Path + " | {GAME}.gbc";
-        else if (result.IsError)
+        SelectEmulator((str) =>
         {
-            TopLevel.DisplayMessageModal("Error", result.ErrorMessage);
-            return null;
-        }
+            runCommand = str;
+            callbackReceived = true;
+        });
+
+        TopLevel.OpenModal("Emulator file dialog", () =>
+        {
+            ImGui.Text("Waiting for file dialog...");
+
+            if (callbackReceived)
+            {
+                onSelected(runCommand);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    static void SelectEmulator(Action<string> onSelected)
+    {
+        (string, string)[] filterList;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            filterList = new (string, string)[] {("Executable files (.exe)", "exe"), ("All files", "*")};
         else
-            return null;
+            filterList = new (string, string)[] {};
+
+        TopLevel.Backend.ShowOpenFileDialog(null, filterList, (selectedFile) =>
+        {
+            if (selectedFile != null)
+                onSelected(selectedFile + " | {GAME}.gbc");
+            else
+                onSelected(null);
+        });
     }
 }

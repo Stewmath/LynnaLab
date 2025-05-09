@@ -1,4 +1,5 @@
 using Veldrid;
+using SDLUtil;
 
 using Point = Util.Point;
 
@@ -168,6 +169,18 @@ public class VeldridBackend
     public void SetIcon(string path)
     {
         window.SetIcon(path);
+    }
+
+    public void ShowOpenFileDialog(string location,
+                                   IReadOnlyList<(string name, string pattern)> filters,
+                                   Action<string> callback)
+    {
+        SDLHelper.ShowOpenFileDialog(window, location, filters, callback);
+    }
+
+    public void ShowOpenFolderDialog(string location, Action<string> callback)
+    {
+        SDLHelper.ShowOpenFolderDialog(window, location, callback);
     }
 
     #if RENDERDOC

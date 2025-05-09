@@ -372,21 +372,29 @@ public static class TopLevel
 
     public static void OpenProjectModal()
     {
-        LoadingModal("Waiting for file dialog...", () =>
-        {
-            var result = NativeFileDialogSharp.Dialog.FolderPicker();
+        string selectedFolder = null;
+        bool callbackReceived = false;
 
-            if (result.IsOk)
+        Backend.ShowOpenFolderDialog(null, (folder) =>
+        {
+            selectedFolder = folder;
+            callbackReceived = true;
+        });
+
+        OpenModal("Open project", () =>
+        {
+            ImGui.Text("Waiting for file dialog...");
+
+            if (callbackReceived)
             {
-                OpenProject(result.Path);
+                if (selectedFolder != null)
+                {
+                    OpenProject(selectedFolder);
+                }
+                return true;
             }
-            else if (result.IsCancelled)
-            {
-            }
-            else if (result.IsError)
-            {
-                DisplayMessageModal("Error", result.ErrorMessage);
-            }
+
+            return false;
         });
     }
 

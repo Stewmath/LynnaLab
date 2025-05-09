@@ -244,9 +244,11 @@ public class ProjectWorkspace
 
                 if (ImGui.MenuItem("Choose emulator path..."))
                 {
-                    string cmd = BuildDialog.SelectEmulator();
-                    if (cmd != null)
-                        TopLevel.GlobalConfig.EmulatorCommand = cmd;
+                    BuildDialog.SelectEmulatorDialog((cmd) =>
+                    {
+                        if (cmd != null)
+                            TopLevel.GlobalConfig.EmulatorCommand = cmd;
+                    });
                 }
 
                 ImGui.EndMenu();

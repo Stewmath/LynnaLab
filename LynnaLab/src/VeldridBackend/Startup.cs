@@ -1,6 +1,7 @@
 using Veldrid;
 using static SDL.SDL3;
 using SDL;
+using SDLUtil;
 
 namespace VeldridBackend;
 

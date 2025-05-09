@@ -1,7 +1,7 @@
 using SDL;
 using static SDL.SDL3;
 
-namespace VeldridBackend;
+namespace SDLUtil;
 
 /// <summary>
 /// Wrapper over SDL_Window, exposing functionality in a saner, C# friendly way.

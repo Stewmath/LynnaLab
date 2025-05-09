@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 
 using Point = Util.Point;
 using SDL_Keycode = SDL.SDL_Keycode;
+using SDLUtil;
 
 
 namespace VeldridBackend;
@@ -480,7 +481,7 @@ public class ImGuiController : IDisposable
     /// <summary>
     /// Updates ImGui input and IO configuration state.
     /// </summary>
-    public void Update(float deltaSeconds, InputSnapshot snapshot)
+    public void Update(float deltaSeconds, SDLUtil.InputSnapshot snapshot)
     {
         SetPerFrameImGuiData(deltaSeconds);
         UpdateImGuiInput(snapshot);
@@ -563,7 +564,7 @@ public class ImGuiController : IDisposable
         return result != ImGuiKey.None;
     }
 
-    private void UpdateImGuiInput(InputSnapshot snapshot)
+    private void UpdateImGuiInput(SDLUtil.InputSnapshot snapshot)
     {
         ImGuiIOPtr io = ImGui.GetIO();
         io.AddMousePosEvent(snapshot.MousePosition.X, snapshot.MousePosition.Y);

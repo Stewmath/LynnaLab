@@ -1,6 +1,6 @@
 using SDL;
 
-namespace VeldridBackend;
+namespace SDLUtil;
 
 public enum MouseButton
 {
