@@ -25,14 +25,8 @@
     <EmbeddedResource Include="version.txt" />
     <EmbeddedResource Include="ZeldaOracles.ttf" />
 
-    <EmbeddedResource Include="Shaders/OpenGL/imgui-vertex.glsl" LogicalName="imgui-vertex.glsl" />
-    <EmbeddedResource Include="Shaders/OpenGL/imgui-frag.glsl" LogicalName="imgui-frag.glsl" />
-    <EmbeddedResource Include="Shaders/OpenGL/tileset-vertex.glsl" LogicalName="tileset-vertex.glsl" />
-    <EmbeddedResource Include="Shaders/OpenGL/tileset-frag.glsl" LogicalName="tileset-frag.glsl" />
-    <EmbeddedResource Include="Shaders/SPIR-V/imgui-vertex.spv" LogicalName="imgui-vertex.spv" />
-    <EmbeddedResource Include="Shaders/SPIR-V/imgui-frag.spv" LogicalName="imgui-frag.spv" />
-    <EmbeddedResource Include="Shaders/SPIR-V/tileset-vertex.spv" LogicalName="tileset-vertex.spv" />
-    <EmbeddedResource Include="Shaders/SPIR-V/tileset-frag.spv" LogicalName="tileset-frag.spv" />
+    <EmbeddedResource Include="Shaders/OpenGL/*.glsl" LogicalName="%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Shaders/SPIR-V/*.spv" LogicalName="%(Filename)%(Extension)" />
   </ItemGroup>
 
 
@@ -66,4 +60,32 @@
   <ItemGroup>
     <ProjectReference Include="..\LynnaLib\LynnaLib.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- List of shader source files -->
+    <ShaderInputFiles Include="Shaders\SPIR-V\*.glsl" />
+    <ShaderOutputFiles Include="Shaders\SPIR-V\*.spv" />
+  </ItemGroup>
+
+  <!-- Shader compilation step (only configured for linux, must have glslangValidator installed) -->
+  <Target Name="RunGlslangValidator"
+          BeforeTargets="BeforeBuild"
+          Inputs="@(ShaderInputFiles)"
+          Outputs="@(ShaderOutputFiles)"
+          >
+    <!-- Check if glslangValidator is available -->
+    <Exec Command="which glslangValidator" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="GlslangValidatorFound" />
+    </Exec>
+
+    <!-- Run validator only if found -->
+    <Exec Command="./generate-spirv.sh"
+          WorkingDirectory="$(ProjectDir)Shaders\SPIR-V"
+          Condition="'$(GlslangValidatorFound)' == '0'" />
+
+    <!-- Show warning if not found -->
+    <Message Text="Warning: glslangValidator not found in PATH. Shader compilation will be skipped."
+             Importance="High"
+             Condition="'$(GlslangValidatorFound)' != '0'" />
+  </Target>
 </Project>
