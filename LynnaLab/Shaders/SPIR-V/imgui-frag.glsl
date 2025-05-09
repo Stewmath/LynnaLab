@@ -23,6 +23,5 @@ layout (location = 0) out vec4 outputColor;
 void main()
 {
     vec4 newColor = color * texture(sampler2D(Texture, MainSampler), texCoord);
-
-    outputColor = newColor * vec4(color.rgb, alpha * color.a);
+    outputColor = vec4(newColor.rgb, alpha * newColor.a);
 }
