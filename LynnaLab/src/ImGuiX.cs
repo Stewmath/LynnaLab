@@ -31,11 +31,15 @@ public static class ImGuiX
         ImGui.SetScrollY(scroll.Y);
     }
 
+    /// <summary>
+    /// Shift cursor position by the specified amount. Should remain within the current window
+    /// boundaries (if not, you must draw something there like "ImGui.Dummy()" to force the window
+    /// to extend in size or ImGui will error out)
+    /// </summary>
     public static void ShiftCursorScreenPos(Vector2 delta)
     {
         var pos = ImGui.GetCursorScreenPos() + delta;
         ImGui.SetCursorScreenPos(pos);
-        ImGui.Dummy(new Vector2(0, 0)); // This forces the window to extend if necessary
     }
 
     public static void ShiftCursorScreenPos(float x, float y)
@@ -285,10 +289,14 @@ public static class ImGuiX
     {
         var avail = ImGui.GetContentRegionAvail();
         var size = ImGui.CalcTextSize(text);
-        var shiftVector = new Vector2(((avail - size) / 2).X, 0.0f);
-        ShiftCursorScreenPos(shiftVector);
+
+        if (size.X < avail.X)
+        {
+            var shiftVector = new Vector2(((avail - size) / 2).X, 0.0f);
+            ShiftCursorScreenPos(shiftVector);
+        }
+
         ImGui.Text(text);
-        ShiftCursorScreenPos(-shiftVector);
     }
 
     /// <summary>
