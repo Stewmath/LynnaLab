@@ -1,6 +1,4 @@
 using Veldrid;
-using Veldrid.Sdl2;
-using Veldrid.StartupUtilities;
 
 using Point = Util.Point;
 
@@ -22,8 +20,10 @@ public class VeldridBackend
         Veldrid.RenderDoc.Load(out rd);
         #endif
 
-        VeldridStartup.CreateWindowAndGraphicsDevice(
-            new WindowCreateInfo(50, 50, 1280, 720, WindowState.Maximized, title),
+        Startup.CreateWindowAndGraphicsDevice(
+            title,
+            1280,
+            720,
             new GraphicsDeviceOptions(true, null, true, ResourceBindingModel.Improved, true, true),
             GraphicsBackend.OpenGL,
             out window,
@@ -60,7 +60,7 @@ public class VeldridBackend
     Veldrid.RenderDoc rd;
     #endif
 
-    static Sdl2Window window;
+    static SDLWindow window;
     static GraphicsDevice gd;
     static CommandList cl;
     static ImGuiController controller;
@@ -167,7 +167,7 @@ public class VeldridBackend
 
     public void SetIcon(string path)
     {
-        ApplicationIcon.SetWindowIcon(window.SdlWindowHandle, path);
+        window.SetIcon(path);
     }
 
     #if RENDERDOC

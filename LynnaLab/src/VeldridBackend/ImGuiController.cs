@@ -7,6 +7,7 @@ using ImGuiXCallback = LynnaLab.ImGuiXCallback;
 using System.Runtime.InteropServices;
 
 using Point = Util.Point;
+using SDL_Keycode = SDL.SDL_Keycode;
 
 
 namespace VeldridBackend;
@@ -499,9 +500,9 @@ public class ImGuiController : IDisposable
         io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
     }
 
-    private bool TryMapKey(Key key, out ImGuiKey result)
+    private bool TryMapKey(SDL_Keycode key, out ImGuiKey result)
     {
-        ImGuiKey KeyToImGuiKeyShortcut(Key keyToConvert, Key startKey1, ImGuiKey startKey2)
+        ImGuiKey KeyToImGuiKeyShortcut(SDL_Keycode keyToConvert, SDL_Keycode startKey1, ImGuiKey startKey2)
         {
             int changeFromStart1 = (int)keyToConvert - (int)startKey1;
             return startKey2 + changeFromStart1;
@@ -509,52 +510,53 @@ public class ImGuiController : IDisposable
 
         result = key switch
         {
-            >= Key.F1 and <= Key.F24 => KeyToImGuiKeyShortcut(key, Key.F1, ImGuiKey.F1),
-            >= Key.Keypad0 and <= Key.Keypad9 => KeyToImGuiKeyShortcut(key, Key.Keypad0, ImGuiKey.Keypad0),
-            >= Key.A and <= Key.Z => KeyToImGuiKeyShortcut(key, Key.A, ImGuiKey.A),
-            >= Key.Number0 and <= Key.Number9 => KeyToImGuiKeyShortcut(key, Key.Number0, ImGuiKey._0),
-            Key.ShiftLeft or Key.ShiftRight => ImGuiKey.ModShift,
-            Key.ControlLeft or Key.ControlRight => ImGuiKey.ModCtrl,
-            Key.AltLeft or Key.AltRight => ImGuiKey.ModAlt,
-            Key.WinLeft or Key.WinRight => ImGuiKey.ModSuper,
-            Key.Menu => ImGuiKey.Menu,
-            Key.Up => ImGuiKey.UpArrow,
-            Key.Down => ImGuiKey.DownArrow,
-            Key.Left => ImGuiKey.LeftArrow,
-            Key.Right => ImGuiKey.RightArrow,
-            Key.Enter => ImGuiKey.Enter,
-            Key.Escape => ImGuiKey.Escape,
-            Key.Space => ImGuiKey.Space,
-            Key.Tab => ImGuiKey.Tab,
-            Key.BackSpace => ImGuiKey.Backspace,
-            Key.Insert => ImGuiKey.Insert,
-            Key.Delete => ImGuiKey.Delete,
-            Key.PageUp => ImGuiKey.PageUp,
-            Key.PageDown => ImGuiKey.PageDown,
-            Key.Home => ImGuiKey.Home,
-            Key.End => ImGuiKey.End,
-            Key.CapsLock => ImGuiKey.CapsLock,
-            Key.ScrollLock => ImGuiKey.ScrollLock,
-            Key.PrintScreen => ImGuiKey.PrintScreen,
-            Key.Pause => ImGuiKey.Pause,
-            Key.NumLock => ImGuiKey.NumLock,
-            Key.KeypadDivide => ImGuiKey.KeypadDivide,
-            Key.KeypadMultiply => ImGuiKey.KeypadMultiply,
-            Key.KeypadSubtract => ImGuiKey.KeypadSubtract,
-            Key.KeypadAdd => ImGuiKey.KeypadAdd,
-            Key.KeypadDecimal => ImGuiKey.KeypadDecimal,
-            Key.KeypadEnter => ImGuiKey.KeypadEnter,
-            Key.Tilde => ImGuiKey.GraveAccent,
-            Key.Minus => ImGuiKey.Minus,
-            Key.Plus => ImGuiKey.Equal,
-            Key.BracketLeft => ImGuiKey.LeftBracket,
-            Key.BracketRight => ImGuiKey.RightBracket,
-            Key.Semicolon => ImGuiKey.Semicolon,
-            Key.Quote => ImGuiKey.Apostrophe,
-            Key.Comma => ImGuiKey.Comma,
-            Key.Period => ImGuiKey.Period,
-            Key.Slash => ImGuiKey.Slash,
-            Key.BackSlash or Key.NonUSBackSlash => ImGuiKey.Backslash,
+            >= SDL_Keycode.SDLK_F1 and <= SDL_Keycode.SDLK_F12 => KeyToImGuiKeyShortcut(key, SDL_Keycode.SDLK_F1, ImGuiKey.F1),
+            SDL_Keycode.SDLK_KP_0 => ImGuiKey.Keypad0,
+            >= SDL_Keycode.SDLK_KP_1 and <= SDL_Keycode.SDLK_KP_9 => KeyToImGuiKeyShortcut(key, SDL_Keycode.SDLK_KP_1, ImGuiKey.Keypad1),
+            >= SDL_Keycode.SDLK_A and <= SDL_Keycode.SDLK_Z => KeyToImGuiKeyShortcut(key, SDL_Keycode.SDLK_A, ImGuiKey.A),
+            >= SDL_Keycode.SDLK_0 and <= SDL_Keycode.SDLK_9 => KeyToImGuiKeyShortcut(key, SDL_Keycode.SDLK_0, ImGuiKey._0),
+            SDL_Keycode.SDLK_LSHIFT or SDL_Keycode.SDLK_RSHIFT => ImGuiKey.ModShift,
+            SDL_Keycode.SDLK_LCTRL or SDL_Keycode.SDLK_RCTRL => ImGuiKey.ModCtrl,
+            SDL_Keycode.SDLK_LALT or SDL_Keycode.SDLK_RALT => ImGuiKey.ModAlt,
+            SDL_Keycode.SDLK_LGUI or SDL_Keycode.SDLK_RGUI => ImGuiKey.ModSuper,
+            SDL_Keycode.SDLK_MENU => ImGuiKey.Menu,
+            SDL_Keycode.SDLK_UP => ImGuiKey.UpArrow,
+            SDL_Keycode.SDLK_DOWN => ImGuiKey.DownArrow,
+            SDL_Keycode.SDLK_LEFT => ImGuiKey.LeftArrow,
+            SDL_Keycode.SDLK_RIGHT => ImGuiKey.RightArrow,
+            SDL_Keycode.SDLK_RETURN => ImGuiKey.Enter,
+            SDL_Keycode.SDLK_ESCAPE => ImGuiKey.Escape,
+            SDL_Keycode.SDLK_SPACE => ImGuiKey.Space,
+            SDL_Keycode.SDLK_TAB => ImGuiKey.Tab,
+            SDL_Keycode.SDLK_BACKSPACE => ImGuiKey.Backspace,
+            SDL_Keycode.SDLK_INSERT => ImGuiKey.Insert,
+            SDL_Keycode.SDLK_DELETE => ImGuiKey.Delete,
+            SDL_Keycode.SDLK_PAGEUP => ImGuiKey.PageUp,
+            SDL_Keycode.SDLK_PAGEDOWN => ImGuiKey.PageDown,
+            SDL_Keycode.SDLK_HOME => ImGuiKey.Home,
+            SDL_Keycode.SDLK_END => ImGuiKey.End,
+            SDL_Keycode.SDLK_CAPSLOCK => ImGuiKey.CapsLock,
+            SDL_Keycode.SDLK_SCROLLLOCK => ImGuiKey.ScrollLock,
+            SDL_Keycode.SDLK_PRINTSCREEN => ImGuiKey.PrintScreen,
+            SDL_Keycode.SDLK_PAUSE => ImGuiKey.Pause,
+            SDL_Keycode.SDLK_NUMLOCKCLEAR => ImGuiKey.NumLock,
+            SDL_Keycode.SDLK_KP_MEMDIVIDE => ImGuiKey.KeypadDivide,
+            SDL_Keycode.SDLK_KP_MEMMULTIPLY => ImGuiKey.KeypadMultiply,
+            SDL_Keycode.SDLK_KP_MEMSUBTRACT => ImGuiKey.KeypadSubtract,
+            SDL_Keycode.SDLK_KP_MEMADD => ImGuiKey.KeypadAdd,
+            SDL_Keycode.SDLK_KP_DECIMAL => ImGuiKey.KeypadDecimal,
+            SDL_Keycode.SDLK_KP_ENTER => ImGuiKey.KeypadEnter,
+            SDL_Keycode.SDLK_TILDE => ImGuiKey.GraveAccent,
+            SDL_Keycode.SDLK_MINUS => ImGuiKey.Minus,
+            SDL_Keycode.SDLK_PLUS => ImGuiKey.Equal,
+            SDL_Keycode.SDLK_LEFTBRACKET => ImGuiKey.LeftBracket,
+            SDL_Keycode.SDLK_RIGHTBRACKET => ImGuiKey.RightBracket,
+            SDL_Keycode.SDLK_SEMICOLON => ImGuiKey.Semicolon,
+            SDL_Keycode.SDLK_APOSTROPHE => ImGuiKey.Apostrophe,
+            SDL_Keycode.SDLK_COMMA => ImGuiKey.Comma,
+            SDL_Keycode.SDLK_PERIOD => ImGuiKey.Period,
+            SDL_Keycode.SDLK_SLASH => ImGuiKey.Slash,
+            SDL_Keycode.SDLK_BACKSLASH => ImGuiKey.Backslash,
             _ => ImGuiKey.None
         };
 
