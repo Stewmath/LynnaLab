@@ -18,8 +18,8 @@ public class VeldridBackend
     // ================================================================================
     public VeldridBackend(string title)
     {
-        #if DEBUG
-        //Veldrid.RenderDoc.Load(out rd);
+        #if RENDERDOC
+        Veldrid.RenderDoc.Load(out rd);
         #endif
 
         VeldridStartup.CreateWindowAndGraphicsDevice(
@@ -56,7 +56,7 @@ public class VeldridBackend
     // ================================================================================
     // Variables
     // ================================================================================
-    #if DEBUG
+    #if RENDERDOC
     Veldrid.RenderDoc rd;
     #endif
 
@@ -109,7 +109,7 @@ public class VeldridBackend
         gd.SubmitCommands(cl);
         gd.SwapBuffers(gd.MainSwapchain);
 
-        #if DEBUG
+        #if RENDERDOC
         if (rd != null && rd.IsFrameCapturing())
             rd.EndFrameCapture();
         #endif
@@ -170,10 +170,9 @@ public class VeldridBackend
         ApplicationIcon.SetWindowIcon(window.SdlWindowHandle, path);
     }
 
-    #if DEBUG
+    #if RENDERDOC
     public void TriggerRenderDocCapture()
     {
-        Console.WriteLine("RenderDoc Capture");
         rd.TriggerCapture();
     }
 

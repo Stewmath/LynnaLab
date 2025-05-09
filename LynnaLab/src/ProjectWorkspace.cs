@@ -255,7 +255,9 @@ public class ProjectWorkspace
             {
                 ImGuiX.MenuItemCheckbox("Debug Window", ref showDebugWindow);
                 ImGuiX.MenuItemCheckbox("ImGui Demo Window", ref showImGuiDemoWindow);
-                #if DEBUG
+                #if RENDERDOC
+                if (ImGui.MenuItem("RenderDoc: Grab frame"))
+                    TopLevel.Backend.TriggerRenderDocCapture();
                 if (ImGui.MenuItem("RenderDoc: Launch UI"))
                     TopLevel.Backend.RenderDocUI();
                 #endif
