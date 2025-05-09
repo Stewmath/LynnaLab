@@ -5,8 +5,8 @@ using SDL;
 namespace VeldridBackend;
 
 /// <summary>
-/// Helper functions for using SDL3 with Veldrid. Similar to Veldrid.StartupUtilities but for SDL3
-/// instead of SDL2.
+/// Helper functions for setting up Veldrid with SDL3. Similar to Veldrid.StartupUtilities but for
+/// SDL3 instead of SDL2.
 /// </summary>
 public static class Startup
 {
@@ -26,23 +26,26 @@ public static class Startup
         out SDLWindow window,
         out GraphicsDevice gd)
     {
+        string preferredDrivers = null;
+        bool videoInitialized = false;
+
         // On Linux, prefer wayland if available. (X11+Vulkan has a crashing bug when resizing the
         // window. Probably my fault somehow, but I couldn't figure it out.)
         if (SDL_GetPlatform() == "Linux")
+            preferredDrivers = "wayland";
+
+        if (preferredDrivers != null)
         {
-            int numDrivers = SDL_GetNumVideoDrivers();
-            for (int i=0; i<numDrivers; i++)
-            {
-                string driver = SDL_GetVideoDriver(i);
-                if (driver == "wayland")
-                {
-                    SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "wayland");
-                    break;
-                }
-            }
+            SDL_SetHint(SDL_HINT_VIDEO_DRIVER, preferredDrivers);
+            videoInitialized = SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO);
         }
 
-        SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO);
+        if (!videoInitialized)
+        {
+            SDL_ResetHint(SDL_HINT_VIDEO_DRIVER);
+            if (!(videoInitialized = SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO)))
+                throw new Exception($"SDL failed to initialize: {SDL_GetError()}.");
+        }
 
         SDL_WindowFlags flags =
             SDL_WindowFlags.SDL_WINDOW_RESIZABLE
