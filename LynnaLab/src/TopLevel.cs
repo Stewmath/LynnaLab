@@ -18,8 +18,8 @@ public static class TopLevel
 {
     public static void Load(string path = null, string game = null)
     {
-        string versionString = new StreamReader(Helper.GetResourceStream("LynnaLab.version.txt")).ReadToEnd();
-        backend = new VeldridBackend.VeldridBackend("LynnaLab " + versionString);
+        string versionString = new StreamReader(Helper.GetResourceStream("LynnaLab.version.txt")).ReadToEnd().Trim();
+        backend = new VeldridBackend.VeldridBackend("LynnaLab", versionString);
 
         ImageDir = Path.GetDirectoryName(System.AppContext.BaseDirectory) + "/Images/";
 

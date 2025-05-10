@@ -15,7 +15,7 @@ public class VeldridBackend
     // ================================================================================
     // Constructors
     // ================================================================================
-    public VeldridBackend(string title)
+    public VeldridBackend(string title, string version)
     {
         #if RENDERDOC
         Veldrid.RenderDoc.Load(out rd);
@@ -23,6 +23,7 @@ public class VeldridBackend
 
         Startup.CreateWindowAndGraphicsDevice(
             title,
+            version,
             1280,
             720,
             new GraphicsDeviceOptions(true, null, true, ResourceBindingModel.Improved, true, true),

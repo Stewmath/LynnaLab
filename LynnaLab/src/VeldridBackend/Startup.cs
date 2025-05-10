@@ -20,6 +20,7 @@ public static class Startup
     /// </summary>
     public static void CreateWindowAndGraphicsDevice(
         string title,
+        string version,
         int width,
         int height,
         GraphicsDeviceOptions deviceOptions,
@@ -29,6 +30,8 @@ public static class Startup
     {
         string preferredDrivers = null;
         bool videoInitialized = false;
+
+        SDL_SetAppMetadata(title, version, null);
 
         // On Linux, prefer wayland if available. (X11+Vulkan has a crashing bug when resizing the
         // window. Probably my fault somehow, but I couldn't figure it out.)
@@ -58,7 +61,7 @@ public static class Startup
         // Don't add SDL_WINDOW_VULKAN to flags because we don't initialize vulkan through SDL.
         // Veldrid already knows how to set it up and attach it to the window on each platform.
 
-        window = new SDLWindow(title, width, height, flags);
+        window = new SDLWindow($"{title} {version}", width, height, flags);
 
         gd = CreateGraphicsDevice(window, deviceOptions, backend);
     }
