@@ -462,6 +462,8 @@ public static class ImGuiX
         Vector2 framePadding = ImGui.GetStyle().FramePadding;
         Vector2 buttonSize = size + framePadding * 2;
 
+        ImGui.BeginGroup();
+
         Vector2 startPos = ImGui.GetCursorScreenPos();
         bool clicked = ImGui.InvisibleButton("Btn: " + name, buttonSize);
         Vector2 finalPos = ImGui.GetCursorScreenPos();
@@ -484,6 +486,8 @@ public static class ImGuiX
 
         ImGui.SetCursorScreenPos(startPos + framePadding);
         ImGui.Image(textureID, size);
+
+        ImGui.EndGroup();
         return clicked;
     }
 
