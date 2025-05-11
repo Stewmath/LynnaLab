@@ -163,6 +163,8 @@ public unsafe class SDLWindow
     public void SetIcon(string path)
     {
         SDL_Surface *surface = SDL_LoadBMP(path);
+        if (surface == null)
+            return;
         SDL_SetWindowIcon(Handle, surface);
         SDL_DestroySurface(surface);
     }
