@@ -31,7 +31,17 @@ public class GlobalConfig
         var deserializer = new DeserializerBuilder()
             .IgnoreUnmatchedProperties()
             .Build();
-        var retval = deserializer.Deserialize<GlobalConfig>(input);
+
+        GlobalConfig retval = null;
+        try
+        {
+            retval = deserializer.Deserialize<GlobalConfig>(input);
+        }
+        catch (Exception)
+        {
+            TopLevel.DisplayMessageModal("Error", "Error parsing global_config.yaml. Default settings will be used.");
+        }
+
         if (retval != null)
         {
             if (retval.DisplayScaleFactor < 1.0f)

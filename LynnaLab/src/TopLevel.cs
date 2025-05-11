@@ -35,8 +35,8 @@ public static class TopLevel
         if (GlobalConfig == null)
         {
             GlobalConfig = new GlobalConfig();
-            GlobalConfig.Save();
-            // TODO: Save on exit?
+            if (!GlobalConfig.FileExists())
+                GlobalConfig.Save();
         }
 
         AddFont("default", null, 13);
