@@ -604,6 +604,7 @@ class SubTileViewer : GfxViewer
         base.Selectable = false;
         base.TooltipImagePreview = true;
         base.TooltipImagePreviewScale = TILE_IMAGE_SCALE;
+        base.SelectColor = Color.DarkOrange;
 
         base.OnDrag = (index) =>
         {
