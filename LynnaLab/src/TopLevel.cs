@@ -49,11 +49,13 @@ public static class TopLevel
 
         stopwatch = Stopwatch.StartNew();
 
+        ImGuiX.BackupStyle();
+        ReAdjustScale();
+
+        settingsDialog = new SettingsDialog("Settings Dialog");
+
         if (path != null)
             TopLevel.OpenProject(path, game);
-
-        ImGuiX.BackupStyle();
-        ReAdjustScale(Backend.WindowDisplayScale);
     }
 
     // ================================================================================
@@ -77,6 +79,8 @@ public static class TopLevel
     // This must be thread-safe - signals that come from other threads (ie. emulator process exit
     // signal) may want to schedule actions to perform on the main thread.
     static ConcurrentQueue<Func<bool>> idleFunctions = new();
+
+    static SettingsDialog settingsDialog;
 
     // Vars related to modal windows
     static Queue<ModalStruct> modalQueue = new Queue<ModalStruct>();
@@ -163,9 +167,19 @@ public static class TopLevel
 
         RenderModals();
 
-        if (Workspace == null)
+        // Don't render the workspace if we're handling an exception right now, because it is
+        // probably something in Workspace.Render that caused the exception in the first place.
+        bool renderWorkspace = Workspace != null && Program.handlingException == null;
+
+        float ypos = 0.0f;
+
+        if (ImGui.BeginMainMenuBar())
         {
-            if (ImGui.BeginMainMenuBar())
+            if (renderWorkspace)
+            {
+                Workspace.RenderMenuBar();
+            }
+            else
             {
                 if (ImGui.BeginMenu("Project"))
                 {
@@ -175,16 +189,23 @@ public static class TopLevel
                     }
                     ImGui.EndMenu();
                 }
-                ImGui.EndMainMenuBar();
             }
+            ypos += ImGui.GetWindowHeight();
+            ImGui.EndMainMenuBar();
         }
-        else
+
+        if (ImGuiX.BeginDocked("Toolbar", new Vector2(0, ypos), ImGuiX.Unit(0, 50.0f), scrollbar: false))
         {
-            // Don't render the workspace if we're handling an exception right now, because it is
-            // probably something in Workspace.Render that caused the exception in the first place.
-            if (Program.handlingException == null)
-                Workspace.Render(deltaTime);
+            if (renderWorkspace)
+                Workspace.RenderToolbar();
+            ypos += ImGui.GetWindowHeight();
         }
+        ImGui.End();
+
+        settingsDialog.RenderDockedLeft(ypos, ImGuiX.Unit(300.0f));
+
+        if (renderWorkspace)
+            Workspace.Render(deltaTime);
 
         ImGui.PopFont();
     }
@@ -192,10 +213,8 @@ public static class TopLevel
     /// <summary>
     /// Scales fonts and styles with the given scale value, for high-DPI displays.
     /// </summary>
-    public static unsafe void ReAdjustScale(float scale)
+    public static unsafe void ReAdjustScale()
     {
-        ImGuiX.ScaleUnit = scale;
-
         ImGui.GetIO().Fonts.Clear();
 
         foreach (FontStruct font in fontDict.Values)
@@ -210,13 +229,13 @@ public static class TopLevel
                 config.RasterizerMultiply = 1.0f;
                 config.RasterizerDensity = 1.0f;
                 config.OversampleH = config.OversampleV = 1;
-                config.SizePixels = font.baseSize * scale;
+                config.SizePixels = font.baseSize * ImGuiX.ScaleUnit;
                 font.ptr = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
             }
             else
             {
                 Stream stream = Helper.GetResourceStream(font.resource);
-                font.ptr = ImGuiX.LoadFont(stream, (int)(font.baseSize * scale));
+                font.ptr = ImGuiX.LoadFont(stream, (int)(font.baseSize * ImGuiX.ScaleUnit));
                 stream.Close();
             }
         }
@@ -466,6 +485,23 @@ public static class TopLevel
         {
             ImGui.Text(message);
             return ImGui.Button("OK");
+        });
+    }
+
+    /// <summary>
+    /// Display a message for a certain number of seconds. Can left click anywhere to close.
+    /// </summary>
+    public static void DisplayTimedMessageModal(string title, string message, float seconds = 3.0f)
+    {
+        Stopwatch watch = Stopwatch.StartNew();
+        OpenModal(title, () =>
+        {
+            ImGui.Text(message);
+
+            if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+                return true;
+
+            return watch.Elapsed.Seconds >= seconds;
         });
     }
 

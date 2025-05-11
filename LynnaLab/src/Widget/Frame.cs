@@ -67,6 +67,9 @@ public abstract class Frame
 
     public ImGuiWindowFlags WindowFlags;
 
+
+    string WindowID { get { return DisplayName == null ? Name : $"{DisplayName}###{Name}"; } }
+
     // ================================================================================
     // Public methods
     // ================================================================================
@@ -95,8 +98,7 @@ public abstract class Frame
                 ImGui.SetNextWindowSize(lastWindowSize * factor);
             }
 
-            string name = DisplayName == null ? Name : $"{DisplayName}###{Name}";
-            if (ImGui.Begin(name, ref active, WindowFlags))
+            if (ImGui.Begin(WindowID, ref active, WindowFlags))
             {
                 Render();
 
@@ -107,6 +109,36 @@ public abstract class Frame
         }
 
         grabFocus = false;
+    }
+
+    /// <summary>
+    /// Render this as a window docked on the left side which can be expanded. Can only have one of
+    /// these right now.
+    /// </summary>
+    public void RenderDockedLeft(float ypos, float width)
+    {
+        if (!Active) // Show only the button to expand the window
+            width = ImGuiX.Unit(10.0f);
+
+        if (ImGuiX.BeginDocked(WindowID, new Vector2(0, ypos), new Vector2(width, 0), front:true))
+        {
+            if (Active)
+            {
+                if (ImGui.Button("<"))
+                {
+                    Active = false;
+                }
+                Render();
+            }
+            else
+            {
+                if (ImGui.Button(">"))
+                {
+                    Active = true;
+                }
+            }
+        }
+        ImGui.End();
     }
 
     /// <summary>

@@ -8,7 +8,7 @@ namespace LynnaLab;
 /// in LynnaLib).
 public class GlobalConfig
 {
-    static readonly string ConfigFile = "config.yaml";
+    static readonly string ConfigFile = "global_config.yaml";
     static readonly string ConfigFileComment = @"
 # User config file for LynnaLab. You shouldn't need to edit this directly,
 # but if you know what you're doing you can edit the commands to build and run the game.
@@ -33,7 +33,11 @@ public class GlobalConfig
             .Build();
         var retval = deserializer.Deserialize<GlobalConfig>(input);
         if (retval != null)
+        {
+            if (retval.DisplayScaleFactor < 1.0f)
+                retval.DisplayScaleFactor = 1.0f;
             retval.oldValues = new GlobalConfig(retval);
+        }
         return retval;
     }
 
@@ -64,8 +68,24 @@ public class GlobalConfig
     }
 
     // Variables imported from YAML config file
+
+    // Advanced settings
     public string MakeCommand { get; set; }
     public string EmulatorCommand { get; set; }
-    public bool CloseRunDialogWithEmulator { get; set; }
-    public bool CloseEmulatorWithRunDialog { get; set; }
+
+    // Display
+    public bool LightMode { get; set; } = false;
+    public Interpolation Interpolation { get; set; } = Interpolation.Bicubic;
+    public bool DarkenDuplicateRooms { get; set; } = true;
+    public bool ShowBrushPreview { get; set; } = true;
+    public bool OverrideSystemScaling { get; set; } = false;
+    public float DisplayScaleFactor { get; set; } = 1.0f;
+
+    // Build & Run dialog
+    public bool CloseRunDialogWithEmulator { get; set; } = false;
+    public bool CloseEmulatorWithRunDialog { get; set; } = false;
+
+    // Other
+    public bool AutoAdjustGroupNumber { get; set; } = true;
+    public bool ScrollToZoom { get; set; } = true;
 }

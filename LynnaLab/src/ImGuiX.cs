@@ -14,7 +14,6 @@ public static class ImGuiX
     // ================================================================================
 
     static ImGuiStyle backupStyle;
-    static bool lightMode = false;
 
     // ================================================================================
     // Properties
@@ -23,7 +22,16 @@ public static class ImGuiX
     /// <summary>
     /// Use this for sizing windows such that they can be scaled by changing this value.
     /// </summary>
-    public static float ScaleUnit { get; set; } = 1.0f;
+    public static float ScaleUnit
+    {
+        get
+        {
+            if (TopLevel.GlobalConfig.OverrideSystemScaling)
+                return Math.Max(TopLevel.GlobalConfig.DisplayScaleFactor, 1.0f);
+            else
+                return TopLevel.Backend.WindowDisplayScale;
+        }
+    }
 
 
     public static float TOOLTIP_WINDOW_WIDTH { get { return Unit(500.0f); } }
@@ -75,16 +83,10 @@ public static class ImGuiX
         *(ImGuiStyle*)stylePtr = backupStyle;
         stylePtr.ScaleAllSizes(ScaleUnit);
 
-        if (lightMode)
+        if (TopLevel.GlobalConfig.LightMode)
             ImGui.StyleColorsLight();
         else
             ImGui.StyleColorsDark();
-    }
-
-    public static void SetLightMode(bool lightMode)
-    {
-        ImGuiX.lightMode = lightMode;
-        UpdateStyle();
     }
 
     public static unsafe ImFontPtr LoadFont(Stream stream, int size)
@@ -416,13 +418,20 @@ public static class ImGuiX
     }
 
     /// <summary>
-    /// A toolbar at the top of the main window. Use with ImGui.End().
+    /// Begin a docked window. Must manually specify the position and size of the window. Used for
+    /// toolbars and other things.
     /// </summary>
-    public static bool BeginToolbar(string name, float offset, float height)
+    public static bool BeginDocked(string name, Vector2 offset, Vector2 size, bool scrollbar=true, bool front=false)
     {
         var mainViewport = ImGui.GetMainViewport();
-        ImGui.SetNextWindowPos(mainViewport.Pos + new Vector2(0, offset));
-        ImGui.SetNextWindowSize(new Vector2(mainViewport.Size.X, height));
+
+        if (size.X == 0)
+            size.X = mainViewport.Size.X - offset.X;
+        if (size.Y == 0)
+            size.Y = mainViewport.Size.Y - offset.Y;
+
+        ImGui.SetNextWindowPos(mainViewport.Pos + offset);
+        ImGui.SetNextWindowSize(size);
         ImGui.SetNextWindowViewport(mainViewport.ID);
 
         ImGuiWindowFlags window_flags = 0
@@ -430,9 +439,14 @@ public static class ImGuiX
             | ImGuiWindowFlags.NoTitleBar
             | ImGuiWindowFlags.NoResize
             | ImGuiWindowFlags.NoMove
-            | ImGuiWindowFlags.NoScrollbar
             | ImGuiWindowFlags.NoSavedSettings
+            | ImGuiWindowFlags.NoNavFocus
             ;
+
+        if (!scrollbar)
+            window_flags |= ImGuiWindowFlags.NoScrollbar;
+        if (!front)
+            window_flags |= ImGuiWindowFlags.NoBringToFrontOnFocus;
         ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0);
         bool retval = ImGui.Begin(name, window_flags);
         ImGui.PopStyleVar();

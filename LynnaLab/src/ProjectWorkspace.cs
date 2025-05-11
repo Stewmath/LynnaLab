@@ -42,9 +42,6 @@ public class ProjectWorkspace
         scratchpad = new ScratchPad(this, "Scratchpad", roomEditor.TilesetViewer, Brush);
         undoDialog = new UndoDialog(this, "Undo History");
 
-        roomEditor.SetInterpolation(bicubicScaling ? Interpolation.Bicubic : Interpolation.Nearest);
-        roomEditor.SetScrollToZoom(scrollToZoom);
-
         frames.AddRange(new Frame[] {
                 roomEditor,
                 dungeonEditor,
@@ -85,8 +82,6 @@ public class ProjectWorkspace
     List<Frame> frames = new List<Frame>();
     bool showDebugWindow;
     bool showImGuiDemoWindow;
-    bool lightMode, scrollToZoom = true, darkenUsedDungeonRooms = true, bicubicScaling = true;
-    bool autoAdjustGroupNumber = true;
 
     TextureBase linkTexture;
 
@@ -108,178 +103,131 @@ public class ProjectWorkspace
     public ObjectDefinition CopiedObject { get; set; }
     public Color? CopiedColor { get; set; }
 
-    public bool ShowBrushPreview { get; private set; } = true;
     public bool ViewObjects { get; private set; }
     public bool ViewWarps { get; private set; }
 
     // Togglable settings that affect other modules (really just minimaps right now)
-    public bool DarkenUsedDungeonRooms { get { return darkenUsedDungeonRooms; } }
-    public bool AutoAdjustGroupNumber { get { return autoAdjustGroupNumber; } }
+    public bool DarkenDuplicateRooms { get { return TopLevel.GlobalConfig.DarkenDuplicateRooms; } }
+    public bool AutoAdjustGroupNumber { get { return TopLevel.GlobalConfig.AutoAdjustGroupNumber; } }
 
     // ================================================================================
     // Public methods
     // ================================================================================
 
+    public void RenderMenuBar()
+    {
+        if (ImGui.BeginMenu("Project"))
+        {
+            if (ImGui.MenuItem("Open"))
+            {
+                TopLevel.CloseProjectModal(() => TopLevel.OpenProjectModal());
+            }
+            if (ImGui.MenuItem("Save"))
+            {
+                Project.Save();
+            }
+            if (ImGui.MenuItem("Close"))
+            {
+                TopLevel.CloseProjectModal();
+            }
+            if (ImGui.MenuItem("Reload"))
+            {
+                TopLevel.CloseProjectModal(() => TopLevel.OpenProject(Project.BaseDirectory, Project.GameString));
+            }
+            if (ImGui.MenuItem("Switch Game"))
+            {
+                TopLevel.CloseProjectModal(() =>
+                {
+                    string gameString = Project.Game == Game.Seasons ? "ages" : "seasons";
+                    TopLevel.OpenProject(Project.BaseDirectory, gameString);
+                });
+            }
+            if (ImGui.MenuItem("Run"))
+            {
+                RunGame();
+            }
+            ImGui.EndMenu();
+        }
+        if (ImGui.BeginMenu("Edit"))
+        {
+            Func<bool> renderUndoButton;
+            if (Project.UndoState.UndoAvailable)
+                renderUndoButton = () => ImGui.Selectable("Undo: " + Project.UndoState.GetUndoDescription());
+            else
+                renderUndoButton = () => ImGui.Selectable("Undo", false, ImGuiSelectableFlags.Disabled);
+
+            Func<bool> renderRedoButton;
+            if (Project.UndoState.RedoAvailable)
+                renderRedoButton = () => ImGui.Selectable("Redo: " + Project.UndoState.GetRedoDescription());
+            else
+                renderRedoButton = () => ImGui.Selectable("Redo", false, ImGuiSelectableFlags.Disabled);
+
+            if (renderUndoButton())
+            {
+                Project.UndoState.Undo();
+            }
+            if (renderRedoButton())
+            {
+                Project.UndoState.Redo();
+            }
+            ImGui.EndMenu();
+        }
+        if (ImGui.BeginMenu("View"))
+        {
+            ImGuiX.MenuItemCheckbox("View objects",
+                                    new Accessor<bool>(() => ViewObjects),
+                                    (_) => roomEditor.UpdateRoomComponents());
+            ImGuiX.MenuItemCheckbox("View warps",
+                                    new Accessor<bool>(() => ViewWarps),
+                                    (_) => roomEditor.UpdateRoomComponents());
+            ImGui.EndMenu();
+        }
+        if (ImGui.BeginMenu("Windows"))
+        {
+            foreach (Frame frame in frames)
+            {
+                ImGuiX.MenuItemCheckbox(
+                    frame.Name,
+                    frame.Active,
+                    (active) =>
+                    {
+                        frame.Active = active;
+                    });
+            }
+            ImGui.EndMenu();
+        }
+        if (ImGui.BeginMenu("Debug"))
+        {
+            ImGuiX.MenuItemCheckbox("Debug Window", ref showDebugWindow);
+            ImGuiX.MenuItemCheckbox("ImGui Demo Window", ref showImGuiDemoWindow);
+            #if RENDERDOC
+            if (ImGui.MenuItem("RenderDoc: Grab frame"))
+                TopLevel.Backend.TriggerRenderDocCapture();
+            if (ImGui.MenuItem("RenderDoc: Launch UI"))
+                TopLevel.Backend.RenderDocUI();
+            #endif
+            ImGui.EndMenu();
+        }
+    }
+
+    public void RenderToolbar()
+    {
+        if (ImGui.ImageButton("Run", TopLevel.PegasusSeedTexture.GetBinding(), ImGuiX.Unit(TOOLBAR_BUTTON_SIZE)))
+        {
+            RunGame();
+        }
+        ImGuiX.TooltipOnHover("Run (F5)");
+
+        ImGui.SameLine();
+        ImGuiX.ToggleImageButton("Quickstart", linkTexture.GetBinding(), ImGuiX.Unit(TOOLBAR_BUTTON_SIZE),
+                QuickstartData.Enabled, ToggleQuickstart);
+        ImGuiX.TooltipOnHover("Toggle Quickstart (F4)");
+    }
+
     public void Render(float deltaTime)
     {
         if (Project == null)
             return;
-
-        float menuBarHeight = 0.0f;
-        if (ImGui.BeginMainMenuBar())
-        {
-            if (ImGui.BeginMenu("Project"))
-            {
-                if (ImGui.MenuItem("Open"))
-                {
-                    TopLevel.CloseProjectModal(() => TopLevel.OpenProjectModal());
-                }
-                if (ImGui.MenuItem("Save"))
-                {
-                    Project.Save();
-                }
-                if (ImGui.MenuItem("Close"))
-                {
-                    TopLevel.CloseProjectModal();
-                }
-                if (ImGui.MenuItem("Reload"))
-                {
-                    TopLevel.CloseProjectModal(() => TopLevel.OpenProject(Project.BaseDirectory, Project.GameString));
-                }
-                if (ImGui.MenuItem("Switch Game"))
-                {
-                    TopLevel.CloseProjectModal(() =>
-                    {
-                        string gameString = Project.Game == Game.Seasons ? "ages" : "seasons";
-                        TopLevel.OpenProject(Project.BaseDirectory, gameString);
-                    });
-                }
-                if (ImGui.MenuItem("Run"))
-                {
-                    RunGame();
-                }
-                ImGui.EndMenu();
-            }
-            if (ImGui.BeginMenu("Edit"))
-            {
-                Func<bool> renderUndoButton;
-                if (Project.UndoState.UndoAvailable)
-                    renderUndoButton = () => ImGui.Selectable("Undo: " + Project.UndoState.GetUndoDescription());
-                else
-                    renderUndoButton = () => ImGui.Selectable("Undo", false, ImGuiSelectableFlags.Disabled);
-
-                Func<bool> renderRedoButton;
-                if (Project.UndoState.RedoAvailable)
-                    renderRedoButton = () => ImGui.Selectable("Redo: " + Project.UndoState.GetRedoDescription());
-                else
-                    renderRedoButton = () => ImGui.Selectable("Redo", false, ImGuiSelectableFlags.Disabled);
-
-                if (renderUndoButton())
-                {
-                    Project.UndoState.Undo();
-                }
-                if (renderRedoButton())
-                {
-                    Project.UndoState.Redo();
-                }
-                ImGui.EndMenu();
-            }
-            if (ImGui.BeginMenu("View"))
-            {
-                ImGuiX.MenuItemCheckbox("View objects",
-                                        new Accessor<bool>(() => ViewObjects),
-                                        (_) => roomEditor.UpdateRoomComponents());
-                ImGuiX.MenuItemCheckbox("View warps",
-                                        new Accessor<bool>(() => ViewWarps),
-                                        (_) => roomEditor.UpdateRoomComponents());
-                ImGui.EndMenu();
-            }
-            if (ImGui.BeginMenu("Windows"))
-            {
-                foreach (Frame frame in frames)
-                {
-                    ImGuiX.MenuItemCheckbox(
-                        frame.Name,
-                        frame.Active,
-                        (active) =>
-                        {
-                            frame.Active = active;
-                        });
-                }
-                ImGui.EndMenu();
-            }
-            if (ImGui.BeginMenu("Minimap"))
-            {
-                if (ImGuiX.MenuItemCheckbox("Scroll to Zoom", ref scrollToZoom))
-                {
-                    roomEditor.SetScrollToZoom(scrollToZoom);
-                }
-
-                ImGuiX.MenuItemCheckbox("Darken used dungeon rooms & duplicate rooms", ref darkenUsedDungeonRooms);
-                ImGuiX.TooltipOnHover("Rooms which are darkened have a more \"canonical\" version somewhere else, either on the dungeon tab or in a different world index. Duplicate rooms may be missing their warp data.");
-
-                if (ImGuiX.MenuItemCheckbox("Bicubic scaling", ref bicubicScaling))
-                {
-                    Interpolation interp = bicubicScaling ? Interpolation.Bicubic : Interpolation.Nearest;
-                    roomEditor.SetInterpolation(interp);
-                }
-                ImGui.EndMenu();
-            }
-            if (ImGui.BeginMenu("Misc"))
-            {
-                ImGuiX.MenuItemCheckbox("Auto-Adjust World Number", ref autoAdjustGroupNumber);
-                ImGuiX.TooltipOnHover("The subrosia map & dungeons have duplicates in the World tab. Check this box to auto-adjust the group number to its expected value when selecting these rooms.");
-
-                if (ImGuiX.MenuItemCheckbox("Light Mode", ref lightMode))
-                {
-                    ImGuiX.SetLightMode(lightMode);
-                }
-                ImGuiX.MenuItemCheckbox(
-                    "Hover preview",
-                    new Accessor<bool>(() => ShowBrushPreview
-                    ));
-
-                if (ImGui.MenuItem("Choose emulator path..."))
-                {
-                    BuildDialog.SelectEmulatorDialog((cmd) =>
-                    {
-                        if (cmd != null)
-                            TopLevel.GlobalConfig.EmulatorCommand = cmd;
-                    });
-                }
-
-                ImGui.EndMenu();
-            }
-            if (ImGui.BeginMenu("Debug"))
-            {
-                ImGuiX.MenuItemCheckbox("Debug Window", ref showDebugWindow);
-                ImGuiX.MenuItemCheckbox("ImGui Demo Window", ref showImGuiDemoWindow);
-                #if RENDERDOC
-                if (ImGui.MenuItem("RenderDoc: Grab frame"))
-                    TopLevel.Backend.TriggerRenderDocCapture();
-                if (ImGui.MenuItem("RenderDoc: Launch UI"))
-                    TopLevel.Backend.RenderDocUI();
-                #endif
-                ImGui.EndMenu();
-            }
-            menuBarHeight = ImGui.GetWindowHeight();
-            ImGui.EndMainMenuBar();
-        }
-
-        if (ImGuiX.BeginToolbar("Toolbar", menuBarHeight, ImGuiX.Unit(50.0f)))
-        {
-            if (ImGui.ImageButton("Run", TopLevel.PegasusSeedTexture.GetBinding(), ImGuiX.Unit(TOOLBAR_BUTTON_SIZE)))
-            {
-                RunGame();
-            }
-            ImGuiX.TooltipOnHover("Run (F5)");
-
-            ImGui.SameLine();
-            ImGuiX.ToggleImageButton("Quickstart", linkTexture.GetBinding(), ImGuiX.Unit(TOOLBAR_BUTTON_SIZE),
-                    QuickstartData.Enabled, ToggleQuickstart);
-            ImGuiX.TooltipOnHover("Toggle Quickstart (F4)");
-        }
-        ImGui.End();
 
         if (showDebugWindow)
         {

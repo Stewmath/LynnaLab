@@ -23,7 +23,7 @@ public class RoomLayoutEditor : TileGrid
         base.RenderOffset = new Vector2(8, 8) * base.RequestedScale;
         base.BrushInterfacer = BrushInterfacer.Create(brush, (index, scale) =>
         {
-            if (Workspace.ShowBrushPreview)
+            if (TopLevel.GlobalConfig.ShowBrushPreview)
                 RoomEditor.TilesetViewer.DrawTileImage(index, scale);
         });
 

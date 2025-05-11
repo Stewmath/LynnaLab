@@ -21,7 +21,7 @@ public class Minimap : TileGrid
             // Darken rooms which are already used in a dungeon, or rooms considered "duplicates"
             // (not the main version of the room). These both have the effect of discouraging
             // interacting with these rooms as there is a more canonical version of it somewhere.
-            if (Workspace.DarkenUsedDungeonRooms && !(map is Dungeon))
+            if (Workspace.DarkenDuplicateRooms && !(map is Dungeon))
             {
                 for (int tile = 0; tile < MaxIndex; tile++)
                 {
