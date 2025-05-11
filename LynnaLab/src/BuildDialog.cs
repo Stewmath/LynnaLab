@@ -225,7 +225,7 @@ public class BuildDialog : Frame
         }
 
         // Open a modal telling the user to select an emulator, then open the file chooser dialog
-        TopLevel.OpenModal(
+        Modal.OpenModal(
             "Select Emulator",
             () =>
             {
@@ -340,7 +340,7 @@ public class BuildDialog : Frame
             callbackReceived = true;
         });
 
-        TopLevel.OpenModal("Emulator file dialog", () =>
+        Modal.OpenModal("Emulator file dialog", () =>
         {
             ImGui.Text("Waiting for file dialog...");
 

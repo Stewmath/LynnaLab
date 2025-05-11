@@ -120,7 +120,7 @@ public class ProjectWorkspace
         {
             if (ImGui.MenuItem("Open"))
             {
-                TopLevel.CloseProjectModal(() => TopLevel.OpenProjectModal());
+                Modal.CloseProjectModal(this, () => Modal.OpenProjectModal());
             }
             if (ImGui.MenuItem("Save"))
             {
@@ -128,15 +128,15 @@ public class ProjectWorkspace
             }
             if (ImGui.MenuItem("Close"))
             {
-                TopLevel.CloseProjectModal();
+                Modal.CloseProjectModal(this);
             }
             if (ImGui.MenuItem("Reload"))
             {
-                TopLevel.CloseProjectModal(() => TopLevel.OpenProject(Project.BaseDirectory, Project.GameString));
+                Modal.CloseProjectModal(this, () => TopLevel.OpenProject(Project.BaseDirectory, Project.GameString));
             }
             if (ImGui.MenuItem("Switch Game"))
             {
-                TopLevel.CloseProjectModal(() =>
+                Modal.CloseProjectModal(this, () =>
                 {
                     string gameString = Project.Game == Game.Seasons ? "ages" : "seasons";
                     TopLevel.OpenProject(Project.BaseDirectory, gameString);

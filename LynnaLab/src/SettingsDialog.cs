@@ -136,7 +136,7 @@ public class SettingsDialog : Frame
         if (ImGui.Button("Save settings"))
         {
             GlobalConfig.Save();
-            TopLevel.DisplayTimedMessageModal("SaveSettings", $"Settings saved to global_config.yaml!");
+            Modal.DisplayTimedMessageModal("SaveSettings", $"Settings saved to global_config.yaml!");
         }
 
         // Only update scale when the mouse is released

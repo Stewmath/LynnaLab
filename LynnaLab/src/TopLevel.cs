@@ -88,10 +88,6 @@ public static class TopLevel
 
     static SettingsDialog settingsDialog;
 
-    // Vars related to modal windows
-    static Queue<ModalStruct> modalQueue = new Queue<ModalStruct>();
-    static bool rememberGameChoice;
-
     // ================================================================================
     // Properties
     // ================================================================================
@@ -149,7 +145,7 @@ public static class TopLevel
             if (Workspace == null)
                 backend.Close();
             else
-                CloseProjectModal(() => { backend.Close(); });
+                Modal.CloseProjectModal(Workspace, () => { backend.Close(); });
 
             backend.CloseRequested = false;
         }
@@ -171,7 +167,7 @@ public static class TopLevel
         ImGui.NewFrame();
         ImGui.PushFont(OraclesFont);
 
-        RenderModals();
+        Modal.RenderModals();
 
         // Don't render the workspace if we're handling an exception right now, because it is
         // probably something in Workspace.Render that caused the exception in the first place.
@@ -191,7 +187,7 @@ public static class TopLevel
                 {
                     if (ImGui.MenuItem("Open"))
                     {
-                        OpenProjectModal();
+                        Modal.OpenProjectModal();
                     }
                     ImGui.EndMenu();
                 }
@@ -248,43 +244,6 @@ public static class TopLevel
 
         ImGuiX.UpdateStyle();
         Backend.RecreateFontTexture();
-    }
-
-    /// <summary>
-    /// Open a modal window with the given name, using the given function to render its contents.
-    /// It will be opened after any other modal windows have been closed.
-    /// </summary>
-    public static void OpenModal(string name, Func<bool> renderFunc)
-    {
-        modalQueue.Enqueue(new ModalStruct { name = name, renderFunc = renderFunc });
-    }
-
-    /// <summary>
-    /// Render code for modal windows.
-    /// This is in the TopLevel class because some modals are needed even when no Workspace is loaded.
-    /// </summary>
-    public static void RenderModals()
-    {
-        if (modalQueue.Count != 0)
-        {
-            ModalStruct modal = (ModalStruct)modalQueue.Peek();
-
-            // There seems to be no harm in calling this repeatedly instead of just once
-            ImGui.OpenPopup(modal.name);
-
-            // Put it in the center of the screen
-            ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), 0, new Vector2(0.5f, 0.5f));
-
-            if (ImGui.BeginPopupModal(modal.name, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar))
-            {
-                if (modal.renderFunc())
-                {
-                    modalQueue.Dequeue();
-                    ImGui.CloseCurrentPopup();
-                }
-                ImGui.EndPopup();
-            }
-        }
     }
 
     /// <summary>
@@ -349,7 +308,7 @@ public static class TopLevel
 
         var loadProject = (string game) =>
         {
-            LoadingModal($"Loading project: {path} ({game})...", () =>
+            Modal.LoadingModal($"Loading project: {path} ({game})...", () =>
             {
                 var project = new Project(path, game, config);
                 Workspace = new ProjectWorkspace(project);
@@ -358,7 +317,7 @@ public static class TopLevel
 
         if (config == null)
         {
-            DisplayMessageModal("Error", $"Error opening directory: {path}\n\nCouldn't find project config file (config.yaml). Please select the \"oracles-disasm\" folder to open.\n\nIf you're on Windows, you may need to execute the \"windows-setup.bat\" file first.");
+            Modal.DisplayMessageModal("Error", $"Error opening directory: {path}\n\nCouldn't find project config file (config.yaml). Please select the \"oracles-disasm\" folder to open.\n\nIf you're on Windows, you may need to execute the \"windows-setup.bat\" file first.");
         }
         else if (gameOverride != null)
         {
@@ -370,7 +329,7 @@ public static class TopLevel
         }
         else
         {
-            TopLevel.SelectGameModal(path, (game, rememberGameChoice) =>
+            Modal.SelectGameModal(path, (game, rememberGameChoice) =>
             {
                 if (rememberGameChoice)
                     config.SetEditingGame(game);
@@ -379,213 +338,24 @@ public static class TopLevel
         }
     }
 
+    public static void SaveProject()
+    {
+        Workspace?.Project.Save();
+    }
+
+    /// <summary>
+    /// Close the project. Normally, this should be called through Modal.CloseProjectModal to ensure
+    /// no data is lost.
+    /// </summary>
+    public static void CloseProject()
+    {
+        Workspace?.Close();
+        Workspace = null;
+    }
+
     public static void DoNextFrame(Action action)
     {
         actionsForNextFrame.Enqueue(action);
-    }
-
-    // ================================================================================
-    // Modal windows
-    // ================================================================================
-
-    // Offer to save the project before closing. Pops up when attempting to close the window, or
-    // "Project -> Close" (slightly different things).
-    // If the project is not modified then it is immediately closed.
-    public static void CloseProjectModal(Action callback = null)
-    {
-        Debug.Assert(Workspace != null);
-
-        var close = () =>
-        {
-            Workspace.Close();
-            Workspace = null;
-            if (callback != null)
-                callback();
-        };
-
-        if (!Workspace.Project.Modified)
-        {
-            DoNextFrame(close);
-            return;
-        }
-
-        OpenModal("Close Project", () =>
-        {
-            ImGui.Text("Save project before closing?");
-
-            if (ImGui.Button("Save"))
-            {
-                Workspace.Project.Save();
-                close();
-                return true;
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Don't save"))
-            {
-                close();
-                return true;
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Cancel"))
-            {
-                return true;
-            }
-            return false;
-        });
-    }
-
-    public static void OpenProjectModal()
-    {
-        string selectedFolder = null;
-        bool callbackReceived = false;
-
-        Backend.ShowOpenFolderDialog(null, (folder) =>
-        {
-            selectedFolder = folder;
-            callbackReceived = true;
-        });
-
-        OpenModal("Open project", () =>
-        {
-            ImGui.Text("Waiting for file dialog...");
-
-            if (callbackReceived)
-            {
-                if (selectedFolder != null)
-                {
-                    OpenProject(selectedFolder);
-                }
-                return true;
-            }
-
-            return false;
-        });
-    }
-
-    /// <summary>
-    /// Dispays a modal for a single frame. Call this when performing some action that interrupts
-    /// ImGui rendering for an extended period of time and you want to set up a modal before
-    /// starting the action.
-    /// </summary>
-    public static void LoadingModal(string message, Action action)
-    {
-        int frameCounter = 0;
-
-        OpenModal("Loading", () =>
-        {
-            ImGui.Text(message);
-
-            if (frameCounter == 2)
-            {
-                action();
-                return true;
-            }
-            frameCounter++;
-            return false;
-        });
-    }
-
-    public static void DisplayMessageModal(string title, string message)
-    {
-        OpenModal(title, () =>
-        {
-            ImGui.Text(message);
-            return ImGui.Button("OK");
-        });
-    }
-
-    /// <summary>
-    /// Display a message for a certain number of seconds. Can left click anywhere to close.
-    /// </summary>
-    public static void DisplayTimedMessageModal(string title, string message, float seconds = 3.0f)
-    {
-        Stopwatch watch = Stopwatch.StartNew();
-        OpenModal(title, () =>
-        {
-            ImGui.Text(message);
-
-            if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
-                return true;
-
-            return watch.Elapsed.Seconds >= seconds;
-        });
-    }
-
-    public static void DisplayExceptionModal(Exception e)
-    {
-        modalQueue.Clear();
-        OpenModal("Exception", () =>
-        {
-            ImGui.PushFont(TopLevel.DefaultFont);
-
-            ImGui.Text("An unhandled exception occurred!\n\nYou can attempt to resume LynnaLab, but the program may be in an invalid state.\n\nException details:");
-
-            Vector2 exceptionViewSize = ImGui.GetMainViewport().Size * 0.8f;
-
-            if (ImGui.BeginChild("Exception details", exceptionViewSize, ImGuiChildFlags.FrameStyle))
-            {
-                ImGui.Text(e.ToString());
-            }
-            ImGui.EndChild();
-
-            bool retval = false;
-
-            if (Workspace != null)
-            {
-                if (ImGui.Button("Save project and quit"))
-                {
-                    Program.handlingException = null;
-                    Workspace.Project.Save();
-                    Environment.Exit(1);
-                    retval = true;
-                }
-                ImGui.SameLine();
-            }
-
-            if (ImGui.Button("Quit without saving"))
-            {
-                Environment.Exit(1);
-                retval = true;
-            }
-            ImGui.SameLine();
-
-            if (ImGui.Button("Attempt to resume (not recommended)"))
-            {
-                Program.handlingException = null;
-                retval = true;
-            }
-
-            ImGui.PopFont();
-            return retval;
-        });
-    }
-
-    public static void SelectGameModal(string path, Action<string, bool> onSelected)
-    {
-        // Deciding which game to edit after selecting a project
-        OpenModal("Select Game", () =>
-        {
-            string gameChoice = null;
-
-            ImGui.Text("Opening project at: " + path + "\n\n");
-            ImGui.Text("Which game to edit?");
-            if (ImGui.Button("Ages"))
-                gameChoice = "ages";
-            ImGui.SameLine();
-            if (ImGui.Button("Seasons"))
-                gameChoice = "seasons";
-            ImGui.Checkbox("Remember my choice", ref rememberGameChoice);
-
-            if (gameChoice != null)
-            {
-                onSelected(gameChoice, rememberGameChoice);
-
-                rememberGameChoice = false;
-                return true;
-            }
-
-            return false;
-        });
     }
 
     // ================================================================================
@@ -606,12 +376,6 @@ public static class TopLevel
     // ================================================================================
     // Nested structs
     // ================================================================================
-
-    struct ModalStruct
-    {
-        public string name;
-        public Func<bool> renderFunc;
-    }
 
     class FontStruct
     {

@@ -39,7 +39,7 @@ public class GlobalConfig
         }
         catch (Exception)
         {
-            TopLevel.DisplayMessageModal("Error", "Error parsing global_config.yaml. Default settings will be used.");
+            Modal.DisplayMessageModal("Error", "Error parsing global_config.yaml. Default settings will be used.");
         }
 
         if (retval != null)

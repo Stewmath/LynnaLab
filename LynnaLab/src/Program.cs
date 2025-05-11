@@ -60,7 +60,7 @@ class Program
                 handlingException = e;
                 Console.WriteLine("Unhandled exception occurred!");
                 Console.WriteLine(e);
-                TopLevel.DisplayExceptionModal(e);
+                Modal.DisplayExceptionModal(e, () => TopLevel.SaveProject());
             }
         }
     }
