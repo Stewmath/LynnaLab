@@ -64,7 +64,8 @@ public unsafe class SDLWindow
     // Events
     // ================================================================================
 
-    public event Action Resized;
+    // Parameter is true if display scale changed
+    public event Action<bool> Resized;
 
     // ================================================================================
     // Public methods
@@ -92,6 +93,9 @@ public unsafe class SDLWindow
         var keyPresses = new List<uint>();
         var keyEvents = new List<KeyEvent>();
 
+        bool updateSize = false;
+        bool updateScale = false;
+
         SDL_Event ev;
         while (SDL_PollEvent(&ev))
         {
@@ -111,17 +115,26 @@ public unsafe class SDLWindow
                     Close();
                     break;
                 case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
-                case SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
                 case SDL_EventType.SDL_EVENT_WINDOW_MINIMIZED:
                 case SDL_EventType.SDL_EVENT_WINDOW_MAXIMIZED:
                 case SDL_EventType.SDL_EVENT_WINDOW_RESTORED:
-                    UpdateSize();
-                    Resized?.Invoke();
+                    updateSize = true;
+                    break;
+                case SDL_EventType.SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
+                case SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+                    updateSize = true;
+                    updateScale = true;
                     break;
                 default:
                     //Console.WriteLine($"EVENT: {ev.Type}");
                     break;
             }
+        }
+
+        if (updateSize)
+        {
+            UpdateSize();
+            Resized?.Invoke(updateScale);
         }
 
         snapshot.KeyCharPresses = keyPresses;

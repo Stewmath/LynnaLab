@@ -52,6 +52,12 @@ public static class TopLevel
         ImGuiX.BackupStyle();
         ReAdjustScale();
 
+        backend.DisplayScaleChanged += () =>
+        {
+            if (!GlobalConfig.OverrideSystemScaling)
+                ReAdjustScale();
+        };
+
         settingsDialog = new SettingsDialog("Settings Dialog");
 
         if (path != null)

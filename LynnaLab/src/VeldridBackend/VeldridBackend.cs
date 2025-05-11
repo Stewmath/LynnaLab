@@ -31,10 +31,12 @@ public class VeldridBackend
             out window,
             out gd);
 
-        window.Resized += () =>
+        window.Resized += (bool scaleChanged) =>
         {
             FramebufferSize = window.SizeInPixels.AsVector2();
             gd.MainSwapchain.Resize((uint)FramebufferSize.X, (uint)FramebufferSize.Y);
+            if (scaleChanged)
+                DisplayScaleChanged?.Invoke();
         };
 
         window.SetCloseRequestedHandler(CloseRequestedHandler);
@@ -86,6 +88,12 @@ public class VeldridBackend
     public unsafe float WindowPixelDensity { get { return SDL.SDL3.SDL_GetWindowPixelDensity(window.Handle); } }
 
     public Vector2 FramebufferSize { get; private set; }
+
+    // ================================================================================
+    // Events
+    // ================================================================================
+
+    public event Action DisplayScaleChanged;
 
     // ================================================================================
     // Public methods
