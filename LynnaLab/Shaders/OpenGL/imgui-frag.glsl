@@ -1,6 +1,7 @@
 #version 330 core
 
-uniform sampler2D Texture;
+uniform sampler2D PointTexture;
+uniform sampler2D BilinearTexture;
 
 uniform FragGlobalsStruct
 {
@@ -61,9 +62,11 @@ void main()
     vec4 newColor;
 
     if (InterpolationMode == 0) // Nearest Neighbor
-        newColor = texture(Texture, texCoord);
-    else // Bicubic
-        newColor = textureBicubic(Texture, texCoord);
+        newColor = texture(PointTexture, texCoord);
+    else if (InterpolationMode == 1) // Bilinear
+        newColor = texture(BilinearTexture, texCoord);
+    else if (InterpolationMode == 2) // Bicubic
+        newColor = textureBicubic(PointTexture, texCoord);
 
     outputColor = newColor * vec4(color.rgb, alpha * color.a);
 }

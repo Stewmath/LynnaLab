@@ -242,7 +242,8 @@ public class VeldridBackend
 public enum Interpolation
 {
     Nearest = 0,
-    Bicubic = 1,
+    Bilinear = 1,
+    Bicubic = 2,
 
     Count
 }

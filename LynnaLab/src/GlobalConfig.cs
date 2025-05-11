@@ -75,7 +75,7 @@ public class GlobalConfig
 
     // Display
     public bool LightMode { get; set; } = false;
-    public Interpolation Interpolation { get; set; } = Interpolation.Bicubic;
+    public Interpolation Interpolation { get; set; } = Interpolation.Bilinear;
     public bool DarkenDuplicateRooms { get; set; } = true;
     public bool ShowBrushPreview { get; set; } = true;
     public bool OverrideSystemScaling { get; set; } = false;

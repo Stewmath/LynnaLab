@@ -681,6 +681,8 @@ public class RoomLayoutEditor : TileGrid
         /// </summary>
         protected void SpriteDrawer(Bitmap sprite, int xOffset, int yOffset)
         {
+            // NOTE: Objects are drawn sprite-by-sprite, so don't try to use anything other than
+            // nearest-neighbor interpolation here.
             var origin = ImGui.GetCursorScreenPos();
             var offset = new Vector2(X + xOffset, Y + yOffset);
             TextureBase texture = TopLevel.TextureFromBitmapTracked(sprite);

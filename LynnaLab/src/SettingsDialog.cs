@@ -50,15 +50,17 @@ public class SettingsDialog : Frame
 
         if (beginSection("Display"))
         {
+            int filter = (int)GlobalConfig.Interpolation;
+            if (ImGui.Combo("Filter", ref filter, new string[] { "Nearest", "Bilinear", "Bicubic" }, 3))
+            {
+                GlobalConfig.Interpolation = (Interpolation)filter;
+            }
+            ImGuiX.TooltipOnHover("How to handle non-integer scaling (mainly on minimaps).");
+
             ImGuiX.Checkbox("Light Mode", GlobalConfig.LightMode, (value) =>
             {
                 GlobalConfig.LightMode = value;
                 ImGuiX.UpdateStyle();
-            });
-
-            ImGuiX.Checkbox("Bicubic filter", GlobalConfig.Interpolation == Interpolation.Bicubic, (value) =>
-            {
-                GlobalConfig.Interpolation = value ? Interpolation.Bicubic : Interpolation.Nearest;
             });
 
             ImGuiX.Checkbox("Darken duplicate rooms",

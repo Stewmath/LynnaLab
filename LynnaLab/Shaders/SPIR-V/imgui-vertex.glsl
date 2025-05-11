@@ -14,7 +14,7 @@ layout (binding = 0) uniform ProjectionMatrixBuffer
 
 // Determines the window of the source texture to read from.
 // Normally, topLeft=(0, 0), bottomRight=(1, 1) to read the whole texture.
-layout (set = 1, binding = 3) uniform SourceViewportBuffer
+layout (set = 1, binding = 5) uniform SourceViewportBuffer
 {
     vec2 topLeft;
     vec2 bottomRight;

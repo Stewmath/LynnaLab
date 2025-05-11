@@ -311,6 +311,8 @@ public class TileGrid : SizedWidget
     // Public methods
     // ================================================================================
 
+    // NOTE: RoomEditor overrides this and doesn't call it, instead opting to call RenderTileGrid()
+    // and RenderHoverSelection() on its own terms.
     public virtual void Render()
     {
         // Start position of window containing the scrollbars

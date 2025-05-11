@@ -149,8 +149,10 @@ public class ImGuiController : IDisposable
 
         // Layout for rendering textures (including font)
         textureLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
-            new ResourceLayoutElementDescription("Texture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
-            new ResourceLayoutElementDescription("MainSampler", ResourceKind.Sampler, ShaderStages.Fragment),
+            new ResourceLayoutElementDescription("PointTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+            new ResourceLayoutElementDescription("PointSampler", ResourceKind.Sampler, ShaderStages.Fragment),
+            new ResourceLayoutElementDescription("BilinearTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+            new ResourceLayoutElementDescription("BilinearSampler", ResourceKind.Sampler, ShaderStages.Fragment),
             new ResourceLayoutElementDescription("FragGlobalsStruct", ResourceKind.UniformBuffer, ShaderStages.Fragment),
             new ResourceLayoutElementDescription("SourceViewportBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex)
                                                       ));
@@ -216,23 +218,7 @@ public class ImGuiController : IDisposable
         }
 
         ResourceFactory factory = gd.ResourceFactory;
-        Sampler sampler;
         ResourceSet resourceSet;
-
-        // TODO: Maybe just stick to one sampler - updates to textureGlobalsStruct won't affect this later
-        if (textureGlobalsStruct.InterpolationMode == (int)Interpolation.Nearest)
-        {
-            sampler = gd.PointSampler;
-        }
-        else if (textureGlobalsStruct.InterpolationMode == (int)Interpolation.Bicubic)
-        {
-            // This seems to have some effect, but the bulk of the work is in the shader
-            sampler = gd.LinearSampler;
-        }
-        else
-        {
-            throw new Exception($"Interpolation method {textureGlobalsStruct.InterpolationMode} unknown");
-        }
 
         Texture baseTexture = null;
         DeviceBuffer sourceViewportBuffer = fullSourceViewportBuffer;
@@ -264,7 +250,9 @@ public class ImGuiController : IDisposable
         resourceSet = factory.CreateResourceSet(
             new ResourceSetDescription(textureLayout,
                                        baseTexture,
-                                       sampler,
+                                       gd.PointSampler,
+                                       baseTexture,
+                                       gd.LinearSampler,
                                        textureGlobalsBuffer,
                                        sourceViewportBuffer
             ));
@@ -446,6 +434,8 @@ public class ImGuiController : IDisposable
             textureLayout,
             fontTextureView,
             gd.PointSampler,
+            fontTextureView,
+            gd.LinearSampler,
             fontFragBuffer,
             fullSourceViewportBuffer));
 
