@@ -16,9 +16,12 @@ namespace LynnaLab;
 /// </summary>
 public static class TopLevel
 {
+    /// <summary>
+    /// Called upon initialization. Optionally takes parameters for the project to load.
+    /// </summary>
     public static void Load(string path = null, string game = null)
     {
-        string versionString = new StreamReader(Helper.GetResourceStream("LynnaLab.version.txt")).ReadToEnd().Trim();
+        string versionString = Helper.ReadResourceFile("LynnaLab.version.txt").Trim();
         backend = new VeldridBackend.VeldridBackend("LynnaLab", versionString);
 
         ImageDir = Path.GetDirectoryName(System.AppContext.BaseDirectory) + "/Images/";
@@ -36,22 +39,21 @@ public static class TopLevel
             // TODO: Save on exit?
         }
 
-        TopLevel.DefaultFont = ImGui.GetFont();
-        TopLevel.OraclesFont = ImGuiX.LoadFont(
-            Helper.GetResourceStream("LynnaLab.ZeldaOracles.ttf"), 18);
-        TopLevel.OraclesFont24px = ImGuiX.LoadFont(
-            Helper.GetResourceStream("LynnaLab.ZeldaOracles.ttf"), 24);
+        AddFont("default", null, 13);
+        AddFont("oracles", "LynnaLab.ZeldaOracles.ttf", 18);
+        AddFont("oracles24px", "LynnaLab.ZeldaOracles.ttf", 24);
 
         ImGui.StyleColorsDark(); // Default style
         //ImGui.StyleColorsClassic();
         //ImGui.StyleColorsLight();
 
-        backend.RecreateFontTexture();
-
         stopwatch = Stopwatch.StartNew();
 
         if (path != null)
             TopLevel.OpenProject(path, game);
+
+        ImGuiX.BackupStyle();
+        ReAdjustScale(Backend.WindowDisplayScale);
     }
 
     // ================================================================================
@@ -67,7 +69,8 @@ public static class TopLevel
     static Backend backend;
     static Stopwatch stopwatch;
 
-    static Dictionary<Bitmap, RgbaTexture> imageDict = new Dictionary<Bitmap, RgbaTexture>();
+    static Dictionary<Bitmap, RgbaTexture> imageDict = new();
+    static Dictionary<string, FontStruct> fontDict = new();
 
     static Queue<Action> actionsForNextFrame = new();
 
@@ -87,9 +90,9 @@ public static class TopLevel
     public static GlobalConfig GlobalConfig { get; private set; }
     public static string ImageDir { get; private set; }
 
-    public static ImFontPtr DefaultFont { get; private set; }
-    public static ImFontPtr OraclesFont { get; private set; }
-    public static ImFontPtr OraclesFont24px { get; private set; }
+    public static ImFontPtr DefaultFont { get { return fontDict["default"].ptr; } }
+    public static ImFontPtr OraclesFont { get { return fontDict["oracles"].ptr; } }
+    public static ImFontPtr OraclesFont24px { get { return fontDict["oracles24px"].ptr; } }
 
     public static RgbaTexture PegasusSeedTexture { get; private set; }
 
@@ -184,6 +187,42 @@ public static class TopLevel
         }
 
         ImGui.PopFont();
+    }
+
+    /// <summary>
+    /// Scales fonts and styles with the given scale value, for high-DPI displays.
+    /// </summary>
+    public static unsafe void ReAdjustScale(float scale)
+    {
+        ImGuiX.ScaleUnit = scale;
+
+        ImGui.GetIO().Fonts.Clear();
+
+        foreach (FontStruct font in fontDict.Values)
+        {
+            if (font.name == "default")
+            {
+                // It's not recommended to scale the default font as it's a bitmap font
+                // (ProggyClean). Maybe replace it with something else.
+                ImFontConfig config;
+                config.FontDataOwnedByAtlas = 1;
+                config.GlyphMaxAdvanceX = float.MaxValue;
+                config.RasterizerMultiply = 1.0f;
+                config.RasterizerDensity = 1.0f;
+                config.OversampleH = config.OversampleV = 1;
+                config.SizePixels = font.baseSize * scale;
+                font.ptr = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
+            }
+            else
+            {
+                Stream stream = Helper.GetResourceStream(font.resource);
+                font.ptr = ImGuiX.LoadFont(stream, (int)(font.baseSize * scale));
+                stream.Close();
+            }
+        }
+
+        ImGuiX.UpdateStyle();
+        Backend.RecreateFontTexture();
     }
 
     /// <summary>
@@ -507,6 +546,20 @@ public static class TopLevel
         });
     }
 
+    // ================================================================================
+    // Private methods
+    // ================================================================================
+
+    static void AddFont(string name, string resource, float baseSize)
+    {
+        FontStruct font = new();
+        font.name = name;
+        font.ptr = null; // Will be loaded later
+        font.resource = resource;
+        font.baseSize = baseSize;
+        fontDict[name] = font;
+    }
+
 
     // ================================================================================
     // Nested structs
@@ -516,5 +569,13 @@ public static class TopLevel
     {
         public string name;
         public Func<bool> renderFunc;
+    }
+
+    class FontStruct
+    {
+        public string name;
+        public ImFontPtr ptr;
+        public string resource;
+        public float baseSize;
     }
 }

@@ -124,7 +124,7 @@ public class ObjectGroupEditor : Frame
     public override void Render()
     {
         // Allocate a certain amount of space for the fields at the bottom, only if an object is selected
-        var childSize = ImGui.GetContentRegionAvail() - new Vector2(0.0f, 300.0f);
+        var childSize = ImGui.GetContentRegionAvail() - new Vector2(0.0f, ImGuiX.Unit(300.0f));
         if (SelectedObject == null)
             childSize = new Vector2(0.0f, 0.0f);
 
@@ -149,7 +149,7 @@ public class ObjectGroupEditor : Frame
                     ImGuiX.TooltipOnHover(tooltip);
 
                     if (ImGui.BeginChild(box.ObjectGroup.Identifier + " frame",
-                                         box.WidgetSize + new Vector2(12.0f, 16.0f),
+                                         box.WidgetSize + ImGuiX.Unit(12.0f, 16.0f),
                                          ImGuiChildFlags.Borders))
                     {
                         box.Render();

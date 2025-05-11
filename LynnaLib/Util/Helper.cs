@@ -89,7 +89,10 @@ namespace Util
         // Read a resource file
         public static string ReadResourceFile(string name)
         {
-            return new StreamReader(GetResourceStream(name, Assembly.GetCallingAssembly())).ReadToEnd();
+            Stream stream = GetResourceStream(name, Assembly.GetCallingAssembly());
+            string data = new StreamReader(stream).ReadToEnd();
+            stream.Close();
+            return data;
         }
     }
 

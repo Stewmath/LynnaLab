@@ -77,13 +77,34 @@ public class TileGrid : SizedWidget
         }
     }
 
+    /// <summary>
+    /// Total size of the draw area, accounting for global scaling. This includes the area inside
+    /// the scroll bars if InChildWindow = true.
+    /// </summary>
     public Vector2 CanvasSize
     {
         get
         {
-            return new Vector2(CanvasWidth, CanvasHeight);
+            return new Vector2(
+                (PaddedTileWidth * Width + TilePaddingX) * Scale,
+                (PaddedTileHeight * Height + TilePaddingY) * Scale);
         }
     }
+
+    /// <summary>
+    /// Size of window; if this gets any bigger scrollbars will appear.
+    ///
+    /// This value is in units from BEFORE global scaling is applied (ImGuiX.ScaleUnit).
+    ///
+    /// Has no effect unless InChildWindow = true. Otherwise, check CanvasSize or WidgetSize.
+    /// </summary>
+    public Vector2 RequestedViewportSize { get; set; }
+
+    /// <summary>
+    /// Like above, but after global scaling is applied.
+    /// </summary>
+    public Vector2 ViewportSize { get { return RequestedViewportSize * ImGuiX.ScaleUnit; } }
+
 
     // Number of tiles on each axis
     public int Width { get; protected set; }
@@ -102,15 +123,33 @@ public class TileGrid : SizedWidget
     public float PaddedTileWidth { get { return TileWidth + TilePaddingX; } }
     public float PaddedTileHeight { get { return TileHeight + TilePaddingY; } }
 
-    // Variables related to zooming. If "InChildWindow" is true, then the TileGrid is rendered
-    // within a scrollable window. Otherwise only the "Scale" variable is really relevant.
-    public float Scale { get; set; } = 1.0f;
+    /// <summary>
+    /// Scale factor of the TileGrid, before global scaling is applied (see Scale for result after
+    /// global scaling).
+    /// </summary>
+    public float RequestedScale { get; set; } = 1.0f;
+
     public float MaxScale { get; set; } = 1.0f;
     public float MinScale { get; set; } = 1.0f;
-    public bool InChildWindow { get; set; } // If true, this is rendered in a child window with scrollbars
-    public bool ScrollToZoom { get; set; } = true; // If false, scrollwheel moves scrollbars rather than zooming
+
+    /// <summary>
+    /// Scale factor of the TileGrid, after accounting for global scaling.
+    ///
+    /// This is not writable; set "RequestedScale" instead.
+    /// </summary>
+    public float Scale { get { return RequestedScale * ImGuiX.ScaleUnit; } }
+
+    /// <summary>
+    /// If true, then the TileGrid is rendered within a scrollable window.
+    /// </summary>
+    public bool InChildWindow { get; set; }
+
+    /// <summary>
+    /// If false, scrollwheel moves scrollbars rather than zooming
+    /// </summary>
+    public bool ScrollToZoom { get; set; } = true;
+
     public Interpolation Interpolation { get; set; } = Interpolation.Bicubic;
-    public Vector2 ViewportSize { get; set; } // Size of window; if this gets any bigger scrollbars will appear
 
     public BrushInterfacer BrushInterfacer { get; set; }
 
@@ -215,22 +254,10 @@ public class TileGrid : SizedWidget
     public Color SelectColor { get; protected set; } = Color.White;
     public Color DragColor { get; protected set; } = Color.Cyan;
 
+    /// <summary>
+    /// Thickness of selection / hover rectangles, before global scaling is applied.
+    /// </summary>
     public float RectThickness { get; set; } = 3.0f;
-
-    public float CanvasWidth
-    {
-        get
-        {
-            return (PaddedTileWidth * Width + TilePaddingX) * Scale;
-        }
-    }
-    public float CanvasHeight
-    {
-        get
-        {
-            return (PaddedTileHeight * Height + TilePaddingY) * Scale;
-        }
-    }
 
     /// <summary>
     /// Name used for unique ImGui IDs
@@ -243,7 +270,7 @@ public class TileGrid : SizedWidget
     public bool TooltipImagePreview { get; set; } = false;
 
     /// <summary>
-    /// Amount to scale tile image for drag preview
+    /// Amount to scale tile image for drag preview (before global scaling is applied)
     /// </summary>
     public float TooltipImagePreviewScale { get; set; } = 4.0f;
 
@@ -341,11 +368,11 @@ public class TileGrid : SizedWidget
                     this.centerScaledPos = topLevelMousePos;
                     this.centerUnscaledPos = (centerScaledPos + ImGuiX.GetScroll()) / Scale;
 
-                    Scale *= 1.0f + (offset * 0.2f); // Adjust size by 20% per tick
-                    if (Scale >= MaxScale)
-                        Scale = MaxScale;
-                    if (Scale <= MinScale)
-                        Scale = MinScale;
+                    RequestedScale *= 1.0f + (offset * 0.2f); // Adjust size by 20% per tick
+                    if (RequestedScale >= MaxScale)
+                        RequestedScale = MaxScale;
+                    if (RequestedScale <= MinScale)
+                        RequestedScale = MinScale;
                 }
             }
 
@@ -367,7 +394,7 @@ public class TileGrid : SizedWidget
 
         const int MAX_SLIDER_VALUE = 100;
 
-        int minimapScale = (int)(((Scale - MinScale) / (MaxScale - MinScale)) * 100);
+        int minimapScale = (int)(((RequestedScale - MinScale) / (MaxScale - MinScale)) * 100);
 
         ImGui.PushItemWidth(200);
         ImGui.SameLine(); // Same line as whatever came before this (World/Season selector buttons)
@@ -381,7 +408,7 @@ public class TileGrid : SizedWidget
                 SelectedY * TileHeight + TileHeight / 2.0f);
             this.centerScaledPos = centerUnscaledPos * Scale - lastFrameScroll;
 
-            Scale = MinScale + (minimapScale / (float)MAX_SLIDER_VALUE) * (MaxScale - MinScale);
+            RequestedScale = MinScale + (minimapScale / (float)MAX_SLIDER_VALUE) * (MaxScale - MinScale);
         }
 
         ImGui.PopItemWidth();
@@ -426,13 +453,13 @@ public class TileGrid : SizedWidget
                 {
                     dragging = true;
                     draggingTileIndex = XYToTile(x, y);
-                    DrawTileImage(draggingTileIndex, TooltipImagePreviewScale);
+                    DrawTileImage(draggingTileIndex, TooltipImagePreviewScale * ImGuiX.ScaleUnit);
                     OnDrag(draggingTileIndex);
                     ImGui.EndDragDropSource();
 
                     // Draw rectangle on tile being dragged
                     FRect r = TileRect(draggingTileIndex);
-                    base.AddRect(r, DragColor, thickness: RectThickness);
+                    base.AddRect(r, DragColor, thickness: RectThickness * ImGuiX.ScaleUnit);
 
                     // Unselect tile. The issue is that we don't want tiles to be selected
                     // when they're actually being dragged. Not the best way to fix this,
@@ -459,7 +486,7 @@ public class TileGrid : SizedWidget
                 if (TooltipImagePreview)
                 {
                     ImGui.BeginTooltip();
-                    DrawTileImage(tile, TooltipImagePreviewScale);
+                    DrawTileImage(tile, TooltipImagePreviewScale * ImGuiX.ScaleUnit);
                     ImGui.EndTooltip();
                 }
                 OnHover?.Invoke(tile);
@@ -630,20 +657,20 @@ public class TileGrid : SizedWidget
             FRect r = TileRangeRect(mouseIndex, XYToTile(
                                         Math.Min(hoverX + hoverWidth - 1, Width - 1),
                                         Math.Min(hoverY + hoverHeight - 1, Height - 1)));
-            base.AddRect(r, HoverColor, thickness: RectThickness);
+            base.AddRect(r, HoverColor, thickness: RectThickness * ImGuiX.ScaleUnit);
         }
 
         if (RectangleSelected || SelectingRectangle)
         {
             // Draw rectangle selection range
-            base.AddRect(TileRangeRect(rectSelectStart, rectSelectEnd), SelectColor, RectThickness);
+            base.AddRect(TileRangeRect(rectSelectStart, rectSelectEnd), SelectColor, RectThickness * ImGuiX.ScaleUnit);
         }
 
         if (!RectangleSelected && !SelectingRectangle && Selectable && SelectedIndex != -1)
         {
             // Draw regular (1-tile) selection rectangle
             FRect r = TileRect(SelectedIndex);
-            base.AddRect(r, SelectColor, thickness: RectThickness);
+            base.AddRect(r, SelectColor, thickness: RectThickness * ImGuiX.ScaleUnit);
         }
     }
 
@@ -722,7 +749,7 @@ public class TileGrid : SizedWidget
     /// </summary>
     public int CoordToTile(Vector2 pos)
     {
-        if (pos.X < 0 || pos.Y < 0 || pos.X >= CanvasWidth || pos.Y >= CanvasHeight)
+        if (pos.X < 0 || pos.Y < 0 || pos.X >= CanvasSize.X || pos.Y >= CanvasSize.Y)
             return -1;
 
         int y = (int)((pos.Y - TilePaddingY * Scale / 2) / (PaddedTileHeight * Scale));
@@ -944,7 +971,7 @@ public class TileGrid : SizedWidget
     /// </summary>
     void UpdateScroll()
     {
-        ImGui.SetNextWindowContentSize(new Vector2(CanvasWidth, CanvasHeight));
+        ImGui.SetNextWindowContentSize(new Vector2(CanvasSize.X, CanvasSize.Y));
 
         if (centerScaledPos != null)
         {

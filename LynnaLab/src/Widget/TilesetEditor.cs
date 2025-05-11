@@ -19,8 +19,8 @@ public class TilesetEditor : Frame
         tilesetViewer.InChildWindow = true;
         tilesetViewer.MinScale = 2.0f;
         tilesetViewer.MaxScale = 3.0f;
-        tilesetViewer.Scale = 2.0f;
-        tilesetViewer.ViewportSize = tilesetViewer.CanvasSize;
+        tilesetViewer.RequestedScale = 2.0f;
+        tilesetViewer.RequestedViewportSize = new Vector2(1, 1) * (256 * 2);
 
         tilesetViewer.SelectedEvent += (selectedIndex) =>
         {
@@ -78,12 +78,12 @@ public class TilesetEditor : Frame
 
     public override void Render()
     {
-        float HEIGHT = tilesetViewer.WidgetSize.Y + 40.0f;
+        float HEIGHT = tilesetViewer.WidgetSize.Y + ImGuiX.Unit(40.0f);
 
         ImGuiLL.TilesetChooser(Project, "Chooser", Tileset.Index, Tileset.Season,
             (t, s) => SetTileset(t, s));
         ImGui.SameLine();
-        ImGuiX.ShiftCursorScreenPos(10.0f, 0.0f);
+        ImGuiX.ShiftCursorScreenPos(ImGuiX.Unit(10.0f), 0.0f);
 
         if (ImGui.Button("Open Cloner"))
         {
@@ -97,7 +97,7 @@ public class TilesetEditor : Frame
             ImGuiX.TooltipOnHover("Changes to tiles affect all seasons, not just the current selected one.");
         }
 
-        ImGui.PushItemWidth(200.0f);
+        ImGui.PushItemWidth(ImGuiX.Unit(200.0f));
         if (ImGui.BeginCombo("##Brush Mode", BrushModeString(BrushMode)))
         {
             string[] tooltips = {
@@ -600,7 +600,7 @@ class SubTileViewer : GfxViewer
         base.TileHeight = 8;
         base.Width = 16;
         base.Height = 16;
-        base.Scale = 2;
+        base.RequestedScale = 2;
         base.Selectable = false;
         base.TooltipImagePreview = true;
         base.TooltipImagePreviewScale = TILE_IMAGE_SCALE;
@@ -678,7 +678,7 @@ class TileEditor : TileGrid
 
         base.TileWidth = base.TileHeight = 8;
         base.Width = base.Height = 2;
-        base.Scale = 4;
+        base.RequestedScale = 4;
         base.CenterX = true;
 
         base.Selectable = true;
@@ -805,7 +805,7 @@ class TileEditor : TileGrid
         {
             // In collision brush mode, instead of rendering subtile properties, just show the
             // collision data for this tile.
-            ImGui.PushItemWidth(100.0f);
+            ImGui.PushItemWidth(ImGuiX.Unit(100.0f));
             ImGui.Text("Collision:");
             ImGuiX.InputHex("##Collision", Tileset.GetTileCollision(TileIndex), (c) =>
             {

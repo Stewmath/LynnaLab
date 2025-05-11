@@ -14,7 +14,7 @@ public class Minimap : TileGrid
         base.InChildWindow = true;
         base.MinScale = 0.15f;
         base.MaxScale = 1.0f;
-        base.Scale = 0.2f;
+        base.RequestedScale = 0.2f;
 
         base.AfterRenderTileGrid += (_, _) =>
         {

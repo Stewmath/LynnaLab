@@ -51,7 +51,7 @@ public class TilesetCloner : Frame
     public override void Render()
     {
         Vector2 panelSize = sourceViewer.WidgetSize;
-        panelSize.Y += 80.0f;
+        panelSize.Y += ImGuiX.Unit(80.0f);
 
         changedDestTileset = false;
 

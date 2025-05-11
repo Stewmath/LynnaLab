@@ -103,14 +103,14 @@ public class ProjectWorkspace
     public QuickstartData QuickstartData { get; set; } = new QuickstartData();
     public Brush<int> Brush { get; private set; }
 
-    public bool ShowBrushPreview { get; private set; } = true;
-    public bool ViewObjects { get; private set; }
-    public bool ViewWarps { get; private set; }
-
     // For copy/pasting. This may or may not exist in the game (it may have been deleted), but it
     // should be copiable regardless.
     public ObjectDefinition CopiedObject { get; set; }
     public Color? CopiedColor { get; set; }
+
+    public bool ShowBrushPreview { get; private set; } = true;
+    public bool ViewObjects { get; private set; }
+    public bool ViewWarps { get; private set; }
 
     // Togglable settings that affect other modules (really just minimaps right now)
     public bool DarkenUsedDungeonRooms { get { return darkenUsedDungeonRooms; } }
@@ -232,10 +232,7 @@ public class ProjectWorkspace
 
                 if (ImGuiX.MenuItemCheckbox("Light Mode", ref lightMode))
                 {
-                    if (lightMode)
-                        ImGui.StyleColorsLight();
-                    else
-                        ImGui.StyleColorsDark();
+                    ImGuiX.SetLightMode(lightMode);
                 }
                 ImGuiX.MenuItemCheckbox(
                     "Hover preview",
@@ -269,16 +266,16 @@ public class ProjectWorkspace
             ImGui.EndMainMenuBar();
         }
 
-        if (ImGuiX.BeginToolbar("Toolbar", menuBarHeight, 50.0f))
+        if (ImGuiX.BeginToolbar("Toolbar", menuBarHeight, ImGuiX.Unit(50.0f)))
         {
-            if (ImGui.ImageButton("Run", TopLevel.PegasusSeedTexture.GetBinding(), TOOLBAR_BUTTON_SIZE))
+            if (ImGui.ImageButton("Run", TopLevel.PegasusSeedTexture.GetBinding(), ImGuiX.Unit(TOOLBAR_BUTTON_SIZE)))
             {
                 RunGame();
             }
             ImGuiX.TooltipOnHover("Run (F5)");
 
             ImGui.SameLine();
-            ImGuiX.ToggleImageButton("Quickstart", linkTexture.GetBinding(), TOOLBAR_BUTTON_SIZE,
+            ImGuiX.ToggleImageButton("Quickstart", linkTexture.GetBinding(), ImGuiX.Unit(TOOLBAR_BUTTON_SIZE),
                     QuickstartData.Enabled, ToggleQuickstart);
             ImGuiX.TooltipOnHover("Toggle Quickstart (F4)");
         }

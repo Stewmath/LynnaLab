@@ -53,7 +53,8 @@ public static class Startup
 
         SDL_WindowFlags flags =
             SDL_WindowFlags.SDL_WINDOW_RESIZABLE
-            | SDL_WindowFlags.SDL_WINDOW_MAXIMIZED;
+            | SDL_WindowFlags.SDL_WINDOW_MAXIMIZED
+            | SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
         if (backend == GraphicsBackend.OpenGL || backend == GraphicsBackend.OpenGLES)
             flags |= SDL_WindowFlags.SDL_WINDOW_OPENGL;
@@ -94,8 +95,8 @@ public static class Startup
     {
         SwapchainDescription scDesc = new SwapchainDescription(
             GetSwapchainSource(window),
-            (uint)window.Width,
-            (uint)window.Height,
+            (uint)window.Size.X,
+            (uint)window.Size.Y,
             options.SwapchainDepthFormat,
             options.SyncToVerticalBlank,
             colorSrgb);
@@ -190,8 +191,8 @@ public static class Startup
         return GraphicsDevice.CreateOpenGL(
             options,
             platformInfo,
-            (uint)window.Width,
-            (uint)window.Height);
+            (uint)window.Size.X,
+            (uint)window.Size.Y);
     }
 
     public static unsafe void SetSDLGLContextAttributes(GraphicsDeviceOptions options, GraphicsBackend backend)

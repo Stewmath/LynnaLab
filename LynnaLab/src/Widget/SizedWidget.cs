@@ -15,7 +15,7 @@ public abstract class SizedWidget
     public bool CenterY { get; set; }
 
     // Leave this much space above and to the left of the start of the render area.
-    // Usually this is (0,0).
+    // Usually this is (0,0). Specify this in coordinates BEFORE global scaling.
     public Vector2 RenderOffset { get; set; }
 
     // ================================================================================
@@ -28,7 +28,7 @@ public abstract class SizedWidget
     /// </summary>
     public void RenderPrep()
     {
-        ImGuiX.ShiftCursorScreenPos(RenderOffset);
+        ImGuiX.ShiftCursorScreenPos(RenderOffset * ImGuiX.ScaleUnit);
         var cursor = ImGui.GetCursorScreenPos();
         var avail = ImGui.GetContentRegionAvail();
 

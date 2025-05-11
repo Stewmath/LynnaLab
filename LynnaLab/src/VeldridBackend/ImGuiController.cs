@@ -49,10 +49,6 @@ public class ImGuiController : IDisposable
 
     IntPtr fontAtlasID = (IntPtr)1;
 
-    int windowWidth;
-    int windowHeight;
-    Vector2 scaleFactor = Vector2.One;
-
     // Texture trackers
     readonly Dictionary<VeldridTextureBase, ResourceSetInfo> setsByTexture = new ();
     readonly Dictionary<IntPtr, ResourceSetInfo> viewsById = new();
@@ -90,14 +86,11 @@ public class ImGuiController : IDisposable
     /// <summary>
     /// Constructs a new ImGuiController.
     /// </summary>
-    public ImGuiController(VeldridBackend backend, CommandList cl, OutputDescription outputDescription, int width, int height)
+    public ImGuiController(VeldridBackend backend, CommandList cl, OutputDescription outputDescription)
     {
         this.backend = backend;
         this.cl = cl;
         this.gd = backend.GraphicsDevice;
-
-        windowWidth = width;
-        windowHeight = height;
 
         ImGui.CreateContext();
         var io = ImGui.GetIO();
@@ -113,12 +106,6 @@ public class ImGuiController : IDisposable
     public VeldridBackend Backend { get { return backend; } }
     public GraphicsDevice GraphicsDevice { get { return gd; } }
     public CommandList CommandList { get { return cl; } }
-
-    public void WindowResized(int width, int height)
-    {
-        windowWidth = width;
-        windowHeight = height;
-    }
 
     public void DestroyDeviceObjects()
     {
@@ -495,9 +482,9 @@ public class ImGuiController : IDisposable
     {
         ImGuiIOPtr io = ImGui.GetIO();
         io.DisplaySize = new Vector2(
-            windowWidth / scaleFactor.X,
-            windowHeight / scaleFactor.Y);
-        io.DisplayFramebufferScale = scaleFactor;
+            backend.FramebufferSize.X,
+            backend.FramebufferSize.Y);
+        io.DisplayFramebufferScale = Vector2.One;
         io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
     }
 
@@ -567,7 +554,8 @@ public class ImGuiController : IDisposable
     private void UpdateImGuiInput(SDLUtil.InputSnapshot snapshot)
     {
         ImGuiIOPtr io = ImGui.GetIO();
-        io.AddMousePosEvent(snapshot.MousePosition.X, snapshot.MousePosition.Y);
+        var mousePos = snapshot.MousePosition * backend.WindowPixelDensity;
+        io.AddMousePosEvent(mousePos.X, mousePos.Y);
         io.AddMouseButtonEvent(0, snapshot.IsMouseDown(MouseButton.Left));
         io.AddMouseButtonEvent(1, snapshot.IsMouseDown(MouseButton.Right));
         io.AddMouseButtonEvent(2, snapshot.IsMouseDown(MouseButton.Middle));

@@ -89,7 +89,7 @@ public class WarpEditor : Frame
         ImGui.SeparatorText("Warps");
 
         if (ImGui.BeginChild("WarpSourceBox Frame",
-                             warpSourceBox.WidgetSize + new Vector2(12.0f, 16.0f),
+                             warpSourceBox.WidgetSize + ImGuiX.Unit(12.0f, 16.0f),
                              ImGuiChildFlags.Borders))
         {
             warpSourceBox.Render();

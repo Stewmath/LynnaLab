@@ -5,7 +5,7 @@ namespace LynnaLab;
 /// </summary>
 public class ImGuiLL
 {
-    public const float ENTRY_ITEM_WIDTH = 120.0f;
+    public static float ENTRY_ITEM_WIDTH { get { return ImGuiX.Unit(120.0f); } }
 
     /// <summary>
     /// Displays a ComboBox along with (optionally) the raw integer field as an alternate way to set
@@ -38,13 +38,13 @@ public class ImGuiLL
         }
 
         // Calculate width of largest text item
-        float width = 40.0f;
+        float width = ImGuiX.Unit(40.0f);
         foreach (string v in mapping.GetAllStrings())
             width = Math.Max(width, ImGui.CalcTextSize(getLabelName(v, mapping, omitPrefix)).X);
 
-        ImGui.PushItemWidth(width + 35.0f);
+        ImGui.PushItemWidth(width + ImGuiX.Unit(35.0f));
 
-        const float horizontalShift = 10.0f;
+        float horizontalShift = ImGuiX.Unit(10.0f);
         ImGuiX.ShiftCursorScreenPos(horizontalShift, 0.0f);
 
         string preview = "";
@@ -160,7 +160,7 @@ public class ImGuiLL
     /// </summary>
     public static void RenderPaletteHeader(PaletteHeaderGroup phg, int paletteToHighlight, ProjectWorkspace workspace)
     {
-        const float COLUMN_WIDTH = 30.0f;
+        float COLUMN_WIDTH = ImGuiX.Unit(30.0f);
         int callCount = 0;
         bool openRightClickPopup = false;
         Project project = workspace.Project;

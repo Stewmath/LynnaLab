@@ -14,7 +14,7 @@ public class GfxViewer : TileGrid
         base.TileHeight = 8;
         base.Width = 0;
         base.Height = 0;
-        base.Scale = 2;
+        base.RequestedScale = 2;
         base.Selectable = true;
     }
 
@@ -72,7 +72,7 @@ public class GfxViewer : TileGrid
         Height = height;
         TileWidth = 8;
         TileHeight = 8;
-        Scale = scale;
+        RequestedScale = scale;
 
         // NOTE: Should dispose this at some point
         texture = TopLevel.Backend.CreateTexture(Width * TileWidth, Height * TileHeight);

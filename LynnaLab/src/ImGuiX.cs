@@ -9,15 +9,92 @@ namespace LynnaLab;
 /// </summary>
 public static class ImGuiX
 {
+    // ================================================================================
+    // Variables
+    // ================================================================================
+
+    static ImGuiStyle backupStyle;
+    static bool lightMode = false;
+
+    // ================================================================================
+    // Properties
+    // ================================================================================
+
+    /// <summary>
+    /// Use this for sizing windows such that they can be scaled by changing this value.
+    /// </summary>
+    public static float ScaleUnit { get; set; } = 1.0f;
+
+
+    public static float TOOLTIP_WINDOW_WIDTH { get { return Unit(500.0f); } }
+
+
+    // ================================================================================
+    // Public methods
+    // ================================================================================
+
+    /// <summary>
+    /// Multiply input value by the ScaleUnit, for DPI-independent positioning.
+    /// </summary>
+    public static float Unit(float value)
+    {
+        return value * ScaleUnit;
+    }
+
+    /// <summary>
+    /// Multiply input vector by the ScaleUnit, for DPI-independent positioning.
+    /// </summary>
+    public static Vector2 Unit(Vector2 value)
+    {
+        return value * ScaleUnit;
+    }
+
+    /// <summary>
+    /// Multiply input vector by the ScaleUnit, for DPI-independent positioning.
+    /// </summary>
+    public static Vector2 Unit(float x, float y)
+    {
+        return new Vector2(x, y) * ScaleUnit;
+    }
+
+    /// <summary>
+    /// Save initial style information so that it can be reset and rescaled later.
+    /// </summary>
+    public unsafe static void BackupStyle()
+    {
+        ImGuiStyle* stylePtr = ImGui.GetStyle();
+        backupStyle = *stylePtr;
+    }
+
+    /// <summary>
+    /// Call this after updating scale ratio or style.
+    /// </summary>
+    public unsafe static void UpdateStyle()
+    {
+        ImGuiStylePtr stylePtr = ImGui.GetStyle();
+        *(ImGuiStyle*)stylePtr = backupStyle;
+        stylePtr.ScaleAllSizes(ScaleUnit);
+
+        if (lightMode)
+            ImGui.StyleColorsLight();
+        else
+            ImGui.StyleColorsDark();
+    }
+
+    public static void SetLightMode(bool lightMode)
+    {
+        ImGuiX.lightMode = lightMode;
+        UpdateStyle();
+    }
+
     public static unsafe ImFontPtr LoadFont(Stream stream, int size)
     {
-        byte[] data = new byte[stream.Length];
-        stream.Read(data, 0, (int)stream.Length);
+        // ImGui is responsible for freeing the buffer, so we must allocate it in an unmanaged way.
+        int length = (int)stream.Length;
+        byte* data = (byte*)Marshal.AllocHGlobal(length);
+        stream.Read(new Span<byte>(data, length));
 
-        fixed (byte* ptr = data)
-        {
-            return ImGui.GetIO().Fonts.AddFontFromMemoryTTF((IntPtr)ptr, data.Length, size);
-        }
+        return ImGui.GetIO().Fonts.AddFontFromMemoryTTF((IntPtr)data, length, size);
     }
 
     public static Vector2 GetScroll()
@@ -311,8 +388,6 @@ public static class ImGuiX
         ImGui.TextColored(new Vector4(1.0f, 1.0f, 1.0f, 1.0f), text);
     }
 
-    public const float TOOLTIP_WINDOW_WIDTH = 500.0f;
-
     /// <summary>
     /// A tooltip with a standardized window size
     /// </summary>
@@ -323,7 +398,7 @@ public static class ImGuiX
         if (textSize.X > TOOLTIP_WINDOW_WIDTH)
             ImGui.SetNextWindowSize(new Vector2(TOOLTIP_WINDOW_WIDTH, 0.0f));
         else
-            ImGui.SetNextWindowSize(new Vector2(textSize.X + 20.0f, 0.0f));
+            ImGui.SetNextWindowSize(new Vector2(textSize.X + Unit(20.0f), 0.0f));
         ImGui.BeginTooltip();
         ImGui.TextWrapped(text);
         ImGui.EndTooltip();

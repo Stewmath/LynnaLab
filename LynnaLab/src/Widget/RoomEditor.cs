@@ -234,9 +234,9 @@ public class RoomEditor : Frame
 
     public override void Render()
     {
-        const float X_OFFSET = 15.0f;
+        float X_OFFSET = ImGuiX.Unit(15.0f);
 
-        float statusBarHeight = ImGui.GetTextLineHeight() + 8.0f;
+        float statusBarHeight = ImGui.GetTextLineHeight() + ImGuiX.Unit(8.0f);
         ImGui.BeginChild("Above status bar", ImGui.GetContentRegionAvail() - new Vector2(0.0f, statusBarHeight));
 
         // Wrapper over ImGui.BeginTabItem() to help us keep track of which tab is open at any given time
@@ -255,7 +255,7 @@ public class RoomEditor : Frame
             }
         };
 
-        ImGui.BeginChild("Left Panel", new Vector2(tilesetViewer.WidgetSize.X + X_OFFSET + 20.0f, 0.0f));
+        ImGui.BeginChild("Left Panel", new Vector2(tilesetViewer.WidgetSize.X + X_OFFSET + ImGuiX.Unit(20.0f), 0.0f));
         if (ImGui.BeginTabBar("##Left Panel Tabs"))
         {
             if (TrackedTabItem("Room"))
@@ -611,7 +611,7 @@ public class RoomEditor : Frame
         ImGuiLL.RenderValueReferenceGroup(Room.Chest.ValueReferenceGroup, null, (doc) => Workspace.ShowDocumentation(doc));
 
         ImGui.SeparatorText("");
-        ImGuiX.ShiftCursorScreenPos(0.0f, 10.0f);
+        ImGuiX.ShiftCursorScreenPos(ImGuiX.Unit(0.0f, 10.0f));
 
         TreasureObject treasureObj = Room.Chest.Treasure;
 
@@ -630,7 +630,7 @@ public class RoomEditor : Frame
             int subid = Room.Chest.TreasureSubID;
             if (ImGui.CollapsingHeader($"Treasure object data: {id:X2} {subid:X2}###TreasureObjectHeader {id}"))
             {
-                ImGuiX.ShiftCursorScreenPos(new Vector2(10.0f, 0.0f));
+                ImGuiX.ShiftCursorScreenPos(ImGuiX.Unit(10.0f, 0.0f));
                 ImGuiLL.RenderValueReferenceGroup(treasureObj.ValueReferenceGroup, null, Workspace.ShowDocumentation);
             }
         }

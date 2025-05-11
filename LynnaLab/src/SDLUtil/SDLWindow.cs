@@ -15,6 +15,14 @@ public unsafe class SDLWindow
     {
         SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
 
+        SDL_DisplayID display = SDL_GetPrimaryDisplay();
+        if (display != 0)
+        {
+            float scale = SDL_GetDisplayContentScale(display);
+            width = (int)(width * scale);
+            height = (int)(height * scale);
+        }
+
         Handle = SDL_CreateWindow(title, width, height, flags);
 
         if ((nint)Handle == 0)
@@ -32,7 +40,6 @@ public unsafe class SDLWindow
     // Variables
     // ================================================================================
 
-    int width, height;
     Func<bool> closeRequestedHandler;
 
     // ================================================================================
@@ -41,8 +48,16 @@ public unsafe class SDLWindow
 
     public SDL_Window* Handle { get; private set; }
 
-    public int Width { get { return width; } }
-    public int Height { get { return height; } }
+    /// <summary>
+    /// Size of window in system-native coordinates. May not be the same as SizeInPixels.
+    /// </summary>
+    public Point Size { get; private set; }
+
+    /// <summary>
+    /// Size of window in pixels. See SDL_GetWindowPixelDensity().
+    /// </summary>
+    public Point SizeInPixels { get; private set; }
+
     public bool Exists { get; private set; }
 
     // ================================================================================
@@ -147,9 +162,8 @@ public unsafe class SDLWindow
     {
         int w, h;
         SDL_GetWindowSize(Handle, &w, &h);
-        width = w;
-        height = h;
-
-        //Console.WriteLine($"Size: {w},{h}");
+        Size = new Point(w, h);
+        SDL_GetWindowSizeInPixels(Handle, &w, &h);
+        SizeInPixels = new Point(w, h);
     }
 }

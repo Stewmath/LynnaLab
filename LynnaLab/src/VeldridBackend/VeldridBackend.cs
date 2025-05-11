@@ -33,15 +33,15 @@ public class VeldridBackend
 
         window.Resized += () =>
         {
-            gd.MainSwapchain.Resize((uint)window.Width, (uint)window.Height);
-            controller.WindowResized(window.Width, window.Height);
+            FramebufferSize = window.SizeInPixels.AsVector2();
+            gd.MainSwapchain.Resize((uint)FramebufferSize.X, (uint)FramebufferSize.Y);
         };
 
         window.SetCloseRequestedHandler(CloseRequestedHandler);
 
         cl = gd.ResourceFactory.CreateCommandList();
         cl.Begin();
-        controller = new ImGuiController(this, cl, gd.MainSwapchain.Framebuffer.OutputDescription, window.Width, window.Height);
+        controller = new ImGuiController(this, cl, gd.MainSwapchain.Framebuffer.OutputDescription);
 
         GreyscalePalette = new VeldridPalette(controller, GbGraphics.GrayPalette, transparentIndex: -1);
     }
@@ -79,6 +79,13 @@ public class VeldridBackend
     public CommandList CommandList { get { return cl; } }
 
     internal VeldridPalette GreyscalePalette { get; private set; }
+
+    // Scaling factors determined by system display scaling settings.
+    // See: https://wiki.libsdl.org/SDL3/README-highdpi
+    public unsafe float WindowDisplayScale { get { return SDL.SDL3.SDL_GetWindowDisplayScale(window.Handle); } }
+    public unsafe float WindowPixelDensity { get { return SDL.SDL3.SDL_GetWindowPixelDensity(window.Handle); } }
+
+    public Vector2 FramebufferSize { get; private set; }
 
     // ================================================================================
     // Public methods

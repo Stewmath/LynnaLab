@@ -21,6 +21,9 @@ public abstract class Frame
     bool active;
     bool grabFocus;
 
+    Vector2 lastWindowSize = Vector2.Zero;
+    float lastScaleFactor = 0.0f;
+
     // ================================================================================
     // Events
     // ================================================================================
@@ -51,6 +54,10 @@ public abstract class Frame
         }
     }
 
+    /// <summary>
+    /// Default size the first time this window is opened. Don't use ImGuiX.Unit() when setting
+    /// this; that scaling happens later.
+    /// </summary>
     public Vector2 DefaultSize { get; set; } = Vector2.Zero;
 
     // Name is the name used for ImGui's internal window tracking. DisplayName, if set, changes only
@@ -77,12 +84,24 @@ public abstract class Frame
             if (grabFocus)
                 ImGui.SetNextWindowFocus();
 
-            ImGui.SetNextWindowSize(DefaultSize, ImGuiCond.FirstUseEver);
+            // Set initial window size (only for the first time ever using LynnaLab; normally,
+            // saved window sizes are retrieved from a .ini file)
+            ImGui.SetNextWindowSize(DefaultSize * ImGuiX.ScaleUnit, ImGuiCond.FirstUseEver);
+
+            // Auto-adjust window size when scale factor is changed
+            if (lastScaleFactor != 0.0f && lastScaleFactor != ImGuiX.ScaleUnit)
+            {
+                float factor = ImGuiX.ScaleUnit / lastScaleFactor;
+                ImGui.SetNextWindowSize(lastWindowSize * factor);
+            }
 
             string name = DisplayName == null ? Name : $"{DisplayName}###{Name}";
             if (ImGui.Begin(name, ref active, WindowFlags))
             {
                 Render();
+
+                lastWindowSize = ImGui.GetWindowSize();
+                lastScaleFactor = ImGuiX.ScaleUnit;
             }
             ImGui.End();
         }
