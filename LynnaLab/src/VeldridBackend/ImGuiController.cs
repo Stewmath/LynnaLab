@@ -692,15 +692,15 @@ public class ImGuiController : IDisposable
                         }
                     }
 
-                    if (pcmd.ClipRect.X >= 0 && pcmd.ClipRect.Y >= 0)
-                    {
-                        cl.SetScissorRect(
+                    // Vulkan crashes if we send rect values < 0, and apparently imgui does this
+                    // sometimes (when modal windows are displayed). Not sure why, but we fix it
+                    // with Max(0, ...).
+                    cl.SetScissorRect(
                         0,
-                        (uint)pcmd.ClipRect.X,
-                        (uint)pcmd.ClipRect.Y,
+                        (uint)Math.Max(0, pcmd.ClipRect.X),
+                        (uint)Math.Max(0, pcmd.ClipRect.Y),
                         (uint)(pcmd.ClipRect.Z - pcmd.ClipRect.X),
                         (uint)(pcmd.ClipRect.W - pcmd.ClipRect.Y));
-                    }
 
                     cl.DrawIndexed(pcmd.ElemCount, 1, pcmd.IdxOffset + (uint)idx_offset, (int)pcmd.VtxOffset + vtx_offset, 0);
                 }
