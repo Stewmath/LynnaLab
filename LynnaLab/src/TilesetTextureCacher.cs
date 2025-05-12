@@ -68,7 +68,7 @@ public class TilesetTextureCacher : IDisposeNotifier
 
     void GenerateTexture()
     {
-        tilesetTexture = TopLevel.Backend.CreateTexture(256, 256, renderTarget: true);
+        tilesetTexture = Top.Backend.CreateTexture(256, 256, renderTarget: true);
         Render();
 
         Tileset.TileModifiedEvent += (sender, tile) =>
@@ -85,7 +85,7 @@ public class TilesetTextureCacher : IDisposeNotifier
 
     void Render()
     {
-        TopLevel.Backend.RenderTileset(tilesetTexture, Tileset);
+        Top.Backend.RenderTileset(tilesetTexture, Tileset);
     }
 
     /// <summary>
@@ -100,7 +100,7 @@ public class TilesetTextureCacher : IDisposeNotifier
     {
         int index = x + y * 16;
         var bitmap = Tileset.GetTileBitmap(index);
-        var bitmapTexture = TopLevel.TextureFromBitmapTracked(bitmap);
+        var bitmapTexture = Top.TextureFromBitmapTracked(bitmap);
 
         bitmapTexture.DrawOn(tilesetTexture,
                            new Point(0, 0),

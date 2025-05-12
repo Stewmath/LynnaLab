@@ -68,14 +68,14 @@ public static class Modal
 
         var close = () =>
         {
-            TopLevel.CloseProject();
+            Top.CloseProject();
             if (callback != null)
                 callback();
         };
 
         if (!workspace.Project.Modified)
         {
-            TopLevel.DoNextFrame(close);
+            Top.DoNextFrame(close);
             return;
         }
 
@@ -109,7 +109,7 @@ public static class Modal
         string selectedFolder = null;
         bool callbackReceived = false;
 
-        TopLevel.Backend.ShowOpenFolderDialog(null, (folder) =>
+        Top.Backend.ShowOpenFolderDialog(null, (folder) =>
         {
             selectedFolder = folder;
             callbackReceived = true;
@@ -123,7 +123,7 @@ public static class Modal
             {
                 if (selectedFolder != null)
                 {
-                    TopLevel.OpenProject(selectedFolder);
+                    Top.OpenProject(selectedFolder);
                 }
                 return true;
             }
@@ -192,7 +192,7 @@ public static class Modal
         modalQueue.Clear();
         OpenModal("Exception", () =>
         {
-            ImGui.PushFont(TopLevel.DefaultFont);
+            ImGui.PushFont(Top.DefaultFont);
 
             ImGui.Text("An unhandled exception occurred!\n\nYou can attempt to resume LynnaLab, but the program may be in an invalid state.\n\nException details:");
 

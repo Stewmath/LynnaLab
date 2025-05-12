@@ -36,7 +36,7 @@ public class BuildDialog : Frame
     public Project Project { get { return Workspace.Project; } }
 
     // Private properties
-    GlobalConfig GlobalConfig { get { return TopLevel.GlobalConfig; } }
+    GlobalConfig GlobalConfig { get { return Top.GlobalConfig; } }
 
     // ================================================================================
     // Public methods
@@ -44,7 +44,7 @@ public class BuildDialog : Frame
 
     public override void Render()
     {
-        ImGui.PushFont(TopLevel.DefaultFont);
+        ImGui.PushFont(Top.DefaultFont);
 
         ImGui.TextWrapped("Building oracles-disasm. The first time will take several minutes.");
 
@@ -361,7 +361,7 @@ public class BuildDialog : Frame
         else
             filterList = new (string, string)[] {};
 
-        TopLevel.Backend.ShowOpenFileDialog(null, filterList, (selectedFile) =>
+        Top.Backend.ShowOpenFileDialog(null, filterList, (selectedFile) =>
         {
             if (selectedFile != null)
                 onSelected(selectedFile + " | {GAME}.gbc");

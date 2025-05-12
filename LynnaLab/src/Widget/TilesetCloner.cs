@@ -150,7 +150,7 @@ public class TilesetCloner : Frame
         // Don't dispose the previous previewTileset immediately as its image may be needed for
         // rendering this frame.
         if (previewTileset != null)
-            TopLevel.DoNextFrame(previewTileset.Dispose);
+            Top.DoNextFrame(previewTileset.Dispose);
 
         previewTileset = new FakeTileset(destTileset);
         previewViewer.SetTileset(previewTileset);

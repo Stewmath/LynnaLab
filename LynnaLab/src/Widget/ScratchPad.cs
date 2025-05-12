@@ -67,7 +67,7 @@ public class ScratchPadGrid : TileGrid
 
         base.BrushInterfacer = BrushInterfacer.Create(brush, (index, scale) =>
         {
-            if (TopLevel.GlobalConfig.ShowBrushPreview)
+            if (Top.GlobalConfig.ShowBrushPreview)
                 this.referenceGrid.DrawTileImage(index, scale);
         });
 
@@ -94,7 +94,7 @@ public class ScratchPadGrid : TileGrid
         );
 
         // NOTE: Should dispose this at some point
-        texture = TopLevel.Backend.CreateTexture(Width * TileWidth, Height * TileHeight);
+        texture = Top.Backend.CreateTexture(Width * TileWidth, Height * TileHeight);
         SetReferenceGrid(referenceGrid);
     }
 

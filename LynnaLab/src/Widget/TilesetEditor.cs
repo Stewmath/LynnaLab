@@ -502,7 +502,7 @@ public class TilesetEditor : Frame
                 0, 0, subtileBrush.BrushWidth, subtileBrush.BrushHeight
             );
             bitmap.Unlock();
-            TextureBase image = TopLevel.Backend.TextureFromBitmap(bitmap);
+            TextureBase image = Top.Backend.TextureFromBitmap(bitmap);
             subtileBrushInterfacer.SetPreviewTexture(image, 8);
             tilesetViewer.TooltipImagePreview = subtileBrush.IsSingleTile;
         }
@@ -870,7 +870,7 @@ class TileEditor : TileGrid
     {
         // This uses CPU rendering to get the tile, unlike most of our rendering code. Might as well
         // leave like this to ensure that path is still working.
-        image = TopLevel.TextureFromBitmapTracked(Tileset.GetTileBitmap(TileIndex));
+        image = Top.TextureFromBitmapTracked(Tileset.GetTileBitmap(TileIndex));
     }
 
     /// <summary>

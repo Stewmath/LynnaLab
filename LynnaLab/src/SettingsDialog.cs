@@ -23,7 +23,7 @@ public class SettingsDialog : Frame
     // Properties
     // ================================================================================
 
-    GlobalConfig GlobalConfig { get { return TopLevel.GlobalConfig; } }
+    GlobalConfig GlobalConfig { get { return Top.GlobalConfig; } }
 
     // ================================================================================
     // Public methods
@@ -74,12 +74,12 @@ public class SettingsDialog : Frame
 
             ImGuiX.Checkbox("Override system scaling", GlobalConfig.OverrideSystemScaling, (value) =>
             {
-                TopLevel.DoNextFrame(() =>
+                Top.DoNextFrame(() =>
                 {
                     GlobalConfig.OverrideSystemScaling = value;
                     if (value)
-                        GlobalConfig.DisplayScaleFactor = TopLevel.Backend.WindowDisplayScale;
-                    TopLevel.ReAdjustScale();
+                        GlobalConfig.DisplayScaleFactor = Top.Backend.WindowDisplayScale;
+                    Top.ReAdjustScale();
                 });
             });
             ImGuiX.TooltipOnHover("If checked, ignore system preferences and use a manual scale factor for the UI.");
@@ -143,10 +143,10 @@ public class SettingsDialog : Frame
         if (newScale != 0.0f && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
             float value = newScale; // Capture current value for closure
-            TopLevel.DoNextFrame(() =>
+            Top.DoNextFrame(() =>
             {
                 GlobalConfig.DisplayScaleFactor = value;
-                TopLevel.ReAdjustScale();
+                Top.ReAdjustScale();
             });
 
             newScale = 0.0f;

@@ -35,23 +35,23 @@ class Program
         try
         {
             if (args.Length >= 2)
-                TopLevel.Load(args[0], args[1]);
+                Top.Load(args[0], args[1]);
             else if (args.Length >= 1)
-                TopLevel.Load(args[0]);
+                Top.Load(args[0]);
             else
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     string path = $"C:\\msys64\\home\\{Environment.UserName}\\oracles-disasm";
-                    TopLevel.Load(path);
+                    Top.Load(path);
                 }
                 else
-                    TopLevel.Load();
+                    Top.Load();
             }
 
-            while (!TopLevel.Backend.Exited)
+            while (!Top.Backend.Exited)
             {
-                TopLevel.Run();
+                Top.Run();
             }
         }
         catch (Exception e)
@@ -76,7 +76,7 @@ class Program
                 new string[] { "Save project and exit", "Exit without saving" });
 
             if (option == 0)
-                TopLevel.SaveProject();
+                Top.SaveProject();
 
             return 1;
         }

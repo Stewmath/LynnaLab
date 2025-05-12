@@ -75,7 +75,7 @@ public class GfxViewer : TileGrid
         RequestedScale = scale;
 
         // NOTE: Should dispose this at some point
-        texture = TopLevel.Backend.CreateTexture(Width * TileWidth, Height * TileHeight);
+        texture = Top.Backend.CreateTexture(Width * TileWidth, Height * TileHeight);
 
         RedrawAll();
     }
@@ -114,7 +114,7 @@ public class GfxViewer : TileGrid
 
         using (Bitmap _subImage = GbGraphics.RawTileToBitmap(data))
         {
-            RgbaTexture subTexture = TopLevel.Backend.TextureFromBitmap(_subImage);
+            RgbaTexture subTexture = Top.Backend.TextureFromBitmap(_subImage);
             subTexture.DrawOn(texture,
                             new Point(0, 0),
                             new Point(x * 8, y * 8),

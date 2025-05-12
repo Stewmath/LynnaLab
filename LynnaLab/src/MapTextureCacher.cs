@@ -65,7 +65,7 @@ public class MapTextureCacher : IDisposeNotifier
 
     protected void GenerateTexture()
     {
-        texture = TopLevel.Backend.CreateTexture(
+        texture = Top.Backend.CreateTexture(
             Map.MapWidth * Map.RoomWidth * 16,
             Map.MapHeight * Map.RoomHeight * 16);
 

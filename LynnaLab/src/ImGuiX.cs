@@ -26,10 +26,10 @@ public static class ImGuiX
     {
         get
         {
-            if (TopLevel.GlobalConfig.OverrideSystemScaling)
-                return Math.Max(TopLevel.GlobalConfig.DisplayScaleFactor, 1.0f);
+            if (Top.GlobalConfig.OverrideSystemScaling)
+                return Math.Max(Top.GlobalConfig.DisplayScaleFactor, 1.0f);
             else
-                return TopLevel.Backend.WindowDisplayScale;
+                return Top.Backend.WindowDisplayScale;
         }
     }
 
@@ -83,7 +83,7 @@ public static class ImGuiX
         *(ImGuiStyle*)stylePtr = backupStyle;
         stylePtr.ScaleAllSizes(ScaleUnit);
 
-        if (TopLevel.GlobalConfig.LightMode)
+        if (Top.GlobalConfig.LightMode)
             ImGui.StyleColorsLight();
         else
             ImGui.StyleColorsDark();

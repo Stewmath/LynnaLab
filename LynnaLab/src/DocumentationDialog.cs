@@ -38,7 +38,7 @@ public class DocumentationDialog : Frame
             return;
         }
 
-        ImGui.PushFont(TopLevel.OraclesFont);
+        ImGui.PushFont(Top.OraclesFont);
 
         if (Documentation.Description != null && Documentation.Description != "")
         {

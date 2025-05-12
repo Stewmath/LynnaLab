@@ -23,7 +23,7 @@ public class RoomLayoutEditor : TileGrid
         base.RenderOffset = new Vector2(8, 8) * base.RequestedScale;
         base.BrushInterfacer = BrushInterfacer.Create(brush, (index, scale) =>
         {
-            if (TopLevel.GlobalConfig.ShowBrushPreview)
+            if (Top.GlobalConfig.ShowBrushPreview)
                 RoomEditor.TilesetViewer.DrawTileImage(index, scale);
         });
 
@@ -227,7 +227,7 @@ public class RoomLayoutEditor : TileGrid
                 // Right click
                 if (ImGui.IsMouseClicked(ImGuiMouseButton.Right) && !draggingComponent)
                 {
-                    ImGui.OpenPopup(TopLevel.RightClickPopupName);
+                    ImGui.OpenPopup(Top.RightClickPopupName);
                 }
 
                 // Double-click
@@ -239,7 +239,7 @@ public class RoomLayoutEditor : TileGrid
         }
 
         // Render right-click menu
-        if (ImGui.BeginPopup(TopLevel.RightClickPopupName))
+        if (ImGui.BeginPopup(Top.RightClickPopupName))
         {
             var com = selectedRoomComponent;
 
@@ -685,7 +685,7 @@ public class RoomLayoutEditor : TileGrid
             // nearest-neighbor interpolation here.
             var origin = ImGui.GetCursorScreenPos();
             var offset = new Vector2(X + xOffset, Y + yOffset);
-            TextureBase texture = TopLevel.TextureFromBitmapTracked(sprite);
+            TextureBase texture = Top.TextureFromBitmapTracked(sprite);
             ImGui.SetCursorScreenPos(origin + offset * Parent.Scale);
             ImGuiX.DrawImage(texture, Parent.Scale);
             ImGui.SetCursorScreenPos(origin);
@@ -738,7 +738,7 @@ public class RoomLayoutEditor : TileGrid
             Vector2 size = new Vector2(BoxWidth, BoxHeight) * Parent.Scale;
 
             ImGuiX.ShiftCursorScreenPos(pos - size / 2);
-            TextureBase linkTexture = TopLevel.TextureFromBitmapTracked(Parent.Project.LinkBitmap);
+            TextureBase linkTexture = Top.TextureFromBitmapTracked(Parent.Project.LinkBitmap);
             ImGuiX.DrawImage(linkTexture, Parent.Scale);
         }
 
@@ -978,7 +978,7 @@ public class RoomLayoutEditor : TileGrid
         public override void Render()
         {
             // Draw digit representing the warp index in the center of the rectangle
-            ImGui.PushFont(TopLevel.OraclesFont24px);
+            ImGui.PushFont(Top.OraclesFont24px);
             var origin = ImGui.GetCursorScreenPos();
             string text = index.ToString("X");
             ImGuiX.DrawTextAt(text, origin + BoxRectangle.Center * Parent.Scale);
@@ -1066,7 +1066,7 @@ public class RoomLayoutEditor : TileGrid
 
         public override void Render()
         {
-            ImGui.PushFont(TopLevel.OraclesFont24px);
+            ImGui.PushFont(Top.OraclesFont24px);
             var origin = ImGui.GetCursorScreenPos();
             ImGuiX.DrawTextAt("W", origin + BoxRectangle.Center * Parent.Scale);
             ImGui.SetCursorScreenPos(origin);

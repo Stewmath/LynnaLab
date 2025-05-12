@@ -10,9 +10,6 @@ public class RoomEditor : Frame
     // Constructors
     // ================================================================================
 
-    /// <summary>
-    /// Assumes that the TopLevel has a valid Project loaded.
-    /// </summary>
     public RoomEditor(ProjectWorkspace workspace)
         : base("Room Editor")
     {

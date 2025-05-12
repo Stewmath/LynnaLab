@@ -4,8 +4,8 @@ namespace LynnaLab;
 
 /// <summary>
 /// Class containing all project-specific information.
-/// Keeping this separate from the TopLevel class just in case I want to make a way to open
-/// multiple projects at once.
+/// Keeping this separate from the Top class just in case I want to make a way to open multiple
+/// projects at once.
 /// </summary>
 public class ProjectWorkspace
 {
@@ -16,7 +16,7 @@ public class ProjectWorkspace
     {
         this.Project = project;
 
-        Project.LazyInvoke = TopLevel.LazyInvoke;
+        Project.LazyInvoke = Top.LazyInvoke;
 
         tilesetTextureCacher = new((tileset) => new TilesetTextureCacher(this, tileset));
         roomTextureCacher = new((layout) => new RoomTextureCacher(this, layout));
@@ -31,7 +31,7 @@ public class ProjectWorkspace
 
         this.Brush = new Brush<int>(0);
 
-        linkTexture = TopLevel.TextureFromBitmapTracked(project.LinkBitmap);
+        linkTexture = Top.TextureFromBitmapTracked(project.LinkBitmap);
 
         roomEditor = new RoomEditor(this);
         dungeonEditor = new DungeonEditor(this, "Dungeon Editor");
@@ -107,8 +107,8 @@ public class ProjectWorkspace
     public bool ViewWarps { get; private set; }
 
     // Togglable settings that affect other modules (really just minimaps right now)
-    public bool DarkenDuplicateRooms { get { return TopLevel.GlobalConfig.DarkenDuplicateRooms; } }
-    public bool AutoAdjustGroupNumber { get { return TopLevel.GlobalConfig.AutoAdjustGroupNumber; } }
+    public bool DarkenDuplicateRooms { get { return Top.GlobalConfig.DarkenDuplicateRooms; } }
+    public bool AutoAdjustGroupNumber { get { return Top.GlobalConfig.AutoAdjustGroupNumber; } }
 
     // ================================================================================
     // Public methods
@@ -132,14 +132,14 @@ public class ProjectWorkspace
             }
             if (ImGui.MenuItem("Reload"))
             {
-                Modal.CloseProjectModal(this, () => TopLevel.OpenProject(Project.BaseDirectory, Project.GameString));
+                Modal.CloseProjectModal(this, () => Top.OpenProject(Project.BaseDirectory, Project.GameString));
             }
             if (ImGui.MenuItem("Switch Game"))
             {
                 Modal.CloseProjectModal(this, () =>
                 {
                     string gameString = Project.Game == Game.Seasons ? "ages" : "seasons";
-                    TopLevel.OpenProject(Project.BaseDirectory, gameString);
+                    Top.OpenProject(Project.BaseDirectory, gameString);
                 });
             }
             if (ImGui.MenuItem("Run"))
@@ -202,9 +202,9 @@ public class ProjectWorkspace
             ImGuiX.MenuItemCheckbox("ImGui Demo Window", ref showImGuiDemoWindow);
             #if RENDERDOC
             if (ImGui.MenuItem("RenderDoc: Grab frame"))
-                TopLevel.Backend.TriggerRenderDocCapture();
+                Top.Backend.TriggerRenderDocCapture();
             if (ImGui.MenuItem("RenderDoc: Launch UI"))
-                TopLevel.Backend.RenderDocUI();
+                Top.Backend.RenderDocUI();
             #endif
             ImGui.EndMenu();
         }
@@ -212,7 +212,7 @@ public class ProjectWorkspace
 
     public void RenderToolbar()
     {
-        if (ImGui.ImageButton("Run", TopLevel.PegasusSeedTexture.GetBinding(), ImGuiX.Unit(TOOLBAR_BUTTON_SIZE)))
+        if (ImGui.ImageButton("Run", Top.PegasusSeedTexture.GetBinding(), ImGuiX.Unit(TOOLBAR_BUTTON_SIZE)))
         {
             RunGame();
         }
@@ -238,7 +238,7 @@ public class ProjectWorkspace
 
         if (showImGuiDemoWindow)
         {
-            ImGui.PushFont(TopLevel.DefaultFont);
+            ImGui.PushFont(Top.DefaultFont);
             ImGui.ShowDemoWindow(ref showImGuiDemoWindow);
             ImGui.PopFont();
         }

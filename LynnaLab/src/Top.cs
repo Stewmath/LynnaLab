@@ -7,14 +7,15 @@ using Backend = VeldridBackend.VeldridBackend;
 namespace LynnaLab;
 
 /// <summary>
-/// TopLevel class contains the main loop and deals with anything that's not project-specific.
+/// Top class (the "top level") contains the main loop and deals with anything that's not
+/// project-specific.
 ///
 /// It could potentially contain multiple ProjectWorkspaces in the future.
 ///
 /// Try not to put things in here unless you're sure that the program only needs one of it, since
 /// everything is static. Most things should go in ProjectWorkspace instead.
 /// </summary>
-public static class TopLevel
+public static class Top
 {
     /// <summary>
     /// Called upon initialization. Optionally takes parameters for the project to load.
@@ -29,7 +30,7 @@ public static class TopLevel
         backend.SetIcon(ImageDir + "icon.bmp");
         PegasusSeedTexture = backend.TextureFromFile(ImageDir + "Pegasus_Seed_OOX.png");
 
-        Helper.mainThreadInvokeFunction = TopLevel.LazyInvoke;
+        Helper.mainThreadInvokeFunction = Top.LazyInvoke;
 
         GlobalConfig = GlobalConfig.Load();
         if (GlobalConfig == null)
@@ -61,7 +62,7 @@ public static class TopLevel
         settingsDialog = new SettingsDialog("Settings Dialog");
 
         if (path != null)
-            TopLevel.OpenProject(path, game);
+            Top.OpenProject(path, game);
     }
 
     // ================================================================================
@@ -118,7 +119,7 @@ public static class TopLevel
         stopwatch.Restart();
 
         backend.HandleEvents(lastDeltaTime);
-        TopLevel.Render(lastDeltaTime);
+        Top.Render(lastDeltaTime);
 
         // Call the "idle functions", used for lazy drawing.
         // Do this before backend.Render() as that triggers vsync and messes up our timer.

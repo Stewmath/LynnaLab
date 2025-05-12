@@ -147,9 +147,9 @@ public class TileGrid : SizedWidget
     /// <summary>
     /// If false, scrollwheel moves scrollbars rather than zooming
     /// </summary>
-    public bool ScrollToZoom { get { return TopLevel.GlobalConfig.ScrollToZoom; } }
+    public bool ScrollToZoom { get { return Top.GlobalConfig.ScrollToZoom; } }
 
-    public Interpolation Interpolation { get { return TopLevel.GlobalConfig.Interpolation; } }
+    public Interpolation Interpolation { get { return Top.GlobalConfig.Interpolation; } }
 
     public BrushInterfacer BrushInterfacer { get; set; }
 
