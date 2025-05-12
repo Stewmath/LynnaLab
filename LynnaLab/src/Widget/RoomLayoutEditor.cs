@@ -155,6 +155,7 @@ public class RoomLayoutEditor : TileGrid
 
         RoomComponent hoveringComponent = null;
         var mousePos = base.GetRelativeMousePos() / Scale;
+        int componentIndex = 0;
 
         // Render room components
         foreach (var com in roomComponents)
@@ -172,7 +173,7 @@ public class RoomLayoutEditor : TileGrid
             // Create an InvisibleButton so that we can select it without dragging the entire window.
             // Names are not unique... probably not an issue? These don't really do anything.
             ImGui.SetCursorScreenPos(origin + com.BoxRectangle.TopLeft * Scale);
-            ImGui.InvisibleButton($"RoomComponent button", com.BoxSize * Scale);
+            ImGui.InvisibleButton($"RoomComponent button {componentIndex}", com.BoxSize * Scale);
 
             // Check if we're hovering over it. But don't draw the hovering rectangle right now
             // because we don't want to draw it on more than one RoomComponent.
@@ -181,6 +182,8 @@ public class RoomLayoutEditor : TileGrid
             {
                 hoveringComponent = com;
             }
+
+            componentIndex++;
         }
 
         // If the mouse is clicked while not focused on the window, do not allow the tile grid to be
