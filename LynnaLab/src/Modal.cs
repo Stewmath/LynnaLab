@@ -181,6 +181,12 @@ public static class Modal
         });
     }
 
+    /// <summary>
+    /// Display a modal window for an exception handler.
+    ///
+    /// This is a bit fragile, since it depends on all of my rendering code working correctly.
+    /// Currently it's unused in favor of SDL dialog boxes.
+    /// </summary>
     public static void DisplayExceptionModal(Exception e, Action saveProject)
     {
         modalQueue.Clear();

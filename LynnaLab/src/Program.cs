@@ -27,41 +27,60 @@ class Program
 {
     public static Exception handlingException;
 
-    static void Main(string[] args)
+    /// <summary>
+    /// Program entry point.
+    /// </summary>
+    static int Main(string[] args)
     {
-        if (args.Length >= 2)
-            TopLevel.Load(args[0], args[1]);
-        else if (args.Length >= 1)
-            TopLevel.Load(args[0]);
-        else
+        try
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                string path = $"C:\\msys64\\home\\{Environment.UserName}\\oracles-disasm";
-                TopLevel.Load(path);
-            }
+            if (args.Length >= 2)
+                TopLevel.Load(args[0], args[1]);
+            else if (args.Length >= 1)
+                TopLevel.Load(args[0]);
             else
-                TopLevel.Load();
-        }
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    string path = $"C:\\msys64\\home\\{Environment.UserName}\\oracles-disasm";
+                    TopLevel.Load(path);
+                }
+                else
+                    TopLevel.Load();
+            }
 
-        while (!TopLevel.Backend.Exited)
-        {
-            try
+            while (!TopLevel.Backend.Exited)
             {
                 TopLevel.Run();
             }
-            catch (Exception e)
-            {
-                // If we end up here twice then something must be wrong with our exception handler,
-                // so just give up and throw it.
-                if (handlingException != null)
-                    throw handlingException;
-
-                handlingException = e;
-                Console.WriteLine("Unhandled exception occurred!");
-                Console.WriteLine(e);
-                Modal.DisplayExceptionModal(e, () => TopLevel.SaveProject());
-            }
         }
+        catch (Exception e)
+        {
+            // This is our generic exception handler - we print the exception to the console and
+            // attempt to create a messagebox with SDL.
+
+            // If we end up here twice then something must be wrong with our exception handler,
+            // so just give up and throw it. (This is only relevant to the old imgui-based exception
+            // handler, not the current SDL-based one.)
+            if (handlingException != null)
+                throw handlingException;
+
+            handlingException = e;
+            Console.WriteLine("Unhandled exception occurred!");
+            Console.WriteLine(e);
+
+            string message = "An unhandled exception occurred - this probably indicates a bug in LynnaLab! You can attempt to save your project before LynnaLab terminates.\n\n" + e;
+            int option = SDLUtil.SDLHelper.ShowErrorMessageBox(
+                "Error",
+                message,
+                new string[] { "Save project and exit", "Exit without saving" });
+
+            if (option == 0)
+                TopLevel.SaveProject();
+
+            return 1;
+        }
+
+        return 0;
     }
 }
