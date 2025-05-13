@@ -31,7 +31,7 @@ public class UndoDialog : Frame
 
     public override void Render()
     {
-        ImGui.PushFont(Top.DefaultFont);
+        ImGui.PushFont(Top.InfoFont);
 
         if (UndoState.constructingTransaction.Empty)
         {

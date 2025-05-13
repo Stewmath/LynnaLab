@@ -31,6 +31,7 @@ public class ProcessOutputView
 
     public void Render()
     {
+        ImGui.PushFont(Top.InfoFont);
         foreach (var entry in textList)
         {
             if (entry.color != null)
@@ -48,6 +49,7 @@ public class ProcessOutputView
             ImGui.SetScrollY(ImGui.GetScrollMaxY());
             jumpToBottom--;
         }
+        ImGui.PopFont();
     }
 
     public void AppendText(string text, string preset = "system")

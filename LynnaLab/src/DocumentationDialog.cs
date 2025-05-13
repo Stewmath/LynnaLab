@@ -32,13 +32,14 @@ public class DocumentationDialog : Frame
 
     public override void Render()
     {
+        ImGui.PushFont(Top.InfoFont);
+
         if (Documentation == null)
         {
             ImGui.TextWrapped("No documentation found.");
+            ImGui.PopFont();
             return;
         }
-
-        ImGui.PushFont(Top.OraclesFont);
 
         if (Documentation.Description != null && Documentation.Description != "")
         {

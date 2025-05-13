@@ -981,7 +981,7 @@ public class RoomLayoutEditor : TileGrid
         public override void Render()
         {
             // Draw digit representing the warp index in the center of the rectangle
-            ImGui.PushFont(Top.OraclesFont24px);
+            ImGui.PushFont(Top.MenuFontLarge);
             var origin = ImGui.GetCursorScreenPos();
             string text = index.ToString("X");
             ImGuiX.DrawTextAt(text, origin + BoxRectangle.Center * Parent.Scale);
@@ -1069,7 +1069,7 @@ public class RoomLayoutEditor : TileGrid
 
         public override void Render()
         {
-            ImGui.PushFont(Top.OraclesFont24px);
+            ImGui.PushFont(Top.MenuFontLarge);
             var origin = ImGui.GetCursorScreenPos();
             ImGuiX.DrawTextAt("W", origin + BoxRectangle.Center * Parent.Scale);
             ImGui.SetCursorScreenPos(origin);

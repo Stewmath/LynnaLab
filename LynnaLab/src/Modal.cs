@@ -45,11 +45,13 @@ public static class Modal
 
             if (ImGui.BeginPopupModal(modal.name, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar))
             {
+                ImGui.PushFont(Top.InfoFont);
                 if (modal.renderFunc())
                 {
                     modalQueue.Dequeue();
                     ImGui.CloseCurrentPopup();
                 }
+                ImGui.PopFont();
                 ImGui.EndPopup();
             }
         }
@@ -192,8 +194,6 @@ public static class Modal
         modalQueue.Clear();
         OpenModal("Exception", () =>
         {
-            ImGui.PushFont(Top.DefaultFont);
-
             ImGui.Text("An unhandled exception occurred!\n\nYou can attempt to resume LynnaLab, but the program may be in an invalid state.\n\nException details:");
 
             Vector2 exceptionViewSize = ImGui.GetMainViewport().Size * 0.8f;
@@ -228,7 +228,6 @@ public static class Modal
                 retval = true;
             }
 
-            ImGui.PopFont();
             return retval;
         });
     }

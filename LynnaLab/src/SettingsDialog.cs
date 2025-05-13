@@ -18,6 +18,7 @@ public class SettingsDialog : Frame
     // ================================================================================
 
     float newScale = 0.0f;
+    bool fontSizeChanged = false;
 
     // ================================================================================
     // Properties
@@ -38,7 +39,7 @@ public class SettingsDialog : Frame
         };
         Action endSection = () =>
         {
-            ImGuiX.ShiftCursorScreenPos(ImGuiX.Unit(0.0f, 10.0f));
+            ImGuiX.ShiftCursorScreenPos(ImGuiX.Unit(0.0f, 20.0f));
         };
 
         ImGui.Separator();
@@ -98,6 +99,67 @@ public class SettingsDialog : Frame
             endSection();
         }
 
+        if (beginSection("Fonts"))
+        {
+            // Subfunction to display options for one of the two font types
+            var fontOptions = (Accessor<string> fontName, Accessor<int> size, string name, string tooltip, bool menu) =>
+            {
+                ImGui.BeginGroup();
+
+                // Combo box (not using the simpler "Combo()" function so I can change the font of
+                // each entry)
+                var oldFont = Top.GetFont(fontName.Get());
+                ImGui.PushFont(menu ? oldFont.menuSize : oldFont.infoSize);
+                if (ImGui.BeginCombo($"##{name}", oldFont.name))
+                {
+                    ImGui.PopFont();
+                    foreach (string v in Top.AvailableFonts.OrderBy(v => v))
+                    {
+                        var font = Top.GetFont(v);
+                        bool selected = v == oldFont.name;
+                        ImGui.PushFont(font.menuSize);
+                        if (ImGui.Selectable(v, selected))
+                            fontName.Set(v);
+                        if (selected)
+                            ImGui.SetItemDefaultFocus();
+                        ImGui.PopFont();
+                    }
+                    ImGui.EndCombo();
+                }
+                else
+                    ImGui.PopFont();
+
+                // Text on the right + tooltip
+                float width = ImGui.GetItemRectSize().X;
+                ImGui.SameLine();
+                ImGui.Text(name);
+                ImGui.EndGroup();
+                ImGuiX.TooltipOnHover(tooltip);
+
+                // Size slider
+                float offset = ImGuiX.Unit(20.0f);
+                ImGuiX.ShiftCursorScreenPos(offset, 0.0f);
+                ImGui.PushItemWidth(width - offset);
+                if (ImGuiX.SliderInt($" Size##{name}", size, 10, 40))
+                    fontSizeChanged = true;
+                ImGui.PopItemWidth();
+            };
+
+            fontOptions(new(() => GlobalConfig.MenuFont),
+                        new(() => GlobalConfig.MenuFontSize),
+                        "Menu font",
+                        "Font to use for menus, labels, etc.",
+                        true);
+
+            fontOptions(new(() => GlobalConfig.InfoFont),
+                        new(() => GlobalConfig.InfoFontSize),
+                        "Info font",
+                        "Font to use for tooltips, documentation, etc.",
+                        false);
+
+            endSection();
+        }
+
         if (beginSection("Build & Run dialog"))
         {
             if (ImGui.Button("Choose emulator path..."))
@@ -140,16 +202,18 @@ public class SettingsDialog : Frame
         }
 
         // Only update scale when the mouse is released
-        if (newScale != 0.0f && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        if ((newScale != 0.0f || fontSizeChanged) && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
             float value = newScale; // Capture current value for closure
             Top.DoNextFrame(() =>
             {
-                GlobalConfig.DisplayScaleFactor = value;
+                if (value != 0.0f)
+                    GlobalConfig.DisplayScaleFactor = value;
                 Top.ReAdjustScale();
             });
 
             newScale = 0.0f;
+            fontSizeChanged = false;
         }
     }
 

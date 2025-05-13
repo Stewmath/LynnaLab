@@ -26,11 +26,14 @@ public static class Top
         backend = new VeldridBackend.VeldridBackend("LynnaLab", versionString);
 
         ImageDir = Path.GetDirectoryName(System.AppContext.BaseDirectory) + "/Images/";
+        FontDir = Path.GetDirectoryName(System.AppContext.BaseDirectory) + "/Fonts/";
 
         backend.SetIcon(ImageDir + "icon.bmp");
         PegasusSeedTexture = backend.TextureFromFile(ImageDir + "Pegasus_Seed_OOX.png");
 
         Helper.mainThreadInvokeFunction = Top.LazyInvoke;
+
+        CheckAvailableFonts(); // Must do this before loading global config
 
         GlobalConfig = GlobalConfig.Load();
         if (GlobalConfig == null)
@@ -39,14 +42,6 @@ public static class Top
             if (!GlobalConfig.FileExists())
                 GlobalConfig.Save();
         }
-
-        AddFont("default", null, 13);
-        AddFont("oracles", "LynnaLab.ZeldaOracles.ttf", 18);
-        AddFont("oracles24px", "LynnaLab.ZeldaOracles.ttf", 24);
-
-        ImGui.StyleColorsDark(); // Default style
-        //ImGui.StyleColorsClassic();
-        //ImGui.StyleColorsLight();
 
         stopwatch = Stopwatch.StartNew();
 
@@ -60,6 +55,7 @@ public static class Top
         };
 
         settingsDialog = new SettingsDialog("Settings Dialog");
+        settingsDialog.AutoAdjustWidth = true;
 
         if (path != null)
             Top.OpenProject(path, game);
@@ -79,7 +75,7 @@ public static class Top
     static Stopwatch stopwatch;
 
     static Dictionary<Bitmap, RgbaTexture> imageDict = new();
-    static Dictionary<string, FontStruct> fontDict = new();
+    static Dictionary<string, FontData> fontDict;
 
     static Queue<Action> actionsForNextFrame = new();
 
@@ -96,10 +92,24 @@ public static class Top
     public static Backend Backend { get { return backend; } }
     public static GlobalConfig GlobalConfig { get; private set; }
     public static string ImageDir { get; private set; }
+    public static string FontDir { get; private set; }
 
-    public static ImFontPtr DefaultFont { get { return fontDict["default"].ptr; } }
-    public static ImFontPtr OraclesFont { get { return fontDict["oracles"].ptr; } }
-    public static ImFontPtr OraclesFont24px { get { return fontDict["oracles24px"].ptr; } }
+    /// <summary>
+    /// List of available fonts from the "Fonts/" directory.
+    /// </summary>
+    public static IEnumerable<string> AvailableFonts { get { return fontDict.Values.Select((v) => v.name); } }
+
+    /// <summary>
+    /// Font used for detailed text displays. (It can be a bit difficult to read text dumps in the
+    /// oracles font.)
+    /// </summary>
+    public static ImFontPtr InfoFont { get { return fontDict[GlobalConfig.InfoFont].infoSize; } }
+
+    /// <summary>
+    /// Font used for window titles, labels, etc. The default in most contexts.
+    /// </summary>
+    public static ImFontPtr MenuFont { get { return fontDict[GlobalConfig.MenuFont].menuSize; } }
+    public static ImFontPtr MenuFontLarge { get { return fontDict[GlobalConfig.MenuFont].menuSizeLarge; } }
 
     public static RgbaTexture PegasusSeedTexture { get; private set; }
 
@@ -166,7 +176,7 @@ public static class Top
     public static void Render(float deltaTime)
     {
         ImGui.NewFrame();
-        ImGui.PushFont(OraclesFont);
+        ImGui.PushFont(MenuFont);
 
         Modal.RenderModals();
 
@@ -205,7 +215,7 @@ public static class Top
         }
         ImGui.End();
 
-        settingsDialog.RenderDockedLeft(ypos, ImGuiX.Unit(300.0f));
+        settingsDialog.RenderDockedLeft(ypos, ImGuiX.Unit(100.0f));
 
         if (renderWorkspace)
             Workspace.Render(deltaTime);
@@ -220,31 +230,57 @@ public static class Top
     {
         ImGui.GetIO().Fonts.Clear();
 
-        foreach (FontStruct font in fontDict.Values)
+        float largeFontScale = 1.333f;
+
+        foreach (FontData font in fontDict.Values)
         {
-            if (font.name == "default")
+            if (font.name == "ProggyClean")
             {
-                // It's not recommended to scale the default font as it's a bitmap font
-                // (ProggyClean). Maybe replace it with something else.
                 ImFontConfig config;
                 config.FontDataOwnedByAtlas = 1;
                 config.GlyphMaxAdvanceX = float.MaxValue;
                 config.RasterizerMultiply = 1.0f;
                 config.RasterizerDensity = 1.0f;
                 config.OversampleH = config.OversampleV = 1;
-                config.SizePixels = font.baseSize * ImGuiX.ScaleUnit;
-                font.ptr = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
+
+                config.SizePixels = (int)(GlobalConfig.InfoFontSize * ImGuiX.ScaleUnit);
+                font.infoSize = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
+
+                config.SizePixels = (int)(GlobalConfig.MenuFontSize * ImGuiX.ScaleUnit);
+                font.menuSize = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
+
+                config.SizePixels = (int)(GlobalConfig.MenuFontSize * ImGuiX.ScaleUnit * largeFontScale);
+                font.menuSizeLarge = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
             }
             else
             {
-                Stream stream = Helper.GetResourceStream(font.resource);
-                font.ptr = ImGuiX.LoadFont(stream, (int)(font.baseSize * ImGuiX.ScaleUnit));
-                stream.Close();
+                font.infoSize = ImGuiX.LoadFont(font.name, (int)(GlobalConfig.InfoFontSize * ImGuiX.ScaleUnit));
+                font.menuSize = ImGuiX.LoadFont(font.name, (int)(GlobalConfig.MenuFontSize * ImGuiX.ScaleUnit));
+                font.menuSizeLarge = ImGuiX.LoadFont(font.name, (int)(GlobalConfig.MenuFontSize * ImGuiX.ScaleUnit * largeFontScale));
             }
         }
 
         ImGuiX.UpdateStyle();
         Backend.RecreateFontTexture();
+    }
+
+    public static void CheckAvailableFonts()
+    {
+        fontDict = new();
+
+        AddFont("ProggyClean"); // Default, built-in font
+
+        string[] fonts = Directory.GetFiles(FontDir, "*.ttf");
+        foreach (string path in fonts)
+        {
+            string name = Path.GetFileName(path);
+            AddFont(name);
+        }
+    }
+
+    public static FontData GetFont(string name)
+    {
+        return fontDict[name];
     }
 
     /// <summary>
@@ -363,13 +399,13 @@ public static class Top
     // Private methods
     // ================================================================================
 
-    static void AddFont(string name, string resource, float baseSize)
+    static void AddFont(string name)
     {
-        FontStruct font = new();
+        FontData font = new();
         font.name = name;
-        font.ptr = null; // Will be loaded later
-        font.resource = resource;
-        font.baseSize = baseSize;
+        font.infoSize = null; // Will be loaded later
+        font.menuSize = null;
+        font.menuSizeLarge = null;
         fontDict[name] = font;
     }
 
@@ -378,11 +414,13 @@ public static class Top
     // Nested structs
     // ================================================================================
 
-    class FontStruct
+    public class FontData
     {
         public string name;
-        public ImFontPtr ptr;
-        public string resource;
-        public float baseSize;
+
+        // Variants of the font loaded at different sizes
+        public ImFontPtr infoSize;
+        public ImFontPtr menuSize;
+        public ImFontPtr menuSizeLarge;
     }
 }

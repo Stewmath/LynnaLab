@@ -25,6 +25,7 @@ public class TilesetViewer : TileGrid
             if (!base.TooltipImagePreview)
                 return;
             ImGui.BeginTooltip();
+            ImGui.PushFont(Top.InfoFont);
             if (subTileMode)
             {
                 var (t, x, y) = ToSubTileIndex(tile);
@@ -38,6 +39,7 @@ public class TilesetViewer : TileGrid
             {
                 ImGui.Text($"Tile {tile:X2}");
             }
+            ImGui.PopFont();
             ImGui.EndTooltip();
         };
     }

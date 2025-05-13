@@ -238,7 +238,7 @@ public class ProjectWorkspace
 
         if (showImGuiDemoWindow)
         {
-            ImGui.PushFont(Top.DefaultFont);
+            ImGui.PushFont(Top.InfoFont);
             ImGui.ShowDemoWindow(ref showImGuiDemoWindow);
             ImGui.PopFont();
         }

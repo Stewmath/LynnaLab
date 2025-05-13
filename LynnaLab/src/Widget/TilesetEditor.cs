@@ -614,7 +614,9 @@ class SubTileViewer : GfxViewer
         base.OnHover = (index) =>
         {
             ImGui.BeginTooltip();
+            ImGui.PushFont(Top.InfoFont);
             ImGui.Text($"SubTile Index: {index^0x80:X2}");
+            ImGui.PopFont();
             ImGui.EndTooltip();
         };
     }

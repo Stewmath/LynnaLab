@@ -21,8 +21,13 @@ public abstract class Frame
     bool active;
     bool grabFocus;
 
+    // For automatic size adjustment when display scale changes (windows only)
     Vector2 lastWindowSize = Vector2.Zero;
     float lastScaleFactor = 0.0f;
+
+    // Used by dockable frames only.
+    // TODO: Should probably put dockable rendering into a separate class - this is messy.
+    Vector2 lastRequestedWindowSize = Vector2.Zero;
 
     // ================================================================================
     // Events
@@ -59,6 +64,12 @@ public abstract class Frame
     /// this; that scaling happens later.
     /// </summary>
     public Vector2 DefaultSize { get; set; } = Vector2.Zero;
+
+    /// <summary>
+    /// Automatically set the window width based on the content size. Only supported by
+    /// RenderDockedLeft() for now.
+    /// </summary>
+    public bool AutoAdjustWidth { get; set; }
 
     // Name is the name used for ImGui's internal window tracking. DisplayName, if set, changes only
     // the name as displayed to the user.
@@ -119,16 +130,24 @@ public abstract class Frame
     {
         if (!Active) // Show only the button to expand the window
             width = ImGuiX.Unit(10.0f);
+        else if (AutoAdjustWidth && lastRequestedWindowSize.X != 0)
+            width = lastRequestedWindowSize.X;
 
         if (ImGuiX.BeginDocked(WindowID, new Vector2(0, ypos), new Vector2(width, 0), front:true))
         {
             if (Active)
             {
+                ImGui.BeginGroup();
                 if (ImGui.Button("<"))
                 {
                     Active = false;
                 }
                 Render();
+                ImGui.EndGroup();
+                lastWindowSize = ImGui.GetWindowSize();
+                ImGui.SameLine();
+                float requestedWidth = ImGui.GetCursorPosX();
+                lastRequestedWindowSize = ImGui.GetCursorPos();
             }
             else
             {

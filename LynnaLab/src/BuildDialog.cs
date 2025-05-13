@@ -44,9 +44,9 @@ public class BuildDialog : Frame
 
     public override void Render()
     {
-        ImGui.PushFont(Top.DefaultFont);
-
+        ImGui.PushFont(Top.InfoFont);
         ImGui.TextWrapped("Building oracles-disasm. The first time will take several minutes.");
+        ImGui.PopFont();
 
         if (ImGui.BeginChild("Build Dialog ProcessView", new Vector2(0.0f, -50.0f), ImGuiChildFlags.FrameStyle))
         {
@@ -58,8 +58,6 @@ public class BuildDialog : Frame
                         new Accessor<bool>(() => GlobalConfig.CloseRunDialogWithEmulator));
         ImGuiX.Checkbox("Closing dialog closes emulator",
                         new Accessor<bool>(() => GlobalConfig.CloseEmulatorWithRunDialog));
-
-        ImGui.PopFont();
     }
 
     /// <summary>

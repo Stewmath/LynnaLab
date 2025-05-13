@@ -323,10 +323,8 @@ public class WarpEditor : Frame
             base.AddRectFilled(rect, WarpEditor.WarpSourceColor);
 
             // Draw digit representing the warp index in the center of the rectangle
-            ImGui.PushFont(Top.OraclesFont);
             string text = index.ToString("X");
             ImGuiX.DrawTextAt(text, base.origin + rect.Center);
-            ImGui.PopFont();
         }
 
         // ================================================================================

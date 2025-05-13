@@ -15,6 +15,9 @@ public class GlobalConfig
 
 ".TrimStart();
 
+    static readonly string DefaultMenuFont = "ZeldaOracles.ttf";
+    static readonly string DefaultInfoFont = "RocknRollOne-Regular.ttf";
+
 
     GlobalConfig oldValues;
 
@@ -44,8 +47,14 @@ public class GlobalConfig
 
         if (retval != null)
         {
+            // Validate values
             if (retval.DisplayScaleFactor < 1.0f)
                 retval.DisplayScaleFactor = 1.0f;
+            if (!Top.AvailableFonts.Contains(retval.MenuFont))
+                retval.MenuFont = DefaultMenuFont;
+            if (!Top.AvailableFonts.Contains(retval.InfoFont))
+                retval.InfoFont = DefaultInfoFont;
+
             retval.oldValues = new GlobalConfig(retval);
         }
         return retval;
@@ -90,6 +99,12 @@ public class GlobalConfig
     public bool ShowBrushPreview { get; set; } = true;
     public bool OverrideSystemScaling { get; set; } = false;
     public float DisplayScaleFactor { get; set; } = 1.0f;
+
+    // Fonts
+    public string MenuFont { get; set; } = DefaultMenuFont;
+    public string InfoFont { get; set; } = DefaultInfoFont;
+    public int MenuFontSize { get; set; } = 18;
+    public int InfoFontSize { get; set; } = 20;
 
     // Build & Run dialog
     public bool CloseRunDialogWithEmulator { get; set; } = false;

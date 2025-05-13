@@ -23,7 +23,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="version.txt" />
-    <EmbeddedResource Include="ZeldaOracles.ttf" />
 
     <EmbeddedResource Include="Shaders/OpenGL/*.glsl" LogicalName="%(Filename)%(Extension)" />
     <EmbeddedResource Include="Shaders/SPIR-V/*.spv" LogicalName="%(Filename)%(Extension)" />
@@ -44,6 +43,10 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>
     <None Update="Images/*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+    <None Update="Fonts/*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>

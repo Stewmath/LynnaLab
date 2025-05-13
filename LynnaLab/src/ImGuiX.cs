@@ -89,14 +89,10 @@ public static class ImGuiX
             ImGui.StyleColorsDark();
     }
 
-    public static unsafe ImFontPtr LoadFont(Stream stream, int size)
+    public static unsafe ImFontPtr LoadFont(string filename, int size)
     {
-        // ImGui is responsible for freeing the buffer, so we must allocate it in an unmanaged way.
-        int length = (int)stream.Length;
-        byte* data = (byte*)Marshal.AllocHGlobal(length);
-        stream.Read(new Span<byte>(data, length));
-
-        return ImGui.GetIO().Fonts.AddFontFromMemoryTTF((IntPtr)data, length, size);
+        string path = Top.FontDir + filename;
+        return ImGui.GetIO().Fonts.AddFontFromFileTTF(path, size);
     }
 
     public static Vector2 GetScroll()
@@ -154,6 +150,41 @@ public static class ImGuiX
         ret = ImGuiNative.igBeginTabItem(native_label, (byte*)0, flags);
         Marshal.FreeCoTaskMem((nint)native_label);
         return ret != 0;
+    }
+
+    /// <summary>
+    /// Alternate version of ImGui.Combo() which takes the name of the selected value, rather than
+    /// just an index.
+    /// </summary>
+    public static bool Combo(string name, Accessor<string> selection, IEnumerable<string> options)
+    {
+        bool retval = false;
+        string oldSelection = selection.Get();
+        if (ImGui.BeginCombo(name, oldSelection))
+        {
+            foreach (string v in options)
+            {
+                bool selected = v == oldSelection;
+                if (ImGui.Selectable(v, selected))
+                {
+                    selection.Set(v);
+                    retval = true;
+                }
+                if (selected)
+                    ImGui.SetItemDefaultFocus();
+            }
+            ImGui.EndCombo();
+        }
+        return retval;
+    }
+
+    public static bool SliderInt(string name, Accessor<int> accessor, int min, int max)
+    {
+        int value = accessor.Get();
+        bool retval = ImGui.SliderInt(name, ref value, min, max);
+        if (retval)
+            accessor.Set(value);
+        return retval;
     }
 
     /// <summary>
@@ -395,6 +426,8 @@ public static class ImGuiX
     /// </summary>
     public static void Tooltip(string text)
     {
+        ImGui.PushFont(Top.InfoFont);
+
         var textSize = ImGui.CalcTextSize(text);
 
         if (textSize.X > TOOLTIP_WINDOW_WIDTH)
@@ -404,6 +437,7 @@ public static class ImGuiX
         ImGui.BeginTooltip();
         ImGui.TextWrapped(text);
         ImGui.EndTooltip();
+        ImGui.PopFont();
     }
 
     /// <summary>
