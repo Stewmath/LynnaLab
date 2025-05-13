@@ -94,6 +94,16 @@ namespace Util
             stream.Close();
             return data;
         }
+
+        /// <summary>
+        /// Throw an exception if the value is false. An alternative to Debug.Assert that applies to
+        /// release builds.
+        /// </summary>
+        public static void Assert(bool condition, string message=null)
+        {
+            if (!condition)
+                throw new Exception(message);
+        }
     }
 
 }
