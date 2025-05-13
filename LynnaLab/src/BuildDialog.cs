@@ -28,6 +28,8 @@ public class BuildDialog : Frame
 
     bool makeLaunchFailed;
 
+    float bottomPanelSize = 0.0f;
+
 
     // ================================================================================
     // Properties
@@ -48,16 +50,20 @@ public class BuildDialog : Frame
         ImGui.TextWrapped("Building oracles-disasm. The first time will take several minutes.");
         ImGui.PopFont();
 
-        if (ImGui.BeginChild("Build Dialog ProcessView", new Vector2(0.0f, -50.0f), ImGuiChildFlags.FrameStyle))
+        if (ImGui.BeginChild("Build Dialog ProcessView", new Vector2(0.0f, -bottomPanelSize), ImGuiChildFlags.FrameStyle))
         {
             processView?.Render();
         }
         ImGui.EndChild();
 
+        float startY = ImGui.GetCursorScreenPos().Y;
+
         ImGuiX.Checkbox("Closing emulator closes dialog",
                         new Accessor<bool>(() => GlobalConfig.CloseRunDialogWithEmulator));
         ImGuiX.Checkbox("Closing dialog closes emulator",
                         new Accessor<bool>(() => GlobalConfig.CloseEmulatorWithRunDialog));
+
+        bottomPanelSize = ImGui.GetCursorScreenPos().Y - startY;
     }
 
     /// <summary>
