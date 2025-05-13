@@ -15,6 +15,9 @@ public static class ImGuiX
 
     static ImGuiStyle backupStyle;
 
+    static Stack<float> alphaStack = new Stack<float>();
+    static Stack<Interpolation> interpolationStack = new Stack<Interpolation>();
+
     // ================================================================================
     // Properties
     // ================================================================================
@@ -122,8 +125,44 @@ public static class ImGuiX
         ShiftCursorScreenPos(new Vector2(x, y));
     }
 
+    /// <summary>
+    /// All subsequent images will have this alpha (transparency) applied to them when drawn
+    /// </summary>
+    public static void PushAlpha(float alpha)
+    {
+        alphaStack.Push(alpha);
+        AddCallback<float>(ImGuiXCallback.SetAlpha, alpha);
+    }
+
+    public static void PopAlpha()
+    {
+        alphaStack.Pop();
+        float alpha = 1.0f;
+        if (alphaStack.Count != 0)
+            alpha = alphaStack.Peek();
+        AddCallback<float>(ImGuiXCallback.SetAlpha, alpha);
+    }
+
+    /// <summary>
+    /// All subsequent images will be rendered with this interpolation mode
+    /// </summary>
+    public static void PushInterpolation(Interpolation mode)
+    {
+        interpolationStack.Push(mode);
+        AddCallback<int>(ImGuiXCallback.SetInterpolation, (int)mode);
+    }
+
+    public static void PopInterpolation()
+    {
+        interpolationStack.Pop();
+        Interpolation mode = Interpolation.Nearest; // Default interpolation mode
+        if (interpolationStack.Count != 0)
+            mode = interpolationStack.Peek();
+        AddCallback<int>(ImGuiXCallback.SetInterpolation, (int)mode);
+    }
+
     // ================================================================================
-    // Function wrappers
+    // Function wrappers and widgets
     // ================================================================================
 
     /// <summary>
@@ -215,49 +254,6 @@ public static class ImGuiX
         ImDrawListPtr drawList = ImGui.GetWindowDrawList();
         drawList.AddCallback((nint)callbackType, ptr);
     }
-
-    /// <summary>
-    /// All subsequent images will have this alpha (transparency) applied to them when drawn
-    /// </summary>
-    public static void PushAlpha(float alpha)
-    {
-        alphaStack.Push(alpha);
-        AddCallback<float>(ImGuiXCallback.SetAlpha, alpha);
-    }
-
-    public static void PopAlpha()
-    {
-        alphaStack.Pop();
-        float alpha = 1.0f;
-        if (alphaStack.Count != 0)
-            alpha = alphaStack.Peek();
-        AddCallback<float>(ImGuiXCallback.SetAlpha, alpha);
-    }
-
-    /// <summary>
-    /// All subsequent images will be rendered with this interpolation mode
-    /// </summary>
-    public static void PushInterpolation(Interpolation mode)
-    {
-        interpolationStack.Push(mode);
-        AddCallback<int>(ImGuiXCallback.SetInterpolation, (int)mode);
-    }
-
-    public static void PopInterpolation()
-    {
-        interpolationStack.Pop();
-        Interpolation mode = Interpolation.Nearest; // Default interpolation mode
-        if (interpolationStack.Count != 0)
-            mode = interpolationStack.Peek();
-        AddCallback<int>(ImGuiXCallback.SetInterpolation, (int)mode);
-    }
-
-    static Stack<float> alphaStack = new Stack<float>();
-    static Stack<Interpolation> interpolationStack = new Stack<Interpolation>();
-
-    // ================================================================================
-    // Custom widgets
-    // ================================================================================
 
     /// <summary>
     /// Convenience method for rendering images
