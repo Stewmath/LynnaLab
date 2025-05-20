@@ -354,12 +354,12 @@ namespace LynnaLib
             logAppender = new log4net.Appender.RollingFileAppender();
             logAppender.AppendToFile = true;
             logAppender.Layout = new log4net.Layout.PatternLayout(
-                "%date{ABSOLUTE} [%logger] %level - %message%newline%exception");
+                "%date %-5level [%logger] - %message%newline%exception");
             logAppender.File = logDirectory + "Log.txt";
-            logAppender.Threshold = log4net.Core.Level.All;
+            logAppender.Threshold = log4net.Core.Level.Info;
             logAppender.MaxFileSize = 2 * 1024 * 1024;
-            logAppender.MaxSizeRollBackups = 3;
-            logAppender.RollingStyle = log4net.Appender.RollingFileAppender.RollingMode.Composite;
+            logAppender.MaxSizeRollBackups = 10;
+            logAppender.RollingStyle = log4net.Appender.RollingFileAppender.RollingMode.Once;
             logAppender.ActivateOptions();
             LogHelper.AddAppenderToRootLogger(logAppender);
 
