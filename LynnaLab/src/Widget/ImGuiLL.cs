@@ -129,7 +129,8 @@ public class ImGuiLL
                         ImGuiX.InputHex(desc.Name, vr.GetIntValue(), (value) =>
                         {
                             vr.SetValue(value);
-                        });
+                        },
+                        min: vr.MinValue, max: vr.MaxValue);
                     }
                     break;
                 case ValueReferenceType.String:

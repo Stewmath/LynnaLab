@@ -75,6 +75,11 @@ public class AbstractIntValueReference : ValueReference
             log.Warn(string.Format("Tried to set value to {0} (max value is {1})", i, MaxValue));
             i = MaxValue;
         }
+        if (i < MinValue)
+        {
+            log.Warn(string.Format("Tried to set value to {0} (min value is {1})", i, MinValue));
+            i = MinValue;
+        }
         if (i == GetIntValue())
             return;
 
