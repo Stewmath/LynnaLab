@@ -1,3 +1,4 @@
+using System.Text;
 using SDL;
 using static SDL.SDL3;
 
@@ -30,6 +31,8 @@ public unsafe class SDLWindow
 
         if (!SDL_ShowWindow(Handle))
             throw new Exception("SDL_ShowWindow error");
+
+        SDL_StartTextInput(Handle);
 
         UpdateSize();
 
@@ -111,6 +114,9 @@ public unsafe class SDLWindow
                 case SDL_EventType.SDL_EVENT_KEY_UP:
                     keyEvents.Add(new KeyEvent(ev.key.key, ev.key.down));
                     break;
+                case SDL_EventType.SDL_EVENT_TEXT_INPUT:
+                    HandleTextInputEvent(ev.text, keyPresses);
+                    break;
                 case SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                     Close();
                     break;
@@ -180,5 +186,26 @@ public unsafe class SDLWindow
         Size = new Point(w, h);
         SDL_GetWindowSizeInPixels(Handle, &w, &h);
         SizeInPixels = new Point(w, h);
+    }
+
+    private void HandleTextInputEvent(SDL_TextInputEvent textInputEvent, IList<uint> presses)
+    {
+        uint byteCount = 0;
+        // Loop until the null terminator is found.
+        while (textInputEvent.text[byteCount++] != 0)
+        { }
+
+        if (byteCount > 1)
+        {
+            // We don't want the null terminator.
+            byteCount -= 1;
+            int charCount = Encoding.UTF8.GetCharCount(textInputEvent.text, (int)byteCount);
+            char* charsPtr = stackalloc char[charCount];
+            Encoding.UTF8.GetChars(textInputEvent.text, (int)byteCount, charsPtr, charCount);
+            for (int i = 0; i < charCount; i++)
+            {
+                presses.Add(charsPtr[i]);
+            }
+        }
     }
 }
