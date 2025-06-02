@@ -347,6 +347,7 @@ public class ServerController
     {
         lock (mylock)
         {
+            conn.Accept();
             if (!pendingConnections.Remove(conn))
                 throw new Exception("AcceptConnection: Connection wasn't in our list of pending connections.");
             acceptedConnectionQueue.Enqueue(conn);
@@ -451,6 +452,7 @@ public class ConnectionController
         else if (role == NetworkRole.Client)
         {
             packetHandler = new ClientPacketHandler(this, Connection, interfacer, () => packetLoopIterated);
+            acceptedConnection = true;
         }
         else
         {
@@ -511,6 +513,7 @@ public class ConnectionController
     IPacketHandler packetHandler;
 
     bool ranBegin = false;
+    bool acceptedConnection = false; // For server-side connections, this is false until accepted
     Exception? closeException;
 
     // ================================================================================
@@ -661,6 +664,13 @@ public class ConnectionController
         // TODO: Cleanup?
     }
 
+    public void Accept()
+    {
+        if (acceptedConnection)
+            throw new Exception(FormatLog("Connection accepted multiple times?"));
+        acceptedConnection = true;
+    }
+
     public void Close()
     {
         Connection.Close();
@@ -717,6 +727,10 @@ public class ConnectionController
     {
         log.Debug(FormatLog($"Received packet from sender {header.senderID}: " + header.command));
         //log.Debug("Packet body: " + data);
+
+        // Do not accept any packets until connection is accepted, for security reasons.
+        if (!acceptedConnection)
+            throw new NetworkException(FormatLog("Received packet before connection was accepted."));
 
         if (!receivedHello
             && header.command != NetworkCommand.ServerHello
