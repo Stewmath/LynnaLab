@@ -471,7 +471,7 @@ public static class Modal
                     ImGui.Text($"Error: Couldn't parse address '{toParse}'.");
                 }
 
-                if (ImGui.Button("Connect"))
+                if (ImGui.Button("Connect") && endPoint != null)
                 {
                     cancelSource = new();
                     connectToServerTask = ConnectToServer(endPoint, cancelSource.Token);
