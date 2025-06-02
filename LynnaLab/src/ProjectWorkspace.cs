@@ -369,7 +369,7 @@ public class ProjectWorkspace
         ServerController server;
         try
         {
-            server = ServerController.CreateServer(Project, serverAddress, Top.InvokeAsync);
+            server = ServerController.CreateServer(Project, serverAddress, Top.DoNextFrameAsync);
             this.NetworkConnection = server;
         }
         catch (System.Net.Sockets.SocketException e)
@@ -382,12 +382,12 @@ public class ProjectWorkspace
         // TODO: Unsubscribe on closure
         server.ConnectionRequestedEvent += (_, conn) =>
         {
-            Top.LazyInvoke(() => Modal.ConnectionRequestModal(server, conn));
+            Top.DoNextFrame(() => Modal.ConnectionRequestModal(server, conn));
         };
 
         server.ClientDisconnectedEvent += (_, conn, exception) =>
         {
-            Top.LazyInvoke(() => Modal.DisplayErrorMessage("Client disconnected.", exception));
+            Top.DoNextFrame(() => Modal.DisplayErrorMessage("Client disconnected.", exception));
         };
 
         // New thread: Run the server until it shuts down
@@ -397,7 +397,7 @@ public class ProjectWorkspace
             {
                 await server.RunUntilClosed();
 
-                Top.LazyInvoke(() =>
+                Top.DoNextFrame(() =>
                 {
                     Modal.DisplayInfoMessage("Server has closed.");
                 });
@@ -405,7 +405,7 @@ public class ProjectWorkspace
             catch (Exception e)
             {
                 log.Error(e);
-                Top.LazyInvoke(() =>
+                Top.DoNextFrame(() =>
                 {
                     Modal.DisplayErrorMessage("Server encountered an error and is shutting down; see log.");
                 });

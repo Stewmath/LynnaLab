@@ -516,7 +516,7 @@ public static class Modal
             ImGui.Text($"New connection request from: {conn.RemoteEndPoint}");
             if (ImGui.Button("Accept"))
             {
-                Top.LazyInvoke(() => Modal.DisplayInfoMessage($"Client connected: {conn.RemoteEndPoint}."));
+                Top.DoNextFrame(() => Modal.DisplayInfoMessage($"Client connected: {conn.RemoteEndPoint}."));
                 server.AcceptConnection(conn);
                 return true;
             }
@@ -545,7 +545,7 @@ public static class Modal
 
         connectToServerStage = 0;
 
-        (project, clientConn) = await ConnectionController.CreateForClientAsync(endPoint, Top.InvokeAsync, cancellationToken);
+        (project, clientConn) = await ConnectionController.CreateForClientAsync(endPoint, Top.DoNextFrameAsync, cancellationToken);
 
         // Make no assumptions about what thread we're on after above "await".
 
@@ -572,7 +572,7 @@ public static class Modal
         }
 
         project.FinalizeLoad();
-        await Top.InvokeAsync(() => { Top.SetWorkspace(new ProjectWorkspace(project, "ClientProject", clientConn)); });
+        await Top.DoNextFrameAsync(() => { Top.SetWorkspace(new ProjectWorkspace(project, "ClientProject", clientConn)); });
     }
 
 

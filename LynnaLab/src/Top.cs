@@ -33,7 +33,7 @@ public static class Top
         backend.SetIcon(ImageDir + "icon.bmp");
         PegasusSeedTexture = backend.TextureFromFile(ImageDir + "Pegasus_Seed_OOX.png");
 
-        Helper.mainThreadInvokeFunction = Top.LazyInvoke;
+        Helper.mainThreadInvokeFunction = Top.DoNextFrame;
 
         CheckAvailableFonts(); // Must do this before loading global config
 
@@ -109,11 +109,9 @@ public static class Top
     static Dictionary<Bitmap, RgbaTexture> imageDict = new();
     static Dictionary<string, FontData> fontDict;
 
-    static Queue<Action> actionsForNextFrame = new();
-
     // This must be thread-safe - signals that come from other threads (ie. emulator process exit
     // signal) may want to schedule actions to perform on the main thread.
-    static ConcurrentQueue<Func<bool>> idleFunctions = new();
+    static ConcurrentQueue<Action> actionsForNextFrame = new();
 
     static SettingsDialog settingsDialog;
 
@@ -162,25 +160,6 @@ public static class Top
 
         backend.HandleEvents(lastDeltaTime);
         Top.Render(lastDeltaTime);
-
-        // Call the "idle functions", used for lazy drawing.
-        // Do this before backend.Render() as that triggers vsync and messes up our timer.
-        while (Program.handlingException == null)
-        {
-            if (!idleFunctions.TryDequeue(out Func<bool> func))
-                break;
-            if (func())
-                idleFunctions.Enqueue(func);
-
-            // Maximum frame time up to which we can run another idle function.
-            // At 60fps, 1 frame = 0.016 seconds. So we keep this a bit under that.
-            const float MAX_FRAME_TIME = 0.01f;
-
-            float deltaTime = stopwatch.ElapsedTicks / (float)Stopwatch.Frequency;
-            if (deltaTime >= MAX_FRAME_TIME)
-                break;
-        }
-
         backend.Render();
 
         if (backend.CloseRequested)
@@ -195,9 +174,7 @@ public static class Top
 
         if (Program.handlingException == null)
         {
-            var actions = actionsForNextFrame.ToArray();
-            actionsForNextFrame.Clear();
-            foreach (Action act in actions)
+            while (actionsForNextFrame.TryDequeue(out Action act))
                 act();
         }
     }
@@ -355,35 +332,28 @@ public static class Top
     }
 
     /// <summary>
-    /// Queues the given function to run when some free time is available.
-    /// The function will be repeatedly called until it returns false.
+    /// Queues the given function to run later (after imgui rendering is finished).
     /// THIS MAY BE CALLED FROM OTHER THREADS! Ensure that no race conditions occur. The
-    /// "idleFunctions" queue is a thread-safe type.
+    /// "actionsForNextFrame" queue is a thread-safe type.
     /// </summary>
-    public static void LazyInvoke(Func<bool> function)
+    public static void DoNextFrame(Action action)
     {
-        idleFunctions.Enqueue(function);
-    }
-
-    public static void LazyInvoke(Action function)
-    {
-        LazyInvoke(() => { function(); return false; });
+        actionsForNextFrame.Enqueue(action);
     }
 
     /// <summary>
-    /// Like LazyInvoke but it returns a Task, so can be used with "await".
+    /// Like DoNextFrame but it returns a Task, so can be used with "await".
     /// </summary>
-    public static Task InvokeAsync(Action action)
+    public static Task DoNextFrameAsync(Action action)
     {
         TaskCompletionSource taskSource = new();
 
-        idleFunctions.Enqueue(() =>
+        actionsForNextFrame.Enqueue(() =>
         {
             try
             {
                 action();
                 taskSource.SetResult();
-                return false;
             }
             catch (Exception e)
             {
@@ -455,11 +425,6 @@ public static class Top
     {
         Workspace?.Close();
         Workspace = null;
-    }
-
-    public static void DoNextFrame(Action action)
-    {
-        actionsForNextFrame.Enqueue(action);
     }
 
     public static void SetWorkspace(ProjectWorkspace workspace)
