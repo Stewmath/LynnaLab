@@ -1285,7 +1285,7 @@ public interface Trackable
 /// - Anything that's needed to properly instantiate an object after deserialization.
 /// - Avoid putting "caches" in the state. It should be possible to re-compute that kind of thing
 /// after deserialization. Anyway, it can create false "undo/redo" prompts when cache-like data is
-/// tracked (simply from to loading new data in without changing anything).
+/// tracked (simply from loading new data in without changing anything).
 /// </summary>
 public interface TransactionState
 {

@@ -1728,7 +1728,10 @@ namespace LynnaLib
             return (T)Deserialize(typeof(T), stateStr);
         }
 
-        // TODO: Check type
+        /// <summary>
+        /// Do not call this unless you're certain that it's safe to deserialize the type that's
+        /// being passed in. (The GetStateType and GetInstType functions do this validation.)
+        /// </summary>
         public object Deserialize(Type type, string stateStr)
         {
             object s;
@@ -1802,25 +1805,27 @@ namespace LynnaLib
             s[1] = fullID.Substring(splitPos+1);
             if (s.Length != 2)
                 throw new Exception($"Bad identifier: {fullID}");
-            Type t = Type.GetType(s[0]); // TODO: VALIDATE THE TYPE
-            if (t == null)
-                throw new Exception("Could not resolve type: " + s[0]);
+            Type t = GetInstType(s[0]);
             return (t, s[1]);
         }
 
         public static Type GetStateType(string type)
         {
-            Type t = Type.GetType(type); // TODO: VALIDATE THE TYPE
+            Type t = Type.GetType(type);
             if (t == null)
                 throw new Exception("Could not resolve type: " + type);
+            if (!(typeof(TransactionState).IsAssignableFrom(t)))
+                throw new Exception("GetStateType: Invalid type: " + t);
             return t;
         }
 
         public static Type GetInstType(string type)
         {
-            Type t = Type.GetType(type); // TODO: VALIDATE THE TYPE
+            Type t = Type.GetType(type);
             if (t == null)
                 throw new Exception("Could not resolve type: " + type);
+            if (!(typeof(TrackedProjectData).IsAssignableFrom(t)))
+                throw new Exception("GetInstType: Invalid type: " + t);
             return t;
         }
 
