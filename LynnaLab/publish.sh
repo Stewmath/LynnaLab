@@ -7,7 +7,7 @@ projectdir="$PWD"
 projectfile="$projectdir/LynnaLab.csproj"
 publishbasedir="$projectdir/bin/Release/Publish"
 profiledir="$projectdir/Properties/PublishProfiles"
-versionfile="$projectdir/version.txt"
+versionfile="$projectdir/../LynnaLib/version.txt"
 
 # WINDOWS
 #==========================================================================
