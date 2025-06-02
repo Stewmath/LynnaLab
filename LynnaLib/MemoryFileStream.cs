@@ -133,7 +133,7 @@ namespace LynnaLib
                 Helper.MainThreadInvoke(() =>
                 {
                     Project.BeginTransaction("File Reload", disallowUndo: true);
-                    Project.UndoState.CaptureInitialState<State>(this);
+                    Project.TransactionManager.CaptureInitialState<State>(this);
                     LoadFromFile();
                     InvokeModifiedEvent(new StreamModifiedEventArgs(0, Length));
                     Project.EndTransaction();
@@ -266,7 +266,7 @@ namespace LynnaLib
 
         public override void WriteAllBytes(ReadOnlySpan<byte> data)
         {
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
             state.data = data.ToArray();
             InvokeModifiedEvent(StreamModifiedEventArgs.All(this));
         }
@@ -297,7 +297,7 @@ namespace LynnaLib
 
         public void RecordChange()
         {
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
         }
 
         // ================================================================================

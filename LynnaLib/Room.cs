@@ -645,7 +645,7 @@ namespace LynnaLib
             // Don't capture initial state in constructor - since we're not actually changing
             // anything. (Don't want to register undo events that would undo the initialization!)
             if (!inConstructor)
-                Project.UndoState.CaptureInitialState<State>(this);
+                Project.TransactionManager.CaptureInitialState<State>(this);
 
             state.ChestDataStart = d;
             OnChestDataChanged(true);

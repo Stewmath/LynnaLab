@@ -1341,7 +1341,7 @@ namespace LynnaLib
         /// </summary>
         public void RecordChange()
         {
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             // This is a bit weird. We need to record the project's changes as well, but the fields
             // in the project class that we care about (just defines & labels) are only ever changed

@@ -312,7 +312,7 @@ namespace LynnaLib
         public int AddObject(ObjectType t)
         {
             Project.BeginTransaction("Add object");
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             AddObjectToEnd(t);
             ModifiedHandler(this, null);
@@ -328,7 +328,7 @@ namespace LynnaLib
         public int AddObjectClone(ObjectDefinition obj)
         {
             Project.BeginTransaction("Clone object");
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             ObjectDefinition newObj = AddObjectToEnd(obj.GetObjectType());
             newObj.CopyFrom(obj);
@@ -342,7 +342,7 @@ namespace LynnaLib
         public void RemoveObject(int index)
         {
             Project.BeginTransaction("Delete object");
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             if (IsStub() || index >= ObjectList.Count)
                 throw new ArgumentException("Argument index=" + index + " is too high.");
@@ -380,7 +380,7 @@ namespace LynnaLib
                 return;
 
             Project.BeginTransaction($"Rearrange objects#{Identifier}", true);
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             Isolate();
 
@@ -409,7 +409,7 @@ namespace LynnaLib
                 throw new Exception("Tried to remove an invalid object group.");
 
             Project.BeginTransaction("Delete object group");
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             bool foundGroup = false;
 
@@ -474,7 +474,7 @@ namespace LynnaLib
 
             if (!IsIsolated(out firstToDelete))
             {
-                Project.UndoState.CaptureInitialState<State>(this);
+                Project.TransactionManager.CaptureInitialState<State>(this);
 
                 RawObjectGroup.Repoint();
 

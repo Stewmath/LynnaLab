@@ -34,7 +34,7 @@ public class RoomLayoutEditor : TileGrid
             (x, y, tile) => RoomLayout.SetTile(x, y, tile),
             () => RoomLayout.Width,
             () => RoomLayout.Height,
-            () => Project.UndoState.InsertBarrier());
+            () => Project.TransactionManager.InsertBarrier());
 
         QuickstartData.enableToggledEvent += (s, a) => UpdateQuickstartRoomComponent();
         RoomEditor.TabChangedEvent += (s, a) => UpdateRoomComponents();
@@ -323,7 +323,7 @@ public class RoomLayoutEditor : TileGrid
             else
             {
                 // Released the component
-                Project.UndoState.InsertBarrier();
+                Project.TransactionManager.InsertBarrier();
                 draggingComponent = false;
             }
         }

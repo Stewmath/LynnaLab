@@ -98,11 +98,11 @@ public class TestNetwork
             cRoom.SetTile(4, 2, 56);
             await synchronize();
             Assert.Equal(56, sRoom.GetTile(4, 2));
-            p2.UndoState.Undo();
+            p2.TransactionManager.Undo();
             Assert.Equal(17, cRoom.GetTile(4, 2));
             await synchronize();
             Assert.Equal(17, sRoom.GetTile(4, 2));
-            p2.UndoState.Redo();
+            p2.TransactionManager.Redo();
             Assert.Equal(56, cRoom.GetTile(4, 2));
             await synchronize();
             Assert.Equal(56, sRoom.GetTile(4, 2));
@@ -126,11 +126,11 @@ public class TestNetwork
             Assert.Equal(56, p2.GetRoomLayout(0x203, Season.None).GetTile(2, 1));
 
             // Client does undo, then redo
-            p2.UndoState.Undo();
+            p2.TransactionManager.Undo();
             Assert.Equal(161, cRoom.GetTile(4, 2));
             await synchronize();
             Assert.Equal(161, sRoom.GetTile(4, 2));
-            p2.UndoState.Redo();
+            p2.TransactionManager.Redo();
             Assert.Equal(56, cRoom.GetTile(4, 2));
             await synchronize();
             Assert.Equal(56, sRoom.GetTile(4, 2));

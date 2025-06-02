@@ -171,7 +171,7 @@ namespace LynnaLib
             get { return state.warpSource.Instance; }
             set
             {
-                Project.UndoState.CaptureInitialState<State>(this);
+                Project.TransactionManager.CaptureInitialState<State>(this);
                 state.warpSource = new(value);
             }
         }
@@ -423,7 +423,7 @@ namespace LynnaLib
             // purpose (see note in constructor). But it means that we do not see undo/redo events
             // that change the underlying data. So we must notify the Undo system to do something.
             // (This is just to ensure "InvokeUndoEvents" is called.)
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             ModifiedEvent?.Invoke(this, null);
         }

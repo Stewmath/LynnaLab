@@ -28,11 +28,11 @@ public class TestProject
             Assert.Equal(98, layout.GetTile(5, 4));
             layout.SetTile(5, 4, 40);
             Assert.Equal(40, layout.GetTile(5, 4));
-            p.UndoState.Undo();
+            p.TransactionManager.Undo();
             Assert.Equal(98, layout.GetTile(5, 4));
-            p.UndoState.Redo();
+            p.TransactionManager.Redo();
             Assert.Equal(40, layout.GetTile(5, 4));
-            p.UndoState.Undo();
+            p.TransactionManager.Undo();
             Assert.Equal(98, layout.GetTile(5, 4));
         }
 
@@ -42,9 +42,9 @@ public class TestProject
             Assert.Equal(0, group.GetNumObjects());
             group.AddObject(ObjectType.Interaction);
             Assert.Equal(1, group.GetNumObjects());
-            p.UndoState.Undo();
+            p.TransactionManager.Undo();
             Assert.Equal(0, group.GetNumObjects());
-            p.UndoState.Redo();
+            p.TransactionManager.Redo();
             Assert.Equal(1, group.GetNumObjects());
         }
 
@@ -55,10 +55,10 @@ public class TestProject
             group.AddObject(ObjectType.Interaction);
             Assert.Equal(1, group.GetNumObjects());
             group.GetObject(0).SetX(0x50);
-            p.UndoState.Undo();
-            p.UndoState.Undo();
-            p.UndoState.Redo();
-            p.UndoState.Redo();
+            p.TransactionManager.Undo();
+            p.TransactionManager.Undo();
+            p.TransactionManager.Redo();
+            p.TransactionManager.Redo();
         }
 
         // undo/redo of warp creation
@@ -67,9 +67,9 @@ public class TestProject
             Assert.Equal(0, group.Count);
             group.AddWarp(WarpSourceType.Standard);
             Assert.Equal(1, group.Count);
-            p.UndoState.Undo();
+            p.TransactionManager.Undo();
             Assert.Equal(0, group.Count);
-            p.UndoState.Redo();
+            p.TransactionManager.Redo();
             Assert.Equal(1, group.Count);
         }
     }

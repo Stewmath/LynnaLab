@@ -247,7 +247,7 @@ namespace LynnaLib
 
         internal void SetObjectData(ObjectData data)
         {
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
             ObjectData = data;
         }
 

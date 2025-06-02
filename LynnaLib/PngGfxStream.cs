@@ -23,10 +23,10 @@ namespace LynnaLib
             // PNG files, specifically, watch for changes on the filesystem.
             this.PngFile.ModifiedEvent += (_, _) =>
             {
-                Project.UndoState.BeginTransaction("Reload PNG file", merge: false, disallowUndo: true);
+                Project.TransactionManager.BeginTransaction("Reload PNG file", merge: false, disallowUndo: true);
                 LoadFile();
                 InvokeModifiedEvent(StreamModifiedEventArgs.All(this));
-                Project.UndoState.EndTransaction();
+                Project.TransactionManager.EndTransaction();
             };
         }
 
@@ -149,7 +149,7 @@ namespace LynnaLib
 
         public override void WriteAllBytes(ReadOnlySpan<byte> data)
         {
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
             state.Data = data.ToArray();
             Modified = true;
             InvokeModifiedEvent(StreamModifiedEventArgs.All(this));
@@ -248,7 +248,7 @@ namespace LynnaLib
 
         void LoadFile()
         {
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
             var pngData = PngFile.ReadAllBytes().ToArray();
             using (var bitmap = new Bitmap(pngData))
             {

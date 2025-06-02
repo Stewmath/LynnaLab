@@ -107,7 +107,7 @@ namespace LynnaLib
         log4net.Appender.RollingFileAppender logAppender;
 
 
-        UndoState undoState;
+        TransactionManager transactionManager;
 
 
         // All ProjectDataType instances will be tracked in this dictionary. This includes instances of:
@@ -216,7 +216,7 @@ namespace LynnaLib
             get { return baseDirectory; }
         }
 
-        public UndoState UndoState { get { return undoState; } }
+        public TransactionManager TransactionManager { get { return transactionManager; } }
 
         public int NumDungeons
         {
@@ -340,8 +340,8 @@ namespace LynnaLib
         {
             IsClient = false;
 
-            undoState = new(this, NetworkID.Server);
-            undoState.BeginTransaction("Initial project load", merge: false, disallowUndo: true);
+            transactionManager = new(this, NetworkID.Server);
+            transactionManager.BeginTransaction("Initial project load", merge: false, disallowUndo: true);
 
             this.stateHolder = new(this, game, config);
 
@@ -564,7 +564,7 @@ namespace LynnaLib
                 room.GetWarpGroup();
             }
 
-            undoState.EndTransaction();
+            transactionManager.EndTransaction();
             log.Info("Finished loading project.");
             IsInConstructor = false;
         }
@@ -577,7 +577,7 @@ namespace LynnaLib
         {
             IsClient = true;
 
-            undoState = new(this, NetworkID.Unassigned); // ID will be assigned later
+            transactionManager = new(this, NetworkID.Unassigned); // ID will be assigned later
 
             IsInConstructor = false;
 
@@ -841,12 +841,12 @@ namespace LynnaLib
                     {
                         // Creating the PngGfxStream will register as a transaction, though it's not
                         // one that we want to allow the user to undo.
-                        UndoState.BeginTransaction($"Load PNG: {filename}", merge: false, disallowUndo: true);
+                        TransactionManager.BeginTransaction($"Load PNG: {filename}", merge: false, disallowUndo: true);
 
                         // Will add itself to data struct dictionary
                         var retval = new PngGfxStream(this, baseFilename);
 
-                        UndoState.EndTransaction();
+                        TransactionManager.EndTransaction();
 
                         return retval;
                     }
@@ -945,10 +945,10 @@ namespace LynnaLib
 
             // Register the data as being created in the next transaction - assuming it's not being
             // created from a transaction being applied (undo/redo/network traffic).
-            if (!UndoState.IsUndoing)
+            if (!TransactionManager.IsUndoing)
             {
                 if (data is TrackedProjectData tracked)
-                    undoState.RegisterNewData(type, tracked);
+                    transactionManager.RegisterNewData(type, tracked);
             }
         }
 
@@ -964,8 +964,8 @@ namespace LynnaLib
             dataStructDictionary.Remove(s);
             if (!fromUndo)
             {
-                Helper.Assert(!UndoState.IsUndoing, "Removing ProjectDataType in the middle of an undo?");
-                undoState.UnregisterData(type, identifier);
+                Helper.Assert(!TransactionManager.IsUndoing, "Removing ProjectDataType in the middle of an undo?");
+                transactionManager.UnregisterData(type, identifier);
             }
         }
 
@@ -1670,7 +1670,7 @@ namespace LynnaLib
         /// </summary>
         public void BeginTransaction(string description, bool merge = false, bool disallowUndo = false)
         {
-            UndoState.BeginTransaction(description, merge, disallowUndo);
+            TransactionManager.BeginTransaction(description, merge, disallowUndo);
         }
 
         /// <summary>
@@ -1678,7 +1678,7 @@ namespace LynnaLib
         /// </summary>
         public void EndTransaction()
         {
-            UndoState.EndTransaction();
+            TransactionManager.EndTransaction();
         }
 
         /// <summary>
@@ -1703,7 +1703,7 @@ namespace LynnaLib
         /// </summary>
         internal void CaptureSelfInitialState()
         {
-            UndoState.CaptureInitialState<ProjectStateHolder.ProjectState>(stateHolder);
+            TransactionManager.CaptureInitialState<ProjectStateHolder.ProjectState>(stateHolder);
         }
 
         // ================================================================================

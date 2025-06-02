@@ -25,7 +25,7 @@ namespace LynnaLib
 
             public override void CaptureInitialState(FileComponent parent)
             {
-                parent.Project.UndoState.CaptureInitialState<PaletteHeaderState>(parent);
+                parent.Project.TransactionManager.CaptureInitialState<PaletteHeaderState>(parent);
             }
         }
 

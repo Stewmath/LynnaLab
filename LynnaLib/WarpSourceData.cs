@@ -107,7 +107,7 @@ namespace LynnaLib
 
             public override void CaptureInitialState(FileComponent parent)
             {
-                parent.Project.UndoState.CaptureInitialState<WarpSourceState>(parent);
+                parent.Project.TransactionManager.CaptureInitialState<WarpSourceState>(parent);
             }
         }
 

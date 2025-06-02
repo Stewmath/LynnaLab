@@ -169,7 +169,7 @@
 
             public override void CaptureInitialState(FileComponent parent)
             {
-                parent.Project.UndoState.CaptureInitialState<ObjectDataState>(parent);
+                parent.Project.TransactionManager.CaptureInitialState<ObjectDataState>(parent);
             }
         }
 

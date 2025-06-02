@@ -341,7 +341,7 @@ public class TilesetEditor : Frame
                     tileEditor.SetTile(Tileset, t);
                 },
                 name: "Brush LeftClick",
-                onRelease: Project.UndoState.InsertBarrier
+                onRelease: Project.TransactionManager.InsertBarrier
             );
 
             // Ctrl + left click: Rectangle fill when in a brush mode
@@ -369,7 +369,7 @@ public class TilesetEditor : Frame
                 },
                 brushPreview: true,
                 name: "Brush Ctrl+LeftClick",
-                onRelease: Project.UndoState.InsertBarrier
+                onRelease: Project.TransactionManager.InsertBarrier
             );
         }
 
@@ -460,7 +460,7 @@ public class TilesetEditor : Frame
                     tileEditor.SetTile(Tileset, t);
                 },
                 name: "Collision Brush RightClick",
-                onRelease: Project.UndoState.InsertBarrier
+                onRelease: Project.TransactionManager.InsertBarrier
             );
             // Right click + drag: Unset collision range when in collision brush mode
             tilesetViewer.AddMouseAction(
@@ -470,7 +470,7 @@ public class TilesetEditor : Frame
                     collisionSetter(args, false);
                 },
                 name: "Collision Brush Ctrl+RightClick",
-                onRelease: Project.UndoState.InsertBarrier
+                onRelease: Project.TransactionManager.InsertBarrier
             );
         }
     }

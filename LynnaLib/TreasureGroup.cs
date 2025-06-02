@@ -125,7 +125,7 @@ namespace LynnaLib
             };
 
             Project.BeginTransaction("Create treasure object");
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             if (NumTreasureObjectSubids == 0)
             {

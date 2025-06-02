@@ -186,7 +186,7 @@ namespace LynnaLib
         public int AddWarp(WarpSourceType type)
         {
             Project.BeginTransaction("Add warp");
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             Action<WarpSourceData> InsertInMainList = (d) =>
             {
@@ -296,7 +296,7 @@ namespace LynnaLib
         public void RemoveWarp(Warp warp)
         {
             Project.BeginTransaction("Delete warp");
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             WarpSourceData data = warp.SourceData;
             WarpDestData destData = data.ReferencedDestData;

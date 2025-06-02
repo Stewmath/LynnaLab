@@ -117,7 +117,7 @@ public class NetworkInterfacer
         this.executeOnMainThread = executeOnMainThread;
 
         // TODO: Unsubscribe on deletion
-        UndoState.TransactionAddedEvent += (t) =>
+        TransactionManager.TransactionAddedEvent += (t) =>
             TransactionAddedEvent?.Invoke(t.Value, t.Previous?.Value.NodeID);
     }
 
@@ -133,7 +133,7 @@ public class NetworkInterfacer
     // ================================================================================
 
     public Project Project { get { return project; } }
-    public UndoState UndoState { get { return project.UndoState; } }
+    public TransactionManager TransactionManager { get { return project.TransactionManager; } }
 
     // ================================================================================
     // Events
@@ -146,12 +146,12 @@ public class NetworkInterfacer
     // ================================================================================
 
     /// <summary>
-    /// This function executes on the main thread and gives the caller access to the UndoState. This
-    /// is the only safe way to access it.
+    /// This function executes on the main thread and gives the caller access to the
+    /// TransactionManager. This is the only safe way to access it.
     /// </summary>
-    public async Task DoOnMainThread(Action<UndoState> action)
+    public async Task DoOnMainThread(Action<TransactionManager> action)
     {
-        await executeOnMainThread(() => action(UndoState));
+        await executeOnMainThread(() => action(TransactionManager));
     }
 
     /// <summary>
@@ -161,13 +161,13 @@ public class NetworkInterfacer
     public async Task<bool> HasInitialTransaction()
     {
         bool retval = false;
-        await executeOnMainThread(() => retval = UndoState.TransactionHistory.Count != 0);
+        await executeOnMainThread(() => retval = TransactionManager.TransactionHistory.Count != 0);
         return retval;
     }
 
     public async Task AssignID(int id)
     {
-        await executeOnMainThread(() => UndoState.CreatorID = id);
+        await executeOnMainThread(() => TransactionManager.CreatorID = id);
     }
 
     public TransactionNode CreateTransactionNode(TransactionNodeDTO dto)
@@ -1022,9 +1022,9 @@ class ServerPacketHandler : PacketHandlerBase, IPacketHandler
 
     public async Task SendInitialProjectState()
     {
-        await NetworkInterfacer.DoOnMainThread((undoState) =>
+        await NetworkInterfacer.DoOnMainThread((transactionManager) =>
         {
-            var history = undoState.TransactionHistory;
+            var history = transactionManager.TransactionHistory;
             base.QueueTransactions(history.FirstNode, history.LastNode);
             initialStateSent = true;
         });
@@ -1061,7 +1061,7 @@ class ServerPacketHandler : PacketHandlerBase, IPacketHandler
         bool rejectedAny = false;
 
         // Do this on the main thread, so that no changes to the transaction history are made in the meantime.
-        await NetworkInterfacer.DoOnMainThread((undoState) =>
+        await NetworkInterfacer.DoOnMainThread((transactionManager) =>
         {
             foreach (TransactionNodeDTO dto in packet.AppliedTransactions)
             {
@@ -1073,8 +1073,8 @@ class ServerPacketHandler : PacketHandlerBase, IPacketHandler
                     continue;
                 }
 
-                string? lastNodeID = undoState.TransactionHistory.Last?.NodeID;
-                bool applied = undoState.ApplyTransactionNode(node);
+                string? lastNodeID = transactionManager.TransactionHistory.Last?.NodeID;
+                bool applied = transactionManager.ApplyTransactionNode(node);
 
                 if (applied)
                 {
@@ -1270,13 +1270,13 @@ class ClientPacketHandler : PacketHandlerBase, IPacketHandler
 
         if (packet.rejectedTransactions.Count != 0)
         {
-            await NetworkInterfacer.DoOnMainThread((undoState) =>
+            await NetworkInterfacer.DoOnMainThread((transactionManager) =>
             {
                 foreach (string p in packet.rejectedTransactions)
                 {
                     // The rejected transactions should exist in our TransactionHistory up until we
                     // call "SynchronizeWithServer"
-                    TransactionNode? node = undoState.TransactionHistory.Find(p)?.Value;
+                    TransactionNode? node = transactionManager.TransactionHistory.Find(p)?.Value;
                     if (node == null)
                         throw new NetworkException($"Couldn't find transaction '{p}' in local history");
                     rejectedTransactionList.Add(node);
@@ -1303,12 +1303,12 @@ class ClientPacketHandler : PacketHandlerBase, IPacketHandler
 
         // Do the outstanding ack check on the main thread - just in case new transaction sneak in
         // on the other thread.
-        await NetworkInterfacer.DoOnMainThread((undoState) =>
+        await NetworkInterfacer.DoOnMainThread((transactionManager) =>
         {
             if (OutstandingAcks != 0)
                 return;
 
-            undoState.SynchronizeWith(ServerTransactionHistory, lastCommonAncestor);
+            transactionManager.SynchronizeWith(ServerTransactionHistory, lastCommonAncestor);
             lastCommonAncestor = ServerTransactionHistory.Last.NodeID;
             synchronized = true;
         });

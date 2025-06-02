@@ -26,7 +26,7 @@ namespace LynnaLib
 
             public override void CaptureInitialState(FileComponent parent)
             {
-                parent.Project.UndoState.CaptureInitialState<WarpDestState>(parent);
+                parent.Project.TransactionManager.CaptureInitialState<WarpDestState>(parent);
             }
         }
 
@@ -118,14 +118,14 @@ namespace LynnaLib
 
         public void AddReference(WarpSourceData data)
         {
-            Project.UndoState.CaptureInitialState<WarpDestState>(this);
+            Project.TransactionManager.CaptureInitialState<WarpDestState>(this);
             if (!State.referenceSet.Add(new(data)))
                 throw new Exception("Internal error: Warp dest data reference set state invalid");
         }
 
         public void RemoveReference(WarpSourceData data)
         {
-            Project.UndoState.CaptureInitialState<WarpDestState>(this);
+            Project.TransactionManager.CaptureInitialState<WarpDestState>(this);
             if (!State.referenceSet.Remove(new(data)))
                 throw new Exception("Internal error: Warp dest data reference set state invalid");
         }

@@ -180,14 +180,14 @@ public class ProjectWorkspace
         if (ImGui.BeginMenu("Edit"))
         {
             Func<bool> renderUndoButton;
-            if (Project.UndoState.UndoAvailable)
-                renderUndoButton = () => ImGui.Selectable("Undo: " + Project.UndoState.GetUndoDescription());
+            if (Project.TransactionManager.UndoAvailable)
+                renderUndoButton = () => ImGui.Selectable("Undo: " + Project.TransactionManager.GetUndoDescription());
             else
                 renderUndoButton = () => ImGui.Selectable("Undo", false, ImGuiSelectableFlags.Disabled);
 
             Func<bool> renderRedoButton;
-            if (Project.UndoState.RedoAvailable)
-                renderRedoButton = () => ImGui.Selectable("Redo: " + Project.UndoState.GetRedoDescription());
+            if (Project.TransactionManager.RedoAvailable)
+                renderRedoButton = () => ImGui.Selectable("Redo: " + Project.TransactionManager.GetRedoDescription());
             else
                 renderRedoButton = () => ImGui.Selectable("Redo", false, ImGuiSelectableFlags.Disabled);
 
@@ -530,13 +530,13 @@ public class ProjectWorkspace
 
     void TryUndo()
     {
-        if (!Project.UndoState.Undo())
+        if (!Project.TransactionManager.Undo())
             Modal.DisplayErrorMessage("Undo failed.");
     }
 
     void TryRedo()
     {
-        if (!Project.UndoState.Redo())
+        if (!Project.TransactionManager.Redo())
             Modal.DisplayErrorMessage("Redo failed.");
     }
 

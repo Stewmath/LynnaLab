@@ -23,7 +23,7 @@ public class UndoDialog : Frame
 
     public ProjectWorkspace Workspace { get; private set; }
     public Project Project { get { return Workspace.Project; } }
-    public UndoState UndoState { get { return Project.UndoState; } }
+    public TransactionManager TransactionManager { get { return Project.TransactionManager; } }
 
     // ================================================================================
     // Public methods
@@ -33,7 +33,7 @@ public class UndoDialog : Frame
     {
         ImGui.PushFont(Top.InfoFont);
 
-        if (UndoState.constructingTransaction.Empty)
+        if (TransactionManager.constructingTransaction.Empty)
         {
             ImGui.Text("Pending transaction: None");
             ImGui.Separator();
@@ -41,13 +41,13 @@ public class UndoDialog : Frame
         else
         {
             ImGui.Text("Pending transaction:");
-            DrawTransaction(UndoState.constructingTransaction, -1);
+            DrawTransaction(TransactionManager.constructingTransaction, -1);
         }
 
         ImGui.Text("Undo stack:");
 
         int index = 0;
-        foreach (var transaction in UndoState.Transactions)
+        foreach (var transaction in TransactionManager.Transactions)
         {
             DrawTransaction(transaction, index++);
         }

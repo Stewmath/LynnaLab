@@ -3,14 +3,15 @@
 namespace LynnaLib;
 
 /// <summary>
-/// Keeps track of "transactions" that can be undone/redone.
+/// Keeps track of "transactions" in a project that can be undone/redone. This relates to both
+/// undo/redo and to network synchronization.
 /// </summary>
-public class UndoState
+public class TransactionManager
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public UndoState(Project project, int creatorID)
+    public TransactionManager(Project project, int creatorID)
     {
         Project = project;
         _creatorID = creatorID;
@@ -607,6 +608,7 @@ public class TransactionNode
 }
 
 /// <summary>
+/// Serializaiton for TransactionNode class
 /// </summary>
 public class TransactionNodeDTO
 {
@@ -1166,6 +1168,9 @@ public class TransactionStateHolderDTO
 }
 
 
+/// <summary>
+/// Represents a class that can be de/serialized for undo/redo and network communication.
+/// </summary>
 public abstract class TrackedProjectData : ProjectDataType, Trackable
 {
     public TrackedProjectData(Project p, string id) : base(p, id) {}
@@ -1263,10 +1268,11 @@ public interface Trackable
 /// be serialized with System.Text.Json so they can be sent over the network.
 ///
 /// In general, when modifying a class's State, one should always call
-/// "UndoState.CaptureInitialState" first, before it is modified. This is how the system knows that
-/// something is about to be changed and to serialize its initial state. (Might be nice if I could
-/// somehow architect the state classes such that accesses to its fields triggered this
-/// automatically somehow... maybe a source generator could create a wrapper around it or something?)
+/// "TransactionManager.CaptureInitialState" first, before it is modified. This is how the system
+/// knows that something is about to be changed and to serialize its initial state. (Might be nice
+/// if I could somehow architect the state classes such that accesses to its fields triggered this
+/// automatically somehow... maybe a source generator could create a wrapper around it or
+/// something?)
 ///
 /// Serialization notes:
 /// - All public fields and properties are serialized by default. (Setter must be public.)

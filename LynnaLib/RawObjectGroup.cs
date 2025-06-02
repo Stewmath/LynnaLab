@@ -20,8 +20,9 @@
                 if (data.GetObjectType() == ObjectType.Garbage)
                 {
                     // We used to "Detach()" the data here to delete garbage date, but we now have
-                    // strict checks in the UndoState class that disallow such modifications during
-                    // initialization! Doesn't make much difference to us - it's ignored regardless.
+                    // strict checks in the TransactionManager class that disallow such
+                    // modifications during initialization! Doesn't make much difference to us -
+                    // it's ignored regardless.
                     //data.Detach();
                 }
                 else
@@ -97,7 +98,7 @@
             if (index >= ObjectDataList.Count - 1)
                 throw new Exception("Array index out of bounds.");
 
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             ObjectData data = ObjectDataList[index];
             data.Detach();
@@ -106,7 +107,7 @@
 
         public void InsertObject(int index, ObjectData data)
         {
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             data.Attach(Parser);
             data.InsertIntoParserBefore(ObjectDataList[index]);
@@ -125,7 +126,7 @@
         /// </summary>
         internal void Repoint()
         {
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             Parser.RemoveLabel(Identifier);
 

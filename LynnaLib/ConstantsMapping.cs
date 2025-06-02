@@ -233,7 +233,7 @@ namespace LynnaLib
             }
 
             if (!fromConstructor)
-                Project.UndoState.CaptureInitialState<State>(this);
+                Project.TransactionManager.CaptureInitialState<State>(this);
 
             StringList.Add(key);
 

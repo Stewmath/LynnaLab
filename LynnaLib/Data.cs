@@ -299,7 +299,7 @@ namespace LynnaLib
 
             public override void CaptureInitialState(FileComponent parent)
             {
-                parent.Project.UndoState.CaptureInitialState<DataState>(parent);
+                parent.Project.TransactionManager.CaptureInitialState<DataState>(parent);
             }
         }
     }

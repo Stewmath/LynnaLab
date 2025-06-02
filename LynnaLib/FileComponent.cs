@@ -186,7 +186,7 @@ namespace LynnaLib
 
             public virtual void CaptureInitialState(FileComponent parent)
             {
-                parent.Project.UndoState.CaptureInitialState<FileComponentState>(parent);
+                parent.Project.TransactionManager.CaptureInitialState<FileComponentState>(parent);
             }
         }
     }
@@ -233,7 +233,7 @@ namespace LynnaLib
 
             public override void CaptureInitialState(FileComponent parent)
             {
-                parent.Project.UndoState.CaptureInitialState<StringFileComponentState>(parent);
+                parent.Project.TransactionManager.CaptureInitialState<StringFileComponentState>(parent);
             }
         }
     }
@@ -246,7 +246,7 @@ namespace LynnaLib
 
             public override void CaptureInitialState(FileComponent parent)
             {
-                parent.Project.UndoState.CaptureInitialState<LabelState>(parent);
+                parent.Project.TransactionManager.CaptureInitialState<LabelState>(parent);
             }
         }
 

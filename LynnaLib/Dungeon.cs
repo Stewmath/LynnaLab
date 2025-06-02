@@ -143,7 +143,7 @@ namespace LynnaLib
             }
             private set
             {
-                Project.UndoState.CaptureInitialState<State>(this);
+                Project.TransactionManager.CaptureInitialState<State>(this);
                 state.numFloors = value;
                 SetDataIndex(3, value);
             }
@@ -217,7 +217,7 @@ namespace LynnaLib
         public void SetRoom(int x, int y, int floor, int room)
         {
             Project.BeginTransaction($"Change dungeon room#d{Index}x{x}y{y}f{floor}", true);
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             int pos = y * 8 + x;
             if (pos >= 0x40)
@@ -302,7 +302,7 @@ namespace LynnaLib
         public void InsertFloor(int floorIndex)
         {
             Project.BeginTransaction("Add dungeon floor");
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             if (floorIndex < 0 || floorIndex > NumFloors)
                 throw new ArgumentException("Can't insert floor " + floorIndex + ".");
@@ -343,7 +343,7 @@ namespace LynnaLib
         public void RemoveFloor(int floorIndex)
         {
             Project.BeginTransaction("Remove dungeon floor");
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             if (floorIndex < 0 || floorIndex >= NumFloors)
                 throw new ArgumentException("Can't remove floor " + floorIndex + ": doesn't exist.");
@@ -462,7 +462,7 @@ namespace LynnaLib
             if (!(g == 4 || g == 5))
                 throw new ArgumentException("Invalid group '" + g + "' for dungeon.");
 
-            Project.UndoState.CaptureInitialState<State>(this);
+            Project.TransactionManager.CaptureInitialState<State>(this);
 
             DataStart.SetValue(0, ">wGroup" + g.ToString() + "RoomFlags");
 
