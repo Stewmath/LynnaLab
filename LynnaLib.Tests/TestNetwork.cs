@@ -157,7 +157,11 @@ public class TestNetwork
             Assert.Equal(3, cRoom.Chest?.ValueReferenceGroup.GetIntValue("X"));
         }
 
-        // TODO: Test applying transaction when there's an unfinished transaction
+        // Confirm that the dungeon ValueReferenceGroup is initialized on the client
+        {
+            Assert.NotNull(p2.GetDungeon(1).ValueReferenceGroup);
+            Assert.Equal(4, p2.GetDungeon(1).ValueReferenceGroup.GetIntValue("Group"));
+        }
 
         p1.Close();
         //p2.Close();

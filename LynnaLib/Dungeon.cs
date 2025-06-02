@@ -60,7 +60,6 @@ namespace LynnaLib
 
             DetermineGroup();
             DetermineRoomsUsed();
-            GenerateValueReferenceGroup();
         }
 
         /// <summary>
@@ -94,6 +93,7 @@ namespace LynnaLib
 
         State state;
         Data _dataStart;
+        ValueReferenceGroup _vrg;
 
         // ================================================================================
         // Properties
@@ -132,7 +132,15 @@ namespace LynnaLib
         // Properties
         // ================================================================================
 
-        public ValueReferenceGroup ValueReferenceGroup { get; private set; }
+        public ValueReferenceGroup ValueReferenceGroup
+        {
+            get
+            {
+                if (_vrg == null)
+                    GenerateValueReferenceGroup();
+                return _vrg;
+            }
+        }
 
         public int NumFloors
         {
@@ -407,8 +415,8 @@ namespace LynnaLib
                         tooltip: "A bitset of floors that will appear on the map when the compass is obtained.\n\nEg. If this is $05, then floors 0 and 2 will be unlocked (bits 0 and 2 are set)."),
             };
 
-            ValueReferenceGroup = new ValueReferenceGroup(list);
-            ValueReferenceGroup.EnableTransactions($"Edit dungeon property#{TransactionIdentifier}", true);
+            _vrg = new ValueReferenceGroup(list);
+            _vrg.EnableTransactions($"Edit dungeon property#{TransactionIdentifier}", true);
         }
 
         /// <summary>
