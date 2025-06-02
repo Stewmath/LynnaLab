@@ -181,7 +181,7 @@ public static class Modal
                 callback();
         };
 
-        if (!workspace.Project.Modified)
+        if (workspace.IsClientRunning || !workspace.Project.Modified)
         {
             Top.DoNextFrame(close);
             return;
