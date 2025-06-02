@@ -313,7 +313,7 @@ namespace LynnaLib
                 this.baseDirectory = null;
             else
             {
-                this.baseDirectory = Path.GetFullPath(baseDirectory);
+                this.baseDirectory = Path.GetFullPath(baseDirectory).Replace('\\', '/');
                 if (!this.baseDirectory.EndsWith("/"))
                     this.baseDirectory += "/";
             }
@@ -634,7 +634,7 @@ namespace LynnaLib
                 directory += "/";
             foreach (string f in Helper.GetSortedFiles(baseDirectory + directory))
             {
-                action(Path.GetRelativePath(baseDirectory, f));
+                action(Path.GetRelativePath(baseDirectory, f).Replace('\\', '/'));
             }
 
             // Ignore folders that belong to the other game

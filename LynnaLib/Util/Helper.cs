@@ -119,7 +119,8 @@ namespace Util
         {
             var rel = Path.GetRelativePath(
                 basePath.Replace('\\', '/'),
-                subPath.Replace('\\', '/'));
+                subPath.Replace('\\', '/'))
+                .Replace('\\', '/');
             return rel != "."
                 && rel != ".."
                 && !rel.StartsWith("../")
