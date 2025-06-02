@@ -66,13 +66,6 @@ namespace LynnaLib
 
         public void ClearGfx()
         {
-            foreach (GfxHeaderData header in gfxHeaderDataList)
-            {
-                if (header.GfxStream is ReloadableStream)
-                {
-                    (header.GfxStream as ReloadableStream).ExternallyModifiedEvent -= OnGfxStreamModified;
-                }
-            }
             gfxHeaderDataList = new List<GfxHeaderData>();
             gfxHeaderDataTypes = new List<GfxHeaderType>();
             rawDataList.Clear();
@@ -123,11 +116,6 @@ namespace LynnaLib
                 gfxModified = true;
 
             CheckGfxHeaderTilesToUpdate(header);
-
-            if (header.GfxStream is ReloadableStream)
-            {
-                (header.GfxStream as ReloadableStream).ExternallyModifiedEvent += OnGfxStreamModified;
-            }
         }
 
         public void RemoveGfxHeaderType(GfxHeaderType type)
@@ -141,12 +129,6 @@ namespace LynnaLib
                     gfxHeaderDataList.RemoveAt(i);
 
                     CheckGfxHeaderTilesToUpdate(header);
-
-                    if (header.GfxStream is ReloadableStream)
-                    {
-                        (header.GfxStream as ReloadableStream).ExternallyModifiedEvent -= OnGfxStreamModified;
-                    }
-
                     i--;
                 }
             }
@@ -228,6 +210,8 @@ namespace LynnaLib
                     {
                         for (int j = 0; j < 4; j++)
                         {
+                            if (data == null)
+                                throw new Exception("PaletteData missing expected RgbData?");
                             paletteBuffer[(int)header.PaletteType][i][j] = data.Color;
                             data = data.NextData as RgbData;
                         }
@@ -297,11 +281,6 @@ namespace LynnaLib
                 int tile = t + (header.DestAddr - 0x8000) / 16;
                 tileModifiedEvent(header.DestBank, tile);
             }
-        }
-
-        void OnGfxStreamModified(object sender, EventArgs args)
-        {
-            RegenerateBuffers();
         }
     }
 }

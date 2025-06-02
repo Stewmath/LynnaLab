@@ -62,21 +62,25 @@ public class UndoDialog : Frame
     void DrawTransaction(Transaction t, int index)
     {
         string keyString = "###Transaction" + index;
-        if (ImGui.CollapsingHeader(t.description + keyString + "A"))
+        if (ImGui.CollapsingHeader(t.Description + keyString + "A"))
         {
-            foreach (object obj in t.deltas.Keys)
-            {
-                string text = obj.GetType().ToString();
+            // TODO
+            // foreach (var (obj, delta) in t.deltas)
+            // {
+            //     string text = obj.GetType().ToString();
 
-                if (obj is FileComponent com)
-                    text += ": " + com.GetString();
-                else if (obj is FileParser p)
-                    text += ": " + p.Filename;
-                else if (obj is MemoryFileStream stream)
-                    text += ": " + stream.RelativeFilePath;
+            //     ImGui.Text("- " + text);
 
-                ImGui.Text("- " + text);
-            }
+            //     if (delta is TransactionStateHolder holder)
+            //         ImGui.TextWrapped(holder.initialState);
+
+            //     // if (obj is FileComponent com)
+            //     //     text += ": " + com.GetString();
+            //     // else if (obj is FileParser p)
+            //     //     text += ": " + p.Filename;
+            //     // else if (obj is MemoryFileStream stream)
+            //     //     text += ": " + stream.RelativeFilePath;
+            // }
         }
     }
 }

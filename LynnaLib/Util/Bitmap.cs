@@ -1,4 +1,5 @@
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
 using PixelFormats = SixLabors.ImageSharp.PixelFormats;
 
 namespace LynnaLib;
@@ -37,9 +38,16 @@ public class Bitmap : System.IDisposable
     /// <summary>
     /// Constructor from file
     /// </summary>
-    public unsafe Bitmap(string filename)
+    public Bitmap(string filename)
     {
         image = Image.Load<PixelFormats.Rgba32>(filename);
+    }
+
+    public Bitmap(ReadOnlySpan<byte> data)
+    {
+        if (data.Length == 0)
+            throw new Exception("Bitmap: Empty data received");
+        image = Image.Load<PixelFormats.Rgba32>(data);
     }
 
     ~Bitmap()
@@ -133,6 +141,19 @@ public class Bitmap : System.IDisposable
                 }
             }
         });
+    }
+
+    public void Save(string path)
+    {
+        // Gameboy graphics work well with palette-based encoding, 2 bit colormap.
+        // This doesn't order the palettes in the same way as the python scripts. Doesn't really
+        // matter though.
+        PngEncoder encoder = new()
+        {
+            BitDepth = PngBitDepth.Bit2,
+            ColorType = PngColorType.Palette,
+        };
+        image.SaveAsPng(path, encoder);
     }
 
     public void Dispose()

@@ -1,15 +1,30 @@
 using System.Diagnostics;
+using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LynnaLab;
 
+/// <summary>
+/// Deals with displaying modal windows and status messages.
+/// </summary>
 public static class Modal
 {
     // ================================================================================
     // Variables
     // ================================================================================
 
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
+
     static Queue<ModalStruct> modalQueue = new Queue<ModalStruct>();
+    static List<MessageStruct> messageList = new List<MessageStruct>();
     static bool rememberGameChoice;
+    static int messageIDCounter = 0;
+
+    // For connect to server dialog
+    static int connectToServerStage;
 
     // ================================================================================
     // Properties
@@ -25,28 +40,28 @@ public static class Modal
     /// </summary>
     public static void OpenModal(string name, Func<bool> renderFunc)
     {
-        modalQueue.Enqueue(new ModalStruct { name = name, renderFunc = renderFunc });
+        modalQueue.Enqueue(new ModalStruct { Name = name, RenderFunc = renderFunc });
     }
 
     /// <summary>
     /// Render code for modal windows.
     /// </summary>
-    public static void RenderModals()
+    public static void RenderModalsAndMessages()
     {
         if (modalQueue.Count != 0)
         {
             ModalStruct modal = (ModalStruct)modalQueue.Peek();
 
             // There seems to be no harm in calling this repeatedly instead of just once
-            ImGui.OpenPopup(modal.name);
+            ImGui.OpenPopup(modal.Name);
 
             // Put it in the center of the screen
             ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), 0, new Vector2(0.5f, 0.5f));
 
-            if (ImGui.BeginPopupModal(modal.name, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar))
+            if (ImGui.BeginPopupModal(modal.Name, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar))
             {
                 ImGui.PushFont(Top.InfoFont);
-                if (modal.renderFunc())
+                if (modal.RenderFunc())
                 {
                     modalQueue.Dequeue();
                     ImGui.CloseCurrentPopup();
@@ -55,6 +70,97 @@ public static class Modal
                 ImGui.EndPopup();
             }
         }
+
+        // Display messages (these appear in the bottom-right and disappear automatically after a
+        // few seconds)
+
+        List<MessageStruct> messagesToRemove = new();
+
+        var vp = ImGui.GetMainViewport();
+        Vector2 nextMessageBoxPos = vp.WorkPos + vp.WorkSize * new Vector2(0.99f, 0.99f);
+
+        foreach (MessageStruct message in messageList)
+        {
+            // Put it near the bottom-right of the screen
+            ImGui.SetNextWindowPos(nextMessageBoxPos, 0, new Vector2(1.0f, 1.0f));
+
+            ImGuiWindowFlags flags = 0
+                | ImGuiWindowFlags.NoNavFocus
+                | ImGuiWindowFlags.NoResize
+                | ImGuiWindowFlags.AlwaysAutoResize
+                | ImGuiWindowFlags.NoMove
+                | ImGuiWindowFlags.NoCollapse
+                | ImGuiWindowFlags.NoSavedSettings
+                ;
+
+            bool enabled = true;
+
+            // Display message boxes (if there are multiple, newer ones are higher up)
+            if (ImGui.Begin($"Error##MessageBox {message.ID}", ref enabled, flags))
+            {
+                ImGui.PushFont(Top.InfoFont);
+
+                ImGui.Text(message.Message);
+
+                if (message.Exception != null)
+                {
+                    if (ImGui.Button("Show full error"))
+                    {
+                        message.DisplayException = !message.DisplayException;
+                    }
+
+                    if (message.DisplayException)
+                    {
+                        DisplayException(message.Exception);
+                    }
+                }
+
+                if (ImGui.IsWindowHovered() || message.DisplayException)
+                    message.Watch.Restart();
+
+                // Display a timer as a bar
+                ImGui.Dummy(ImGuiX.Unit(0.0f, 3.0f));
+                float timerHeight = ImGuiX.Unit(5.0f);
+                Vector2 pos = ImGui.GetCursorScreenPos();
+                float timerWidthAvail = ImGui.GetWindowSize().X - ImGui.GetStyle().WindowPadding.X * 2;
+                float timerRatio = ((message.DisplaySeconds * 1000 - (float)message.Watch.Elapsed.TotalMilliseconds)
+                                    / (message.DisplaySeconds * 1000));
+                float timerWidth = timerWidthAvail * timerRatio;
+
+                ImGui.Dummy(new Vector2(0.0f, timerHeight));
+
+                ImGui.GetWindowDrawList().AddRectFilled(
+                    pos,
+                    pos + new Vector2(timerWidth, timerHeight),
+                    Color.FromRgb(102, 153, 255).ToUInt());
+
+                nextMessageBoxPos -= new Vector2(0.0f, ImGui.GetWindowSize().Y);
+
+                ImGui.PopFont();
+                ImGui.End();
+            }
+
+            if (!enabled || (message.DisplaySeconds != 0 && message.Watch.Elapsed.Seconds >= message.DisplaySeconds))
+                messagesToRemove.Add(message);
+        }
+
+        foreach (var m in messagesToRemove)
+            messageList.Remove(m);
+    }
+
+    /// <summary>
+    /// Currently this is used for all kinds of messages, not just errors.
+    /// </summary>
+    public static void DisplayErrorMessage(string message, Exception exception = null)
+    {
+        messageList.Add(new MessageStruct
+        {
+            Message = message,
+            Exception = exception,
+            Watch = Stopwatch.StartNew(),
+            DisplaySeconds = 5,
+            ID = messageIDCounter++,
+        });
     }
 
     // ================================================================================
@@ -88,13 +194,13 @@ public static class Modal
             if (ImGui.Button("Save"))
             {
                 workspace.Project.Save();
-                close();
+                Top.DoNextFrame(close);
                 return true;
             }
             ImGui.SameLine();
             if (ImGui.Button("Don't save"))
             {
-                close();
+                Top.DoNextFrame(close);
                 return true;
             }
             ImGui.SameLine();
@@ -196,13 +302,7 @@ public static class Modal
         {
             ImGui.Text("An unhandled exception occurred!\n\nYou can attempt to resume LynnaLab, but the program may be in an invalid state.\n\nException details:");
 
-            Vector2 exceptionViewSize = ImGui.GetMainViewport().Size * 0.8f;
-
-            if (ImGui.BeginChild("Exception details", exceptionViewSize, ImGuiChildFlags.FrameStyle))
-            {
-                ImGui.Text(e.ToString());
-            }
-            ImGui.EndChild();
+            DisplayException(e);
 
             bool retval = false;
 
@@ -230,6 +330,17 @@ public static class Modal
 
             return retval;
         });
+    }
+
+    static void DisplayException(Exception e)
+    {
+        Vector2 exceptionViewSize = ImGui.GetMainViewport().Size * 0.8f;
+
+        if (ImGui.BeginChild("Exception details", exceptionViewSize, ImGuiChildFlags.FrameStyle))
+        {
+            ImGui.Text(e.ToString());
+        }
+        ImGui.EndChild();
     }
 
     public static void SelectGameModal(string path, Action<string, bool> onSelected)
@@ -260,14 +371,212 @@ public static class Modal
         });
     }
 
+    public static void ConnectToServerModal()
+    {
+        string serverAddressTextInput = "127.0.0.1";
+        int serverPort = 2310;
+        Task connectToServerTask = null;
+        IPEndPoint endPoint = null;
+        CancellationTokenSource cancelSource = null;
+        bool viewFullException = false;
+
+        OpenModal("Connect to server", () =>
+        {
+            if (connectToServerTask != null)
+            {
+                if (connectToServerTask.IsFaulted)
+                {
+                    if (cancelSource != null)
+                    {
+                        cancelSource.Dispose();
+                        cancelSource = null;
+                    }
+
+                    ImGui.Text("An error occured while connecting to the server:");
+
+                    foreach (Exception e in connectToServerTask.Exception.InnerExceptions)
+                    {
+                        // Errors establishing the connection
+                        if (e is SocketException se)
+                        {
+                            ImGui.Text(se.Message + ".");
+                        }
+                        // Server user probably rejected the connection
+                        else if (e is EndOfStreamException)
+                        {
+                            ImGui.Text("Server disconnected.");
+                        }
+                        else
+                            ImGui.Text(e.GetType().ToString());
+                    }
+                    if (viewFullException)
+                        DisplayException(connectToServerTask.Exception);
+
+                    if (ImGui.Button("OK"))
+                    {
+                        connectToServerTask = null;
+                        viewFullException = false;
+                    }
+                    if (!viewFullException)
+                    {
+                        ImGui.SameLine();
+                        if (ImGui.Button("View full exception details"))
+                        {
+                            viewFullException = true;
+                        }
+                    }
+                }
+                else if (connectToServerTask.IsCanceled)
+                {
+                    connectToServerTask = null;
+                }
+                else if (connectToServerTask.IsCompletedSuccessfully)
+                {
+                    DisplayErrorMessage("Connection to server established!");
+                    cancelSource.Dispose();
+                    return true;
+                }
+                else
+                {
+                    if (connectToServerStage == 0)
+                        ImGui.Text($"Connecting to server {endPoint}...");
+                    else if (connectToServerStage == 1)
+                        ImGui.Text($"Connected to server {endPoint}, waiting for them to accept...");
+                    else if (connectToServerStage == 2)
+                        ImGui.Text($"Connection accepted, synchronizing project...");
+                    else if (connectToServerStage == 3)
+                        ImGui.Text($"Loading project...");
+                    if (ImGui.Button("Abort"))
+                    {
+                        if (cancelSource != null)
+                        {
+                            cancelSource.Cancel();
+                            cancelSource.Dispose();
+                            cancelSource = null;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
+                ImGui.InputText("Server Address", ref serverAddressTextInput, 20);
+                ImGui.InputInt("Server Port", ref serverPort);
+                ImGui.PopItemWidth();
+
+                string toParse = $"{serverAddressTextInput}:{serverPort}";
+
+                if (!IPEndPoint.TryParse(toParse, out endPoint))
+                {
+                    ImGui.Text($"Error: Couldn't parse address '{toParse}'.");
+                }
+
+                if (ImGui.Button("Connect"))
+                {
+                    cancelSource = new();
+                    connectToServerTask = ConnectToServer(endPoint, cancelSource.Token);
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Cancel"))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+    }
+
+    public static void ConnectionRequestModal(ServerController server, ConnectionController conn)
+    {
+        OpenModal("New connection request", () =>
+        {
+            // Checking conn.Closed doesn't actually work because we're not listening for packets
+            // right now. Even if the client closes the connection we won't notice until later.
+            if (conn.Closed)
+                return true;
+
+            ImGui.Text($"New connection request from: {conn.RemoteEndPoint}");
+            if (ImGui.Button("Accept"))
+            {
+                Top.LazyInvoke(() => Modal.DisplayErrorMessage($"Client connected: {conn.RemoteEndPoint}."));
+                server.AcceptConnection(conn);
+                return true;
+            }
+
+            ImGui.SameLine();
+            if (ImGui.Button("Reject"))
+            {
+                server.RejectConnection(conn);
+                return true;
+            }
+
+            return false;
+        });
+    }
+
+    // ================================================================================
+    // Private methods
+    // ================================================================================
+
+    // May throw SocketException on failure to connect, maybe throws a NetworkException if the
+    // server sends some packets we're not expecting.
+    public static async Task ConnectToServer(IPEndPoint endPoint, CancellationToken cancellationToken)
+    {
+        Project project = null;
+        ConnectionController clientConn = null;
+
+        connectToServerStage = 0;
+
+        (project, clientConn) = await ConnectionController.CreateForClientAsync(endPoint, Top.InvokeAsync, cancellationToken);
+
+        // Make no assumptions about what thread we're on after above "await".
+
+        connectToServerStage = 1;
+
+        Task clientRunTask = clientConn.RunUntilClosed();
+
+        try
+        {
+            await clientConn.WaitUntilAcceptedAsync(cancellationToken);
+
+            connectToServerStage = 2;
+
+            await clientConn.WaitUntilSynchronizedAsync();
+
+            connectToServerStage = 3;
+        }
+        catch (Exception e)
+        {
+            log.Debug("ConnectToServer: Cancelled/error midway; closing connection.");
+            log.Debug(e);
+            clientConn.Close();
+            throw;
+        }
+
+        project.FinalizeLoad();
+        await Top.InvokeAsync(() => { Top.SetWorkspace(new ProjectWorkspace(project, "ClientProject", clientConn)); });
+    }
+
+
     // ================================================================================
     // Nested structs
     // ================================================================================
 
-    struct ModalStruct
+    class ModalStruct
     {
-        public string name;
-        public Func<bool> renderFunc;
+        public string Name { get; init; }
+        public Func<bool> RenderFunc { get; init; }
     }
 
+    class MessageStruct
+    {
+        public string Message { get; init; }
+        public Exception Exception { get; init; }
+        public Stopwatch Watch { get; init; }
+        public int DisplaySeconds { get; init; }
+        public int ID { get; init; }
+
+        public bool DisplayException { get; set; } = false;
+    }
 }

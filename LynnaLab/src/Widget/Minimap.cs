@@ -38,9 +38,11 @@ public class Minimap : TileGrid
 
         // Watch for dungeons removing a floor that we're currently looking at.
         // This is enough to prevent crashes, though it won't update the selected room in the RoomEditor.
-        dungeonEW.Bind<EventArgs>("FloorsChangedEvent", (_, _) =>
+        dungeonEW.Bind<DungeonChangedEventArgs>("ChangedEvent", (_, args) =>
         {
             if (!(map is Dungeon dungeon))
+                return;
+            if (!args.FloorsChanged)
                 return;
             if (floor >= dungeon.NumFloors)
             {

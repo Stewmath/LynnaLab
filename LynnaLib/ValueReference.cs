@@ -35,7 +35,7 @@ public abstract class ValueReference
         if (constantsMappingString != null)
         {
             this.ConstantsMappingString = constantsMappingString;
-            constantsMapping = (ConstantsMapping)typeof(Project).GetField(ConstantsMappingString)
+            constantsMapping = (ConstantsMapping)typeof(Project).GetProperty(ConstantsMappingString)
                 .GetValue(Project);
         }
     }

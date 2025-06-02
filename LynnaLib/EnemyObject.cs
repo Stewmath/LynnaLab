@@ -6,7 +6,7 @@ namespace LynnaLib
     /// <summary>
     ///  An enemy object. The "index" is the full ID (2 bytes, including subid).
     /// </summary>
-    public class EnemyObject : GameObject
+    public class EnemyObject : GameObject, IndexedProjectDataInstantiator
     {
 
         readonly Data objectData;
@@ -16,7 +16,7 @@ namespace LynnaLib
         readonly byte _tileIndexBase;
         readonly byte _oamFlagsBase;
 
-        internal EnemyObject(Project p, int i) : base(p, i)
+        private EnemyObject(Project p, int i) : base(p, i)
         {
             try
             {
@@ -77,6 +77,11 @@ namespace LynnaLib
                 Console.WriteLine(e.ToString());
                 objectData = null;
             }
+        }
+
+        static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+        {
+            return new EnemyObject(p, index);
         }
 
 

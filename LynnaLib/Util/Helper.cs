@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Util
 {
@@ -96,6 +97,14 @@ namespace Util
         }
 
         /// <summary>
+        /// Returns a version string representing the current git commit.
+        /// </summary>
+        public static string GetVersionString()
+        {
+            return Helper.ReadResourceFile("LynnaLib.version.txt").Trim();
+        }
+
+        /// <summary>
         /// Throw an exception if the value is false. An alternative to Debug.Assert that applies to
         /// release builds.
         /// </summary>
@@ -103,6 +112,35 @@ namespace Util
         {
             if (!condition)
                 throw new Exception(message);
+        }
+
+        // From: https://stackoverflow.com/questions/5617320/given-full-path-check-if-path-is-subdirectory-of-some-other-path-or-otherwise
+        public static bool IsSubPathOf(string subPath, string basePath)
+        {
+            var rel = Path.GetRelativePath(
+                basePath.Replace('\\', '/'),
+                subPath.Replace('\\', '/'));
+            return rel != "."
+                && rel != ".."
+                && !rel.StartsWith("../")
+                && !Path.IsPathRooted(rel);
+        }
+
+        /// <summary>
+        /// Like Task.WhenAll, but triggers an exception if any task triggers an exception.
+        /// </summary>
+        public static async Task WhenAllWithExceptions(IEnumerable<Task> t)
+        {
+            HashSet<Task> tasks = new(t);
+
+            while (tasks.Count != 0)
+            {
+                Task finished = await Task.WhenAny(tasks);
+                if (finished.IsFaulted)
+                    await finished; // Will trigger exception
+                if (!tasks.Remove(finished))
+                    throw new Exception("WhenAllWithExceptions: Internal error");
+            }
         }
     }
 

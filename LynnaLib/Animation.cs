@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LynnaLib
 {
-    public class Animation : ProjectDataType
+    public class Animation : ProjectDataType, ProjectDataInstantiator
     {
         public int NumIndices
         {
@@ -14,7 +14,7 @@ namespace LynnaLib
         List<int> gfxHeaderIndices = new List<int>();
         List<int> counters = new List<int>();
 
-        internal Animation(Project p, string label) : base(p, label)
+        private Animation(Project p, string label) : base(p, label)
         {
             FileParser parser = Project.GetFileWithLabel(label);
             Data data = parser.GetData(label);
@@ -27,6 +27,11 @@ namespace LynnaLib
                 gfxHeaderIndices.Add(Project.Eval(data.GetValue(0)));
                 data = data.NextData;
             }
+        }
+
+        static ProjectDataType ProjectDataInstantiator.Instantiate(Project p, string id)
+        {
+            return new Animation(p, id);
         }
 
         public int GetCounter(int i)

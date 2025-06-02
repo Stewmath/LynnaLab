@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using Util;
-
-namespace LynnaLib
+﻿namespace LynnaLib
 {
     // Class represents macro:
     // m_GfxHeader filename destAddress [size] [startOffset]
@@ -11,7 +6,7 @@ namespace LynnaLib
     // Other types of gfx headers not supported here.
     public class GfxHeaderData : Data, IGfxHeader
     {
-        readonly Stream gfxStream;
+        IStream gfxStream;
 
         public int DestAddr
         {
@@ -32,7 +27,7 @@ namespace LynnaLib
             get { return null; }
         }
 
-        public Stream GfxStream { get { return gfxStream; } }
+        public IStream GfxStream { get { return gfxStream; } }
 
         // The number of blocks (16 bytes each) to be read.
         public int BlockCount
@@ -45,17 +40,19 @@ namespace LynnaLib
             }
         }
 
-        public GfxHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
-            : base(p, command, values, 6, parser, spacing)
+        public GfxHeaderData(Project p, string id, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
+            : base(p, id, command, values, 6, parser, spacing)
         {
             string filename = GetValue(0);
 
-            gfxStream = Project.LoadGfx(filename);
+            IStream stream = Project.GetGfxStream(filename);
 
-            if (gfxStream == null)
+            if (stream == null)
             {
                 throw new Exception("Could not find graphics file " + filename + ".");
             }
+
+            gfxStream = stream;
 
             // Adjust the gfx stream if we're supposed to omit part of it
             if (GetNumValues() >= 3)
@@ -63,8 +60,22 @@ namespace LynnaLib
                 int start = 0;
                 if (GetNumValues() >= 4)
                     start = GetIntValue(3);
-                gfxStream = new SubStream(gfxStream, start, BlockCount * 16);
+                // TODO: Fix this - graphics should reference a subset of the full file
+                //gfxStream = new SubStream(gfxStream, start, BlockCount * 16);
             }
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private GfxHeaderData(Project p, string id, TransactionState state)
+            : base(p, id, state)
+        {
+        }
+
+        public override void OnInitializedFromTransfer()
+        {
+            gfxStream = Project.GetGfxStream(GetValue(0));
         }
     }
 

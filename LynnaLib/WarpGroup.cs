@@ -1,5 +1,3 @@
-using System.Collections.ObjectModel;
-
 namespace LynnaLib
 {
     // Reads/writes warp source data per room. Searches through all of a group's warp data to get
@@ -12,7 +10,7 @@ namespace LynnaLib
     //   after that point. (The game would not see it.)
     // - Each warp type is only used in its appropriate location (StandardWarp and PointerWarp at
     //   the top level, PositionWarp only as the data pointed to by a PointerWarp).
-    public class WarpGroup : ProjectIndexedDataType, Undoable
+    public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiator
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -20,10 +18,25 @@ namespace LynnaLib
         // Constructors
         // ================================================================================
 
-        internal WarpGroup(Project p, int id) : base(p, id)
+        private WarpGroup(Project p, int id) : base(p, id)
         {
-            fileParser = Project.GetFileWithLabel("warpSourcesTable");
-            RegenWarpSourceDataList(true);
+            state.fileParser = new(Project.GetFileWithLabel("warpSourcesTable"));
+            RegenWarpSourceDataList();
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private WarpGroup(Project p, string id, TransactionState s)
+            : base(p, int.Parse(id))
+        {
+            this.state = (State)s;
+            // No need to call RegenWarpSourceDataList() - it's all in the state tracking
+        }
+
+        static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+        {
+            return new WarpGroup(p, index);
         }
 
         // ================================================================================
@@ -33,57 +46,68 @@ namespace LynnaLib
         // Everything in the State class is affected by undo/redo
         class State : TransactionState
         {
+            public InstanceResolver<FileParser> fileParser;
+
             // Parallel lists
-            public List<Warp> warpList;
-            public List<WarpSourceData> warpSourceDataList;
-            public WarpSourceData endWarp; // "m_WarpListEnd" opcode for top level data (shouldn't be null)
-            public WarpSourceData pointerWarp; // "m_PointerWarp" (can be null but should be unique)
-            public WarpSourceData lastStandardWarp; // New data added goes after this (can be null)
+            public List<InstanceResolver<Warp>> warpList = new();
+            public List<InstanceResolver<WarpSourceData>> warpSourceDataList;
 
-            public TransactionState Copy()
-            {
-                State s = new State();
-                s.warpList = new List<Warp>(warpList);
-                s.warpSourceDataList = new List<WarpSourceData>(warpSourceDataList);
-                s.endWarp = endWarp;
-                s.pointerWarp = pointerWarp;
-                s.lastStandardWarp = lastStandardWarp;
-                return s;
-            }
+            public InstanceResolver<WarpSourceData> endWarp; // "m_WarpListEnd" opcode for top level data (shouldn't be null)
+            public InstanceResolver<WarpSourceData> pointerWarp; // "m_PointerWarp" (can be null but should be unique)
+            public InstanceResolver<WarpSourceData> lastStandardWarp; // New data added goes after this (can be null)
 
-            public bool Compare(TransactionState obj)
-            {
-                return (obj is State s)
-                    && warpSourceDataList.SequenceEqual(s.warpSourceDataList) && warpList.SequenceEqual(s.warpList)
-                    && endWarp == s.endWarp && pointerWarp == s.pointerWarp && lastStandardWarp == s.lastStandardWarp;
-            }
+            public int uniqueIDCounter;
         };
 
 
-        readonly FileParser fileParser;
         State state = new State();
-        int uniqueIDCounter;
+
+        // Purposely tracked outside of State to manage event handlers. Can't use InstanceResolvers
+        // because they may refer to deleted warps, which InstanceResolvers can't find.
+        List<Warp> registeredWarps = new();
 
         // ================================================================================
         // Properties
         // ================================================================================
 
-        List<Warp> WarpList { get { return state.warpList; } }
-        List<WarpSourceData> WarpSourceDataList { get { return state.warpSourceDataList; } }
+        List<InstanceResolver<Warp>> WarpList { get { return state.warpList; } }
+        List<InstanceResolver<WarpSourceData>> WarpSourceDataList { get { return state.warpSourceDataList; } }
         WarpSourceData EndWarp
         {
-            get { return state.endWarp; }
-            set { state.endWarp = value; }
+            get { return state.endWarp.Instance; }
+            set { state.endWarp = new(value); }
         }
         WarpSourceData PointerWarp
         {
-            get { return state.pointerWarp; }
-            set { state.pointerWarp = value; }
+            get
+            {
+                if (state.pointerWarp == null)
+                    return null;
+                return state.pointerWarp?.Instance;
+            }
+            set
+            {
+                if (value == null)
+                    state.pointerWarp = null;
+                else
+                    state.pointerWarp = new(value);
+            }
         }
         WarpSourceData LastStandardWarp
         {
-            get { return state.lastStandardWarp; }
-            set { state.lastStandardWarp = value; }
+            get
+            {
+                if (state.lastStandardWarp == null)
+                    return null;
+                return state.lastStandardWarp?.Instance;
+            }
+            set
+            {
+                if (value == null)
+                    state.lastStandardWarp = null;
+                else
+                    state.lastStandardWarp = new(value);
+            }
         }
 
         public int Group
@@ -97,7 +121,7 @@ namespace LynnaLib
         {
             get
             {
-                return fileParser;
+                return state.fileParser;
             }
         }
 
@@ -125,17 +149,21 @@ namespace LynnaLib
         // - Underlying warp data is modified. "sender" is the "Warp" object that was modified.
         public event EventHandler<EventArgs> ModifiedEvent;
 
+        // ================================================================================
+        // Public methods
+        // ================================================================================
+
         // Returns a new list of all the WarpSourceData objects for the given room.
         // This does not return "PointerWarp" types. It instead traverses them and returns the
         // resulting PositionWarps.
-        public ReadOnlyCollection<Warp> GetWarps()
+        public IEnumerable<Warp> GetWarps()
         {
-            return new ReadOnlyCollection<Warp>(WarpList);
+            return WarpList.Select((w) => w.Instance);
         }
 
         public int IndexOf(Warp warp)
         {
-            return WarpList.IndexOf(warp);
+            return WarpList.IndexOf(new(warp));
         }
 
         public Warp GetWarp(int index)
@@ -145,7 +173,7 @@ namespace LynnaLib
 
         public bool ContainsWarp(Warp warp)
         {
-            return WarpList.Contains(warp);
+            return WarpList.Contains(new(warp));
         }
 
         // Adds the given data to the group and inserts the data into the FileParser.
@@ -158,7 +186,7 @@ namespace LynnaLib
         public int AddWarp(WarpSourceType type)
         {
             Project.BeginTransaction("Add warp");
-            Project.UndoState.CaptureInitialState(this);
+            Project.UndoState.CaptureInitialState<State>(this);
 
             Action<WarpSourceData> InsertInMainList = (d) =>
             {
@@ -176,11 +204,13 @@ namespace LynnaLib
                 }
             };
 
-            WarpSourceData data = new WarpSourceData(Project,
-                    command: WarpSourceData.WarpCommands[(int)type],
-                    values: WarpSourceData.DefaultValues[(int)type],
-                    parser: FileParser,
-                    spacing: new List<string> { "\t" });
+            WarpSourceData data = new WarpSourceData(
+                Project,
+                Project.GenUniqueID(typeof(WarpSourceData)),
+                command: WarpSourceData.WarpCommands[(int)type],
+                values: WarpSourceData.DefaultValues[(int)type],
+                parser: FileParser,
+                spacing: new List<string> { "\t" });
 
             if (type == WarpSourceType.Standard)
             {
@@ -192,18 +222,20 @@ namespace LynnaLib
                 FileComponent pointedDataInsertPosition;
                 if (PointerWarp == null)
                 {
-                    PointerWarp = new WarpSourceData(Project,
-                            command: WarpSourceData.WarpCommands[(int)WarpSourceType.Pointer],
-                            values: WarpSourceData.DefaultValues[(int)WarpSourceType.Pointer],
-                            parser: FileParser,
-                            spacing: new List<string> { "\t", "  " });
+                    PointerWarp = new WarpSourceData(
+                        Project,
+                        Project.GenUniqueID(typeof(WarpSourceData)),
+                        command: WarpSourceData.WarpCommands[(int)WarpSourceType.Pointer],
+                        values: WarpSourceData.DefaultValues[(int)WarpSourceType.Pointer],
+                        parser: FileParser,
+                        spacing: new List<string> { "\t", "  " });
                     PointerWarp.Map = Map;
 
                     // Create a unique pointer after top-level data end
                     string name = Project.GetUniqueLabelName(
                             String.Format("group{0}Room{1:x2}WarpSources", Index >> 8, Index & 0xff));
                     PointerWarp.PointerString = name;
-                    Label newLabel = new Label(FileParser, name);
+                    Label newLabel = new Label(Project.GenUniqueID(typeof(Label)), FileParser, name);
 
                     InsertInMainList(PointerWarp);
 
@@ -215,11 +247,13 @@ namespace LynnaLib
                     //FileParser.InsertParseableTextAfter(EndWarp, new string[] { "" });
 
                     // Insert m_WarpListEndNoDefault opcode
-                    var endOpcode = new WarpSourceData(Project,
-                            command: WarpSourceData.WarpCommands[(int)WarpSourceType.EndNoDefault],
-                            values: WarpSourceData.DefaultValues[(int)WarpSourceType.EndNoDefault],
-                            parser: FileParser,
-                            spacing: new List<string> { "\t" });
+                    var endOpcode = new WarpSourceData(
+                        Project,
+                        Project.GenUniqueID(typeof(WarpSourceData)),
+                        command: WarpSourceData.WarpCommands[(int)WarpSourceType.EndNoDefault],
+                        values: WarpSourceData.DefaultValues[(int)WarpSourceType.EndNoDefault],
+                        parser: FileParser,
+                        spacing: new List<string> { "\t" });
                     FileParser.InsertComponentAfter(newLabel, endOpcode);
 
                     pointedDataInsertPosition = newLabel;
@@ -238,16 +272,17 @@ namespace LynnaLib
             }
 
             // Default warp destination should use unique data
-            data.SetDestData(data.DestGroup.GetNewOrUnusedDestData());
+            var (destIndex, destData) = data.DestGroup.GetNewOrUnusedDestData();
+            data.SetDestData(data.DestGroup.Index, destIndex, destData);
 
             // Default values (we may be overwriting a previously unused warp)
-            data.GetReferencedDestData().Map = 0;
-            data.GetReferencedDestData().Y = 0;
-            data.GetReferencedDestData().X = 0;
-            data.GetReferencedDestData().Parameter = 0;
-            data.GetReferencedDestData().Transition = 1;
+            data.ReferencedDestData.Map = 0;
+            data.ReferencedDestData.Y = 0;
+            data.ReferencedDestData.X = 0;
+            data.ReferencedDestData.Parameter = 0;
+            data.ReferencedDestData.Transition = 1;
 
-            RegenWarpSourceDataList(false);
+            RegenWarpSourceDataList();
             ModifiedEvent?.Invoke(this, null);
 
             Project.EndTransaction();
@@ -261,20 +296,10 @@ namespace LynnaLib
         public void RemoveWarp(Warp warp)
         {
             Project.BeginTransaction("Delete warp");
-            Project.UndoState.CaptureInitialState(this);
+            Project.UndoState.CaptureInitialState<State>(this);
 
             WarpSourceData data = warp.SourceData;
-            WarpDestData destData = data.GetReferencedDestData();
-
-            Project.UndoState.OnRewind("Remove warp", () =>
-            { // On undo
-                warp.AddModifiedHandler(OnDataModified);
-                destData.AddReference(data);
-            }, (isRedo) =>
-            { // On redo or now
-                warp.RemoveModifiedHandler(OnDataModified);
-                destData.RemoveReference(data);
-            });
+            WarpDestData destData = data.ReferencedDestData;
 
             if (data.WarpSourceType == WarpSourceType.Standard)
             {
@@ -290,7 +315,7 @@ namespace LynnaLib
                 if (PointerWarp.GetNumPointedWarps() == 1)
                 {
                     // Delete label
-                    fileParser.RemoveFileComponent(Project.GetLabel(PointerWarp.PointerString));
+                    FileParser.RemoveFileComponent(Project.GetLabel(PointerWarp.PointerString));
                     // Delete PointerWarp (do this before deleting its last PositionWarp, otherwise
                     // it'll start reading subsequent data and get an incorrect count)
                     PointerWarp.Detach();
@@ -306,7 +331,7 @@ namespace LynnaLib
             else
                 throw new ArgumentException("RemoveWarp doesn't support this warp source type.");
 
-            RegenWarpSourceDataList(false);
+            RegenWarpSourceDataList();
             ModifiedEvent?.Invoke(this, null);
 
             Project.EndTransaction();
@@ -318,21 +343,22 @@ namespace LynnaLib
         }
 
         // ================================================================================
-        // Undoable interface methods
+        // TrackedProjectData interface functions
         // ================================================================================
 
-        public TransactionState GetState()
+        public override TransactionState GetState()
         {
             return state;
         }
 
-        public void SetState(TransactionState s)
+        public override void SetState(TransactionState s)
         {
-            state = (State)s.Copy();
+            state = (State)s;
         }
 
-        public void InvokeModifiedEvent(TransactionState prevState)
+        public override void InvokeUndoEvents(TransactionState prevState)
         {
+            UpdateWarpModifiedHandlers();
             ModifiedEvent?.Invoke(this, null);
         }
 
@@ -340,18 +366,33 @@ namespace LynnaLib
         // Private methods
         // ================================================================================
 
-        void RegenWarpSourceDataList(bool inConstructor)
+        // Update modified handlers
+        void UpdateWarpModifiedHandlers()
         {
-            Data d = fileParser.GetData("warpSourcesTable", (Index >> 8) * 2);
+            foreach (Warp warp in registeredWarps)
+                warp.RemoveModifiedHandler(OnDataModified);
+
+            registeredWarps.Clear();
+
+            foreach (InstanceResolver<Warp> warpIR in state.warpList)
+            {
+                warpIR.Instance.AddModifiedHandler(OnDataModified);
+                registeredWarps.Add(warpIR.Instance);
+            }
+        }
+
+        void RegenWarpSourceDataList()
+        {
+            // Now begin reading the file data for the new warps
+            Data d = FileParser.GetData("warpSourcesTable", (Index >> 8) * 2);
 
             string label = d.GetValue(0);
 
-            var newWarpList = new List<Warp>();
-            state.warpSourceDataList = new List<WarpSourceData>();
+            var newWarpList = new List<InstanceResolver<Warp>>();
+            state.warpSourceDataList = new List<InstanceResolver<WarpSourceData>>();
 
-            WarpSourceData warpData = fileParser.GetData(label) as WarpSourceData;
+            WarpSourceData warpData = FileParser.GetData(label) as WarpSourceData;
 
-            EndWarp = null;
             PointerWarp = null;
             LastStandardWarp = null;
 
@@ -376,7 +417,7 @@ namespace LynnaLib
                                 throw new AssemblyErrorException(string.Format(
                                             "Unexpected warp type '{0}' in {1}!",
                                             pWarp.WarpSourceType, warpData.PointerString));
-                            WarpSourceDataList.Add(pWarp);
+                            WarpSourceDataList.Add(new(pWarp));
                             pWarp = pWarp.GetNextWarp();
                         }
                     }
@@ -384,7 +425,7 @@ namespace LynnaLib
                     {
                         if (PointerWarp != null)
                             throw new AssemblyErrorException("Encountered a 'Standard Warp' after a Pointer Warp; this is invalid!");
-                        WarpSourceDataList.Add(warpData);
+                        WarpSourceDataList.Add(new(warpData));
                         LastStandardWarp = warpData;
                     }
                     else
@@ -395,6 +436,8 @@ namespace LynnaLib
                     }
                 }
 
+                // For each entry added to WarpSourceDataList, update newWarpList with a
+                // corresponding entry
                 while (newWarpList.Count < WarpSourceDataList.Count)
                 {
                     WarpSourceData dataToAdd = WarpSourceDataList[newWarpList.Count];
@@ -408,7 +451,7 @@ namespace LynnaLib
                         {
                             if (oldWarp.SourceData == dataToAdd)
                             {
-                                newWarpList.Add(oldWarp);
+                                newWarpList.Add(new(oldWarp));
                                 addedData = true;
                                 break;
                             }
@@ -416,24 +459,8 @@ namespace LynnaLib
                     }
                     if (!addedData)
                     {
-                        var warp = new Warp(this, dataToAdd, uniqueIDCounter++);
-                        newWarpList.Add(warp);
-
-                        // Distinguish betwen calls from the constructor (initializing from
-                        // pre-existing data) and everywhere else (modifying something). Only in the
-                        // latter case should we be touching the undo history.
-                        if (inConstructor)
-                            warp.AddModifiedHandler(OnDataModified);
-                        else
-                        {
-                            Project.UndoState.OnRewind("Add warp", () =>
-                            { // On undo
-                                warp.RemoveModifiedHandler(OnDataModified);
-                            }, (isRedo) =>
-                            { // On redo or now
-                                warp.AddModifiedHandler(OnDataModified);
-                            });
-                        }
+                        var warp = new Warp(this, dataToAdd, state.uniqueIDCounter++);
+                        newWarpList.Add(new(warp));
                     }
                 }
 
@@ -448,6 +475,8 @@ namespace LynnaLib
             }
 
             state.warpList = newWarpList;
+
+            UpdateWarpModifiedHandlers();
         }
 
 

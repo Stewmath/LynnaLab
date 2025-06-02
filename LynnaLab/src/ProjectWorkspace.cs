@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace LynnaLab;
 
@@ -12,11 +13,24 @@ public class ProjectWorkspace
     // ================================================================================
     // Constructors
     // ================================================================================
-    public ProjectWorkspace(Project project)
+    public ProjectWorkspace(Project project, string uniqueIdentifier, ConnectionController connection = null)
     {
         this.Project = project;
+        this.UniqueIdentifier = uniqueIdentifier;
 
-        Project.LazyInvoke = Top.LazyInvoke;
+        if (connection == null)
+            this.NetworkConnection = new None();
+        else
+        {
+            // This is a client connected to a server
+            this.NetworkConnection = connection;
+
+            connection.TransactionsRejectedEvent += OnTransactionsRejected;
+            connection.ConnectionClosedEvent += OnConnectionClosed;
+
+            if (connection.Closed)
+                throw new Exception("Connection closed in the middle of loading");
+        }
 
         tilesetTextureCacher = new((tileset) => new TilesetTextureCacher(this, tileset));
         roomTextureCacher = new((layout) => new RoomTextureCacher(this, layout));
@@ -41,6 +55,7 @@ public class ProjectWorkspace
         documentationDialog = new DocumentationDialog(this, "Documentation Dialog");
         scratchpad = new ScratchPad(this, "Scratchpad", roomEditor.TilesetViewer, Brush);
         undoDialog = new UndoDialog(this, "Undo History");
+        networkDialog = new NetworkDialog(this, "Networking");
 
         frames.AddRange(new Frame[] {
                 roomEditor,
@@ -51,6 +66,7 @@ public class ProjectWorkspace
                 buildDialog,
                 documentationDialog,
                 undoDialog,
+                networkDialog,
             });
         frames.Sort((f1, f2) => f1.Name.CompareTo(f2.Name));
 
@@ -70,6 +86,8 @@ public class ProjectWorkspace
     // Variables
     // ================================================================================
 
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
+
     RoomEditor roomEditor;
     DungeonEditor dungeonEditor;
     TilesetEditor tilesetEditor;
@@ -78,6 +96,7 @@ public class ProjectWorkspace
     BuildDialog buildDialog;
     DocumentationDialog documentationDialog;
     UndoDialog undoDialog;
+    NetworkDialog networkDialog;
 
     List<Frame> frames = new List<Frame>();
     bool showDebugWindow;
@@ -109,6 +128,16 @@ public class ProjectWorkspace
     // Togglable settings that affect other modules (really just minimaps right now)
     public bool DarkenDuplicateRooms { get { return Top.GlobalConfig.DarkenDuplicateRooms; } }
     public bool AutoAdjustGroupNumber { get { return Top.GlobalConfig.AutoAdjustGroupNumber; } }
+
+    // Identifier applied to imgui windows. Useful for displaying multiple workspaces at once (ie.
+    // when testing networking).
+    public string UniqueIdentifier { get; }
+
+    // Network status: Standalone, Server, or Client
+    public OneOf<None, ServerController, ConnectionController> NetworkConnection { get; private set; }
+
+    public bool IsServerRunning { get { return NetworkConnection.IsT1; } }
+    public bool IsClientRunning { get { return NetworkConnection.IsT2; } }
 
     // ================================================================================
     // Public methods
@@ -164,11 +193,11 @@ public class ProjectWorkspace
 
             if (renderUndoButton())
             {
-                Project.UndoState.Undo();
+                TryUndo();
             }
             if (renderRedoButton())
             {
-                Project.UndoState.Redo();
+                TryRedo();
             }
             ImGui.EndMenu();
         }
@@ -248,16 +277,16 @@ public class ProjectWorkspace
         if (ImGui.IsKeyPressed(ImGuiKey.F5))
             RunGame();
         if (ImGui.IsKeyChordPressed(ImGuiKey.ModCtrl | ImGuiKey.Z))
-            Project.UndoState.Undo();
+            TryUndo();
         if (ImGui.IsKeyChordPressed(ImGuiKey.ModCtrl | ImGuiKey.ModShift | ImGuiKey.Z))
-            Project.UndoState.Redo();
+            TryRedo();
 
         // Rendering frames should be the last thing done. In particular, undo/redo operations
         // should happen before this. They may delete resources (ImGui images) that the frames have
         // requested to use already if the frames are rendered first.
         foreach (var frame in frames)
         {
-            frame.RenderAsWindow();
+            frame.RenderAsWindow(UniqueIdentifier);
         }
 
         RedrawTextures();
@@ -268,6 +297,11 @@ public class ProjectWorkspace
     /// </summary>
     public void Close()
     {
+        NetworkConnection.Switch(
+            none => {},
+            server => server.Stop(),
+            client => client.Close()
+        );
         Project.Close();
         linkTexture.Dispose();
         tilesetTextureCacher.Dispose();
@@ -320,6 +354,67 @@ public class ProjectWorkspace
     {
         tilesetEditor.SetTileset(tileset);
         tilesetEditor.Focus();
+    }
+
+    /// <summary>
+    /// Begin listening for connections for collaborative editing.
+    /// </summary>
+    public void BeginServer(System.Net.IPEndPoint serverAddress)
+    {
+        if (IsServerRunning)
+            throw new Exception("BeginServer: Server already running");
+        if (IsClientRunning)
+            throw new Exception("BeginServer: Client already running");
+
+        ServerController server;
+        try
+        {
+            server = ServerController.CreateServer(Project, serverAddress, Top.InvokeAsync);
+            this.NetworkConnection = server;
+        }
+        catch (System.Net.Sockets.SocketException e)
+        {
+            Modal.DisplayErrorMessage("There was an error starting the server (couldn't open the socket? See log).");
+            log.Error(e);
+            return;
+        }
+
+        // TODO: Unsubscribe on closure
+        server.ConnectionRequestedEvent += (_, conn) =>
+        {
+            Top.LazyInvoke(() => Modal.ConnectionRequestModal(server, conn));
+        };
+
+        server.ClientDisconnectedEvent += (_, conn, exception) =>
+        {
+            Top.LazyInvoke(() => Modal.DisplayErrorMessage("Client disconnected.", exception));
+        };
+
+        // New thread: Run the server until it shuts down
+        Task.Run(async () =>
+        {
+            try
+            {
+                await server.RunUntilClosed();
+
+                Top.LazyInvoke(() =>
+                {
+                    Modal.DisplayErrorMessage("Server has closed.");
+                });
+            }
+            catch (Exception e)
+            {
+                log.Error(e);
+                Top.LazyInvoke(() =>
+                {
+                    Modal.DisplayErrorMessage("Server encountered an error and is shutting down; see log.");
+                });
+            }
+            finally
+            {
+                this.NetworkConnection = new None();
+            }
+        });
     }
 
     // ================================================================================
@@ -431,6 +526,59 @@ public class ProjectWorkspace
             else
                 installHandlers(room, Season.None);
         }
+    }
+
+    void TryUndo()
+    {
+        if (!Project.UndoState.Undo())
+            Modal.DisplayErrorMessage("Undo failed.");
+    }
+
+    void TryRedo()
+    {
+        if (!Project.UndoState.Redo())
+            Modal.DisplayErrorMessage("Redo failed.");
+    }
+
+    /// <summary>
+    /// For clients: This is called when the server rejects transactions.
+    /// </summary>
+    void OnTransactionsRejected(IEnumerable<string> list)
+    {
+        if (!IsClientRunning)
+            throw new Exception("OnTransactionsRejected: Called on a non-client instance?");
+
+        string message;
+        if (list.Count() == 1)
+            message = $"Server rejected transaction: '{list.First()}'";
+        else
+            message = $"Server rejected multiple transactions.";
+
+        Modal.DisplayErrorMessage(message);
+    }
+
+    /// <summary>
+    /// For clients: This is called when the connection is closed for any reason (maybe the server
+    /// closed it, or maybe there was some kind of protocol error that the networking code couldn't
+    /// deal with.)
+    /// </summary>
+    void OnConnectionClosed(Exception exception)
+    {
+        if (!IsClientRunning)
+            throw new Exception("OnConnectionClosed: Called on a non-client instance?");
+
+        ConnectionController controller = NetworkConnection.AsT2;
+
+        Top.DoNextFrame(() =>
+        {
+            Modal.DisplayErrorMessage("The connection to the server was closed.", exception);
+
+            controller.TransactionsRejectedEvent -= OnTransactionsRejected;
+            controller.ConnectionClosedEvent -= OnConnectionClosed;
+
+            NetworkConnection = new None();
+            Top.CloseProject();
+        });
     }
 }
 

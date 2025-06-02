@@ -6,14 +6,14 @@ namespace LynnaLib
     /// <summary>
     ///  An interaction object. The "index" is the full ID (2 bytes, including subid).
     /// </summary>
-    public class InteractionObject : GameObject
+    public class InteractionObject : GameObject, IndexedProjectDataInstantiator
     {
 
         readonly Data objectData;
 
         readonly byte b0, b1, b2;
 
-        internal InteractionObject(Project p, int i) : base(p, i)
+        private InteractionObject(Project p, int i) : base(p, i)
         {
             try
             {
@@ -61,6 +61,11 @@ namespace LynnaLib
                 Console.WriteLine(e.ToString());
                 objectData = null;
             }
+        }
+
+        static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+        {
+            return new InteractionObject(p, index);
         }
 
 

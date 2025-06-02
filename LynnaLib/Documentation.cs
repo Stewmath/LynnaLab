@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace LynnaLib
 {
@@ -17,13 +18,16 @@ namespace LynnaLib
     /// </summary>
     public class Documentation
     {
+        [JsonInclude]
         Dictionary<string, string> _fieldDict;
-        ISet<string> _fieldKeys; // Maintained separately from documentationParams to preserve original case
+        [JsonInclude]
+        SortedSet<string> _fieldKeys; // Maintained separately from documentationParams to preserve original case
 
         public string Name { get; set; }
         public string KeyName { get; set; } = "Key";
         public string Description { get; set; }
 
+        [JsonIgnore]
         public ICollection<string> Keys
         {
             get
@@ -78,6 +82,12 @@ namespace LynnaLib
             Description = d.Description;
             Name = d.Name;
             KeyName = d.KeyName;
+        }
+
+        // Blank constructor just for deserialization
+        public Documentation()
+        {
+
         }
 
 

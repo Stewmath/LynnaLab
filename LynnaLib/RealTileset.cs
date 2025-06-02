@@ -47,7 +47,7 @@ public class RealTileset : Tileset
                 gfxFileName = String.Format("gfx_tileset{0:x2}_{1}", Index, SeasonName);
             else
                 gfxFileName = String.Format("gfx_tileset{0:x2}", Index);
-            base.GfxFileStream = Project.LoadGfx(gfxFileName);
+            base.GfxFileStream = Project.GetGfxStream(gfxFileName);
 
             if (base.GfxFileStream == null)
                 throw new ProjectErrorException("Couldn't find \"" + gfxFileName + "\" in project.");
@@ -206,6 +206,23 @@ public class RealTileset : Tileset
             TilesetHeaderGroup.SetCollisionsData(index, val);
     }
 
+    /// <summary>
+    /// Overwrites the GfxStream data from the given source.
+    /// </summary>
+    public override void LoadGraphics(Tileset source)
+    {
+        if (!Project.Config.ExpandedTilesets)
+            throw new Exception("LoadGraphics: Copy from another tileset not supported without expanded tilesets patch");
+
+        if (GfxFileStream != source.GfxFileStream)
+        {
+            GfxFileStream.WriteAllBytes(source.GfxFileStream.ReadAllBytes());
+
+            LoadAllGfxData();
+            InvalidateAllTiles();
+        }
+    }
+
     public IList<Room> GetReferences()
     {
         var references = new List<Room>();
@@ -336,13 +353,13 @@ public class RealTileset : Tileset
     {
         if (IsSeasonal)
         {
-            return Project.GetBinaryFile(
+            return Project.GetFileStream(
                 String.Format("tileset_layouts_expanded/{0}/tilesetMappings{1:x2}_{2}.bin",
                               Project.GameString, Index, SeasonName));
         }
         else
         {
-            return Project.GetBinaryFile(
+            return Project.GetFileStream(
             String.Format("tileset_layouts_expanded/{0}/tilesetMappings{1:x2}.bin",
                           Project.GameString, Index));
         }
@@ -352,13 +369,13 @@ public class RealTileset : Tileset
     {
         if (IsSeasonal)
         {
-            return Project.GetBinaryFile(
+            return Project.GetFileStream(
                 String.Format("tileset_layouts_expanded/{0}/tilesetCollisions{1:x2}_{2}.bin",
                               Project.GameString, Index, SeasonName));
         }
         else
         {
-            return Project.GetBinaryFile(
+            return Project.GetFileStream(
                 String.Format("tileset_layouts_expanded/{0}/tilesetCollisions{1:x2}.bin",
                               Project.GameString, Index));
         }

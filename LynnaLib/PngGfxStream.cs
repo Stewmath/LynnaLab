@@ -1,68 +1,107 @@
-using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using YamlDotNet.Serialization;
 
 namespace LynnaLib
 {
+    /// <summary>
     /// This class loads a PNG file and converts it to a byte stream. Only works with greyscale PNGs
     /// which can be properly converted to 2bpp format.
-    public class PngGfxStream : ReloadableStream
+    /// </summary>
+    public class PngGfxStream : TrackedStream, IStream
     {
-        private byte[] data;
-        int _length;
-        string filename;
-
-        PngProperties properties;
-
-
-        public PngGfxStream(string filename)
-            : base(filename)
+        public PngGfxStream(Project p, string baseFilename)
+            : base(p, GetID(baseFilename))
         {
-            this.filename = filename;
+            this.pngFilePath = baseFilename + ".png";
+            this.state = new()
+            {
+                PngFile = new(p.GetFileStream(pngFilePath)),
+            };
             LoadFile();
+
+            // PNG files, specifically, watch for changes on the filesystem.
+            this.PngFile.ModifiedEvent += (_, _) =>
+            {
+                Project.UndoState.BeginTransaction("Reload PNG file", merge: false, disallowUndo: true);
+                LoadFile();
+                InvokeModifiedEvent(StreamModifiedEventArgs.All(this));
+                Project.UndoState.EndTransaction();
+            };
         }
 
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private PngGfxStream(Project p, string id, TransactionState state)
+            : base(p, id)
+        {
+            this.state = (State)state;
+            this.pngFilePath = null;
+        }
+
+        public static string GetID(string baseFilename)
+        {
+            return "pngstream-" + baseFilename;
+        }
+
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        private static readonly log4net.ILog log = LogHelper.GetLogger();
+
+        class State : TransactionState
+        {
+            [JsonRequired]
+            public byte[] Data { get; set; }
+
+            [JsonRequired]
+            public PngProperties Properties { get; set; }
+
+            [JsonRequired]
+            public InstanceResolver<MemoryFileStream> PngFile { get; init; }
+        }
+
+        State state;
+
+        // These are only valid on the server
+        readonly string pngFilePath;
+
+        // ================================================================================
+        // Properties
+        // ================================================================================
+
+        byte[] Data { get { return state.Data; } }
+        MemoryFileStream PngFile { get { return state.PngFile; } }
+        PngProperties Properties { get { return state.Properties; } }
 
         // Stream Properties
 
-        public override bool CanRead
-        {
-            get { return true; }
-        }
-        public override bool CanSeek
-        {
-            get { return true; }
-        }
-        public override bool CanTimeout
-        {
-            get { return false; }
-        }
-        public override bool CanWrite
-        {
-            get { return false; }
-        }
         public override long Length
         {
             get
             {
-                return _length;
+                return Data.Length;
             }
         }
+
         public override long Position { get; set; }
 
+        // TODO: Do something with this
+        public bool Modified { get; private set; }
+
+        // ================================================================================
+        // Events
+        // ================================================================================
+
+        // Inherits ModifiedEvent
+
+        // ================================================================================
+        // Methods
+        // ================================================================================
 
         // Stream methods
-
-        public override void Flush()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void SetLength(long len)
-        {
-            throw new NotImplementedException();
-        }
 
         public override long Seek(long dest, SeekOrigin origin)
         {
@@ -86,9 +125,21 @@ namespace LynnaLib
             int size = count;
             if (Position + count > Length)
                 size = (int)(Length - Position);
-            Array.Copy(data, Position, buffer, offset, size);
+            Array.Copy(Data, Position, buffer, offset, size);
             Position = Position + size;
             return size;
+        }
+
+        public override int ReadByte()
+        {
+            int ret = Data[Position];
+            Position++;
+            return ret;
+        }
+
+        public override ReadOnlySpan<byte> ReadAllBytes()
+        {
+            return Data;
         }
 
         public override void Write(byte[] buffer, int offset, int count)
@@ -96,11 +147,12 @@ namespace LynnaLib
             throw new NotImplementedException();
         }
 
-        public override int ReadByte()
+        public override void WriteAllBytes(ReadOnlySpan<byte> data)
         {
-            int ret = data[Position];
-            Position++;
-            return ret;
+            Project.UndoState.CaptureInitialState<State>(this);
+            state.Data = data.ToArray();
+            Modified = true;
+            InvokeModifiedEvent(StreamModifiedEventArgs.All(this));
         }
 
         public override void WriteByte(byte value)
@@ -108,56 +160,123 @@ namespace LynnaLib
             throw new NotImplementedException();
         }
 
-
-        // ReloadableStream methods
-
-        protected override void Reload()
+        /// <summary>
+        /// Use ImageSharp to write back modified PNG files.
+        /// </summary>
+        public void Save()
         {
-            LoadFile();
-            Position = 0;
+            if (!Modified)
+                return;
+
+            if (pngFilePath == null)
+            {
+                log.Error("Can't save PNG file on remote instance.");
+                return;
+            }
+            if (Properties.nonDefault)
+            {
+                log.Error($"Can't save PNG file with a .properties file: {pngFilePath}.");
+                return;
+            }
+            if (Data.Length % 16 != 0)
+            {
+                log.Error($"Can't save PNG file with data width not a multiple of 16: {pngFilePath}.");
+                return;
+            }
+
+            int numTiles = Data.Length / 16;
+
+            // Default to 16 tiles per row (the assumed default with no .properties file).
+            int tilesPerRow = 16;
+
+            int width = numTiles >= tilesPerRow ? tilesPerRow : numTiles;
+            int height = (numTiles + tilesPerRow - 1) / tilesPerRow;
+
+            Console.WriteLine("TILES: " + numTiles);
+            Console.WriteLine("HEIGHT: " + height);
+
+            using (Bitmap bitmap = new(width * 8, height * 8))
+            {
+                for (int tile = 0; tile < numTiles; tile++)
+                {
+                    int x = tile % tilesPerRow;
+                    int y = tile / tilesPerRow;
+                    GbGraphics.RenderRawTile(
+                        bitmap,
+                        x * 8,
+                        y * 8,
+                        new ReadOnlySpan<byte>(Data, tile * 16, 16),
+                        GbGraphics.GrayPalette, 0);
+                }
+
+                bitmap.Save(Path.Combine(Project.BaseDirectory, pngFilePath));
+            }
+            Modified = false;
         }
 
+        // ================================================================================
+        // TrackedProjectData interface functions
+        // ================================================================================
 
+        public override TransactionState GetState()
+        {
+            return state;
+        }
+
+        public override void SetState(TransactionState s)
+        {
+            State newState = (State)s;
+            if (newState.Data == null)
+                throw new DeserializationException("Missing data in MemoryFileStream");
+            this.state = newState;
+            this.Modified = true;
+        }
+
+        public override void InvokeUndoEvents(TransactionState prevState)
+        {
+            State last = (State)prevState;
+
+            var args = StreamModifiedEventArgs.FromChangedRange(last.Data, state.Data);
+            if (args == null)
+                return;
+            InvokeModifiedEvent(args);
+        }
+
+        // ================================================================================
         // Private methods
+        // ================================================================================
 
         void LoadFile()
         {
-            using (var bitmap = new Bitmap(filename))
+            Project.UndoState.CaptureInitialState<State>(this);
+            var pngData = PngFile.ReadAllBytes().ToArray();
+            using (var bitmap = new Bitmap(pngData))
             {
-                string propertiesFilename = Path.GetDirectoryName(filename) + "/" +
-                    Path.GetFileNameWithoutExtension(filename) + ".properties";
+                string propertiesFilename = Path.GetDirectoryName(pngFilePath) + "/" +
+                    Path.GetFileNameWithoutExtension(pngFilePath) + ".properties";
 
-                properties = LoadProperties(propertiesFilename);
+                state.Properties = LoadProperties(Project, propertiesFilename);
 
-                _length = bitmap.Width * bitmap.Height * 2 / 8;
+                int numTiles = bitmap.Width * bitmap.Height / 64;
 
-                data = new byte[Length * 8];
+                state.Data = new byte[numTiles * 16];
 
                 Func<int, int, int> lookupPixel = (x, y) =>
                 {
                     var color = bitmap.GetPixel(x, y);
-                    if (color.R != color.G || color.R != color.B || color.G != color.B)
-                        throw new InvalidImageException(filename + " isn't a greyscale image.");
-
-                    int[] colors = {
-                    0x00,
-                    0x55,
-                    0xaa,
-                    0xff
-                    };
 
                     for (int i = 0; i < 4; i++)
                     {
-                        if (color.R == colors[i])
+                        if (color == GbGraphics.GrayPalette[i])
                         {
-                            if (properties.invert)
-                                return i;
-                            else
+                            if (Properties.invert)
                                 return 3 - i;
+                            else
+                                return i;
                         }
                     }
 
-                    throw new InvalidImageException("Invalid color in " + filename + ".");
+                    throw new InvalidImageException($"Invalid color in {pngFilePath} at {x},{y}: {color}.");
                 };
 
                 for (int y = 0; y < bitmap.Height; y++)
@@ -171,7 +290,7 @@ namespace LynnaLib
 
                         int tile;
 
-                        if (properties.interleave)
+                        if (Properties.interleave)
                         {
                             tile = (y / 16) * bitmap.Width / 8 * 2;
                             tile += x / 8 * 2;
@@ -181,17 +300,21 @@ namespace LynnaLib
                         else
                             tile = (y / 8) * bitmap.Width / 8 + (x / 8);
 
-                        data[tile * 16 + y2 * 2 + 0] |= (byte)((val & 1) << (7 - x2));
-                        data[tile * 16 + y2 * 2 + 1] |= (byte)((val >> 1) << (7 - x2));
+                        Data[tile * 16 + y2 * 2 + 0] |= (byte)((val & 1) << (7 - x2));
+                        Data[tile * 16 + y2 * 2 + 1] |= (byte)((val >> 1) << (7 - x2));
                     }
                 }
             }
+
+            // Don't write back to the PNG file after loading from it
+            this.Modified = false;
         }
 
-
+        // ================================================================================
         // Static methods
+        // ================================================================================
 
-        static PngProperties LoadProperties(string s)
+        static PngProperties LoadProperties(Project p, string s)
         {
             PngProperties properties = new PngProperties();
 
@@ -202,11 +325,11 @@ namespace LynnaLib
                 properties.interleave = true;
             }
 
-            if (File.Exists(s))
+            if (p.FileExists(s))
             {
                 var deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
-
-                var dict = deserializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(s));
+                MemoryFileStream propertyStream = p.GetFileStream(s);
+                var dict = deserializer.Deserialize<Dictionary<string, string>>(propertyStream.ReadAllText());
 
                 if (dict.ContainsKey("width"))
                     properties.width = int.Parse(dict["width"]);
@@ -216,19 +339,22 @@ namespace LynnaLib
                     properties.invert = bool.Parse(dict["invert"]);
                 if (dict.ContainsKey("interleave"))
                     properties.interleave = bool.Parse(dict["interleave"]);
+
+                properties.nonDefault = true;
             }
 
             return properties;
         }
 
 
-        // Representation of ".properties" file
+        // Representation of ".properties" file. This is serialized with networking.
         class PngProperties
         {
             public int width;
             public int tile_padding;
             public bool invert;
             public bool interleave;
+            public bool nonDefault;
         }
     }
 }

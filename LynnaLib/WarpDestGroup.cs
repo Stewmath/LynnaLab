@@ -4,26 +4,23 @@ using System.Collections.Generic;
 
 namespace LynnaLib
 {
-    public class WarpDestGroup : ProjectIndexedDataType, Undoable
+    public class WarpDestGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiator
     {
         // ================================================================================
         // Constructors
         // ================================================================================
 
-        internal WarpDestGroup(Project p, int id) : base(p, id)
+        private WarpDestGroup(Project p, int id) : base(p, id)
         {
-            fileParser = Project.GetFileWithLabel("warpDestTable");
-            Data tmp = fileParser.GetData("warpDestTable", id * 2);
+            Data tmp = FileParser.GetData("warpDestTable", id * 2);
 
             string label = tmp.GetValue(0);
 
-            WarpDestData data = fileParser.GetData(label) as WarpDestData;
+            WarpDestData data = FileParser.GetData(label) as WarpDestData;
 
             while (data != null)
             {
-                data.DestGroup = this;
-                data.DestIndex = WarpDestDataList.Count;
-                WarpDestDataList.Add(data);
+                WarpDestDataList.Add(new(data));
 
                 FileComponent component = data.Next;
                 data = null;
@@ -44,6 +41,23 @@ namespace LynnaLib
             }
         }
 
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private WarpDestGroup(Project p, string id, TransactionState state)
+            : base(p, int.Parse(id))
+        {
+            this.state = (State)state;
+
+            if (this.state.warpDestDataList == null)
+                throw new DeserializationException();
+        }
+
+        static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+        {
+            return new WarpDestGroup(p, index);
+        }
+
         // ================================================================================
         // Variables
         // ================================================================================
@@ -51,28 +65,25 @@ namespace LynnaLib
         // Everything in the State class is affected by undo/redo
         class State : TransactionState
         {
-            public List<WarpDestData> warpDestDataList = new List<WarpDestData>();
-
-            public TransactionState Copy()
-            {
-                State s = new State();
-                s.warpDestDataList = new List<WarpDestData>(warpDestDataList);
-                return s;
-            }
-
-            public bool Compare(TransactionState obj)
-            {
-                return (obj is State state) && warpDestDataList.SequenceEqual(state.warpDestDataList);
-            }
+            public List<InstanceResolver<WarpDestData>> warpDestDataList = new();
         };
 
         State state = new State();
-        readonly FileParser fileParser;
-        List<WarpDestData> WarpDestDataList { get { return state.warpDestDataList; } }
+        FileParser _fileParser;
 
         // ================================================================================
         // Properties
         // ================================================================================
+
+        FileParser FileParser
+        {
+            get
+            {
+                if (_fileParser == null)
+                    _fileParser = Project.GetFileWithLabel("warpDestTable");
+                return _fileParser;
+            }
+        }
 
         public int Group
         {
@@ -82,6 +93,7 @@ namespace LynnaLib
             }
         }
 
+        List<InstanceResolver<WarpDestData>> WarpDestDataList { get { return state.warpDestDataList; } }
 
         // ================================================================================
         // Public methods
@@ -98,32 +110,31 @@ namespace LynnaLib
         }
 
         // Adds a new WarpDestData to the end of the group, returns the index
-        public WarpDestData AddDestData()
+        public (int, WarpDestData) AddDestData()
         {
-            Project.UndoState.CaptureInitialState(this);
+            Project.UndoState.CaptureInitialState<State>(this);
 
-            WarpDestData newData = new WarpDestData(Project,
-                    WarpDestData.WarpCommand,
-                    null,
-                    fileParser,
-                    new List<string> { "\t" });
+            WarpDestData newData = new WarpDestData(
+                Project,
+                Project.GenUniqueID(typeof(WarpDestData)),
+                WarpDestData.WarpCommand,
+                null,
+                FileParser,
+                new List<string> { "\t" });
 
             foreach (ValueReferenceDescriptor desc in newData.ValueReferenceGroup.GetDescriptors())
                 desc.ValueReference.Initialize();
 
             newData.Transition = 1;
 
-            newData.DestGroup = this;
-            newData.DestIndex = WarpDestDataList.Count;
+            FileParser.InsertComponentAfter(WarpDestDataList[WarpDestDataList.Count - 1], newData);
+            WarpDestDataList.Add(new(newData));
 
-            fileParser.InsertComponentAfter(WarpDestDataList[WarpDestDataList.Count - 1], newData);
-            WarpDestDataList.Add(newData);
-
-            return newData;
+            return (WarpDestDataList.Count-1, newData);
         }
 
         // Returns either an unused WarpDestData, or creates a new one if no unused ones exist.
-        public WarpDestData GetNewOrUnusedDestData()
+        public (int index, WarpDestData data) GetNewOrUnusedDestData()
         {
             // Check if there's unused destination data already
             for (int i = 0; i < GetNumWarpDests(); i++)
@@ -131,7 +142,7 @@ namespace LynnaLib
                 WarpDestData destData = GetWarpDest(i);
                 if (destData.GetNumReferences() == 0)
                 {
-                    return GetWarpDest(i);
+                    return (i, GetWarpDest(i));
                 }
             }
             // TODO: check if there's room to add data
@@ -139,20 +150,20 @@ namespace LynnaLib
         }
 
         // ================================================================================
-        // Undoable interface methods
+        // TrackedProjectData interface functions
         // ================================================================================
 
-        public TransactionState GetState()
+        public override TransactionState GetState()
         {
             return state;
         }
 
-        public void SetState(TransactionState s)
+        public override void SetState(TransactionState s)
         {
-            state = (State)s.Copy();
+            state = (State)s;
         }
 
-        public void InvokeModifiedEvent(TransactionState prevState)
+        public override void InvokeUndoEvents(TransactionState prevState)
         {
         }
     }

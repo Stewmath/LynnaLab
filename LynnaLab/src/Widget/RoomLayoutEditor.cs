@@ -481,7 +481,7 @@ public class RoomLayoutEditor : TileGrid
         if (DrawWarps)
         {
             var warpGroup = Room.GetWarpGroup();
-            for (int warpIndex = 0; warpIndex < warpGroup.GetWarps().Count; warpIndex++)
+            for (int warpIndex = 0; warpIndex < warpGroup.Count; warpIndex++)
             {
                 Warp warp = warpGroup.GetWarp(warpIndex);
 

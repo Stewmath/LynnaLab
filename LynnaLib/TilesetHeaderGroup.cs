@@ -6,11 +6,11 @@ namespace LynnaLib
 {
 
     // This class is only used when "ExpandedTilesets" is false in config.yaml.
-    public class TilesetHeaderGroup : ProjectIndexedDataType
+    public class TilesetHeaderGroup : ProjectIndexedDataType, IndexedProjectDataInstantiator
     {
-        readonly Stream mappingsDataFile, collisionsDataFile;
+        readonly TrackedStream mappingsDataFile, collisionsDataFile;
 
-        internal TilesetHeaderGroup(Project p, int i) : base(p, i)
+        private TilesetHeaderGroup(Project p, int i) : base(p, i)
         {
             FileParser tableFile = Project.GetFileWithLabel("tilesetLayoutTable");
             Data pointerData = tableFile.GetData("tilesetLayoutTable", Index * 2);
@@ -25,7 +25,7 @@ namespace LynnaLib
                 if (headerData == null)
                     throw new Exception("Expected tileset header group " + Index.ToString("X") + " to reference tileset header data (m_TilesetHeader)");
 
-                Stream dataFile = headerData.ReferencedData;
+                TrackedStream dataFile = headerData.ReferencedData;
                 dataFile.Position = 0;
                 if (headerData.DestAddress == Project.Eval("w3TileMappingIndices"))
                 {
@@ -47,6 +47,11 @@ namespace LynnaLib
                 else
                     next = false;
             }
+        }
+
+        static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+        {
+            return new TilesetHeaderGroup(p, index);
         }
 
         public byte GetMappingsData(int i)

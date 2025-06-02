@@ -19,10 +19,8 @@ namespace LynnaLib
         Bitmap[] tileImagesCache = new Bitmap[256];
         bool[] tileImagesDrawn = new bool[256];
 
-        EventWrapper<ReloadableStream> gfxStreamEventWrapper
-            = new EventWrapper<ReloadableStream>();
-        EventWrapper<PaletteHeaderGroup> paletteEventWrapper
-            = new EventWrapper<PaletteHeaderGroup>();
+        EventWrapper<IStream> gfxStreamEventWrapper = new EventWrapper<IStream>();
+        EventWrapper<PaletteHeaderGroup> paletteEventWrapper = new EventWrapper<PaletteHeaderGroup>();
 
         // TODO: This class is not fully undo-proofed. It works on the hack-base branch with the
         // expanded tilesets patch which simplifies things.
@@ -98,7 +96,8 @@ namespace LynnaLib
         public IntValueReferenceWrapper DungeonIndex { get; protected set; }
         public IntValueReferenceWrapper CollisionType { get; protected set; }
 
-        public Stream GfxFileStream { get; protected set; }
+        // TODO: Tracking
+        public IStream GfxFileStream { get; protected set; }
 
         // End of properties that subclass must set in constructor
 
@@ -144,7 +143,7 @@ namespace LynnaLib
                 Project.GetIndexedDataType<PaletteHeaderGroup>(0xf);
             graphicsState.AddPaletteHeaderGroup(globalPaletteHeaderGroup, PaletteGroupType.Common);
 
-            gfxStreamEventWrapper.Bind<EventArgs>("ExternallyModifiedEvent", (o, a) =>
+            gfxStreamEventWrapper.Bind<StreamModifiedEventArgs>("ModifiedEvent", (o, a) =>
             {
                 LoadAllGfxData();
                 InvalidateAllTiles();
@@ -450,38 +449,10 @@ namespace LynnaLib
         }
 
         /// <summary>
-        /// Replace the graphics with the data from the source.
-        /// TODO: Write change to file
+        /// Replace the graphics with the data from the source. For real tilesets, this causes the
+        /// PNG file itself to be modified.
         /// </summary>
-        public void LoadGraphics(Tileset source)
-        {
-            if (GfxFileStream != source.GfxFileStream)
-            {
-                Stream origStream = GfxFileStream;
-                Stream newStream = source.GfxFileStream;
-
-                if (this is RealTileset) // Only real tilesets matter to the undo system
-                {
-                    Project.UndoState.OnRewind("Load tileset graphics", () =>
-                    { // On undo
-                        GfxFileStream = origStream;
-                        LoadAllGfxData();
-                        InvalidateAllTiles();
-                    }, (isRedo) => // On redo / right now
-                    {
-                        GfxFileStream = newStream;
-                        LoadAllGfxData();
-                        InvalidateAllTiles();
-                    });
-                }
-                else
-                {
-                    GfxFileStream = newStream;
-                    LoadAllGfxData();
-                    InvalidateAllTiles();
-                }
-            }
-        }
+        public abstract void LoadGraphics(Tileset source);
 
         /// <summary>
         /// Replace the collision data with the data from the source
@@ -567,7 +538,7 @@ namespace LynnaLib
                 GfxFileStream.Seek(0, SeekOrigin.Begin);
                 GfxFileStream.Read(gfx, 0, 0x1000);
                 graphicsState.AddRawVram(1, 0x800, gfx);
-                gfxStreamEventWrapper.ReplaceEventSource(GfxFileStream as ReloadableStream);
+                gfxStreamEventWrapper.ReplaceEventSource(GfxFileStream);
             }
             else
             {

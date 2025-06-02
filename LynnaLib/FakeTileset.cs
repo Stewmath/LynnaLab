@@ -76,6 +76,16 @@ public class FakeTileset : Tileset
         tileCollisions[index] = val;
     }
 
+    public override void LoadGraphics(Tileset source)
+    {
+        if (GfxFileStream != source.GfxFileStream)
+        {
+            GfxFileStream = source.GfxFileStream;
+
+            LoadAllGfxData();
+            InvalidateAllTiles();
+        }
+    }
 
     // ================================================================================
     // Private methods

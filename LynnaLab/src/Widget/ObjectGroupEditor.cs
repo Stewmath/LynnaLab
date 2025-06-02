@@ -176,7 +176,7 @@ public class ObjectGroupEditor : Frame
         ImGui.EndChild();
 
         if (SelectedObject != null)
-            ImGuiLL.RenderValueReferenceGroup(SelectedObject, null, Workspace.ShowDocumentation);
+            ImGuiLL.RenderValueReferenceGroup(SelectedObject.ValueReferenceGroup, null, Workspace.ShowDocumentation);
 
         if (groupToDelete != null)
         {

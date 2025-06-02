@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Numerics;
 
 using PixelFormats = SixLabors.ImageSharp.PixelFormats;
@@ -57,6 +59,26 @@ namespace LynnaLib
             c.b = (int)(b * 255);
             c.a = (int)(a * 255);
             return c;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Color c && this == c;
+        }
+
+        public override int GetHashCode()
+        {
+            return r.GetHashCode() * 3 + b.GetHashCode() * 5 + g.GetHashCode() * 7 + a.GetHashCode();
+        }
+
+        public static bool operator==(Color c1, Color c2)
+        {
+            return c1.r == c2.r && c1.g == c2.g && c1.b == c2.b && c1.a == c2.a;
+        }
+
+        public static bool operator!=(Color c1, Color c2)
+        {
+            return !(c1 == c2);
         }
 
         public override string ToString()

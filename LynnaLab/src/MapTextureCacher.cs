@@ -73,38 +73,28 @@ public class MapTextureCacher : IDisposeNotifier
 
         if (Map is Dungeon dungeon)
         {
-            EventHandler<DungeonRoomChangedEventArgs> roomChangedHandler = (_, args) =>
+            EventHandler<DungeonChangedEventArgs> changedHandler = (_, args) =>
             {
-                if (args.all)
-                {
-                    Redraw();
-                }
-                else if (args.floor == Floor)
-                {
-                    DrawTile(args.x, args.y);
-                }
-            };
-            EventHandler<EventArgs> floorsChangedHandler = (_, args) =>
-            {
-                // Added or removed a floor: Just invalidate all floors to keep things simple. Also
-                // must check whether the floor in question was deleted.
-                if (Floor >= dungeon.NumFloors)
-                {
+                if (args.FloorsChanged && Floor >= dungeon.NumFloors)
                     Dispose();
-                }
                 else
                 {
-                    Redraw();
+                    if (args.FloorsChanged || args.AllRoomsChanged)
+                    {
+                        Redraw();
+                    }
+                    else if (args.RoomPosValid && args.RoomPos.floor == Floor)
+                    {
+                        DrawTile(args.RoomPos.x, args.RoomPos.y);
+                    }
                 }
             };
 
-            dungeon.RoomChangedEvent += roomChangedHandler;
-            dungeon.FloorsChangedEvent += floorsChangedHandler;
+            dungeon.ChangedEvent += changedHandler;
 
             texture.DisposedEvent += (_, _) =>
             {
-                dungeon.RoomChangedEvent -= roomChangedHandler;
-                dungeon.FloorsChangedEvent -= floorsChangedHandler;
+                dungeon.ChangedEvent -= changedHandler;
             };
         }
 

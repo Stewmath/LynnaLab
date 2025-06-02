@@ -1,367 +1,220 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-
-using Util;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace LynnaLib
 {
-    public class Project : Undoable
+    /// <summary>
+    /// Holds project state that must be tracked for undo/redo. (The fields in here used to be
+    /// directly in the Project class, but now it contains an instance of this.)
+    /// </summary>
+    class ProjectStateHolder : TrackedProjectData
+    {
+        public ProjectStateHolder(Project p, Game game, ProjectConfig projectConfig)
+            : base(p, "Project State") // ID is unique, there can only be one of this
+        {
+            this.State = new()
+            {
+                game = game,
+                projectConfig = projectConfig,
+                labelDictionary = new(),
+                definesDictionary = new(),
+            };
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private ProjectStateHolder(Project p, string id, TransactionState state)
+            : base(p, id)
+        {
+            this.State = (ProjectState)state;
+
+            if (State.labelDictionary == null || State.definesDictionary == null)
+                throw new DeserializationException();
+
+            if (!Enum.IsDefined(typeof(Game), State.game))
+                throw new DeserializationException($"Invalid game specified: {State.game}");
+        }
+
+        public ProjectState State { get; private set; }
+
+        /// <summary>
+        /// Actual fields that are tracked are in here.
+        /// </summary>
+        public class ProjectState : TransactionState
+        {
+            // The game being edited
+            public required Game game;
+
+            // Project config from config.yaml
+            public required ProjectConfig projectConfig;
+
+            // Maps label to file which contains it
+            public required Dictionary<string, InstanceResolver<FileParser>> labelDictionary;
+
+            // Dictionary of .DEFINE's
+            [JsonRequired]
+            public required Dictionary<string, string> definesDictionary;
+
+        }
+
+        // ================================================================================
+        // TrackedProjectData interface functions
+        // ================================================================================
+
+        public override TransactionState GetState()
+        {
+            return State;
+        }
+
+        public override void SetState(TransactionState s)
+        {
+            State = (ProjectState)s;
+        }
+
+        public override void InvokeUndoEvents(TransactionState prevState)
+        {
+            Project.MarkModified();
+        }
+    }
+
+    /// <summary>
+    /// The Project class is the gateway to accessing everything in an oracles-disasm project.
+    /// </summary>
+    public class Project
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(
                 System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
-        log4net.Appender.RollingFileAppender logAppender;
 
         // ================================================================================
         // Variables
         // ================================================================================
 
-        public readonly ConstantsMapping UniqueGfxMapping;
-        public readonly ConstantsMapping MainGfxMapping;
-        public readonly ConstantsMapping PaletteHeaderMapping;
-        public readonly ConstantsMapping MusicMapping;
-        public readonly ConstantsMapping SourceTransitionMapping;
-        public readonly ConstantsMapping DestTransitionMapping;
-        public readonly ConstantsMapping InteractionMapping;
-        public readonly ConstantsMapping EnemyMapping;
-        public readonly ConstantsMapping PartMapping;
-        public readonly ConstantsMapping ItemMapping;
-        public readonly ConstantsMapping SeasonMapping;
-        public readonly ConstantsMapping SpecialObjectMapping;
-        public readonly ConstantsMapping ItemDropMapping;
-        public readonly ConstantsMapping TreasureMapping;
-        public readonly ConstantsMapping TreasureSpawnModeMapping;
-        public readonly ConstantsMapping TreasureGrabModeMapping;
-        public readonly ConstantsMapping TreasureObjectMapping;
+        ProjectStateHolder stateHolder;
 
-        readonly string baseDirectory;
-
-
-        /// <summary>
-        /// Project state fields that are "undoable". Everything outside of here is not affected by undo/redo.
-        /// That being said there is a lot more state that is kept track of in other classes
-        /// (FileComponent, FileParser, etc).
-        /// </summary>
-        class State : TransactionState
-        {
-            // Maps label to file which contains it
-            public Dictionary<string, FileParser> labelDictionary = new Dictionary<string, FileParser>();
-            // Dictionary of .DEFINE's
-            public Dictionary<string, string> definesDictionary = new Dictionary<string, string>();
-
-            public TransactionState Copy()
-            {
-                State s = new State();
-                s.labelDictionary = new Dictionary<string, FileParser>(labelDictionary);
-                s.definesDictionary = new Dictionary<string, string>(definesDictionary);
-                return s;
-            }
-
-            public bool Compare(TransactionState o)
-            {
-                if (!(o is State p))
-                    return false;
-                return labelDictionary.SequenceEqual(p.labelDictionary)
-                    && definesDictionary.SequenceEqual(p.definesDictionary);
-            }
-        }
-
-        State state = new State();
-
-        UndoState undoState = new UndoState();
-
-        // string -> FileParser
-        Dictionary<string, FileParser> fileParserDictionary = new Dictionary<string, FileParser>();
-        // string -> MemoryFileStream (binary file)
-        Dictionary<string, MemoryFileStream> binaryFileDictionary = new Dictionary<string, MemoryFileStream>();
-        // string -> GfxStream
-        Dictionary<string, PngGfxStream> pngGfxStreamDictionary = new Dictionary<string, PngGfxStream>();
-
+        // --- Don't need synchronization for these ---
         Dictionary<Tuple<int, Season>, RealTileset> tilesetCache = new();
         Dictionary<int, bool> tilesetSeasonalCache = new Dictionary<int, bool>();
-        Dictionary<int, Dungeon> dungeonCache = new Dictionary<int, Dungeon>();
-        Dictionary<Tuple<int, Season>, WorldMap> worldMapCache = new();
 
-
-        // Data structures which should be linked to a particular project
-        Dictionary<string, ProjectDataType> dataStructDictionary = new Dictionary<string, ProjectDataType>();
-        Dictionary<string, ObjectGroup> objectGroupDictionary = new Dictionary<string, ObjectGroup>();
-
-        readonly int numTilesets;
-
+        int numTilesets;
         // See "GetStandardSpritePalettes"
         Color[][] _standardSpritePalettes;
 
-        ProjectConfig config;
+        // --- Only valid server-side ---
+        readonly string baseDirectory;
+        log4net.Appender.RollingFileAppender logAppender;
 
-        // ================================================================================
-        // Constructors
-        // ================================================================================
 
-        public Project(string d, string gameToLoad, ProjectConfig config)
-        {
-            GameString = gameToLoad;
-            baseDirectory = Path.GetFullPath(d);
-            if (!baseDirectory.EndsWith("/"))
-                baseDirectory += "/";
-            this.config = config;
+        // --- TODO: Figure out how to handle these over the network ---
+        UndoState undoState;
 
-            // Write logs to disassembly folder at LynnaLab/Logs/
-            var configDirectory = baseDirectory + "LynnaLab/";
-            var logDirectory = configDirectory + "Logs/";
-            System.IO.Directory.CreateDirectory(logDirectory);
 
-            logAppender = new log4net.Appender.RollingFileAppender();
-            logAppender.AppendToFile = true;
-            logAppender.Layout = new log4net.Layout.PatternLayout(
-                "%date{ABSOLUTE} [%logger] %level - %message%newline%exception");
-            logAppender.File = logDirectory + "Log.txt";
-            logAppender.Threshold = log4net.Core.Level.All;
-            logAppender.MaxFileSize = 2 * 1024 * 1024;
-            logAppender.MaxSizeRollBackups = 3;
-            logAppender.RollingStyle = log4net.Appender.RollingFileAppender.RollingMode.Composite;
-            logAppender.ActivateOptions();
-            LogHelper.AddAppenderToRootLogger(logAppender);
-
-            log.Info("Opening project at \"" + baseDirectory + "\".");
-
-            // Before parsing anything, create the "ROM_AGES" or "ROM_SEASONS" definition for ifdefs
-            // to work
-            DefinesDictionary.Add("ROM_" + GameString.ToUpper(), "");
-
-            // And other things from "version.s" (which LynnaLib can't parse right now). Most of
-            // these aren't really important, but I've been known to use the bugfix flags in data
-            // files, so LynnaLab should know about them.
-            DefinesDictionary.Add("REGION_US", "");
-            DefinesDictionary.Add("ENABLE_US_BUGFIXES", "");
-
-            // Hack-base only
-            if (Config.ExpandedTilesets)
-            {
-                DefinesDictionary.Add("ENABLE_EU_BUGFIXES", "");
-                DefinesDictionary.Add("ENABLE_BUGFIXES", "");
-                DefinesDictionary.Add("AGES_ENGINE", "");
-            }
-
-            // version.s contains some important defines that should be visible everywhere
-            GetFileParser("constants/" + GameString + "/version.s");
-
-            // Parse everything in constants/
-            LoadFilesRecursively("constants/");
-
-            // Must load this before constants mapping initialization
-            GetFileParser("data/" + GameString + "/paletteData.s");
-
-            // Initialize constantsMappings
-            UniqueGfxMapping = new ConstantsMapping(
-                    GetFileParser($"data/{GameString}/uniqueGfxHeaders.s"),
-                    "UNIQUE_GFXH_",
-                    alphabetical: true);
-            MainGfxMapping = new ConstantsMapping(
-                    GetFileParser($"data/{GameString}/gfxHeaders.s"),
-                    "GFXH_",
-                    alphabetical: true);
-            PaletteHeaderMapping = new ConstantsMapping(
-                    GetFileParser($"data/{GameString}/paletteHeaders.s"),
-                    "PALH_",
-                    alphabetical: true);
-            MusicMapping = new ConstantsMapping(
-                    GetFileParser("constants/common/music.s"),
-                    "MUS_",
-                    alphabetical: true);
-            SourceTransitionMapping = new ConstantsMapping(
-                    GetFileParser("constants/common/transitions.s"),
-                    "TRANSITION_SRC_");
-            DestTransitionMapping = new ConstantsMapping(
-                    GetFileParser("constants/common/transitions.s"),
-                    "TRANSITION_DEST_");
-            InteractionMapping = new ConstantsMapping(
-                    this,
-                    new FileParser[] {
-                        GetFileParser("constants/common/interactions.s"),
-                        GetFileParser($"constants/{GameString}/interactions.s"),
-                    },
-                    "INTERAC_",
-                    alphabetical: true);
-            EnemyMapping = new ConstantsMapping(
-                    this,
-                    new FileParser[] {
-                        GetFileParser("constants/common/enemies.s"),
-                        GetFileParser($"constants/{GameString}/enemies.s"),
-                    },
-                    "ENEMY_",
-                    alphabetical: true);
-            PartMapping = new ConstantsMapping(
-                    this,
-                    new FileParser[] {
-                        GetFileParser("constants/common/parts.s"),
-                        GetFileParser($"constants/{GameString}/parts.s"),
-                    },
-                    "PART_",
-                    alphabetical: true);
-            ItemMapping = new ConstantsMapping(
-                    GetFileParser("constants/common/items.s"),
-                    "ITEM_",
-                    alphabetical: true);
-            SeasonMapping = new ConstantsMapping(
-                    GetFileParser("constants/seasons/seasons.s"),
-                    "SEASON_");
-            SpecialObjectMapping = new ConstantsMapping(
-                    GetFileParser("constants/common/specialObjects.s"),
-                    "SPECIALOBJECT_");
-            ItemDropMapping = new ConstantsMapping(
-                    GetFileParser("constants/common/itemDrops.s"),
-                    "ITEM_DROP_");
-            TreasureMapping = new ConstantsMapping(
-                    GetFileParser("constants/common/treasure.s"),
-                    "TREASURE_",
-                    maxValue: 256,
-                    alphabetical: true);
-            TreasureSpawnModeMapping = new ConstantsMapping(
-                    GetFileParser("constants/common/treasureSpawnModes.s"),
-                    "TREASURE_SPAWN_MODE_");
-            TreasureGrabModeMapping = new ConstantsMapping(
-                    GetFileParser("constants/common/treasureSpawnModes.s"),
-                    "TREASURE_GRAB_MODE_");
-
-            // Parse everything in data/
-            // A few files need to be loaded before others through
-            if (!Config.ExpandedTilesets)
-            {
-                GetFileParser("data/" + GameString + "/tilesetMappings.s");
-                GetFileParser("data/" + GameString + "/tilesetCollisions.s");
-                GetFileParser("data/" + GameString + "/tilesetHeaders.s");
-            }
-            LoadFilesRecursively("data/");
-
-            // Parse wram.s
-            GetFileParser("include/wram.s");
-
-            // Parse everything in objects/
-            LoadFilesRecursively("objects/" + GameString + "/");
-
-            // Load all Treasure Objects. This is necessary because they contain definitions which
-            // are used elsewhere. Can't rely on "lazy loading".
-            // Ideally this would happen automatically in the FileParser, but this is simpler for
-            // now.
-            TreasureObjectMapping = new ConstantsMapping(this, new string[] { "TREASURE_OBJECT_" });
-            for (int t = 0; t < NumTreasures; t++)
-            {
-                TreasureGroup g = GetIndexedDataType<TreasureGroup>(t);
-                for (int s = 0; s < g.NumTreasureObjectSubids; s++)
-                    g.GetTreasureObject(s);
-            }
-
-            numTilesets = determineNumTilesets();
-
-            LinkBitmap = LoadLinkBitmap();
-
-            // Don't allow undos that go before our initialization!
-            // At the time of writing, only ConstantsMappings actually register undoable events in
-            // this constructor.
-            UndoState.ClearHistory();
-        }
-
-        /// <summary>
-        /// Getting the number of tilesets should not be a complicated calculation. However, I
-        /// neglected to add extra tilesets to the Seasons hack-base branch at first, so this must
-        /// detect whether they've been added.
-        /// </summary>
-        int determineNumTilesets()
-        {
-            if (!Config.ExpandedTilesets)
-            {
-                if (Game == Game.Ages)
-                    return 0x67;
-                else
-                    return 0x63;
-            }
-
-            if (Game == Game.Ages)
-                return 0x80;
-
-            // Detect number of Seasons tileset
-            Data data = GetData("tilesetData");
-            Data end = GetData("tileset00Seasons");
-            for (int t = 0; t < 0x81; t++)
-            {
-                if (data == end)
-                    return t;
-                data = data.GetDataAtOffset(8);
-            }
-
-            // Something went wrong
-            throw new ProjectErrorException("Couldn't calculate # of tilesets");
-        }
-
-        void LoadFilesRecursively(string directory)
-        {
-            // LynnaLib can't parse these yet, and generally shouldn't need to
-            var blacklist = new string[]
-            {
-                "macros.s",
-                "version.s",
-            };
-
-            if (!directory.EndsWith("/"))
-                directory += "/";
-            foreach (string f in Helper.GetSortedFiles(baseDirectory + directory))
-            {
-                if (f.Substring(f.LastIndexOf('.')) == ".s")
-                {
-                    string basename = f.Substring(f.LastIndexOf('/') + 1);
-                    if (blacklist.Contains(basename))
-                        continue;
-
-                    string filename = directory + basename;
-                    GetFileParser(filename);
-                }
-            }
-
-            // Ignore folders that belong to the other game
-            string ignoreDirectory = (GameString == "ages" ? "seasons" : "ages");
-            foreach (string d in Helper.GetSortedDirectories(baseDirectory + directory))
-            {
-                if (d == ignoreDirectory)
-                    continue;
-                LoadFilesRecursively(directory + d);
-            }
-        }
+        // All ProjectDataType instances will be tracked in this dictionary. This includes instances of:
+        // - WorldMap
+        // - Dungeon
+        // - ObjectGroup
+        // - FileComponent / Data
+        // - And more.
+        Dictionary<string, ProjectDataType> dataStructDictionary = new();
 
         // ================================================================================
         // Properties
         // ================================================================================
 
-        public Dictionary<string, FileParser> LabelDictionary { get { return state.labelDictionary; } }
-        public Dictionary<string, string> DefinesDictionary { get { return state.definesDictionary; } }
-
         public bool Modified { get; private set; }
 
-        public ProjectConfig Config
+        public Game Game
         {
-            get
-            {
-                return config;
-            }
-        }
-
-        public string BaseDirectory
-        {
-            get { return baseDirectory; }
+            get { return stateHolder.State.game; }
         }
 
         // The string to use for navigating game-specific folders in the disassembly
         public string GameString
         {
-            get; private set;
+            get { return Game == Game.Seasons ? "seasons" : "ages"; }
         }
 
-        public Game Game
+        public ConstantsMapping UniqueGfxMapping
         {
-            get { return GameString == "ages" ? Game.Ages : Game.Seasons; }
+            get { return GetConstantsMapping("UniqueGfxMapping"); }
+        }
+        public ConstantsMapping MainGfxMapping
+        {
+            get { return GetConstantsMapping("MainGfxMapping"); }
+        }
+        public ConstantsMapping PaletteHeaderMapping
+        {
+            get { return GetConstantsMapping("PaletteHeaderMapping"); }
+        }
+        public ConstantsMapping MusicMapping
+        {
+            get { return GetConstantsMapping("MusicMapping"); }
+        }
+        public ConstantsMapping SourceTransitionMapping
+        {
+            get { return GetConstantsMapping("SourceTransitionMapping"); }
+        }
+        public ConstantsMapping DestTransitionMapping
+        {
+            get { return GetConstantsMapping("DestTransitionMapping"); }
+        }
+        public ConstantsMapping InteractionMapping
+        {
+            get { return GetConstantsMapping("InteractionMapping"); }
+        }
+        public ConstantsMapping EnemyMapping
+        {
+            get { return GetConstantsMapping("EnemyMapping"); }
+        }
+        public ConstantsMapping PartMapping
+        {
+            get { return GetConstantsMapping("PartMapping"); }
+        }
+        public ConstantsMapping ItemMapping
+        {
+            get { return GetConstantsMapping("ItemMapping"); }
+        }
+        public ConstantsMapping SeasonMapping
+        {
+            get { return GetConstantsMapping("SeasonMapping"); }
+        }
+        public ConstantsMapping SpecialObjectMapping
+        {
+            get { return GetConstantsMapping("SpecialObjectMapping"); }
+        }
+        public ConstantsMapping ItemDropMapping
+        {
+            get { return GetConstantsMapping("ItemDropMapping"); }
+        }
+        public ConstantsMapping TreasureMapping
+        {
+            get { return GetConstantsMapping("TreasureMapping"); }
+        }
+        public ConstantsMapping TreasureSpawnModeMapping
+        {
+            get { return GetConstantsMapping("TreasureSpawnModeMapping"); }
+        }
+        public ConstantsMapping TreasureGrabModeMapping
+        {
+            get { return GetConstantsMapping("TreasureGrabModeMapping"); }
+        }
+        public ConstantsMapping TreasureObjectMapping
+        {
+            get { return GetConstantsMapping("TreasureObjectMapping"); }
+        }
+
+
+        // TODO: Make these private
+        public Dictionary<string, InstanceResolver<FileParser>> LabelDictionary { get { return stateHolder.State.labelDictionary; } }
+        public Dictionary<string, string> DefinesDictionary { get { return stateHolder.State.definesDictionary; } }
+
+        public ProjectConfig Config { get { return stateHolder.State.projectConfig; } }
+
+        public string BaseDirectory
+        {
+            get { return baseDirectory; }
         }
 
         public UndoState UndoState { get { return undoState; } }
@@ -437,49 +290,535 @@ namespace LynnaLib
 
         public Bitmap LinkBitmap { get; private set; }
 
-        public Action<Func<bool>> LazyInvoke { get; set; }
+        /// <summary>
+        /// Whether this project is created from a network download, rather than reading from the filesystem.
+        /// </summary>
+        public bool IsClient { get; }
 
+        internal bool IsInConstructor { get; }
+
+        // Private properties
+
+        JsonSerializerOptions SerializerOptions { get; }
+
+
+        // ================================================================================
+        // Constructors
+        // ================================================================================
+
+        private Project(string baseDirectory)
+        {
+            IsInConstructor = true;
+
+            if (baseDirectory == null)
+                this.baseDirectory = null;
+            else
+            {
+                this.baseDirectory = Path.GetFullPath(baseDirectory);
+                if (!this.baseDirectory.EndsWith("/"))
+                    this.baseDirectory += "/";
+            }
+
+            SerializerOptions = new()
+            {
+                IncludeFields = true,
+                //IgnoreReadOnlyFields = true,
+                //IgnoreReadOnlyProperties = true,
+                //RespectRequiredConstructorParameters = true,
+                UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+                DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+            };
+
+            SerializerOptions.Converters.Add(new InstanceResolverConverter(this));
+        }
+
+        /// <summary>
+        /// Main constructor. When considering networking, this only works on the server side, where
+        /// the game data actually is.
+        /// </summary>
+        public Project(string d, Game game, ProjectConfig config)
+            : this(d)
+        {
+            IsClient = false;
+
+            undoState = new(this, NetworkID.Server);
+            undoState.BeginTransaction("Initial project load", merge: false, disallowUndo: true);
+
+            this.stateHolder = new(this, game, config);
+
+            // Write logs to disassembly folder at LynnaLab/Logs/
+            var configDirectory = baseDirectory + "LynnaLab/";
+            var logDirectory = configDirectory + "Logs/";
+            System.IO.Directory.CreateDirectory(logDirectory);
+
+            logAppender = new log4net.Appender.RollingFileAppender();
+            logAppender.AppendToFile = true;
+            logAppender.Layout = new log4net.Layout.PatternLayout(
+                "%date{ABSOLUTE} [%logger] %level - %message%newline%exception");
+            logAppender.File = logDirectory + "Log.txt";
+            logAppender.Threshold = log4net.Core.Level.All;
+            logAppender.MaxFileSize = 2 * 1024 * 1024;
+            logAppender.MaxSizeRollBackups = 3;
+            logAppender.RollingStyle = log4net.Appender.RollingFileAppender.RollingMode.Composite;
+            logAppender.ActivateOptions();
+            LogHelper.AddAppenderToRootLogger(logAppender);
+
+            log.Info("Opening project at \"" + baseDirectory + "\".");
+
+            // At this step, all files that are required are loaded from the disk. (FileParsers
+            // still need to be loaded, but they will be based on the binary data streams loaded
+            // here.)
+            foreach (string dir in new string[] {
+                    "audio", "code", "constants", "data", "gfx", "gfx_compressible",
+                    "include", "objects", "rooms", "tileset_layouts_expanded"})
+            {
+                LoadBinaryFilesRecursively(dir, new string[] { ".s", ".bin", ".png", ".properties" });
+            }
+
+            // Below are some defines that normally come from "version.s" but which LynnaLab fails
+            // to parse due to it using some newer wla-dx syntax that isn't supported here yet.
+
+            // Before parsing anything, create the "ROM_AGES" or "ROM_SEASONS" definition for ifdefs
+            // to work
+            DefinesDictionary.Add("ROM_" + GameString.ToUpper(), "");
+
+            // And other things from "version.s" (which LynnaLib can't parse right now). Most of
+            // these aren't really important, but I've been known to use the bugfix flags in data
+            // files, so LynnaLab should know about them.
+            DefinesDictionary.Add("REGION_US", "");
+            DefinesDictionary.Add("ENABLE_US_BUGFIXES", "");
+
+            // Hack-base only
+            if (Config.ExpandedTilesets)
+            {
+                DefinesDictionary.Add("ENABLE_EU_BUGFIXES", "");
+                DefinesDictionary.Add("ENABLE_BUGFIXES", "");
+                DefinesDictionary.Add("AGES_ENGINE", "");
+            }
+
+            // Parse everything in constants/
+            LoadFileParsersRecursively("constants/");
+
+            // Must load this before constants mapping initialization
+            LoadFileParser("data/" + GameString + "/paletteData.s");
+
+            // Initialize constantsMappings
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser($"data/{GameString}/uniqueGfxHeaders.s"),
+                    "UniqueGfxMapping",
+                    "UNIQUE_GFXH_",
+                    alphabetical: true));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser($"data/{GameString}/gfxHeaders.s"),
+                    "MainGfxMapping",
+                    "GFXH_",
+                    alphabetical: true));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser($"data/{GameString}/paletteHeaders.s"),
+                    "PaletteHeaderMapping",
+                    "PALH_",
+                    alphabetical: true));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser("constants/common/music.s"),
+                    "MusicMapping",
+                    "MUS_",
+                    alphabetical: true));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser("constants/common/transitions.s"),
+                    "SourceTransitionMapping",
+                    "TRANSITION_SRC_"));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser("constants/common/transitions.s"),
+                    "DestTransitionMapping",
+                    "TRANSITION_DEST_"));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    this,
+                    "InteractionMapping",
+                    new FileParser[] {
+                        LoadFileParser("constants/common/interactions.s"),
+                        LoadFileParser($"constants/{GameString}/interactions.s"),
+                    },
+                    "INTERAC_",
+                    alphabetical: true));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    this,
+                    "EnemyMapping",
+                    new FileParser[] {
+                        LoadFileParser("constants/common/enemies.s"),
+                        LoadFileParser($"constants/{GameString}/enemies.s"),
+                    },
+                    "ENEMY_",
+                    alphabetical: true));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    this,
+                    "PartMapping",
+                    new FileParser[] {
+                        LoadFileParser("constants/common/parts.s"),
+                        LoadFileParser($"constants/{GameString}/parts.s"),
+                    },
+                    "PART_",
+                    alphabetical: true));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser("constants/common/items.s"),
+                    "ItemMapping",
+                    "ITEM_",
+                    alphabetical: true));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser("constants/common/specialObjects.s"),
+                    "SpecialObjectMapping",
+                    "SPECIALOBJECT_"));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser("constants/common/itemDrops.s"),
+                    "ItemDropMapping",
+                    "ITEM_DROP_"));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser("constants/common/treasure.s"),
+                    "TreasureMapping",
+                    "TREASURE_",
+                    maxValue: 256,
+                    alphabetical: true));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser("constants/common/treasureSpawnModes.s"),
+                    "TreasureSpawnModeMapping",
+                    "TREASURE_SPAWN_MODE_"));
+            AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser("constants/common/treasureSpawnModes.s"),
+                    "TreasureGrabModeMapping",
+                    "TREASURE_GRAB_MODE_"));
+
+            if (Game == Game.Seasons)
+            {
+                AddConstantsMapping(
+                new ConstantsMapping(
+                    LoadFileParser("constants/seasons/seasons.s"),
+                    "SeasonMapping",
+                    "SEASON_"));
+            }
+
+            // Parse everything in data/
+            // A few files need to be loaded before others through
+            if (!Config.ExpandedTilesets)
+            {
+                LoadFileParser("data/" + GameString + "/tilesetMappings.s");
+                LoadFileParser("data/" + GameString + "/tilesetCollisions.s");
+                LoadFileParser("data/" + GameString + "/tilesetHeaders.s");
+            }
+            LoadFileParsersRecursively("data/");
+
+            // Parse wram.s
+            LoadFileParser("include/wram.s");
+
+            // Parse everything in objects/
+            LoadFileParsersRecursively("objects/" + GameString + "/");
+
+            // Load all Treasure Objects. This is necessary because they contain definitions which
+            // are used elsewhere. Can't rely on "lazy loading".
+            // Ideally this would happen automatically in the FileParser, but this is simpler for
+            // now.
+            AddConstantsMapping(new ConstantsMapping(
+                                    this,
+                                    "TreasureObjectMapping",
+                                    new string[] { "TREASURE_OBJECT_" }));
+
+            for (int t = 0; t < NumTreasures; t++)
+            {
+                TreasureGroup g = GetIndexedDataType<TreasureGroup>(t);
+                for (int s = 0; s < g.NumTreasureObjectSubids; s++)
+                    g.GetTreasureObject(s);
+            }
+
+            numTilesets = determineNumTilesets();
+
+            LinkBitmap = LoadLinkBitmap();
+
+            // Preload some data. Generally we want most "TrackedProjectData" instances to be loaded
+            // in the Project constructor, because otherwise it may appear to the undo system as if
+            // we are "creating" new objects (IE. new rooms) after initialization.
+
+            for (int g=0; g<NumGroups; g++)
+            {
+                ForEachSeason(g, (s) => GetWorldMap(g, s));
+            }
+            for (int dungeon=0; dungeon<NumDungeons; dungeon++)
+            {
+                GetDungeon(dungeon);
+            }
+            for (int r=0; r<NumRooms; r++)
+            {
+                Room room = GetIndexedDataType<Room>(r);
+                room.GetObjectGroup();
+                room.GetWarpGroup();
+            }
+
+            undoState.EndTransaction();
+            log.Info("Finished loading project.");
+            IsInConstructor = false;
+        }
+
+        /// <summary>
+        /// Creates a blank project which should be hooked up to a server to receive data.
+        /// </summary>
+        public Project()
+            : this(null)
+        {
+            IsClient = true;
+
+            undoState = new(this, NetworkID.Unassigned); // ID will be assigned later
+
+            IsInConstructor = false;
+
+            // After this, wait for data from the network.
+        }
+
+        /// <summary>
+        /// Called after all data is finished loading. For client instances, this may be a fair bit
+        /// after the constructor is finished.
+        /// TODO: delete this
+        /// </summary>
+        public void FinalizeLoad()
+        {
+            numTilesets = determineNumTilesets();
+
+            LinkBitmap = LoadLinkBitmap();
+        }
+
+        /// <summary>
+        /// Getting the number of tilesets should not be a complicated calculation. However, I
+        /// neglected to add extra tilesets to the Seasons hack-base branch at first, so this must
+        /// detect whether they've been added.
+        /// </summary>
+        int determineNumTilesets()
+        {
+            if (!Config.ExpandedTilesets)
+            {
+                if (Game == Game.Ages)
+                    return 0x67;
+                else
+                    return 0x63;
+            }
+
+            if (Game == Game.Ages)
+                return 0x80;
+
+            // Detect number of Seasons tileset
+            Data data = GetData("tilesetData");
+            Data end = GetData("tileset00Seasons");
+            for (int t = 0; t < 0x81; t++)
+            {
+                if (data == end)
+                    return t;
+                data = data.GetDataAtOffset(8);
+            }
+
+            // Something went wrong
+            throw new ProjectErrorException("Couldn't calculate # of tilesets");
+        }
+
+        void VisitDirectoriesRecursively(string directory, Action<string> action)
+        {
+            if (!directory.EndsWith("/"))
+                directory += "/";
+            foreach (string f in Helper.GetSortedFiles(baseDirectory + directory))
+            {
+                action(Path.GetRelativePath(baseDirectory, f));
+            }
+
+            // Ignore folders that belong to the other game
+            string ignoreDirectory = (GameString == "ages" ? "seasons" : "ages");
+            foreach (string d in Helper.GetSortedDirectories(baseDirectory + directory))
+            {
+                if (d == ignoreDirectory)
+                    continue;
+                VisitDirectoriesRecursively(directory + d, action);
+            }
+        }
+
+        /// <summary>
+        /// Load file parsers recursively. This DOES check the directories on the disk, although the
+        /// data itself should already be loaded in MemoryFileStreamss.
+        /// </summary>
+        void LoadFileParsersRecursively(string directory)
+        {
+            // LynnaLib can't parse these yet, and generally shouldn't need to
+            var blacklist = new string[]
+            {
+                "macros.s",
+                "version.s",
+            };
+
+            VisitDirectoriesRecursively(directory, (filename) =>
+            {
+                if (filename.Substring(filename.LastIndexOf('.')) == ".s")
+                {
+                    if (blacklist.Contains(Path.GetFileName(filename)))
+                        return;
+
+                    LoadFileParser(filename);
+                }
+            });
+        }
+
+        /// <summary>
+        /// Load files recursively as MemoryFileStreams.
+        /// </summary>
+        void LoadBinaryFilesRecursively(string directory, IEnumerable<string> extensions)
+        {
+            VisitDirectoriesRecursively(directory, (filename) =>
+            {
+                string extension = Path.GetExtension(filename);
+                if (extensions.Contains(extension))
+                {
+                    if (extension == ".png")
+                        LoadFileStream(filename, true);
+                    else
+                        LoadFileStream(filename, false);
+                }
+            });
+        }
+
+        /// <summary>
+        /// Simply creating a ConstantsMapping will register it in the data struct dictionary, so
+        /// there's nothing to do here.
+        /// </summary>
+        void AddConstantsMapping(ConstantsMapping mapping)
+        {
+        }
 
         // ================================================================================
         // Public/internal methods
         // ================================================================================
 
-        internal FileParser GetFileParser(string filename)
+        public IEnumerable<TrackedProjectData> GetAllTrackedData()
         {
-            if (!FileExists(filename))
-                return null;
-            FileParser p;
-            if (!fileParserDictionary.TryGetValue(filename, out p))
-            {
-                p = new FileParser(this, filename);
-                fileParserDictionary[filename] = p;
-            }
-            return p;
+            return dataStructDictionary.Values.Where((a) => a is TrackedProjectData).Select((a) => (TrackedProjectData)a);
         }
 
-        public MemoryFileStream GetBinaryFile(string filename)
+        // TODO: Determine if this is needed
+        // TODO: Randomize loading order to catch bugs
+        public TrackedProjectData AddExternalData(string identifier, Type instanceType, Type stateType, string stateStr)
         {
-            filename = baseDirectory + filename;
-            MemoryFileStream stream = null;
-            if (!binaryFileDictionary.TryGetValue(filename, out stream))
+            log.Debug($"Adding external data: Type={instanceType}, ID={identifier}, StateType={stateType}");
+
+            if (identifier == "Project State")
+                log.Debug("Data state: " + stateStr);
+
+            TransactionState state = (TransactionState)Deserialize(stateType, stateStr);
+
+            Helper.Assert(instanceType.IsSubclassOf(typeof(TrackedProjectData)),
+                          $"AddExternalData: Invalid class: " + instanceType.Name);
+
+            try
             {
-                stream = new MemoryFileStream(this, filename);
-                binaryFileDictionary[filename] = stream;
+                var obj = (TrackedProjectData)Activator.CreateInstance(
+                    instanceType,
+                    BindingFlags.NonPublic | BindingFlags.CreateInstance | BindingFlags.Instance,
+                    null,
+                    new object[] { this, identifier, state },
+                    null
+                );
+                Helper.Assert(identifier == obj.Identifier,
+                              $"AddExternalData: Identifier mismatch ({identifier}, {obj.Identifier})");
+
+                if (obj is ProjectStateHolder h)
+                {
+                    if (stateHolder != null)
+                        throw new Exception("Tried to replace project's stateHolder?");
+                    stateHolder = h;
+                }
+                return obj;
             }
-            return stream;
+            catch (System.Reflection.TargetInvocationException)
+            {
+                throw;
+            }
         }
 
         /// <summary>
-        ///  Searches for a gfx file in all gfx directories (for the current game).
+        /// Should only call this from the project constructor, so that everything's loaded at the
+        /// beginning.
         /// </summary>
-        public Stream LoadGfx(string filename)
+        private FileParser LoadFileParser(string filename)
         {
-            PngGfxStream pngGfxStream;
-            if (pngGfxStreamDictionary.TryGetValue(filename, out pngGfxStream))
-                return pngGfxStream;
+            if (CheckHasDataType<FileParser>(filename))
+                return GetDataType<FileParser>(filename, createIfMissing: false);
+            FileParser parser = new FileParser(this, filename);
+            return parser;
+        }
 
+        /// <summary>
+        /// Load a file from the disk into a MemoryFileStream. Should only call this from the
+        /// project constructor, so that everything's loaded at the beginning.
+        /// </summary>
+        private void LoadFileStream(string filename, bool watchForFilesystemChanges)
+        {
+            if (CheckHasDataType<MemoryFileStream>(filename))
+                return;
+
+            string fullPath = Path.Combine(BaseDirectory, filename);
+            if (!Helper.IsSubPathOf(fullPath, BaseDirectory))
+                throw new Exception($"Bad file path (outside of project base directory): {filename}");
+            if (!File.Exists(fullPath))
+                throw new Exception($"File does not exist on disk: {fullPath}");
+
+            // Instantiating this adds it to the data struct dictionary
+            var stream = new MemoryFileStream(this, filename, watchForFilesystemChanges);
+        }
+
+        /// <summary>
+        /// Get a FileParser that's already been initialized.
+        /// </summary>
+        private FileParser GetFileParser(string filename)
+        {
+            if (!CheckHasDataType(typeof(FileParser), filename))
+            {
+                throw new Exception($"FileParser did not exist already: {filename}");
+            }
+            return GetDataType<FileParser>(filename, createIfMissing: false);
+        }
+
+        /// <summary>
+        /// Get a file stream that's already been loaded from the disk.
+        /// </summary>
+        public MemoryFileStream GetFileStream(string filename)
+        {
+            if (!CheckHasDataType<MemoryFileStream>(filename))
+            {
+                throw new Exception($"File stream did not exist: {filename}");
+            }
+            return GetDataType<MemoryFileStream>(filename, createIfMissing: false);
+        }
+
+        /// <summary>
+        /// Unlike with "GetFileStream", the filename passed in has no path. This searches for a gfx
+        /// file in all gfx directories (for the current game).
+        ///
+        /// Despite the directory traversal this works fine over the network, since it's checking
+        /// cached data.
+        ///
+        /// The underlying type that provides the data will either be a MemoryFileStream (.bin) or a
+        /// PngGfxStream (.png). The PNG is converted to binary in the gameboy's 2bpp format when
+        /// accessed through the IStream.
+        /// </summary>
+        public IStream GetGfxStream(string filename)
+        {
             var directories = new List<string>();
 
+            // Check if it exists in any of these directories
             directories.Add("gfx/common/");
             directories.Add("gfx_compressible/common/");
             directories.Add("gfx/" + GameString + "/");
@@ -490,32 +829,53 @@ namespace LynnaLib
                 string baseFilename = directory + filename;
                 if (FileExists(baseFilename + ".bin"))
                 {
-                    return GetBinaryFile(baseFilename + ".bin");
+                    return GetFileStream(baseFilename + ".bin");
                 }
                 else if (FileExists(baseFilename + ".png"))
                 {
-                    pngGfxStream = new PngGfxStream(BaseDirectory + baseFilename + ".png");
-                    pngGfxStreamDictionary.Add(filename, pngGfxStream);
-                    return pngGfxStream;
+                    string pngID = PngGfxStream.GetID(baseFilename);
+
+                    if (CheckHasDataType<TrackedStream>(pngID))
+                    {
+                        return GetDataType<TrackedStream>(pngID, createIfMissing: false);
+                    }
+                    else
+                    {
+                        // Creating the PngGfxStream will register as a transaction, though it's not
+                        // one that we want to allow the user to undo.
+                        UndoState.BeginTransaction($"Load PNG: {filename}", merge: false, disallowUndo: true);
+
+                        // Will add itself to data struct dictionary
+                        var retval = new PngGfxStream(this, baseFilename);
+
+                        UndoState.EndTransaction();
+
+                        return retval;
+                    }
                 }
             }
 
+            log.Warn($"GFX file not found: {filename}");
             return null;
         }
 
         public void Save()
         {
+            if (IsClient) // Nothing to do on clients - don't have filesystem access
+                return;
+
+            // Note the separate foreach loops. Ordering can be important.
             foreach (ProjectDataType data in dataStructDictionary.Values)
             {
-                data.Save();
+                if (data is FileParser p)
+                    p.Save();
             }
-            foreach (FileParser parser in fileParserDictionary.Values)
+            foreach (ProjectDataType data in dataStructDictionary.Values)
             {
-                parser.Save();
-            }
-            foreach (MemoryFileStream file in binaryFileDictionary.Values)
-            {
-                file.Flush();
+                if (data is MemoryFileStream m)
+                    m.Save();
+                if (data is PngGfxStream p)
+                    p.Save();
             }
 
             Modified = false;
@@ -528,99 +888,247 @@ namespace LynnaLib
             {
                 t.Dispose();
             }
-            foreach (var d in dungeonCache.Values)
-            {
-            }
-            foreach (var w in worldMapCache.Values)
-            {
-            }
-            foreach (var group in objectGroupDictionary.Values)
-            {
-            }
             foreach (ProjectDataType data in dataStructDictionary.Values)
             {
+                if (data is FileParser parser)
+                    parser.Close();
             }
-            foreach (FileParser parser in fileParserDictionary.Values)
+
+            if (logAppender != null) // May be null on clients
             {
-                parser.Close();
+                LogHelper.RemoveAppenderFromRootLogger(logAppender);
+                logAppender.Close();
             }
-            foreach (PngGfxStream stream in pngGfxStreamDictionary.Values)
-            {
-                stream.Close();
-            }
-            foreach (MemoryFileStream file in binaryFileDictionary.Values)
-            {
-                file.Close();
-            }
-            LogHelper.RemoveAppenderFromRootLogger(logAppender);
-            logAppender.Close();
         }
 
-        public T GetIndexedDataType<T>(int identifier) where T : ProjectIndexedDataType
+        public string GenUniqueID(Type type)
         {
-            string s = typeof(T).Name + "_" + identifier;
-            ProjectDataType o;
-            if (dataStructDictionary.TryGetValue(s, out o))
-                return o as T;
-
-            try
+            int counter = 0;
+            while (true)
             {
-                o = (ProjectIndexedDataType)Activator.CreateInstance(
-                        typeof(T),
-                        BindingFlags.NonPublic | BindingFlags.CreateInstance | BindingFlags.Instance,
-                        null,
-                        new object[] { this, identifier },
-                        null
-                        );
+                string id = $"UniqueID-{counter}";
+                if (!CheckHasDataType(type, id))
+                    return id;
+                counter++;
             }
-            // If an exception occurs during reflection, it always throws
-            // a TargetInvocationException. So we unpack that and throw the "real" exception.
-            // NOTE: Undid this for now by using "throw;" to preserve the stack
-            // trace. Unfortunately this means we lose the actual exception
-            // type. Might affect "catch"es (need to test this).
-            catch (System.Reflection.TargetInvocationException)
-            {
-                throw;
-                //throw ex.InnerException;
-            }
+        }
 
-            AddDataType(o);
+        public bool CheckHasDataType(Type t, string identifier)
+        {
+            string s = GetFullIdentifier(t, identifier);
+            return dataStructDictionary.ContainsKey(s);
+        }
 
-            return o as T;
+        public bool CheckHasDataType<T>(string identifier) where T : ProjectDataType
+        {
+            return CheckHasDataType(typeof(T), identifier);
         }
 
         /// <summary>
-        ///   Get a datatype for which only one instance exists with a given identifier. This will
-        ///   return that instance if it exists, or create it of it doesn't exist.
+        /// Should call this any time an object of type ProjectDataType is created. Then it can be
+        /// retrieved through "GetDataType()" without being recreated again. (If this is not done,
+        /// multiple instances of the supposedly same data may be created which could cause issues,
+        /// and networking will probably due to its inability to find the data in question.)
         /// </summary>
-        public T GetDataType<T>(string identifier) where T : ProjectDataType
+        internal void AddDataType(Type type, ProjectDataType data)
         {
-            string s = typeof(T).Name + "_" + identifier;
+            if (!(type == data.GetType() || type.IsAssignableFrom(data.GetType())) || type == typeof(ProjectDataType))
+                throw new Exception($"AddDataType: Invalid type: {type.FullName} (identifier: {data.Identifier})");
+
+            string s = GetFullIdentifier(type, data.Identifier);
+
+            if (dataStructDictionary.ContainsKey(s))
+                throw new Exception("Data with identifier \"" + s +
+                        "\" was attempted to be added to the project multiple times.");
+
+            log.Debug($"Adding ProjectDataType: {s}");
+
+            dataStructDictionary[s] = data;
+
+            // Register the data as being created in the next transaction - assuming it's not being
+            // created from a transaction being applied (undo/redo/network traffic).
+            if (!UndoState.IsUndoing)
+            {
+                if (data is TrackedProjectData tracked)
+                    undoState.RegisterNewData(type, tracked);
+            }
+        }
+
+        /// <summary>
+        /// Mainly called when an undo is performed. Undo system can't really handle data being
+        /// removed within a transaction, but if data was added and then undone, this gets called.
+        /// </summary>
+        internal void RemoveDataType(Type type, string identifier, bool fromUndo)
+        {
+            string s = GetFullIdentifier(type, identifier);
+            if (!dataStructDictionary.ContainsKey(s))
+                throw new Exception($"Tried to remove data \"{s}\" which didn't exist!");
+            dataStructDictionary.Remove(s);
+            if (!fromUndo)
+            {
+                Helper.Assert(!UndoState.IsUndoing, "Removing ProjectDataType in the middle of an undo?");
+                undoState.UnregisterData(type, identifier);
+            }
+        }
+
+        internal void RemoveDataType<T>(string identifier, bool fromUndo=false) where T : ProjectDataType
+        {
+            RemoveDataType(typeof(T), identifier, fromUndo);
+        }
+
+        /// <summary>
+        /// Get a datatype for which only one instance exists with a given identifier.
+        ///
+        /// If it doesn't exist already, this method will create an instance of the object, so long
+        /// as the type implements "ProjectDataInstantiator" or "IndexedProjectDataInstantiator".
+        /// Otherwise it will throw an exception.
+        ///
+        /// When considering network synchronization, there are two broad cases to consider:
+        ///
+        /// - Classes which extend TrackedProjectData: These will be transferred over the network
+        /// and created on the other side. Therefore it's not critical that they implement
+        /// instantiators - they don't need to be instantiated on the client side.
+        ///
+        /// - Everything else should implement instantiators. This is because this function MUST be
+        /// able to instantiate these objects on demand, because they will not exist on the client
+        /// side at first. Any ProjectDataType can be wrapped in an InstanceResolver, meaning that
+        /// there could be a reference to it in any state-holding class. If this method can't
+        /// instantiate the ProjectDataType, the InstanceResolver can's resolve the instance, so it
+        /// must throw an exception!
+        ///
+        /// The only real reason for this distinction is that I don't want to have to implement
+        /// state tracking for absolutely everything. Classes that don't need state tracking (those
+        /// that don't extend TrackedProjectData) are simply recreated on the other end of the
+        /// network connection.
+        /// </summary>
+        internal ProjectDataType GetDataType(Type type, string identifier, bool createIfMissing)
+        {
+            ProjectDataType instance;
+
+            // Sanity check: Any class that doesn't extend TrackedProjectData should implement an
+            // instantiator.
+            // TODO: Move this to tests
+            Debug.Assert(typeof(TrackedProjectData).IsAssignableFrom(type)
+                         || typeof(ProjectDataInstantiator).IsAssignableFrom(type)
+                         || typeof(IndexedProjectDataInstantiator).IsAssignableFrom(type),
+                         $"Type {type.FullName} failed instantiator sanity check."
+            );
+
+            // This will verify the type is ok to use
+            if (TryLookupDataType(type, identifier, out instance))
+                return instance;
+
+            if (!createIfMissing)
+                throw new Exception($"Couldn't find project data: Type: {type.Name}, ID: {identifier}");
+
+            log.Debug("Instantiating: " + GetFullIdentifier(type, identifier));
+
+            if (typeof(IndexedProjectDataInstantiator).IsAssignableFrom(type))
+            {
+                int integerID;
+                try
+                {
+                    integerID = int.Parse(identifier);
+                }
+                catch (FormatException)
+                {
+                    throw;
+                }
+                catch (OverflowException)
+                {
+                    throw;
+                }
+
+                return GetIndexedDataType(type, integerID);
+            }
+
+            if (typeof(ProjectDataInstantiator).IsAssignableFrom(type))
+            {
+                MethodInfo method = type.GetMethod(
+                    "LynnaLib.ProjectDataInstantiator.Instantiate",
+                    BindingFlags.Static | BindingFlags.NonPublic
+                );
+                if (method != null)
+                {
+                    instance = (ProjectDataType)method.Invoke(null, new object[] { this, identifier });
+                    return instance;
+                }
+                else
+                    throw new Exception($"Could not find Instantiate method for type {type.Name}.");
+            }
+            else
+                throw new Exception($"Type {type.Name} is missing an instantiator.");
+        }
+
+        internal T GetDataType<T>(string identifier, bool createIfMissing)
+            where T : ProjectDataType
+        {
+            return (T)GetDataType(typeof(T), identifier, createIfMissing);
+        }
+
+        // TODO: Make this internal
+        // TODO: useDefaultConstructor argument (or createifmissing)
+        public ProjectDataType GetIndexedDataType(Type type, int index)
+        {
+            ProjectDataType instance;
+            string identifier = index.ToString();
+
+            // This call verifies the type is ok to use
+            if (TryLookupDataType(type, identifier, out instance))
+                return instance;
+
+            // Doesn't exist, must create it.
+            if (typeof(IndexedProjectDataInstantiator).IsAssignableFrom(type))
+            {
+                MethodInfo method = type.GetMethod(
+                    "LynnaLib.IndexedProjectDataInstantiator.Instantiate",
+                    BindingFlags.Static | BindingFlags.NonPublic
+                );
+                if (method != null)
+                {
+                    instance = (ProjectDataType)method.Invoke(null, new object[] { this, index });
+                    return instance;
+                }
+                else
+                    throw new Exception($"Could not find Instantiate method for type {type.Name}.");
+            }
+            else
+                throw new Exception();
+        }
+
+        public T GetIndexedDataType<T>(int index)
+            where T : ProjectDataType
+        {
+            return (T)GetIndexedDataType(typeof(T), index);
+        }
+
+
+        bool TryLookupDataType<T>(string identifier, out T data)
+            where T : ProjectDataType
+        {
+            ProjectDataType o;
+            bool retval = TryLookupDataType(typeof(T), identifier, out o);
+            data = (T)o;
+            return retval;
+        }
+        bool TryLookupDataType(Type type, string identifier, out ProjectDataType data)
+        {
+            if (identifier == null)
+                throw new Exception("GetDataType: identifier can't be null.");
+
+            // This call verifies the type is ok to use
+            string s = GetFullIdentifier(type, identifier);
+
             ProjectDataType o;
             if (dataStructDictionary.TryGetValue(s, out o))
-                return o as T;
-
-            try
             {
-                o = (ProjectDataType)Activator.CreateInstance(
-                        typeof(T),
-                        BindingFlags.NonPublic | BindingFlags.CreateInstance | BindingFlags.Instance,
-                        null,
-                        new object[] { this, identifier },
-                        null
-                        );
+                data = o;
+                return true;
             }
-            // If an exception occurs during reflection, it always throws
-            // a TargetInvocationException. So we unpack that and throw the "real" exception.
-            catch (System.Reflection.TargetInvocationException ex)
-            {
-                throw ex.InnerException;
-            }
-
-            AddDataType(o);
-
-            return o as T;
+            data = null;
+            return false;
         }
+
 
 
         /// <summary>
@@ -700,7 +1208,9 @@ namespace LynnaLib
         /// </summary>
         public bool GroupSeasonIsValid(int group, Season season)
         {
-            if (Game == Game.Seasons && group == 0)
+            if (group < 0 || group >= NumGroups)
+                return false;
+            else if (Game == Game.Seasons && group == 0)
                 return (int)season >= 0 && (int)season <= 3;
             else
                 return season == Season.None;
@@ -738,31 +1248,26 @@ namespace LynnaLib
             return list;
         }
 
+        public Room GetRoom(int index)
+        {
+            return GetIndexedDataType<Room>(index);
+        }
+
+        public RoomLayout GetRoomLayout(int index, Season season)
+        {
+            return GetIndexedDataType<Room>(index).GetLayout(season);
+        }
 
         public Dungeon GetDungeon(int index)
         {
-            Dungeon retval;
-            dungeonCache.TryGetValue(index, out retval);
-            if (retval == null)
-            {
-                retval = new Dungeon(this, index);
-                dungeonCache[index] = retval;
-            }
-            return retval;
+            return GetDataType<Dungeon>(index.ToString(), createIfMissing: true);
         }
 
         public WorldMap GetWorldMap(int index, Season season)
         {
             if (!GroupSeasonIsValid(index, season))
                 throw new ProjectErrorException($"Invalid season {season} for group {index}.");
-            WorldMap retval;
-            worldMapCache.TryGetValue(new Tuple<int, Season>(index, season), out retval);
-            if (retval == null)
-            {
-                retval = new WorldMap(this, index, season);
-                worldMapCache[new Tuple<int, Season>(index, season)] = retval;
-            }
-            return retval;
+            return GetDataType<WorldMap>($"{index}_{season}", createIfMissing: true);
         }
 
         /// <summary>
@@ -779,29 +1284,23 @@ namespace LynnaLib
         internal ObjectGroup GetObjectGroup(string identifier, ObjectGroupType type)
         {
             ObjectGroup group;
-            if (objectGroupDictionary.TryGetValue(identifier, out group))
+            if (CheckHasDataType(typeof(ObjectGroup), identifier))
+                group = GetDataType<ObjectGroup>(identifier, createIfMissing: false);
+            else
             {
-                if (type != group.GetGroupType())
-                    throw new AssemblyErrorException(
-                        String.Format("Object group '{0}' used as both type '{1}' and '{2}'!",
-                            identifier,
-                            type,
-                            group.GetGroupType()));
-                return group;
+                group = new ObjectGroup(this, identifier, type);
             }
-            group = new ObjectGroup(this, identifier, type);
-            objectGroupDictionary[identifier] = group;
+
+            if (type != group.GetGroupType())
+            {
+                throw new AssemblyErrorException(
+                String.Format("Object group '{0}' used as both type '{1}' and '{2}'!",
+                    identifier,
+                    type,
+                    group.GetGroupType()));
+            }
             return group;
 
-        }
-
-        void AddDataType(ProjectDataType data)
-        {
-            string s = data.GetIdentifier();
-            if (dataStructDictionary.ContainsKey(s))
-                throw new Exception("Data with identifier \"" + data.GetIdentifier() +
-                        "\" was attempted to be added to the project multiple times.");
-            dataStructDictionary[s] = data;
         }
 
         // Adds a definition to definesDictionary. Don't confuse with the "SetDefinition" method.
@@ -818,17 +1317,25 @@ namespace LynnaLib
         {
             if (LabelDictionary.ContainsKey(label))
                 throw new DuplicateLabelException("Label \"" + label + "\" defined for a second time.");
-            LabelDictionary.Add(label, source);
+            LabelDictionary.Add(label, new(source));
         }
         public void RemoveLabel(string label)
         {
-            FileParser f;
+            InstanceResolver<FileParser> f;
             if (!LabelDictionary.TryGetValue(label, out f))
                 return;
             LabelDictionary.Remove(label);
-            f.RemoveLabel(label);
+            f.Instance.RemoveLabel(label);
         }
         public FileParser GetFileWithLabel(string label)
+        {
+            return GetFileWithLabelAsReference(label).Instance;
+        }
+        /// <summary>
+        /// Get a reference to a FileParser without resolving it, potentially useful in state-based
+        /// constructors where one is not supposed to try to resolve any ProjectDataTypes.
+        /// </summary>
+        public InstanceResolver<FileParser> GetFileWithLabelAsReference(string label)
         {
             if (!HasLabel(label))
                 throw new InvalidLookupException("Label \"" + label + "\" was needed but could not be located!");
@@ -838,7 +1345,7 @@ namespace LynnaLib
         {
             if (!HasLabel(label))
                 throw new InvalidLookupException("Label \"" + label + "\" was needed but could not be located!");
-            return LabelDictionary[label].GetLabel(label);
+            return LabelDictionary[label].Instance.GetLabel(label);
         }
         public bool HasLabel(string label)
         {
@@ -1143,7 +1650,7 @@ namespace LynnaLib
         // "Project.AddDefinition" method for updating constants, or something.)
         public void SetDefinition(string filename, string constant, string value)
         {
-            FileParser parser = fileParserDictionary[filename];
+            FileParser parser = GetFileParser(filename);
             parser.SetDefinition(constant, value);
         }
 
@@ -1176,9 +1683,15 @@ namespace LynnaLib
             UndoState.EndTransaction();
         }
 
+        /// <summary>
+        /// This checks the list of files loaded into memory and checks if the given filename
+        /// (relative from the project base directory) exists. This does not include ALL files, only
+        /// the ones already loaded through "LoadFileStream()" (which should include anything we
+        /// care about).
+        /// </summary>
         public bool FileExists(string filename)
         {
-            return File.Exists(BaseDirectory + filename);
+            return CheckHasDataType<TrackedStream>(filename);
         }
 
         public void MarkModified()
@@ -1186,32 +1699,66 @@ namespace LynnaLib
             Modified = true;
         }
 
-        // ================================================================================
-        // Undoable interface functions
-        // ================================================================================
-
-        public TransactionState GetState()
+        /// <summary>
+        /// TODO: Refactor things so this function doesn't need to exist because it's confusing.
+        /// This only needs to be called when something externally modifies ProjectStateHolder.
+        /// </summary>
+        internal void CaptureSelfInitialState()
         {
-            return state;
+            UndoState.CaptureInitialState<ProjectStateHolder.ProjectState>(stateHolder);
         }
 
-        public void SetState(TransactionState s)
+        // ================================================================================
+        // Serialization
+        // ================================================================================
+
+        public string Serialize<T>(T state)
         {
-            state = (State)s.Copy();
+            return Serialize(typeof(T), state);
         }
 
-        public void InvokeModifiedEvent(TransactionState prevState)
+        public string Serialize(Type type, object state)
         {
-            MarkModified();
+            string s = JsonSerializer.Serialize(state, type, SerializerOptions);
+            if (s == null)
+                throw new Exception("Serialization error");
+            return s;
+        }
+
+        public T Deserialize<T>(string stateStr)
+        {
+            return (T)Deserialize(typeof(T), stateStr);
+        }
+
+        // TODO: Check type
+        public object Deserialize(Type type, string stateStr)
+        {
+            object s;
+            try
+            {
+                s = JsonSerializer.Deserialize(stateStr, type, SerializerOptions);
+            }
+            catch (DeserializationException)
+            {
+                throw;
+            }
+            if (s == null)
+                throw new DeserializationException("Null output from JsonSerializer");
+            return s;
         }
 
         // ================================================================================
         // Private methods
         // ================================================================================
 
+        ConstantsMapping GetConstantsMapping(string identifier)
+        {
+            return GetDataType<ConstantsMapping>(identifier, createIfMissing: false);
+        }
+
         Bitmap LoadLinkBitmap()
         {
-            var stream = LoadGfx("spr_link");
+            var stream = GetGfxStream("spr_link");
             stream.Seek(32 * 16, SeekOrigin.Begin);
             byte[] leftHalf = new byte[32];
             byte[] rightHalf = new byte[32];
@@ -1225,6 +1772,73 @@ namespace LynnaLib
             leftBitmap.Dispose();
             rightBitmap.Dispose();
             return fullBitmap;
+        }
+
+        // ================================================================================
+        // Static methods
+        // ================================================================================
+
+        public static Game GameFromString(string game)
+        {
+            if (String.Equals(game, "seasons", StringComparison.OrdinalIgnoreCase))
+                return Game.Seasons;
+            else if (String.Equals(game, "ages", StringComparison.OrdinalIgnoreCase))
+                return Game.Ages;
+            else
+                throw new Exception("Invalid game string: '" + game + "'");
+        }
+
+        public static string GetFullIdentifier(Type type, string id)
+        {
+            if (!typeof(ProjectDataType).IsAssignableFrom(type))
+                throw new Exception($"GetFullIdentifier: Invalid type {type.FullName}");
+            type = FixTypeForTracking(type);
+            return type.FullName + "_" + id;
+        }
+
+        public static (Type, string) SplitFullIdentifier(string fullID)
+        {
+            string[] s = new string[2];
+            int splitPos = fullID.IndexOf('_');
+            s[0] = fullID.Substring(0, splitPos);
+            s[1] = fullID.Substring(splitPos+1);
+            if (s.Length != 2)
+                throw new Exception($"Bad identifier: {fullID}");
+            Type t = Type.GetType(s[0]); // TODO: VALIDATE THE TYPE
+            if (t == null)
+                throw new Exception("Could not resolve type: " + s[0]);
+            return (t, s[1]);
+        }
+
+        public static Type GetStateType(string type)
+        {
+            Type t = Type.GetType(type); // TODO: VALIDATE THE TYPE
+            if (t == null)
+                throw new Exception("Could not resolve type: " + type);
+            return t;
+        }
+
+        public static Type GetInstType(string type)
+        {
+            Type t = Type.GetType(type); // TODO: VALIDATE THE TYPE
+            if (t == null)
+                throw new Exception("Could not resolve type: " + type);
+            return t;
+        }
+
+        // NOTE: EXTREMELY HACKY WORKAROUND HERE!!!
+        // FileComponent is one of the ProjectDataType's that's polymorphic. We may call
+        // GetDataType<T> with type "FileComponent" or a derived class. The identifier must be the
+        // same no matter what class it's called with.
+        // This would be the case for any class that's referred to with an InstanceResolver that's
+        // of a base class, rather than the subclass.
+        static Type FixTypeForTracking(Type type)
+        {
+            if (type.IsSubclassOf(typeof(FileComponent)))
+                return typeof(FileComponent);
+            if (type.IsSubclassOf(typeof(TrackedStream)))
+                return typeof(TrackedStream);
+            return type;
         }
     }
 

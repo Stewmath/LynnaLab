@@ -32,7 +32,7 @@ public class StreamValueReference : ValueReference
 
     void BindEventHandler()
     {
-        streamEventWrapper.Bind<MemoryFileStream.ModifiedEventArgs>("ModifiedEvent", OnStreamModified);
+        streamEventWrapper.Bind<StreamModifiedEventArgs>("ModifiedEvent", OnStreamModified);
         streamEventWrapper.ReplaceEventSource(stream);
     }
 
@@ -143,7 +143,7 @@ public class StreamValueReference : ValueReference
     // ================================================================================
 
 
-    void OnStreamModified(object sender, MemoryFileStream.ModifiedEventArgs args)
+    void OnStreamModified(object sender, StreamModifiedEventArgs args)
     {
         if (sender != stream)
             throw new Exception("StreamValueReference.OnStreamModified: Wrong stream object?");

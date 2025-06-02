@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
-
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using Backend = VeldridBackend.VeldridBackend;
 
 namespace LynnaLab;
@@ -22,7 +24,7 @@ public static class Top
     /// </summary>
     public static void Load(string path = null, string game = null)
     {
-        string versionString = Helper.ReadResourceFile("LynnaLab.version.txt").Trim();
+        string versionString = Helper.GetVersionString();
         backend = new VeldridBackend.VeldridBackend("LynnaLab", versionString);
 
         ImageDir = Path.GetDirectoryName(System.AppContext.BaseDirectory) + "/Images/";
@@ -70,6 +72,8 @@ public static class Top
     // ================================================================================
     // Variables
     // ================================================================================
+
+    static ProjectWorkspace workspace2;
 
     static Backend backend;
     static Stopwatch stopwatch;
@@ -178,7 +182,7 @@ public static class Top
         ImGui.NewFrame();
         ImGui.PushFont(MenuFont);
 
-        Modal.RenderModals();
+        Modal.RenderModalsAndMessages();
 
         // Don't render the workspace if we're handling an exception right now, because it is
         // probably something in Workspace.Render that caused the exception in the first place.
@@ -192,13 +196,17 @@ public static class Top
             {
                 Workspace.RenderMenuBar();
             }
-            else
+            else // No project is loaded
             {
                 if (ImGui.BeginMenu("Project"))
                 {
                     if (ImGui.MenuItem("Open"))
                     {
                         Modal.OpenProjectModal();
+                    }
+                    if (ImGui.MenuItem("Connect to server..."))
+                    {
+                        Modal.ConnectToServerModal();
                     }
                     ImGui.EndMenu();
                 }
@@ -210,7 +218,9 @@ public static class Top
         if (ImGuiX.BeginDocked("Toolbar", new Vector2(0, ypos), ImGuiX.Unit(0, 50.0f), scrollbar: false))
         {
             if (renderWorkspace)
+            {
                 Workspace.RenderToolbar();
+            }
             ypos += ImGui.GetWindowHeight();
         }
         ImGui.End();
@@ -218,7 +228,10 @@ public static class Top
         settingsDialog.RenderDockedLeft(ypos, ImGuiX.Unit(100.0f));
 
         if (renderWorkspace)
+        {
             Workspace.Render(deltaTime);
+            workspace2?.Render(deltaTime);
+        }
 
         ImGui.PopFont();
     }
@@ -330,6 +343,31 @@ public static class Top
     }
 
     /// <summary>
+    /// Like LazyInvoke but it returns a Task, so can be used with "await".
+    /// </summary>
+    public static Task InvokeAsync(Action action)
+    {
+        TaskCompletionSource taskSource = new();
+
+        idleFunctions.Enqueue(() =>
+        {
+            try
+            {
+                action();
+                taskSource.SetResult();
+                return false;
+            }
+            catch (Exception e)
+            {
+                taskSource.SetException(e);
+                throw;
+            }
+        });
+
+        return taskSource.Task;
+    }
+
+    /// <summary>
     /// Opens the project at the specified path. If game == null, this either checks the project
     /// config to decide which game to load, or shows a prompt to let the user decide.
     /// </summary>
@@ -347,8 +385,8 @@ public static class Top
         {
             Modal.LoadingModal($"Loading project: {path} ({game})...", () =>
             {
-                var project = new Project(path, game, config);
-                Workspace = new ProjectWorkspace(project);
+                var project = new Project(path, Project.GameFromString(game), config);
+                Workspace = new ProjectWorkspace(project, "MainProject");
             });
         };
 
@@ -382,7 +420,8 @@ public static class Top
 
     /// <summary>
     /// Close the project. Normally, this should be called through Modal.CloseProjectModal to ensure
-    /// no data is lost.
+    /// no data is lost. Calling this directly while rendering can cause exceptions due to Workspace
+    /// turning null.
     /// </summary>
     public static void CloseProject()
     {
@@ -393,6 +432,14 @@ public static class Top
     public static void DoNextFrame(Action action)
     {
         actionsForNextFrame.Enqueue(action);
+    }
+
+    public static void SetWorkspace(ProjectWorkspace workspace)
+    {
+        if (Workspace != null)
+            throw new Exception("SetWorkspace: Already have a workspace?");
+
+        Workspace = workspace;
     }
 
     // ================================================================================

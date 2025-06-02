@@ -6,7 +6,7 @@ namespace LynnaLib
     /// <summary>
     ///  An interaction object. The "index" is the full ID (2 bytes, including subid).
     /// </summary>
-    public class PartObject : GameObject
+    public class PartObject : GameObject, IndexedProjectDataInstantiator
     {
 
         readonly Data objectData;
@@ -15,7 +15,7 @@ namespace LynnaLib
         readonly byte _tileIndexBase;
         readonly byte _oamFlagsBase;
 
-        internal PartObject(Project p, int i) : base(p, i)
+        private PartObject(Project p, int i) : base(p, i)
         {
             try
             {
@@ -40,6 +40,11 @@ namespace LynnaLib
                 Console.WriteLine(e.ToString());
                 objectData = null;
             }
+        }
+
+        static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+        {
+            return new PartObject(p, index);
         }
 
 

@@ -6,6 +6,8 @@ global using System.Numerics;
 global using ImGuiNET;
 global using LynnaLib;
 global using Util;
+global using OneOf;
+global using OneOf.Types;
 
 global using Debug = System.Diagnostics.Debug;
 

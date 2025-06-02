@@ -7,10 +7,8 @@ namespace LynnaLib
     // Represents a "Map", or layout of rooms. Subclass "WorldMap" represents a group of 256 rooms
     // laid out in a square, while the "Dungeon" subclass represents an 8x8 dungeon with a tweakable
     // layout, which also has multiple floors.
-    public abstract class Map
+    public abstract class Map : TrackedProjectData
     {
-        public Project Project { get; private set; }
-
         // This is called "MainGroup" instead of "Group" because the "Dungeon" subclass doesn't
         // really have a single canonical group. Most rooms in a dungeon belong to group 4 or 5,
         // except for sidescrolling rooms, which belong to group 6 or 7. The "main" group is
@@ -23,9 +21,8 @@ namespace LynnaLib
         public abstract int RoomHeight { get; }
         public abstract Season Season { get; }
 
-        internal Map(Project p)
+        protected Map(Project p, string id) : base(p, id)
         {
-            Project = p;
         }
 
         /// <summary>

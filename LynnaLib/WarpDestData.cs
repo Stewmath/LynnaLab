@@ -20,11 +20,22 @@ namespace LynnaLib
 
         // Private variables
 
-        HashSet<WarpSourceData> referenceSet;
+        class WarpDestState : Data.DataState
+        {
+            public HashSet<InstanceResolver<WarpSourceData>> referenceSet;
+
+            public override void CaptureInitialState(FileComponent parent)
+            {
+                parent.Project.UndoState.CaptureInitialState<WarpDestState>(parent);
+            }
+        }
+
         ValueReferenceGroup vrg;
 
 
         // Properties
+
+        private WarpDestState State { get { return base.state as WarpDestState; } }
 
         public int Map
         {
@@ -87,41 +98,46 @@ namespace LynnaLib
             get { return vrg; }
         }
 
-        public int Group
-        {
-            get { return DestGroup.Index; }
-        }
 
-        // Don't edit these properties outside of the WarpDestGroup class (TODO: review this)
-        internal WarpDestGroup DestGroup { get; set; }
-        internal int DestIndex { get; set; }
-
-
-        public WarpDestData(Project p, string command, IEnumerable<string> values,
+        public WarpDestData(Project p, string id, string command, IEnumerable<string> values,
                 FileParser parser, IList<string> spacing)
-            : base(p, command, values, 3, parser, spacing)
+            : base(p, id, command, values, 3, parser, spacing, () => new WarpDestState())
         {
             vrg = new ValueReferenceGroup(GetWarpValueReferences(this));
 
-            referenceSet = new HashSet<WarpSourceData>();
+            State.referenceSet = new HashSet<InstanceResolver<WarpSourceData>>();
+        }
 
-            DestGroup = null;
-            DestIndex = -1;
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private WarpDestData(Project p, string id, TransactionState state)
+            : base(p, id, state)
+        {
         }
 
         public void AddReference(WarpSourceData data)
         {
-            referenceSet.Add(data);
+            Project.UndoState.CaptureInitialState<WarpDestState>(this);
+            if (!State.referenceSet.Add(new(data)))
+                throw new Exception("Internal error: Warp dest data reference set state invalid");
         }
 
         public void RemoveReference(WarpSourceData data)
         {
-            referenceSet.Remove(data);
+            Project.UndoState.CaptureInitialState<WarpDestState>(this);
+            if (!State.referenceSet.Remove(new(data)))
+                throw new Exception("Internal error: Warp dest data reference set state invalid");
         }
 
         public int GetNumReferences()
         {
-            return referenceSet.Count;
+            return State.referenceSet.Count;
+        }
+
+        public override void OnInitializedFromTransfer()
+        {
+            vrg = new ValueReferenceGroup(GetWarpValueReferences(this));
         }
     }
 }

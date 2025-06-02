@@ -44,6 +44,6 @@ Thumbs.db
 .vs/
 
 #Misc
-LynnaLab/version.txt
+LynnaLib/version.txt
 global_config.yaml
 imgui.ini

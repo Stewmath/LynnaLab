@@ -3,10 +3,12 @@ namespace LynnaLib
     public static class GbGraphics
     {
         // Black & white palette; use when no other palette makes sense.
+        // This should match up with the colors used in PNG files, otherwise processing them could
+        // fail.
         public static readonly Color[] GrayPalette = {
             Color.FromRgb(255, 255, 255),
-            Color.FromRgb(198, 198, 198),
-            Color.FromRgb(100, 100, 100),
+            Color.FromRgb(170, 170, 170),
+            Color.FromRgb(85, 85, 85),
             Color.FromRgb(0, 0, 0)
         };
 

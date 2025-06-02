@@ -83,4 +83,23 @@ namespace LynnaLib
         public NoAnimationException(Exception e) : base(e.Message) { }
     }
 
+    /// <summary>
+    /// Deserialization (mainly with System.Text.Json)
+    /// </summary>
+    public class DeserializationException : Exception
+    {
+        public DeserializationException() : base() { }
+        public DeserializationException(string s) : base(s) { }
+        public DeserializationException(Exception e) : base(e.Message) { }
+    }
+
+    /// <summary>
+    /// Exceptions that occur during network transmission
+    /// </summary>
+    public class NetworkException : Exception
+    {
+        public NetworkException() : base() { }
+        public NetworkException(string s) : base(s) { }
+        public NetworkException(Exception e) : base(e.Message) { }
+    }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace LynnaLib
 {
@@ -14,7 +15,19 @@ namespace LynnaLib
     //                          0           1           2
     public class PaletteHeaderData : Data
     {
-        FileParser paletteDataFile;
+        // Variables
+
+        class PaletteHeaderState : Data.DataState
+        {
+            [JsonRequired]
+            public InstanceResolver<FileParser> PaletteDataFile; // Can be null
+            public bool IsResolvable;
+
+            public override void CaptureInitialState(FileComponent parent)
+            {
+                parent.Project.UndoState.CaptureInitialState<PaletteHeaderState>(parent);
+            }
+        }
 
 
         /// This is DIFFERENT from the base class's "ModifiedEvent" because this triggers when the
@@ -29,7 +42,8 @@ namespace LynnaLib
             {
                 if (!IsResolvable)
                     return null;
-                return (RgbData)paletteDataFile.GetData(GetValue(2));
+                Debug.Assert(State.PaletteDataFile != null);
+                return (RgbData)State.PaletteDataFile?.Instance.GetData(GetValue(2));
             }
         }
 
@@ -54,12 +68,14 @@ namespace LynnaLib
         // no way to resolve the palette data.
         public bool IsResolvable
         {
-            get; private set;
+            get { return State.IsResolvable; }
         }
 
+        private PaletteHeaderState State { get { return state as PaletteHeaderState; } }
 
-        public PaletteHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
-            : base(p, command, values, 3, parser, spacing)
+
+        public PaletteHeaderData(Project p, string id,string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
+            : base(p, id, command, values, 3, parser, spacing, () => new PaletteHeaderState())
         {
 
             int dest;
@@ -68,15 +84,28 @@ namespace LynnaLib
 
             string labelName = GetValue(2);
             if (dest != -1 || !Project.HasLabel(labelName))
-                IsResolvable = false;
+                State.IsResolvable = false;
             else
             {
-                IsResolvable = true;
-                paletteDataFile = Project.GetFileWithLabel(labelName);
-                if (!(paletteDataFile.GetData(labelName) is RgbData))
+                State.IsResolvable = true;
+                State.PaletteDataFile = new(Project.GetFileWithLabel(labelName));
+                if (!(State.PaletteDataFile?.Instance.GetData(labelName) is RgbData))
                     throw new Exception("Label \"" + labelName + "\" was expected to reference data defined with m_RGB16");
             }
 
+            CommonInitialization();
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private PaletteHeaderData(Project p, string id, TransactionState state)
+            : base(p, id, state)
+        {
+        }
+
+        void CommonInitialization()
+        {
             if (IsResolvable)
             {
                 Foreach((rgbData) =>
@@ -140,9 +169,17 @@ namespace LynnaLib
             RgbData data = Data;
             for (int i = 0; i < NumPalettes * 4; i++)
             {
+                if (data == null)
+                    throw new Exception("PaletteData missing expected RgbData?");
                 action(data);
                 data = data.NextData as RgbData;
             }
+        }
+
+
+        public override void OnInitializedFromTransfer()
+        {
+            CommonInitialization();
         }
     }
 

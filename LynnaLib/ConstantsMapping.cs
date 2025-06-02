@@ -1,10 +1,12 @@
-﻿namespace LynnaLib
+﻿using System.Text.Json.Serialization;
+
+namespace LynnaLib
 {
     /// <summary>
     ///  Takes a file from the constants folder and creates a 1:1 mapping between definitions and
     ///  values.
     /// </summary>
-    public class ConstantsMapping : Undoable
+    public class ConstantsMapping : TrackedProjectData
     {
         /// <summary>
         ///  A string/byte pair.
@@ -21,6 +23,12 @@
                 val = _val;
                 documentation = _doc;
             }
+
+            // Empty constructor just for deserialization
+            public Entry()
+            {
+
+            }
         }
 
 
@@ -30,6 +38,7 @@
         // Variables
         // ================================================================================
 
+        // TODO: DESERIALIZATION UNFINISHED - must implement CaptureInitialState logic
         // Anything undoable goes in here
         class State : TransactionState
         {
@@ -40,32 +49,16 @@
             public Dictionary<string, Entry> stringToByte = new();
             public Dictionary<int, Entry> byteToString = new();
 
-            public TransactionState Copy()
-            {
-                State s = new State();
-                s.stringList = new(stringList);
-                s.stringToByte = new(stringToByte);
-                s.byteToString = new(byteToString);
-                return s;
-            }
+            public IList<string> prefixes;
+            public int maxValue;
 
-            public bool Compare(TransactionState o)
-            {
-                return o is State s && s.stringList.SequenceEqual(stringList)
-                    && s.stringToByte.SequenceEqual(stringToByte)
-                    && s.byteToString.SequenceEqual(byteToString);
-            }
+            public Documentation _documentation;
         }
 
         State state = new State();
 
         // This list is only necessary to preserve ordering
         List<string> StringList { get { return state.stringList; } }
-
-        readonly IList<string> prefixes;
-        readonly int maxValue;
-
-        Documentation _documentation;
 
         // ================================================================================
         // Properties
@@ -75,11 +68,16 @@
         Dictionary<string, Entry> StringToByteDict { get { return state.stringToByte; } }
         Dictionary<int, Entry> ByteToStringDict { get { return state.byteToString; } }
 
-        public Project Project { get; private set; }
+        int MaxValue
+        {
+            get { return state.maxValue; }
+            set { state.maxValue = value; }
+        }
 
         public IList<string> Prefixes
         {
-            get { return prefixes; }
+            get { return state.prefixes; }
+            private set { state.prefixes = value; }
         }
 
         /// <summary>
@@ -89,12 +87,12 @@
         {
             get
             {
-                if (_documentation == null)
+                if (state._documentation == null)
                 {
-                    _documentation = new Documentation("", "", GetAllValuesWithDescriptions());
-                    _documentation.KeyName = "ID";
+                    state._documentation = new Documentation("", "", GetAllValuesWithDescriptions());
+                    state._documentation.KeyName = "ID";
                 }
-                return _documentation;
+                return state._documentation;
             }
         }
 
@@ -104,25 +102,28 @@
 
         /// If the optional "maxValue" parameter is passed, any constants with this value or above is
         /// ignored when generating the mapping.
-        public ConstantsMapping(FileParser parser, string prefix, int maxValue = -1, bool alphabetical = false)
-            : this(parser, new string[] { prefix }, maxValue, alphabetical) { }
+        internal ConstantsMapping(FileParser parser, string id, string prefix, int maxValue = -1, bool alphabetical = false)
+            : this(parser, id, new string[] { prefix }, maxValue, alphabetical) { }
 
-        public ConstantsMapping(FileParser _parser, string[] _prefixes, int maxValue = -1, bool alphabetical = false)
-            : this(_parser.Project,
-                    _parser.DefinesDictionary.ToDictionary(kp => kp.Key, kp => kp.Value.Item1),
-                    _prefixes,
-                    maxValue,
-                    alphabetical,
-                    _parser.DefinesDictionary.ToDictionary(kp => kp.Key, kp => kp.Value.Item2)
-                    )
+        internal ConstantsMapping(FileParser _parser, string id, string[] _prefixes, int maxValue = -1, bool alphabetical = false)
+            : this(
+                _parser.Project,
+                id,
+                _parser.DefinesDictionary.ToDictionary(kp => kp.Key, kp => kp.Value.Item1),
+                _prefixes,
+                maxValue,
+                alphabetical,
+                _parser.DefinesDictionary.ToDictionary(kp => kp.Key, kp => kp.Value.Item2?.Instance))
         { }
 
-        public ConstantsMapping(Project p,
-                                FileParser[] parsers,
-                                string prefix,
-                                int maxValue = -1,
-                                bool alphabetical = false)
-            : this(p, new string[] {prefix}, maxValue)
+        internal ConstantsMapping(
+            Project p,
+            string id,
+            FileParser[] parsers,
+            string prefix,
+            int maxValue = -1,
+            bool alphabetical = false)
+            : this(p, id, new string[] {prefix}, maxValue)
         {
             var defines = new Dictionary<string, string>();
             var documentation = new Dictionary<string, DocumentationFileComponent>();
@@ -132,7 +133,7 @@
                 foreach (var kp in parser.DefinesDictionary)
                 {
                     defines.Add(kp.Key, kp.Value.Item1);
-                    documentation.Add(kp.Key, kp.Value.Item2);
+                    documentation.Add(kp.Key, kp.Value.Item2?.Instance);
                 }
             }
 
@@ -140,25 +141,41 @@
         }
 
 
-        public ConstantsMapping(Project p,
-                Dictionary<string, string> definesDictionary,
-                string[] _prefixes,
-                int maxValue = -1,
-                bool alphabetical = false,
-                Dictionary<string, DocumentationFileComponent> documentationDictionary = null)
-            : this(p, _prefixes, maxValue)
+        internal ConstantsMapping(
+            Project p,
+            string id,
+            Dictionary<string, string> definesDictionary,
+            string[] _prefixes,
+            int maxValue = -1,
+            bool alphabetical = false,
+            Dictionary<string, DocumentationFileComponent> documentationDictionary = null)
+            : this(p, id, _prefixes, maxValue)
         {
             InitializeDefines(definesDictionary, alphabetical, documentationDictionary);
         }
 
-        public ConstantsMapping(Project p, IList<string> prefixes, int maxValue = -1)
+        internal ConstantsMapping(Project p, string id, IList<string> prefixes, int maxValue = -1)
+            : base(p, id)
         {
-            this.Project = p;
-            this.prefixes = prefixes;
+            this.Prefixes = prefixes;
 
             if (maxValue == -1)
                 maxValue = Int32.MaxValue;
-            this.maxValue = maxValue;
+            this.MaxValue = maxValue;
+
+            // TODO: Why aren't we calling InitializeDefines here?
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private ConstantsMapping(Project p, string id, TransactionState state)
+            : base(p, id)
+        {
+            this.state = (State)state;
+
+            if (this.state.stringList == null || this.state.stringToByte == null || this.state.byteToString == null)
+                throw new DeserializationException();
         }
 
         void InitializeDefines(
@@ -169,7 +186,7 @@
             foreach (string key in definesDictionary.Keys)
             {
                 bool acceptable = false;
-                foreach (string prefix in prefixes)
+                foreach (string prefix in Prefixes)
                 {
                     if (key.Length > prefix.Length && key.Substring(0, prefix.Length) == prefix)
                     {
@@ -189,7 +206,7 @@
                         int val;
 
                         if (Project.TryEval(valStr, out val))
-                            AddKeyValuePair(key, val, docComponent);
+                            AddKeyValuePair(key, val, docComponent, fromConstructor: true);
                         else
                             Console.WriteLine("ConstantsMapping: " + valStr);
                     }
@@ -201,9 +218,9 @@
         }
 
 
-        public void AddKeyValuePair(string key, int value, DocumentationFileComponent docComponent = null)
+        public void AddKeyValuePair(string key, int value, DocumentationFileComponent docComponent = null, bool fromConstructor = false)
         {
-            if (value >= maxValue)
+            if (value >= MaxValue)
                 return;
             if (ByteToStringDict.ContainsKey(value))
             {
@@ -215,7 +232,8 @@
                 log.Warn(string.Format("Overwriting key {0} in ConstantsMapping", key));
             }
 
-            Project.UndoState.CaptureInitialState(this);
+            if (!fromConstructor)
+                Project.UndoState.CaptureInitialState<State>(this);
 
             StringList.Add(key);
 
@@ -338,20 +356,20 @@
         }
 
         // ================================================================================
-        // Undoable interface functions
+        // TrackedProjectData interface functions
         // ================================================================================
 
-        public TransactionState GetState()
+        public override TransactionState GetState()
         {
             return state;
         }
 
-        public void SetState(TransactionState s)
+        public override void SetState(TransactionState s)
         {
-            this.state = (State)s.Copy();
+            this.state = (State)s;
         }
 
-        public void InvokeModifiedEvent(TransactionState prevState)
+        public override void InvokeUndoEvents(TransactionState prevState)
         {
         }
     }

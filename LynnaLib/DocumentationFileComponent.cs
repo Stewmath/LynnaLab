@@ -26,8 +26,8 @@ namespace LynnaLib
             get { return _keys; }
         }
 
-        public DocumentationFileComponent(FileParser parser, string str)
-            : base(parser, null, () => new FileComponentState())
+        public DocumentationFileComponent(string id, FileParser parser, string str)
+            : base(id, parser, null, () => new FileComponentState())
         {
             // Setup default fields
             defaultFields["postype"] = "normal";
@@ -38,6 +38,15 @@ namespace LynnaLib
             this.origString = str;
 
             documentationParams = ParseDoc(str, _keys);
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private DocumentationFileComponent(Project p, string id, TransactionState state)
+            : base(p, id, state)
+        {
+            // TODO: DESERIALIZATION UNFINISHED
         }
 
         public override string GetString()

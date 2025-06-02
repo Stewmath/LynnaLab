@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Text.Json.Serialization;
 
 namespace LynnaLib
 {
@@ -21,7 +22,7 @@ namespace LynnaLib
         }
     }
 
-    public class FileParser : Undoable
+    public class FileParser : TrackedProjectData
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -45,34 +46,19 @@ namespace LynnaLib
         /// </summary>
         class State : TransactionState
         {
-            public DictionaryLinkedList<FileComponent> fileStructure = new DictionaryLinkedList<FileComponent>();
-            public Dictionary<string, Label> labelDictionary = new Dictionary<string, Label>();
+            [JsonRequired]
+            public DictionaryLinkedList<InstanceResolver<FileComponent>> fileStructure = new();
+            [JsonRequired]
+            public Dictionary<string, InstanceResolver<Label>> labelDictionary = new();
 
             // Maps a string (key) to a pair (v,d), where v is the value, and d is
             // a DocumentationFileComponent (possible null).
-            public Dictionary<string, Tuple<string, DocumentationFileComponent>> definesDictionary =
-                new Dictionary<string, Tuple<string, DocumentationFileComponent>>();
+            [JsonRequired]
+            public Dictionary<string, Tuple<string, InstanceResolver<DocumentationFileComponent>>> definesDictionary = new();
 
-            public TransactionState Copy()
-            {
-                State s = new State();
-                s.fileStructure = new DictionaryLinkedList<FileComponent>(fileStructure);
-                s.labelDictionary = new Dictionary<string, Label>(labelDictionary);
-                s.definesDictionary = new Dictionary<string, Tuple<string, DocumentationFileComponent>>(definesDictionary);
-                return s;
-            }
-
-            public bool Compare(TransactionState obj)
-            {
-                if (!(obj is State state))
-                    return false;
-                return fileStructure.SequenceEqual(state.fileStructure)
-                    && labelDictionary.SequenceEqual(state.labelDictionary)
-                    && definesDictionary.SequenceEqual(state.definesDictionary);
-            }
+            [JsonRequired]
+            public ulong idCounter;
         }
-
-        readonly Project _project;
 
         readonly string filename; // Relative to base directory
         readonly string fullFilename; // Full path
@@ -115,16 +101,17 @@ namespace LynnaLib
 
 
         public FileParser(Project p, string f)
+            : base(p, f)
         {
-            _project = p;
+            if (!Project.FileExists(f))
+                throw new Exception($"File does not exist: {f}");
+
             this.filename = f;
             this.fullFilename = Project.BaseDirectory + f;
 
-
             log.Debug("Began parsing \"" + Filename + "\".");
 
-
-            string[] lines = File.ReadAllLines(FullFilename);
+            string[] lines = Project.GetFileStream(f).ReadAllLines();
 
             for (int i = 0; i < lines.Length; i++)
             {
@@ -139,12 +126,30 @@ namespace LynnaLib
             log.Debug("Finished parsing \"" + Filename + "\".");
         }
 
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private FileParser(Project p, string id, TransactionState s)
+            : base(p, id)
+        {
+            this.state = (State)s;
+            this.filename = null;
+            this.fullFilename = null;
+            this.context = "";
+
+            if (state.fileStructure == null || state.definesDictionary == null || state.labelDictionary == null)
+                throw new DeserializationException();
+        }
+
 
         // Properties
 
-        public DictionaryLinkedList<FileComponent> FileStructure { get { return state.fileStructure; } }
-        public Dictionary<string, Tuple<string, DocumentationFileComponent>> DefinesDictionary { get { return state.definesDictionary; } }
-        Dictionary<string, Label> LabelDictionary { get { return state.labelDictionary; } }
+        public DictionaryLinkedList<InstanceResolver<FileComponent>> FileStructure { get { return state.fileStructure; } }
+        public Dictionary<string, Tuple<string, InstanceResolver<DocumentationFileComponent>>> DefinesDictionary
+        {
+            get { return state.definesDictionary; }
+        }
+        Dictionary<string, InstanceResolver<Label>> LabelDictionary { get { return state.labelDictionary; } }
 
         public bool Modified
         {
@@ -155,10 +160,6 @@ namespace LynnaLib
                 if (value)
                     Project.MarkModified();
             }
-        }
-        public Project Project
-        {
-            get { return _project; }
         }
         public string Filename
         {
@@ -193,11 +194,22 @@ namespace LynnaLib
 
         // Methods
 
-        void ParseLine(string pureLine, DictionaryLinkedList<FileComponent> fileStructure)
+        void ParseLine(string pureLine, DictionaryLinkedList<InstanceResolver<FileComponent>> fileStructure)
         {
             string warningString = WarningString;
 
             // Helper functions
+
+            // TODO: Is it wise to base IDs on fileparsers when data can technically move between them?
+            // TODO: When networking, add a client-specific part to the identifier to reduce chance
+            // of collisions between clients?
+            Func<string> GenID = () =>
+            {
+                // Want to avoid collisions by using characters unlikely to be used in filenames
+                string id = $"{filename}~$~{state.idCounter}";
+                state.idCounter++;
+                return id;
+            };
 
             Action<FileComponent> AddComponent = (component) =>
             {
@@ -207,7 +219,10 @@ namespace LynnaLib
             };
             Action PopFileStructure = () =>
             {
-                fileStructure.Remove(fileStructure.LastNode);
+                LinkedListNode<InstanceResolver<FileComponent>> last = fileStructure.LastNode;
+                Helper.Assert(fileStructure.Remove(last),
+                              "Internal error: FileStructure to remove wasn't in list.");
+                Project.RemoveDataType<FileComponent>(last.Value.Instance.Identifier);
             };
             Action<FileComponent> AddDataAndPopFileStructure = (data) =>
             {
@@ -231,7 +246,7 @@ namespace LynnaLib
                 {
                     case ".incbin":
                         {
-                            Data d = new Data(Project, fTokens[0], standardValues, -1,
+                            Data d = new Data(Project, GenID(), fTokens[0], standardValues, -1,
                                     this, fSpacing);
                             AddDataAndPopFileStructure(d);
                             break;
@@ -281,7 +296,7 @@ namespace LynnaLib
                             if (j == fTokens.Count - 1)
                                 newfSpacing[2] = fSpacing[j + 1];
 
-                            Data d = new Data(Project, fTokens[0], values, size,
+                            Data d = new Data(Project, GenID(), fTokens[0], values, size,
                                     this, newfSpacing);
                             if (j != fTokens.Count - 1)
                                 d.EndsLine = false;
@@ -319,7 +334,7 @@ namespace LynnaLib
 
                     case "m_animationloop":
                         {
-                            Data d = new Data(Project, fTokens[0], standardValues, 2,
+                            Data d = new Data(Project, GenID(), fTokens[0], standardValues, 2,
                                     this, fSpacing);
                             AddDataAndPopFileStructure(d);
                             break;
@@ -331,7 +346,7 @@ namespace LynnaLib
                             break;
                         }
                         {
-                            Data d = new RgbData(Project, fTokens[0], standardValues,
+                            Data d = new RgbData(Project, GenID(), fTokens[0], standardValues,
                                     this, fSpacing);
                             AddDataAndPopFileStructure(d);
                             break;
@@ -345,7 +360,7 @@ namespace LynnaLib
                             break;
                         }
                         {
-                            Data d = new GfxHeaderData(Project, fTokens[0], standardValues,
+                            Data d = new GfxHeaderData(Project, GenID(), fTokens[0], standardValues,
                                     this, fSpacing);
                             AddDataAndPopFileStructure(d);
                             break;
@@ -357,7 +372,7 @@ namespace LynnaLib
                                 log.Warn(warningString + "Expected " + fTokens[0] + " to take 1-3 parameters");
                                 break;
                             }
-                            Data d = new ObjectGfxHeaderData(Project, fTokens[0], standardValues, this, fSpacing);
+                            Data d = new ObjectGfxHeaderData(Project, GenID(), fTokens[0], standardValues, this, fSpacing);
                             AddDataAndPopFileStructure(d);
                             break;
                         }
@@ -379,7 +394,7 @@ namespace LynnaLib
                             else
                                 labelName = "uniqueGfxHeader";
                             labelName += index.ToString("x2");
-                            Label l = new Label(this, labelName);
+                            Label l = new Label(GenID(), this, labelName);
                             AddDataAndPopFileStructure(l);
                         }
                         break;
@@ -390,7 +405,7 @@ namespace LynnaLib
                         }
                         else
                         {
-                            Data d = new Data(Project, fTokens[0], standardValues, 0, this, fSpacing);
+                            Data d = new Data(Project, GenID(), fTokens[0], standardValues, 0, this, fSpacing);
                             AddDataAndPopFileStructure(d);
                         }
                         break;
@@ -407,7 +422,7 @@ namespace LynnaLib
                             int index = Project.Eval(fTokens[2]);
                             string labelName;
                             labelName = "paletteHeader" + index.ToString("x2");
-                            Label l = new Label(this, labelName);
+                            Label l = new Label(GenID(), this, labelName);
                             AddDataAndPopFileStructure(l);
                         }
                         break;
@@ -418,7 +433,7 @@ namespace LynnaLib
                         }
                         else
                         {
-                            Data d = new Data(Project, fTokens[0], standardValues, 0, this, fSpacing);
+                            Data d = new Data(Project, GenID(), fTokens[0], standardValues, 0, this, fSpacing);
                             AddDataAndPopFileStructure(d);
                         }
                         break;
@@ -430,7 +445,7 @@ namespace LynnaLib
                         }
                         else
                         {
-                            Data d = new PaletteHeaderData(Project, fTokens[0], standardValues,
+                            Data d = new PaletteHeaderData(Project, GenID(), fTokens[0], standardValues,
                                     this, fSpacing);
                             AddDataAndPopFileStructure(d);
                         }
@@ -442,7 +457,7 @@ namespace LynnaLib
                             break;
                         }
                         {
-                            Data d = new TilesetLayoutHeaderData(Project, fTokens[0], standardValues,
+                            Data d = new TilesetLayoutHeaderData(Project, GenID(), fTokens[0], standardValues,
                                     this, fSpacing);
                             AddDataAndPopFileStructure(d);
                             break;
@@ -454,10 +469,10 @@ namespace LynnaLib
                             break;
                         }
                         {
-                            Label l = new Label(this, fTokens[1]);
+                            Label l = new Label(GenID(), this, fTokens[1]);
                             l.Fake = true;
                             AddDataAndPopFileStructure(l);
-                            Data d = new Data(Project, fTokens[0], standardValues, -1,
+                            Data d = new Data(Project, GenID(), fTokens[0], standardValues, -1,
                                     this, fSpacing);
                             AddComponent(d);
                             break;
@@ -472,7 +487,7 @@ namespace LynnaLib
                                 break;
                             }
                             // Create a data object considered to have a size of 8 bytes
-                            Data d = new Data(Project, fTokens[0], standardValues, 8, this, fSpacing);
+                            Data d = new Data(Project, GenID(), fTokens[0], standardValues, 8, this, fSpacing);
                             AddDataAndPopFileStructure(d);
                             break;
                         }
@@ -483,7 +498,7 @@ namespace LynnaLib
                                 log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 or 3 parameters");
                                 break;
                             }
-                            Data d = new Data(Project, fTokens[0], standardValues, 3, this, fSpacing);
+                            Data d = new Data(Project, GenID(), fTokens[0], standardValues, 3, this, fSpacing);
                             AddDataAndPopFileStructure(d);
                             break;
                         }
@@ -494,7 +509,7 @@ namespace LynnaLib
                                 log.Warn(warningString + "Expected " + fTokens[0] + " to take 3-4 parameters");
                                 break;
                             }
-                            Data d = new Data(Project, fTokens[0], standardValues, 4, this, fSpacing);
+                            Data d = new Data(Project, GenID(), fTokens[0], standardValues, 4, this, fSpacing);
                             AddDataAndPopFileStructure(d);
                             break;
                         }
@@ -505,7 +520,7 @@ namespace LynnaLib
                                 log.Warn(warningString + "Expected " + fTokens[0] + " to take 8 parameters");
                                 break;
                             }
-                            Data d = new Data(Project, fTokens[0], standardValues, 8, this, fSpacing);
+                            Data d = new Data(Project, GenID(), fTokens[0], standardValues, 8, this, fSpacing);
                             AddDataAndPopFileStructure(d);
                             break;
                         }
@@ -516,7 +531,7 @@ namespace LynnaLib
                                 log.Warn(warningString + "Expected " + fTokens[0] + " to take 1 parameter");
                                 break;
                             }
-                            Data d = new Data(Project, fTokens[0], standardValues, 8, this, fSpacing);
+                            Data d = new Data(Project, GenID(), fTokens[0], standardValues, 8, this, fSpacing);
                             AddDataAndPopFileStructure(d);
                             break;
                         }
@@ -537,7 +552,7 @@ namespace LynnaLib
                                         break;
                                     }
 
-                                    d = new Data(Project, fTokens[0], standardValues, command.size, this, fSpacing);
+                                    d = new Data(Project, GenID(), fTokens[0], standardValues, command.size, this, fSpacing);
                                     break;
                                 }
                             }
@@ -566,13 +581,13 @@ namespace LynnaLib
                                     ObjectData lastObjectData = null;
                                     for (var node = fileStructure.LastNode; node != null; node = node.Previous)
                                     {
-                                        if (node.Value is Data)
+                                        if (node.Value.Instance is Data)
                                         {
-                                            lastObjectData = node.Value as ObjectData;
+                                            lastObjectData = node.Value.Instance as ObjectData;
                                             break;
                                         }
                                     }
-                                    d = new ObjectData(Project, fTokens[0], standardValues,
+                                    d = new ObjectData(Project, GenID(), fTokens[0], standardValues,
                                             this, fSpacing, objectDefinitionType, lastObjectData);
                                     break;
                                 }
@@ -582,14 +597,14 @@ namespace LynnaLib
                             {
                                 if (s.ToLower() == fTokens[0].ToLower())
                                 {
-                                    d = new WarpSourceData(Project, fTokens[0], standardValues,
+                                    d = new WarpSourceData(Project, GenID(), fTokens[0], standardValues,
                                             this, fSpacing);
                                 }
                             }
                             // Try warp dest
                             if (WarpDestData.WarpCommand.ToLower() == fTokens[0].ToLower())
                             {
-                                d = new WarpDestData(Project, fTokens[0], standardValues,
+                                d = new WarpDestData(Project, GenID(), fTokens[0], standardValues,
                                         this, fSpacing);
                             }
 
@@ -617,7 +632,7 @@ namespace LynnaLib
                 else
                 {
                     context = "";
-                    AddComponent(new DocumentationFileComponent(this, documentationString));
+                    AddComponent(new DocumentationFileComponent(GenID(), this, documentationString));
                     context = "";
                 }
             }
@@ -639,7 +654,7 @@ namespace LynnaLib
 
             // Add raw string to file structure, it'll be removed if
             // a better representation is found
-            AddComponent(new StringFileComponent(this, line, null));
+            AddComponent(new StringFileComponent(GenID(), this, line, null));
 
             if (line.Trim().Length == 0)
                 return;
@@ -852,13 +867,13 @@ namespace LynnaLib
                                     if (context == "RAMSECTION")
                                         AddDefinitionWhileParsing(":" + s, bank.ToString());
                                     PopFileStructure();
-                                    StringFileComponent sc = new StringFileComponent(this, tokens[0], spacing);
+                                    StringFileComponent sc = new StringFileComponent(GenID(), this, tokens[0], spacing);
                                     AddComponent(sc);
                                     addedComponent = sc;
                                 }
                                 else
                                 {
-                                    Label label = new Label(this, s, spacing);
+                                    Label label = new Label(GenID(), this, s, spacing);
                                     AddDataAndPopFileStructure(label);
                                     addedComponent = label;
                                 }
@@ -872,7 +887,7 @@ namespace LynnaLib
                                     // Add raw string to file structure, it'll be removed if a better
                                     // representation is found
                                     AddComponent(new StringFileComponent(
-                                                this, line.Substring(spacing[0].Length + tokens[0].Length), spacing2));
+                                                GenID(), this, line.Substring(spacing[0].Length + tokens[0].Length), spacing2));
 
                                     for (int j = 1; j < tokens.Count; j++)
                                         tokens2[j - 1] = tokens[j];
@@ -905,10 +920,13 @@ namespace LynnaLib
 
             DocumentationFileComponent doc = null;
             if (FileStructure.Count >= 2)
-                doc = FileStructure.LastNode.Previous.Value as DocumentationFileComponent;
+                doc = FileStructure.LastNode.Previous.Value.Instance as DocumentationFileComponent;
 
             // Replace the value from the "AddDefinition" call
-            DefinesDictionary[def] = new Tuple<string, DocumentationFileComponent>(value, doc);
+            if (doc == null)
+                DefinesDictionary[def] = new(value, null);
+            else
+                DefinesDictionary[def] = new(value, new InstanceResolver<DocumentationFileComponent>(doc));
         }
 
         void AddDefinition(string def, string value, bool replace = false)
@@ -917,13 +935,13 @@ namespace LynnaLib
             // modifications to data. Changes to the dictionary will still be seen because the data
             // changes that trigger changes to the dictionary will call RecordChange() themselves.
             Project.AddDefinition(def, value, replace);
-            DefinesDictionary[def] = new Tuple<string, DocumentationFileComponent>(value, null);
+            DefinesDictionary[def] = new(value, null);
         }
 
         void AddLabelToDictionaries(Label label)
         {
             // See above note about RecordChange().
-            LabelDictionary.Add(label.Name, label);
+            LabelDictionary.Add(label.Name, new(label));
             Project.AddLabel(label.Name, this);
         }
 
@@ -1027,7 +1045,7 @@ namespace LynnaLib
         {
             RecordChange();
             context = "";
-            var structure = new DictionaryLinkedList<FileComponent>();
+            var structure = new DictionaryLinkedList<InstanceResolver<FileComponent>>();
 
             for (int i = 0; i < text.Length; i++)
             {
@@ -1035,10 +1053,10 @@ namespace LynnaLib
                 ParseLine(text[i], structure);
             }
 
-            var node = FileStructure.Find(refComponent);
-            foreach (FileComponent f in structure)
+            var node = refComponent == null ? null : FileStructure.Find(new(refComponent));
+            foreach (InstanceResolver<FileComponent> f in structure)
             {
-                var nextNode = new LinkedListNode<FileComponent>(f);
+                var nextNode = new LinkedListNode<InstanceResolver<FileComponent>>(f);
                 if (node == null)
                     FileStructure.AddLast(nextNode);
                 else
@@ -1052,7 +1070,7 @@ namespace LynnaLib
         {
             RecordChange();
             context = "";
-            var structure = new DictionaryLinkedList<FileComponent>();
+            var structure = new DictionaryLinkedList<InstanceResolver<FileComponent>>();
 
             for (int i = 0; i < text.Length; i++)
             {
@@ -1060,10 +1078,10 @@ namespace LynnaLib
                 ParseLine(text[i], structure);
             }
 
-            var node = FileStructure.Find(refComponent);
-            foreach (FileComponent f in structure.Reverse())
+            var node = refComponent == null ? null : FileStructure.Find(new(refComponent));
+            foreach (InstanceResolver<FileComponent> f in structure.Reverse())
             {
-                var nextNode = new LinkedListNode<FileComponent>(f);
+                var nextNode = new LinkedListNode<InstanceResolver<FileComponent>>(f);
                 if (node == null)
                     FileStructure.AddFirst(nextNode);
                 else
@@ -1076,13 +1094,17 @@ namespace LynnaLib
 
         public FileComponent GetNextFileComponent(FileComponent reference)
         {
-            var node = FileStructure.Find(reference);
-            return node.Next?.Value;
+            if (reference == null)
+                throw new Exception("Can't get next FileComponent from null reference");
+            var node = FileStructure.Find(new(reference));
+            return node.Next?.Value.Instance;
         }
         public FileComponent GetPrevFileComponent(FileComponent reference)
         {
-            var node = FileStructure.Find(reference);
-            return node.Previous?.Value;
+            if (reference == null)
+                throw new Exception("Can't get prev FileComponent from null reference");
+            var node = FileStructure.Find(new(reference));
+            return node.Previous?.Value.Instance;
         }
 
         // Remove a FileComponent (Data, Label) from the fileStructure.
@@ -1101,7 +1123,7 @@ namespace LynnaLib
 
         public void RemoveLabel(string label)
         {
-            Label l;
+            InstanceResolver<Label> l;
             if (!LabelDictionary.TryGetValue(label, out l))
                 return;
             RemoveFileComponent(l);
@@ -1116,12 +1138,16 @@ namespace LynnaLib
 
         public void Save()
         {
+            if (filename == null)
+                throw new Exception("Can't save on remote instance");
+
             if (!Modified) return;
 
             List<string> output = new List<string>();
             FileComponent lastComponent = null;
-            foreach (var d in FileStructure)
+            foreach (var ir in FileStructure)
             {
+                FileComponent d = ir.Instance;
                 string s = null;
 
                 if (d.Fake)
@@ -1146,6 +1172,10 @@ namespace LynnaLib
 
                 lastComponent = d;
             }
+            // NOTE: This is asymmetrical - we're writing directly to the filesystem, unlike loading
+            // where we loaded through a MemoryFileStream. Doesn't really matter since saving only
+            // works on the server anyway. It does mean the MemoryFileStream will be out of sync
+            // with the file itself though - not that that should matter at all.
             File.WriteAllLines(FullFilename, output);
 
             Modified = false;
@@ -1311,7 +1341,7 @@ namespace LynnaLib
         /// </summary>
         public void RecordChange()
         {
-            Project.UndoState.CaptureInitialState(this);
+            Project.UndoState.CaptureInitialState<State>(this);
 
             // This is a bit weird. We need to record the project's changes as well, but the fields
             // in the project class that we care about (just defines & labels) are only ever changed
@@ -1319,28 +1349,74 @@ namespace LynnaLib
             // change.
             // This feels wrong. Something probably needs to be refactored to make the project's
             // state management cleaner.
-            Project.UndoState.CaptureInitialState(Project);
+            Project.CaptureSelfInitialState();
 
             Modified = true;
         }
 
         // ================================================================================
-        // Undoable interface functions
+        // TrackedProjectData interface functions
         // ================================================================================
 
-        public TransactionState GetState()
+        public override TransactionState GetState()
         {
             return state;
         }
 
-        public void SetState(TransactionState s)
+        public override void SetState(TransactionState s)
         {
-            this.state = (State)s.Copy();
+            this.state = (State)s;
             Modified = true;
         }
 
-        public void InvokeModifiedEvent(TransactionState prevState)
+        public override void InvokeUndoEvents(TransactionState prevState)
         {
+        }
+    }
+
+    /// <summary>
+    /// Helper functions for DictionaryLinkedList to simplify accesses with FileComponents.
+    ///
+    /// The value type is not "FileComponent" but "InstanceResolver<FileComponent>". Since any two
+    /// InstanceResolvers instantiated from the same object are considered equal, they can still be
+    /// used for dictionary lookups.
+    ///
+    /// So this basically just wraps the FileComponent parameters in InstanceResolvers.
+    /// </summary>
+    public static class DictExtensions
+    {
+        public static bool Contains(this DictionaryLinkedList<InstanceResolver<FileComponent>> dict, FileComponent value)
+        {
+            return dict.Contains(new InstanceResolver<FileComponent>(value));
+        }
+
+        public static void AddFirst(this DictionaryLinkedList<InstanceResolver<FileComponent>> dict, FileComponent value)
+        {
+            dict.AddFirst(new InstanceResolver<FileComponent>(value));
+        }
+
+        public static void AddLast(this DictionaryLinkedList<InstanceResolver<FileComponent>> dict, FileComponent value)
+        {
+            dict.AddLast(new InstanceResolver<FileComponent>(value));
+        }
+
+        public static void AddBefore(this DictionaryLinkedList<InstanceResolver<FileComponent>> dict, FileComponent node, FileComponent newNode)
+        {
+            var v1 = new InstanceResolver<FileComponent>(node);
+            var v2 = new InstanceResolver<FileComponent>(newNode);
+            dict.AddBefore(v1, v2);
+        }
+
+        public static void AddAfter(this DictionaryLinkedList<InstanceResolver<FileComponent>> dict, FileComponent node, FileComponent newNode)
+        {
+            var v1 = new InstanceResolver<FileComponent>(node);
+            var v2 = new InstanceResolver<FileComponent>(newNode);
+            dict.AddAfter(v1, v2);
+        }
+
+        public static void Remove(this DictionaryLinkedList<InstanceResolver<FileComponent>> dict, FileComponent value)
+        {
+            dict.Remove(new InstanceResolver<FileComponent>(value));
         }
     }
 }

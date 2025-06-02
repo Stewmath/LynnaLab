@@ -100,13 +100,36 @@ namespace LynnaLib
 
 
         // Private variables
-        WarpDestData referencedDestData;
+
+        class WarpSourceState : Data.DataState
+        {
+            public InstanceResolver<WarpDestData> referencedDestData; // Can be null
+
+            public override void CaptureInitialState(FileComponent parent)
+            {
+                parent.Project.UndoState.CaptureInitialState<WarpSourceState>(parent);
+            }
+        }
 
         readonly WarpSourceType _type;
-        readonly ValueReferenceGroup vrg;
+        ValueReferenceGroup _vrg;
 
 
         // Properties
+
+        private WarpSourceState State { get { return base.state as WarpSourceState; } }
+
+        public WarpDestData ReferencedDestData
+        {
+            get { return State.referencedDestData?.Instance; }
+            private set
+            {
+                if (value == null)
+                    State.referencedDestData = null;
+                else
+                    State.referencedDestData = new(value);
+            }
+        }
 
         public WarpSourceType WarpSourceType
         {
@@ -114,7 +137,17 @@ namespace LynnaLib
         }
         public ValueReferenceGroup ValueReferenceGroup
         {
-            get { return vrg; }
+            get
+            {
+                if (_vrg == null)
+                    _vrg = new ValueReferenceGroup(GetWarpDescriptors(_type, this));
+                return _vrg;
+            }
+        }
+
+        ValueReferenceGroup vrg
+        {
+            get { return ValueReferenceGroup; }
         }
 
         public bool TopLeft
@@ -256,43 +289,39 @@ namespace LynnaLib
         }
 
 
-        public WarpSourceData(Project p, string command, IEnumerable<string> values,
+        public WarpSourceData(Project p, string id, string command, IEnumerable<string> values,
                 FileParser parser, IList<string> spacing)
-            : base(p, command, values, -1, parser, spacing)
+            : base(p, id, command, values, -1, parser, spacing, () => new WarpSourceState())
         {
-            // Find type
+            _type = DetermineType(this.CommandLowerCase);
+
+            ReferencedDestData = GetReferencedDestData().destData;
+            if (ReferencedDestData != null)
+                ReferencedDestData.AddReference(this);
+
+            Sanitize();
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private WarpSourceData(Project p, string id, TransactionState state)
+            : base(p, id, state)
+        {
+            _type = DetermineType(this.CommandLowerCase);
+        }
+
+        static WarpSourceType DetermineType(string command)
+        {
             for (int i = 0; i < WarpCommands.Length; i++)
             {
                 string s = WarpCommands[i];
-                if (this.CommandLowerCase == s.ToLower())
+                if (command == s.ToLower())
                 {
-                    _type = (WarpSourceType)i;
-                    break;
+                    return (WarpSourceType)i;
                 }
             }
-
-            vrg = new ValueReferenceGroup(GetWarpDescriptors(_type, this));
-
-            referencedDestData = GetReferencedDestData();
-            if (referencedDestData != null)
-                referencedDestData.AddReference(this);
-
-            this.AddModifiedEventHandler((sender, args) => Sanitize());
-            Sanitize();
-
-            this.AddModifiedEventHandler(delegate (object sender, DataModifiedEventArgs args)
-            {
-                WarpDestData newDestData = GetReferencedDestData();
-                if (newDestData != referencedDestData)
-                {
-                    // Update DestData reference
-                    if (referencedDestData != null)
-                        referencedDestData.RemoveReference(this);
-                    referencedDestData = newDestData;
-                    if (newDestData != null)
-                        newDestData.AddReference(this);
-                }
-            });
+            throw new Exception("Could not determine type for WarpSourceData");
         }
 
         // If this is the kind of warp which points to another warp, return the pointed warp,
@@ -364,18 +393,18 @@ namespace LynnaLib
             return GetNextWarp().TraversePointedChain(count - 1);
         }
 
-        public WarpDestData GetReferencedDestData()
+        private (int group, WarpDestData destData) GetReferencedDestData()
         {
             WarpDestGroup group = GetReferencedDestGroup();
-            if (group == null) return null;
+            if (group == null) return (-1, null);
 
             try
             {
-                return group.GetWarpDest(DestIndex);
+                return (group.Index, group.GetWarpDest(DestIndex));
             }
             catch (ArgumentOutOfRangeException)
             {
-                return null;
+                return (-1, null);
             }
         }
 
@@ -388,20 +417,43 @@ namespace LynnaLib
 
         // Set the WarpDestData associated with this source, setting DestIndex and DestGroup
         // appropriately
-        public void SetDestData(WarpDestData data)
+        public void SetDestData(int group, int index, WarpDestData newDestData)
         {
-            LockModifiedEvents();
-            DestGroupIndex = data.DestGroup.Index;
-            DestIndex = data.DestIndex;
-            UnlockModifiedEvents();
-            // The handler defined in the constructor will update the referencedData variable
+            DestGroupIndex = group;
+            DestIndex = index;
+
+            Debug.Assert((group, newDestData) == GetReferencedDestData());
+            if (newDestData != ReferencedDestData)
+            {
+                // Update DestData reference
+                base.RecordChange();
+                if (ReferencedDestData != null)
+                    ReferencedDestData.RemoveReference(this);
+                ReferencedDestData = newDestData;
+                if (newDestData != null)
+                    newDestData.AddReference(this);
+            }
+
+            Sanitize();
         }
 
         // This hides the annoyance of the "DestData" intermediate layer
         public Room GetDestRoom()
         {
-            WarpDestData destData = GetReferencedDestData();
-            return Project.GetIndexedDataType<Room>((destData.Group << 8) + destData.Map);
+            if (ReferencedDestData == null)
+                throw new Exception("Tried to get destination data for warp source with no valid data.");
+            return Project.GetIndexedDataType<Room>((DestGroupIndex << 8) + ReferencedDestData.Map);
+        }
+
+        public override void Detach()
+        {
+            if (ReferencedDestData != null)
+            {
+                base.RecordChange();
+                ReferencedDestData.RemoveReference(this);
+                ReferencedDestData = null;
+            }
+            base.Detach();
         }
 
 
@@ -433,7 +485,12 @@ namespace LynnaLib
         // Make sure there are no surprises
         void Sanitize()
         {
-            if (WarpSourceType == WarpSourceType.Standard || WarpSourceType == WarpSourceType.Position)
+            bool shouldHaveDestWarp = WarpSourceType == WarpSourceType.Standard || WarpSourceType == WarpSourceType.Position;
+
+            if (shouldHaveDestWarp != (ReferencedDestData != null))
+                throw new Exception("Warp has/lacks dest data when it shouldn't?");
+
+            if (shouldHaveDestWarp)
             {
                 if (DestGroupIndex >= Project.NumGroups)
                 {

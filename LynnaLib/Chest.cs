@@ -68,6 +68,9 @@ namespace LynnaLib
                 ValueReferenceGroup.SetValue("SubID", value);
             }
         }
+        /// <summary>
+        /// Full 16-bit index of the treasure object
+        /// </summary>
         public int TreasureIndex
         {
             get
@@ -122,14 +125,7 @@ namespace LynnaLib
             Project.BeginTransaction("Delete chest");
 
             dataStart.Detach();
-
-            Project.UndoState.OnRewind("Delete chest", () =>
-            { // On undo
-                room.ChestRevived(this);
-            }, (_) =>
-            { // On redo / right now
-                InvokeDeletedEvent();
-            });
+            room.OnChestDeleted(this);
 
             Project.EndTransaction();
         }

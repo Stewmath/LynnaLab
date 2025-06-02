@@ -23,10 +23,6 @@ namespace LynnaLib
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
 
-        // Size in bytes
-        // -1 if indeterminate? (consider getting rid of this, it's unreliable)
-        readonly int size;
-
         // Event invoked whenever data is modified
         LockableEvent<DataModifiedEventArgs> dataModifiedEvent = new LockableEvent<DataModifiedEventArgs>();
 
@@ -70,7 +66,8 @@ namespace LynnaLib
         }
         public int Size
         {
-            get { return size; }
+            get { return State.size; }
+            private set { State.size = value; }
         }
 
         public Data NextData
@@ -107,16 +104,15 @@ namespace LynnaLib
 
         // Constructor
 
-        public Data(Project p, string command, IEnumerable<string> values, int size, FileParser parser, IList<string> spacing)
-            : base(parser, spacing, () => new DataState())
+        protected Data(Project p, string id, string command, IEnumerable<string> values, int size, FileParser parser, IList<string> spacing, Func<FileComponentState> stateConstructor)
+            : base(p, id, parser, spacing, stateConstructor)
         {
-            base.SetProject(p);
             this.Command = command;
             if (values == null)
                 this.Values = new List<string>();
             else
                 this.Values = new List<string>(values);
-            this.size = size;
+            this.Size = size;
 
             if (this.Spacing == null)
                 this.Spacing = new List<string>();
@@ -125,6 +121,20 @@ namespace LynnaLib
 
             PrintCommand = true;
 
+            dataModifiedEvent += (sender, args) => ModifiedEvent?.Invoke(sender, args);
+        }
+
+        public Data(Project p, string id, string command, IEnumerable<string> values, int size, FileParser parser, IList<string> spacing)
+            : this(p, id, command, values, size, parser, spacing, () => new DataState())
+        {
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        protected Data(Project p, string id, TransactionState state)
+            : base(p, id, state)
+        {
             dataModifiedEvent += (sender, args) => ModifiedEvent?.Invoke(sender, args);
         }
 
@@ -259,8 +269,9 @@ namespace LynnaLib
             return FileParser.GetData(this, offset);
         }
 
-        public override void InvokeModifiedEvent(TransactionState prevState)
+        public override void InvokeUndoEvents(TransactionState prevState)
         {
+            base.InvokeUndoEvents(prevState);
             dataModifiedEvent.Invoke(this, new DataModifiedEventArgs(-1));
         }
 
@@ -278,29 +289,17 @@ namespace LynnaLib
             throw e;
         }
 
-        class DataState : FileComponent.FileComponentState
+        protected class DataState : FileComponent.FileComponentState
         {
             public string command;
             public List<string> values;
             public bool printCommand;
+            public int size;
 
-            public override void CopyFrom(FileComponentState state)
-            {
-                DataState ds = state as DataState;
-                command = ds.command;
-                values = new List<string>(ds.values);
-                printCommand = ds.printCommand;
-                base.CopyFrom(state);
-            }
 
-            public override bool Compare(TransactionState obj)
+            public override void CaptureInitialState(FileComponent parent)
             {
-                if (!(obj is DataState state))
-                    return false;
-                return base.Compare(obj)
-                    && command == state.command
-                    && values.SequenceEqual(state.values)
-                    && printCommand == state.printCommand;
+                parent.Project.UndoState.CaptureInitialState<DataState>(parent);
             }
         }
     }
@@ -325,8 +324,16 @@ namespace LynnaLib
             }
         }
 
-        public RgbData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
-            : base(p, command, values, 2, parser, spacing)
+        public RgbData(Project p, string id, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
+            : base(p, id, command, values, 2, parser, spacing)
+        {
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private RgbData(Project p, string id, TransactionState state)
+            : base(p, id, state)
         {
         }
     }

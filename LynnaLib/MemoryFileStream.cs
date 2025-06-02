@@ -1,70 +1,29 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+using Util;
 
 namespace LynnaLib
 {
     /// Like a FileStream but it's buffered in memory. Can be written to and saved.
-    public class MemoryFileStream : Stream, Undoable
+    public class MemoryFileStream : TrackedStream
     {
-        // Arguments for modification callback
-        public class ModifiedEventArgs
+        public class State : TransactionState
         {
-            public readonly long modifiedRangeStart; // First changed address (inclusive)
-            public readonly long modifiedRangeEnd;   // Last changed address (exclusive)
-
-            public ModifiedEventArgs(long s, long e)
-            {
-                modifiedRangeStart = s;
-                modifiedRangeEnd = e;
-            }
-
-            public bool ByteChanged(long position)
-            {
-                return position >= modifiedRangeStart && position < modifiedRangeEnd;
-            }
-        }
-
-        class State : TransactionState
-        {
+            [JsonRequired]
             public byte[] data;
-
-            public TransactionState Copy()
-            {
-                State s = new State();
-                s.data = (byte[])data.Clone();
-                return s;
-            }
-
-            public bool Compare(TransactionState o)
-            {
-                if (!(o is State state))
-                    return false;
-                return data.SequenceEqual(state.data);
-            }
         }
 
+        // ================================================================================
+        // Properties
+        // ================================================================================
 
-        public Project Project { get; private set; }
-
-        public override bool CanRead
-        {
-            get { return true; }
-        }
-        public override bool CanSeek
-        {
-            get { return true; }
-        }
-        public override bool CanTimeout
-        {
-            get { return false; }
-        }
-        public override bool CanWrite
-        {
-            get { return true; }
-        }
         public override long Length
         {
-            get { return _length; }
+            get { return state.data.Length; }
         }
         public override long Position
         {
@@ -75,11 +34,6 @@ namespace LynnaLib
         public string FilePath
         {
             get { return filepath; }
-        }
-
-        public string RelativeFilePath
-        {
-            get { return System.IO.Path.GetRelativePath(Project.BaseDirectory, filepath); }
         }
 
         public bool Modified
@@ -95,36 +49,126 @@ namespace LynnaLib
 
         private byte[] Data { get { return state.data; } }
 
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        private static readonly log4net.ILog log = LogHelper.GetLogger();
+
+        FileSystemWatcher watcher;
+        bool watcherReloadScheduled;
+        object watcherLock = new();
+
         State state = new State();
-        long _length;
+
+        // TODO: Technically should probably be tracking this? But the way it's used, it's unlikely
+        // to matter.
         long _position;
+
+        readonly string filepath;
         bool _modified;
-        string filepath;
 
-        LockableEvent<ModifiedEventArgs> modifiedEvent = new LockableEvent<ModifiedEventArgs>();
+        // ================================================================================
+        // Events
+        // ================================================================================
 
-        // TODO: replace above with this
-        public event EventHandler<ModifiedEventArgs> ModifiedEvent;
+        // Inherits ModifiedEvent
 
+        // ================================================================================
+        // Constructors
+        // ================================================================================
 
-        public MemoryFileStream(Project project, string filename)
+        public MemoryFileStream(Project project, string filename, bool watchForFilesystemChanges)
+            : base(project, filename)
         {
-            this.Project = project;
-            this.filepath = filename;
+            this.filepath = Path.Combine(project.BaseDirectory, filename);
 
-            FileStream input = new FileStream(filename, FileMode.Open);
-            _length = input.Length;
+            LoadFromFile();
 
-            state.data = new byte[Length];
-            _position = 0;
-            input.Read(Data, 0, (int)Length);
-            input.Close();
-
-            modifiedEvent += (sender, args) => { if (ModifiedEvent != null) ModifiedEvent(sender, args); };
+            if (watchForFilesystemChanges)
+                InitializeFileWatcher();
         }
 
-        public override void Flush()
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private MemoryFileStream(Project p, string id, TransactionState state)
+            : base(p, id)
         {
+            this.filepath = null;
+            this.state = (State)state;
+        }
+
+        void InitializeFileWatcher()
+        {
+            // FileSystemWatcher doesn't work well on Linux. Creating hundreds or thousands of these
+            // uses up system resources in a way that causes the OS to complain.
+            // Automatic file reloading is disabled on Linux until a good workaround is found.
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                return;
+
+            watcher = new FileSystemWatcher();
+            watcher.Path = Path.GetDirectoryName(filepath);
+            watcher.Filter = Path.GetFileName(filepath);
+            watcher.NotifyFilter = NotifyFilters.LastWrite;
+
+            watcher.Changed += (o, a) =>
+            {
+                lock (watcherLock)
+                {
+                    if (watcherReloadScheduled)
+                        return;
+                    watcherReloadScheduled = true;
+                }
+
+                log.Info($"File {filepath} changed, triggering reload event");
+
+                // Wait one second before rereading the file. FileSystemWatcher seems a bit glitchy,
+                // we need to give the file time to "stabilize".
+                System.Threading.Thread.Sleep(1000);
+
+                watcherReloadScheduled = false;
+
+                // Use MainThreadInvoke to avoid any threading headaches
+                Helper.MainThreadInvoke(() =>
+                {
+                    Project.BeginTransaction("PNG File Reload"); // TODO: Don't allow undoing this?
+                    Project.UndoState.CaptureInitialState<State>(this);
+                    LoadFromFile();
+                    InvokeModifiedEvent(new StreamModifiedEventArgs(0, Length));
+                    Project.EndTransaction();
+                });
+            };
+
+            watcher.EnableRaisingEvents = true;
+        }
+
+        void LoadFromFile()
+        {
+            FileStream input = new FileStream(filepath, FileMode.Open);
+
+            if (input.Length == 0)
+            {
+                // It seems like when a filewatcher is installed, this can get triggered when it's
+                // seen as "empty"? Perhaps because it can't open the file properly. Obviously this
+                // is bad. Just ignore it in that case.
+                return;
+            }
+
+            state.data = new byte[input.Length];
+            _position = 0;
+            if (input.Read(state.data, 0, (int)input.Length) != input.Length)
+                throw new Exception("MemoryFileStream: Didn't read enough bytes");
+            input.Close();
+        }
+
+        // ================================================================================
+        // Public methods
+        // ================================================================================
+
+        public void Save()
+        {
+            // TODO: How to handle this when on a remote client (probably just do nothing)
             if (Modified)
             {
                 FileStream output = new FileStream(filepath, FileMode.Open);
@@ -134,7 +178,7 @@ namespace LynnaLib
             }
         }
 
-        public override void SetLength(long len)
+        public void SetLength(long len)
         {
             // This code should work, but it's not currently needed. Not sure how to handle the modified
             // event handler for this. See todo below.
@@ -149,7 +193,7 @@ namespace LynnaLib
                 _length = len;
 
                 modified = true;
-                modifiedEvent.Invoke(this, null); // TODO: should send an actual argument I guess
+                ModifiedEvent?.Invoke(this, null); // TODO: should send an actual argument I guess
             }
             */
         }
@@ -180,6 +224,19 @@ namespace LynnaLib
             Position = Position + size;
             return size;
         }
+
+        public override int ReadByte()
+        {
+            int ret = Data[Position];
+            Position++;
+            return ret;
+        }
+
+        public override ReadOnlySpan<byte> ReadAllBytes()
+        {
+            return Data;
+        }
+
         public override void Write(byte[] buffer, int offset, int count)
         {
             RecordChange();
@@ -190,15 +247,9 @@ namespace LynnaLib
             if (Position > Length)
                 Position = Length;
             Modified = true;
-            modifiedEvent.Invoke(this, new ModifiedEventArgs(offset, offset + count));
+            InvokeModifiedEvent(new StreamModifiedEventArgs(offset, offset + count));
         }
 
-        public override int ReadByte()
-        {
-            int ret = Data[Position];
-            Position++;
-            return ret;
-        }
         public override void WriteByte(byte value)
         {
             if (Data[Position] == value)
@@ -210,80 +261,71 @@ namespace LynnaLib
             Data[Position] = value;
             Position++;
             Modified = true;
-            modifiedEvent.Invoke(this, new ModifiedEventArgs(Position - 1, Position));
+            InvokeModifiedEvent(new StreamModifiedEventArgs(Position - 1, Position));
         }
 
-
+        public override void WriteAllBytes(ReadOnlySpan<byte> data)
+        {
+            Project.UndoState.CaptureInitialState<State>(this);
+            state.data = data.ToArray();
+            InvokeModifiedEvent(StreamModifiedEventArgs.All(this));
+        }
 
         public int GetByte(int position)
         {
             return Data[position];
         }
 
+        public string ReadAllText()
+        {
+            return System.Text.Encoding.UTF8.GetString(Data);
+        }
+        public string[] ReadAllLines()
+        {
+            return ReadAllText().Split('\n');
+        }
 
-        public void AddModifiedEventHandler(EventHandler<ModifiedEventArgs> handler)
-        {
-            modifiedEvent += handler;
-        }
-        public void RemoveModifiedEventHandler(EventHandler<ModifiedEventArgs> handler)
-        {
-            modifiedEvent -= handler;
-        }
 
-        public void LockEvents()
+        public void AddModifiedEventHandler(EventHandler<StreamModifiedEventArgs> handler)
         {
-            modifiedEvent.Lock();
+            ModifiedEvent += handler;
         }
-        public void UnlockEvents()
+        public void RemoveModifiedEventHandler(EventHandler<StreamModifiedEventArgs> handler)
         {
-            modifiedEvent.Unlock();
+            ModifiedEvent -= handler;
         }
 
         public void RecordChange()
         {
-            Project.UndoState.CaptureInitialState(this);
+            Project.UndoState.CaptureInitialState<State>(this);
         }
 
         // ================================================================================
-        // Undoable interface functions
+        // TrackedProjectData interface functions
         // ================================================================================
 
-        public TransactionState GetState()
+        public override TransactionState GetState()
         {
             return state;
         }
 
-        public void SetState(TransactionState state)
+        public override void SetState(TransactionState s)
         {
-            this.state = (State)state.Copy();
-            Modified = true;
+            State newState = (State)s;
+            if (newState.data == null)
+                throw new DeserializationException("Missing data in MemoryFileStream");
+            this.state = newState;
+            this.Modified = true;
         }
 
-        public void InvokeModifiedEvent(TransactionState prevState)
+        public override void InvokeUndoEvents(TransactionState prevState)
         {
-            State last = prevState as State;
+            State last = (State)prevState;
 
-            if (last.data.Length == state.data.Length)
-            {
-                // Compare the new and old data to try to optimize which parts we mark as modified.
-                int start = 0, end = state.data.Length - 1;
-
-                while (start < state.data.Length && last.data[start] == state.data[start])
-                    start++;
-                if (start == state.data.Length)
-                    return;
-                while (last.data[end] == state.data[end])
-                    end--;
-                end++;
-                if (start >= end)
-                    return;
-                modifiedEvent?.Invoke(this, new ModifiedEventArgs(start, end));
-            }
-            else
-            {
-                // Just mark everything as modified
-                modifiedEvent?.Invoke(this, new ModifiedEventArgs(0, Length));
-            }
+            var args = StreamModifiedEventArgs.FromChangedRange(last.data, state.data);
+            if (args == null)
+                return;
+            InvokeModifiedEvent(args);
         }
     }
 }

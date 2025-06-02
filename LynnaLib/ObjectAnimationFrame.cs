@@ -25,14 +25,15 @@ namespace LynnaLib
 
             GenerateBitmaps();
 
-            var gfxStream = _animation.ObjectGfxHeaderData.GfxStream;
-            if (gfxStream is ReloadableStream)
-            {
-                (gfxStream as ReloadableStream).ExternallyModifiedEvent += (s, a) =>
-                {
-                    GenerateBitmaps();
-                };
-            }
+            // TODO: Get PNG reloading working again
+            // var gfxStream = _animation.ObjectGfxHeaderData.GfxStream;
+            // if (gfxStream is ReloadableStream)
+            // {
+            //     (gfxStream as ReloadableStream).ExternallyModifiedEvent += (s, a) =>
+            //     {
+            //         GenerateBitmaps();
+            //     };
+            // }
         }
 
         void GenerateBitmaps()
@@ -89,7 +90,7 @@ namespace LynnaLib
                     }
 
                     int tileOffset = (tileIndex & 0xfe) * 16;
-                    Stream gfxStream = gfxHeader.GfxStream;
+                    IStream gfxStream = gfxHeader.GfxStream;
 
                     if (gfxStream.Length - tileOffset < 0x20)
                         throw new InvalidAnimationException("Sprite not defined in gfx data");

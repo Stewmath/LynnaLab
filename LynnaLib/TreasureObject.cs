@@ -8,28 +8,48 @@ namespace LynnaLib
     /// graphics, text, etc. (see "data/{game}/treasureObjectData.s".)
     /// Has an "ID" (the treasure index) and an additional "subID" representing a "variant" of the
     /// treasure.
-    public class TreasureObject
+    public class TreasureObject : TrackedProjectData
     {
-        readonly TreasureGroup treasureGroup;
-        readonly Data baseData;
+        class State : TransactionState
+        {
+            public required int SubID { get; init; }
+            public required InstanceResolver<TreasureGroup> treasureGroup { get; init; }
+            public required InstanceResolver<Data> baseData { get; init; }
+        }
+
+        State state;
         ValueReferenceGroup vrg;
 
-        internal TreasureObject(TreasureGroup treasureGroup, int subid, Data baseData)
+
+        internal TreasureObject(TreasureGroup treasureGroup, string identifier, int subid, Data baseData)
+            : base(treasureGroup.Project, identifier)
         {
-            this.treasureGroup = treasureGroup;
-            this.SubID = subid;
+            state = new()
+            {
+                SubID = subid,
+                treasureGroup = new(treasureGroup),
+                baseData = new(baseData),
+            };
 
             // Check if index is too high
             if (ID >= Project.NumTreasures)
                 throw new InvalidTreasureException(string.Format("ID {0:X2} for treasure was too high!", ID));
 
-            this.baseData = baseData;
             GenerateValueReferenceGroup();
 
             // Add the treasure definition to the Project's definition list and to the
             // TreasureObjectMapping.
             Project.AddDefinition(Name, Wla.ToWord((ID << 8) | SubID));
             Project.TreasureObjectMapping.AddKeyValuePair(Name, (ID << 8) | SubID);
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private TreasureObject(Project p, string id, TransactionState state)
+            : base(p, id)
+        {
+            this.state = (State)state;
         }
 
 
@@ -47,16 +67,16 @@ namespace LynnaLib
 
         public int ID
         {
-            get { return treasureGroup.Index; }
+            get { return state.treasureGroup.Instance.Index; }
         }
         public int SubID
         {
-            get; private set;
+            get { return state.SubID; }
         }
 
         public string Name
         {
-            get { return baseData.GetValue(4); }
+            get { return BaseData.GetValue(4); }
         }
 
         // Allows one to get/set the raw value of the 1st byte directly (spawn mode, grab mode, "set
@@ -65,20 +85,20 @@ namespace LynnaLib
         {
             get
             {
-                return (byte)baseData.GetIntValue(0);
+                return (byte)BaseData.GetIntValue(0);
             }
             set
             {
                 // Bypassing the ValueReferenceGroup shouldn't cause any problems with its modified
                 // handler since we're not using AbstractIntValueReference.
-                baseData.SetByteValue(0, value);
+                BaseData.SetByteValue(0, value);
             }
         }
 
         public string TransactionIdentifier { get { return $"treasureobject-{ID:X2}-{SubID:X2}"; } }
 
 
-        Project Project { get { return treasureGroup.Project; } }
+        Data BaseData { get { return state.baseData.Instance; } }
 
 
         // Private methods
@@ -86,34 +106,34 @@ namespace LynnaLib
         void GenerateValueReferenceGroup()
         {
             vrg = new ValueReferenceGroup(new ValueReferenceDescriptor[] {
-                DataValueReference.Descriptor(baseData,
+                DataValueReference.Descriptor(BaseData,
                         index: 0,
                         name: "Spawn Mode",
                         type: DataValueType.ByteBits,
                         startBit: 4,
                         endBit: 6,
                         constantsMappingString: "TreasureSpawnModeMapping"),
-                DataValueReference.Descriptor(baseData,
+                DataValueReference.Descriptor(BaseData,
                         index: 0,
                         name: "Grab Mode",
                         type: DataValueType.ByteBits,
                         startBit: 0,
                         endBit: 2,
                         constantsMappingString: "TreasureGrabModeMapping"),
-                DataValueReference.Descriptor(baseData,
+                DataValueReference.Descriptor(BaseData,
                         index: 1,
                         name: "Parameter",
                         type: DataValueType.Byte),
-                DataValueReference.Descriptor(baseData,
+                DataValueReference.Descriptor(BaseData,
                         index: 2,
                         name: "Text Index",
                         type: DataValueType.String,
                         tooltip: "Will show text \"TX_00XX\" when you open the chest."),
-                DataValueReference.Descriptor(baseData,
+                DataValueReference.Descriptor(BaseData,
                         index: 3,
                         name: "Graphics",
                         type: DataValueType.Byte),
-                DataValueReference.Descriptor(baseData,
+                DataValueReference.Descriptor(BaseData,
                         index: 0,
                         name: "Set 'Item Obtained' Flag",
                         type: DataValueType.ByteBit,
@@ -122,6 +142,28 @@ namespace LynnaLib
             });
 
             vrg.EnableTransactions("Edit treasure object#" + TransactionIdentifier, true);
+        }
+
+        // ================================================================================
+        // TrackedProjectState implementation
+        // ================================================================================
+
+        public override TransactionState GetState()
+        {
+            return state;
+        }
+        public override void SetState(TransactionState state)
+        {
+            this.state = (State)state;
+        }
+        public override void InvokeUndoEvents(TransactionState oldState)
+        {
+        }
+        public override void OnInitializedFromTransfer()
+        {
+            // Can't put this in the state-based constructor since it involves dereferencing
+            // "BaseData".
+            GenerateValueReferenceGroup();
         }
     }
 }

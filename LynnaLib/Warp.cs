@@ -2,17 +2,21 @@ namespace LynnaLib
 {
     // This class is an abstraction of WarpSourceData and WarpDestData, managed by the WarpGroup
     // class. It hides annoying details such as managing warp destination indices manually.
-    public class Warp : Undoable
+    public class Warp : TrackedProjectData
     {
         // ================================================================================
         // Constructors
         // ================================================================================
 
         internal Warp(WarpGroup group, WarpSourceData data, int uniqueID)
+            : base(group.Project, $"{group.Identifier}-{uniqueID}")
         {
-            SourceGroup = group;
-            state.warpSource = data;
-            this.uniqueID = uniqueID;
+            state = new()
+            {
+                sourceGroup = new(group),
+                uniqueID = uniqueID,
+                warpSource = new(data),
+            };
 
             // Do not, repeat, do NOT install a modified handler onto the source data - not as long
             // as the "DestGroup" and "DestIndex" fields behave as they do currently; they should
@@ -23,8 +27,15 @@ namespace LynnaLib
             // because it should never be modified except through this class.
             //
             // This does make undo/redo management a tad more complicated, but it's manageable.
+        }
 
-            ConstructValueReferenceGroup();
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private Warp(Project p, string id, TransactionState s)
+            : base(p, id)
+        {
+            this.state = (State)s;
         }
 
         // ================================================================================
@@ -34,24 +45,13 @@ namespace LynnaLib
         // Everything in the State class is affected by undo/redo
         class State : TransactionState
         {
-            public WarpSourceData warpSource;
-
-            public TransactionState Copy()
-            {
-                State s = new State();
-                s.warpSource = warpSource;
-                return s;
-            }
-
-            public bool Compare(TransactionState obj)
-            {
-                return (obj is State state) && warpSource == state.warpSource;
-            }
+            public InstanceResolver<WarpGroup> sourceGroup { get; init; }
+            public int uniqueID { get; init; } // ID that's unique compared to any warp in this room
+            public InstanceResolver<WarpSourceData> warpSource;
         };
 
         State state = new State();
-        ValueReferenceGroup vrg;
-        int uniqueID; // ID that's unique compared to any warp in this room
+        ValueReferenceGroup _vrg;
 
         LockableEvent<EventArgs> ModifiedEvent = new LockableEvent<EventArgs>();
 
@@ -62,10 +62,6 @@ namespace LynnaLib
 
         // Properties from warp source
 
-        public Project Project
-        {
-            get { return SourceData.Project; }
-        }
         public WarpSourceType WarpSourceType
         {
             get { return SourceData.WarpSourceType; }
@@ -73,6 +69,16 @@ namespace LynnaLib
         public ValueReferenceGroup ValueReferenceGroup
         {
             get { return vrg; }
+        }
+
+        ValueReferenceGroup vrg
+        {
+            get
+            {
+                if (_vrg == null)
+                    ConstructValueReferenceGroup();
+                return _vrg;
+            }
         }
 
         public bool TopLeft
@@ -153,24 +159,24 @@ namespace LynnaLib
 
         // Other properties
 
-        public WarpGroup SourceGroup { get; private set; }
+        public WarpGroup SourceGroup { get { return state.sourceGroup.Instance; } }
 
-        public string TransactionIdentifier { get { return $"warp-r{SourceRoom.Index:X3}i{uniqueID}"; } }
+        public string TransactionIdentifier { get { return $"warp-r{SourceRoom.Index:X3}i{state.uniqueID}"; } }
 
         // Underlying warp source data object. In general, manipulating this directly
         // isn't recommended; direct modifications to the base data don't trigger event handlers
         // set by the "AddModifiedHandler" function. Same with "DestData".
         internal WarpSourceData SourceData
         {
-            get { return state.warpSource; }
+            get { return state.warpSource.Instance; }
             set
             {
-                Project.UndoState.CaptureInitialState(this);
-                state.warpSource = value;
+                Project.UndoState.CaptureInitialState<State>(this);
+                state.warpSource = new(value);
             }
         }
 
-        WarpDestData DestData { get { return SourceData.GetReferencedDestData(); } }
+        WarpDestData DestData { get { return SourceData.ReferencedDestData; } }
 
         ValueReferenceGroup SourceVrg { get { return SourceData.ValueReferenceGroup; } }
         ValueReferenceGroup DestVrg { get { return DestData.ValueReferenceGroup; } }
@@ -195,20 +201,20 @@ namespace LynnaLib
         }
 
         // ================================================================================
-        // Undoable interface methods
+        // TrackedProjectData interface functions
         // ================================================================================
 
-        public TransactionState GetState()
+        public override TransactionState GetState()
         {
             return state;
         }
 
-        public void SetState(TransactionState state)
+        public override void SetState(TransactionState state)
         {
             this.state = (State)state;
         }
 
-        public void InvokeModifiedEvent(TransactionState prevState)
+        public override void InvokeUndoEvents(TransactionState prevState)
         {
             ModifiedEvent?.Invoke(this, null);
         }
@@ -355,9 +361,9 @@ namespace LynnaLib
                     constantsMappingString: "DestTransitionMapping");
             descriptors.Add(desc);
 
-            vrg = new ValueReferenceGroup(descriptors);
-            vrg.AddValueModifiedHandler((sender, args) => OnDataModified(sender, null));
-            vrg.EnableTransactions($"Edit warp data#{TransactionIdentifier}", true);
+            _vrg = new ValueReferenceGroup(descriptors);
+            _vrg.AddValueModifiedHandler((sender, args) => OnDataModified(sender, null));
+            _vrg.EnableTransactions($"Edit warp data#{TransactionIdentifier}", true);
         }
 
 
@@ -376,13 +382,13 @@ namespace LynnaLib
                 if (newGroup >= Project.NumGroups)
                     throw new Exception(string.Format("Group {0} is too high for warp destination.", newGroup));
                 var destGroup = Project.GetIndexedDataType<WarpDestGroup>(newGroup);
-                SetDestData(destGroup.GetNewOrUnusedDestData());
+                AllocateNewDestData(destGroup);
             }
             else
             {
                 if (DestData.GetNumReferences() != 1)
                 { // Used by another warp source
-                    SetDestData(SourceData.DestGroup.GetNewOrUnusedDestData());
+                    AllocateNewDestData(SourceData.DestGroup);
                 }
             }
 
@@ -403,9 +409,10 @@ namespace LynnaLib
         // Used to always use this function so that I could add and remove modified hooks on the
         // underlying "dest data". But all modifications should be done through the "Warp" class
         // anyway, not the "WarpDestData" class, so that's not necessary.
-        void SetDestData(WarpDestData newDestData)
+        void AllocateNewDestData(WarpDestGroup group)
         {
-            SourceData.SetDestData(newDestData);
+            (int i, WarpDestData data) = group.GetNewOrUnusedDestData();
+            SourceData.SetDestData(group.Index, i, data);
         }
 
 
@@ -415,11 +422,10 @@ namespace LynnaLib
             // does not have any listeners installed on the underlying data. This is done on
             // purpose (see note in constructor). But it means that we do not see undo/redo events
             // that change the underlying data. So we must notify the Undo system to do something.
+            // (This is just to ensure "InvokeUndoEvents" is called.)
+            Project.UndoState.CaptureInitialState<State>(this);
 
-            Project.UndoState.OnRewind("Edit warp data", () =>
-            { // Action to do on undo, redo, and also now
-                ModifiedEvent.Invoke(this, null);
-            });
+            ModifiedEvent?.Invoke(this, null);
         }
     }
 }

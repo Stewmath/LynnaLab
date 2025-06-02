@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LynnaLab", "LynnaLab\LynnaL
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LynnaLib", "LynnaLib\LynnaLib.csproj", "{C57A460A-90D5-4B50-AA96-1D11CA6D6801}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LynnaLib.Tests", "LynnaLib.Tests\LynnaLib.Tests.csproj", "{1817167D-2C8D-487C-ACC0-8CA8A4A1D6B0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -17,6 +19,10 @@ Global
 		{21072A00-C7C0-41FF-8103-4186BB75056E}.Debug|x86.Build.0 = Debug|Any CPU
 		{21072A00-C7C0-41FF-8103-4186BB75056E}.Release|x86.ActiveCfg = Release|Any CPU
 		{21072A00-C7C0-41FF-8103-4186BB75056E}.Release|x86.Build.0 = Release|Any CPU
+		{1817167D-2C8D-487C-ACC0-8CA8A4A1D6B0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1817167D-2C8D-487C-ACC0-8CA8A4A1D6B0}.Debug|x86.Build.0 = Debug|Any CPU
+		{1817167D-2C8D-487C-ACC0-8CA8A4A1D6B0}.Release|x86.ActiveCfg = Release|Any CPU
+		{1817167D-2C8D-487C-ACC0-8CA8A4A1D6B0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -12,29 +12,29 @@ namespace LynnaLib
         {
             get { return project; }
         }
+        /// <summary>
+        /// Unique identifier (not including the type name)
+        /// </summary>
         public string Identifier
         {
             get { return identifier; }
         }
 
-        internal ProjectDataType(Project p, string identifier)
+        /// <summary>
+        /// Full identifier including type
+        /// </summary>
+        public string FullIdentifier
+        {
+            get { return Project.GetFullIdentifier(GetType(), Identifier); }
+        }
+
+        protected ProjectDataType(Project p, string identifier)
         {
             project = p;
             this.identifier = identifier;
-            // TODO: Somehow assert that this is always instantiated through the Project class (to
-            // ensure that duplicate instances for the same data are not created)
-        }
-        internal ProjectDataType(Project p, int i)
-            : this(p, i.ToString())
-        {
-        }
 
-        public string GetIdentifier()
-        {
-            return this.GetType().Name + "_" + identifier;
+            Project.AddDataType(GetType(), this);
         }
-
-        public virtual void Save() { }
     }
 
     public abstract class ProjectIndexedDataType : ProjectDataType

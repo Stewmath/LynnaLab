@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace LynnaLib
 {
-    public class AnimationGroup : ProjectIndexedDataType
+    public class AnimationGroup : ProjectIndexedDataType, IndexedProjectDataInstantiator
     {
         public int NumAnimations
         {
@@ -14,7 +14,7 @@ namespace LynnaLib
         int _numAnimations;
         Animation[] animations = new Animation[4];
 
-        internal AnimationGroup(Project p, int i) : base(p, i)
+        private AnimationGroup(Project p, int i) : base(p, i)
         {
             FileParser parser = Project.GetFileWithLabel("animationGroupTable");
             Data pointer = parser.GetData("animationGroupTable", 2 * Index);
@@ -41,9 +41,14 @@ namespace LynnaLib
                 if (data.CommandLowerCase != ".dw")
                     throw new Exception("Malformatted animation group data (index 0x" +
                             Index.ToString("x") + "\n");
-                animations[j] = Project.GetDataType<Animation>(data.GetValue(0));
+                animations[j] = Project.GetDataType<Animation>(data.GetValue(0), createIfMissing: true);
                 data = data.NextData;
             }
+        }
+
+        static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+        {
+            return new AnimationGroup(p, index);
         }
 
         public Animation GetAnimationIndex(int i)

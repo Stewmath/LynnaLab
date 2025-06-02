@@ -88,7 +88,7 @@ public abstract class Frame
     /// <summary>
     /// Render this as a separate window (not embedded in anything)
     /// </summary>
-    public void RenderAsWindow()
+    public void RenderAsWindow(string extraIdentifier)
     {
         if (grabFocus)
             Active = true;
@@ -109,7 +109,7 @@ public abstract class Frame
                 ImGui.SetNextWindowSize(lastWindowSize * factor);
             }
 
-            if (ImGui.Begin(WindowID, ref active, WindowFlags))
+            if (ImGui.Begin($"{WindowID}##{extraIdentifier}", ref active, WindowFlags))
             {
                 Render();
 

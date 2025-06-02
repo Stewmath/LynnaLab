@@ -7,13 +7,13 @@ namespace LynnaLib
 {
     /// Represents an "INTERACID_TREASURE" value (1 byte). This can be used to lookup
     /// a "TreasureObject" which has an additional subID.
-    public class TreasureGroup : ProjectIndexedDataType, Undoable
+    public class TreasureGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiator
     {
         // ================================================================================
         // Constructors
         // ================================================================================
 
-        internal TreasureGroup(Project p, int index) : base(p, index)
+        private TreasureGroup(Project p, int index) : base(p, index)
         {
             if (Index >= Project.NumTreasures)
                 throw new InvalidTreasureException(
@@ -22,30 +22,27 @@ namespace LynnaLib
             DetermineDataStart();
         }
 
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private TreasureGroup(Project p, string id, TransactionState state)
+            : base(p, int.Parse(id))
+        {
+            this.state = (State)state;
+        }
+
+        static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+        {
+            return new TreasureGroup(p, index);
+        }
+
         // ================================================================================
         // Variables
         // ================================================================================
 
-        // Undoable state goes here
         class State : TransactionState
         {
-            public TreasureObject[] treasureObjectCache = new TreasureObject[256];
-            public Data dataStart;
-
-            public TransactionState Copy()
-            {
-                State s = new State();
-                s.treasureObjectCache = (TreasureObject[])treasureObjectCache.Clone();
-                s.dataStart = dataStart;
-                return s;
-            }
-
-            public bool Compare(TransactionState obj)
-            {
-                if (!(obj is State s))
-                    return false;
-                return treasureObjectCache.SequenceEqual(s.treasureObjectCache) && s.dataStart == dataStart;
-            }
+            public InstanceResolver<Data> dataStart;
         };
 
         State state = new State();
@@ -54,12 +51,10 @@ namespace LynnaLib
         // Properties
         // ================================================================================
 
-        TreasureObject[] TreasureObjectCache { get { return state.treasureObjectCache; } }
-
         Data DataStart
         {
-            get { return state.dataStart; }
-            set { state.dataStart = value; }
+            get { return state.dataStart.Instance; }
+            set { state.dataStart = new(value); }
         }
 
         public int NumTreasureObjectSubids
@@ -92,14 +87,14 @@ namespace LynnaLib
 
         public TreasureObject GetTreasureObject(int subid)
         {
-            if (TreasureObjectCache[subid] == null)
-            {
-                Data data = GetSubidBaseData(subid);
-                if (data == null)
-                    return null;
-                TreasureObjectCache[subid] = new TreasureObject(this, subid, data);
-            }
-            return TreasureObjectCache[subid];
+            Data data = GetSubidBaseData(subid);
+            if (data == null)
+                return null;
+            string identifier = $"{Identifier}-{subid}";
+            if (Project.CheckHasDataType<TreasureObject>(identifier))
+                return Project.GetDataType<TreasureObject>(identifier, createIfMissing: false);
+            TreasureObject obj = new TreasureObject(this, identifier, subid, data);
+            return obj;
         }
 
         public TreasureObject AddTreasureObjectSubid()
@@ -130,7 +125,7 @@ namespace LynnaLib
             };
 
             Project.BeginTransaction("Create treasure object");
-            Project.UndoState.CaptureInitialState(this);
+            Project.UndoState.CaptureInitialState<State>(this);
 
             if (NumTreasureObjectSubids == 0)
             {
@@ -170,8 +165,8 @@ namespace LynnaLib
 
                 // We want to insert the data at the end of the file, but it must be within the
                 // section, so we need to check for the ".ends" directive and put it above there.
-                var sectionEnd = parser.FileStructure.Where((x) => x.GetString().Trim().ToLower() == ".ends");
-                FileComponent insertPos = (sectionEnd.Count() == 0 ? null : sectionEnd.Last().Prev);
+                var sectionEnd = parser.FileStructure.Where((x) => x.Instance.GetString().Trim().ToLower() == ".ends");
+                FileComponent insertPos = (sectionEnd.Count() == 0 ? null : sectionEnd.Last().Instance.Prev);
 
                 // Create label
                 insertPos = parser.InsertParseableTextAfter(insertPos, new string[] { labelName + ":" });
@@ -210,20 +205,20 @@ namespace LynnaLib
         }
 
         // ================================================================================
-        // Undoable interface functions
+        // TrackedProjectData interface functions
         // ================================================================================
 
-        public TransactionState GetState()
+        public override TransactionState GetState()
         {
             return state;
         }
 
-        public void SetState(TransactionState s)
+        public override void SetState(TransactionState s)
         {
-            this.state = (State)s.Copy();
+            this.state = (State)s;
         }
 
-        public void InvokeModifiedEvent(TransactionState prevState)
+        public override void InvokeUndoEvents(TransactionState prevState)
         {
         }
 

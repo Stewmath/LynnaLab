@@ -8,13 +8,13 @@ namespace LynnaLib
     public class TilesetLayoutHeaderData : Data
     {
 
-        readonly Stream referencedData;
+        readonly TrackedStream referencedData;
 
         public int DictionaryIndex
         {
             get { return Project.Eval(GetValue(0)); }
         }
-        public Stream ReferencedData
+        public TrackedStream ReferencedData
         {
             get
             {
@@ -35,12 +35,12 @@ namespace LynnaLib
         }
 
 
-        public TilesetLayoutHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
-            : base(p, command, values, 8, parser, spacing)
+        public TilesetLayoutHeaderData(Project p, string id, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
+            : base(p, id, command, values, 8, parser, spacing)
         {
             try
             {
-                referencedData = Project.GetBinaryFile("tileset_layouts/" + Project.GameString + "/" + GetValue(1) + ".bin");
+                referencedData = Project.GetFileStream("tileset_layouts/" + Project.GameString + "/" + GetValue(1) + ".bin");
             }
             catch (FileNotFoundException)
             {
@@ -48,7 +48,7 @@ namespace LynnaLib
                 // TODO: copy this into its own file?
                 LogHelper.GetLogger().Warn("Missing tileset layout file: " + GetValue(1));
                 string filename = GetValue(1).Substring(0, GetValue(1).Length - 2);
-                referencedData = Project.GetBinaryFile("tileset_layouts/" + Project.GameString + "/" + filename + "00.bin");
+                referencedData = Project.GetFileStream("tileset_layouts/" + Project.GameString + "/" + filename + "00.bin");
             }
         }
 

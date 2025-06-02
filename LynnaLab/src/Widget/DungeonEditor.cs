@@ -14,9 +14,12 @@ public class DungeonEditor : Frame
         minimap = new Minimap(Workspace);
         SetDungeon(Project.GetDungeon(0));
 
-        dungeonEW.Bind<EventArgs>("FloorsChangedEvent", (_, _) =>
+        dungeonEW.Bind<DungeonChangedEventArgs>("ChangedEvent", (_, args) =>
         {
-            ReloadMap();
+            if (args.FloorsChanged)
+            {
+                ReloadMap();
+            }
         }, weak: false);
     }
 

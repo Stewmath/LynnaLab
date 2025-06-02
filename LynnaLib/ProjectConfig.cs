@@ -1,8 +1,14 @@
 using System.IO;
+using System.Text.Json.Serialization;
 using YamlDotNet.Serialization;
 
 namespace LynnaLib
 {
+    /// <summary>
+    /// This is the contents of the "config.yaml" file deserialized with YamlDotNet.
+    ///
+    /// This is also serialized with System.Text.Json during network transmission. Sure, why not.
+    /// </summary>
     public class ProjectConfig
     {
         private static readonly log4net.ILog log = LogHelper.GetLogger();
@@ -31,9 +37,12 @@ namespace LynnaLib
         }
 
         // Variables imported from YAML config file
+        [JsonInclude, JsonRequired]
         public string EditingGame { get; private set; }
+        [JsonInclude, JsonRequired]
         public bool ExpandedTilesets { get; private set; }
 
+        // Filename of config file
         string filename;
 
 

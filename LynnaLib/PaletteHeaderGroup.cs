@@ -4,7 +4,7 @@ namespace LynnaLib
 {
     /// This basically consists of a list of "PaletteHeaderData"s. Keep in mind that some
     /// PaletteHeaderGroups are identical (reference the same data).
-    public class PaletteHeaderGroup : ProjectIndexedDataType
+    public class PaletteHeaderGroup : ProjectIndexedDataType, IndexedProjectDataInstantiator
     {
         readonly PaletteHeaderData firstPaletteHeader;
 
@@ -28,7 +28,7 @@ namespace LynnaLib
             }
         }
 
-        PaletteHeaderGroup(Project project, int index) : base(project, index)
+        private PaletteHeaderGroup(Project project, int index) : base(project, index)
         {
             try
             {
@@ -44,6 +44,11 @@ namespace LynnaLib
                 throw new InvalidPaletteHeaderGroupException(e.Message);
             }
             InstallEventHandlers();
+        }
+
+        static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+        {
+            return new PaletteHeaderGroup(p, index);
         }
 
         // TODO: error handling

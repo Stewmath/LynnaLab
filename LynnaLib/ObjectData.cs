@@ -161,24 +161,48 @@
         }
 
 
-        private readonly ObjectType objectType;
-        private ValueReferenceGroup vrg;
+        // Variables
+
+        class ObjectDataState : Data.DataState
+        {
+            public ObjectType objectType;
+
+            public override void CaptureInitialState(FileComponent parent)
+            {
+                parent.Project.UndoState.CaptureInitialState<ObjectDataState>(parent);
+            }
+        }
+
+        private ValueReferenceGroup _vrg;
 
 
         // Properties
         public ValueReferenceGroup ValueReferenceGroup
         {
-            get { return vrg; }
+            get
+            {
+                if (_vrg == null)
+                    InitializeValueReferenceGroup();
+                return _vrg;
+            }
         }
+
+        private ObjectType ObjectType
+        {
+            get { return State.objectType; }
+            set { State.objectType = value; }
+        }
+
+        private ObjectDataState State { get { return state as ObjectDataState; } }
 
 
         // Constructors
 
-        public ObjectData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int objType, ObjectData last)
-            : base(p, command, values, -1, parser, spacing)
+        // Creation from a FileParser
+        public ObjectData(Project p, string id, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int objType, ObjectData last)
+            : base(p, id, command, values, -1, parser, spacing, () => new ObjectDataState())
         {
-
-            this.objectType = (ObjectType)objType;
+            this.ObjectType = (ObjectType)objType;
             InitializeValueReferenceGroup();
 
             ExpandParameters(last);
@@ -186,18 +210,18 @@
 
         // Creates a new ObjectData instance, not based on existing data.
         public ObjectData(Project p, FileParser parser, ObjectType type)
-            : base(p, "", null, -1, parser, new string[] { "\t" })
+            : base(p, GenerateID(p), "", null, -1, parser, new string[] { "\t" }, () => new ObjectDataState())
         {
-            this.objectType = type;
+            this.ObjectType = type;
 
-            Command = ObjectCommands[(int)objectType];
-            base.SetNumValues(ObjectCommandDefaultParams[(int)objectType], "$00");
+            Command = ObjectCommands[(int)ObjectType];
+            base.SetNumValues(ObjectCommandDefaultParams[(int)ObjectType], "$00");
 
             InitializeValueReferenceGroup();
 
             base.LockModifiedEvents();
 
-            foreach (ValueReferenceDescriptor desc in vrg.GetDescriptors())
+            foreach (ValueReferenceDescriptor desc in ValueReferenceGroup.GetDescriptors())
                 desc.ValueReference.Initialize();
 
             if (type == ObjectType.RandomEnemy)
@@ -208,27 +232,39 @@
 
         // Copy constructor
         public ObjectData(ObjectData o)
-            : base(o.Project, "", null, -1, null, new string[] { "\t" })
+            : base(o.Project, GenerateID(o.Project), "", null, -1, null, new string[] { "\t" }, () => new ObjectDataState())
         {
             this.Command = o.Command;
-            this.objectType = o.objectType;
+            this.ObjectType = o.ObjectType;
 
             base.SetNumValues(o.GetNumValues(), "$00");
             for (int i = 0; i < o.GetNumValues(); i++)
                 SetValue(i, o.GetValue(i));
+        }
 
-            InitializeValueReferenceGroup();
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private ObjectData(Project p, string id, TransactionState state)
+            : base(p, id, state)
+        {
+        }
+
+
+        static string GenerateID(Project p)
+        {
+            return p.GenUniqueID(typeof(ObjectData));
         }
 
         // Common code for constructors
         void InitializeValueReferenceGroup()
         {
-            vrg = new ValueReferenceGroup(GetObjectValueReferenceDescriptors(objectType, this));
+            _vrg = new ValueReferenceGroup(GetObjectValueReferenceDescriptors(ObjectType, this));
         }
 
         public ObjectType GetObjectType()
         {
-            return objectType;
+            return ObjectType;
         }
 
         public bool IsPointerType()
@@ -279,12 +315,12 @@
                 base.SetSpacing(1, " ");
                 base.InsertValue(0, last.GetValue(0));
             }
-            else if (objectType == ObjectType.Interaction)
+            else if (ObjectType == ObjectType.Interaction)
             {
                 if (base.GetNumValues() < 5)
                     base.SetNumValues(5, "$00");
             }
-            else if (objectType == ObjectType.Part)
+            else if (ObjectType == ObjectType.Part)
             {
                 if (base.GetNumValues() != 3 && base.GetNumValues() != 5)
                     log.Warn("Part object has an unexpected number of parameters: " + base.GetString());
@@ -318,7 +354,7 @@
                     base.SetSpacing(1, "     ");
                 }
             }
-            else if (objectType == ObjectType.Interaction)
+            else if (ObjectType == ObjectType.Interaction)
             {
                 if (base.GetIntValue(4) == 0)
                 { // Check var03
@@ -328,7 +364,7 @@
                         base.SetNumValues(4, "$00");
                 }
             }
-            else if (objectType == ObjectType.Part)
+            else if (ObjectType == ObjectType.Part)
             {
                 bool expanded = false;
 

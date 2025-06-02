@@ -6,22 +6,24 @@ namespace LynnaLib;
 /// </summary>
 public class ValueReferenceGroup
 {
-    IList<ValueReferenceDescriptor> descriptors;
-    LockableEvent<ValueModifiedEventArgs> lockableModifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
+    readonly IList<ValueReferenceDescriptor> descriptors;
+    readonly LockableEvent<ValueModifiedEventArgs> lockableModifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
 
     string transactionDescription;
     bool transactionMerge;
 
 
-    /// Constructor to let subclasses set valueReferences manually
-    protected ValueReferenceGroup()
+    public ValueReferenceGroup(IList<ValueReferenceDescriptor> refs)
     {
         lockableModifiedEvent += (sender, args) => ModifiedEvent?.Invoke(sender, args);
-    }
+        descriptors = new List<ValueReferenceDescriptor>();
+        foreach (var desc in refs)
+        {
+            descriptors.Add(desc);
 
-    public ValueReferenceGroup(IList<ValueReferenceDescriptor> refs) : this()
-    {
-        SetDescriptors(refs);
+            desc.ValueReference.AddValueModifiedHandler(
+                (sender, args) => lockableModifiedEvent?.Invoke(sender, args));
+        }
     }
 
 
@@ -173,21 +175,6 @@ public class ValueReferenceGroup
     // ================================================================================
     // Protected methods
     // ================================================================================
-
-    protected void SetDescriptors(IList<ValueReferenceDescriptor> refs)
-    {
-        if (descriptors != null)
-            throw new Exception();
-
-        descriptors = new List<ValueReferenceDescriptor>();
-        foreach (var desc in refs)
-        {
-            descriptors.Add(desc);
-
-            desc.ValueReference.AddValueModifiedHandler(
-                (sender, args) => lockableModifiedEvent?.Invoke(sender, args));
-        }
-    }
 
     // ================================================================================
     // Private methods

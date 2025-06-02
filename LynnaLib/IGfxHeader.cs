@@ -14,7 +14,7 @@ namespace LynnaLib
         int? SourceBank { get; }
 
         // May be null, if source is from RAM
-        Stream GfxStream { get; }
+        IStream GfxStream { get; }
 
         // The number of blocks (16 bytes each) to be read.
         int BlockCount { get; }

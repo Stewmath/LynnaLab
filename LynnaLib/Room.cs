@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.Json.Serialization;
 
 namespace LynnaLib
 {
@@ -13,7 +14,7 @@ namespace LynnaLib
 
     /// Provides an interface for accessing various room properties, or to get related classes, ie.
     /// relating to room layout variants, warps or objects.
-    public partial class Room : ProjectIndexedDataType
+    public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstantiator
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -25,19 +26,29 @@ namespace LynnaLib
         /// Access rooms with "Project.GetIndexedDataType" instead of this constructor to avoid
         /// duplicate instances.
         /// </summary>
-        internal Room(Project p, int index) : base(p, index)
+        private Room(Project p, int index) : base(p, index)
         {
-            // Get dungeon flag file
-            Data data = Project.GetData("dungeonRoomPropertiesGroupTable", (Group % 2) * 2);
-            data = Project.GetData(data.GetValue(0));
-            dungeonFlagStream = Project.GetBinaryFile("rooms/" + Project.GameString + "/" + data.GetValue(0));
+            if (!p.IsInConstructor)
+                throw new Exception("Rooms should not be loaded outside of the Project constructor.");
 
-            chestEventWrapper.Bind<EventArgs>("DeletedEvent", (_, _) => OnChestDeleted(), weak: false);
+            if (index < 0 || index >= Project.NumRooms)
+                throw new Exception($"Invalid room: {index:X3}");
 
-            GenerateValueReferenceGroup();
-            UpdateChestRef();
+            UpdateChestRef(true);
+        }
 
-            layouts = new List<RoomLayout>();
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private Room(Project p, string id, TransactionState s)
+            : base(p, int.Parse(id))
+        {
+            this.state = (State)s;
+        }
+
+        void CreateRoomLayouts()
+        {
+            var layouts = new List<RoomLayout>();
             if (HasSeasons)
             {
                 for (int i = 0; i < 4; i++)
@@ -47,20 +58,47 @@ namespace LynnaLib
             }
             else
                 layouts.Add(new RoomLayout(this, Season.None));
+            _layouts = layouts;
             UpdateTileset();
+        }
+
+        static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+        {
+            return new Room(p, index);
         }
 
         // ================================================================================
         // Variables
         // ================================================================================
 
-        readonly MemoryFileStream dungeonFlagStream;
-        // Different season layouts
-        readonly List<RoomLayout> layouts;
+        class State : TransactionState
+        {
+            [JsonInclude, JsonRequired]
+            public InstanceResolver<Data> _chestDataStart; // Can be null
 
-        // Kept up-to-date via events, even through undos
+            [JsonIgnore]
+            public Data ChestDataStart
+            {
+                get { return _chestDataStart?.Instance; }
+                set
+                {
+                    if (value == null)
+                        _chestDataStart = null;
+                    else
+                        _chestDataStart = new(value);
+                }
+            }
+        }
+
+        State state = new();
+
+        // These are not tracked, but are created once when needed and then never changed.
+        MemoryFileStream _dungeonFlagStream;
+        List<RoomLayout> _layouts; // Different season layouts
+        ValueReferenceGroup _vrg;
+
+        // This is not directly tracked, but is kept up to date through events triggered by undos.
         Chest chest;
-        EventWrapper<Chest> chestEventWrapper = new();
 
         // ================================================================================
         // Events
@@ -151,11 +189,6 @@ namespace LynnaLib
         public Chest Chest
         {
             get { return chest; }
-            set
-            {
-                chest = value;
-                chestEventWrapper.ReplaceEventSource(value);
-            }
         }
 
         /// If true, tileset graphics are loaded after the screen transition instead of before.
@@ -188,15 +221,15 @@ namespace LynnaLib
             {
                 if (!(Group >= 4 && Group < 8))
                     throw new Exception(string.Format("Room {0:X3} is not in a dungeon group, doesn't have dungeon flags.", Index));
-                dungeonFlagStream.Seek(Index & 0xff, SeekOrigin.Begin);
-                return (byte)dungeonFlagStream.ReadByte();
+                DungeonFlagStream.Seek(Index & 0xff, SeekOrigin.Begin);
+                return (byte)DungeonFlagStream.ReadByte();
             }
             set
             {
                 if (!(Group >= 4 && Group < 8))
                     throw new Exception(string.Format("Room {0:X3} is not in a dungeon group, doesn't have dungeon flags.", Index));
-                dungeonFlagStream.Seek(Index & 0xff, SeekOrigin.Begin);
-                dungeonFlagStream.WriteByte(value);
+                DungeonFlagStream.Seek(Index & 0xff, SeekOrigin.Begin);
+                DungeonFlagStream.WriteByte(value);
             }
         }
 
@@ -291,7 +324,15 @@ namespace LynnaLib
         }
 
         /// Alternative interface for accessing certain properties
-        public ValueReferenceGroup ValueReferenceGroup { get; private set; }
+        public ValueReferenceGroup ValueReferenceGroup
+        {
+            get
+            {
+                if (_vrg == null)
+                    GenerateValueReferenceGroup();
+                return _vrg;
+            }
+        }
 
         public string TransactionIdentifier { get { return $"room-{Index:X3}"; } }
 
@@ -301,6 +342,31 @@ namespace LynnaLib
             get
             {
                 return GetRoomPackFile() != null;
+            }
+        }
+
+        MemoryFileStream DungeonFlagStream
+        {
+            get
+            {
+                if (_dungeonFlagStream == null)
+                {
+                    // Get dungeon flag file
+                    Data data = Project.GetData("dungeonRoomPropertiesGroupTable", (Group % 2) * 2);
+                    data = Project.GetData(data.GetValue(0));
+                    _dungeonFlagStream = Project.GetFileStream("rooms/" + Project.GameString + "/" + data.GetValue(0));
+                }
+                return _dungeonFlagStream;
+            }
+        }
+
+        List<RoomLayout> Layouts
+        {
+            get
+            {
+                if (_layouts == null)
+                    CreateRoomLayouts();
+                return _layouts;
             }
         }
 
@@ -314,9 +380,9 @@ namespace LynnaLib
         {
             season = ValidateSeason(season, autoCorrect);
             if (season == Season.None)
-                return layouts[0];
+                return Layouts[0];
             else
-                return layouts[(int)season];
+                return Layouts[(int)season];
         }
 
         public RealTileset GetTileset(Season season, bool autoCorrect = false)
@@ -331,13 +397,13 @@ namespace LynnaLib
         // constant definitions
         public int GetMusicID()
         {
-            Stream file = GetMusicFile();
+            TrackedStream file = GetMusicFile();
             file.Position = Index & 0xff;
             return file.ReadByte();
         }
         public void SetMusicID(int id)
         {
-            Stream file = GetMusicFile();
+            TrackedStream file = GetMusicFile();
             file.Position = Index & 0xff;
             file.WriteByte((byte)id);
         }
@@ -381,18 +447,10 @@ namespace LynnaLib
                 string.Format("\tm_ChestData $00, ${0:x2}, $0000", Index & 0xff)
             });
 
-            Project.UndoState.OnRewind("Add chest", () =>
-            { // On undo
-                Chest.InvokeDeletedEvent();
-                // We are subscribed to the chest deletion event so it should set Chest = null by this line.
-                Debug.Assert(Chest == null);
-            }, (_) =>
-            { // On redo / right now
-                Debug.Assert(Chest == null);
-                UpdateChestRef();
-                Debug.Assert(Chest != null);
-                ChestAddedEvent?.Invoke(this, null);
-            });
+            UpdateChestRef(false);
+
+            Debug.Assert(state.ChestDataStart != null);
+            Debug.Assert(Chest != null);
 
             Project.EndTransaction();
         }
@@ -405,22 +463,12 @@ namespace LynnaLib
                 return season == Season.None;
         }
 
-        /// <summary>
-        /// A chest which was previously deleted was brought back via an undo operation
-        /// </summary>
-        internal void ChestRevived(Chest chest)
-        {
-            Debug.Assert(Chest == null);
-            Chest = chest;
-            ChestAddedEvent?.Invoke(this, null);
-        }
-
 
         // Private methods
 
         void UpdateTileset()
         {
-            foreach (var layout in layouts)
+            foreach (var layout in Layouts)
                 layout.UpdateTileset();
         }
 
@@ -433,7 +481,7 @@ namespace LynnaLib
             string path = data.GetValue(0);
             path = path.Substring(1, path.Length - 2); // Remove quotes
 
-            return Project.GetBinaryFile(path);
+            return Project.GetFileStream(path);
         }
 
         byte GetTilesetByte()
@@ -449,7 +497,7 @@ namespace LynnaLib
             string path = data.GetValue(0);
             path = path.Substring(1, path.Length - 2); // Remove quotes
 
-            return Project.GetBinaryFile(path);
+            return Project.GetFileStream(path);
         }
 
         MemoryFileStream GetRoomPackFile()
@@ -470,7 +518,7 @@ namespace LynnaLib
                 else
                     return null;
             }
-            return Project.GetBinaryFile(s);
+            return Project.GetFileStream(s);
         }
 
         bool GetDungeonFlagBit(int bit)
@@ -541,14 +589,14 @@ namespace LynnaLib
                         tooltip: "Check to load this screen's tileset graphics after the screen transition, instead of before."),
             };
 
-            ValueReferenceGroup = new ValueReferenceGroup(descriptors);
+            _vrg = new ValueReferenceGroup(descriptors);
 
-            ValueReferenceGroup["Tileset"].ValueReference.AddValueModifiedHandler((sender, args) =>
+            _vrg["Tileset"].ValueReference.AddValueModifiedHandler((sender, args) =>
             {
                 UpdateTileset();
             });
 
-            ValueReferenceGroup.EnableTransactions($"Edit room property#{TransactionIdentifier}", true);
+            _vrg.EnableTransactions($"Edit room property#{TransactionIdentifier}", true);
         }
 
         // Find the data corresponding to the chest for this room, or "null" if it doesn't exist.
@@ -574,20 +622,55 @@ namespace LynnaLib
             return null;
         }
 
-        void UpdateChestRef()
+        /// <summary>
+        /// Called by chest class when it is removed
+        /// </summary>
+        internal void OnChestDeleted(Chest c)
         {
-            if (Chest != null)
-                throw new Exception("Internal error");
-            Data d = GetChestData();
-            if (d == null)
-                Chest = null;
-            else
-                Chest = new Chest(this, d);
+            Debug.Assert(Chest == c);
+            UpdateChestRef(false);
+            Debug.Assert(state.ChestDataStart == null);
+            Debug.Assert(Chest == null);
         }
 
-        void OnChestDeleted()
+        /// <summary>
+        /// Called when chests are added or removed.
+        /// </summary>
+        void UpdateChestRef(bool inConstructor)
         {
-            Chest = null;
+            Data d = GetChestData();
+            if (d == state.ChestDataStart)
+                return;
+
+            // Don't capture initial state in constructor - since we're not actually changing
+            // anything. (Don't want to register undo events that would undo the initialization!)
+            if (!inConstructor)
+                Project.UndoState.CaptureInitialState<State>(this);
+
+            state.ChestDataStart = d;
+            OnChestDataChanged(true);
+        }
+
+        /// <summary>
+        /// Call this when ChestDataStart is changed to ensure that the corresponding Chest is
+        /// updated. This is called on undo/redo.
+        /// </summary>
+        void OnChestDataChanged(bool invokeEvents)
+        {
+            Chest oldChest = chest;
+
+            if (state.ChestDataStart == null)
+                chest = null;
+            else
+                chest = new Chest(this, state.ChestDataStart);
+
+            if (!invokeEvents)
+                return;
+
+            if (oldChest != null)
+                oldChest.InvokeDeletedEvent();
+            if (chest != null)
+                ChestAddedEvent?.Invoke(this, null);
         }
 
         /// <summary>
@@ -612,6 +695,32 @@ namespace LynnaLib
                 return handleError();
 
             return season;
+        }
+
+        // ================================================================================
+        // TrackedProjectData implementation
+        // ================================================================================
+
+        public override TransactionState GetState()
+        {
+            return state;
+        }
+
+        public override void SetState(TransactionState state)
+        {
+            this.state = (State)state;
+        }
+
+        public override void InvokeUndoEvents(TransactionState oldState)
+        {
+            State old = (State)oldState;
+            if (state._chestDataStart != old._chestDataStart)
+                OnChestDataChanged(true);
+        }
+
+        public override void OnInitializedFromTransfer()
+        {
+            OnChestDataChanged(false);
         }
     }
 }

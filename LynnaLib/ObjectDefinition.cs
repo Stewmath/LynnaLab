@@ -1,18 +1,37 @@
 namespace LynnaLib
 {
     /// Public interface over the ObjectData class.
-    public class ObjectDefinition : ValueReferenceGroup, Undoable
+    public class ObjectDefinition : TrackedProjectData
     {
         // ================================================================================
         // Constructors
         // ================================================================================
 
         public ObjectDefinition(ObjectGroup group, ObjectData od, int uniqueID)
+            : base(group.Project, CreateIdentifier(group.Identifier, uniqueID))
         {
-            this.objectGroup = group;
-            this.ObjectData = od;
-            this.uniqueID = uniqueID;
+            this.state = new()
+            {
+                objectGroupIR = new InstanceResolver<ObjectGroup>(group),
+                uniqueID = uniqueID,
+                objectDataIR = new(od)
+            };
+        }
 
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private ObjectDefinition(Project p, string id, TransactionState state)
+            : base(p, id)
+        {
+            this.state = (State)state;
+            string expectedID = CreateIdentifier(this.state.objectGroupIR.Identifier, this.state.uniqueID);
+            if (Identifier != expectedID)
+                throw new DeserializationException($"Bad ObjectDefinition ID; expected {expectedID}, got {Identifier}");
+        }
+
+        void CreateValueReferenceGroup()
+        {
             var descriptors = new List<ValueReferenceDescriptor>();
 
             foreach (var desc in ObjectData.ValueReferenceGroup.GetDescriptors())
@@ -32,8 +51,13 @@ namespace LynnaLib
                 descriptors.Add(new ValueReferenceDescriptor(newVref, name));
             }
 
-            base.SetDescriptors(descriptors);
-            base.EnableTransactions($"Edit Object#{TransactionIdentifier}", true);
+            _vrg = new ValueReferenceGroup(descriptors);
+            _vrg.EnableTransactions($"Edit Object#{TransactionIdentifier}", true);
+        }
+
+        static string CreateIdentifier(string groupID, int uniqueID)
+        {
+            return $"{groupID}-{uniqueID}";
         }
 
         // ================================================================================
@@ -41,30 +65,44 @@ namespace LynnaLib
         // ================================================================================
 
         // Undo-able stuff goes here
-        struct State : TransactionState
+        internal struct State : TransactionState
         {
-            public ObjectData objectData;
+            public required InstanceResolver<ObjectGroup> objectGroupIR { get; init; }
+            public required int uniqueID { get; init; } // Value that's unique compared to other ObjectDefinitions in this ObjectGroup
 
-            // No need to implement Copy/Compare for a value type
+            public required InstanceResolver<ObjectData> objectDataIR { get; set; } // Can be null
         }
 
-        readonly ObjectGroup objectGroup;
-        readonly int uniqueID; // Value that's unique compared to other ObjectDefinitions in this ObjectGrou
+        ValueReferenceGroup _vrg;
 
-        State state = new();
+        State state;
 
         // ================================================================================
         // Properties
         // ================================================================================
 
-        public ObjectGroup ObjectGroup { get { return objectGroup; } }
+        public ObjectGroup ObjectGroup { get { return state.objectGroupIR; } }
 
-        public string TransactionIdentifier { get { return $"obj-{ObjectGroup.Identifier}-i{uniqueID}"; } }
+        public ValueReferenceGroup ValueReferenceGroup { get { return vrg; } }
+
+        public string TransactionIdentifier { get { return $"obj-{ObjectGroup.Identifier}-i{UniqueID}"; } }
+
+        int UniqueID { get { return state.uniqueID; } }
 
         ObjectData ObjectData
         {
-            get { return state.objectData; }
-            set { state.objectData = value; }
+            get { return state.objectDataIR; }
+            set { state.objectDataIR = new(value); }
+        }
+
+        ValueReferenceGroup vrg
+        {
+            get
+            {
+                if (_vrg == null)
+                    CreateValueReferenceGroup();
+                return _vrg;
+            }
         }
 
 
@@ -89,7 +127,7 @@ namespace LynnaLib
         /// Returns true if this type has X/Y variables, AND we don't have "postype == none".
         public bool HasXY()
         {
-            return HasValue("X") && HasValue("Y") && GetSubIDDocumentation()?.GetField("postype") != "none";
+            return vrg.HasValue("X") && vrg.HasValue("Y") && GetSubIDDocumentation()?.GetField("postype") != "none";
         }
 
         // Return the center x-coordinate of the object.
@@ -100,83 +138,83 @@ namespace LynnaLib
         {
             if (GetSubIDDocumentation()?.GetField("postype") == "short")
             {
-                int n = GetIntValue("Y") & 0xf;
+                int n = vrg.GetIntValue("Y") & 0xf;
                 return (byte)(n * 16 + 8);
             }
             else if (IsTypeWithShortenedXY())
             {
-                int n = GetIntValue("X");
+                int n = vrg.GetIntValue("X");
                 return (byte)(n * 16 + 8);
             }
             else
-                return (byte)GetIntValue("X");
+                return (byte)vrg.GetIntValue("X");
         }
         // Return the center y-coordinate of the object
         public byte GetY()
         {
             if (GetSubIDDocumentation()?.GetField("postype") == "short")
             {
-                int n = GetIntValue("Y") >> 4;
+                int n = vrg.GetIntValue("Y") >> 4;
                 return (byte)(n * 16 + 8);
             }
             else if (IsTypeWithShortenedXY())
             {
-                int n = GetIntValue("Y");
+                int n = vrg.GetIntValue("Y");
                 return (byte)(n * 16 + 8);
             }
             else
-                return (byte)GetIntValue("Y");
+                return (byte)vrg.GetIntValue("Y");
         }
 
         public void SetX(byte n)
         {
             if (GetSubIDDocumentation()?.GetField("postype") == "short")
             {
-                byte y = (byte)(GetIntValue("Y") & 0xf0);
+                byte y = (byte)(vrg.GetIntValue("Y") & 0xf0);
                 y |= (byte)(n / 16);
-                SetValue("Y", y);
+                vrg.SetValue("Y", y);
             }
             else if (IsTypeWithShortenedXY())
-                SetValue("X", n / 16);
+                vrg.SetValue("X", n / 16);
             else
-                SetValue("X", n);
+                vrg.SetValue("X", n);
         }
         public void SetY(byte n)
         {
             if (GetSubIDDocumentation()?.GetField("postype") == "short")
             {
-                byte y = (byte)(GetIntValue("Y") & 0x0f);
+                byte y = (byte)(vrg.GetIntValue("Y") & 0x0f);
                 y |= (byte)(n & 0xf0);
-                SetValue("Y", y);
+                vrg.SetValue("Y", y);
             }
             else if (IsTypeWithShortenedXY())
-                SetValue("Y", n / 16);
+                vrg.SetValue("Y", n / 16);
             else
-                SetValue("Y", n);
+                vrg.SetValue("Y", n);
         }
 
         public GameObject GetGameObject()
         {
             if (GetObjectType() == ObjectType.Interaction)
             {
-                int id = GetIntValue("ID");
-                int subid = GetIntValue("SubID");
+                int id = vrg.GetIntValue("ID");
+                int subid = vrg.GetIntValue("SubID");
                 return Project.GetIndexedDataType<InteractionObject>((id << 8) | subid);
             }
             else if (GetObjectType() == ObjectType.RandomEnemy
                      || GetObjectType() == ObjectType.SpecificEnemyA
                      || GetObjectType() == ObjectType.SpecificEnemyB)
             {
-                int id = GetIntValue("ID");
-                int subid = GetIntValue("SubID");
+                int id = vrg.GetIntValue("ID");
+                int subid = vrg.GetIntValue("SubID");
                 if (id >= 0x80)
                     return null;
                 return Project.GetIndexedDataType<EnemyObject>((id << 8) | subid);
             }
             else if (GetObjectType() == ObjectType.Part)
             {
-                int id = GetIntValue("ID");
-                int subid = GetIntValue("SubID");
+                int id = vrg.GetIntValue("ID");
+                int subid = vrg.GetIntValue("SubID");
                 if (id >= 0x80)
                     return null;
                 return Project.GetIndexedDataType<PartObject>((id << 8) | subid);
@@ -198,31 +236,38 @@ namespace LynnaLib
         // Remove self from the parent ObjectGroup.
         public void Remove()
         {
-            objectGroup.RemoveObject(this);
+            ObjectGroup.RemoveObject(this);
+        }
+
+        public void CopyFrom(ObjectDefinition obj)
+        {
+            vrg.CopyFrom(obj.vrg);
         }
 
 
         internal void SetObjectData(ObjectData data)
         {
-            Project.UndoState.CaptureInitialState(this);
+            Project.UndoState.CaptureInitialState<State>(this);
             ObjectData = data;
         }
 
         // ================================================================================
-        // Undoable interface functions
+        // TrackedProjectData interface functions
         // ================================================================================
 
-        public TransactionState GetState()
+        public override TransactionState GetState()
         {
             return state;
         }
 
-        public void SetState(TransactionState s)
+        public override void SetState(TransactionState s)
         {
-            this.state = (State)s.Copy();
+            State newState = (State)s;
+            Helper.Assert(newState.objectDataIR != null);
+            this.state = newState;
         }
 
-        public void InvokeModifiedEvent(TransactionState prevState)
+        public override void InvokeUndoEvents(TransactionState prevState)
         {
         }
 
@@ -248,7 +293,7 @@ namespace LynnaLib
         {
             if (ObjectData.ValueReferenceGroup.GetIntValue(name) == value)
                 return;
-            objectGroup.Isolate();
+            ObjectGroup.Isolate();
             ObjectData.ValueReferenceGroup.SetValue(name, value);
         }
     }

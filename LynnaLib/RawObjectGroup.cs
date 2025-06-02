@@ -3,29 +3,47 @@
     // This class provides an interface to edit an "object group" (list of object data ending with
     // "obj_End" or "obj_EndPointer"). For most cases it's recommended to use the "ObjectGroup"
     // class instead.
-    internal class RawObjectGroup : ProjectDataType, Undoable
+    internal class RawObjectGroup : TrackedProjectData, ProjectDataInstantiator
     {
         // ================================================================================
         // Constructor
         // ================================================================================
 
-        internal RawObjectGroup(Project p, String id) : base(p, id)
+        private RawObjectGroup(Project p, string id) : base(p, id)
         {
-            parser = Project.GetFileWithLabel(Identifier);
-            ObjectData data = parser.GetData(Identifier) as ObjectData;
+            ObjectData data = Parser.GetData(Identifier) as ObjectData;
 
             while (data.GetObjectType() != ObjectType.End && data.GetObjectType() != ObjectType.EndPointer)
             {
                 ObjectData next = data.NextData as ObjectData;
 
-                if (data.GetObjectType() == ObjectType.Garbage) // Delete these (they do nothing anyway)
-                    data.Detach();
+                if (data.GetObjectType() == ObjectType.Garbage)
+                {
+                    // We used to "Detach()" the data here to delete garbage date, but we now have
+                    // strict checks in the UndoState class that disallow such modifications during
+                    // initialization! Doesn't make much difference to us - it's ignored regardless.
+                    //data.Detach();
+                }
                 else
-                    ObjectDataList.Add(data);
+                    ObjectDataList.Add(new(data));
 
                 data = next;
             }
-            ObjectDataList.Add(data);
+            ObjectDataList.Add(new(data));
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private RawObjectGroup(Project p, string id, TransactionState s)
+            : base(p, id)
+        {
+            this.state = (State)s;
+        }
+
+        static ProjectDataType ProjectDataInstantiator.Instantiate(Project p, string id)
+        {
+            return new RawObjectGroup(p, id);
         }
 
         // ================================================================================
@@ -35,29 +53,27 @@
         // Undoable stuff goes here
         class State : TransactionState
         {
-            public List<ObjectData> objectDataList = new();
-
-            public TransactionState Copy()
-            {
-                State s = new State();
-                s.objectDataList = new(objectDataList);
-                return s;
-            }
-
-            public bool Compare(TransactionState obj)
-            {
-                return obj is State s && objectDataList.SequenceEqual(s.objectDataList);
-            }
+            public List<InstanceResolver<ObjectData>> objectDataList = new();
         }
 
-        readonly FileParser parser;
         State state = new();
+        FileParser _parser;
 
         // ================================================================================
         // Properties
         // ================================================================================
 
-        List<ObjectData> ObjectDataList
+        FileParser Parser
+        {
+            get
+            {
+                if (_parser == null)
+                    _parser = Project.GetFileWithLabel(Identifier);
+                return _parser;
+            }
+        }
+
+        List<InstanceResolver<ObjectData>> ObjectDataList
         {
             get { return state.objectDataList; }
             set { state.objectDataList = value; }
@@ -81,7 +97,7 @@
             if (index >= ObjectDataList.Count - 1)
                 throw new Exception("Array index out of bounds.");
 
-            Project.UndoState.CaptureInitialState(this);
+            Project.UndoState.CaptureInitialState<State>(this);
 
             ObjectData data = ObjectDataList[index];
             data.Detach();
@@ -90,16 +106,16 @@
 
         public void InsertObject(int index, ObjectData data)
         {
-            Project.UndoState.CaptureInitialState(this);
+            Project.UndoState.CaptureInitialState<State>(this);
 
-            data.Attach(parser);
+            data.Attach(Parser);
             data.InsertIntoParserBefore(ObjectDataList[index]);
-            ObjectDataList.Insert(index, data);
+            ObjectDataList.Insert(index, new(data));
         }
 
         public void InsertObject(int index, ObjectType type)
         {
-            ObjectData data = new ObjectData(Project, parser, type);
+            ObjectData data = new ObjectData(Project, Parser, type);
             InsertObject(index, data);
         }
 
@@ -109,22 +125,22 @@
         /// </summary>
         internal void Repoint()
         {
-            Project.UndoState.CaptureInitialState(this);
+            Project.UndoState.CaptureInitialState<State>(this);
 
-            parser.RemoveLabel(Identifier);
+            Parser.RemoveLabel(Identifier);
 
             FileComponent lastComponent;
 
-            parser.InsertParseableTextAfter(null, new String[] { "" }); // Newline
-            lastComponent = new Label(parser, Identifier);
-            parser.InsertComponentAfter(null, lastComponent);
+            Parser.InsertParseableTextAfter(null, new String[] { "" }); // Newline
+            lastComponent = new Label(Project.GenUniqueID(typeof(Label)), Parser, Identifier);
+            Parser.InsertComponentAfter(null, lastComponent);
 
-            List<ObjectData> newList = new List<ObjectData>();
+            List<InstanceResolver<ObjectData>> newList = new();
             foreach (ObjectData old in ObjectDataList)
             {
                 ObjectData newData = new ObjectData(old);
-                newList.Add(newData);
-                parser.InsertComponentAfter(lastComponent, newData);
+                newList.Add(new(newData));
+                Parser.InsertComponentAfter(lastComponent, newData);
                 lastComponent = newData;
             }
 
@@ -132,20 +148,20 @@
         }
 
         // ================================================================================
-        // Undoable interface functions
+        // TrackedProjectData interface functions
         // ================================================================================
 
-        public TransactionState GetState()
+        public override TransactionState GetState()
         {
             return state;
         }
 
-        public void SetState(TransactionState s)
+        public override void SetState(TransactionState s)
         {
-            this.state = (State)s.Copy();
+            this.state = (State)s;
         }
 
-        public void InvokeModifiedEvent(TransactionState prevState)
+        public override void InvokeUndoEvents(TransactionState prevState)
         {
         }
     }

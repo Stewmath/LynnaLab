@@ -10,7 +10,7 @@ namespace LynnaLib
     // Other types of gfx headers not supported here.
     public class ObjectGfxHeaderData : Data, IGfxHeader
     {
-        readonly Stream gfxStream;
+        IStream gfxStream;
 
         public int? SourceAddr
         {
@@ -21,7 +21,7 @@ namespace LynnaLib
             get { return null; }
         }
 
-        public Stream GfxStream { get { return gfxStream; } }
+        public IStream GfxStream { get { return gfxStream; } }
 
         // The number of blocks (16 bytes each) to be read.
         public int BlockCount
@@ -45,16 +45,30 @@ namespace LynnaLib
         }
 
 
-        public ObjectGfxHeaderData(Project p, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
-            : base(p, command, values, 3, parser, spacing)
+        public ObjectGfxHeaderData(Project p, string id, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
+            : base(p, id, command, values, 3, parser, spacing)
         {
             string filename = GetValue(0);
 
-            gfxStream = Project.LoadGfx(filename);
-            if (gfxStream == null)
+            IStream stream = Project.GetGfxStream(filename);
+            if (stream == null)
             {
                 throw new Exception("Could not find graphics file " + filename);
             }
+            gfxStream = stream;
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private ObjectGfxHeaderData(Project p, string id, TransactionState state)
+            : base(p, id, state)
+        {
+        }
+
+        public override void OnInitializedFromTransfer()
+        {
+            gfxStream = Project.GetGfxStream(GetValue(0));
         }
     }
 

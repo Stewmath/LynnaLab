@@ -1,20 +1,16 @@
-using System;
-using System.Collections.Generic;
-
 namespace LynnaLib
 {
     /// <summary>
     ///  This usually corresponds to a line in a file, but it can generally also be a logical unit
     ///  (ie. a documentation block).
     /// </summary>
-    public abstract class FileComponent : Undoable
+    public abstract class FileComponent : TrackedProjectData
     {
         protected FileComponentState state;
         protected int suppressUndoRecording = 0;
 
         // Private variables
         bool _modified;
-        Project _project;
 
 
         // Properties
@@ -57,13 +53,10 @@ namespace LynnaLib
                 return FileParser?.GetPrevFileComponent(this);
             }
         }
+        // This can be null, if the data is orphaned.
         public FileParser FileParser
         {
-            get { return state.parser; }
-        }
-        public Project Project
-        {
-            get { return _project; }
+            get { return state.parser?.Instance; }
         }
 
         protected List<string> Spacing
@@ -72,19 +65,34 @@ namespace LynnaLib
             set { state.spacing = value; }
         }
 
-        protected FileComponent(FileParser parser, IList<string> spacing, Func<FileComponentState> stateConstructor)
+        protected FileComponent(Project p, string id, FileParser parser,
+                                IList<string> spacing, Func<FileComponentState> stateConstructor)
+            : base(p, id)
         {
             state = stateConstructor();
-            state.constructorFunc = stateConstructor;
-            if (parser != null)
-                _project = parser.Project;
             EndsLine = true;
             Fake = false;
             if (spacing != null)
                 state.spacing = new List<string>(spacing);
-            this.state.parser = parser;
+            this.state.parser = parser == null ? null : new(parser);
             _modified = false;
         }
+
+        protected FileComponent(string id, FileParser parser,
+                                IList<string> spacing, Func<FileComponentState> stateConstructor)
+            : this(parser.Project, id, parser, spacing, stateConstructor)
+        {
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer
+        /// </summary>
+        protected FileComponent(Project p, string id, TransactionState state)
+            : base(p, id)
+        {
+            this.state = (FileComponentState)state;
+        }
+
 
         public string GetSpacing(int index)
         {
@@ -107,14 +115,16 @@ namespace LynnaLib
         // Attaching/detaching from a parser object
         public void Attach(FileParser p)
         {
-            if (p == state.parser)
+            if (p == state.parser?.Instance)
                 return;
             if (state.parser != null)
                 throw new Exception("Must call 'Detach()' before calling 'Attach(parser)'.");
+            if (p == null)
+                throw new Exception("Can't attach to null parser");
             RecordChange();
-            state.parser = p;
+            state.parser = new(p);
         }
-        public void Detach()
+        public virtual void Detach()
         {
             RecordChange();
             FileParser.RemoveFileComponent(this);
@@ -129,11 +139,6 @@ namespace LynnaLib
             FileParser.InsertComponentBefore(reference, this);
         }
 
-        protected void SetProject(Project p)
-        {
-            _project = p;
-        }
-
         /// <summary>
         /// Always call this BEFORE any change is made that affects the state object. It will record
         /// the state before the change is made in order to be able to undo it.
@@ -142,30 +147,30 @@ namespace LynnaLib
         {
             if (suppressUndoRecording != 0)
                 return;
-            Project.UndoState.CaptureInitialState(this);
+            state.CaptureInitialState(this);
             Modified = true;
             if (FileParser != null)
                 FileParser.Modified = true;
         }
 
         // ================================================================================
-        // Undoable interface functions
+        // TrackedProjectData interface functions
         // ================================================================================
 
-        public TransactionState GetState()
+        public override TransactionState GetState()
         {
             return state;
         }
 
-        public void SetState(TransactionState state)
+        public override void SetState(TransactionState state)
         {
-            this.state = (FileComponentState)state.Copy();
+            this.state = (FileComponentState)state;
             Modified = true;
             if (FileParser != null)
                 FileParser.Modified = true;
         }
 
-        public virtual void InvokeModifiedEvent(TransactionState prevState)
+        public override void InvokeUndoEvents(TransactionState prevState)
         {
         }
 
@@ -174,50 +179,36 @@ namespace LynnaLib
         /// </summary>
         protected class FileComponentState : TransactionState
         {
-            public FileParser parser;
+            public InstanceResolver<FileParser> parser; // Can be null
             public List<string> spacing;
             public bool endsLine;
             public bool fake;
-            public Func<FileComponentState> constructorFunc; // Constructs an instance of the derived class
 
-            public virtual void CopyFrom(FileComponentState state)
+            public virtual void CaptureInitialState(FileComponent parent)
             {
-                parser = state.parser;
-                spacing = new List<string>(state.spacing);
-                endsLine = state.endsLine;
-                fake = state.fake;
-                constructorFunc = state.constructorFunc;
-            }
-
-            public virtual TransactionState Copy()
-            {
-                FileComponentState copy = constructorFunc();
-                copy.CopyFrom(this);
-                return copy;
-            }
-
-            public virtual bool Compare(TransactionState obj)
-            {
-                if (!(obj is FileComponentState state))
-                    return false;
-                return parser == state.parser
-                    && spacing.SequenceEqual(state.spacing)
-                    && endsLine == state.endsLine
-                    && fake == state.fake;
+                parent.Project.UndoState.CaptureInitialState<FileComponentState>(parent);
             }
         }
     }
 
     public class StringFileComponent : FileComponent
     {
-        public StringFileComponent(FileParser parser, string s, IList<string> spacing)
-            : base(parser, spacing, () => new StringFileComponentState())
+        public StringFileComponent(string id, FileParser parser, string s, IList<string> spacing)
+            : base(id, parser, spacing, () => new StringFileComponentState())
         {
             State.str = s;
             if (this.Spacing == null)
                 this.Spacing = new List<string>();
             while (this.Spacing.Count < 2)
                 this.Spacing.Add("");
+        }
+
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private StringFileComponent(Project p, string id, TransactionState state)
+            : base(p, id, state)
+        {
         }
 
         // Properties
@@ -240,34 +231,36 @@ namespace LynnaLib
         {
             public string str;
 
-            public override void CopyFrom(FileComponentState state)
+            public override void CaptureInitialState(FileComponent parent)
             {
-                str = (state as StringFileComponentState).str;
-                base.CopyFrom(state);
-            }
-
-            public override bool Compare(TransactionState obj)
-            {
-                if (!(obj is StringFileComponentState state))
-                    return false;
-                return base.Compare(obj) && str == state.str;
+                parent.Project.UndoState.CaptureInitialState<StringFileComponentState>(parent);
             }
         }
     }
 
     public class Label : FileComponent
     {
-        readonly string name;
+        class LabelState : FileComponent.FileComponentState
+        {
+            public string name;
+
+            public override void CaptureInitialState(FileComponent parent)
+            {
+                parent.Project.UndoState.CaptureInitialState<LabelState>(parent);
+            }
+        }
+
+        LabelState State { get { return base.state as LabelState; } }
 
         public string Name
         {
-            get { return name; }
+            get { return State.name; }
         }
 
-        public Label(FileParser parser, string n, IList<string> spacing = null)
-            : base(parser, spacing, () => new FileComponentState())
+        public Label(string id, FileParser parser, string n, IList<string> spacing = null)
+            : base(id, parser, spacing, () => new LabelState())
         {
-            name = n;
+            State.name = n;
             if (spacing == null)
             {
                 this.Spacing = new List<string> { "", "" };
@@ -276,9 +269,17 @@ namespace LynnaLib
                 this.Spacing.Add("");
         }
 
+        /// <summary>
+        /// State-based constructor, for network transfer (located via reflection)
+        /// </summary>
+        private Label(Project p, string id, TransactionState state)
+            : base(p, id, state)
+        {
+        }
+
         public override string GetString()
         {
-            return Spacing[0] + name + ":" + Spacing[1];
+            return Spacing[0] + Name + ":" + Spacing[1];
         }
     }
 }

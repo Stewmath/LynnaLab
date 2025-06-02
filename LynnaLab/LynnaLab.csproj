@@ -17,13 +17,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <PreBuildEvent>git describe --always &gt; "$(MSBuildProjectDirectory)/version.txt"</PreBuildEvent>
-  </PropertyGroup>
-
   <ItemGroup>
-    <EmbeddedResource Include="version.txt" />
-
     <EmbeddedResource Include="Shaders/OpenGL/*.glsl" LogicalName="%(Filename)%(Extension)" />
     <EmbeddedResource Include="Shaders/SPIR-V/*.spv" LogicalName="%(Filename)%(Extension)" />
   </ItemGroup>

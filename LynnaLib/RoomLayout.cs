@@ -21,9 +21,6 @@ namespace LynnaLib
         // Tied to the ValueReference through an event handler - undo-proof
         Tileset loadedTileset;
 
-        // List of positions where each tile index is used in the room
-        List<(int,int)>[] tilePositions = new List<(int,int)>[256];
-
 
         // Event invoked when tileset used for this room is changed
         public event EventHandler<RoomTilesetChangedEventArgs> TilesetChangedEvent;
@@ -101,32 +98,12 @@ namespace LynnaLib
 
             Project.BeginTransaction($"Modify room layout#r{Room.Index:X3}s{Season}", true);
 
-            tilePositions[oldTile].Remove((x, y));
-            tilePositions[value].Add((x, y));
             tileDataFile.Position = y * Stride + x;
             tileDataFile.WriteByte((byte)value);
             // Modifying the data will trigger the callback to the TileDataModified function
 
-            Project.UndoState.OnRewind("Modify room layout", () =>
-            { // On undo
-                CalculateTilePositions();
-            }, (isRedo) =>
-            { // On redo or right now
-                if (isRedo)
-                    CalculateTilePositions();
-            });
-
             Project.EndTransaction();
         }
-
-        /// <summary>
-        /// Returns a list of positions where a given tile is located.
-        /// </summary>
-        public IList<(int, int)> GetTilePositions(int tileIndex)
-        {
-            return tilePositions[tileIndex].AsReadOnly();
-        }
-
 
         /// <summary>
         /// Tied to the Room's ValueReference for the tileset assignment. This means that this
@@ -157,22 +134,6 @@ namespace LynnaLib
 
         // Private methods
 
-        void CalculateTilePositions()
-        {
-            for (int t = 0; t < 256; t++)
-            {
-                tilePositions[t] = new List<(int, int)>();
-            }
-            for (int x = 0; x < Width; x++)
-            {
-                for (int y = 0; y < Height; y++)
-                {
-                    int tile = GetTile(x, y);
-                    tilePositions[tile].Add((x, y));
-                }
-            }
-        }
-
         void UpdateRoomData()
         {
             if (tileDataFile != null)
@@ -202,9 +163,9 @@ namespace LynnaLib
             string largeFileName = "rooms/" + Project.GameString + "/large/" + roomString;
 
             if (Project.FileExists(smallFileName))
-                tileDataFile = Project.GetBinaryFile(smallFileName);
+                tileDataFile = Project.GetFileStream(smallFileName);
             else if (Project.FileExists(largeFileName))
-                tileDataFile = Project.GetBinaryFile(largeFileName);
+                tileDataFile = Project.GetFileStream(largeFileName);
             else
                 throw new AssemblyErrorException("Couldn't find \"" + roomString + "\" in \"rooms/small\" or \"rooms/large\".");
 
@@ -222,12 +183,10 @@ namespace LynnaLib
             }
             else
                 throw new AssemblyErrorException("Size of file \"" + tileDataFile.FilePath + "\" was invalid!");
-
-            CalculateTilePositions();
         }
 
         // Room layout modified
-        void TileDataModified(object sender, MemoryFileStream.ModifiedEventArgs args)
+        void TileDataModified(object sender, StreamModifiedEventArgs args)
         {
             LayoutChangedEvent?.Invoke(this, new RoomLayoutChangedEventArgs {});
         }
