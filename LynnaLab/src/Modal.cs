@@ -96,7 +96,7 @@ public static class Modal
             bool enabled = true;
 
             // Display message boxes (if there are multiple, newer ones are higher up)
-            if (ImGui.Begin($"Error##MessageBox {message.ID}", ref enabled, flags))
+            if (ImGui.Begin($"{message.Title}##MessageBox {message.ID}", ref enabled, flags))
             {
                 ImGui.PushFont(Top.InfoFont);
 
@@ -149,13 +149,30 @@ public static class Modal
     }
 
     /// <summary>
-    /// Currently this is used for all kinds of messages, not just errors.
+    /// Display a message for several seconds.
+    /// </summary>
+    public static void DisplayInfoMessage(string message)
+    {
+        messageList.Add(new MessageStruct
+        {
+            Message = message,
+            Title = "Info",
+            Exception = null,
+            Watch = Stopwatch.StartNew(),
+            DisplaySeconds = 5,
+            ID = messageIDCounter++,
+        });
+    }
+
+    /// <summary>
+    /// Display an error message for several seconds.
     /// </summary>
     public static void DisplayErrorMessage(string message, Exception exception = null)
     {
         messageList.Add(new MessageStruct
         {
             Message = message,
+            Title = "Error",
             Exception = exception,
             Watch = Stopwatch.StartNew(),
             DisplaySeconds = 5,
@@ -432,7 +449,7 @@ public static class Modal
                 }
                 else if (connectToServerTask.IsCompletedSuccessfully)
                 {
-                    DisplayErrorMessage("Connection to server established!");
+                    DisplayInfoMessage("Connection to server established!");
                     cancelSource.Dispose();
                     return true;
                 }
@@ -499,7 +516,7 @@ public static class Modal
             ImGui.Text($"New connection request from: {conn.RemoteEndPoint}");
             if (ImGui.Button("Accept"))
             {
-                Top.LazyInvoke(() => Modal.DisplayErrorMessage($"Client connected: {conn.RemoteEndPoint}."));
+                Top.LazyInvoke(() => Modal.DisplayInfoMessage($"Client connected: {conn.RemoteEndPoint}."));
                 server.AcceptConnection(conn);
                 return true;
             }
@@ -572,6 +589,7 @@ public static class Modal
     class MessageStruct
     {
         public string Message { get; init; }
+        public string Title { get; init; }
         public Exception Exception { get; init; }
         public Stopwatch Watch { get; init; }
         public int DisplaySeconds { get; init; }

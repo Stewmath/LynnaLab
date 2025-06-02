@@ -399,7 +399,7 @@ public class ProjectWorkspace
 
                 Top.LazyInvoke(() =>
                 {
-                    Modal.DisplayErrorMessage("Server has closed.");
+                    Modal.DisplayInfoMessage("Server has closed.");
                 });
             }
             catch (Exception e)
