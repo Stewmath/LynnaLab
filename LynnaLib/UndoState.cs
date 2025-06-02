@@ -95,8 +95,6 @@ public class UndoState
 
     bool HaveIncompleteTransaction { get { return !constructingTransaction.Empty; } }
 
-    NetworkRole NetworkRole { get; } // TODO
-
 
     // TODO: Make this non-public
     public DictionaryLinkedList<string, TransactionNode> TransactionHistory { get; } = new();

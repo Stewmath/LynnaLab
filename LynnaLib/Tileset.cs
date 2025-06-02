@@ -96,7 +96,8 @@ namespace LynnaLib
         public IntValueReferenceWrapper DungeonIndex { get; protected set; }
         public IntValueReferenceWrapper CollisionType { get; protected set; }
 
-        // TODO: Tracking
+        // Note on tracking: Because the "RealTileset" class (the one that's tracked) never changes
+        // this, we don't need to track its state. However the FakeTileset class does change this.
         public IStream GfxFileStream { get; protected set; }
 
         // End of properties that subclass must set in constructor

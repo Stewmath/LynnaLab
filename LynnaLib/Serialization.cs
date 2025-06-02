@@ -98,12 +98,6 @@ public class InstanceResolver<T> where T : ProjectDataType
     {
         if (!ResolvedValue)
         {
-            // Assert that we're not in the middle of processing a packet - otherwise the data
-            // we're referencing might not exist yet!
-            // (TODO: Ensure this check is accurate when networking is implemented)
-            // Helper.Assert(!project.UndoState.IsUndoing,
-            //               "Tried to resolve an instance in the middle of an undo!");
-
             instance = (T)project.GetDataType(InstanceType, Identifier, createIfMissing: true);
             ResolvedValue = true;
         }

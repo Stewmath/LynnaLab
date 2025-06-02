@@ -107,7 +107,6 @@ namespace LynnaLib
         log4net.Appender.RollingFileAppender logAppender;
 
 
-        // --- TODO: Figure out how to handle these over the network ---
         UndoState undoState;
 
 
@@ -708,7 +707,6 @@ namespace LynnaLib
             return dataStructDictionary.Values.Where((a) => a is TrackedProjectData).Select((a) => (TrackedProjectData)a);
         }
 
-        // TODO: Determine if this is needed
         // TODO: Randomize loading order to catch bugs
         public TrackedProjectData AddExternalData(string identifier, Type instanceType, Type stateType, string stateStr)
         {
@@ -1670,9 +1668,9 @@ namespace LynnaLib
         /// "#" is included in the description string, the remainder of the string will not be
         /// displayed, but will still be used for comparisons to determine whether to merge.
         /// </summary>
-        public void BeginTransaction(string description, bool merge = false)
+        public void BeginTransaction(string description, bool merge = false, bool disallowUndo = false)
         {
-            UndoState.BeginTransaction(description, merge);
+            UndoState.BeginTransaction(description, merge, disallowUndo);
         }
 
         /// <summary>

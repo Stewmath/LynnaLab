@@ -61,8 +61,8 @@ namespace LynnaLib
 
         State state = new State();
 
-        // TODO: Technically should probably be tracking this? But the way it's used, it's unlikely
-        // to matter.
+        // NOTE: Not tracked with state. Every time the stream is accessed the position should be
+        // set to whatever we're reading.
         long _position;
 
         readonly string filepath;
@@ -132,7 +132,7 @@ namespace LynnaLib
                 // Use MainThreadInvoke to avoid any threading headaches
                 Helper.MainThreadInvoke(() =>
                 {
-                    Project.BeginTransaction("PNG File Reload"); // TODO: Don't allow undoing this?
+                    Project.BeginTransaction("File Reload", disallowUndo: true);
                     Project.UndoState.CaptureInitialState<State>(this);
                     LoadFromFile();
                     InvokeModifiedEvent(new StreamModifiedEventArgs(0, Length));
