@@ -71,11 +71,11 @@ class Program
             Console.WriteLine("Unhandled exception occurred!");
             Console.WriteLine(e);
 
-            string message = "An unhandled exception occurred - this probably indicates a bug in LynnaLab! You can attempt to save your project before LynnaLab terminates.\n\n" + e;
+            string message = "An unhandled exception occurred! Take a screenshot and show this to Stewmat.\n\nLynnaLab will now terminate. Click \"Save & exit\" to attempt to save your project before closing.\n\n" + e;
             int option = SDLUtil.SDLHelper.ShowErrorMessageBox(
                 "Error",
                 message,
-                new string[] { "Save project and exit", "Exit without saving" });
+                new string[] { "Save & exit", "Don't save" });
 
             if (option == 0)
                 Top.SaveProject();
