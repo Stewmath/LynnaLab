@@ -207,7 +207,7 @@ namespace LynnaLib
             };
             Action PopFileStructure = () =>
             {
-                fileStructure.Remove(fileStructure.Last);
+                fileStructure.Remove(fileStructure.LastNode);
             };
             Action<FileComponent> AddDataAndPopFileStructure = (data) =>
             {
@@ -564,7 +564,7 @@ namespace LynnaLib
                                     int objectDefinitionType = j;
 
                                     ObjectData lastObjectData = null;
-                                    for (var node = fileStructure.Last; node != null; node = node.Previous)
+                                    for (var node = fileStructure.LastNode; node != null; node = node.Previous)
                                     {
                                         if (node.Value is Data)
                                         {
@@ -905,7 +905,7 @@ namespace LynnaLib
 
             DocumentationFileComponent doc = null;
             if (FileStructure.Count >= 2)
-                doc = FileStructure.Last.Previous.Value as DocumentationFileComponent;
+                doc = FileStructure.LastNode.Previous.Value as DocumentationFileComponent;
 
             // Replace the value from the "AddDefinition" call
             DefinesDictionary[def] = new Tuple<string, DocumentationFileComponent>(value, doc);
@@ -1046,7 +1046,7 @@ namespace LynnaLib
                 node = nextNode;
             }
 
-            return structure.Last.Value;
+            return structure.Last;
         }
         public FileComponent InsertParseableTextBefore(FileComponent refComponent, string[] text)
         {
@@ -1071,7 +1071,7 @@ namespace LynnaLib
                 node = nextNode;
             }
 
-            return structure.First.Value;
+            return structure.First;
         }
 
         public FileComponent GetNextFileComponent(FileComponent reference)
