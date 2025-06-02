@@ -22,7 +22,7 @@ public static class Top
     /// <summary>
     /// Called upon initialization. Optionally takes parameters for the project to load.
     /// </summary>
-    public static void Load(string path = null, string game = null)
+    public static void Load(string path = null, string game = null, bool implicitWindowsOpen = false)
     {
         string versionString = Helper.GetVersionString();
         backend = new VeldridBackend.VeldridBackend("LynnaLab", versionString);
@@ -60,7 +60,35 @@ public static class Top
         settingsDialog.AutoAdjustWidth = true;
 
         if (path != null)
-            Top.OpenProject(path, game);
+        {
+            if (implicitWindowsOpen)
+            {
+                if (!Path.Exists(path))
+                {
+                    Modal.DisplayMessageModal("Error", $"Directory does not exist: '{path}'.\n\nTo run LynnaLab locally, first download MSYS2, then execute the \"windows-setup.bat\" file. See readme for details.\n\nIf you're just connecting to a server you may ignore this message.");
+                    return;
+                }
+        
+                Modal.OpenModal("Confirm open", () =>
+                {
+                    bool retval = false;
+                    ImGui.Text($"Found project at '{path}', open it?");
+                    if (ImGui.Button("Open"))
+                    {
+                        Top.OpenProject(path, game);
+                        retval = true;
+                    }
+                    ImGui.SameLine();
+                    if (ImGui.Button("Don't open"))
+                    {
+                        retval = true;
+                    }
+                   return retval;
+                });
+            }
+            else
+                Top.OpenProject(path, game);
+        }
     }
 
     // ================================================================================

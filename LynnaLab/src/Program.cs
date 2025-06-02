@@ -45,7 +45,7 @@ class Program
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     string path = $"C:\\msys64\\home\\{Environment.UserName}\\oracles-disasm";
-                    Top.Load(path);
+                    Top.Load(path, implicitWindowsOpen: true);
                 }
                 else
                     Top.Load();
