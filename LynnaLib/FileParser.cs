@@ -60,6 +60,8 @@ namespace LynnaLib
             public ulong idCounter;
         }
 
+        // Never track these with state - could be a security problem, allowing clients to have
+        // filesystem access
         readonly string filename; // Relative to base directory
         readonly string fullFilename; // Full path
 

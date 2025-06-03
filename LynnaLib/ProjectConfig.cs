@@ -42,7 +42,8 @@ namespace LynnaLib
         [JsonInclude, JsonRequired]
         public bool ExpandedTilesets { get; private set; }
 
-        // Filename of config file
+        // Filename of config file. Don't de/serialize this for security reasons.
+        [JsonIgnore]
         string filename;
 
 

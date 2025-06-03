@@ -760,10 +760,16 @@ namespace LynnaLib
 
         /// <summary>
         /// Load a file from the disk into a MemoryFileStream. Should only call this from the
-        /// project constructor, so that everything's loaded at the beginning.
+        /// project constructor, so that everything's loaded at the beginning. There's more than one
+        /// reason for this - IE. We want them all in memory so that they can all be sent to remote
+        /// clients when they connect. It's also a security precaution - we don't want remote
+        /// clients to somehow invoke this to gain access to files they're not supposed to access!
         /// </summary>
         private void LoadFileStream(string filename, bool watchForFilesystemChanges)
         {
+            if (!IsInConstructor)
+                throw new Exception("Called LoadFileStream outside of Project constructor");
+
             if (CheckHasDataType<MemoryFileStream>(filename))
                 return;
 

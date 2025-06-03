@@ -81,6 +81,10 @@ namespace LynnaLib
         public MemoryFileStream(Project project, string filename, bool watchForFilesystemChanges)
             : base(project, filename)
         {
+            // Sanity check for security - don't access any new files after project is initialized
+            if (!project.IsInConstructor)
+                throw new Exception("Initializing MemoryFileStream outside of Project constructor");
+
             this.filepath = Path.Combine(project.BaseDirectory, filename);
 
             LoadFromFile();
@@ -95,7 +99,7 @@ namespace LynnaLib
         private MemoryFileStream(Project p, string id, TransactionState state)
             : base(p, id)
         {
-            this.filepath = null;
+            this.filepath = null; // NEVER allow remote clients to set this! Don't give them filesystem access!
             this.state = (State)state;
         }
 
