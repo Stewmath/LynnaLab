@@ -49,7 +49,7 @@ public class ProjectWorkspace
         buildDialog = new BuildDialog(this, "Build");
         documentationDialog = new DocumentationDialog(this, "Documentation Dialog");
         scratchpad = new ScratchPad(this, "Scratchpad", roomEditor.TilesetViewer, Brush);
-        undoDialog = new UndoDialog(this, "Undo History");
+        transactionDialog = new TransactionDialog(this, "Undo History");
         networkDialog = new NetworkDialog(this, "Networking");
 
         frames.AddRange(new Frame[] {
@@ -60,7 +60,7 @@ public class ProjectWorkspace
                 scratchpad,
                 buildDialog,
                 documentationDialog,
-                undoDialog,
+                transactionDialog,
                 networkDialog,
             });
         frames.Sort((f1, f2) => f1.Name.CompareTo(f2.Name));
@@ -98,7 +98,7 @@ public class ProjectWorkspace
     ScratchPad scratchpad;
     BuildDialog buildDialog;
     DocumentationDialog documentationDialog;
-    UndoDialog undoDialog;
+    TransactionDialog transactionDialog;
     NetworkDialog networkDialog;
 
     List<Frame> frames = new List<Frame>();

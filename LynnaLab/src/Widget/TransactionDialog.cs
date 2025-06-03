@@ -1,11 +1,11 @@
 namespace LynnaLab;
 
-public class UndoDialog : Frame
+public class TransactionDialog : Frame
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public UndoDialog(ProjectWorkspace workspace, string name)
+    public TransactionDialog(ProjectWorkspace workspace, string name)
         : base(name)
     {
         this.Workspace = workspace;
@@ -40,16 +40,15 @@ public class UndoDialog : Frame
         }
         else
         {
-            ImGui.Text("Pending transaction:");
-            DrawTransaction(TransactionManager.constructingTransaction, -1);
+            ImGui.Text("Pending transaction: " + TransactionManager.constructingTransaction.Description);
         }
 
-        ImGui.Text("Undo stack:");
+        ImGui.Text("Transaction History:");
 
         int index = 0;
-        foreach (var transaction in TransactionManager.Transactions)
+        foreach (var transactionNode in TransactionManager.TransactionHistory.Reverse())
         {
-            DrawTransaction(transaction, index++);
+            DrawTransaction(transactionNode, index++);
         }
 
         ImGui.PopFont();
@@ -59,28 +58,13 @@ public class UndoDialog : Frame
     // Private methods
     // ================================================================================
 
-    void DrawTransaction(Transaction t, int index)
+    void DrawTransaction(TransactionNode node, int index)
     {
         string keyString = "###Transaction" + index;
-        if (ImGui.CollapsingHeader(t.Description + keyString + "A"))
+        if (ImGui.CollapsingHeader((node.Apply ? "Apply" : "Unapply") + $": {node.Description}{keyString}"))
         {
-            // TODO
-            // foreach (var (obj, delta) in t.deltas)
-            // {
-            //     string text = obj.GetType().ToString();
-
-            //     ImGui.Text("- " + text);
-
-            //     if (delta is TransactionStateHolder holder)
-            //         ImGui.TextWrapped(holder.initialState);
-
-            //     // if (obj is FileComponent com)
-            //     //     text += ": " + com.GetString();
-            //     // else if (obj is FileParser p)
-            //     //     text += ": " + p.Filename;
-            //     // else if (obj is MemoryFileStream stream)
-            //     //     text += ": " + stream.RelativeFilePath;
-            // }
+            ImGui.Text("CreatorID: " + node.Transaction.CreatorID);
+            ImGui.Text("TransactionID: " + node.Transaction.TransactionID);
         }
     }
 }
