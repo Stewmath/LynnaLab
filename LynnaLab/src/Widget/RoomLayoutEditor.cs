@@ -246,7 +246,12 @@ public class RoomLayoutEditor : TileGrid
         {
             var com = selectedRoomComponent;
 
-            if (com is ObjectRoomComponent ocom)
+            // This can happen if a remote client deleted the object we were looking at.
+            if (com == null)
+            {
+                ImGui.CloseCurrentPopup();
+            }
+            else if (com is ObjectRoomComponent ocom)
             {
                 ObjectBox.ObjectPopupMenu(ocom.obj, Room, Workspace);
             }

@@ -268,6 +268,8 @@ public class ObjectGroupEditor : Frame
         }
         objectBoxDict.Clear();
 
+        bool selectedObjectGroupExists = false;
+
         foreach (ObjectGroup group in topObjectGroup.GetAllGroups())
         {
             var objectBox = new ObjectBox(this, "ObjectBox-" + group.Identifier, group);
@@ -279,9 +281,13 @@ public class ObjectGroupEditor : Frame
             };
 
             objectBoxDict.Add(group, objectBox);
+
+            if (group.GetAllGroups().AsQueryable().Contains(selectedObjectGroup))
+                selectedObjectGroupExists = true;
         }
 
-        SelectObject(TopObjectGroup, -1);
+        if (!selectedObjectGroupExists)
+            SelectObject(TopObjectGroup, -1);
     }
 
     void ObjectGroupModifiedHandler(object sender, EventArgs args)
@@ -289,7 +295,6 @@ public class ObjectGroupEditor : Frame
         if (sender == topObjectGroup)
         {
             // Just in case a shared object group was deleted, regenerate object boxes.
-            // This will also unselect if something was selected.
             ReloadObjectBoxes();
         }
 
