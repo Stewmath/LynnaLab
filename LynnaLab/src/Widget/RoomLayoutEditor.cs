@@ -153,6 +153,20 @@ public class RoomLayoutEditor : TileGrid
         var endPos = ImGui.GetCursorScreenPos();
         bool isWindowHovered = ImGui.IsWindowHovered(ImGuiHoveredFlags.AllowWhenBlockedByActiveItem);
 
+        // Render remote cursors
+        foreach (var remoteState in Workspace.RemoteStates.Values)
+        {
+            CursorPosition cursor = remoteState.CursorPosition;
+            if (cursor.room == Room.Index && cursor.tileStart != -1)
+            {
+                if (cursor.tileEnd == -1) // Single tile
+                    base.AddRect(base.TileRect(cursor.tileStart), remoteState.Color, ImGuiX.Unit(base.RectThickness));
+                else // Rectangle
+                    base.AddRect(base.TileRangeRect(cursor.tileStart, cursor.tileEnd),
+                                 remoteState.Color, ImGuiX.Unit(base.RectThickness));
+            }
+        }
+
         RoomComponent hoveringComponent = null;
         var mousePos = base.GetRelativeMousePos() / Scale;
         int componentIndex = 0;

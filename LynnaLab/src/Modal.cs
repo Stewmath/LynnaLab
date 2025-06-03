@@ -504,34 +504,6 @@ public static class Modal
         });
     }
 
-    public static void ConnectionRequestModal(ServerController server, ConnectionController conn)
-    {
-        OpenModal("New connection request", () =>
-        {
-            // Checking conn.Closed doesn't actually work because we're not listening for packets
-            // right now. Even if the client closes the connection we won't notice until later.
-            if (conn.Closed)
-                return true;
-
-            ImGui.Text($"New connection request from: {conn.RemoteEndPoint}");
-            if (ImGui.Button("Accept"))
-            {
-                Top.DoNextFrame(() => Modal.DisplayInfoMessage($"Client connected: {conn.RemoteEndPoint}."));
-                server.AcceptConnection(conn);
-                return true;
-            }
-
-            ImGui.SameLine();
-            if (ImGui.Button("Reject"))
-            {
-                server.RejectConnection(conn);
-                return true;
-            }
-
-            return false;
-        });
-    }
-
     // ================================================================================
     // Private methods
     // ================================================================================

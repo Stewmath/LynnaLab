@@ -27,6 +27,7 @@ enum NetworkCommand
     ClientHello,
     NewTransactions,
     Ack,
+    RemoteStateChanged,
 }
 
 // This is a class instead of an enum since we don't want to have to cast the values manually
@@ -103,6 +104,35 @@ class AckPacket
     public required List<string> rejectedTransactions;
 }
 
+class UpdateStatePacket
+{
+    // Not necessarily the same as PacketHeader.senderID - server can forward this
+    public required int id;
+
+    public required RemoteState? RemoteState; // If null, the remote disconnected
+}
+
+
+/// <summary>
+/// Represents the state of a remote client, for everything other than the project state. IE. Keeps
+/// track of which rooms they're looking at at any given time. This generally relates to UI stuff
+/// that doesn't need to be synchronized in the same way as project data (each client has full
+/// "ownership" over their version of this data.)
+/// </summary>
+public record RemoteState
+{
+    public required Color Color { get; init; }
+    public required CursorPosition CursorPosition { get; init; }
+}
+
+public record CursorPosition
+{
+    public required int room; // Should always be a valid value
+    public required int tileStart; // If -1, no tile's being hovered over
+    public required int tileEnd; // If not -1, it's a rectangle selection
+}
+
+
 /// <summary>
 /// The purpose of this class is to allow networking functions to interface with the project. It
 /// cannot be done directly due to threading issues. The constructor takes a function which invokes
@@ -132,7 +162,6 @@ public class NetworkInterfacer
     // Properties
     // ================================================================================
 
-    public Project Project { get { return project; } }
     public TransactionManager TransactionManager { get { return project.TransactionManager; } }
 
     // ================================================================================
@@ -316,6 +345,12 @@ public class ServerController
                         log.Error(task.Exception);
                     }
 
+                    // For all remaining connections, notify that the client has disconnected.
+                    await ForEachConnection(async (otherConn) =>
+                    {
+                        await otherConn.NotifyRemoteDisconnected(conn.RemoteID);
+                    });
+
                     ClientDisconnectedEvent?.Invoke(this, conn, task.Exception);
                 }
             }
@@ -376,19 +411,38 @@ public class ServerController
         cancelSource.Cancel();
     }
 
-    /// <summary>
-    /// Always call this from the main thread.
-    /// </summary>
-    public void QueueTransactionsForAllClients(List<TransactionNode> nodes, string? lastNodeID)
+    public async Task ForEachConnection(Func<ConnectionController, Task> action)
+    {
+        // Get a copy of the connections in case the list changes
+        var connections = GetConnections();
+
+        foreach (ConnectionController conn in connections)
+        {
+            await action(conn);
+        }
+    }
+
+    public void ForEachConnection(Action<ConnectionController> action)
     {
         lock (mylock)
         {
             foreach (ConnectionController conn in activeConnections)
             {
-                if (conn.SentInitialProjectState)
-                    conn.QueueTransactions(nodes, lastNodeID, true);
+                action(conn);
             }
         }
+    }
+
+    /// <summary>
+    /// Always call this from the main thread.
+    /// </summary>
+    public void QueueTransactionsForAllClients(List<TransactionNode> nodes, string? lastNodeID)
+    {
+        ForEachConnection((conn) =>
+        {
+            if (conn.SentInitialProjectState)
+                conn.QueueTransactions(nodes, lastNodeID, true);
+        });
     }
 
     // ================================================================================
@@ -443,6 +497,18 @@ public class ConnectionController
         this.RemoteEndPoint = client.Client.RemoteEndPoint!;
         this.Server = server;
 
+        this.localState = new()
+        {
+            // Client color will be changed when ID is assigned
+            Color = role == NetworkRole.Server ? SERVER_COLOR : CLIENT_COLORS[0],
+            CursorPosition = new()
+            {
+                room = 0,
+                tileStart = -1,
+                tileEnd = -1,
+            },
+        };
+
         transactionQueue = Channel.CreateUnbounded<(List<TransactionNode> nodeList, string? lastNodeID)>();
 
         if (role == NetworkRole.Server)
@@ -461,7 +527,7 @@ public class ConnectionController
 
         this.Connection.ClosedEvent += () =>
         {
-            ConnectionClosedEvent?.Invoke(closeException);
+            ConnectionClosedEvent?.Invoke(this, closeException);
         };
     }
 
@@ -498,6 +564,9 @@ public class ConnectionController
     // Variables
     // ================================================================================
 
+    static readonly Color SERVER_COLOR = Color.Cyan;
+    static readonly Color[] CLIENT_COLORS = [Color.Lime, Color.Yellow, Color.Purple];
+
     protected static readonly log4net.ILog log = LogHelper.GetLogger();
 
     protected bool receivedHello = false;
@@ -511,6 +580,8 @@ public class ConnectionController
 
     Channel<(List<TransactionNode> nodeList, string? lastNodeID)> transactionQueue;
     IPacketHandler packetHandler;
+
+    RemoteState localState;
 
     bool ranBegin = false;
     bool acceptedConnection = false; // For server-side connections, this is false until accepted
@@ -574,7 +645,14 @@ public class ConnectionController
     // This will be invoked on the main thread when the remote rejects transactions.
     public event Action<IEnumerable<string>>? TransactionsRejectedEvent;
 
-    public event Action<Exception?>? ConnectionClosedEvent;
+    /// <summary>
+    /// This event is invoked when non-project-related state is changed, ie. someone moving their
+    /// cursor. (Not necessarily the sender - the server can invoke this on behalf of other
+    /// clients.) If the state is null, the client disconnected.
+    /// </summary>
+    public event Action<int, RemoteState?>? RemoteStateChangedEvent;
+
+    public event Action<ConnectionController, Exception?>? ConnectionClosedEvent;
 
     // ================================================================================
     // Methods
@@ -686,6 +764,24 @@ public class ConnectionController
         await packetHandler.WaitUntilAcceptedAsync(ct);
     }
 
+    public async Task UpdateCursorPosition(CursorPosition position)
+    {
+        localState = localState with { CursorPosition = position };
+        await SendLocalState();
+    }
+
+    /// <summary>
+    /// Server calls this on its connections to notify clients that another client has disconnected.
+    /// </summary>
+    internal async Task NotifyRemoteDisconnected(int id)
+    {
+        await Connection.SendPacket<UpdateStatePacket>(NetworkCommand.RemoteStateChanged, new UpdateStatePacket
+        {
+            id = id,
+            RemoteState = null,
+        });
+    }
+
     /// <summary>
     /// Queue a transaction to be sent over the network. It's particularly important for the server
     /// to always use this method when sending transactions - because it also has an event handler
@@ -695,7 +791,7 @@ public class ConnectionController
     /// order (ie. if receiving transactions from the network as the local instance also creates
     /// transactions).
     /// </summary>
-    public void QueueTransactions(List<TransactionNode> transactions, string? lastNodeID, bool incAckCounter)
+    internal void QueueTransactions(List<TransactionNode> transactions, string? lastNodeID, bool incAckCounter)
     {
         if (!transactionQueue.Writer.TryWrite((transactions, lastNodeID)))
             throw new Exception("Channel write failure");
@@ -708,7 +804,7 @@ public class ConnectionController
     /// <summary>
     /// Called upon receiving AckPackets.
     /// </summary>
-    public async Task AcknowledgeAcks(int count)
+    internal async Task AcknowledgeAcks(int count)
     {
         await networkInterfacer.DoOnMainThread((_) =>
         {
@@ -750,10 +846,13 @@ public class ConnectionController
             case NetworkCommand.ServerHello:
                 await packetHandler.HandleServerHello(Deserialize<ServerHelloPacket>(data));
                 receivedHello = true;
+                localState = localState with { Color = CLIENT_COLORS[(LocalID-2) % CLIENT_COLORS.Length] };
+                await SendLocalState();
                 break;
             case NetworkCommand.ClientHello:
                 await packetHandler.HandleClientHello(Deserialize<ClientHelloPacket>(data));
                 receivedHello = true;
+                await SendLocalState();
                 break;
             case NetworkCommand.NewTransactions:
                 await packetHandler.HandleNewTransaction(Deserialize<NewTransactionPacket>(data));
@@ -766,6 +865,26 @@ public class ConnectionController
                         (_) => TransactionsRejectedEvent?.Invoke(rejected.Select((t) => t.Description)));
                 }
                 break;
+
+            case NetworkCommand.RemoteStateChanged:
+                var cursorPacket = Deserialize<UpdateStatePacket>(data);
+
+                // If this is a server, forward the packet to other clients
+                if (Server != null)
+                {
+                    await Server.ForEachConnection(async (conn) =>
+                    {
+                        if (this == conn)
+                            return;
+                        await conn.Connection.SendPacket<UpdateStatePacket>(
+                            NetworkCommand.RemoteStateChanged, cursorPacket);
+                    });
+                }
+
+                await networkInterfacer.DoOnMainThread(
+                    (_) => RemoteStateChangedEvent?.Invoke(cursorPacket.id, cursorPacket.RemoteState));
+                break;
+
             default:
                 throw new NetworkException($"Unhandled network command: {header.command}");
         }
@@ -795,6 +914,14 @@ public class ConnectionController
             ?? throw new DeserializationException("Null result");
     }
 
+    private async Task SendLocalState()
+    {
+        await Connection.SendPacket<UpdateStatePacket>(NetworkCommand.RemoteStateChanged, new UpdateStatePacket
+        {
+            id = LocalID,
+            RemoteState = localState,
+        });
+    }
 }
 
 /// <summary>

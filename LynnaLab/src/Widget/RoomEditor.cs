@@ -135,6 +135,8 @@ public class RoomEditor : Frame
                 DisableWarpDestEditMode();
             }
         }, weak: false);
+
+        roomLayoutEditor.HoverChangedEvent += (_, args) => OnCursorChanged(args);
     }
 
     // ================================================================================
@@ -157,6 +159,7 @@ public class RoomEditor : Frame
     int suppressEvents = 0;
     bool handlingObjectSelection, handlingWarpSelection;
     string minimapTabToSelect; // Set to change right tab bar programmatically
+    CursorPosition cursorPos = new() { room = -1, tileStart = -1, tileEnd = -1 };
 
     // Maps dungeon index to floor number. Allows the editor to remember what floor we were last
     // on for a given dungeon.
@@ -168,6 +171,8 @@ public class RoomEditor : Frame
 
     // Event that fires when the selected left-side tab has been changed
     public event EventHandler TabChangedEvent;
+
+    public event Action<CursorPosition> CursorPositionChangedEvent;
 
     // ================================================================================
     // Properties
@@ -290,6 +295,18 @@ public class RoomEditor : Frame
         ImGui.SameLine();
         ImGui.BeginChild("Middle Panel", new Vector2(roomLayoutEditor.WidgetSize.X + X_OFFSET, 0.0f),
                          ImGuiChildFlags.Borders);
+
+        if (Workspace.IsNetworkActive)
+        {
+            ImGui.PushFont(Top.InfoFont);
+            int count = Workspace.RemoteStates.Values.Where((s) => s.CursorPosition.room == Room.Index).Count();
+            if (count == 1)
+                ImGui.Text($"1 other is in this room.");
+            else
+                ImGui.Text($"{count} others are in this room.");
+            ImGui.PopFont();
+        }
+
         ImGui.SeparatorText("Room");
         roomLayoutEditor.Render();
         ImGui.EndChild();
@@ -573,6 +590,8 @@ public class RoomEditor : Frame
         }
 
         suppressEvents--;
+
+        OnCursorChanged(null);
     }
 
     /// <summary>
@@ -688,5 +707,36 @@ public class RoomEditor : Frame
     void OnTilesetIndexChanged(object sender, RoomTilesetChangedEventArgs args)
     {
         tilesetViewer.SetTileset(RoomLayout.Tileset);
+    }
+
+    /// <summary>
+    /// Invoked when the room or hovering tile is changed, so that remote instances can see what
+    /// you're hovering over.
+    /// </summary>
+    void OnCursorChanged(TileEventArgs args)
+    {
+        if (args == null)
+        {
+            cursorPos = cursorPos with { room = Room.Index };
+        }
+        else if (args.IsSingleTile)
+        {
+            cursorPos = new CursorPosition()
+            {
+                room = Room.Index,
+                tileStart = args.TileStart,
+                tileEnd = args.TileStart,
+            };
+        }
+        else // Rectangle select
+        {
+            cursorPos = new CursorPosition()
+            {
+                room = Room.Index,
+                tileStart = args.TileStart,
+                tileEnd = args.TileEnd,
+            };
+        }
+        CursorPositionChangedEvent?.Invoke(cursorPos);
     }
 }

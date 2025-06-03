@@ -34,6 +34,17 @@ public class Minimap : TileGrid
                     }
                 }
             }
+
+            // Draw cursors for remote instances
+            foreach (var remoteState in Workspace.RemoteStates.Values)
+            {
+                CursorPosition cursor = remoteState.CursorPosition;
+                if (Map.GetRoomPosition(Project.GetRoom(cursor.room), out int x, out int y, out int f))
+                {
+                    if (f == Floor)
+                        base.AddRect(base.TileRect(x, y), remoteState.Color, ImGuiX.Unit(base.RectThickness));
+                }
+            }
         };
 
         // Watch for dungeons removing a floor that we're currently looking at.

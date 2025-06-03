@@ -1,7 +1,7 @@
 #nullable enable
 
 using System.Numerics;
-
+using System.Text.Json.Serialization;
 using PixelFormats = SixLabors.ImageSharp.PixelFormats;
 
 namespace LynnaLib
@@ -12,6 +12,7 @@ namespace LynnaLib
     /// </summary>
     public struct Color
     {
+        [JsonInclude]
         int r, g, b, a;
 
         public int R

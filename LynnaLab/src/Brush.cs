@@ -175,6 +175,7 @@ public class BrushInterfacer
 
     public int BrushWidth { get { return getWidth(); } }
     public int BrushHeight { get { return getHeight(); } }
+    public Point BrushSize { get { return new Point(BrushWidth, BrushHeight); } }
 
     // ================================================================================
     // Methods

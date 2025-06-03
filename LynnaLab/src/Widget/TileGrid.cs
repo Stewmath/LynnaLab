@@ -30,6 +30,7 @@ public class TileGrid : SizedWidget
     // For rectangle selection
     TileGridAction activeRectSelectAction = null;
     int rectSelectStart, rectSelectEnd; // Always have valid values as long as activeRectSelectAction != null
+    FRect lastHoverRect = null;
 
     // Used for scrolling operations to keep zoom focused around point of interest
     Vector2? lastMousePos = null;
@@ -45,6 +46,11 @@ public class TileGrid : SizedWidget
     /// Invoked when selected tile is changed, could possibly have -1 (unselected) as the tile.
     /// </summary>
     public event Action<int> SelectedEvent;
+
+    /// <summary>
+    /// Invoked when hovered tile changes. Could be a single tile or a rectangle of tiles.
+    /// </summary>
+    public event EventHandler<TileEventArgs> HoverChangedEvent;
 
     /// <summary>
     /// Invoked between RenderTileGrid() and RenderHoverAndSelection(). Use this to render stuff on
@@ -225,9 +231,10 @@ public class TileGrid : SizedWidget
 
     /// <summary>
     /// This is only set to a valid value if a single tile is being hovered over. (Set to -1 if not
-    /// hovering or if hovering with a rectangle pattern.)
+    /// hovering or if hovering with a rectangle pattern.) To handle rectangular hovers, see
+    /// HoverChangedEvent.
     /// </summary>
-    public int HoveredTile { get; private set; }
+    public int HoveredTile { get; private set; } = -1;
 
     /// <summary>
     /// This is 1 + the maximum index value which can be hovered over or selected. Set to "0" to
@@ -510,6 +517,9 @@ public class TileGrid : SizedWidget
     /// </summary>
     public void RenderHoverAndSelection()
     {
+        int lastHoveredTile = HoveredTile;
+        TileEventArgs hoverChangedArgs = null;
+
         // Determine hovered tile
         HoveredTile = -1;
 
@@ -541,6 +551,9 @@ public class TileGrid : SizedWidget
                 }
             }
         }
+
+        if (HoveredTile != lastHoveredTile)
+            hoverChangedArgs = new TileEventArgs(HoveredTile);
 
         bool isMousePosValid = isHovered && mouseIndex != -1 && draggingTileIndex == -1;
         bool selectingRectangleThisFrame = SelectingRectangle;
@@ -582,12 +595,16 @@ public class TileGrid : SizedWidget
                         activeRectSelectAction = action;
                         rectSelectStart = mouseIndex;
                         rectSelectEnd = mouseIndex;
+                        hoverChangedArgs = new(rectSelectStart, rectSelectEnd);
                     }
                     else
                     {
                         // Button still being held
                         if (mouseIndex != -1)
+                        {
                             rectSelectEnd = mouseIndex;
+                            hoverChangedArgs = new(rectSelectStart, rectSelectEnd);
+                        }
 
                         // If clicked the alternate button, cancel the rectangle selection without doing anything
                         if (ImGui.IsMouseClicked(activeRectSelectAction.GetCancelButton()))
@@ -651,16 +668,33 @@ public class TileGrid : SizedWidget
 
         RenderBrushPreview();
 
+        FRect hoverRect = null;
+        int hoverBottomRightTile = -1;
+
         if (isMousePosValid && !SelectingRectangle)
         {
             // Draw hover rectangle
             int hoverX = mouseIndex % Width;
             int hoverY = mouseIndex / Width;
-            FRect r = TileRangeRect(mouseIndex, XYToTile(
-                                        Math.Min(hoverX + hoverWidth - 1, Width - 1),
-                                        Math.Min(hoverY + hoverHeight - 1, Height - 1)));
-            base.AddRect(r, HoverColor, thickness: RectThickness * ImGuiX.ScaleUnit);
+            hoverBottomRightTile = XYToTile(
+                hoverX + hoverWidth - 1,
+                hoverY + hoverHeight - 1,
+                clamp: true);
+            hoverRect = TileRangeRect(mouseIndex, hoverBottomRightTile);
+            base.AddRect(hoverRect, HoverColor, thickness: RectThickness * ImGuiX.ScaleUnit);
         }
+
+        if (hoverRect != lastHoverRect)
+        {
+            if (hoverRect == null)
+                hoverChangedArgs = new(-1);
+            else if (hoverWidth == 1 && hoverHeight == 1)
+                hoverChangedArgs = new(mouseIndex);
+            else
+                hoverChangedArgs = new(mouseIndex, hoverBottomRightTile);
+        }
+
+        lastHoverRect = hoverRect;
 
         if (RectangleSelected || SelectingRectangle)
         {
@@ -674,6 +708,9 @@ public class TileGrid : SizedWidget
             FRect r = TileRect(SelectedIndex);
             base.AddRect(r, SelectColor, thickness: RectThickness * ImGuiX.ScaleUnit);
         }
+
+        if (hoverChangedArgs != null)
+            HoverChangedEvent?.Invoke(this, hoverChangedArgs);
     }
 
     /// <summary>
@@ -787,11 +824,31 @@ public class TileGrid : SizedWidget
         return pos;
     }
 
-    public int XYToTile(int x, int y)
+    public int XYToTile(int x, int y, bool clamp = false)
     {
-        Debug.Assert(x >= 0 && x < Width);
-        Debug.Assert(y >= 0 && y < Height);
-        return x + y * Width;
+        int tile;
+        if (clamp)
+        {
+            if (x < 0)
+                x = 0;
+            if (x >= Width)
+                x = Width - 1;
+            if (y < 0)
+                y = 0;
+            if (y >= Height)
+                y = Height - 1;
+            tile = x + y * Width;
+            if (tile >= MaxIndex)
+                tile = MaxIndex - 1;
+        }
+        else
+        {
+            tile = x + y * Width;
+            Debug.Assert(x >= 0 && x < Width);
+            Debug.Assert(y >= 0 && y < Height);
+            Debug.Assert(tile < MaxIndex);
+        }
+        return tile;
     }
 
     public (int, int) TileToXY(int index)
@@ -876,7 +933,11 @@ public class TileGrid : SizedWidget
     public FRect TileRect(int tileIndex)
     {
         var (x, y) = TileToXY(tileIndex);
+        return TileRect(x, y);
+    }
 
+    public FRect TileRect(int x, int y)
+    {
         Vector2 tl = new Vector2((TilePaddingX + x * PaddedTileWidth) * Scale,
                                  (TilePaddingY + y * PaddedTileHeight) * Scale);
         return new FRect(tl.X, tl.Y, TileWidth * Scale, TileHeight * Scale);
@@ -1208,4 +1269,29 @@ public struct TileGridEventArgs
 
         return array;
     }
+}
+
+public class TileEventArgs
+{
+    public TileEventArgs(int tile)
+    {
+        IsSingleTile = true;
+        TileStart = tile;
+        TileEnd = tile;
+    }
+
+    public TileEventArgs(int tileStart, int tileEnd)
+    {
+        IsSingleTile = false;
+        TileStart = tileStart;
+        TileEnd = tileEnd;
+
+        if (tileStart == -1 || tileEnd == -1)
+            throw new Exception("TileEventArgs: tile == -1");
+    }
+
+    public bool IsSingleTile { get; }
+
+    public int TileStart { get; }
+    public int TileEnd { get; }
 }

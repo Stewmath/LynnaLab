@@ -24,12 +24,7 @@ public class ProjectWorkspace
         {
             // This is a client connected to a server
             this.NetworkConnection = connection;
-
-            connection.TransactionsRejectedEvent += OnTransactionsRejected;
-            connection.ConnectionClosedEvent += OnConnectionClosed;
-
-            if (connection.Closed)
-                throw new Exception("Connection closed in the middle of loading");
+            RegisterConnectionEvents(connection);
         }
 
         tilesetTextureCacher = new((tileset) => new TilesetTextureCacher(this, tileset));
@@ -74,6 +69,14 @@ public class ProjectWorkspace
         roomEditor.Active = true;
 
         WatchForRoomChanges();
+
+        roomEditor.CursorPositionChangedEvent += (cursor) =>
+        {
+            ForEachConnection(async (conn) =>
+            {
+                await conn.UpdateCursorPosition(cursor);
+            }).Wait();
+        };
     }
 
     // ================================================================================
@@ -137,6 +140,9 @@ public class ProjectWorkspace
 
     public bool IsServerRunning { get { return NetworkConnection.IsT1; } }
     public bool IsClientRunning { get { return NetworkConnection.IsT2; } }
+    public bool IsNetworkActive { get { return IsServerRunning || IsClientRunning; } }
+
+    public Dictionary<int, RemoteState> RemoteStates { get; } = new();
 
     // ================================================================================
     // Public methods
@@ -376,7 +382,31 @@ public class ProjectWorkspace
         // TODO: Unsubscribe on closure
         server.ConnectionRequestedEvent += (_, conn) =>
         {
-            Top.DoNextFrame(() => Modal.ConnectionRequestModal(server, conn));
+            Top.DoNextFrame(() => Modal.OpenModal("New connection request", () =>
+            {
+                // Checking conn.Closed doesn't actually work because we're not listening for packets
+                // right now. Even if the client closes the connection we won't notice until later.
+                if (conn.Closed)
+                    return true;
+
+                ImGui.Text($"New connection request from: {conn.RemoteEndPoint}");
+                if (ImGui.Button("Accept"))
+                {
+                    Top.DoNextFrame(() => Modal.DisplayInfoMessage($"Client connected: {conn.RemoteEndPoint}."));
+                    server.AcceptConnection(conn);
+                    RegisterConnectionEvents(conn);
+                    return true;
+                }
+
+                ImGui.SameLine();
+                if (ImGui.Button("Reject"))
+                {
+                    server.RejectConnection(conn);
+                    return true;
+                }
+
+                return false;
+            }));
         };
 
         server.ClientDisconnectedEvent += (_, conn, exception) =>
@@ -534,6 +564,28 @@ public class ProjectWorkspace
             Modal.DisplayErrorMessage("Redo failed.");
     }
 
+    // TODO: Unsubscribe on closure
+    void RegisterConnectionEvents(ConnectionController connection)
+    {
+        if (connection.Role == NetworkRole.Client)
+        {
+            connection.TransactionsRejectedEvent += OnTransactionsRejected;
+        }
+
+        connection.ConnectionClosedEvent += OnConnectionClosed;
+
+        if (connection.Closed)
+            throw new Exception("Connection closed in the middle of loading");
+
+        connection.RemoteStateChangedEvent += (id, remoteState) =>
+        {
+            if (remoteState == null)
+                RemoteStates.Remove(id);
+            else
+                RemoteStates[id] = remoteState;
+        };
+    }
+
     /// <summary>
     /// For clients: This is called when the server rejects transactions.
     /// </summary>
@@ -556,23 +608,39 @@ public class ProjectWorkspace
     /// closed it, or maybe there was some kind of protocol error that the networking code couldn't
     /// deal with.)
     /// </summary>
-    void OnConnectionClosed(Exception exception)
+    void OnConnectionClosed(ConnectionController controller, Exception exception)
     {
-        if (!IsClientRunning)
-            throw new Exception("OnConnectionClosed: Called on a non-client instance?");
+        controller.ConnectionClosedEvent -= OnConnectionClosed;
 
-        ConnectionController controller = NetworkConnection.AsT2;
-
-        Top.DoNextFrame(() =>
+        if (IsClientRunning)
         {
-            Modal.DisplayErrorMessage("The connection to the server was closed.", exception);
+            Top.DoNextFrame(() =>
+            {
+                Modal.DisplayErrorMessage("The connection to the server was closed.", exception);
 
-            controller.TransactionsRejectedEvent -= OnTransactionsRejected;
-            controller.ConnectionClosedEvent -= OnConnectionClosed;
+                controller.TransactionsRejectedEvent -= OnTransactionsRejected;
 
-            NetworkConnection = new None();
-            Top.CloseProject();
-        });
+                NetworkConnection = new None();
+                Top.CloseProject();
+            });
+        }
+        else if (IsServerRunning)
+        {
+            // No need to display a modal as the server handles it in "ClientDisconnectedEvent".
+            RemoteStates.Remove(controller.RemoteID);
+        }
+        else
+        {
+            throw new Exception("OnConnectionClosed: No connection is active?");
+        }
+    }
+
+    async Task ForEachConnection(Func<ConnectionController, Task> action)
+    {
+        await NetworkConnection.Match(
+            (none) => Task.CompletedTask,
+            (server) => server.ForEachConnection(action),
+            (client) => action(client));
     }
 }
 
