@@ -126,7 +126,7 @@ public abstract class Frame
     /// Render this as a window docked on the left side which can be expanded. Can only have one of
     /// these right now.
     /// </summary>
-    public void RenderDockedLeft(float ypos, float width)
+    public float RenderDockedLeft(float ypos, float width)
     {
         if (!Active) // Show only the button to expand the window
             width = ImGuiX.Unit(10.0f);
@@ -157,7 +157,9 @@ public abstract class Frame
                 }
             }
         }
+        float retval = ImGui.GetWindowWidth();
         ImGui.End();
+        return retval;
     }
 
     /// <summary>

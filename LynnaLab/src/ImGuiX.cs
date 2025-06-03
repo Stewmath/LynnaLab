@@ -456,11 +456,11 @@ public static class ImGuiX
         var mainViewport = ImGui.GetMainViewport();
 
         if (size.X == 0)
-            size.X = mainViewport.Size.X - offset.X;
+            size.X = mainViewport.WorkSize.X - offset.X;
         if (size.Y == 0)
-            size.Y = mainViewport.Size.Y - offset.Y;
+            size.Y = mainViewport.WorkSize.Y - offset.Y;
 
-        ImGui.SetNextWindowPos(mainViewport.Pos + offset);
+        ImGui.SetNextWindowPos(mainViewport.WorkPos + offset);
         ImGui.SetNextWindowSize(size);
         ImGui.SetNextWindowViewport(mainViewport.ID);
 

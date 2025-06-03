@@ -193,6 +193,11 @@ public static class Top
         // probably something in Workspace.Render that caused the exception in the first place.
         bool renderWorkspace = Workspace != null && Program.handlingException == null;
 
+        var viewport = ImGui.GetMainViewport();
+
+        // Coordinates in terms of "working area" for next elements (see
+        // ImGuiViewport.WorkPos/WorkSize - this excludes the main menu bar)
+        float xpos = 0.0f;
         float ypos = 0.0f;
 
         if (ImGui.BeginMainMenuBar())
@@ -216,7 +221,6 @@ public static class Top
                     ImGui.EndMenu();
                 }
             }
-            ypos += ImGui.GetWindowHeight();
             ImGui.EndMainMenuBar();
         }
 
@@ -230,13 +234,40 @@ public static class Top
         }
         ImGui.End();
 
-        settingsDialog.RenderDockedLeft(ypos, ImGuiX.Unit(100.0f));
+        xpos += settingsDialog.RenderDockedLeft(ypos, ImGuiX.Unit(100.0f));
+
+        // Begin the "Main DockSpace", occupying the remainder of the window not taken up by the
+        // menubar, toolbar, etc. Windows can be docked in this region.
+        ImGui.SetNextWindowPos(viewport.WorkPos + new Vector2(xpos, ypos));
+        ImGui.SetNextWindowSize(viewport.WorkSize - new Vector2(xpos, ypos));
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0.0f);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0.0f, 0.0f));
+
+        ImGui.Begin("Main DockSpace", 0
+                    | ImGuiWindowFlags.NoTitleBar
+                    | ImGuiWindowFlags.NoCollapse
+                    | ImGuiWindowFlags.NoResize
+                    | ImGuiWindowFlags.NoMove
+                    | ImGuiWindowFlags.NoBringToFrontOnFocus
+                    | ImGuiWindowFlags.NoNavFocus);
+
+        ImGui.PopStyleVar(2);
+
+        // Submit the DockSpace
+        if (ImGui.GetIO().ConfigFlags.HasFlag(ImGuiConfigFlags.DockingEnable))
+        {
+            uint dockspaceID = ImGui.GetID("MyDockspace");
+            ImGui.DockSpace(dockspaceID, new Vector2(0.0f, 0.0f), 0);
+        }
+
 
         if (renderWorkspace)
         {
             Workspace.Render(deltaTime);
             workspace2?.Render(deltaTime);
         }
+
+        ImGui.End(); // Dockspace window
 
         ImGui.PopFont();
     }
