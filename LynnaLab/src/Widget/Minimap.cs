@@ -42,7 +42,23 @@ public class Minimap : TileGrid
                 if (Map.GetRoomPosition(Project.GetRoom(cursor.room), out int x, out int y, out int f))
                 {
                     if (f == Floor)
-                        base.AddRect(base.TileRect(x, y), remoteState.Color, ImGuiX.Unit(base.RectThickness));
+                    {
+                        // Rectangle around whole room
+                        FRect rect = base.TileRect(x, y);
+                        base.AddRect(rect, remoteState.Color, ImGuiX.Unit(base.RectThickness));
+
+                        float tileSize = 16 * base.Scale;
+
+                        // Draw the cursor within the room
+                        if (cursor.tileStart != -1)
+                        {
+                            float p1x = rect.X + (cursor.tileStart % map.RoomWidth) * tileSize;
+                            float p1y = rect.Y + (cursor.tileStart / map.RoomWidth) * tileSize;
+                            float p2x = rect.X + (cursor.tileEnd % map.RoomWidth) * tileSize + tileSize;
+                            float p2y = rect.Y + (cursor.tileEnd / map.RoomWidth) * tileSize + tileSize;
+                            base.AddRect(new FRect(p1x, p1y, p2x - p1x, p2y - p1y), remoteState.Color, base.RectThickness * base.Scale);
+                        }
+                    }
                 }
             }
         };

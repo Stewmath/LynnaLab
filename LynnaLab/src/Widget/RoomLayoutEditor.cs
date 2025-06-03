@@ -159,11 +159,8 @@ public class RoomLayoutEditor : TileGrid
             CursorPosition cursor = remoteState.CursorPosition;
             if (cursor.room == Room.Index && cursor.tileStart != -1)
             {
-                if (cursor.tileEnd == -1) // Single tile
-                    base.AddRect(base.TileRect(cursor.tileStart), remoteState.Color, ImGuiX.Unit(base.RectThickness));
-                else // Rectangle
-                    base.AddRect(base.TileRangeRect(cursor.tileStart, cursor.tileEnd),
-                                 remoteState.Color, ImGuiX.Unit(base.RectThickness));
+                base.AddRect(base.TileRangeRect(cursor.tileStart, cursor.tileEnd),
+                             remoteState.Color, ImGuiX.Unit(base.RectThickness));
             }
         }
 

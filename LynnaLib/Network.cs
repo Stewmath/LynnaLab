@@ -129,7 +129,7 @@ public record CursorPosition
 {
     public required int room; // Should always be a valid value
     public required int tileStart; // If -1, no tile's being hovered over
-    public required int tileEnd; // If not -1, it's a rectangle selection
+    public required int tileEnd; // If tileStart is valid, this should also be valid
 }
 
 
