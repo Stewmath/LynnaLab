@@ -99,7 +99,6 @@ public class ProjectWorkspace
     NetworkDialog networkDialog;
 
     List<Frame> frames = new List<Frame>();
-    bool showDebugWindow;
     bool showImGuiDemoWindow;
 
     TextureBase linkTexture;
@@ -230,7 +229,6 @@ public class ProjectWorkspace
         }
         if (ImGui.BeginMenu("Debug"))
         {
-            ImGuiX.MenuItemCheckbox("Debug Window", ref showDebugWindow);
             ImGuiX.MenuItemCheckbox("ImGui Demo Window", ref showImGuiDemoWindow);
             #if RENDERDOC
             if (ImGui.MenuItem("RenderDoc: Grab frame"))
@@ -260,13 +258,6 @@ public class ProjectWorkspace
     {
         if (Project == null)
             return;
-
-        if (showDebugWindow)
-        {
-            ImGui.Begin("Debug", ref showDebugWindow);
-            ImGui.Text("Frametime: " + deltaTime);
-            ImGui.End();
-        }
 
         if (showImGuiDemoWindow)
         {
