@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PreBuildEvent>git describe --always &gt; "$(MSBuildProjectDirectory)/version.txt"</PreBuildEvent>
+    <PreBuildEvent>git describe --always --abbrev=7 &gt; "$(MSBuildProjectDirectory)/version.txt"</PreBuildEvent>
   </PropertyGroup>
 
   <ItemGroup>
