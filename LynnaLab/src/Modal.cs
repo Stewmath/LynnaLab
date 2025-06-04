@@ -450,7 +450,7 @@ public static class Modal
                 else if (connectToServerTask.IsCompletedSuccessfully)
                 {
                     DisplayInfoMessage("Connection to server established!");
-                    cancelSource.Dispose();
+                    cancelSource?.Dispose();
                     return true;
                 }
                 else

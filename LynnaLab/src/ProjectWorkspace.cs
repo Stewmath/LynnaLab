@@ -72,10 +72,12 @@ public class ProjectWorkspace
 
         roomEditor.CursorPositionChangedEvent += (cursor) =>
         {
-            ForEachConnection(async (conn) =>
+            // Let this run asynchronously. We don't want exceptions to bring down the whole program
+            // if the connection goes down.
+            Task t = ForEachConnection(async (conn) =>
             {
                 await conn.UpdateCursorPosition(cursor);
-            }).Wait();
+            });
         };
     }
 
