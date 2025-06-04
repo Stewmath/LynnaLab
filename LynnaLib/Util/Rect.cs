@@ -46,9 +46,35 @@ namespace Util
                 && point.Y >= Y && point.Y <= Y + Height;
         }
 
+        public override bool Equals(object o)
+        {
+            return (o is FRect r) && this == r;
+        }
+
+        public override int GetHashCode()
+        {
+            return X.GetHashCode() * 23 + Y.GetHashCode() * 17 + Width.GetHashCode() * 11 + Height.GetHashCode();
+        }
+
         // ================================================================================
         // Operator overloads
         // ================================================================================
+
+        public static bool operator==(FRect rect1, FRect rect2)
+        {
+            if (rect1 is null || rect2 is null)
+                return (rect1 is null && rect2 is null);
+
+            return rect1.X == rect2.X
+            && rect1.Y == rect2.Y
+            && rect1.Width == rect2.Width
+            && rect1.Height == rect2.Height;
+        }
+
+        public static bool operator!=(FRect rect1, FRect rect2)
+        {
+            return !(rect1 == rect2);
+        }
 
         public static FRect operator*(FRect rect1, float scale)
         {

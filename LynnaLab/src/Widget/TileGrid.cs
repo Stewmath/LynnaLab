@@ -517,7 +517,6 @@ public class TileGrid : SizedWidget
     /// </summary>
     public void RenderHoverAndSelection()
     {
-        int lastHoveredTile = HoveredTile;
         TileEventArgs hoverChangedArgs = null;
 
         // Determine hovered tile
@@ -551,9 +550,6 @@ public class TileGrid : SizedWidget
                 }
             }
         }
-
-        if (HoveredTile != lastHoveredTile)
-            hoverChangedArgs = new TileEventArgs(HoveredTile);
 
         bool isMousePosValid = isHovered && mouseIndex != -1 && draggingTileIndex == -1;
         bool selectingRectangleThisFrame = SelectingRectangle;
@@ -595,7 +591,6 @@ public class TileGrid : SizedWidget
                         activeRectSelectAction = action;
                         rectSelectStart = mouseIndex;
                         rectSelectEnd = mouseIndex;
-                        hoverChangedArgs = new(rectSelectStart, rectSelectEnd);
                     }
                     else
                     {
@@ -603,7 +598,6 @@ public class TileGrid : SizedWidget
                         if (mouseIndex != -1)
                         {
                             rectSelectEnd = mouseIndex;
-                            hoverChangedArgs = new(rectSelectStart, rectSelectEnd);
                         }
 
                         // If clicked the alternate button, cancel the rectangle selection without doing anything
@@ -669,18 +663,28 @@ public class TileGrid : SizedWidget
         RenderBrushPreview();
 
         FRect hoverRect = null;
-        int hoverBottomRightTile = -1;
+        int hoverTile1 = -1;
+        int hoverTile2 = -1;
 
-        if (isMousePosValid && !SelectingRectangle)
+        if (SelectingRectangle)
         {
-            // Draw hover rectangle
+            // Draw hover rectangle (currently actively selecting a rectangle)
+            hoverTile1 = rectSelectStart;
+            hoverTile2 = rectSelectEnd;
+            hoverRect = TileRangeRect(rectSelectStart, rectSelectEnd);
+            base.AddRect(hoverRect, SelectColor, RectThickness * ImGuiX.ScaleUnit);
+        }
+        else if (isMousePosValid)
+        {
+            // Draw hover rectangle (based on brush size)
             int hoverX = mouseIndex % Width;
             int hoverY = mouseIndex / Width;
-            hoverBottomRightTile = XYToTile(
+            hoverTile1 = mouseIndex;
+            hoverTile2 = XYToTile(
                 hoverX + hoverWidth - 1,
                 hoverY + hoverHeight - 1,
                 clamp: true);
-            hoverRect = TileRangeRect(mouseIndex, hoverBottomRightTile);
+            hoverRect = TileRangeRect(mouseIndex, hoverTile2);
             base.AddRect(hoverRect, HoverColor, thickness: RectThickness * ImGuiX.ScaleUnit);
         }
 
@@ -688,15 +692,13 @@ public class TileGrid : SizedWidget
         {
             if (hoverRect == null)
                 hoverChangedArgs = new(-1);
-            else if (hoverWidth == 1 && hoverHeight == 1)
-                hoverChangedArgs = new(mouseIndex);
             else
-                hoverChangedArgs = new(mouseIndex, hoverBottomRightTile);
+                hoverChangedArgs = new(hoverTile1, hoverTile2);
         }
 
         lastHoverRect = hoverRect;
 
-        if (RectangleSelected || SelectingRectangle)
+        if (RectangleSelected)
         {
             // Draw rectangle selection range
             base.AddRect(TileRangeRect(rectSelectStart, rectSelectEnd), SelectColor, RectThickness * ImGuiX.ScaleUnit);
