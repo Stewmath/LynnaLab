@@ -1178,7 +1178,8 @@ namespace LynnaLib
             // where we loaded through a MemoryFileStream. Doesn't really matter since saving only
             // works on the server anyway. It does mean the MemoryFileStream will be out of sync
             // with the file itself though - not that that should matter at all.
-            File.WriteAllLines(FullFilename, output);
+            // Don't use WriteAllLines as that writes CRLF on windows.
+            File.WriteAllText(FullFilename, string.Join('\n', output));
 
             Modified = false;
         }

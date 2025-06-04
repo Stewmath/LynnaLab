@@ -282,7 +282,7 @@ namespace LynnaLib
 
         public string ReadAllText()
         {
-            return System.Text.Encoding.UTF8.GetString(Data);
+            return System.Text.Encoding.UTF8.GetString(Data).Replace("\r\n", "\n");
         }
         public string[] ReadAllLines()
         {
