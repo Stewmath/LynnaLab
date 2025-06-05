@@ -3,7 +3,7 @@
 uniform sampler2D PointTexture;
 uniform sampler2D BilinearTexture;
 
-uniform FragGlobalsStruct
+layout(std140) uniform FragGlobalsStruct
 {
     int InterpolationMode;
     float alpha;

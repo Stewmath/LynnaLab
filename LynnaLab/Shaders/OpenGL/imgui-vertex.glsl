@@ -1,13 +1,13 @@
 #version 330 core
 
-uniform ProjectionMatrixBuffer
+layout(std140) uniform ProjectionMatrixBuffer
 {
     mat4 projection_matrix;
 };
 
 // Determines the window of the source texture to read from.
 // Normally, topLeft=(0, 0), bottomRight=(1, 1) to read the whole texture.
-uniform SourceViewportBuffer
+layout(std140) uniform SourceViewportBuffer
 {
     vec2 topLeft;
     vec2 bottomRight;
