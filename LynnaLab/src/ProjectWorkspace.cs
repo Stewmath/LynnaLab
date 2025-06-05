@@ -451,7 +451,7 @@ public class ProjectWorkspace
     {
         QuickstartData.group = (byte)roomEditor.Room.Group;
         QuickstartData.room = (byte)(roomEditor.Room.Index & 0xff);
-        QuickstartData.season = (byte)roomEditor.Season;
+        QuickstartData.season = roomEditor.SelectedSeason == Season.None ? (byte)0 : (byte)roomEditor.SelectedSeason;
         QuickstartData.x = 0x48;
         QuickstartData.y = 0x48;
         QuickstartData.Enabled = enabled;

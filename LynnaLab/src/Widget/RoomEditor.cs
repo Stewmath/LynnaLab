@@ -183,7 +183,12 @@ public class RoomEditor : Frame
 
     public RoomLayout RoomLayout { get { return roomLayoutEditor.RoomLayout; } }
     public Room Room { get { return RoomLayout.Room; } }
-    public Season Season { get { return RoomLayout.Season; } }
+
+    /// <summary>
+    /// Last season selected. In Seasons, this should always be a valid season. In Ages, this is
+    /// always going to be Season.Spring. (Shouldn't be using it for anything anyway.)
+    /// </summary>
+    public Season SelectedSeason { get; private set; } = Season.Spring;
 
     public TilesetViewer TilesetViewer { get { return tilesetViewer; } }
 
@@ -373,7 +378,9 @@ public class RoomEditor : Frame
                     {
                         Season s = Season.None;
                         if (worldIndex == 0 && Project.Game == Game.Seasons)
-                            s = Season.Spring;
+                        {
+                            s = SelectedSeason;
+                        }
                         SetMap(Project.GetWorldMap(worldIndex, s));
                     }
                 }
@@ -458,7 +465,12 @@ public class RoomEditor : Frame
     {
         if (Room == room)
             return;
-        SetRoomLayout(room.GetLayout(Season, autoCorrect: true), updateMinimap);
+
+        RoomLayout layout = room.HasSeasons
+            ? room.GetLayout(SelectedSeason)
+            : room.GetLayout(Season.None);
+
+        SetRoomLayout(layout, updateMinimap);
     }
 
     /// <summary>
@@ -540,6 +552,9 @@ public class RoomEditor : Frame
             // When in warp dest editing mode, selecting a room sets the warp's destination to that room.
             EditingWarpDestination.DestRoom = roomLayout.Room;
         }
+
+        if (roomLayout.Season != Season.None)
+            SelectedSeason = roomLayout.Season;
 
         roomLayoutEditor.SetRoomLayout(roomLayout);
         tilesetViewer.SetTileset(roomLayout.Tileset);
@@ -677,7 +692,7 @@ public class RoomEditor : Frame
             // the hack-base branch as the tileset's layout group is ignored.
             if (!Project.Config.ExpandedTilesets)
             {
-                int expectedGroup = Project.GetCanonicalLayoutGroup(Room.Group, Season);
+                int expectedGroup = Project.GetCanonicalLayoutGroup(Room.Group, RoomLayout.Season);
                 if (tileset.LayoutGroup != expectedGroup)
                 {
                     return string.Format(
