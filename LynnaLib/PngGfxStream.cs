@@ -18,13 +18,13 @@ namespace LynnaLib
             {
                 PngFile = new(p.GetFileStream(pngFilePath)),
             };
-            LoadFile();
+            LoadFromPngFile();
 
             // PNG files, specifically, watch for changes on the filesystem.
             this.PngFile.ModifiedEvent += (_, _) =>
             {
                 Project.TransactionManager.BeginTransaction("Reload PNG file", merge: false, disallowUndo: true);
-                LoadFile();
+                LoadFromPngFile();
                 InvokeModifiedEvent(StreamModifiedEventArgs.All(this));
                 Project.TransactionManager.EndTransaction();
             };
@@ -173,15 +173,25 @@ namespace LynnaLib
                 log.Error("Can't save PNG file on remote instance.");
                 return;
             }
+
+            SaveTo(Path.Combine(Project.BaseDirectory, pngFilePath));
+
+            Modified = false;
+        }
+
+        /// <summary>
+        /// Save as PNG to another location. This is used for remote clients that want to edit PNG
+        /// files manually.
+        /// </summary>
+        public void SaveTo(string outputFile)
+        {
             if (Properties.nonDefault)
             {
-                log.Error($"Can't save PNG file with a .properties file: {pngFilePath}.");
-                return;
+                throw new Exception($"Can't save PNG file with a .properties file: {pngFilePath}.");
             }
             if (Data.Length % 16 != 0)
             {
-                log.Error($"Can't save PNG file with data width not a multiple of 16: {pngFilePath}.");
-                return;
+                throw new Exception($"Can't save PNG file with data width not a multiple of 16: {pngFilePath}.");
             }
 
             int numTiles = Data.Length / 16;
@@ -191,9 +201,6 @@ namespace LynnaLib
 
             int width = numTiles >= tilesPerRow ? tilesPerRow : numTiles;
             int height = (numTiles + tilesPerRow - 1) / tilesPerRow;
-
-            Console.WriteLine("TILES: " + numTiles);
-            Console.WriteLine("HEIGHT: " + height);
 
             using (Bitmap bitmap = new(width * 8, height * 8))
             {
@@ -209,9 +216,8 @@ namespace LynnaLib
                         GbGraphics.GrayPalette, 0);
                 }
 
-                bitmap.Save(Path.Combine(Project.BaseDirectory, pngFilePath));
+                bitmap.Save(outputFile);
             }
-            Modified = false;
         }
 
         // ================================================================================
@@ -242,24 +248,55 @@ namespace LynnaLib
             InvokeModifiedEvent(args);
         }
 
+        /// <summary>
+        /// Replaces the graphical data with the contents of another PNG file. Throws
+        /// InvalidImageException if there's a problem with the image, can throw other types of
+        /// exeptions if the file couldn't be read.
+        /// </summary>
+        public void LoadFromPngFile(string filename)
+        {
+            byte[] data = File.ReadAllBytes(filename);
+
+            Project.BeginTransaction("Load external PNG file", merge: false, disallowUndo: true);
+            try
+            {
+                LoadFromPngData(data, false);
+            }
+            catch (Exception)
+            {
+                Project.EndTransaction();
+                throw;
+            }
+
+            Project.EndTransaction();
+            InvokeModifiedEvent(StreamModifiedEventArgs.All(this));
+        }
+
         // ================================================================================
         // Private methods
         // ================================================================================
 
-        void LoadFile()
+        void LoadFromPngFile()
+        {
+            string propertiesFilename = Path.GetDirectoryName(pngFilePath) + "/" +
+                Path.GetFileNameWithoutExtension(pngFilePath) + ".properties";
+
+            state.Properties = LoadProperties(Project, propertiesFilename);
+
+            LoadFromPngData(PngFile.ReadAllBytes().ToArray(), true);
+        }
+
+        /// <summary>
+        /// Throws InvalidImageException if there was a problem with the image.
+        /// </summary>
+        void LoadFromPngData(byte[] pngData, bool fromProjectData)
         {
             Project.TransactionManager.CaptureInitialState<State>(this);
-            var pngData = PngFile.ReadAllBytes().ToArray();
             using (var bitmap = new Bitmap(pngData))
             {
-                string propertiesFilename = Path.GetDirectoryName(pngFilePath) + "/" +
-                    Path.GetFileNameWithoutExtension(pngFilePath) + ".properties";
-
-                state.Properties = LoadProperties(Project, propertiesFilename);
-
                 int numTiles = bitmap.Width * bitmap.Height / 64;
 
-                state.Data = new byte[numTiles * 16];
+                byte[] data = new byte[numTiles * 16];
 
                 Func<int, int, int> lookupPixel = (x, y) =>
                 {
@@ -300,14 +337,16 @@ namespace LynnaLib
                         else
                             tile = (y / 8) * bitmap.Width / 8 + (x / 8);
 
-                        Data[tile * 16 + y2 * 2 + 0] |= (byte)((val & 1) << (7 - x2));
-                        Data[tile * 16 + y2 * 2 + 1] |= (byte)((val >> 1) << (7 - x2));
+                        data[tile * 16 + y2 * 2 + 0] |= (byte)((val & 1) << (7 - x2));
+                        data[tile * 16 + y2 * 2 + 1] |= (byte)((val >> 1) << (7 - x2));
                     }
                 }
+
+                state.Data = data;
             }
 
             // Don't write back to the PNG file after loading from it
-            this.Modified = false;
+            this.Modified = !fromProjectData;
         }
 
         // ================================================================================

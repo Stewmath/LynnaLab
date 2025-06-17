@@ -56,8 +56,6 @@ namespace LynnaLib
         private static readonly log4net.ILog log = LogHelper.GetLogger();
 
         FileSystemWatcher watcher;
-        bool watcherReloadScheduled;
-        object watcherLock = new();
 
         State state = new State();
 
@@ -90,7 +88,24 @@ namespace LynnaLib
             LoadFromFile();
 
             if (watchForFilesystemChanges)
-                InitializeFileWatcher();
+            {
+                // FileSystemWatcher doesn't work well on Linux. Creating hundreds or thousands of these
+                // uses up system resources in a way that causes the OS to complain.
+                // Automatic file reloading is disabled on Linux until a good workaround is found.
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    watcher = Helper.InitializeFileWatcher(filepath, () =>
+                    {
+                        log.Info($"File {filepath} changed, triggering reload event");
+
+                        Project.BeginTransaction("File Reload", disallowUndo: true);
+                        Project.TransactionManager.CaptureInitialState<State>(this);
+                        LoadFromFile();
+                        InvokeModifiedEvent(new StreamModifiedEventArgs(0, Length));
+                        Project.EndTransaction();
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -101,50 +116,6 @@ namespace LynnaLib
         {
             this.filepath = null; // NEVER allow remote clients to set this! Don't give them filesystem access!
             this.state = (State)state;
-        }
-
-        void InitializeFileWatcher()
-        {
-            // FileSystemWatcher doesn't work well on Linux. Creating hundreds or thousands of these
-            // uses up system resources in a way that causes the OS to complain.
-            // Automatic file reloading is disabled on Linux until a good workaround is found.
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                return;
-
-            watcher = new FileSystemWatcher();
-            watcher.Path = Path.GetDirectoryName(filepath);
-            watcher.Filter = Path.GetFileName(filepath);
-            watcher.NotifyFilter = NotifyFilters.LastWrite;
-
-            watcher.Changed += (o, a) =>
-            {
-                lock (watcherLock)
-                {
-                    if (watcherReloadScheduled)
-                        return;
-                    watcherReloadScheduled = true;
-                }
-
-                log.Info($"File {filepath} changed, triggering reload event");
-
-                // Wait one second before rereading the file. FileSystemWatcher seems a bit glitchy,
-                // we need to give the file time to "stabilize".
-                System.Threading.Thread.Sleep(1000);
-
-                watcherReloadScheduled = false;
-
-                // Use MainThreadInvoke to avoid any threading headaches
-                Helper.MainThreadInvoke(() =>
-                {
-                    Project.BeginTransaction("File Reload", disallowUndo: true);
-                    Project.TransactionManager.CaptureInitialState<State>(this);
-                    LoadFromFile();
-                    InvokeModifiedEvent(new StreamModifiedEventArgs(0, Length));
-                    Project.EndTransaction();
-                });
-            };
-
-            watcher.EnableRaisingEvents = true;
         }
 
         void LoadFromFile()

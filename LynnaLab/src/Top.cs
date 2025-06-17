@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Backend = VeldridBackend.VeldridBackend;
@@ -96,6 +97,13 @@ public static class Top
     // ================================================================================
 
     public const string RightClickPopupName = "RightClickPopup";
+
+    // Filter to use with Backend.ShowOpenFileDialog for finding programs
+    public static readonly (string, string)[] ProgramFileFilter =
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+        ? new (string, string)[] {("Executable files (.exe)", "exe"), ("All files", "*")}
+        : new (string, string)[] {};
+
 
     // ================================================================================
     // Variables

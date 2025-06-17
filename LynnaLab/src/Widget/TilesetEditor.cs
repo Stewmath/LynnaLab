@@ -90,6 +90,12 @@ public class TilesetEditor : Frame
             Workspace.OpenTilesetCloner(Tileset, Tileset);
         }
 
+        ImGui.SameLine();
+        if (ImGui.Button("Edit PNG"))
+        {
+            Workspace.OpenPNG(Tileset.GfxFileName);
+        }
+
         if (Project.Game == Game.Seasons)
         {
             ImGui.SameLine();

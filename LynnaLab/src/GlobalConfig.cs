@@ -88,9 +88,10 @@ public class GlobalConfig
 
     // Variables imported from YAML config file
 
-    // Advanced settings
+    // External programs
     public string MakeCommand { get; set; }
     public string EmulatorCommand { get; set; }
+    public string EditPngProgram { get; set; }
 
     // Display
     public bool LightMode { get; set; } = false;

@@ -42,15 +42,15 @@ public class RealTileset : Tileset
         }
 
         {
-            string gfxFileName = null;
             if (IsSeasonal)
-                gfxFileName = String.Format("gfx_tileset{0:x2}_{1}", Index, SeasonName);
+                GfxFileName = String.Format("gfx_tileset{0:x2}_{1}", Index, SeasonName);
             else
-                gfxFileName = String.Format("gfx_tileset{0:x2}", Index);
-            base.GfxFileStream = Project.GetGfxStream(gfxFileName);
+                GfxFileName = String.Format("gfx_tileset{0:x2}", Index);
+
+            base.GfxFileStream = Project.GetGfxStream(GfxFileName);
 
             if (base.GfxFileStream == null)
-                throw new ProjectErrorException("Couldn't find \"" + gfxFileName + "\" in project.");
+                throw new ProjectErrorException("Couldn't find \"" + GfxFileName + "\" in project.");
         }
 
         ConstructValueReferenceGroup();
@@ -113,6 +113,8 @@ public class RealTileset : Tileset
     {
         get { return parentData.CommandLowerCase == "m_seasonaltileset"; }
     }
+
+    public string GfxFileName { get; private set; }
 
     // ================================================================================
     // Public methods

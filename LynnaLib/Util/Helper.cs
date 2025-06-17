@@ -143,6 +143,46 @@ namespace Util
                     throw new Exception("WhenAllWithExceptions: Internal error");
             }
         }
+
+        /// <summary>
+        /// Creates a FileSystemWatcher that executes an action when the file is modified.
+        /// </summary>
+        public static FileSystemWatcher InitializeFileWatcher(string path, Action act)
+        {
+            bool watcherReloadScheduled = false;
+            object watcherLock = new();
+
+            FileSystemWatcher watcher = new FileSystemWatcher();
+            watcher.Path = Path.GetDirectoryName(path);
+            watcher.Filter = Path.GetFileName(path);
+            watcher.NotifyFilter = NotifyFilters.LastWrite;
+
+            watcher.Changed += (o, a) =>
+            {
+                lock (watcherLock)
+                {
+                    if (watcherReloadScheduled)
+                        return;
+                    watcherReloadScheduled = true;
+                }
+
+                // Wait some time before rereading the file. FileSystemWatcher seems a bit glitchy,
+                // we need to give the file time to "stabilize".
+                System.Threading.Thread.Sleep(500);
+
+                lock (watcherLock)
+                {
+                    watcherReloadScheduled = false;
+                }
+
+                // Use MainThreadInvoke to avoid any threading headaches
+                Helper.MainThreadInvoke(act);
+            };
+
+            watcher.EnableRaisingEvents = true;
+            return watcher;
+        }
+
     }
 
 }

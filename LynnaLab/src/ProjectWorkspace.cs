@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace LynnaLab;
@@ -441,6 +442,69 @@ public class ProjectWorkspace
                 this.NetworkConnection = new None();
             }
         });
+    }
+
+    /// <summary>
+    /// Open a PNG file in an external program.
+    /// </summary>
+    public void OpenPNG(string pngFile)
+    {
+        IStream stream = Project.GetGfxStream(pngFile);
+
+        if (!(stream is PngGfxStream pngStream))
+        {
+            Modal.DisplayErrorMessage("GFX file is not a PNG: " + pngFile);
+            return;
+        }
+
+        string fullPath = $"{Path.GetTempPath()}/{Guid.NewGuid()}.png";
+        pngStream.SaveTo(fullPath);
+
+        var onFileModified = () =>
+        {
+            // Handles image format exceptions only, not file read errors
+            try
+            {
+                pngStream.LoadFromPngFile(fullPath);
+            }
+            catch (InvalidImageException e)
+            {
+                Modal.DisplayErrorMessage("Couldn't load PNG: Invalid colors in image.", e);
+            }
+        };
+
+        FileSystemWatcher watcher = Helper.InitializeFileWatcher(fullPath, onFileModified);
+
+        try
+        {
+            Process p = System.Diagnostics.Process.Start(Top.GlobalConfig.EditPngProgram, fullPath);
+            p.EnableRaisingEvents = true;
+
+            p.Exited += (_, _) => Top.DoNextFrame(() =>
+            {
+                if (p.ExitCode != 0)
+                {
+                    Modal.DisplayErrorMessage($"PNG editor program exited with code {p.ExitCode} (error occurred?)");
+                }
+
+                watcher.Dispose();
+                onFileModified(); // Just in case something went weird with the watcher
+
+                try
+                {
+                    File.Delete(fullPath);
+                }
+                catch (Exception e)
+                {
+                    Modal.DisplayErrorMessage($"Error deleting temporary file {fullPath}.", e);
+                }
+            });
+        }
+        catch (Exception e)
+        {
+            Modal.DisplayErrorMessage("Couldn't open PNG file. Try setting your PNG editor program in LynnaLab settings.", e);
+            return;
+        }
     }
 
     // ================================================================================

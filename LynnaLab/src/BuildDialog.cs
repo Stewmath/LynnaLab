@@ -359,13 +359,7 @@ public class BuildDialog : Frame
 
     static void SelectEmulator(Action<string> onSelected)
     {
-        (string, string)[] filterList;
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            filterList = new (string, string)[] {("Executable files (.exe)", "exe"), ("All files", "*")};
-        else
-            filterList = new (string, string)[] {};
-
-        Top.Backend.ShowOpenFileDialog(null, filterList, (selectedFile) =>
+        Top.Backend.ShowOpenFileDialog(null, Top.ProgramFileFilter, (selectedFile) =>
         {
             if (selectedFile != null)
                 onSelected(selectedFile + " | {GAME}.gbc");

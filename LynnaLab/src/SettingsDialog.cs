@@ -162,6 +162,13 @@ public class SettingsDialog : Frame
 
         if (beginSection("Build & Run dialog"))
         {
+            ImGuiX.Checkbox("Closing emulator closes dialog", new Accessor<bool>(() => GlobalConfig.CloseRunDialogWithEmulator));
+            ImGuiX.Checkbox("Closing dialog closes emulator", new Accessor<bool>(() => GlobalConfig.CloseEmulatorWithRunDialog));
+            endSection();
+        }
+
+        if (beginSection("External programs"))
+        {
             if (ImGui.Button("Choose emulator path..."))
             {
                 BuildDialog.SelectEmulatorDialog((cmd) =>
@@ -176,8 +183,20 @@ public class SettingsDialog : Frame
                                   ? "UNSET"
                                   : GlobalConfig.EmulatorCommand.Replace(" | ", " "));
 
-            ImGuiX.Checkbox("Closing emulator closes dialog", new Accessor<bool>(() => GlobalConfig.CloseRunDialogWithEmulator));
-            ImGuiX.Checkbox("Closing dialog closes emulator", new Accessor<bool>(() => GlobalConfig.CloseEmulatorWithRunDialog));
+            if (ImGui.Button("Choose PNG editor path..."))
+            {
+                Top.Backend.ShowOpenFileDialog(null, Top.ProgramFileFilter, (selectedFile) =>
+                {
+                    if (selectedFile != null)
+                        GlobalConfig.EditPngProgram = selectedFile;
+                });
+            }
+            ImGui.SameLine();
+            ImGui.Text("?");
+            ImGuiX.TooltipOnHover(GlobalConfig.EditPngProgram == null
+                                  ? "UNSET"
+                                  : GlobalConfig.EditPngProgram);
+
             endSection();
         }
 
