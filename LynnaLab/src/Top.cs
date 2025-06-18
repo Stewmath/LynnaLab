@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Backend = VeldridBackend.VeldridBackend;
@@ -472,6 +473,24 @@ public static class Top
             throw new Exception("SetWorkspace: Already have a workspace?");
 
         Workspace = workspace;
+    }
+
+    public static void SetClipboardData(string mimeType, string value)
+    {
+        SDLUtil.SDLHelper.SetClipboardData([mimeType], Encoding.UTF8.GetBytes(value));
+    }
+
+    public static string GetClipboardData(string mimeType)
+    {
+        byte[] data = SDLUtil.SDLHelper.GetClipboardData(mimeType);
+        if (data == null)
+            throw new Exception("GetClipboardData: No data available for mime type " + mimeType);
+        return Encoding.UTF8.GetString(data);
+    }
+
+    public static bool HasClipboardData(string mimeType)
+    {
+        return SDLUtil.SDLHelper.HasClipboardData(mimeType);
     }
 
     // ================================================================================

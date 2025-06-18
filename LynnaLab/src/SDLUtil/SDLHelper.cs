@@ -85,6 +85,44 @@ public static class SDLHelper
         return buttonid;
     }
 
+    public static unsafe bool SetClipboardData(string[] mimeTypes, byte[] data)
+    {
+        (int, nint) userdata = ( data.Length, Marshal.AllocCoTaskMem(data.Length) );
+        Marshal.Copy(data, 0, userdata.Item2, data.Length);
+        GCHandle handle = GCHandle.Alloc(userdata);
+
+        nint mime_types = AllocUnmanagedStringList(mimeTypes);
+        bool retval = SDL_SetClipboardData(&ClipboardDataCallback, &ClipboardCleanupCallback,
+                                           GCHandle.ToIntPtr(handle), (byte**)mime_types, (nuint)mimeTypes.Length);
+        FreeUnmanagedStringList(mime_types, mimeTypes.Length);
+
+        if (!retval)
+            throw new Exception("SetClipboardData: " + SDL_GetError());
+
+        return retval;
+    }
+
+    public static unsafe byte[] GetClipboardData(string mimeType)
+    {
+        nuint size;
+        nint data = SDL_GetClipboardData(mimeType, &size);
+
+        if (data == 0)
+            return null;
+
+        byte[] retval = new byte[size];
+        Marshal.Copy(data, retval, 0, (int)size);
+
+        SDL_free(data);
+
+        return retval;
+    }
+
+    public static unsafe bool HasClipboardData(string mimeType)
+    {
+        return SDL_HasClipboardData(mimeType);
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================
@@ -119,5 +157,47 @@ public static class SDLHelper
         GCHandle handle = GCHandle.FromIntPtr(userdata);
         ((Action)handle.Target)();
         handle.Free();
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private unsafe static nint ClipboardDataCallback(nint userdata, byte* mime_type, nuint* size)
+    {
+        GCHandle handle = GCHandle.FromIntPtr(userdata);
+        var data = ((int, nint))handle.Target;
+        *size = (nuint)data.Item1;
+        return data.Item2;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private unsafe static void ClipboardCleanupCallback(nint userdata)
+    {
+        GCHandle handle = GCHandle.FromIntPtr(userdata);
+        var data = ((int, nint))handle.Target;
+        Marshal.FreeCoTaskMem(data.Item2);
+        handle.Free();
+    }
+
+    private unsafe static nint AllocUnmanagedStringList(string[] stringList)
+    {
+        nint* data = (nint*)Marshal.AllocHGlobal(sizeof(nint) * stringList.Length);
+
+        for (int i=0; i<stringList.Length; i++)
+        {
+            data[i] = Marshal.StringToCoTaskMemUTF8(stringList[i]);
+        }
+
+        return (nint)data;
+    }
+
+    private unsafe static void FreeUnmanagedStringList(nint ptr, int count)
+    {
+        nint* data = (nint*)ptr;
+
+        for (int i=0; i<count; i++)
+        {
+            Marshal.FreeCoTaskMem(data[i]);
+        }
+
+        Marshal.FreeHGlobal((nint)data);
     }
 }

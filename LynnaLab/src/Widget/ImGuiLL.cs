@@ -262,13 +262,24 @@ public class ImGuiLL
         {
             if (ImGui.Selectable("Copy"))
             {
-                workspace.CopiedColor = paletteButtonPopupData.GetColor(paletteButtonPopupPalette, paletteButtonPopupIndex);
+                Color c = paletteButtonPopupData.GetColor(paletteButtonPopupPalette, paletteButtonPopupIndex);
+                Top.SetClipboardData(Color.MimeType, c.Serialize());
             }
-            if (ImGui.Selectable("Paste", false, workspace.CopiedColor == null ? ImGuiSelectableFlags.Disabled : 0))
+            if (ImGui.Selectable("Paste", false, !Top.HasClipboardData(Color.MimeType) ? ImGuiSelectableFlags.Disabled : 0))
             {
-                project.BeginTransaction("Copy palette");
-                paletteButtonPopupData.SetColor(paletteButtonPopupPalette, paletteButtonPopupIndex, (Color)workspace.CopiedColor);
-                project.EndTransaction();
+                string colorString = Top.GetClipboardData(Color.MimeType);
+                Color? color = Color.Deserialize(colorString);
+
+                if (color == null)
+                {
+                    Modal.DisplayErrorMessage($"Failed to parse color from clipboard: \"{colorString}\"");
+                }
+                else
+                {
+                    project.BeginTransaction("Copy palette");
+                    paletteButtonPopupData.SetColor(paletteButtonPopupPalette, paletteButtonPopupIndex, (Color)color);
+                    project.EndTransaction();
+                }
             }
             ImGui.EndPopup();
         }

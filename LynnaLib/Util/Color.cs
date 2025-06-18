@@ -1,6 +1,7 @@
 #nullable enable
 
 using System.Numerics;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using PixelFormats = SixLabors.ImageSharp.PixelFormats;
 
@@ -12,25 +13,30 @@ namespace LynnaLib
     /// </summary>
     public struct Color
     {
-        [JsonInclude]
-        int r, g, b, a;
-
+        [JsonRequired]
         public int R
         {
-            get { return r; }
+            get; init;
         }
+        [JsonRequired]
         public int G
         {
-            get { return g; }
+            get; init;
         }
+        [JsonRequired]
         public int B
         {
-            get { return b; }
+            get; init;
         }
+        [JsonRequired]
         public int A
         {
-            get { return a; }
+            get; init;
         }
+
+        // ================================================================================
+        // Static methods
+        // ================================================================================
 
         public static Color FromRgb(int r, int g, int b)
         {
@@ -39,12 +45,13 @@ namespace LynnaLib
 
         public static Color FromRgba(int r, int g, int b, int a)
         {
-            Color c = new Color();
-            c.r = r;
-            c.g = g;
-            c.b = b;
-            c.a = a;
-            return c;
+            return new Color()
+            {
+                R = r,
+                G = g,
+                B = b,
+                A = a,
+            };
         }
 
         public static Color FromRgbDbl(double r, double g, double b)
@@ -54,12 +61,41 @@ namespace LynnaLib
 
         public static Color FromRgbaDbl(double r, double g, double b, double a)
         {
-            Color c = new Color();
-            c.r = (int)(r * 255);
-            c.g = (int)(g * 255);
-            c.b = (int)(b * 255);
-            c.a = (int)(a * 255);
-            return c;
+            return new Color()
+            {
+                R = (int)(r * 255),
+                G = (int)(g * 255),
+                B = (int)(b * 255),
+                A = (int)(a * 255),
+            };
+        }
+
+        /// <summary>
+        /// Gets a color based on the format from the "ToString" method. May throw JsonException if
+        /// deserialization fails. Used for clipboard copy/paste.
+        /// </summary>
+        public static Color? Deserialize(string s)
+        {
+            try
+            {
+                return JsonSerializer.Deserialize<Color>(s);
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        // ================================================================================
+        // Public methods
+        // ================================================================================
+
+        /// <summary>
+        /// Used for clipboard copy/paste.
+        /// </summary>
+        public string Serialize()
+        {
+            return JsonSerializer.Serialize(this);
         }
 
         public override bool Equals(object? obj)
@@ -69,12 +105,12 @@ namespace LynnaLib
 
         public override int GetHashCode()
         {
-            return r.GetHashCode() * 3 + b.GetHashCode() * 5 + g.GetHashCode() * 7 + a.GetHashCode();
+            return R.GetHashCode() * 3 + B.GetHashCode() * 5 + G.GetHashCode() * 7 + A.GetHashCode();
         }
 
         public static bool operator==(Color c1, Color c2)
         {
-            return c1.r == c2.r && c1.g == c2.g && c1.b == c2.b && c1.a == c2.a;
+            return c1.R == c2.R && c1.G == c2.G && c1.B == c2.B && c1.A == c2.A;
         }
 
         public static bool operator!=(Color c1, Color c2)
@@ -82,6 +118,9 @@ namespace LynnaLib
             return !(c1 == c2);
         }
 
+        /// <summary>
+        /// This is used for clipboard sharing, so don't change without also changing FromString.
+        /// </summary>
         public override string ToString()
         {
             return $"R: {R}, G: {G}, B: {B}, A: {A}";
@@ -109,7 +148,7 @@ namespace LynnaLib
 
         public static implicit operator Vector4(Color c)
         {
-            return new Vector4(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
+            return new Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
         }
 
         public static implicit operator Color(Vector4 c)
@@ -122,6 +161,9 @@ namespace LynnaLib
         // ================================================================================
         // Constants
         // ================================================================================
+
+        // For clipboard copy/paste
+        public static readonly string MimeType = "application/vnd.lynnalab.color";
 
         // Some colors copied over from System.Drawing to keep things consistent
         public static readonly Color Black = FromRgb(0x00, 0x00, 0x00);
