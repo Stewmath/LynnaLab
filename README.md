@@ -132,6 +132,7 @@ either.
 * F5: Build & run game
 * Ctrl-Z: Undo
 * Ctrl-Shift-Z: Redo
+* Ctrl+Tab: Cycle through windows
 
 ### Tileset viewer (left)
 
