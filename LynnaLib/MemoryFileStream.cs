@@ -100,8 +100,10 @@ namespace LynnaLib
 
                         Project.BeginTransaction("File Reload", disallowUndo: true);
                         Project.TransactionManager.CaptureInitialState<State>(this);
-                        LoadFromFile();
-                        InvokeModifiedEvent(new StreamModifiedEventArgs(0, Length));
+                        if (LoadFromFile())
+                        {
+                            InvokeModifiedEvent(new StreamModifiedEventArgs(0, Length));
+                        }
                         Project.EndTransaction();
                     });
                 }
@@ -118,7 +120,7 @@ namespace LynnaLib
             this.state = (State)state;
         }
 
-        void LoadFromFile()
+        bool LoadFromFile()
         {
             FileStream input = new FileStream(filepath, FileMode.Open);
 
@@ -127,14 +129,22 @@ namespace LynnaLib
                 // It seems like when a filewatcher is installed, this can get triggered when it's
                 // seen as "empty"? Perhaps because it can't open the file properly. Obviously this
                 // is bad. Just ignore it in that case.
-                return;
+                return false;
             }
 
-            state.data = new byte[input.Length];
+            byte[] data = new byte[input.Length];
             _position = 0;
-            if (input.Read(state.data, 0, (int)input.Length) != input.Length)
+            if (input.Read(data, 0, (int)input.Length) != input.Length)
                 throw new Exception("MemoryFileStream: Didn't read enough bytes");
             input.Close();
+
+            if (state.data == null || !state.data.SequenceEqual(data))
+            {
+                state.data = data;
+                return true;
+            }
+            else
+                return false;
         }
 
         // ================================================================================

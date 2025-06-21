@@ -257,7 +257,7 @@ namespace LynnaLib
         {
             byte[] data = File.ReadAllBytes(filename);
 
-            Project.BeginTransaction("Load external PNG file", merge: false, disallowUndo: true);
+            Project.BeginTransaction("Load external PNG file", merge: false, disallowUndo: false);
             try
             {
                 LoadFromPngData(data, false);

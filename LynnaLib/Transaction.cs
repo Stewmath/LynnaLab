@@ -528,9 +528,8 @@ public class TransactionManager
     {
         var t = constructingTransaction;
         bool pushed = false;
-        if (HaveIncompleteTransaction)
+        if (HaveIncompleteTransaction && t.CaptureFinalState())
         {
-            t.CaptureFinalState();
             TransactionNode node = new(t, apply: true);
             TransactionHistory.AddLast(node.NodeID, node);
             if (!disallowUndoThisTransaction)
@@ -760,10 +759,18 @@ public class Transaction
         return true;
     }
 
-    public void CaptureFinalState()
+    /// <summary>
+    /// Return true if anything changed from the initial state
+    /// </summary>
+    public bool CaptureFinalState()
     {
+        bool retval = false;
         foreach (TransactionStateHolder delta in deltas.Values)
-            delta.CaptureFinalState();
+        {
+            if (delta.CaptureFinalState())
+                retval = true;
+        }
+        return retval;
     }
 
     /// <summary>
@@ -933,10 +940,10 @@ public class TransactionStateHolder
     // Public methods
     // ================================================================================
 
-    public void CaptureFinalState()
+    public bool CaptureFinalState()
     {
         finalState = Serialize();
-        //Console.WriteLine($"Final state: {initialState}");
+        return initialState != finalState;
     }
 
     public bool CanUnapply()
