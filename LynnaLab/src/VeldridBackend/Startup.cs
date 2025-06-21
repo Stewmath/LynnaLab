@@ -1,7 +1,9 @@
 using Veldrid;
+using Veldrid.OpenGLBinding;
 using static SDL.SDL3;
 using SDL;
 using SDLUtil;
+using System.Runtime.InteropServices;
 
 namespace VeldridBackend;
 
@@ -9,8 +11,10 @@ namespace VeldridBackend;
 /// Helper functions for setting up Veldrid with SDL3. Similar to Veldrid.StartupUtilities but for
 /// SDL3 instead of SDL2.
 /// </summary>
-public static class Startup
+public unsafe static class Startup
 {
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
+
     // ================================================================================
     // Public methods
     // ================================================================================
@@ -178,6 +182,13 @@ public static class Startup
 
         SDL_GL_SetSwapInterval(options.SyncToVerticalBlank ? 1 : 0);
 
+        // Print extensions to log
+        OpenGLNative.LoadAllFunctions((nint)contextHandle, (s) => SDL_GL_GetProcAddress(s), false);
+        foreach (string ext in GetOpenGLExtensions())
+        {
+            log.Debug("OpenGL Extension: " + ext);
+        }
+
         Veldrid.OpenGL.OpenGLPlatformInfo platformInfo = new Veldrid.OpenGL.OpenGLPlatformInfo(
             (nint)contextHandle,
             func => SDL_GL_GetProcAddress(func),
@@ -188,11 +199,13 @@ public static class Startup
             () => SDL_GL_SwapWindow(window.Handle),
             sync => SDL_GL_SetSwapInterval(sync ? 1 : 0));
 
-        return GraphicsDevice.CreateOpenGL(
+        GraphicsDevice gd = GraphicsDevice.CreateOpenGL(
             options,
             platformInfo,
             (uint)window.Size.X,
             (uint)window.Size.Y);
+
+        return gd;
     }
 
     public static unsafe void SetSDLGLContextAttributes(GraphicsDeviceOptions options, GraphicsBackend backend)
@@ -308,22 +321,52 @@ public static class Startup
 
         if (window == null)
         {
-            Debug.WriteLine($"Unable to create version {major}.{minor} {profileMask} context.");
+            log.Debug($"Unable to create OpenGL version {major}.{minor} {profileMask} context.");
             return false;
         }
 
         SDL_GLContextState* context = SDL_GL_CreateContext(window);
         if (context == null)
         {
-            Debug.WriteLine($"Unable to create version {major}.{minor} {profileMask} context.");
+            log.Debug($"Unable to create OpenGL version {major}.{minor} {profileMask} context.");
             SDL_DestroyWindow(window);
             return false;
         }
 
-        Debug.WriteLine($"Created OpenGL context: v{major}.{minor}");
+        log.Debug($"Created OpenGL context: v{major}.{minor}");
 
         SDL_GL_DestroyContext(context);
         SDL_DestroyWindow(window);
         return true;
+    }
+
+    private static unsafe HashSet<string> GetOpenGLExtensions()
+    {
+        var extensions = new HashSet<string>();
+
+        int extensionCount;
+        OpenGLNative.glGetIntegerv(GetPName.NumExtensions, &extensionCount);
+
+        uint error = OpenGLNative.glGetError();
+
+        if (error != 0)
+        {
+            throw new VeldridException("glGetError indicated an error: " + (ErrorCode)error);
+        }
+
+        log.Debug("Num OpenGL extensions: " + extensionCount);
+
+        for (uint i = 0; i < extensionCount; i++)
+        {
+            nint extensionNamePtr = (nint)OpenGLNative.glGetStringi(StringNameIndexed.Extensions, i);
+
+            if (extensionNamePtr != 0)
+            {
+                string extensionName = Marshal.PtrToStringUTF8(extensionNamePtr);
+                extensions.Add(extensionName);
+            }
+        }
+
+        return extensions;
     }
 }
