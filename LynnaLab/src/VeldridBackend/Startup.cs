@@ -165,7 +165,7 @@ public unsafe static class Startup
         SDLWindow window,
         GraphicsBackend backend)
     {
-        SetSDLGLContextAttributes(options, backend);
+        (int, int) version = SetSDLGLContextAttributes(options, backend);
 
         SDL_GLContextState* contextHandle = SDL_GL_CreateContext(window.Handle);
         if (contextHandle == null)
@@ -184,9 +184,19 @@ public unsafe static class Startup
 
         // Print extensions to log
         OpenGLNative.LoadAllFunctions((nint)contextHandle, (s) => SDL_GL_GetProcAddress(s), false);
-        foreach (string ext in GetOpenGLExtensions())
+        var extensions = GetOpenGLExtensions();
+        foreach (string ext in extensions)
         {
             log.Debug("OpenGL Extension: " + ext);
+        }
+
+        // It should not be our responsibility to check for opengl extensions. However, veldrid
+        // appears to fail to check for this extension while requiring it. (Veldrid can potentially
+        // be modified to not require it. I tried it in my veldrid fork, but I don't have a GPU I
+        // can test it on, so I'm not using that.)
+        if (!GLVersion(version, 4, 1) && !extensions.Contains("GL_ARB_viewport_array"))
+        {
+            throw new Exception($"GPU doesn't implement OpenGL extension ARB_viewport_array.");
         }
 
         Veldrid.OpenGL.OpenGLPlatformInfo platformInfo = new Veldrid.OpenGL.OpenGLPlatformInfo(
@@ -208,7 +218,7 @@ public unsafe static class Startup
         return gd;
     }
 
-    public static unsafe void SetSDLGLContextAttributes(GraphicsDeviceOptions options, GraphicsBackend backend)
+    public static unsafe (int, int) SetSDLGLContextAttributes(GraphicsDeviceOptions options, GraphicsBackend backend)
     {
         if (backend != GraphicsBackend.OpenGL && backend != GraphicsBackend.OpenGLES)
         {
@@ -273,6 +283,16 @@ public unsafe static class Startup
         {
             SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 0);
         }
+
+        return (major, minor);
+    }
+
+    /// <summary>
+    /// Return true if the given "version" is at least "major.minor".
+    /// </summary>
+    private static bool GLVersion((int major, int minor) version, int major, int minor)
+    {
+        return version.major > major || (version.major == major && version.minor >= minor);
     }
 
     private static (int Major, int Minor) GetMaxGLVersion(bool gles)
