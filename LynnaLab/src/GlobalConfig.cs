@@ -98,6 +98,7 @@ public class GlobalConfig
     public Interpolation Interpolation { get; set; } = Interpolation.Bilinear;
     public bool DarkenDuplicateRooms { get; set; } = true;
     public bool ShowBrushPreview { get; set; } = true;
+    public bool ShowCoordinateTooltip { get; set; } = false;
     public bool OverrideSystemScaling { get; set; } = false;
     public float DisplayScaleFactor { get; set; } = 1.0f;
 

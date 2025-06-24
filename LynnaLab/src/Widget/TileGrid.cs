@@ -515,8 +515,14 @@ public class TileGrid : SizedWidget
     ///
     /// Should be called after RenderTileGrid.
     /// </summary>
-    public void RenderHoverAndSelection()
+    public void RenderHoverAndSelection(bool enable = true)
     {
+        if (!enable)
+        {
+            HoveredTile = -1;
+            return;
+        }
+
         TileEventArgs hoverChangedArgs = null;
 
         // Determine hovered tile

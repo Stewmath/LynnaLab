@@ -63,6 +63,17 @@ public class Minimap : TileGrid
             }
         };
 
+        // Show coordinate tooltip
+        base.OnHover = (int tile) =>
+        {
+            if (Top.GlobalConfig.ShowCoordinateTooltip)
+            {
+                int x = tile % Width;
+                int y = tile / Width;
+                ImGuiX.Tooltip($"{x}, {y} (room ${Map.GetRoom(x, y).Index:X3})");
+            }
+        };
+
         // Watch for dungeons removing a floor that we're currently looking at.
         // This is enough to prevent crashes, though it won't update the selected room in the RoomEditor.
         dungeonEW.Bind<DungeonChangedEventArgs>("ChangedEvent", (_, args) =>

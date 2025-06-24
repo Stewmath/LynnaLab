@@ -73,6 +73,12 @@ public class SettingsDialog : Frame
                 new Accessor<bool>(() => GlobalConfig.ShowBrushPreview
                 ));
 
+            ImGuiX.Checkbox(
+                "Coordinate tooltips",
+                new Accessor<bool>(() => GlobalConfig.ShowCoordinateTooltip
+                ));
+            ImGuiX.TooltipOnHover("Show coordinate tooltips in room editor and minimap.");
+
             ImGuiX.Checkbox("Override system scaling", GlobalConfig.OverrideSystemScaling, (value) =>
             {
                 Top.DoNextFrame(() =>

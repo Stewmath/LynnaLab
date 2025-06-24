@@ -39,6 +39,17 @@ public class RoomLayoutEditor : TileGrid
         QuickstartData.enableToggledEvent += (s, a) => UpdateQuickstartRoomComponent();
         RoomEditor.TabChangedEvent += (s, a) => UpdateRoomComponents();
 
+        // Show coordinate tooltip
+        base.OnHover = (int tile) =>
+        {
+            if (Top.GlobalConfig.ShowCoordinateTooltip && this.HoveredTile != -1)
+            {
+                int x = tile % Width;
+                int y = tile / Width;
+                ImGuiX.Tooltip($"{x}, {y} (${y:X}{x:X})");
+            }
+        };
+
         roomEventWrapper = new EventWrapper<Room>();
         roomEventWrapper.Bind<EventArgs>(
             "ChestAddedEvent",
@@ -350,11 +361,10 @@ public class RoomLayoutEditor : TileGrid
                 selectedRoomComponent.Delete();
         }
 
-        if (hoveringComponent == null && !draggingComponent)
-        {
-            if (!SuppressTileSelection)
-                base.RenderHoverAndSelection();
-        }
+        if (hoveringComponent == null && !draggingComponent && !SuppressTileSelection)
+            base.RenderHoverAndSelection(true);
+        else
+            base.RenderHoverAndSelection(false);
 
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))
             suppressCurrentClick = false;
