@@ -21,6 +21,8 @@ namespace LynnaLab;
 /// </summary>
 public static class Top
 {
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
+
     /// <summary>
     /// Called upon initialization. Optionally takes parameters for the project to load.
     /// </summary>
@@ -423,7 +425,11 @@ public static class Top
         {
             Modal.LoadingModal($"Loading project: {path} ({game})...", () =>
             {
+                Stopwatch watch = new();
+                watch.Start();
                 var project = new Project(path, Project.GameFromString(game), config);
+                watch.Stop();
+                log.Info($"Loaded project in {((float)watch.ElapsedMilliseconds) / 1000:f3}s");
                 Workspace = new ProjectWorkspace(project, "MainProject");
             });
         };
