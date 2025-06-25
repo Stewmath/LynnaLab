@@ -48,6 +48,7 @@ public class TransactionManager
     int beginTransactionCalls = 0;
     bool doInProgress = false;
     bool disallowUndoThisTransaction = false;
+    bool canMergeConstructingTransaction = false;
 
     // ================================================================================
     // Properties
@@ -89,6 +90,7 @@ public class TransactionManager
                 throw new Exception("Tried to assign transaction history after creating transactions?");
 
             constructingTransaction = new Transaction(Project, CreatorID, transactionIDCounter++);
+            canMergeConstructingTransaction = false;
         }
     }
 
@@ -273,10 +275,8 @@ public class TransactionManager
             if (FinalizeTransaction())
                 log.Warn("BeginTransaction: There was an uncompleted transaction already.");
 
-            if (!merge)
-                InsertBarrier();
-
             constructingTransaction.Description = description;
+            canMergeConstructingTransaction = merge;
 
             // Don't clear redoStack here. There is code that calls BeginTransaction even when it's
             // likely that nothing will actually happen.
@@ -534,13 +534,25 @@ public class TransactionManager
             TransactionHistory.AddLast(node.NodeID, node);
             if (!disallowUndoThisTransaction)
             {
+                if (!canMergeConstructingTransaction)
+                    InsertBarrier();
                 undoStack.Push(t);
                 redoStack.Clear();
             }
             pushed = true;
             TransactionAddedEvent?.Invoke(TransactionHistory.LastNode);
         }
+        else
+        {
+            // Workaround to prevent ID counter going infinitely upwards while "frivolous"
+            // transactions (code that calls BeginTransaction without changing anything) don't cause
+            // the counter to get incremented constantly, resulting in potential overflows. The
+            // dungeon editor does this.
+            // The last ID we used is being discarded, so this should not result in collisions.
+            transactionIDCounter--;
+        }
         constructingTransaction = new Transaction(Project, CreatorID, transactionIDCounter++);
+        canMergeConstructingTransaction = false;
         return pushed;
     }
 }
