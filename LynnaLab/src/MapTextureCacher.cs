@@ -25,6 +25,7 @@ public class MapTextureCacher : IDisposeNotifier
     // ================================================================================
 
     RgbaTexture texture;
+    bool dirty = false;
 
     // ================================================================================
     // Properties
@@ -57,6 +58,18 @@ public class MapTextureCacher : IDisposeNotifier
         DisposedEvent?.Invoke(this, null);
     }
 
+    /// <summary>
+    /// Called once per frame.
+    /// </summary>
+    public void UpdateFrame()
+    {
+        if (dirty)
+        {
+            Redraw();
+            dirty = false;
+        }
+    }
+
     // ================================================================================
     // Protected methods
     // ================================================================================
@@ -81,7 +94,7 @@ public class MapTextureCacher : IDisposeNotifier
                 }
                 else if (args.AllRoomsChanged || (args.SingleFloorChanged == FloorPlan))
                 {
-                    Redraw();
+                    dirty = true;
                 }
                 else if (args.RoomPosValid && args.RoomPos.floorPlan == dungeonFloor)
                 {

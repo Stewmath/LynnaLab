@@ -407,19 +407,17 @@ namespace LynnaLib
             State old = (State)oldState;
             bool floorsChanged = !old.floors.SequenceEqual(state.floors);
 
-            DungeonChangedEventArgs args;
-
             if (floorsChanged)
             {
-                args = DungeonChangedEventArgs.CreateFloorsChanged();
-            }
-            else
-            {
-                // Assume all rooms are potentially changed (too lazy to implement comparison)
-                args = DungeonChangedEventArgs.CreateAllRoomsChanged();
+                DungeonChangedEventArgs args = DungeonChangedEventArgs.CreateFloorsChanged();
+                DungeonChangedEvent?.Invoke(this, args);
             }
 
-            DungeonChangedEvent?.Invoke(this, args);
+            // If any rooms have changed, the state handler in the Floor class will send an event.
+            // NOTE: Potentially, Dungeon and Dungeon.Floor could both send events on the same undo.
+            // Whether this would cause problems depends on what the clients are doing. But it could
+            // be a concern that a Floor which has been deleted from its Dungeon may invoke events
+            // before the listener knows about that.
         }
 
         // ================================================================================

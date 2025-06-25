@@ -537,6 +537,8 @@ public class ProjectWorkspace
     {
         foreach (var ts in tilesetTextureCacher.Values)
             ts.UpdateFrame();
+        foreach (var m in mapTextureCacher.Values)
+            m.UpdateFrame();
 
         var redrawRoom = (RoomLayout layout) =>
         {
