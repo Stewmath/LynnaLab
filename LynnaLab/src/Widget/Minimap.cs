@@ -21,12 +21,12 @@ public class Minimap : TileGrid
             // Darken rooms which are already used in a dungeon, or rooms considered "duplicates"
             // (not the main version of the room). These both have the effect of discouraging
             // interacting with these rooms as there is a more canonical version of it somewhere.
-            if (Workspace.DarkenDuplicateRooms && !(map is Dungeon))
+            if (Workspace.DarkenDuplicateRooms && !(floorPlan is Dungeon.Floor))
             {
                 for (int tile = 0; tile < MaxIndex; tile++)
                 {
                     int x = tile % Width, y = tile / Width;
-                    Room room = map.GetRoom(x, y);
+                    Room room = floorPlan.GetRoom(x, y);
                     if (Project.RoomUsedInDungeon(room.Index) || room.Index != room.ExpectedIndex)
                     {
                         var rect = base.TileRect(tile);
@@ -39,25 +39,22 @@ public class Minimap : TileGrid
             foreach (var remoteState in Workspace.RemoteStates.Values)
             {
                 CursorPosition cursor = remoteState.CursorPosition;
-                if (Map.GetRoomPosition(Project.GetRoom(cursor.room), out int x, out int y, out int f))
+                if (FloorPlan.GetRoomPosition(Project.GetRoom(cursor.room), out int x, out int y))
                 {
-                    if (f == Floor)
+                    // Rectangle around whole room
+                    FRect rect = base.TileRect(x, y);
+                    base.AddRect(rect, remoteState.Color, ImGuiX.Unit(base.RectThickness));
+
+                    float tileSize = 16 * base.Scale;
+
+                    // Draw the cursor within the room
+                    if (cursor.tileStart != -1)
                     {
-                        // Rectangle around whole room
-                        FRect rect = base.TileRect(x, y);
-                        base.AddRect(rect, remoteState.Color, ImGuiX.Unit(base.RectThickness));
-
-                        float tileSize = 16 * base.Scale;
-
-                        // Draw the cursor within the room
-                        if (cursor.tileStart != -1)
-                        {
-                            float p1x = rect.X + (cursor.tileStart % map.RoomWidth) * tileSize;
-                            float p1y = rect.Y + (cursor.tileStart / map.RoomWidth) * tileSize;
-                            float p2x = rect.X + (cursor.tileEnd % map.RoomWidth) * tileSize + tileSize;
-                            float p2y = rect.Y + (cursor.tileEnd / map.RoomWidth) * tileSize + tileSize;
-                            base.AddRect(new FRect(p1x, p1y, p2x - p1x, p2y - p1y), remoteState.Color, base.RectThickness * base.Scale);
-                        }
+                        float p1x = rect.X + (cursor.tileStart % floorPlan.RoomWidth) * tileSize;
+                        float p1y = rect.Y + (cursor.tileStart / floorPlan.RoomWidth) * tileSize;
+                        float p2x = rect.X + (cursor.tileEnd % floorPlan.RoomWidth) * tileSize + tileSize;
+                        float p2y = rect.Y + (cursor.tileEnd / floorPlan.RoomWidth) * tileSize + tileSize;
+                        base.AddRect(new FRect(p1x, p1y, p2x - p1x, p2y - p1y), remoteState.Color, base.RectThickness * base.Scale);
                     }
                 }
             }
@@ -70,21 +67,25 @@ public class Minimap : TileGrid
             {
                 int x = tile % Width;
                 int y = tile / Width;
-                ImGuiX.Tooltip($"{x}, {y} (room ${Map.GetRoom(x, y).Index:X3})");
+                ImGuiX.Tooltip($"{x}, {y} (room ${FloorPlan.GetRoom(x, y).Index:X3})");
             }
         };
 
         // Watch for dungeons removing a floor that we're currently looking at.
         // This is enough to prevent crashes, though it won't update the selected room in the RoomEditor.
-        dungeonEW.Bind<DungeonChangedEventArgs>("ChangedEvent", (_, args) =>
+        dungeonEW.Bind<DungeonChangedEventArgs>("DungeonChangedEvent", (_, args) =>
         {
-            if (!(map is Dungeon dungeon))
+            if (!(floorPlan is Dungeon.Floor floor))
+            {
+                log.Warn("Minimap: Invoked DungeonChangedEvent without dungeon selected?");
                 return;
+            }
             if (!args.FloorsChanged)
                 return;
-            if (floor >= dungeon.NumFloors)
+            Dungeon dungeon = floor.Dungeon;
+            if (!floor.Dungeon.FloorPlans.Contains(floor))
             {
-                SetMap(dungeon, dungeon.NumFloors - 1);
+                SetFloorPlan(dungeon.FloorPlans.First());
             }
         }, weak: false);
     }
@@ -92,8 +93,9 @@ public class Minimap : TileGrid
     // ================================================================================
     // Variables
     // ================================================================================
-    Map map;
-    int floor;
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
+
+    FloorPlan floorPlan;
     TextureBase image;
     EventWrapper<Dungeon> dungeonEW = new();
 
@@ -112,13 +114,11 @@ public class Minimap : TileGrid
     public ProjectWorkspace Workspace { get; private set; }
     public Project Project { get { return Workspace.Project; } }
 
-    public Map Map { get { return map; } }
-
-    public int Floor { get { return floor; } }
+    public FloorPlan FloorPlan { get { return floorPlan; } }
 
     public RoomLayout SelectedRoomLayout
     {
-        get { return map.GetRoomLayout(SelectedX, SelectedY, 0); }
+        get { return floorPlan.GetRoomLayout(SelectedX, SelectedY); }
     }
 
     // ================================================================================
@@ -135,31 +135,30 @@ public class Minimap : TileGrid
     /// <summary>
     /// Sets the map to display
     /// </summary>
-    public void SetMap(Map map, int floor = 0)
+    public void SetFloorPlan(FloorPlan plan)
     {
-        if (this.map == map && this.floor == floor)
+        if (this.floorPlan == plan)
             return;
 
-        this.map = map;
-        this.floor = floor;
+        this.floorPlan = plan;
 
         this.image = null;
 
-        if (map != null)
+        if (plan != null)
         {
-            base.TileWidth = map.RoomWidth * 16;
-            base.TileHeight = map.RoomHeight * 16;
-            base.Width = map.MapWidth;
-            base.Height = map.MapHeight;
+            base.TileWidth = plan.RoomWidth * 16;
+            base.TileHeight = plan.RoomHeight * 16;
+            base.Width = plan.MapWidth;
+            base.Height = plan.MapHeight;
 
-            this.image = Workspace.GetCachedMapTexture((Map, floor));
+            this.image = Workspace.GetCachedMapTexture(FloorPlan);
         }
 
-        dungeonEW.ReplaceEventSource(map as Dungeon);
+        dungeonEW.ReplaceEventSource((plan as Dungeon.Floor)?.Dungeon);
     }
 
     public RoomLayout GetRoomLayout(int x, int y)
     {
-        return map.GetRoomLayout(x, y, floor);
+        return floorPlan.GetRoomLayout(x, y);
     }
 }

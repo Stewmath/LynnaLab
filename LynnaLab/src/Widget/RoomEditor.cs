@@ -49,8 +49,8 @@ public class RoomEditor : Frame
 
         SetRoom(0, 0);
 
-        overworldMinimap.SetMap(Project.GetWorldMap(0, Project.Game == Game.Seasons ? Season.Spring : Season.None));
-        dungeonMinimap.SetMap(Project.GetDungeon(0));
+        overworldMinimap.SetFloorPlan(Project.GetWorldMap(0, Project.Game == Game.Seasons ? Season.Spring : Season.None));
+        dungeonMinimap.SetFloorPlan(Project.GetDungeon(0).GetFloor(0));
 
         ActiveMinimap = overworldMinimap;
 
@@ -63,7 +63,7 @@ public class RoomEditor : Frame
             if (suppressEvents != 0)
                 return;
 
-            RoomLayout roomLayout = overworldMinimap.Map.GetRoomLayout(overworldMinimap.SelectedX, overworldMinimap.SelectedY);
+            RoomLayout roomLayout = overworldMinimap.FloorPlan.GetRoomLayout(overworldMinimap.SelectedX, overworldMinimap.SelectedY);
             if (Workspace.AutoAdjustGroupNumber && roomLayout.Room.Index != roomLayout.Room.ExpectedIndex)
             {
                 roomLayout = Project.GetIndexedDataType<Room>(roomLayout.Room.ExpectedIndex).GetLayout(roomLayout.Season);
@@ -76,7 +76,7 @@ public class RoomEditor : Frame
             if (suppressEvents != 0)
                 return;
 
-            SetRoomLayout(dungeonMinimap.Map.GetRoomLayout(dungeonMinimap.SelectedX, dungeonMinimap.SelectedY, ActiveFloor), 0);
+            SetRoomLayout(dungeonMinimap.FloorPlan.GetRoomLayout(dungeonMinimap.SelectedX, dungeonMinimap.SelectedY), 0);
         };
 
         Brush.BrushChanged += (_, _) =>
@@ -212,7 +212,10 @@ public class RoomEditor : Frame
     // Private properties
 
     Minimap ActiveMinimap { get; set; }
-    Map ActiveMap { get { return ActiveMinimap.Map; } }
+    FloorPlan ActiveFloorPlan { get { return ActiveMinimap.FloorPlan; } }
+
+    // This is null if not on the dungeon tab
+    Dungeon ActiveDungeon { get { return (ActiveFloorPlan as Dungeon.Floor)?.Dungeon; } }
 
     // Left: Editor mode tabs
     string ActiveLeftTabName { get; set; }
@@ -221,17 +224,18 @@ public class RoomEditor : Frame
     bool OverworldTabActive { get { return ActiveMinimap == overworldMinimap; } }
     bool DungeonTabActive { get { return ActiveMinimap == dungeonMinimap; } }
 
-    int ActiveFloor
+    // Only valid on the dungeon tab
+    int SelectedFloor
     {
         get
         {
-            return GetSelectedFloor(ActiveMap);
+            return GetSelectedFloor(ActiveDungeon);
         }
         set
         {
             if (OverworldTabActive)
                 throw new NotImplementedException();
-            floorDict[(ActiveMap as Dungeon).Index] = value;
+            floorDict[(ActiveFloorPlan as Dungeon.Floor).Dungeon.Index] = value;
         }
     }
 
@@ -385,7 +389,7 @@ public class RoomEditor : Frame
                     }
                 }
 
-                if (ActiveMap.Season != Season.None)
+                if (ActiveFloorPlan.Season != Season.None)
                 {
                     ImGui.SameLine();
                     int season = (int)RoomLayout.Season;
@@ -404,32 +408,32 @@ public class RoomEditor : Frame
         }
         if (minimapTabItem("Dungeon", dungeonMinimap))
         {
-            if (ActiveFloor >= (ActiveMap as Dungeon).NumFloors)
-                ActiveFloor = (ActiveMap as Dungeon).NumFloors - 1;
+            Dungeon.Floor dungeonFloor = ActiveFloorPlan as Dungeon.Floor;
 
             // Input fields for dungeons
             {
                 ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
 
-                int dungeonIndex = (dungeonMinimap.Map as Dungeon).Index;
+                int dungeonIndex = ActiveDungeon.Index;
                 if (ImGuiX.InputHex("Dungeon", ref dungeonIndex, 1))
                 {
                     if (dungeonIndex >= 0 && dungeonIndex < Project.NumDungeons)
                     {
-                        SetMap(Project.GetDungeon(dungeonIndex));
+                        Dungeon d = Project.GetDungeon(dungeonIndex);
+                        int floor = GetSelectedFloor(d);
+                        SetMap(d.GetFloor(floor));
                     }
                 }
 
                 ImGui.SameLine();
-                int newFloor = ActiveFloor;
+                int newFloor = dungeonFloor.GetFloorIndex();
                 if (ImGuiX.InputHex("Floor", ref newFloor, 1))
                 {
-                    if (newFloor >= 0 && newFloor < (dungeonMinimap.Map as Dungeon).NumFloors)
+                    if (newFloor >= 0 && newFloor < ActiveDungeon.NumFloors)
                     {
-                        ActiveFloor = newFloor;
-                        dungeonMinimap.SetMap(dungeonMinimap.Map, ActiveFloor);
-                        SetRoom(ActiveMap.GetRoom(
-                                    ActiveMinimap.SelectedX, ActiveMinimap.SelectedY, ActiveFloor),
+                        SelectedFloor = newFloor;
+                        dungeonMinimap.SetFloorPlan(ActiveDungeon.GetFloor(SelectedFloor));
+                        SetRoom(ActiveFloorPlan.GetRoom(ActiveMinimap.SelectedX, ActiveMinimap.SelectedY),
                                 updateMinimap: 0);
                     }
                 }
@@ -476,13 +480,12 @@ public class RoomEditor : Frame
     /// <summary>
     /// Changes the loaded map, updates the loaded room accordingly
     /// </summary>
-    public void SetMap(Map map)
+    public void SetMap(FloorPlan map)
     {
         suppressEvents++;
 
-        ActiveMinimap.SetMap(map, GetSelectedFloor(map));
-        RoomLayout roomLayout = map.GetRoomLayout(
-            ActiveMinimap.SelectedX, ActiveMinimap.SelectedY, ActiveFloor);
+        ActiveMinimap.SetFloorPlan(map);
+        RoomLayout roomLayout = map.GetRoomLayout(ActiveMinimap.SelectedX, ActiveMinimap.SelectedY);
         SetRoomLayout(roomLayout, 0);
 
         suppressEvents--;
@@ -531,11 +534,11 @@ public class RoomEditor : Frame
     /// <summary>
     /// Gets the floor that was last selected for the given map
     /// </summary>
-    int GetSelectedFloor(Map map)
+    int GetSelectedFloor(Dungeon dungeon)
     {
-        if (map is not Dungeon)
-            return 0;
-        return floorDict.GetValueOrDefault((map as Dungeon).Index, 0);
+        if (ActiveDungeon == null)
+            throw new Exception("Tried to get selected floor in non-dungeon");
+        return floorDict.GetValueOrDefault(dungeon.Index, 0);
     }
 
     /// <summary>
@@ -570,8 +573,9 @@ public class RoomEditor : Frame
 
         if (updateMinimap != 0)
         {
-            int x, y, floor;
-            Dungeon dungeon = Project.GetRoomDungeon(roomLayout.Room, out x, out y, out floor);
+            Dungeon.Floor dungeonFloor;
+            int x, y;
+            Dungeon dungeon = Project.GetRoomDungeon(roomLayout.Room, out dungeonFloor, out x, out y);
 
             if (updateMinimap == 2)
             {
@@ -590,16 +594,16 @@ public class RoomEditor : Frame
 
             if (OverworldTabActive)
             {
-                overworldMinimap.SetMap(Project.GetWorldMap(roomLayout.Group, roomLayout.Season));
+                overworldMinimap.SetFloorPlan(Project.GetWorldMap(roomLayout.Group, roomLayout.Season));
                 overworldMinimap.SelectedIndex = roomLayout.Room.Index & 0xff;
             }
             else if (DungeonTabActive)
             {
                 if (dungeon != null)
                 {
-                    dungeonMinimap.SetMap(dungeon, floor);
-                    dungeonMinimap.SelectedIndex = y * dungeon.MapWidth + x;
-                    ActiveFloor = dungeonMinimap.Floor;
+                    dungeonMinimap.SetFloorPlan(dungeonFloor);
+                    dungeonMinimap.SelectedIndex = y * dungeonFloor.MapWidth + x;
+                    SelectedFloor = dungeonFloor.GetFloorIndex();
                 }
             }
         }
@@ -674,9 +678,9 @@ public class RoomEditor : Frame
 
             // Print warning if, on the dungeon tab, the tileset's dungeon index doesn't match the
             // dungeon itself
-            if (DungeonTabActive && tileset.DungeonIndex != (ActiveMap as Dungeon)?.Index)
+            if (DungeonTabActive && tileset.DungeonIndex != ActiveDungeon.Index)
                 return string.Format("Tileset's dungeon index ({0:X}) doesn't match the dungeon ({1:X})",
-                                     (int)tileset.DungeonIndex, (ActiveMap as Dungeon)?.Index);
+                                     (int)tileset.DungeonIndex, ActiveDungeon.Index);
 
             // Print warning if tileset dungeon bit is unset, but dungeon value is not $F.
             // Only in Seasons, because Ages has better sanity checks for this.

@@ -1587,17 +1587,23 @@ namespace LynnaLib
 
         // Gets the dungeon a room is in. Also returns the coordinates within the dungeon in x/y
         // parameters.
-        public Dungeon GetRoomDungeon(Room room, out int x, out int y, out int floor)
+        public Dungeon GetRoomDungeon(Room room, out Dungeon.Floor floor, out int x, out int y)
         {
             x = -1;
             y = -1;
-            floor = -1;
+            floor = null;
 
             for (int d = 0; d < NumDungeons; d++)
             {
                 Dungeon dungeon = GetDungeon(d);
-                if (dungeon.GetRoomPosition(room, out x, out y, out floor))
-                    return dungeon;
+                foreach (Dungeon.Floor f in dungeon.FloorPlans)
+                {
+                    if (f.GetRoomPosition(room, out x, out y))
+                    {
+                        floor = f;
+                        return dungeon;
+                    }
+                }
             }
 
             return null;

@@ -30,13 +30,13 @@ public class ProjectWorkspace
 
         tilesetTextureCacher = new((tileset) => new TilesetTextureCacher(this, tileset));
         roomTextureCacher = new((layout) => new RoomTextureCacher(this, layout));
-        mapTextureCacher = new((tup) => new MapTextureCacher(this, tup.map, tup.floor));
+        mapTextureCacher = new((plan) => new MapTextureCacher(this, plan));
 
         // Create all world map cachers immediately because we need them available as a canvas to
         // draw room layouts (even if we're not displaying the maps themselves right away).
         for (int g=0; g<Project.NumGroups; g++)
         {
-            Project.ForEachSeason(g, (s) => mapTextureCacher.GetOrCreate((Project.GetWorldMap(g, s), 0)));
+            Project.ForEachSeason(g, (s) => mapTextureCacher.GetOrCreate(Project.GetWorldMap(g, s)));
         }
 
         this.Brush = new Brush<int>(0);
@@ -111,7 +111,7 @@ public class ProjectWorkspace
 
     Cacher<Tileset, TilesetTextureCacher> tilesetTextureCacher;
     Cacher<RoomLayout, RoomTextureCacher> roomTextureCacher;
-    Cacher<(Map map, int floor), MapTextureCacher> mapTextureCacher;
+    Cacher<FloorPlan, MapTextureCacher> mapTextureCacher;
 
     Process emulatorProcess;
 
@@ -322,9 +322,9 @@ public class ProjectWorkspace
         return roomTextureCacher.GetOrCreate(layout).GetTexture();
     }
 
-    public RgbaTexture GetCachedMapTexture((Map map, int floor) key)
+    public RgbaTexture GetCachedMapTexture(FloorPlan plan)
     {
-        return mapTextureCacher.GetOrCreate(key).GetTexture();
+        return mapTextureCacher.GetOrCreate(plan).GetTexture();
     }
 
     public void OpenTilesetCloner(RealTileset source, RealTileset dest)
@@ -544,8 +544,8 @@ public class ProjectWorkspace
             int roomY = (layout.Room.Index % 256) / 16;
 
             // Redraw on overworld
-            Map map = Project.GetWorldMap(layout.Group, layout.Season);
-            var worldMapCache = mapTextureCacher.GetOrCreate((map, 0)); // This creates the cacher if it doesn't exist
+            FloorPlan map = Project.GetWorldMap(layout.Group, layout.Season);
+            var worldMapCache = mapTextureCacher.GetOrCreate(map); // This creates the cacher if it doesn't exist
             worldMapCache.RedrawRoom(layout);
 
             // Redraw in dungeons.
@@ -556,9 +556,9 @@ public class ProjectWorkspace
             for (int d=0; d<Project.NumDungeons; d++)
             {
                 Dungeon dungeon = Project.GetDungeon(d);
-                for (int f=0; f<dungeon.NumFloors; f++)
+                foreach (Dungeon.Floor floor in dungeon.FloorPlans)
                 {
-                    if (mapTextureCacher.TryGetValue((dungeon, f), out var mapCache))
+                    if (mapTextureCacher.TryGetValue(floor, out var mapCache))
                     {
                         mapCache.RedrawRoomFrom(layout, worldMapCache, roomX, roomY);
                     }

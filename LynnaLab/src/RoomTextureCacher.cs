@@ -70,7 +70,7 @@ public class RoomTextureCacher : IDisposeNotifier
         int x = Layout.Room.Index % 16;
         int y = (Layout.Room.Index % 256) / 16;
         var roomSize = Layout.Size * 16;
-        this.mapTexture = Workspace.GetCachedMapTexture((Workspace.Project.GetWorldMap(Layout.Room.Group, Layout.Season), 0));
+        this.mapTexture = Workspace.GetCachedMapTexture((Workspace.Project.GetWorldMap(Layout.Room.Group, Layout.Season)));
         roomTexture = Top.Backend.CreateTextureWindow(mapTexture, new Point(x, y) * roomSize, roomSize);
     }
 }

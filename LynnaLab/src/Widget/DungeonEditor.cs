@@ -14,9 +14,9 @@ public class DungeonEditor : Frame
         minimap = new Minimap(Workspace);
         SetDungeon(Project.GetDungeon(0));
 
-        dungeonEW.Bind<DungeonChangedEventArgs>("ChangedEvent", (_, args) =>
+        dungeonEW.Bind<DungeonChangedEventArgs>("DungeonChangedEvent", (_, args) =>
         {
-            if (args.FloorsChanged)
+            if (args.FloorsChanged && suppressFloorChangedEvent == 0)
             {
                 ReloadMap();
             }
@@ -28,7 +28,8 @@ public class DungeonEditor : Frame
     // ================================================================================
 
     Minimap minimap;
-    int floor;
+    int floorIndex;
+    int suppressFloorChangedEvent = 0;
     EventWrapper<Dungeon> dungeonEW = new();
 
     // ================================================================================
@@ -37,7 +38,9 @@ public class DungeonEditor : Frame
 
     public ProjectWorkspace Workspace { get; private set; }
     public Project Project { get { return Workspace.Project; } }
-    public Dungeon Dungeon { get; private set; }
+
+    Dungeon Dungeon { get { return FloorPlan.Dungeon; } }
+    Dungeon.Floor FloorPlan { get; set; }
 
     // Private properties
 
@@ -45,7 +48,7 @@ public class DungeonEditor : Frame
     {
         get
         {
-            return Dungeon.GetRoom(minimap.SelectedX, minimap.SelectedY, floor);
+            return FloorPlan.GetRoom(minimap.SelectedX, minimap.SelectedY);
         }
     }
 
@@ -69,9 +72,10 @@ public class DungeonEditor : Frame
             }
 
             ImGui.SameLine();
-            if (ImGuiX.InputHex("Floor", ref floor, min: 0, max: Dungeon.NumFloors - 1))
+            if (ImGuiX.InputHex("Floor", ref floorIndex, min: 0, max: Dungeon.NumFloors - 1))
             {
-                minimap.SetMap(Dungeon, floor);
+                FloorPlan = Dungeon.GetFloor(floorIndex);
+                ReloadMap();
             }
         }
 
@@ -87,19 +91,25 @@ public class DungeonEditor : Frame
 
             if (ImGui.Button("Add floor above"))
             {
-                floor = floor + 1;
-                Dungeon.InsertFloor(floor);
-                // Dungeon floors changed event will trigger
+                suppressFloorChangedEvent++;
+                floorIndex = floorIndex + 1;
+                Dungeon.InsertFloor(floorIndex);
+                FloorPlan = Dungeon.GetFloor(floorIndex);
+                ReloadMap();
+                suppressFloorChangedEvent--;
             }
             ImGui.SameLine();
             if (ImGui.Button("Add floor below"))
             {
-                Dungeon.InsertFloor(floor);
-                // Dungeon floors changed event will trigger
+                suppressFloorChangedEvent++;
+                Dungeon.InsertFloor(floorIndex);
+                FloorPlan = Dungeon.GetFloor(floorIndex);
+                ReloadMap();
+                suppressFloorChangedEvent--;
             }
             if (ImGui.Button("Delete floor") && Dungeon.NumFloors > 1)
             {
-                Dungeon.RemoveFloor(floor);
+                Dungeon.RemoveFloor(floorIndex);
                 // Dungeon floors changed event will trigger
             }
 
@@ -107,7 +117,7 @@ public class DungeonEditor : Frame
 
             ImGuiX.InputHex("Room", SelectedRoom.Index & 0xff, (newIndex) =>
             {
-                Dungeon.SetRoom(minimap.SelectedX, minimap.SelectedY, floor, newIndex);
+                FloorPlan.SetRoom(minimap.SelectedX, minimap.SelectedY, newIndex);
             }, digits: 2, min: 0, max: 255);
 
             if (ImGui.BeginTable("Room property table", 2))
@@ -150,14 +160,25 @@ public class DungeonEditor : Frame
 
     void SetDungeon(Dungeon dungeon)
     {
-        Dungeon = dungeon;
+        FloorPlan = dungeon.GetFloor(0);
         dungeonEW.ReplaceEventSource(dungeon);
         ReloadMap();
     }
 
+    /// <summary>
+    /// This is called when the dungeon or floor index may have been modified. Responsible for
+    /// updating the minimap display and keeping the floor numbering coherent.
+    /// </summary>
     void ReloadMap()
     {
-        floor = Math.Min(floor, Dungeon.NumFloors - 1);
-        minimap.SetMap(Dungeon, floor);
+        if (FloorPlan.WasDeleted())
+        {
+            if (floorIndex >= Dungeon.NumFloors)
+                floorIndex = Dungeon.NumFloors - 1;
+            FloorPlan = Dungeon.GetFloor(floorIndex);
+        }
+        else
+            this.floorIndex = FloorPlan.GetFloorIndex();
+        minimap.SetFloorPlan(FloorPlan);
     }
 }

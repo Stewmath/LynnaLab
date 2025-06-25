@@ -1,9 +1,6 @@
-using System;
-using System.IO;
-
 namespace LynnaLib
 {
-    public class WorldMap : Map, ProjectDataInstantiator
+    public class WorldMap : FloorPlan, ProjectDataInstantiator
     {
         // Stub state - we don't actually need to track anything through undo/redo. Only have this
         // due to requirements of the base class.
@@ -104,29 +101,27 @@ namespace LynnaLib
 
         // Map methods
 
-        public override Room GetRoom(int x, int y, int floor = 0)
+        public override Room GetRoom(int x, int y)
         {
             return Project.GetIndexedDataType<Room>(MainGroup * 0x100 + x + y * 16);
         }
-        public override IEnumerable<(int x, int y, int floor)> GetRoomPositions(Room room)
+        public override IEnumerable<(int x, int y)> GetRoomPositions(Room room)
         {
             if (room.Group != MainGroup)
-                return new List<(int, int, int)>();
-            return new List<(int, int, int)> { (room.Index % 16, (room.Index & 0xff) / 16, 0 ) };
+                return new List<(int, int)>();
+            return new List<(int, int)> { (room.Index % 16, (room.Index & 0xff) / 16) };
         }
-        public override bool GetRoomPosition(Room room, out int x, out int y, out int floor)
+        public override bool GetRoomPosition(Room room, out int x, out int y)
         {
             if (room.Group != MainGroup)
             {
                 // Not in this group
                 x = -1;
                 y = -1;
-                floor = -1;
                 return false;
             }
             x = room.Index % 16;
             y = (room.Index % 0x100) / 16;
-            floor = 0;
             return true;
         }
 

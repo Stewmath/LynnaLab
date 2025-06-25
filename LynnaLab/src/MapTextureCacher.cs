@@ -1,7 +1,7 @@
 namespace LynnaLab;
 
 /// <summary>
-/// Caches textures for maps. Key is a tuple: (Map, int) where the int is the floor index.
+/// Caches textures for FloorPlans (maps).
 ///
 /// The world maps hold the versions of the room images that are used by the "RoomTextureCacher"
 /// class. Room rendering logic is actually in here. (It seemed more optimal to render everything at
@@ -12,11 +12,10 @@ public class MapTextureCacher : IDisposeNotifier
     // ================================================================================
     // Constructors
     // ================================================================================
-    public MapTextureCacher(ProjectWorkspace workspace, Map map, int floor)
+    public MapTextureCacher(ProjectWorkspace workspace, FloorPlan floorPlan)
     {
         this.Workspace = workspace;
-        this.Map = map;
-        this.Floor = floor;
+        this.FloorPlan = floorPlan;
 
         GenerateTexture();
     }
@@ -31,8 +30,7 @@ public class MapTextureCacher : IDisposeNotifier
     // Properties
     // ================================================================================
 
-    public Map Map { get; private set; }
-    public int Floor { get; private set; }
+    public FloorPlan FloorPlan { get; private set; }
 
     ProjectWorkspace Workspace { get; set; }
 
@@ -66,35 +64,36 @@ public class MapTextureCacher : IDisposeNotifier
     protected void GenerateTexture()
     {
         texture = Top.Backend.CreateTexture(
-            Map.MapWidth * Map.RoomWidth * 16,
-            Map.MapHeight * Map.RoomHeight * 16);
+            FloorPlan.MapWidth * FloorPlan.RoomWidth * 16,
+            FloorPlan.MapHeight * FloorPlan.RoomHeight * 16);
 
         // Watch for room assignment changes (dungeons only)
 
-        if (Map is Dungeon dungeon)
+        if (FloorPlan is Dungeon.Floor dungeonFloor)
         {
+            Dungeon dungeon = dungeonFloor.Dungeon;
+
             EventHandler<DungeonChangedEventArgs> changedHandler = (_, args) =>
             {
-                if (args.FloorsChanged && Floor >= dungeon.NumFloors)
-                    Dispose();
-                else
+                if (args.FloorsChanged && !dungeon.FloorPlans.Contains(dungeonFloor))
                 {
-                    if (args.FloorsChanged || args.AllRoomsChanged)
-                    {
-                        Redraw();
-                    }
-                    else if (args.RoomPosValid && args.RoomPos.floor == Floor)
-                    {
-                        DrawTile(args.RoomPos.x, args.RoomPos.y);
-                    }
+                    Dispose();
+                }
+                else if (args.AllRoomsChanged || (args.SingleFloorChanged == FloorPlan))
+                {
+                    Redraw();
+                }
+                else if (args.RoomPosValid && args.RoomPos.floorPlan == dungeonFloor)
+                {
+                    DrawTile(args.RoomPos.x, args.RoomPos.y);
                 }
             };
 
-            dungeon.ChangedEvent += changedHandler;
+            dungeon.DungeonChangedEvent += changedHandler;
 
             texture.DisposedEvent += (_, _) =>
             {
-                dungeon.ChangedEvent -= changedHandler;
+                dungeon.DungeonChangedEvent -= changedHandler;
             };
         }
 
@@ -107,13 +106,12 @@ public class MapTextureCacher : IDisposeNotifier
     /// </summary>
     public void RedrawRoom(RoomLayout layout)
     {
-        if (layout.Season != Map.Season)
+        if (layout.Season != FloorPlan.Season)
             return;
 
-        foreach (var (x, y, f) in Map.GetRoomPositions(layout.Room))
+        foreach (var (x, y) in FloorPlan.GetRoomPositions(layout.Room))
         {
-            if (f == Floor)
-                DrawTile(x, y);
+            DrawTile(x, y);
         }
     }
 
@@ -122,16 +120,13 @@ public class MapTextureCacher : IDisposeNotifier
     /// </summary>
     public void RedrawRoomFrom(RoomLayout layout, MapTextureCacher source, int srcX, int srcY)
     {
-        if (layout.Season != Map.Season)
+        if (layout.Season != FloorPlan.Season)
             return;
 
-        Point roomSize = new Point(Map.RoomWidth, Map.RoomHeight) * 16;
-        foreach (var (x, y, f) in Map.GetRoomPositions(layout.Room))
+        Point roomSize = new Point(FloorPlan.RoomWidth, FloorPlan.RoomHeight) * 16;
+        foreach (var (x, y) in FloorPlan.GetRoomPositions(layout.Room))
         {
-            if (f == Floor)
-            {
-                texture.DrawFrom(source.texture, new Point(srcX, srcY) * roomSize, new Point(x, y) * roomSize, roomSize);
-            }
+            texture.DrawFrom(source.texture, new Point(srcX, srcY) * roomSize, new Point(x, y) * roomSize, roomSize);
         }
     }
 
@@ -142,9 +137,9 @@ public class MapTextureCacher : IDisposeNotifier
 
     void Redraw()
     {
-        for (int x = 0; x < Map.MapWidth; x++)
+        for (int x = 0; x < FloorPlan.MapWidth; x++)
         {
-            for (int y = 0; y < Map.MapHeight; y++)
+            for (int y = 0; y < FloorPlan.MapHeight; y++)
             {
                 DrawTile(x, y);
             }
@@ -153,8 +148,8 @@ public class MapTextureCacher : IDisposeNotifier
 
     void DrawTile(int x, int y)
     {
-        Point roomSize = new Point(Map.RoomWidth, Map.RoomHeight) * 16;
-        var layout = Map.GetRoomLayout(x, y, Floor);
+        Point roomSize = new Point(FloorPlan.RoomWidth, FloorPlan.RoomHeight) * 16;
+        var layout = FloorPlan.GetRoomLayout(x, y);
 
         var tilesetTexture = Workspace.GetCachedTilesetTexture(layout.Tileset);
 

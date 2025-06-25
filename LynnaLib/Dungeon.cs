@@ -5,31 +5,40 @@ namespace LynnaLib
     /// </summary>
     public class DungeonChangedEventArgs
     {
-        public bool AllRoomsChanged { get; init; } // True if all rooms are potentially modified
+        // Exactly one of the following will be set.
+        public bool AllRoomsChanged { get; init; } // True if all room assignments are potentially modified
         public bool FloorsChanged { get; init; } // True if number of floors has potentially changed
-
         public bool RoomPosValid { get; init; } // True if a single room is modified.
-        public (int x, int y, int floor) RoomPos { get; init; } // position in grid of changed room
+        public Dungeon.Floor SingleFloorChanged { get; init; } // A full floor that must be redrawn, or null
+
+        // If RoomPosValid is true, this is the position in the grid of the changed room.
+        public (int x, int y, Dungeon.Floor floorPlan) RoomPos { get; init; }
 
         private DungeonChangedEventArgs() {}
 
         public static DungeonChangedEventArgs CreateFloorsChanged()
         {
-            return new DungeonChangedEventArgs() { FloorsChanged = true, AllRoomsChanged = true };
+            return new DungeonChangedEventArgs() { FloorsChanged = true };
         }
         public static DungeonChangedEventArgs CreateAllRoomsChanged()
         {
             return new DungeonChangedEventArgs() { AllRoomsChanged = true };
         }
-        public static DungeonChangedEventArgs CreateRoomChanged(int x, int y, int floor)
+        public static DungeonChangedEventArgs CreateRoomChanged(Dungeon.Floor floor, int x, int y)
         {
             return new DungeonChangedEventArgs() { RoomPosValid = true, RoomPos = (x, y, floor) };
+        }
+        public static DungeonChangedEventArgs CreateSingleFloorChanged(Dungeon.Floor floor)
+        {
+            return new DungeonChangedEventArgs() { SingleFloorChanged = floor };
         }
     }
 
     /// <summary>
     /// Represents a dungeon, which is really just an organized layout of rooms. Some "dungeons" are
     /// just collections of miscellaneous large rooms (like Ambi's Palace).
+    ///
+    /// You must access rooms through a Dungeon.Floor object (see GetFloor()).
     ///
     /// This class assumes that each dungeon uniquely controls its own dungeon layout data. This is
     /// technically not true in vanilla Ages, as dungeons 0 and 9 reference the same layout data
@@ -42,13 +51,14 @@ namespace LynnaLib
     /// the underlying data itself, rather than doing things when the "SetRoom" function, etc. is
     /// called. That's annoying to do when floors can be added and deleted though.
     /// </summary>
-    public class Dungeon : Map, IndexedProjectDataInstantiator
+    public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
     {
         // ================================================================================
         // Constructors
         // ================================================================================
 
-        private Dungeon(Project p, int i) : base(p, i.ToString())
+        private Dungeon(Project p, int i)
+            : base(p, i.ToString())
         {
             if (!p.IsInConstructor)
                 throw new Exception("Dungeons should not be loaded outside of the Project constructor.");
@@ -56,10 +66,15 @@ namespace LynnaLib
             this.index = i;
             this.state = new();
 
-            this.state.numFloors = DataStart.GetIntValue(3);
-
             DetermineGroup();
-            DetermineRoomsUsed();
+
+            int numFloors = DataStart.GetIntValue(3);
+
+            for (int f=0; f<numFloors; f++)
+            {
+                Floor floor = new Floor(this, GenFloorID(), GetFloorLayoutData(f));
+                state.floors.Add(new(floor));
+            }
         }
 
         /// <summary>
@@ -83,10 +98,9 @@ namespace LynnaLib
 
         class State : TransactionState
         {
-            // roomsLookup[i] = a list of positions in the map where room "i" is used.
-            public List<(int x, int y, int floor)>[] roomLookup;
             public int _mainGroup;
-            public int numFloors;
+            public int floorIDCounter;
+            public List<InstanceResolver<Floor>> floors = new();
         }
 
         readonly int index;
@@ -100,6 +114,30 @@ namespace LynnaLib
         // ================================================================================
 
         public string TransactionIdentifier { get { return $"dungeon-{Index:X2}"; } }
+
+        public IEnumerable<Floor> FloorPlans
+        {
+            get
+            {
+                return state.floors.Select((f) => f.Instance);
+            }
+        }
+
+        public int MainGroup
+        {
+            get
+            {
+                return state._mainGroup;
+            }
+        }
+
+        public int SidescrollGroup
+        {
+            get
+            {
+                return MainGroup + 2;
+            }
+        }
 
         // The start of the data, at the "dungeonDataXX" label
         Data DataStart
@@ -126,7 +164,9 @@ namespace LynnaLib
         /// - Number of floors change
         /// - Room layout changes
         /// </summary>
-        public event EventHandler<DungeonChangedEventArgs> ChangedEvent;
+        public event EventHandler<DungeonChangedEventArgs> DungeonChangedEvent;
+
+
 
         // ================================================================================
         // Properties
@@ -146,163 +186,35 @@ namespace LynnaLib
         {
             get
             {
-                Debug.Assert(state.numFloors == GetDataIndex(3));
-                return state.numFloors;
-            }
-            private set
-            {
-                Project.TransactionManager.CaptureInitialState<State>(this);
-                state.numFloors = value;
-                SetDataIndex(3, value);
+                Debug.Assert(state.floors.Count == GetDataIndex(3));
+                return state.floors.Count;
             }
         }
-
-        // Map properties
-
-        /// <summary>
-        /// Group management is confusing. Most dungeon rooms use groups 4/5, but sidescrolling rooms
-        /// use groups 6/7 instead. So there is no one single "group number" that any given dungeon
-        /// uses, there are actually two: "MainGroup" and "SidescrollGroup".
-        ///
-        /// This means there is a "fake" version of each dungeon room, the one with the wrong group
-        /// number. It can be recognized by the fact that warp data is usually missing. LynnaLab
-        /// tries to hide it by auto-adjusting the group number of the room to show.
-        /// </summary>
-        public override int MainGroup
-        {
-            get
-            {
-                return state._mainGroup;
-            }
-        }
-
-        public int SidescrollGroup
-        {
-            get
-            {
-                return MainGroup + 2;
-            }
-        }
-
-        public override int MapWidth
-        {
-            get
-            {
-                return 8;
-            }
-        }
-        public override int MapHeight
-        {
-            get
-            {
-                return 8;
-            }
-        }
-        public override int RoomWidth
-        {
-            get
-            {
-                return GetRoom(0, 0).GetLayout(Season.None, autoCorrect: true).Width;
-            }
-        }
-        public override int RoomHeight
-        {
-            get
-            {
-                return GetRoom(0, 0).GetLayout(Season.None, autoCorrect: true).Height;
-            }
-        }
-        public override Season Season
-        {
-            get { return Season.None; }
-        }
-
-        // Other properties
 
         public int Index { get { return index; } }
 
-
-        public void SetRoom(int x, int y, int floor, int room)
-        {
-            Project.BeginTransaction($"Change dungeon room#d{Index}x{x}y{y}f{floor}", true);
-            Project.TransactionManager.CaptureInitialState<State>(this);
-
-            int pos = y * 8 + x;
-            if (pos >= 0x40)
-                throw new ArgumentException(string.Format("Arguments {0:X},{1:X} to 'SetRoom' too high.", x, y));
-            if (floor >= NumFloors)
-                throw new ArgumentException(string.Format("Floor {0} too high.", floor));
-
-            Data d = GetFloorLayoutData(floor).GetDataAtOffset(y * 8 + x);
-            int oldRoom = d.GetIntValue(0);
-
-            d.SetByteValue(0, (byte)room);
-
-            if (!state.roomLookup[oldRoom].Remove((x, y, floor)))
-                throw new Exception("Internal error: Dungeon room lookup table invalid");
-            state.roomLookup[(byte)room].Add((x, y, floor));
-
-            DetermineRoomsUsed();
-
-            ChangedEvent?.Invoke(this, DungeonChangedEventArgs.CreateRoomChanged(x, y, floor));
-
-            Project.EndTransaction();
-        }
+        // ================================================================================
+        // Public methods
+        // ================================================================================
 
         public bool RoomUsed(int roomIndex)
         {
             int group = roomIndex >> 8;
             if (group != MainGroup && group != SidescrollGroup)
                 return false;
-            return state.roomLookup[roomIndex & 0xff].Count > 0;
+            foreach (Floor f in FloorPlans)
+            {
+                if (f.RoomUsed(roomIndex))
+                    return true;
+            }
+            return false;
         }
 
-        // Map methods
-
-        public override Room GetRoom(int x, int y, int floor = 0)
+        public Dungeon.Floor GetFloor(int floor)
         {
-            int pos = y * 8 + x;
-            if (pos >= 0x40)
-                throw new ArgumentException(string.Format("Arguments {0:X},{1:X} to 'GetRoom' too high.", x, y));
-            if (floor >= NumFloors)
-                throw new ArgumentException(string.Format("Floor {0} too high.", floor));
-
-            int roomIndex = GetFloorLayoutData(floor).GetDataAtOffset(y * 8 + x).GetIntValue(0);
-            Room room = Project.GetIndexedDataType<Room>(roomIndex + MainGroup * 0x100);
-
-            // Change the group if the room is sidescrolling. As a result, the group number of
-            // sidescrolling rooms in a dungeon will be different from other rooms, which will look
-            // weird, but that's the way it works apparently...
-            if (room.GetTileset(Season.None).SidescrollFlag)
-                room = Project.GetIndexedDataType<Room>(roomIndex + SidescrollGroup * 0x100);
-
-            return room;
-        }
-
-        public override IEnumerable<(int x, int y, int floor)> GetRoomPositions(Room room)
-        {
-            if (room.Group != MainGroup && room.Group != SidescrollGroup)
-                return new List<(int, int, int)>();
-            return state.roomLookup[room.Index & 0xff];
-        }
-
-        public override bool GetRoomPosition(Room room, out int x, out int y, out int floor)
-        {
-            x = -1;
-            y = -1;
-            floor = -1;
-
-            if (room.Group != MainGroup && room.Group != SidescrollGroup)
-                return false;
-            if (state.roomLookup[room.Index & 0xff].Count == 0)
-                return false;
-
-            var tup = state.roomLookup[room.Index & 0xff][0];
-            x = tup.x;
-            y = tup.y;
-            floor = tup.floor;
-
-            return true;
+            if (floor < 0 || floor >= NumFloors)
+                throw new Exception($"Dungeon {Index}: Invalid floor: {floor}");
+            return state.floors[floor];
         }
 
         /// Insert a floor below "floorIndex". If "floorIndex == NumFloors" then the floor is
@@ -340,10 +252,10 @@ namespace LynnaLib
                 component.FileParser.InsertParseableTextAfter(component, new string[] { "" });
             }
 
-            NumFloors++;
+            SetDataIndex(3, NumFloors+1);
+            state.floors.Insert(floorIndex, new(new Floor(this, GenFloorID(), GetFloorLayoutData(floorIndex))));
 
-            DetermineRoomsUsed();
-            ChangedEvent?.Invoke(this, DungeonChangedEventArgs.CreateFloorsChanged());
+            DungeonChangedEvent?.Invoke(this, DungeonChangedEventArgs.CreateFloorsChanged());
 
             Project.EndTransaction();
         }
@@ -373,10 +285,10 @@ namespace LynnaLib
             if (component is StringFileComponent)
                 parser.RemoveFileComponent(component);
 
-            NumFloors--;
+            SetDataIndex(3, NumFloors-1);
+            state.floors.RemoveAt(floorIndex);
 
-            DetermineRoomsUsed();
-            ChangedEvent?.Invoke(this, DungeonChangedEventArgs.CreateFloorsChanged());
+            DungeonChangedEvent?.Invoke(this, DungeonChangedEventArgs.CreateFloorsChanged());
 
             Project.EndTransaction();
         }
@@ -423,31 +335,15 @@ namespace LynnaLib
         /// Ensure that CaptureInitialState() is called if necessary when invoking this (except from
         /// constructor)
         /// </summary>
-        void DetermineRoomsUsed()
+        bool DetermineGroup()
         {
-            state.roomLookup = new List<(int, int, int)>[256];
-            for (int i=0; i<256; i++)
-                state.roomLookup[i] = new List<(int,int,int)>();
-            for (int f = 0; f < NumFloors; f++)
+            int g = GetDataIndex(0) - Project.Eval(">wGroup4RoomFlags") + 4;
+            if (state._mainGroup != g)
             {
-                for (int x = 0; x < MapWidth; x++)
-                {
-                    for (int y = 0; y < MapHeight; y++)
-                    {
-                        int room = GetRoom(x, y, f).Index & 0xff;
-                        state.roomLookup[room].Add((x, y, f));
-                    }
-                }
+                state._mainGroup = g;
+                return true;
             }
-        }
-
-        /// <summary>
-        /// Ensure that CaptureInitialState() is called if necessary when invoking this (except from
-        /// constructor)
-        /// </summary>
-        void DetermineGroup()
-        {
-            state._mainGroup = GetDataIndex(0) - Project.Eval(">wGroup4RoomFlags") + 4;
+            return false;
         }
 
         int GetDataIndex(int i)
@@ -474,10 +370,25 @@ namespace LynnaLib
 
             DataStart.SetValue(0, ">wGroup" + g.ToString() + "RoomFlags");
 
-            DetermineGroup();
-            DetermineRoomsUsed();
-            ChangedEvent?.Invoke(this, DungeonChangedEventArgs.CreateAllRoomsChanged());
+            if (DetermineGroup())
+            {
+                foreach (Floor f in FloorPlans)
+                    f.DetermineRoomsUsed();
+
+                DungeonChangedEvent?.Invoke(this, DungeonChangedEventArgs.CreateAllRoomsChanged());
+            }
         }
+
+        /// <summary>
+        /// Generate a UniqueID for a Dungeon.Floor. Note that the number used in the second part is
+        /// not necessarily equal to the floor number, it's just a counter of the number of floors
+        /// that have been instantiated since LynnaLab was booted up.
+        /// </summary>
+        string GenFloorID()
+        {
+            return $"{Index}-{state.floorIDCounter++}";
+        }
+
 
         // ================================================================================
         // TrackedProjectData implementation
@@ -494,7 +405,7 @@ namespace LynnaLib
         public override void InvokeUndoEvents(TransactionState oldState)
         {
             State old = (State)oldState;
-            bool floorsChanged = old.numFloors != state.numFloors;
+            bool floorsChanged = !old.floors.SequenceEqual(state.floors);
 
             DungeonChangedEventArgs args;
 
@@ -508,7 +419,260 @@ namespace LynnaLib
                 args = DungeonChangedEventArgs.CreateAllRoomsChanged();
             }
 
-            ChangedEvent?.Invoke(this, args);
+            DungeonChangedEvent?.Invoke(this, args);
+        }
+
+        // ================================================================================
+        // Floor class
+        // ================================================================================
+
+        /// <summary>
+        /// Represents a single floor of a dungeon.
+        ///
+        /// Anything that uses this should subscribe to Dungeon.DungeonChangedEvent, check for the
+        /// "FloorsChanged" flag in the event arguments, and stop using any floor that returns
+        /// "WasDeleted() == true".
+        /// </summary>
+        public class Floor : FloorPlan
+        {
+            public Floor(Dungeon d, string id, Data floorLayoutData)
+                : base(d.Project, id)
+            {
+                this.state = new();
+                this.state._dungeon = new(d);
+                this.state._floorLayoutData = new(floorLayoutData);
+                DetermineRoomsUsed(fromConstructor: true);
+            }
+
+            /// <summary>
+            /// State-based constructor, for network transfer (located via reflection)
+            /// </summary>
+            private Floor(Project p, string id, TransactionState s)
+                : base(p, id)
+            {
+                this.state = (State)s;
+            }
+
+            // ================================================================================
+            // Variables
+            // ================================================================================
+
+            class State : TransactionState
+            {
+                // roomsLookup[i] = a list of positions in the map where room "i" is used.
+                public List<(int x, int y)>[] roomLookup;
+
+                // These should never change
+                public InstanceResolver<Data> _floorLayoutData;
+                public InstanceResolver<Dungeon> _dungeon;
+            }
+
+            State state;
+
+            // ================================================================================
+            // Properties
+            // ================================================================================
+
+            public Dungeon Dungeon { get { return state._dungeon.Instance; } }
+
+            /// <summary>
+            /// Group management is confusing. Most dungeon rooms use groups 4/5, but sidescrolling rooms
+            /// use groups 6/7 instead. So there is no one single "group number" that any given dungeon
+            /// uses, there are actually two: "MainGroup" and "SidescrollGroup".
+            ///
+            /// This means there is a "fake" version of each dungeon room, the one with the wrong group
+            /// number. It can be recognized by the fact that warp data is usually missing. LynnaLab
+            /// tries to hide it by auto-adjusting the group number of the room to show.
+            /// </summary>
+            public override int MainGroup { get { return Dungeon.MainGroup; } }
+
+            public int SidescrollGroup { get { return Dungeon.SidescrollGroup; } }
+
+            public override int MapWidth
+            {
+                get
+                {
+                    return 8;
+                }
+            }
+            public override int MapHeight
+            {
+                get
+                {
+                    return 8;
+                }
+            }
+            public override int RoomWidth
+            {
+                get
+                {
+                    return GetRoom(0, 0).GetLayout(Season.None, autoCorrect: true).Width;
+                }
+            }
+            public override int RoomHeight
+            {
+                get
+                {
+                    return GetRoom(0, 0).GetLayout(Season.None, autoCorrect: true).Height;
+                }
+            }
+            public override Season Season
+            {
+                get { return Season.None; }
+            }
+
+            Data FloorLayoutData { get { return state._floorLayoutData.Instance; }}
+
+            // ================================================================================
+            // Methods
+            // ================================================================================
+
+            /// <summary>
+            /// If this returns true, this floor was deleted from the dungeon, and should no longer be
+            /// used for anything.
+            /// </summary>
+            public bool WasDeleted()
+            {
+                return !Dungeon.FloorPlans.Contains(this);
+            }
+
+            public void SetRoom(int x, int y, int room)
+            {
+                Project.BeginTransaction($"Change dungeon room#d{Identifier}x{x}y{y}", true);
+                Project.TransactionManager.CaptureInitialState<State>(this);
+
+                int pos = y * 8 + x;
+                if (pos >= 0x40)
+                    throw new ArgumentException(string.Format("Arguments {0:X},{1:X} to 'SetRoom' too high.", x, y));
+
+                Data d = FloorLayoutData.GetDataAtOffset(y * 8 + x);
+                int oldRoom = d.GetIntValue(0);
+
+                d.SetByteValue(0, (byte)room);
+
+                if (!state.roomLookup[oldRoom].Remove((x, y)))
+                    throw new Exception("Internal error: Dungeon room lookup table invalid");
+                state.roomLookup[(byte)room].Add((x, y));
+
+                DetermineRoomsUsed();
+
+                Dungeon.DungeonChangedEvent?.Invoke(Dungeon, DungeonChangedEventArgs.CreateRoomChanged(this, x, y));
+
+                Project.EndTransaction();
+            }
+
+            public bool RoomUsed(int roomIndex)
+            {
+                int group = roomIndex >> 8;
+                if (group != MainGroup && group != SidescrollGroup)
+                    return false;
+                return state.roomLookup[roomIndex & 0xff].Count > 0;
+            }
+
+            // FloorPlan methods
+
+            public override Room GetRoom(int x, int y)
+            {
+                int pos = y * 8 + x;
+                if (pos >= 0x40)
+                    throw new ArgumentException(string.Format("Arguments {0:X},{1:X} to 'GetRoom' too high.", x, y));
+
+                int roomIndex = FloorLayoutData.GetDataAtOffset(y * 8 + x).GetIntValue(0);
+                Room room = Project.GetIndexedDataType<Room>(roomIndex + MainGroup * 0x100);
+
+                // Change the group if the room is sidescrolling. As a result, the group number of
+                // sidescrolling rooms in a dungeon will be different from other rooms, which will look
+                // weird, but that's the way it works apparently...
+                if (room.GetTileset(Season.None).SidescrollFlag)
+                    room = Project.GetIndexedDataType<Room>(roomIndex + SidescrollGroup * 0x100);
+
+                return room;
+            }
+
+            public override IEnumerable<(int x, int y)> GetRoomPositions(Room room)
+            {
+                if (room.Group != MainGroup && room.Group != SidescrollGroup)
+                    return new List<(int, int)>();
+                return state.roomLookup[room.Index & 0xff];
+            }
+
+            public override bool GetRoomPosition(Room room, out int x, out int y)
+            {
+                x = -1;
+                y = -1;
+
+                if (room.Group != MainGroup && room.Group != SidescrollGroup)
+                    return false;
+                if (state.roomLookup[room.Index & 0xff].Count == 0)
+                    return false;
+
+                var tup = state.roomLookup[room.Index & 0xff][0];
+                x = tup.x;
+                y = tup.y;
+
+                return true;
+            }
+
+            /// <summary>
+            /// Determine the current floor index within the parent dungneon. This is not fixed, as
+            /// floors can be added and removed.
+            /// </summary>
+            public int GetFloorIndex()
+            {
+                int i = 0;
+                foreach (Floor f in Dungeon.FloorPlans)
+                {
+                    if (f == this)
+                        return i;
+                    i++;
+                }
+                throw new Exception("GetFloorIndex: This floor isn't used in its parent dungeon?");
+            }
+
+            // ================================================================================
+            // Internal methods
+            // ================================================================================
+
+            /// <summary>
+            /// Recalculate room lookup table.
+            /// </summary>
+            internal void DetermineRoomsUsed(bool fromConstructor = false)
+            {
+                if (!fromConstructor)
+                    Project.TransactionManager.CaptureInitialState<State>(this);
+
+                state.roomLookup = new List<(int, int)>[256];
+                for (int i = 0; i < 256; i++)
+                    state.roomLookup[i] = new List<(int, int)>();
+                for (int x = 0; x < MapWidth; x++)
+                {
+                    for (int y = 0; y < MapHeight; y++)
+                    {
+                        int room = GetRoom(x, y).Index & 0xff;
+                        state.roomLookup[room].Add((x, y));
+                    }
+                }
+            }
+
+
+            // ================================================================================
+            // TrackedProjectData implementation
+            // ================================================================================
+
+            public override TransactionState GetState()
+            {
+                return state;
+            }
+            public override void SetState(TransactionState state)
+            {
+                this.state = (State)state;
+            }
+            public override void InvokeUndoEvents(TransactionState oldState)
+            {
+                // Assume all rooms are potentially changed (too lazy to implement comparison)
+                var args = DungeonChangedEventArgs.CreateSingleFloorChanged(this);
+                Dungeon.DungeonChangedEvent?.Invoke(this, args);
+            }
         }
     }
 }
