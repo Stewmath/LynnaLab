@@ -34,6 +34,14 @@ publishdirname="LynnaLab-portable"
 rm -R "$publishdirname/"
 dotnet publish "$projectfile" /p:PublishProfile="$profiledir/portable.pubxml"
 
+# Remove unneeded platform libraries
+rm -R \
+  "$publishdirname/runtimes/android-arm" \
+  "$publishdirname/runtimes/android-arm64" \
+  "$publishdirname/runtimes/android-x64" \
+  "$publishdirname/runtimes/android-x86" \
+  "$publishdirname/runtimes/ios"
+
 gitversion=$(cat "$versionfile")
 zipname="$publishbasedir/LynnaLab-$gitversion-mac-linux.zip"
 
