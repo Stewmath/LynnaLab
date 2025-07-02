@@ -129,6 +129,7 @@ public class ProjectWorkspace
 
     public bool ViewObjects { get; private set; }
     public bool ViewWarps { get; private set; }
+    public bool ViewAnnotations { get; private set; } = true;
 
     // Togglable settings that affect other modules (really just minimaps right now)
     public bool DarkenDuplicateRooms { get { return Top.GlobalConfig.DarkenDuplicateRooms; } }
@@ -220,6 +221,18 @@ public class ProjectWorkspace
             ImGuiX.MenuItemCheckbox("View warps",
                                     new Accessor<bool>(() => ViewWarps),
                                     (_) => roomEditor.UpdateRoomComponents());
+            ImGuiX.MenuItemCheckbox("View annotations",
+                                    new Accessor<bool>(() => ViewAnnotations),
+                                    (_) => roomEditor.UpdateRoomComponents());
+            ImGui.EndMenu();
+        }
+        if (ImGui.BeginMenu("Insert"))
+        {
+            if (ImGui.MenuItem("Annotation"))
+            {
+                ViewAnnotations = true;
+                Project.AddAnnotation(roomEditor.Room.Index);
+            }
             ImGui.EndMenu();
         }
         if (ImGui.BeginMenu("Windows"))

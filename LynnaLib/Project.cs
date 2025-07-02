@@ -6,87 +6,98 @@ using System.Text.Json.Serialization;
 namespace LynnaLib
 {
     /// <summary>
-    /// Holds project state that must be tracked for undo/redo. (The fields in here used to be
-    /// directly in the Project class, but now it contains an instance of this.)
-    /// </summary>
-    class ProjectStateHolder : TrackedProjectData
-    {
-        public ProjectStateHolder(Project p, Game game, ProjectConfig projectConfig)
-            : base(p, "Project State") // ID is unique, there can only be one of this
-        {
-            this.State = new()
-            {
-                game = game,
-                projectConfig = projectConfig,
-                labelDictionary = new(),
-                definesDictionary = new(),
-            };
-        }
-
-        /// <summary>
-        /// State-based constructor, for network transfer (located via reflection)
-        /// </summary>
-        private ProjectStateHolder(Project p, string id, TransactionState state)
-            : base(p, id)
-        {
-            this.State = (ProjectState)state;
-
-            if (State.labelDictionary == null || State.definesDictionary == null)
-                throw new DeserializationException();
-
-            if (!Enum.IsDefined(typeof(Game), State.game))
-                throw new DeserializationException($"Invalid game specified: {State.game}");
-        }
-
-        public ProjectState State { get; private set; }
-
-        /// <summary>
-        /// Actual fields that are tracked are in here.
-        /// </summary>
-        public class ProjectState : TransactionState
-        {
-            // The game being edited
-            public required Game game;
-
-            // Project config from config.yaml
-            public required ProjectConfig projectConfig;
-
-            // Maps label to file which contains it
-            public required Dictionary<string, InstanceResolver<FileParser>> labelDictionary;
-
-            // Dictionary of .DEFINE's
-            [JsonRequired]
-            public required Dictionary<string, string> definesDictionary;
-
-        }
-
-        // ================================================================================
-        // TrackedProjectData interface functions
-        // ================================================================================
-
-        public override TransactionState GetState()
-        {
-            return State;
-        }
-
-        public override void SetState(TransactionState s)
-        {
-            State = (ProjectState)s;
-        }
-
-        public override void InvokeUndoEvents(TransactionState prevState)
-        {
-            Project.MarkModified();
-        }
-    }
-
-    /// <summary>
     /// The Project class is the gateway to accessing everything in an oracles-disasm project.
     /// </summary>
-    public class Project
+    public partial class Project
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(
                 System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        /// <summary>
+        /// Subclass: Holds project state that must be tracked for undo/redo. (The fields in here
+        /// used to be directly in the Project class, but now it contains an instance of this.)
+        /// </summary>
+        class ProjectStateHolder : TrackedProjectData
+        {
+            public ProjectStateHolder(Project p, Game game, ProjectConfig projectConfig)
+                : base(p, "Project State") // ID is unique, there can only be one of this
+            {
+                this.State = new()
+                {
+                    game = game,
+                    projectConfig = projectConfig,
+                    labelDictionary = new(),
+                    definesDictionary = new(),
+                    annotations = new(),
+                    annotationIDCounter = 1,
+                };
+            }
+
+            /// <summary>
+            /// State-based constructor, for network transfer (located via reflection)
+            /// </summary>
+            private ProjectStateHolder(Project p, string id, TransactionState state)
+                : base(p, id)
+            {
+                this.State = (ProjectState)state;
+
+                if (State.labelDictionary == null || State.definesDictionary == null)
+                    throw new DeserializationException();
+
+                if (!Enum.IsDefined(typeof(Game), State.game))
+                    throw new DeserializationException($"Invalid game specified: {State.game}");
+            }
+
+            public ProjectState State { get; private set; }
+
+            /// <summary>
+            /// Actual fields that are tracked are in here.
+            /// </summary>
+            public class ProjectState : TransactionState
+            {
+                // The game being edited
+                public required Game game;
+
+                // Project config from config.yaml
+                public required ProjectConfig projectConfig;
+
+                // Maps label to file which contains it
+                public required Dictionary<string, InstanceResolver<FileParser>> labelDictionary;
+
+                // Dictionary of .DEFINE's
+                public required Dictionary<string, string> definesDictionary;
+
+                // List of annotations
+                public required List<InstanceResolver<Annotation>> annotations;
+                public required int annotationIDCounter;
+            }
+
+            // ================================================================================
+            // TrackedProjectData interface functions
+            // ================================================================================
+
+            public override TransactionState GetState()
+            {
+                return State;
+            }
+
+            public override void SetState(TransactionState s)
+            {
+                State = (ProjectState)s;
+            }
+
+            public override void InvokeUndoEvents(TransactionState prevState)
+            {
+                Project.MarkModified();
+
+                ProjectState old = (ProjectState)prevState;
+
+                if (!old.annotations.SequenceEqual(State.annotations))
+                    Project.AnnotationsAddedOrRemovedEvent?.Invoke();
+            }
+        }
+
+        // Back to actual Project class
 
         // ================================================================================
         // Variables
@@ -300,6 +311,11 @@ namespace LynnaLib
 
         JsonSerializerOptions SerializerOptions { get; }
 
+        // ================================================================================
+        // Events
+        // ================================================================================
+
+        public event Action AnnotationsAddedOrRemovedEvent;
 
         // ================================================================================
         // Constructors
@@ -563,6 +579,8 @@ namespace LynnaLib
                 room.GetObjectGroup();
                 room.GetWarpGroup();
             }
+
+            LoadAnnotations();
 
             transactionManager.EndTransaction();
             log.Info("Finished loading project.");
@@ -881,6 +899,7 @@ namespace LynnaLib
                 if (data is PngGfxStream p)
                     p.Save();
             }
+            SaveAnnotations();
 
             Modified = false;
         }

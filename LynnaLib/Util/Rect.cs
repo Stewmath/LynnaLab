@@ -82,6 +82,11 @@ namespace Util
                              rect1.Width * scale, rect1.Height * scale);
         }
 
+        public static FRect operator+(FRect rect, Vector2 point)
+        {
+            return new FRect(rect.X + point.X, rect.Y + point.Y, rect.Width, rect.Height);
+        }
+
         // ================================================================================
         // Static methods
         // ================================================================================

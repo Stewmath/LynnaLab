@@ -38,6 +38,7 @@ public class RoomLayoutEditor : TileGrid
 
         QuickstartData.enableToggledEvent += (s, a) => UpdateQuickstartRoomComponent();
         RoomEditor.TabChangedEvent += (s, a) => UpdateRoomComponents();
+        Project.AnnotationsAddedOrRemovedEvent += () => UpdateRoomComponents();
 
         // Show coordinate tooltip
         base.OnHover = (int tile) =>
@@ -140,6 +141,7 @@ public class RoomLayoutEditor : TileGrid
     bool DrawObjects { get { return (Workspace.ViewObjects || RoomEditor.ObjectTabActive) && RoomEditor.EditingWarpDestination == null; } }
     bool DrawWarps { get { return (Workspace.ViewWarps || RoomEditor.WarpTabActive) && RoomEditor.EditingWarpDestination == null; } }
     bool DrawChests { get { return RoomEditor.ChestTabActive && Room.Chest != null; } }
+    bool DrawAnnotations { get { return Workspace.ViewAnnotations && RoomEditor.EditingWarpDestination == null; } }
 
 
     // ================================================================================
@@ -188,14 +190,15 @@ public class RoomLayoutEditor : TileGrid
                 base.AddRectFilled(com.BoxRectangle * Scale, (Color)com.BoxColor);
             }
 
-            // Draw it
-            ImGui.SetCursorScreenPos(origin);
-            com.Render();
-
             // Create an InvisibleButton so that we can select it without dragging the entire window.
             // Names are not unique... probably not an issue? These don't really do anything.
             ImGui.SetCursorScreenPos(origin + com.BoxRectangle.TopLeft * Scale);
             ImGui.InvisibleButton($"RoomComponent button {componentIndex}", com.BoxSize * Scale);
+
+            // Draw it. (Ensure "com.Render" is immediately after ImGui.InvisibleButton so that the
+            // Render function can manipulate it if necessary.)
+            ImGui.SetCursorScreenPos(origin);
+            com.Render(com == selectedRoomComponent);
 
             // Check if we're hovering over it. But don't draw the hovering rectangle right now
             // because we don't want to draw it on more than one RoomComponent.
@@ -417,6 +420,14 @@ public class RoomLayoutEditor : TileGrid
         }
     }
 
+    /// <summary>
+    /// If any room component is selected, unselect it.
+    /// </summary>
+    public void UnselectRoomComponent()
+    {
+        SetSelectedRoomComponent(null);
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================
@@ -549,6 +560,14 @@ public class RoomLayoutEditor : TileGrid
             }
         }
 
+        if (DrawAnnotations)
+        {
+            foreach (Annotation ann in Project.GetRoomAnnotations(Room.Index))
+            {
+                roomComponents.Add(new AnnotationRoomComponent(this, ann));
+            }
+        }
+
         // Warp destination editing mode
         if (RoomEditor.EditingWarpDestination != null)
         {
@@ -676,7 +695,7 @@ public class RoomLayoutEditor : TileGrid
         // Public methods
         // ================================================================================
 
-        public abstract void Render();
+        public abstract void Render(bool selected);
 
         public virtual void Select()
         {
@@ -760,7 +779,7 @@ public class RoomLayoutEditor : TileGrid
         public override int BoxWidth { get { return 16; } }
         public override int BoxHeight { get { return 16; } }
 
-        public override void Render()
+        public override void Render(bool selected)
         {
             // Get component position relative to widget origin
             Vector2 pos = new Vector2(X, Y) * Parent.Scale;
@@ -825,7 +844,7 @@ public class RoomLayoutEditor : TileGrid
         public override int BoxWidth { get { return 18; } }
         public override int BoxHeight { get { return 18; } }
 
-        public override void Render()
+        public override void Render(bool selected)
         {
             if (chest.Treasure == null)
                 return;
@@ -907,7 +926,7 @@ public class RoomLayoutEditor : TileGrid
         public override int BoxHeight { get { return 16; } }
 
 
-        public override void Render()
+        public override void Render(bool selected)
         {
             if (obj.GetGameObject() == null)
                 return;
@@ -1004,7 +1023,7 @@ public class RoomLayoutEditor : TileGrid
         public override FRect BoxRectangle { get { return rect; } }
 
 
-        public override void Render()
+        public override void Render(bool selected)
         {
             // Draw digit representing the warp index in the center of the rectangle
             ImGui.PushFont(Top.MenuFontLarge);
@@ -1093,7 +1112,7 @@ public class RoomLayoutEditor : TileGrid
         public override int BoxHeight { get { return 16; } }
 
 
-        public override void Render()
+        public override void Render(bool selected)
         {
             ImGui.PushFont(Top.MenuFontLarge);
             var origin = ImGui.GetCursorScreenPos();
@@ -1110,6 +1129,169 @@ public class RoomLayoutEditor : TileGrid
         public override string GetTransactionIdentifier()
         {
             return "warp dest#" + warp.TransactionIdentifier;
+        }
+    }
+
+    /// <summary>
+    /// Text strings inserted into the room as notes.
+    /// </summary>
+    class AnnotationRoomComponent : RoomComponent
+    {
+        Annotation annotation;
+        bool wasOpenLastFrame = false;
+
+        public AnnotationRoomComponent(RoomLayoutEditor parent, Annotation annotation) : base(parent)
+        {
+            this.annotation = annotation;
+        }
+
+
+        public override Color? BoxColor
+        {
+            get
+            {
+                return Color.FromRgba(55, 163, 252, 0xc0);
+            }
+        }
+
+        public override bool Deletable
+        {
+            get { return true; }
+        }
+        public override bool HasXY
+        {
+            get { return true; }
+        }
+        public override bool HasShortenedXY
+        {
+            get { return false; }
+        }
+        public override int X
+        {
+            get { return annotation.X; }
+            set
+            {
+                annotation.X = (byte)value;
+            }
+        }
+        public override int Y
+        {
+            get { return annotation.Y; }
+            set
+            {
+                annotation.Y = (byte)value;
+            }
+        }
+
+        public override int BoxWidth { get { return 16; } }
+        public override int BoxHeight { get { return 16; } }
+
+
+        public override void Render(bool selected)
+        {
+            var origin = ImGui.GetCursorScreenPos();
+            var realRect = BoxRectangle * Parent.Scale + origin;
+            var mousePos = ImGui.GetMousePos();
+
+            // This is checked to auto-close the popup window when it's cilcked off of, _unless_
+            // we're clicking onto the RoomComponent box. Can't use IsItemHovered() for this because
+            // it's not triggered while the mouse is held down.
+            bool hovering = realRect.Contains(mousePos);
+
+            // Show popup window if it's selected (but not if )
+            if (selected && !ImGui.IsPopupOpen(Top.RightClickPopupName))
+            {
+                ImGuiWindowFlags flags = 0
+                    | ImGuiWindowFlags.NoNavFocus
+                    | ImGuiWindowFlags.NoResize
+                    | ImGuiWindowFlags.NoMove
+                    | ImGuiWindowFlags.NoCollapse
+                    | ImGuiWindowFlags.NoSavedSettings;
+
+                // Popup window follows the RoomComponent box
+                ImGui.SetNextWindowPos(origin + BoxRectangle.TopLeft * Parent.Scale
+                                       + ImGuiX.Unit(16, 0) * Parent.RequestedScale,
+                                       0,
+                                       new Vector2(0, 0));
+
+                bool active = true;
+                bool focused = false;
+
+                if (ImGui.Begin("Annotation", ref active, flags))
+                {
+                    ImGui.PushFont(Top.InfoFont);
+
+                    // Letter input
+                    ImGui.PushItemFlag(ImGuiItemFlags.ButtonRepeat, true);
+                    ImGui.Text("Letter: " + annotation.Letter.ToString());
+                    ImGui.SameLine();
+                    if (ImGui.Button("-"))
+                    {
+                        char c = annotation.Letter;
+                        if ((c-1) >= 'A')
+                            annotation.Letter = (char)(c-1);
+                    }
+                    ImGui.SameLine();
+                    if (ImGui.Button("+"))
+                    {
+                        char c = annotation.Letter;
+                        if ((c+1) <= 'Z')
+                            annotation.Letter = (char)(c+1);
+                    }
+                    ImGui.PopItemFlag();
+
+                    // Text input
+                    if (!wasOpenLastFrame)
+                        ImGui.SetKeyboardFocusHere();
+                    string text = annotation.Text;
+                    if (ImGui.InputTextMultiline("##Text input", ref text, Annotation.MAX_TEXT_LENGTH, ImGuiX.Unit(600, 300),
+                                                 ImGuiInputTextFlags.CtrlEnterForNewLine))
+                    {
+                        annotation.Text = text;
+                    }
+                    ImGui.Text("Press Ctrl+Enter to insert a new line, Enter to close this.");
+                    ImGui.PopFont();
+                    focused = ImGui.IsWindowFocused();
+                    ImGui.SetWindowFocus();
+                }
+                ImGui.End();
+
+                bool onlyEnterPressed = (ImGui.IsKeyPressed(ImGuiKey.Enter)
+                                         && !ImGui.IsKeyChordPressed(ImGuiKey.Enter | ImGuiKey.ModCtrl));
+                if (!active || onlyEnterPressed || (!focused && !hovering))
+                {
+                    Parent.UnselectRoomComponent();
+                }
+
+                wasOpenLastFrame = true;
+            }
+            else
+            {
+                ImGuiX.TooltipOnHover(annotation.Text == ""
+                                      ? "Annotation goes here! Use this to jot down notes."
+                                      : annotation.Text);
+                wasOpenLastFrame = false;
+            }
+
+            ImGui.PushFont(Top.MenuFontLarge);
+            ImGuiX.DrawTextAt(annotation.Letter.ToString(), origin + BoxRectangle.Center * Parent.Scale);
+            ImGui.SetCursorScreenPos(origin);
+            ImGui.PopFont();
+        }
+
+        public override bool Compare(RoomComponent com)
+        {
+            return annotation == (com as AnnotationRoomComponent)?.annotation;
+        }
+
+        public override void Delete()
+        {
+            annotation.Delete();
+        }
+
+        public override string GetTransactionIdentifier()
+        {
+            return "annotation#" + annotation.TransactionIdentifier;
         }
     }
 }
