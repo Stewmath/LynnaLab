@@ -50,7 +50,7 @@ public class ProjectWorkspace
         buildDialog = new BuildDialog(this, "Build");
         documentationDialog = new DocumentationDialog(this, "Documentation Dialog");
         scratchpad = new ScratchPad(this, "Scratchpad", roomEditor.TilesetViewer, Brush);
-        transactionDialog = new TransactionDialog(this, "Undo History");
+        transactionDialog = new TransactionDialog(this, "Transaction History");
         networkDialog = new NetworkDialog(this, "Networking");
 
         frames.AddRange(new Frame[] {
