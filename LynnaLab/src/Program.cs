@@ -55,6 +55,7 @@ class Program
             {
                 Top.Run();
             }
+            SDL.SDL3.SDL_Quit();
         }
         catch (Exception e)
         {
@@ -80,6 +81,7 @@ class Program
             if (option == 0)
                 Top.SaveProject();
 
+            SDL.SDL3.SDL_Quit();
             return 1;
         }
 
