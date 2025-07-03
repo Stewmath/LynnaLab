@@ -360,7 +360,9 @@ public class RoomLayoutEditor : TileGrid
 
         if (ImGui.IsKeyPressed(ImGuiKey.Delete))
         {
-            if (selectedRoomComponent?.Deletable ?? false)
+            if (selectedRoomComponent != null
+                && !(selectedRoomComponent is AnnotationRoomComponent) // Delete key interferes with textbox
+                && selectedRoomComponent.Deletable)
                 selectedRoomComponent.Delete();
         }
 
@@ -1222,9 +1224,14 @@ public class RoomLayoutEditor : TileGrid
                     ImGui.PushFont(Top.InfoFont);
 
                     // Letter input
-                    ImGui.PushItemFlag(ImGuiItemFlags.ButtonRepeat, true);
-                    ImGui.Text("Letter: " + annotation.Letter.ToString());
+                    ImGui.Text("Letter:");
                     ImGui.SameLine();
+                    ImGui.PushItemWidth(ImGuiX.Unit(20.0f));
+                    string letterInput = annotation.Letter.ToString();
+                    ImGui.InputText("##Letter", ref letterInput, 1, ImGuiInputTextFlags.ReadOnly);
+                    ImGui.PopItemWidth();
+                    ImGui.SameLine();
+                    ImGui.PushItemFlag(ImGuiItemFlags.ButtonRepeat, true);
                     if (ImGui.Button("-"))
                     {
                         char c = annotation.Letter;
