@@ -157,6 +157,7 @@ public class Annotation : TrackedIndexedProjectData
             text = dto.Text,
             letter = dto.Letter,
         };
+        Sanitize();
     }
 
     /// <summary>
@@ -166,7 +167,11 @@ public class Annotation : TrackedIndexedProjectData
         : base(p, int.Parse(id))
     {
         this.state = (State)s;
+        Sanitize();
+    }
 
+    void Sanitize()
+    {
         if (this.state.text.Length > MAX_TEXT_LENGTH)
             this.state.text = this.state.text.Substring(0, MAX_TEXT_LENGTH);
 
