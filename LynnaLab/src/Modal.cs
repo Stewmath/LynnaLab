@@ -79,7 +79,7 @@ public static class Modal
         var vp = ImGui.GetMainViewport();
         Vector2 nextMessageBoxPos = vp.WorkPos + vp.WorkSize * new Vector2(0.99f, 0.99f);
 
-        foreach (MessageStruct message in messageList)
+        foreach (MessageStruct message in messageList.AsEnumerable().Reverse())
         {
             // Put it near the bottom-right of the screen
             ImGui.SetNextWindowPos(nextMessageBoxPos, 0, new Vector2(1.0f, 1.0f));
