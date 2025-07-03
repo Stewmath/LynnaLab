@@ -43,7 +43,7 @@ public class TilesetEditor : Frame
 
         subtileBrushInterfacer = BrushInterfacer.Create(subtileBrush);
 
-        RegisterMouseActions();
+        OnBrushModeChanged(fromConstructor: true);
 
         SetTileset(0, Season.Summer);
     }
@@ -69,7 +69,7 @@ public class TilesetEditor : Frame
     public ProjectWorkspace Workspace { get; private set; }
     public Project Project { get { return Workspace.Project; } }
     public RealTileset Tileset { get; private set; }
-    public BrushMode BrushMode { get; private set;  }
+    public BrushMode BrushMode { get; private set; } = BrushMode.Normal;
     public bool EditAllSeasons { get; private set; } = true; // Whether modifying one season should affect other seasons
 
     // ================================================================================
@@ -107,22 +107,18 @@ public class TilesetEditor : Frame
         if (ImGui.BeginCombo("##Brush Mode", BrushModeString(BrushMode)))
         {
             string[] tooltips = {
-                "Select from Tileset (left), drag subtiles from Subtile viewer (top-right) to Tile preview (bottom-right)",
-                "Draw palette assignments directly onto the tileset",
-                "Draw subtiles directly onto the tileset; select by right-clicking on the tileset or subtile viewer",
-                "Draw collision data directly onto the tileset (left-click to set, right-click to clear)",
+                "Select tile from Tileset (left), inspect tiles on the subtile viewer (bottom-right).",
+                "Draw palette assignments directly onto the tileset; select a palette by right-clicking.",
+                "Draw subtiles directly onto the tileset; select by right-clicking on the tileset or subtile viewer.",
+                "Draw collision data directly onto the tileset (left-click to set, right-click to clear).",
             };
 
-            foreach (BrushMode mode in new BrushMode[] { BrushMode.Normal, BrushMode.Palette, BrushMode.Subtile, BrushMode.Collision })
+            foreach (BrushMode mode in new BrushMode[] { BrushMode.Normal, BrushMode.Subtile, BrushMode.Palette, BrushMode.Collision })
             {
                 if (ImGui.Selectable(BrushModeString(mode)))
                 {
                     BrushMode = mode;
-                    tilesetViewer.Selectable = mode == BrushMode.Normal;
-                    tilesetViewer.SubTileMode = mode != BrushMode.Normal;
-                    tilesetViewer.BrushInterfacer = mode == BrushMode.Subtile ? subtileBrushInterfacer : null;
-                    tilesetViewer.TooltipImagePreview = mode != BrushMode.Subtile || subtileBrush.IsSingleTile;
-                    RegisterMouseActions();
+                    OnBrushModeChanged();
                 }
                 if (mode == BrushMode)
                     ImGui.SetItemDefaultFocus();
@@ -147,50 +143,87 @@ public class TilesetEditor : Frame
             ImGuiX.TooltipOnHover("Whether to copy palettes from the selection or leave palettes unchanged when drawing.");
         }
 
+        // Helper functions for changing subtile properties
+        var toggleFlipX = (int t, int tx, int ty) =>
+        {
+            Project.BeginTransaction("Toggle flip X");
+            byte flags = Tileset.GetSubTileFlags(t, tx, ty);
+            flags ^= 0x20;
+            ForAllSeasons((tileset) => tileset.SetSubTileFlags(t, tx, ty, flags));
+            Project.EndTransaction();
+        };
+        var toggleFlipY = (int t, int tx, int ty) =>
+        {
+            Project.BeginTransaction("Toggle flip Y");
+            byte flags = Tileset.GetSubTileFlags(t, tx, ty);
+            flags ^= 0x40;
+            ForAllSeasons((tileset) => tileset.SetSubTileFlags(t, tx, ty, flags));
+            Project.EndTransaction();
+        };
+        var togglePriority = (int t, int tx, int ty) =>
+        {
+            Project.BeginTransaction("Toggle priority");
+            byte flags = Tileset.GetSubTileFlags(t, tx, ty);
+            flags ^= 0x80;
+            ForAllSeasons((tileset) => tileset.SetSubTileFlags(t, tx, ty, flags));
+            Project.EndTransaction();
+        };
+
         ImGui.BeginChild("Tileset Viewer Panel", new Vector2(tilesetViewer.WidgetSize.X, HEIGHT));
         ImGui.SeparatorText("Tileset");
         tilesetViewer.Render();
+
+        // Tileset viewer: Watch for keyboard keys 1/2/3 for toggling subtile properties
         if (tilesetViewer.SubTileMode && tilesetViewer.HoveredTile != -1)
         {
             // Change flip X
             if (ImGui.IsKeyPressed(ImGuiKey._1))
             {
-                Project.BeginTransaction("Toggle flip X");
                 var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
-                byte flags = Tileset.GetSubTileFlags(t, tx, ty);
-                flags ^= 0x20;
-                ForAllSeasons((tileset) => tileset.SetSubTileFlags(t, tx, ty, flags));
-                Project.EndTransaction();
+                toggleFlipX(t, tx, ty);
             }
             // Change flip Y
             if (ImGui.IsKeyPressed(ImGuiKey._2))
             {
-                Project.BeginTransaction("Toggle flip Y");
                 var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
-                byte flags = Tileset.GetSubTileFlags(t, tx, ty);
-                flags ^= 0x40;
-                ForAllSeasons((tileset) => tileset.SetSubTileFlags(t, tx, ty, flags));
-                Project.EndTransaction();
+                toggleFlipY(t, tx, ty);
             }
             // Change priority
             if (ImGui.IsKeyPressed(ImGuiKey._3))
             {
-                Project.BeginTransaction("Toggle priority");
                 var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
-                byte flags = Tileset.GetSubTileFlags(t, tx, ty);
-                flags ^= 0x80;
-                ForAllSeasons((tileset) => tileset.SetSubTileFlags(t, tx, ty, flags));
-                Project.EndTransaction();
+                togglePriority(t, tx, ty);
             }
         }
         ImGui.EndChild();
 
         ImGui.SameLine();
         ImGui.BeginChild("SubTile Panel", new Vector2(subTileViewer.WidgetSize.X, HEIGHT));
-        ImGui.SeparatorText($"SubTiles");
+        ImGui.SeparatorText($"Subtile Viewer");
         subTileViewer.Render();
         ImGui.SeparatorText($"Tile {tileEditor.TileIndex:X2}");
         tileEditor.Render();
+
+        // Tile editor: Watch for keyboard keys 1/2/3 for toggling subtile properties
+        if (tileEditor.HoveredTile != -1)
+        {
+            // Change flip X
+            if (ImGui.IsKeyPressed(ImGuiKey._1))
+            {
+                toggleFlipX(tileEditor.TileIndex, tileEditor.HoveredTile % 2, tileEditor.HoveredTile / 2);
+            }
+            // Change flip Y
+            if (ImGui.IsKeyPressed(ImGuiKey._2))
+            {
+                toggleFlipY(tileEditor.TileIndex, tileEditor.HoveredTile % 2, tileEditor.HoveredTile / 2);
+            }
+            // Change priority
+            if (ImGui.IsKeyPressed(ImGuiKey._3))
+            {
+                togglePriority(tileEditor.TileIndex, tileEditor.HoveredTile % 2, tileEditor.HoveredTile / 2);
+            }
+        }
+
         ImGui.EndChild();
 
         ImGui.SameLine();
@@ -251,16 +284,27 @@ public class TilesetEditor : Frame
     /// <summary>
     /// Called when drawing on position (x,y) in subtile brush mode
     /// </summary>
-    void SubTileDrawer(int x, int y, SubTile subTile)
+    void SubTileDrawer(int x, int y, SubTile subTile, bool onTileEditor)
     {
-        if (!tilesetViewer.XYValid(x, y))
-            return;
+        if (onTileEditor)
+        {
+            if (!tileEditor.XYValid(x, y))
+                return;
+        }
+        else
+        {
+            if (!tilesetViewer.XYValid(x, y))
+                return;
+        }
 
         Project.BeginTransaction($"Draw subtiles#{Tileset.TransactionIdentifier}", true);
 
         ForAllSeasons((tileset) =>
         {
-            var (t, tx, ty) = tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
+            var (t, tx, ty) =
+                onTileEditor ? (tileEditor.TileIndex, x, y)
+                : tilesetViewer.ToSubTileIndex(x + y * tilesetViewer.Width);
+
             tileset.SetSubTileIndex(t, tx, ty, (byte)subTile.subtile);
             if (subTile.palette == -1 || !copyPalettes)
                 tileset.SetSubTileFlags(t, tx, ty, subTile.GetFlags(tileset.GetSubTilePalette(t, tx, ty)));
@@ -271,10 +315,29 @@ public class TilesetEditor : Frame
         Project.EndTransaction();
     }
 
-    void RegisterMouseActions()
+    void OnBrushModeChanged(bool fromConstructor = false)
     {
-        // The mouse actions we register in the tilesetViewer are only enabled situationally. This
-        // function unregisters everything and then reregisters only what we need for the current mode.
+        tilesetViewer.Selectable = BrushMode == BrushMode.Normal;
+        tilesetViewer.SubTileMode = BrushMode != BrushMode.Normal;
+        tilesetViewer.BrushInterfacer = BrushMode == BrushMode.Subtile ? subtileBrushInterfacer : null;
+        tilesetViewer.TooltipImagePreview = BrushMode != BrushMode.Subtile || subtileBrush.IsSingleTile;
+
+        tileEditor.Selectable = BrushMode == BrushMode.Normal;
+
+        if (BrushMode == BrushMode.Subtile)
+        {
+            tileEditor.BrushInterfacer = subtileBrushInterfacer;
+            subTileViewer.Unselectable = true;
+            subTileViewer.Selectable = true;
+        }
+        else
+        {
+            tileEditor.BrushInterfacer = null;
+            subTileViewer.Selectable = false;
+        }
+
+        // The mouse actions we register below here are only enabled situationally. This function
+        // unregisters everything and then reregisters only what we need for the current mode.
         tilesetViewer.RemoveMouseAction("Brush LeftClick");
         tilesetViewer.RemoveMouseAction("Brush Ctrl+LeftClick");
         tilesetViewer.RemoveMouseAction("Palette Brush RightClick");
@@ -282,10 +345,16 @@ public class TilesetEditor : Frame
         tilesetViewer.RemoveMouseAction("Collision Brush RightClick");
         tilesetViewer.RemoveMouseAction("Collision Brush Ctrl+RightClick");
 
-        subTileViewer.RemoveMouseAction("Subtile Viewer RightClick");
+        subTileViewer.RemoveMouseAction("Subtile Viewer Selection");
+
+        tileEditor.RemoveMouseAction("TileEditor LeftClick");
+        tileEditor.RemoveMouseAction("TileEditor Ctrl+LeftClick");
+        tileEditor.RemoveMouseAction("TileEditor Collision Brush RightClick");
+        tileEditor.RemoveMouseAction("TileEditor Collision Brush Ctrl+RightClick");
+
 
         // Helper function for palette brush mode
-        var paletteSetter = (TileGridEventArgs args) =>
+        var paletteSetter = (TileGridEventArgs args, bool onTileEditor) =>
         {
             Project.BeginTransaction($"Draw palettes#{Tileset.TransactionIdentifier}", true);
 
@@ -293,7 +362,9 @@ public class TilesetEditor : Frame
             {
                 args.Foreach((tile) =>
                 {
-                    var (t, x, y) = tilesetViewer.ToSubTileIndex(tile);
+                    var (t, x, y) =
+                        onTileEditor ? (tileEditor.TileIndex, tile % 2, tile / 2)
+                        : tilesetViewer.ToSubTileIndex(tile);
                     tileset.SetSubTilePalette(t, x, y, selectedPalette);
                 });
             });
@@ -302,7 +373,7 @@ public class TilesetEditor : Frame
         };
 
         // Helper function for collision brush mode
-        var collisionSetter = (TileGridEventArgs args, bool enable) =>
+        var collisionSetter = (TileGridEventArgs args, bool enable, bool onTileEditor) =>
         {
             Project.BeginTransaction($"Draw collisions#{Tileset.TransactionIdentifier}", true);
 
@@ -310,7 +381,9 @@ public class TilesetEditor : Frame
             {
                 args.Foreach((tile) =>
                 {
-                    var (t, x, y) = tilesetViewer.ToSubTileIndex(tile);
+                    var (t, x, y) =
+                        onTileEditor ? (tileEditor.TileIndex, tile % 2, tile / 2)
+                        : tilesetViewer.ToSubTileIndex(tile);
                     TrySetSubTileCollision(tileset, t, x, y, enable);
                 });
             });
@@ -320,30 +393,46 @@ public class TilesetEditor : Frame
 
         if (BrushMode != BrushMode.Normal)
         {
+            // Function called when drawing on tileset viewer or single tile editor
+            var tileClicked = (TileGridEventArgs args, bool onTileEditor) =>
+            {
+                if (BrushMode == BrushMode.Palette)
+                {
+                    paletteSetter(args, onTileEditor);
+                }
+                else if (BrushMode == BrushMode.Subtile)
+                {
+                    if (args.gridAction == GridAction.SelectRangeCallback)
+                    {
+                        subtileBrush.Draw((x, y, t) => SubTileDrawer(x, y, t, onTileEditor),
+                                          args.topLeft.X,
+                                          args.topLeft.Y,
+                                          args.SelectedWidth,
+                                          args.SelectedHeight
+                        );
+                    }
+                    else
+                    {
+                        subtileBrush.Draw((x, y, t) => SubTileDrawer(x, y, t, onTileEditor),
+                                      args.selectedIndex % args.gridWidth,
+                                      args.selectedIndex / args.gridWidth,
+                                      subtileBrush.BrushWidth,
+                                      subtileBrush.BrushHeight);
+                    }
+                }
+                else if (BrushMode == BrushMode.Collision)
+                {
+                    collisionSetter(args, true, onTileEditor);
+                }
+            };
+
             // Left click: Draw when in a brush mode
             tilesetViewer.AddMouseAction(
                 MouseButton.LeftClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
                 (_, args) =>
                 {
-                    var (t, x, y) = tilesetViewer.ToSubTileIndex(args.selectedIndex);
-
-                    if (BrushMode == BrushMode.Palette)
-                    {
-                        paletteSetter(args);
-                    }
-                    else if (BrushMode == BrushMode.Subtile)
-                    {
-                        subtileBrush.Draw(SubTileDrawer,
-                                          args.selectedIndex % tilesetViewer.Width,
-                                          args.selectedIndex / tilesetViewer.Width,
-                                          subtileBrush.BrushWidth,
-                                          subtileBrush.BrushHeight);
-                    }
-                    else if (BrushMode == BrushMode.Collision)
-                    {
-                        collisionSetter(args, true);
-                    }
-
+                    var (t, _, _) = tilesetViewer.ToSubTileIndex(args.selectedIndex);
+                    tileClicked(args, false);
                     tileEditor.SetTile(Tileset, t);
                 },
                 name: "Brush LeftClick",
@@ -355,26 +444,34 @@ public class TilesetEditor : Frame
                 MouseButton.LeftClick, MouseModifier.Ctrl, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
                 (_, args) =>
                 {
-                    if (BrushMode == BrushMode.Palette)
-                    {
-                        paletteSetter(args);
-                    }
-                    else if (BrushMode == BrushMode.Subtile)
-                    {
-                        subtileBrush.Draw(SubTileDrawer,
-                                          args.topLeft.X,
-                                          args.topLeft.Y,
-                                          args.SelectedWidth,
-                                          args.SelectedHeight
-                        );
-                    }
-                    else if (BrushMode == BrushMode.Collision)
-                    {
-                        collisionSetter(args, true);
-                    }
+                    var (t, _, _) = tilesetViewer.ToSubTileIndex(args.selectedIndex);
+                    tileClicked(args, false);
+                    tileEditor.SetTile(Tileset, t);
                 },
                 brushPreview: true,
                 name: "Brush Ctrl+LeftClick",
+                onRelease: Project.TransactionManager.InsertBarrier
+            );
+
+            // Tile editor left click: Place tiles down
+            tileEditor.AddMouseAction(
+                MouseButton.LeftClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
+                (_, args) =>
+                {
+                    tileClicked(args, true);
+                },
+                name: "TileEditor LeftClick",
+                onRelease: Project.TransactionManager.InsertBarrier
+            );
+
+            // Tile editor ctrl + left click: Rectangle fill when in a brush mode
+            tileEditor.AddMouseAction(
+                MouseButton.LeftClick, MouseModifier.Ctrl, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
+                (_, args) =>
+                {
+                    tileClicked(args, true);
+                },
+                name: "TileEditor Ctrl+LeftClick",
                 onRelease: Project.TransactionManager.InsertBarrier
             );
         }
@@ -421,20 +518,26 @@ public class TilesetEditor : Frame
 
                         UpdateSubTilePreviewImage();
 
-                        // If we selected just one tile, select it in the tile editor widget
+                        // If we selected just one tile, select it in the tile editor and subtile
+                        // view widgets
                         if (subtileBrush.IsSingleTile)
                         {
-                            var (t, _, _) = tilesetViewer.ToSubTileIndex(args.topLeft.X + args.topLeft.Y * tilesetViewer.Width);
+                            var (t, x, y) = tilesetViewer.ToSubTileIndex(args.topLeft.X + args.topLeft.Y * tilesetViewer.Width);
                             tileEditor.SetTile(Tileset, t);
+                            subTileViewer.SelectedIndex = Tileset.GetSubTileIndex(t, x, y) ^ 0x80;
+                        }
+                        else
+                        {
+                            subTileViewer.SelectedIndex = -1;
                         }
                     }
                 },
                 name: "Subtile Brush RightClick"
             );
 
-            // Subtile viewer: Right click + drag to select tiles (subtile brush mode only)
+            // Subtile viewer: Click + drag to select tiles (subtile brush mode only)
             subTileViewer.AddMouseAction(
-                MouseButton.RightClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
+                MouseButton.Any, MouseModifier.None, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
                 (_, args) =>
                 {
                     subtileBrush.SetTiles(tileEditor, args.RectArray((x, y) =>
@@ -450,7 +553,7 @@ public class TilesetEditor : Frame
 
                     UpdateSubTilePreviewImage();
                 },
-                name: "Subtile Viewer RightClick"
+                name: "Subtile Viewer Selection"
             );
         }
 
@@ -461,7 +564,7 @@ public class TilesetEditor : Frame
                 MouseButton.RightClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
                 (_, args) =>
                 {
-                    collisionSetter(args, false);
+                    collisionSetter(args, false, false);
                     var (t, _, _) = tilesetViewer.ToSubTileIndex(args.selectedIndex);
                     tileEditor.SetTile(Tileset, t);
                 },
@@ -473,9 +576,30 @@ public class TilesetEditor : Frame
                 MouseButton.RightClick, MouseModifier.Ctrl, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
                 (_, args) =>
                 {
-                    collisionSetter(args, false);
+                    collisionSetter(args, false, false);
                 },
                 name: "Collision Brush Ctrl+RightClick",
+                onRelease: Project.TransactionManager.InsertBarrier
+            );
+
+            // Tile editor right click: Unset collision when in collision brush mode
+            tileEditor.AddMouseAction(
+                MouseButton.RightClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
+                (_, args) =>
+                {
+                    collisionSetter(args, false, true);
+                },
+                name: "TileEditor Collision Brush RightClick",
+                onRelease: Project.TransactionManager.InsertBarrier
+            );
+            // Tile editor right click + drag: Unset collision range when in collision brush mode
+            tileEditor.AddMouseAction(
+                MouseButton.RightClick, MouseModifier.Ctrl, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
+                (_, args) =>
+                {
+                    collisionSetter(args, false, true);
+                },
+                name: "TileEditor Collision Brush Ctrl+RightClick",
                 onRelease: Project.TransactionManager.InsertBarrier
             );
         }
@@ -607,15 +731,10 @@ class SubTileViewer : GfxViewer
         base.Width = 16;
         base.Height = 16;
         base.RequestedScale = 2;
-        base.Selectable = false;
+        base.Selectable = true;
         base.TooltipImagePreview = true;
         base.TooltipImagePreviewScale = TILE_IMAGE_SCALE;
         base.SelectColor = Color.DarkOrange;
-
-        base.OnDrag = (index) =>
-        {
-            DragSubTile(index ^ 0x80);
-        };
 
         base.OnHover = (index) =>
         {
@@ -658,16 +777,6 @@ class SubTileViewer : GfxViewer
         Tileset = t;
 
         base.SetGraphicsState(Tileset.GraphicsState, 0x2000, 0x3000);
-    }
-
-    // ================================================================================
-    // Static methods
-    // ================================================================================
-    public static void DragSubTile(int index)
-    {
-        index ^= 0x80;
-        ImGui.Text($"SubTile Index: {index:X2}");
-        ImGuiX.SetDragDropPayload<int>("SubTile Index", index);
     }
 }
 
@@ -720,41 +829,6 @@ class TileEditor : TileGrid
             Project.EndTransaction();
         };
 
-        var trySetCollision = (TileGridEventArgs args, bool enable) =>
-        {
-            if (parent.BrushMode != BrushMode.Collision)
-                return;
-
-            Project.BeginTransaction($"Draw collisions#{Tileset.TransactionIdentifier}-t{TileIndex:X2}", true);
-
-            ForAllSeasons((tileset) =>
-            {
-                args.Foreach((index) =>
-                {
-                    int t = TileIndex;
-                    int tx = index % 2;
-                    int ty = index / 2;
-                    TilesetEditor.TrySetSubTileCollision(tileset, t, tx, ty, enable);
-                });
-            });
-
-            Project.EndTransaction();
-        };
-
-        // Register mouse actions for setting collisions with the mouse
-        base.AddMouseAction(
-            MouseButton.LeftClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
-            (_, args) => trySetCollision(args, true));
-        base.AddMouseAction(
-            MouseButton.LeftClick, MouseModifier.Ctrl, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
-            (_, args) => trySetCollision(args, true));
-        base.AddMouseAction(
-            MouseButton.RightClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
-            (_, args) => trySetCollision(args, false));
-        base.AddMouseAction(
-            MouseButton.RightClick, MouseModifier.Ctrl, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
-            (_, args) => trySetCollision(args, false));
-
         base.AfterRenderTileGrid += (_, _) =>
         {
             // In collision brush mode only, draw red on all solid tiles
@@ -794,8 +868,6 @@ class TileEditor : TileGrid
 
     public override void Render()
     {
-        base.Selectable = parent.BrushMode != BrushMode.Collision;
-
         ImGui.BeginGroup();
         base.Render();
 
@@ -804,13 +876,10 @@ class TileEditor : TileGrid
         if (ImGui.IsItemHovered())
             previewIndex = CoordToTile(GetRelativeMousePos());
 
-        // Get an estimate of excess horizontal space to help with roughly centering the input fields
-        float freeSpace = ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize("Subtile: FF").X;
-        freeSpace = Math.Max(freeSpace, 0.0f);
-        ImGuiX.ShiftCursorScreenPos(freeSpace / 2, 0.0f);
+        ImGuiX.ShiftCursorScreenPos(ImGuiX.Unit(50.0f, 0.0f));
         ImGui.BeginChild("Text fields");
 
-        if (parent.BrushMode == BrushMode.Collision)
+        if (previewIndex == -1)
         {
             // In collision brush mode, instead of rendering subtile properties, just show the
             // collision data for this tile.
@@ -824,7 +893,7 @@ class TileEditor : TileGrid
             });
             ImGui.PopItemWidth();
         }
-        else if (previewIndex != -1)
+        else
         {
             var (x, y) = TileToXY(previewIndex);
             byte flags = Tileset.GetSubTileFlags(TileIndex, x, y);
@@ -843,12 +912,27 @@ class TileEditor : TileGrid
                 });
             };
 
+            ImGui.PushItemWidth(ImGuiX.Unit(100.0f));
             ImGui.Text($"({x}, {y})");
-            ImGui.Text($"Subtile: {Tileset.GetSubTileIndex(TileIndex, x, y):X2}");
-            ImGui.Text($"Palette: {flags & 7}");
+            ImGui.Text($"Subtile: ");
+            ImGui.SameLine();
+            ImGuiX.InputHex("##Subtile",
+                            Tileset.GetSubTileIndex(TileIndex, x, y),
+                            (v) => Tileset.SetSubTileIndex(TileIndex, x, y, (byte)v),
+                            min: 0,
+                            max: 255);
+            ImGui.Text($"Palette: ");
+            ImGui.SameLine();
+            ImGuiX.InputHex("##Palette",
+                            flags & 7,
+                            (v) => Tileset.SetSubTilePalette(TileIndex, x, y, (byte)v),
+                            digits: 1,
+                            min: 0,
+                            max: 7);
             checkboxForBit("Flip X", 0x20);
             checkboxForBit("Flip Y", 0x40);
             checkboxForBit("Priority", 0x80);
+            ImGui.PopItemWidth();
 
             if (ImGui.IsItemHovered())
             {

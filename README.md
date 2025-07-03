@@ -166,26 +166,27 @@ either.
   * Palettes:
     * Right-click: Open copy/paste menu
     * Can also drag one palette onto another to copy it
-* Brush modes (palette brush, subtile brush, collision brush):
+* All brush modes (palette brush, subtile brush, collision brush):
   * Hover over the tileset and press a number key to toggle tile properties:
     * 1: Toggle Flip X
     * 2: Toggle Flip Y
     * 3: Toggle Priority
-* Selection mode
-  * Left-click on tileset: Select tile to inspect in the tile preview (bottom-right)
-  * Left-click on tile preview: Select a subtile to inspect
-  * Drag tiles from subtile viewer (top-right) to tile preview (bottom-right): Assign subtile to the
-    tile (also works in other modes)
 * Palette brush mode
+  * Use this mode to assign palettes.
   * Right-click on tileset: Copy palette
   * Left-click on tileset: Assign palettes (hold Ctrl for rectangle fill)
 * Subtile brush mode
+  * Use this mode to set the subtile assignments in the tileset.
   * Right-click on tileset or subtile viewer: Copy subtile (right click+drag to copy range)
-  * Left-click on tileset: Assign subtiles (hold Ctrl for rectangle fill)
+  * Left-click on tileset or tile preview: Assign subtiles (hold Ctrl for rectangle fill)
 * Collision brush mode
+  * Use this mode to set collisions.
   * Right-click on tileset or tile preview: Disable collision
   * Left-click on tileset or tile preview: Enable collision
   * Use Ctrl for rectangle fill in both cases
+* Selection mode
+  * Left-click on tileset: Select tile to inspect in the tile preview (bottom-right)
+  * Left-click on tile preview: Select a subtile to inspect
 
 ## For more information
 

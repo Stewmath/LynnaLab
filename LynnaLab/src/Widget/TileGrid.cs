@@ -50,7 +50,7 @@ public class TileGrid : SizedWidget
     /// <summary>
     /// Invoked when hovered tile changes. Could be a single tile or a rectangle of tiles.
     /// </summary>
-    public event EventHandler<TileEventArgs> HoverChangedEvent;
+    public event EventHandler<TileHoverEventArgs> HoverChangedEvent;
 
     /// <summary>
     /// Invoked between RenderTileGrid() and RenderHoverAndSelection(). Use this to render stuff on
@@ -327,6 +327,8 @@ public class TileGrid : SizedWidget
         // Mouse position "above" the scroll widget (not affected by scrolling)
         var topLevelMousePos = ImGui.GetIO().MousePos - scrollOrigin;
 
+        ImGui.BeginGroup();
+
         // Check whether to stick this in a scrollable child window
         if (InChildWindow)
         {
@@ -389,6 +391,8 @@ public class TileGrid : SizedWidget
 
             ImGui.EndChild();
         }
+
+        ImGui.EndGroup();
     }
 
     /// <summary>
@@ -523,7 +527,7 @@ public class TileGrid : SizedWidget
             return;
         }
 
-        TileEventArgs hoverChangedArgs = null;
+        TileHoverEventArgs hoverChangedArgs = null;
 
         // Determine hovered tile
         HoveredTile = -1;
@@ -994,6 +998,8 @@ public class TileGrid : SizedWidget
     {
         if (!selectable)
         {
+            RectangleSelected = false;
+
             // Must set the variable selectedIndex instead of the property SelectedIndex as the
             // property cannot be written to while selectable == false
             if (selectedIndex != -1)
@@ -1205,13 +1211,11 @@ public struct TileGridEventArgs
 {
     public TileGridEventArgs(TileGrid grid)
     {
-        this.gridWidth = grid.Width;
-        this.gridHeight = grid.Height;
+        this.ParentGrid = grid;
     }
 
     // For all actions
     public GridAction gridAction;
-    public int gridWidth, gridHeight;
 
     // For GridAction.Callback (selected one tile)
     public int selectedIndex;
@@ -1219,6 +1223,10 @@ public struct TileGridEventArgs
     // For GridAction.SelectRange
     public Point topLeft, bottomRight;
 
+
+    public TileGrid ParentGrid { get; }
+    public int gridWidth { get { return ParentGrid.Width; } }
+    public int gridHeight { get { return ParentGrid.Height; } }
     public int SelectedWidth { get { return bottomRight.X - topLeft.X + 1; } }
     public int SelectedHeight { get { return bottomRight.Y - topLeft.Y + 1; } }
 
@@ -1279,16 +1287,16 @@ public struct TileGridEventArgs
     }
 }
 
-public class TileEventArgs
+public class TileHoverEventArgs
 {
-    public TileEventArgs(int tile)
+    public TileHoverEventArgs(int tile)
     {
         IsSingleTile = true;
         TileStart = tile;
         TileEnd = tile;
     }
 
-    public TileEventArgs(int tileStart, int tileEnd)
+    public TileHoverEventArgs(int tileStart, int tileEnd)
     {
         IsSingleTile = false;
         TileStart = tileStart;

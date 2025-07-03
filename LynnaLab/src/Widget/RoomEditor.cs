@@ -732,7 +732,7 @@ public class RoomEditor : Frame
     /// Invoked when the room or hovering tile is changed, so that remote instances can see what
     /// you're hovering over.
     /// </summary>
-    void OnCursorChanged(TileEventArgs args)
+    void OnCursorChanged(TileHoverEventArgs args)
     {
         if (args == null)
         {
