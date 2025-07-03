@@ -1141,6 +1141,7 @@ public class RoomLayoutEditor : TileGrid
     {
         Annotation annotation;
         bool wasOpenLastFrame = false;
+        bool isActive = false;
 
         public AnnotationRoomComponent(RoomLayoutEditor parent, Annotation annotation) : base(parent)
         {
@@ -1152,7 +1153,7 @@ public class RoomLayoutEditor : TileGrid
         {
             get
             {
-                return Color.FromRgba(55, 163, 252, 0xc0);
+                return annotation.Color;
             }
         }
 
@@ -1200,8 +1201,11 @@ public class RoomLayoutEditor : TileGrid
             // it's not triggered while the mouse is held down.
             bool hovering = realRect.Contains(mousePos);
 
-            // Show popup window if it's selected (but not if )
-            if (selected && !ImGui.IsPopupOpen(Top.RightClickPopupName))
+            if (selected)
+                isActive = true;
+
+            // Show popup window if it's active
+            if (isActive && !ImGui.IsPopupOpen(Top.RightClickPopupName))
             {
                 ImGuiWindowFlags flags = 0
                     | ImGuiWindowFlags.NoNavFocus
@@ -1216,10 +1220,9 @@ public class RoomLayoutEditor : TileGrid
                                        0,
                                        new Vector2(0, 0));
 
-                bool active = true;
                 bool focused = false;
 
-                if (ImGui.Begin("Annotation", ref active, flags))
+                if (ImGui.Begin("Annotation", ref isActive, flags))
                 {
                     ImGui.PushFont(Top.InfoFont);
 
@@ -1247,6 +1250,20 @@ public class RoomLayoutEditor : TileGrid
                     }
                     ImGui.PopItemFlag();
 
+                    // Color selection
+                    ImGui.SameLine();
+                    ImGui.PushItemWidth(ImGuiX.Unit(100.0f));
+                    int selectedColor = (int)annotation.ColorIndex;
+                    if (ImGui.Combo(
+                            "##Color",
+                            ref selectedColor,
+                            Enum.GetNames(typeof(Annotation.AnnotationColor)),
+                            Enum.GetNames(typeof(Annotation.AnnotationColor)).Length))
+                    {
+                        annotation.ColorIndex = (Annotation.AnnotationColor)selectedColor;
+                    }
+                    ImGui.PopItemWidth();
+
                     // Text input
                     if (!wasOpenLastFrame)
                         ImGui.SetKeyboardFocusHere();
@@ -1258,16 +1275,23 @@ public class RoomLayoutEditor : TileGrid
                     }
                     ImGui.Text("Press Ctrl+Enter to insert a new line, Enter to close this.");
                     ImGui.PopFont();
-                    focused = ImGui.IsWindowFocused();
-                    ImGui.SetWindowFocus();
+                    focused = ImGui.IsWindowFocused(ImGuiFocusedFlags.ChildWindows);
+
+                    // If we're hovering over the icon, give focus back to the window so that we
+                    // won't accidentally close it if we move the mouse too fast (outside the bounds
+                    // of the icon) later on.
+                    if (hovering)
+                        ImGui.SetWindowFocus();
                 }
                 ImGui.End();
 
                 bool onlyEnterPressed = (ImGui.IsKeyPressed(ImGuiKey.Enter)
                                          && !ImGui.IsKeyChordPressed(ImGuiKey.Enter | ImGuiKey.ModCtrl));
-                if (!active || onlyEnterPressed || (!focused && !hovering))
+                if (!isActive || onlyEnterPressed || (!focused && !hovering) || !selected)
                 {
-                    Parent.UnselectRoomComponent();
+                    isActive = false;
+                    if (selected)
+                        Parent.UnselectRoomComponent();
                 }
 
                 wasOpenLastFrame = true;

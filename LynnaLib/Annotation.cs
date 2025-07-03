@@ -124,6 +124,16 @@ public partial class Project
 public class Annotation : TrackedIndexedProjectData
 {
     // ================================================================================
+    // Enums
+    // ================================================================================
+    public enum AnnotationColor
+    {
+        Blue = 0,
+        Red,
+        Green,
+    }
+
+    // ================================================================================
     // Constructors
     // ================================================================================
 
@@ -140,6 +150,7 @@ public class Annotation : TrackedIndexedProjectData
             y = 0x58,
             text = "",
             letter = 'A',
+            color = AnnotationColor.Blue,
         };
     }
 
@@ -156,6 +167,7 @@ public class Annotation : TrackedIndexedProjectData
             y = dto.Y,
             text = dto.Text,
             letter = dto.Letter,
+            color = dto.Color,
         };
         Sanitize();
     }
@@ -177,6 +189,9 @@ public class Annotation : TrackedIndexedProjectData
 
         if (!(state.letter >= 'A' && state.letter <= 'Z'))
             state.letter = 'A';
+
+        if (!Enum.IsDefined(typeof(AnnotationColor), state.color))
+            state.color = AnnotationColor.Blue;
     }
 
     // ================================================================================
@@ -192,6 +207,7 @@ public class Annotation : TrackedIndexedProjectData
         public required byte y;
         public required string text;
         public required char letter;
+        public required AnnotationColor color;
     }
 
     State state;
@@ -261,6 +277,43 @@ public class Annotation : TrackedIndexedProjectData
         }
     }
 
+    public AnnotationColor ColorIndex
+    {
+        get { return state.color; }
+        set
+        {
+            Project.BeginTransaction($"Set annotation color#{TransactionIdentifier}", merge: true);
+            Project.TransactionManager.CaptureInitialState<State>(this);
+
+            if (!Enum.IsDefined(typeof(AnnotationColor), value))
+            {
+                throw new Exception($"Annotation.SetColor: Invalid color {value}.");
+            }
+            state.color = value;
+
+            Project.EndTransaction();
+        }
+    }
+
+    public Color Color
+    {
+        get
+        {
+            byte alpha = 0xc0;
+            switch (ColorIndex)
+            {
+                case AnnotationColor.Red:
+                    return Color.FromRgba(249, 46, 39, alpha);
+                case AnnotationColor.Blue:
+                    return Color.FromRgba(55, 163, 252, alpha);
+                case AnnotationColor.Green:
+                    return Color.FromRgba(90, 204, 59, alpha);
+                default:
+                    throw new Exception($"Bad AnnotationColor: {ColorIndex}");
+            }
+        }
+    }
+
     // ================================================================================
     // Public methods
     // ================================================================================
@@ -279,6 +332,7 @@ public class Annotation : TrackedIndexedProjectData
             Y = Y,
             Text = Text,
             Letter = Letter,
+            Color = state.color,
         };
     }
 
@@ -314,4 +368,5 @@ class AnnotationDTO
     public required byte Y { get; init; }
     public required string Text { get; init; }
     public required char Letter { get; init; }
+    public required Annotation.AnnotationColor Color { get; init; }
 }
