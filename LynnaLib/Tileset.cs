@@ -107,14 +107,7 @@ namespace LynnaLib
         {
             get
             {
-                try
-                {
-                    return Project.GetIndexedDataType<PaletteHeaderGroup>(PaletteHeader);
-                }
-                catch (InvalidPaletteHeaderGroupException)
-                {
-                    return null;
-                }
+                return Project.GetPaletteHeaderGroup(PaletteHeader);
             }
         }
 

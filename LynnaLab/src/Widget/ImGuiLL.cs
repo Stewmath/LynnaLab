@@ -161,6 +161,12 @@ public class ImGuiLL
     /// </summary>
     public static void RenderPaletteHeader(PaletteHeaderGroup phg, int paletteToHighlight, ProjectWorkspace workspace)
     {
+        if (phg == null)
+        {
+            ImGui.Text("ERROR: Could not load palettes (invalid index?).");
+            return;
+        }
+
         float COLUMN_WIDTH = ImGuiX.Unit(30.0f);
         int callCount = 0;
         bool openRightClickPopup = false;

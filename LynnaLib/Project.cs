@@ -1326,6 +1326,13 @@ namespace LynnaLib
 
         }
 
+        public PaletteHeaderGroup GetPaletteHeaderGroup(int index)
+        {
+            if (!HasLabel(PaletteHeaderGroup.GetLabelName(index)))
+                return null;
+            return GetIndexedDataType<PaletteHeaderGroup>(index);
+        }
+
         // Adds a definition to definesDictionary. Don't confuse with the "SetDefinition" method.
         public void AddDefinition(string name, string value, bool replace = false)
         {

@@ -32,7 +32,7 @@ namespace LynnaLib
         {
             try
             {
-                LabelName = "paletteHeader" + index.ToString("x2");
+                LabelName = GetLabelName(index);
                 Data headerData = Project.GetData(LabelName);
 
                 if (!(headerData is PaletteHeaderData))
@@ -103,6 +103,15 @@ namespace LynnaLib
                     ModifiedEvent?.Invoke(this, null);
                 };
             });
+        }
+
+        // ================================================================================
+        // Static methods
+        // ================================================================================
+
+        public static string GetLabelName(int index)
+        {
+            return "paletteHeader" + index.ToString("x2");
         }
     }
 }
