@@ -155,9 +155,12 @@ namespace Util
             FileSystemWatcher watcher = new FileSystemWatcher();
             watcher.Path = Path.GetDirectoryName(path);
             watcher.Filter = Path.GetFileName(path);
-            watcher.NotifyFilter = NotifyFilters.LastWrite;
+            
+            watcher.NotifyFilter = 0
+                | NotifyFilters.LastWrite // Detect file changes
+                | NotifyFilters.FileName; // Detect renaming
 
-            watcher.Changed += (o, a) =>
+            var onChanged = () =>
             {
                 lock (watcherLock)
                 {
@@ -178,6 +181,12 @@ namespace Util
                 // Use MainThreadInvoke to avoid any threading headaches
                 Helper.MainThreadInvoke(act);
             };
+
+            watcher.Changed += (_, _) => onChanged();
+
+            // Some programs don't directly modify the file, instead creating a separate file and
+            // renaming it to the desired file (see: Paint).
+            watcher.Renamed += (_, _) => onChanged();
 
             watcher.EnableRaisingEvents = true;
             return watcher;

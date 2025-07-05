@@ -470,7 +470,8 @@ public class ProjectWorkspace
             return;
         }
 
-        string fullPath = $"{Path.GetTempPath()}/{Guid.NewGuid()}.png";
+        var guid = Guid.NewGuid().ToString();
+        string fullPath = Path.Combine(Path.GetTempPath(), guid.ToString()) + ".png";
         pngStream.SaveTo(fullPath);
 
         var onFileModified = () =>
