@@ -208,11 +208,11 @@ public class RoomEditor : Frame
         }
     }
 
+    public FloorPlan ActiveFloorPlan { get { return ActiveMinimap.FloorPlan; } }
 
     // Private properties
 
     Minimap ActiveMinimap { get; set; }
-    FloorPlan ActiveFloorPlan { get { return ActiveMinimap.FloorPlan; } }
 
     // This is null if not on the dungeon tab
     Dungeon ActiveDungeon { get { return (ActiveFloorPlan as Dungeon.Floor)?.Dungeon; } }

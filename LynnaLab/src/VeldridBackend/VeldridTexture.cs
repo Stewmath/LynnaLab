@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Veldrid;
 
 using Point = Util.Point; // Don't care about Veldrid.Point
@@ -169,7 +170,7 @@ public class VeldridRgbaTexture : VeldridTextureBase
     /// <summary>
     /// Blank texture
     /// </summary>
-    public VeldridRgbaTexture(ImGuiController controller, int width, int height, bool renderTarget=false)
+    public VeldridRgbaTexture(ImGuiController controller, int width, int height, bool renderTarget=false, bool staging=false)
         : this(controller)
     {
         var pixelFormat = PixelFormat.R8_G8_B8_A8_UNorm;
@@ -180,9 +181,22 @@ public class VeldridRgbaTexture : VeldridTextureBase
             mipLevels: 1,
             arrayLayers: 1,
             pixelFormat,
-            TextureUsage.Sampled | (renderTarget ? TextureUsage.RenderTarget : 0));
+            TextureUsage.Sampled
+            | (renderTarget ? TextureUsage.RenderTarget : 0));
 
         this.texture = gd.ResourceFactory.CreateTexture(ref textureDescription);
+
+        if (staging)
+        {
+            textureDescription = TextureDescription.Texture2D(
+                (uint)width,
+                (uint)height,
+                mipLevels: 1,
+                arrayLayers: 1,
+                pixelFormat,
+                TextureUsage.Staging);
+            this.stagingTexture = gd.ResourceFactory.CreateTexture(ref textureDescription);
+        }
 
         this.width = width;
         this.height = height;
@@ -193,6 +207,7 @@ public class VeldridRgbaTexture : VeldridTextureBase
     // ================================================================================
     GraphicsDevice gd;
     Veldrid.Texture texture;
+    Veldrid.Texture stagingTexture;
     Framebuffer framebuffer;
 
     int width, height;
@@ -234,6 +249,46 @@ public class VeldridRgbaTexture : VeldridTextureBase
         destTexture.InvokeModifiedHandler();
     }
 
+    /// <summary>
+    /// Capture the current state of the image to an ImageSharp image. Must have set staging=true in
+    /// the constructor.
+    /// </summary>
+    public unsafe void CaptureImage(Action<SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>> callback)
+    {
+        if (stagingTexture == null)
+            throw new Exception("RgbaTexture.Capture: Staging not enabled");
+
+        var cl = controller.Backend.CommandList;
+
+        cl.CopyTexture(Texture, stagingTexture);
+
+        controller.Backend.DoAfterRender(() =>
+        {
+            var mapped = gd.Map(stagingTexture, MapMode.Read);
+
+            SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> image
+                = new((int)Texture.Width, (int)Texture.Height, Color.FromRgb(255, 0, 0));
+
+            image.ProcessPixelRows((accessor) =>
+            {
+                for (int y = 0; y < Height; y++)
+                {
+                    var row = accessor.GetRowSpan(y);
+                    fixed (SixLabors.ImageSharp.PixelFormats.Rgba32* ptr = row)
+                    {
+                        Buffer.MemoryCopy((void*)(mapped.Data + y * mapped.RowPitch),
+                                          ptr,
+                                          4 * Texture.Width,
+                                          4 * Texture.Width);
+                    }
+                }
+            });
+
+            gd.Unmap(stagingTexture);
+            callback(image);
+        });
+    }
+
     public override void Dispose()
     {
         base.Dispose();
@@ -244,6 +299,12 @@ public class VeldridRgbaTexture : VeldridTextureBase
         {
             gd.DisposeWhenIdle(framebuffer);
             framebuffer = null;
+        }
+
+        if (stagingTexture != null)
+        {
+            gd.DisposeWhenIdle(stagingTexture);
+            stagingTexture = null;
         }
 
         gd.DisposeWhenIdle(texture);

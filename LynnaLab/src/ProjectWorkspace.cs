@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using SixLabors.ImageSharp;
+using Color = LynnaLib.Color;
 
 namespace LynnaLab;
 
@@ -249,6 +251,14 @@ public class ProjectWorkspace
             }
             ImGui.EndMenu();
         }
+        if (ImGui.BeginMenu("Misc"))
+        {
+            if (ImGui.MenuItem("Take Map Screenshot"))
+            {
+                CaptureMapScreenshot();
+            }
+            ImGui.EndMenu();
+        }
         if (ImGui.BeginMenu("Debug"))
         {
             ImGuiX.MenuItemCheckbox("ImGui Demo Window", ref showImGuiDemoWindow);
@@ -337,7 +347,12 @@ public class ProjectWorkspace
 
     public RgbaTexture GetCachedMapTexture(FloorPlan plan)
     {
-        return mapTextureCacher.GetOrCreate(plan).GetTexture();
+        return GetMapTextureCacher(plan).GetTexture();
+    }
+
+    public MapTextureCacher GetMapTextureCacher(FloorPlan plan)
+    {
+        return mapTextureCacher.GetOrCreate(plan);
     }
 
     public void OpenTilesetCloner(RealTileset source, RealTileset dest)
@@ -723,6 +738,56 @@ public class ProjectWorkspace
             (none) => Task.CompletedTask,
             (server) => server.ForEachConnection(action),
             (client) => action(client));
+    }
+
+    void CaptureMapScreenshot()
+    {
+        var floorPlan = roomEditor.ActiveFloorPlan;
+
+        var onImageCaptured = (Image<SixLabors.ImageSharp.PixelFormats.Rgba32> image) =>
+        {
+            try
+            {
+                string dir = "Screenshots";
+                if (!Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
+                string filename;
+                if (floorPlan is WorldMap w)
+                {
+                    filename = $"World-{w.MainGroup}";
+                    if (w.Season != Season.None)
+                        filename += $"-{w.Season}";
+                }
+                else if (floorPlan is Dungeon.Floor f)
+                {
+                    filename = $"Dungeon-{f.Dungeon.Index:x2}-F{f.GetFloorIndex()}";
+                }
+                else
+                    throw new Exception();
+
+                string finalFilename;
+                int index = 0;
+                while (true)
+                {
+                    finalFilename = $"{dir}/{filename}-{index}.png";
+                    if (!File.Exists(finalFilename))
+                        break;
+                    index++;
+                }
+                image.SaveAsPng(finalFilename);
+
+                Top.DoNextFrame(
+                    () => Modal.DisplayInfoMessage($"Saved screenshot to {Path.GetFullPath(finalFilename)}."));
+            }
+            catch (Exception e)
+            {
+                Top.DoNextFrame(
+                    () => Modal.DisplayErrorMessage("Error creating screenshot (filesystem access denied?).", e));
+            }
+        };
+
+        GetMapTextureCacher(floorPlan).CaptureImage(onImageCaptured);
     }
 }
 

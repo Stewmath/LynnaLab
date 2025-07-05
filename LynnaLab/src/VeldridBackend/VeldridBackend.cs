@@ -2,6 +2,7 @@ using Veldrid;
 using SDLUtil;
 
 using Point = Util.Point;
+using System.Collections.Concurrent;
 
 namespace VeldridBackend;
 
@@ -69,6 +70,7 @@ public class VeldridBackend
     static CommandList cl;
     static ImGuiController controller;
     static Vector3 clearColor = new Vector3(0.45f, 0.55f, 0.6f);
+    static ConcurrentQueue<Action> actionsAfterRender = new();
     bool forceWindowClose;
 
 
@@ -131,7 +133,16 @@ public class VeldridBackend
             rd.EndFrameCapture();
         #endif
 
+        // Do callbacks for things to do after rendering
+        while (actionsAfterRender.TryDequeue(out Action act))
+            act();
+
         cl.Begin();
+    }
+
+    public void DoAfterRender(Action action)
+    {
+        actionsAfterRender.Enqueue(action);
     }
 
     /// <summary>
@@ -162,9 +173,9 @@ public class VeldridBackend
     /// <summary>
     /// Creates a new RgbaTexture. User must ensure it's disposed at some point.
     /// </summary>
-    public VeldridRgbaTexture CreateTexture(int width, int height, bool renderTarget = false)
+    public VeldridRgbaTexture CreateTexture(int width, int height, bool renderTarget = false, bool staging = false)
     {
-        return new VeldridRgbaTexture(controller, width, height, renderTarget);
+        return new VeldridRgbaTexture(controller, width, height, renderTarget, staging);
     }
 
     public VeldridTextureWindow CreateTextureWindow(RgbaTexture source, Point topLeft, Point size)

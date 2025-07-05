@@ -1,3 +1,8 @@
+using SixLabors.ImageSharp;
+using PixelFormats = SixLabors.ImageSharp.PixelFormats;
+
+using Point = Util.Point;
+
 namespace LynnaLab;
 
 /// <summary>
@@ -70,6 +75,11 @@ public class MapTextureCacher : IDisposeNotifier
         }
     }
 
+    public void CaptureImage(Action<Image<PixelFormats.Rgba32>> callback)
+    {
+        texture.CaptureImage(callback);
+    }
+
     // ================================================================================
     // Protected methods
     // ================================================================================
@@ -78,7 +88,8 @@ public class MapTextureCacher : IDisposeNotifier
     {
         texture = Top.Backend.CreateTexture(
             FloorPlan.MapWidth * FloorPlan.RoomWidth * 16,
-            FloorPlan.MapHeight * FloorPlan.RoomHeight * 16);
+            FloorPlan.MapHeight * FloorPlan.RoomHeight * 16,
+            staging: true);
 
         // Watch for room assignment changes (dungeons only)
 
