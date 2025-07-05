@@ -112,7 +112,7 @@ public partial class Project
         {
             stream.Write("{\"AnnotationList\":["u8);
             bool first = true;
-            foreach (Annotation ann in Annotations)
+            foreach (Annotation ann in Annotations.OrderBy((a) => a.RoomIndex))
             {
                 if (!first)
                     stream.Write(","u8);
