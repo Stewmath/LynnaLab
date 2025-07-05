@@ -262,7 +262,7 @@ public class BuildDialog : Frame
 
         var (fileName, arguments) = SubstituteString(runCommand);
 
-        processView.AppendText("Attempting to run with the following command (reconfigure with Misc -> Select Emulator)...");
+        processView.AppendText("Attempting to run with the following command (reconfigure in LynnaLab settings)...");
         processView.AppendText($"\"{fileName}\" " + arguments + '\n', "code");
 
         ProcessStartInfo startInfo = new ProcessStartInfo
