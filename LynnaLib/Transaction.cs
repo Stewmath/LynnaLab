@@ -286,7 +286,7 @@ public class TransactionManager
             disallowUndoThisTransaction = true;
     }
 
-    public void EndTransaction()
+    public void EndTransaction(bool markModified)
     {
         Debug.Assert(!doInProgress);
 
@@ -296,8 +296,11 @@ public class TransactionManager
             throw new Exception("EndTransaction called without a corresponding BeginTransaction");
         else if (beginTransactionCalls == 0)
         {
-            FinalizeTransaction();
+            bool changed = FinalizeTransaction();
             disallowUndoThisTransaction = false;
+
+            if (changed && markModified)
+                Project.MarkModified();
         }
     }
 

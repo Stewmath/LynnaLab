@@ -582,7 +582,7 @@ namespace LynnaLib
 
             LoadAnnotations();
 
-            transactionManager.EndTransaction();
+            transactionManager.EndTransaction(false);
             log.Info("Finished loading project.");
             IsInConstructor = false;
         }
@@ -870,7 +870,7 @@ namespace LynnaLib
                         // Will add itself to data struct dictionary
                         var retval = new PngGfxStream(this, baseFilename);
 
-                        TransactionManager.EndTransaction();
+                        TransactionManager.EndTransaction(false);
 
                         return retval;
                     }
@@ -1716,7 +1716,7 @@ namespace LynnaLib
         /// </summary>
         public void EndTransaction()
         {
-            TransactionManager.EndTransaction();
+            TransactionManager.EndTransaction(true);
         }
 
         /// <summary>

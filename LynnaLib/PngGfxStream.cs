@@ -26,7 +26,7 @@ namespace LynnaLib
                 Project.TransactionManager.BeginTransaction("Reload PNG file", merge: false, disallowUndo: true);
                 LoadFromPngFile();
                 InvokeModifiedEvent(StreamModifiedEventArgs.All(this));
-                Project.TransactionManager.EndTransaction();
+                Project.TransactionManager.EndTransaction(false);
             };
         }
 
