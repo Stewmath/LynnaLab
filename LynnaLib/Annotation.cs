@@ -106,14 +106,22 @@ public partial class Project
     /// </summary>
     void SaveAnnotations()
     {
+        // This serializes each annotation individually instead of as a list, so that we can write
+        // them line-by-line to annotations.json to reduce the severity of merge conflicts.
         using (Stream stream = new FileStream(AnnotationsFile, FileMode.Create))
         {
-            List<AnnotationDTO> dtoList = Annotations.Select((a) => a.AsDTO()).ToList();
-            AnnotationFileDTO dto = new()
+            stream.Write("{\"AnnotationList\":["u8);
+            bool first = true;
+            foreach (Annotation ann in Annotations)
             {
-                AnnotationList = dtoList
-            };
-            JsonSerializer.Serialize<AnnotationFileDTO>(stream, dto, this.SerializerOptions);
+                if (!first)
+                    stream.Write(","u8);
+                stream.Write("\n"u8);
+                first = false;
+                AnnotationDTO dto = ann.AsDTO();
+                JsonSerializer.Serialize<AnnotationDTO>(stream, dto, this.SerializerOptions);
+            }
+            stream.Write(System.Text.Encoding.UTF8.GetBytes("\n]}"));
         }
     }
 }
