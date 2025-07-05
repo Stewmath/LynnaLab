@@ -35,23 +35,31 @@ fi
 # Building wla-dx instead of downloading release from github because github
 # version depends on some C runtime libraries that may not be installed by
 # default. Anyway doing it this way allows the script to work on linux too.
-heading "Cloning wla-dx..."
-git clone https://github.com/vhelin/wla-dx "$SETUP_DIR/wla-dx"
-cd "$SETUP_DIR/wla-dx"
-git -c advice.detachedHead=false checkout v10.6
+if [[ -e /usr/local/bin/wla-gb ]]; then
+	heading "Skipping wla-dx compilation (already in /usr/local/bin)."
+else
+	heading "Cloning wla-dx..."
+	git clone https://github.com/vhelin/wla-dx "$SETUP_DIR/wla-dx"
+	cd "$SETUP_DIR/wla-dx"
+	git -c advice.detachedHead=false checkout v10.6
 
-heading "Building wla-dx..."
-rm -R build 2>/dev/null
-mkdir build && cd build && cmake .. && cmake --build . --config Release -- wla-gb wlalink
+	heading "Building wla-dx..."
+	rm -R build 2>/dev/null
+	mkdir build && cd build && cmake .. -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && cmake --build . --config Release -- wla-gb wlalink
 
-heading "Copying wla-dx binaries to /usr/local/bin..."
-mkdir -p /usr/local/bin 2>/dev/null
-cp "$SETUP_DIR"/wla-dx/build/binaries/* /usr/local/bin/
+	heading "Copying wla-dx binaries to /usr/local/bin..."
+	mkdir -p /usr/local/bin 2>/dev/null
+	cp "$SETUP_DIR"/wla-dx/build/binaries/* /usr/local/bin/
+fi
 
-heading "Cloning oracles-disasm..."
-git clone https://github.com/stewmath/oracles-disasm "$SETUP_DIR/oracles-disasm"
+if [[ -e "$SETUP_DIR/oracles-disasm" ]]; then
+   heading "Skipping oracles-disasm git clone (folder exists already)."
+else
+	heading "Cloning oracles-disasm..."
+	git clone https://github.com/stewmath/oracles-disasm "$SETUP_DIR/oracles-disasm"
 
-heading "Checking out hack-base branch..."
-cd "$SETUP_DIR/oracles-disasm" && git checkout hack-base
+	heading "Checking out hack-base branch..."
+	cd "$SETUP_DIR/oracles-disasm" && git checkout hack-base
+fi
 
 heading "Dependencies and oracles-disasm downloaded, now you can run LynnaLab!"
