@@ -40,6 +40,14 @@ destination.
 
 ![](images/preview-warps.png)
 
+### Networking
+
+Collaborate with friends by starting a LynnaLab server and having clients connect to it, allowing
+multiple people to edit data simultaneously. See [setup
+instructions](https://wiki.zeldahacking.net/oracle/LynnaLab/Networking).
+
+![](images/preview-networking.png)
+
 ### ...And much more
 
 - Chest editing
