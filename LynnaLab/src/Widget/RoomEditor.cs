@@ -643,8 +643,10 @@ public class RoomEditor : Frame
             ImGui.TextWrapped($"Treasure {Room.Chest.TreasureID:X2} {Room.Chest.TreasureSubID:X2} doesn't exist.");
             if (ImGui.Button("Create new SubID"))
             {
+                Project.BeginTransaction("Create treasure SubID for chest");
                 TreasureObject newObj = Room.Chest.TreasureGroup.AddTreasureObjectSubid();
                 Room.Chest.TreasureSubID = newObj.SubID;
+                Project.EndTransaction();
             }
         }
         else
