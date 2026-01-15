@@ -294,11 +294,14 @@ namespace LynnaLib
             return -1;
         }
 
-        // Returns a list of ObjectGroups representing each main group (Main, Enemy, BeforeEvent,
-        // AfterEvent) plus "Shared" groups if they exist. This includes itself.
-        // In most cases this should only be called on the "Main" type. For other types, typically
-        // this returns a list containing only itself. Though it is technically possible for child
-        // groups to contain children themselves, it is not normal.
+	/// <summary>
+        /// Returns a list of ObjectGroups representing each main group (Main, Enemy, BeforeEvent,
+        /// AfterEvent) plus "Shared" groups if they exist. This includes itself.
+	///
+        /// In most cases this should only be called on the "Main" type. For other types, typically
+        /// this returns a list containing only itself. Though it is technically possible for child
+        /// groups to contain children themselves, it is not normal.
+        /// </summary>
         public IEnumerable<ObjectGroup> GetAllGroups()
         {
             return Children.Select((g) => g.Instance);

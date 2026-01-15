@@ -158,12 +158,13 @@ public class ObjectGroupEditor : Frame
 
                     if (box.ObjectGroup.GetGroupType() == ObjectGroupType.Shared)
                     {
-                        if (ImGui.Button("Delete this"))
+                        if (ImGui.Button("Collapse shared group"))
                         {
                             // Don't delete it while we're still rendering stuff - we're going to
                             // change objectBoxDict which we're currently iterating over!
                             groupToDelete = box.ObjectGroup;
                         }
+                        ImGuiX.TooltipOnHover("This is a shared object group, meaning other rooms could be using these objects.\n\nClick this button to copy the object group contents to 'Main Objects' and delete the reference to this shared object group.\n\nThis is highly recommended so that no other rooms are affected by changes to the object.");
                     }
 
                     if (++col == 1)
@@ -180,6 +181,10 @@ public class ObjectGroupEditor : Frame
 
         if (groupToDelete != null)
         {
+            foreach (var o in groupToDelete.GetObjects())
+            {
+                topObjectGroup.AddObjectClone(o);
+            }
             topObjectGroup.RemoveGroup(groupToDelete);
             // Modified handler should cause objectBoxDict to get regenerated
         }
