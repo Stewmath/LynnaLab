@@ -2,6 +2,9 @@ namespace LynnaLib.Tests;
 
 public class TestProject
 {
+    public static readonly string ProjectBasePath = "../../../../oracles-disasm";
+
+
     [Fact]
     public static void TestProject1()
     {
@@ -80,8 +83,7 @@ public class TestProject
 
     public static Project LoadProject(Game game)
     {
-        string dir = "../../../../oracles-disasm";
-        ProjectConfig config = ProjectConfig.Load(dir);
-        return new Project(dir, game, config);
+        ProjectConfig config = ProjectConfig.Load(ProjectBasePath);
+        return new Project(ProjectBasePath, game, config);
     }
 }

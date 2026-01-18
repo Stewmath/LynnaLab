@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LynnaLib\LynnaLib.csproj" />
+    <ProjectReference Include="..\SameBoySharp\SameBoySharp.csproj" />
   </ItemGroup>
 
 </Project>
