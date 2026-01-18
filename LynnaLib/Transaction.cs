@@ -622,7 +622,7 @@ public class TransactionNode
 }
 
 /// <summary>
-/// Serializaiton for TransactionNode class
+/// Serialization for TransactionNode class
 /// </summary>
 public class TransactionNodeDTO
 {
