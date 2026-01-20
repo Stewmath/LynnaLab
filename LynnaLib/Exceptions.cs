@@ -102,4 +102,14 @@ namespace LynnaLib
         public NetworkException(string s) : base(s) { }
         public NetworkException(Exception e) : base(e.Message) { }
     }
+
+    /// <summary>
+    /// Exceptions that occur while running the SameBoy emulator
+    /// </summary>
+    public class EmulatorException : Exception
+    {
+        public EmulatorException() : base() { }
+        public EmulatorException(string s) : base(s) { }
+        public EmulatorException(Exception e) : base(e.Message) { }
+    }
 }

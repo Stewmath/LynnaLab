@@ -16,6 +16,9 @@ public class TestSameBoy
 
         gb.SetLogCallback((s) => Console.WriteLine("SAMEBOY: " + s));
 
+        // We specified a CGB model
+        Assert.True(gb.IsCgb());
+
         gb.LoadRom(TestProject.ProjectBasePath + "/seasons.gbc");
 
         // Read the ROM successfully
@@ -32,7 +35,26 @@ public class TestSameBoy
         // load boot ROM prior to running anything
         gb.LoadBootRom("cgb_boot.bin");
 
+        // Memory access
+        Assert.Equal(0x31, gb.SafeReadMemory(0));
+
         gb.Dispose();
+    }
+
+    [Fact]
+    public static async Task TestOraclesEmulator()
+    {
+        OraclesEmulator emu = new OraclesEmulator(TestProject.ProjectBasePath + "/ages.gbc");
+        emu.GB.SetLogCallback((s) => Console.WriteLine("SAMEBOY: " + s));
+
+        // Symbols are working
+        AssertEval(emu.GB, "begin", 0x150, 0x00);
+
+        Assert.Equal(0xfe, emu.GB.SafeReadMemory(0xff50));
+        emu.RunBootRom();
+        Assert.Equal(0x100, emu.GB.Registers.PC);
+
+        emu.Dispose();
     }
 
 

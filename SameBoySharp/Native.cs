@@ -6,13 +6,27 @@ using System.Text;
 
 namespace SameBoySharp;
 
-internal static class Native
+internal unsafe static class Native
 {
     private const string DLL = "sameboy"; // sameboy.dll / libsameboy.so
 
     // ================================================================================
+    // Structs
+    // ================================================================================
+
+    internal struct GB_registers_t
+    {
+        internal ushort af, bc, de, hl, sp, pc;
+    }
+
+    // ================================================================================
     // Callbacks
     // ================================================================================
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void GB_vblank_callback_t(
+        IntPtr gb,
+        SameBoy.VBlankType type);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void GB_log_callback_t(
@@ -58,6 +72,12 @@ internal static class Native
     internal static extern void GB_load_rom_from_buffer(IntPtr gb, byte[] buffer, UIntPtr size);
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern bool GB_is_cgb(IntPtr gb);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void GB_set_rendering_disabled(IntPtr gb, byte disabled);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void GB_set_turbo_mode(IntPtr gb, byte on, byte no_frame_skip);
 
     // ================================================================================
@@ -66,6 +86,9 @@ internal static class Native
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr GB_get_pixels_output(IntPtr gb);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void GB_set_vblank_callback(IntPtr gb, GB_vblank_callback_t callback);
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void GB_set_border_mode(
@@ -102,10 +125,14 @@ internal static class Native
     // ================================================================================
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern GB_registers_t* GB_get_registers(IntPtr gb);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint GB_get_rom_crc32(IntPtr gb);
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
-    internal static extern void GB_get_rom_title(
-        IntPtr gb,
-        StringBuilder title);
+    internal static extern void GB_get_rom_title(IntPtr gb, StringBuilder title);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern byte GB_safe_read_memory(IntPtr gb, ushort addr);
 }

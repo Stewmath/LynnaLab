@@ -81,4 +81,29 @@ public partial class SameBoy
         GB_LOG_DASHED_UNDERLINE = 2,
         GB_LOG_UNDERLINE = 4,
     }
+
+    public enum VBlankType : int
+    {
+        GB_VBLANK_TYPE_NORMAL_FRAME,
+        GB_VBLANK_TYPE_LCD_OFF,
+        GB_VBLANK_TYPE_ARTIFICIAL,
+        GB_VBLANK_TYPE_REPEAT
+    }
+
+
+    public unsafe class RegisterList
+    {
+        internal RegisterList(Native.GB_registers_t* registers)
+        {
+            this.registers = registers;
+        }
+
+        Native.GB_registers_t* registers;
+
+
+        public ushort PC {
+            get { return registers->pc; }
+            set { registers->pc = value; }
+        }
+    }
 }
