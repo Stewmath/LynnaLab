@@ -210,7 +210,17 @@ public class VeldridBackend
         SDLHelper.ShowOpenFolderDialog(window, location, callback);
     }
 
-    #if RENDERDOC
+    public void BeginTextInput()
+    {
+        window.BeginTextInput();
+    }
+
+    public void StopTextInput()
+    {
+        window.StopTextInput();
+    }
+
+#if RENDERDOC
     public void TriggerRenderDocCapture()
     {
         rd.TriggerCapture();
@@ -230,7 +240,7 @@ public class VeldridBackend
     {
         rd.EndFrameCapture();
     }
-    #endif
+#endif
 
 
     // ================================================================================

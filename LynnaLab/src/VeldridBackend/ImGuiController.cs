@@ -56,6 +56,8 @@ public class ImGuiController : IDisposable
     readonly List<IDisposable> ownedResources = new();
     int lastAssignedID = 100;
 
+    bool textInputActive = false;
+
 
     struct FragGlobalsStruct
     {
@@ -564,6 +566,16 @@ public class ImGuiController : IDisposable
             {
                 io.AddKeyEvent(imguikey, keyEvent.Down);
             }
+        }
+
+        if (io.WantTextInput != textInputActive)
+        {
+            if (io.WantTextInput)
+                Backend.BeginTextInput();
+            else
+                Backend.StopTextInput();
+
+            textInputActive = io.WantTextInput;
         }
     }
 

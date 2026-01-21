@@ -90,6 +90,31 @@ public partial class SameBoy
         GB_VBLANK_TYPE_REPEAT
     }
 
+    public enum GBKey : int
+    {
+        GB_KEY_RIGHT,
+        GB_KEY_LEFT,
+        GB_KEY_UP,
+        GB_KEY_DOWN,
+        GB_KEY_A,
+        GB_KEY_B,
+        GB_KEY_SELECT,
+        GB_KEY_START,
+        GB_KEY_MAX
+    }
+
+    public enum GBKeyMask : int
+    {
+        GB_KEY_RIGHT_MASK =  1 << GBKey.GB_KEY_RIGHT,
+        GB_KEY_LEFT_MASK =   1 << GBKey.GB_KEY_LEFT,
+        GB_KEY_UP_MASK =     1 << GBKey.GB_KEY_UP,
+        GB_KEY_DOWN_MASK =   1 << GBKey.GB_KEY_DOWN,
+        GB_KEY_A_MASK =      1 << GBKey.GB_KEY_A,
+        GB_KEY_B_MASK =      1 << GBKey.GB_KEY_B,
+        GB_KEY_SELECT_MASK = 1 << GBKey.GB_KEY_SELECT,
+        GB_KEY_START_MASK =  1 << GBKey.GB_KEY_START,
+    }
+
 
     public unsafe class RegisterList
     {

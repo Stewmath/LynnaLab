@@ -124,6 +124,13 @@ internal unsafe static class Native
     internal static extern void GB_apu_set_sample_callback(IntPtr gb, GB_sample_callback_t? callback);
 
     // ================================================================================
+    // Player controls
+    // ================================================================================
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void GB_set_key_mask(IntPtr gb, SameBoy.GBKeyMask mask);
+
+    // ================================================================================
     // Debugger
     // ================================================================================
 

@@ -1,12 +1,13 @@
 #nullable enable
 
 using System.Runtime.InteropServices;
+using SameBoySharp;
 using SDL;
 
 namespace LynnaLab;
 
 /// <summary>
-/// Helper class to render an emulator instance in ImGui. Also deals with audio.
+/// Helper class to render an emulator instance in ImGui. Also deals with audio and input.
 /// </summary>
 public unsafe class EmulatorRenderer : Frame, IDisposable
 {
@@ -81,6 +82,46 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     public override void Render()
     {
         ImGuiX.DrawImage(screenTexture, scale);
+
+        // Handle input
+        if (ImGui.IsWindowFocused())
+        {
+            (ImGuiKey, SameBoy.GBKeyMask)[] keyList = [
+                (ImGuiKey.RightArrow, SameBoy.GBKeyMask.GB_KEY_RIGHT_MASK),
+                (ImGuiKey.LeftArrow, SameBoy.GBKeyMask.GB_KEY_LEFT_MASK),
+                (ImGuiKey.UpArrow, SameBoy.GBKeyMask.GB_KEY_UP_MASK),
+                (ImGuiKey.DownArrow, SameBoy.GBKeyMask.GB_KEY_DOWN_MASK),
+                (ImGuiKey.Z, SameBoy.GBKeyMask.GB_KEY_A_MASK),
+                (ImGuiKey.X, SameBoy.GBKeyMask.GB_KEY_B_MASK),
+                (ImGuiKey.RightShift, SameBoy.GBKeyMask.GB_KEY_SELECT_MASK),
+                (ImGuiKey.Enter, SameBoy.GBKeyMask.GB_KEY_START_MASK),
+
+                // Dvorak weirdo bindings
+                (ImGuiKey.E, SameBoy.GBKeyMask.GB_KEY_RIGHT_MASK),
+                (ImGuiKey.A, SameBoy.GBKeyMask.GB_KEY_LEFT_MASK),
+                (ImGuiKey.Comma, SameBoy.GBKeyMask.GB_KEY_UP_MASK),
+                (ImGuiKey.O, SameBoy.GBKeyMask.GB_KEY_DOWN_MASK),
+                (ImGuiKey.C, SameBoy.GBKeyMask.GB_KEY_A_MASK),
+                (ImGuiKey.H, SameBoy.GBKeyMask.GB_KEY_B_MASK),
+            ];
+
+            SameBoy.GBKeyMask mask = 0;
+
+            foreach (var (imKey, gbKey) in keyList)
+            {
+                if (ImGui.IsKeyDown(imKey))
+                    mask |= gbKey;
+            }
+            emu.GB.SetKeyMask(mask);
+
+            bool turbo = ImGui.IsKeyDown(ImGuiKey.Space);
+            emu.GB.SetTurboMode(turbo);
+            if (turbo)
+            {
+                // Don't let audio stream fall behind
+                SDL3.SDL_ClearAudioStream(audioStream);
+            }
+        }
     }
 
     public void Dispose()

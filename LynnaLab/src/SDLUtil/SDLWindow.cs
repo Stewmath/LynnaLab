@@ -32,8 +32,6 @@ public unsafe class SDLWindow
         if (!SDL_ShowWindow(Handle))
             throw new Exception("SDL_ShowWindow error");
 
-        SDL_StartTextInput(Handle);
-
         UpdateSize();
 
         Exists = true;
@@ -173,6 +171,16 @@ public unsafe class SDLWindow
             return;
         SDL_SetWindowIcon(Handle, surface);
         SDL_DestroySurface(surface);
+    }
+
+    public void BeginTextInput()
+    {
+        SDL_StartTextInput(Handle);
+    }
+
+    public void StopTextInput()
+    {
+        SDL_StopTextInput(Handle);
     }
 
     // ================================================================================
