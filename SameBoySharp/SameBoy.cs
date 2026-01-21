@@ -8,8 +8,12 @@ namespace SameBoySharp;
 /// <summary>
 /// Represents a SameBoy instance.
 ///
-/// In order to use this class, you must call SetPixelsOutput() and SetRgbEncodeCallback() (or just
-/// SetRenderingDisabled()) before calling Run() or RunFrame(), otherwise a segfault will occur.
+/// libsameboy has some particularities where using it the wrong way can cause segfaults. In a
+/// nutshell:
+///
+/// - You must call SetPixelsOutput() and SetRgbEncodeCallback() (or just SetRenderingDisabled())
+///   before calling Run() or RunFrame().
+/// - If you're using audio, you must call ApuSetSampleCallback() before SetSampleRate().
 ///
 /// You should also load a BIOS first, unless you want to set up the initial hardware state
 /// manually.
@@ -32,6 +36,7 @@ public unsafe partial class SameBoy : IDisposable
     Native.GB_log_callback_t? _logCallback;
     Native.GB_vblank_callback_t? _vblankCallback;
     Native.GB_rgb_encode_callback_t? _rgbEncodeCallback;
+    Native.GB_sample_callback_t? _sampleCallback;
 
     Native.GB_registers_t* _native_registers = null;
     RegisterList? _managed_registers = null;
@@ -148,13 +153,55 @@ public unsafe partial class SameBoy : IDisposable
         if (action != null)
         {
             _vblankCallback = (gb, type) => action(type);
-            Native.GB_set_vblank_callback(_gb, _vblankCallback);
         }
         else
         {
             _vblankCallback = null;
-            Native.GB_set_vblank_callback(_gb, null);
         }
+
+        Native.GB_set_vblank_callback(_gb, _vblankCallback);
+    }
+
+    // ================================================================================
+    // Audio
+    // ================================================================================
+
+    public uint GetSampleRate()
+    {
+        VerifyNotDisposed();
+
+        return Native.GB_get_sample_rate(_gb);
+    }
+
+    public void SetSampleRate(uint rate)
+    {
+        VerifyNotDisposed();
+
+#if DEBUG
+        if (_sampleCallback == null && rate != 0)
+            throw new Exception("SameBoy: Must call ApuSetSampleCallback() before SetSampleRate().");
+#endif
+
+        Native.GB_set_sample_rate(_gb, rate);
+    }
+
+    /// <summary>
+    /// Callback takes two parameters: left sample, and right sample.
+    /// </summary>
+    public void ApuSetSampleCallback(Action<GB_sample_t>? action)
+    {
+        VerifyNotDisposed();
+
+        if (action != null)
+        {
+            _sampleCallback = (gb, sample) => action(*sample);
+        }
+        else
+        {
+            _sampleCallback = null;
+        }
+
+        Native.GB_apu_set_sample_callback(_gb, _sampleCallback);
     }
 
     // ================================================================================

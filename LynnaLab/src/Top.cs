@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using SDL;
 using Backend = VeldridBackend.VeldridBackend;
 
 namespace LynnaLab;
@@ -30,6 +31,8 @@ public static class Top
     {
         string versionString = Helper.GetVersionString();
         backend = new VeldridBackend.VeldridBackend("LynnaLab", versionString);
+
+        AudioAvailable = InitAudio();
 
         ImageDir = Path.GetDirectoryName(System.AppContext.BaseDirectory) + "/Images/";
         FontDir = Path.GetDirectoryName(System.AppContext.BaseDirectory) + "/Fonts/";
@@ -136,6 +139,8 @@ public static class Top
     // ================================================================================
     // Properties
     // ================================================================================
+
+    public static bool AudioAvailable { get; private set; }
 
     public static Backend Backend { get { return backend; } }
     public static GlobalConfig GlobalConfig { get; private set; }
@@ -522,6 +527,15 @@ public static class Top
         fontDict[name] = font;
     }
 
+    static bool InitAudio()
+    {
+        bool retval = SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO);
+
+        if (!retval)
+            log.Warn($"SDL audio failed to intiialize: {SDL3.SDL_GetError()}.");
+
+        return retval;
+    }
 
     // ================================================================================
     // Nested structs

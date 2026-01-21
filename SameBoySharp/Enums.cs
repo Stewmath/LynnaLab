@@ -106,4 +106,9 @@ public partial class SameBoy
             set { registers->pc = value; }
         }
     }
+
+    public struct GB_sample_t
+    {
+        public short left, right;
+    }
 }

@@ -52,7 +52,7 @@ public unsafe static class Startup
         {
             SDL_ResetHint(SDL_HINT_VIDEO_DRIVER);
             if (!(videoInitialized = SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_VIDEO)))
-                throw new Exception($"SDL failed to initialize: {SDL_GetError()}.");
+                throw new Exception($"SDL video failed to initialize: {SDL_GetError()}.");
         }
 
         SDL_WindowFlags flags =

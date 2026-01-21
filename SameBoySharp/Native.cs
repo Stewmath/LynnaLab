@@ -36,6 +36,11 @@ internal unsafe static class Native
         SameBoy.VBlankType type);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate void GB_sample_callback_t(
+        IntPtr gb,
+        SameBoy.GB_sample_t* sample);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void GB_log_callback_t(
         IntPtr gb,
         IntPtr message,
@@ -104,6 +109,19 @@ internal unsafe static class Native
     internal static extern void GB_set_border_mode(
         IntPtr gb,
         SameBoy.BorderMode mode);
+
+    // ================================================================================
+    // Audio
+    // ================================================================================
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern uint GB_get_sample_rate(IntPtr gb);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void GB_set_sample_rate(IntPtr gb, uint rate);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void GB_apu_set_sample_callback(IntPtr gb, GB_sample_callback_t? callback);
 
     // ================================================================================
     // Debugger

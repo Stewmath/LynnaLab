@@ -1,7 +1,6 @@
 #nullable enable
 
 using System.Threading;
-using SDL;
 
 namespace LynnaLab;
 
