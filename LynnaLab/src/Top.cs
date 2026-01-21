@@ -93,6 +93,10 @@ public static class Top
             else
                 Top.OpenProject(path, game);
         }
+
+        emulator = new OraclesEmulator("../oracles-disasm/ages.gbc");
+        emulatorFrame = new EmulatorDebugger(emulator);
+        emulatorFrame.Active = true;
     }
 
     // ================================================================================
@@ -125,6 +129,9 @@ public static class Top
     static ConcurrentQueue<Action> actionsForNextFrame = new();
 
     static SettingsDialog settingsDialog;
+    static OraclesEmulator emulator;
+    static EmulatorDebugger emulatorFrame;
+
 
     // ================================================================================
     // Properties
@@ -277,6 +284,8 @@ public static class Top
             Workspace.Render(deltaTime);
             workspace2?.Render(deltaTime);
         }
+
+        emulatorFrame.RenderAsWindow("Emulator Frame");
 
         ImGui.End(); // Dockspace window
 

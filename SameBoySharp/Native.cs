@@ -24,6 +24,13 @@ internal unsafe static class Native
     // ================================================================================
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate uint GB_rgb_encode_callback_t(
+        IntPtr gb,
+        byte r,
+        byte g,
+        byte b);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void GB_vblank_callback_t(
         IntPtr gb,
         SameBoy.VBlankType type);
@@ -85,10 +92,13 @@ internal unsafe static class Native
     // ================================================================================
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
-    internal static extern IntPtr GB_get_pixels_output(IntPtr gb);
+    internal static extern void GB_set_pixels_output(IntPtr gb, IntPtr output);
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
-    internal static extern void GB_set_vblank_callback(IntPtr gb, GB_vblank_callback_t callback);
+    internal static extern void GB_set_rgb_encode_callback(IntPtr gb, GB_rgb_encode_callback_t callback);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void GB_set_vblank_callback(IntPtr gb, GB_vblank_callback_t? callback);
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void GB_set_border_mode(

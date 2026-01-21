@@ -2,6 +2,7 @@
 namespace LynnaLib;
 
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using SameBoySharp;
 
@@ -17,7 +18,18 @@ public class OraclesEmulator : IDisposable
         gb.LoadBootRom("/usr/share/games/sameboy/cgb_boot.bin");
         gb.LoadRom(romPath);
         gb.DebuggerLoadSymbolFile(Path.ChangeExtension(romPath, ".sym"));
-        gb.SetRenderingDisabled(true);
+
+        gb.SetRgbEncodeCallback(Color.RgbToUInt);
+
+        pixelData = Marshal.AllocHGlobal(160 * 144 * 4);
+
+        // Fill the pixel data with black to start
+        for (int i = 0; i < 160 * 144 * 4; i++)
+        {
+            Marshal.WriteByte(pixelData + i, 0);
+        }
+
+        gb.SetPixelsOutput(pixelData);
     }
 
     // ================================================================================
@@ -25,12 +37,15 @@ public class OraclesEmulator : IDisposable
     // ================================================================================
 
     SameBoy gb;
+    IntPtr pixelData;
 
     // ================================================================================
     // Properties
     // ================================================================================
 
     public SameBoy GB { get { return gb; } }
+
+    public IntPtr PixelData { get { return pixelData; }}
 
     // ================================================================================
     // Public methods
@@ -59,5 +74,8 @@ public class OraclesEmulator : IDisposable
     public void Dispose()
     {
         gb.Dispose();
+        gb = null!;
+        Marshal.FreeHGlobal(pixelData);
+        pixelData = IntPtr.Zero;
     }
 }

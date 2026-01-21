@@ -8,8 +8,8 @@ namespace SameBoySharp;
 /// <summary>
 /// Represents a SameBoy instance.
 ///
-/// In order to use this class, you must call SetPixelsOutput() or SetRenderingDisabled() before
-/// calling Run() or RunFrame(), otherwise a segfault will occur.
+/// In order to use this class, you must call SetPixelsOutput() and SetRgbEncodeCallback() (or just
+/// SetRenderingDisabled()) before calling Run() or RunFrame(), otherwise a segfault will occur.
 ///
 /// You should also load a BIOS first, unless you want to set up the initial hardware state
 /// manually.
@@ -31,6 +31,7 @@ public unsafe partial class SameBoy : IDisposable
     IntPtr _gb;
     Native.GB_log_callback_t? _logCallback;
     Native.GB_vblank_callback_t? _vblankCallback;
+    Native.GB_rgb_encode_callback_t? _rgbEncodeCallback;
 
     Native.GB_registers_t* _native_registers = null;
     RegisterList? _managed_registers = null;
@@ -62,11 +63,7 @@ public unsafe partial class SameBoy : IDisposable
     public uint Run()
     {
         VerifyNotDisposed();
-
-#if DEBUG
-        if (!(renderingDisabled || pixelOutputAssigned))
-            throw new Exception("SameBoy: Cannot call Run() before setting render output");
-#endif
+        VerifyRenderTargetValid();
 
         return Native.GB_run(_gb);
     }
@@ -74,11 +71,7 @@ public unsafe partial class SameBoy : IDisposable
     public ulong RunFrame()
     {
         VerifyNotDisposed();
-
-#if DEBUG
-        if (!(renderingDisabled || pixelOutputAssigned))
-            throw new Exception("SameBoy: Cannot call RunFrame() before setting render output");
-#endif
+        VerifyRenderTargetValid();
 
         return Native.GB_run_frame(_gb);
     }
@@ -126,20 +119,42 @@ public unsafe partial class SameBoy : IDisposable
     // Video
     // ================================================================================
 
-    public IntPtr GetFrameBuffer()
+    /// <summary>
+    /// You must pass in a pointer to unmanaged memory, ie. allocated with Marshal.AllocHGlobal,
+    /// which is at least 160x144x4 bytes large (more if there is a SGB border).
+    /// </summary>
+    public unsafe void SetPixelsOutput(IntPtr output)
     {
         VerifyNotDisposed();
 
-        return Native.GB_get_pixels_output(_gb);
+        Native.GB_set_pixels_output(_gb, output);
+
+        pixelOutputAssigned = output != IntPtr.Zero;
     }
 
-    public void SetVBlankCallback(Action<VBlankType> action)
+    public void SetRgbEncodeCallback(Func<byte, byte, byte, uint> callback)
     {
         VerifyNotDisposed();
 
-        _vblankCallback = (gb, type) => action(type);
+        _rgbEncodeCallback = (gb, r, g, b) => callback(r, g, b);
 
-        Native.GB_set_vblank_callback(_gb, _vblankCallback);
+        Native.GB_set_rgb_encode_callback(_gb, _rgbEncodeCallback);
+    }
+
+    public void SetVBlankCallback(Action<VBlankType>? action)
+    {
+        VerifyNotDisposed();
+
+        if (action != null)
+        {
+            _vblankCallback = (gb, type) => action(type);
+            Native.GB_set_vblank_callback(_gb, _vblankCallback);
+        }
+        else
+        {
+            _vblankCallback = null;
+            Native.GB_set_vblank_callback(_gb, null);
+        }
     }
 
     // ================================================================================
@@ -255,6 +270,14 @@ public unsafe partial class SameBoy : IDisposable
 #if DEBUG
         if (_gb == IntPtr.Zero)
             throw new Exception("SameBoySharp: Tried to use a SameBoy instance after disposing it");
+#endif
+    }
+
+    void VerifyRenderTargetValid()
+    {
+#if DEBUG
+        if (!(renderingDisabled || (pixelOutputAssigned && _rgbEncodeCallback != null)))
+            throw new Exception("SameBoy: Cannot call Run() before setting render output");
 #endif
     }
 }

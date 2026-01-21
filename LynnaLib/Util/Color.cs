@@ -177,5 +177,19 @@ namespace LynnaLib
         public static readonly Color Purple = FromRgb(0x80, 0x00, 0x80);
         public static readonly Color White = FromRgb(0xff, 0xff, 0xff);
         public static readonly Color Yellow = FromRgb(0xff, 0xff, 0x00);
+
+        // ================================================================================
+        // Static methods
+        // ================================================================================
+
+        public static uint RgbaToUInt(byte r, byte g, byte b, byte a)
+        {
+            return (uint)(r | (g << 8) | (b << 16) | (a << 24));
+        }
+
+        public static uint RgbToUInt(byte r, byte g, byte b)
+        {
+            return RgbaToUInt(r, g, b, 255);
+        }
     }
 }

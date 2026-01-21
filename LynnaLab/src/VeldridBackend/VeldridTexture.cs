@@ -250,6 +250,15 @@ public class VeldridRgbaTexture : VeldridTextureBase
     }
 
     /// <summary>
+    /// Draw pixel data from a pointer to unmanaged (or at least fixed) memory onto the texture.
+    /// </summary>
+    public unsafe void CopyPixels(IntPtr ptr, uint width, uint height, uint bytesPerPixel)
+    {
+        gd.UpdateTexture(texture, ptr, width * height * bytesPerPixel, 0, 0, 0,
+                         width, height, 1, 0, 0);
+    }
+
+    /// <summary>
     /// Capture the current state of the image to an ImageSharp image. Must have set staging=true in
     /// the constructor.
     /// </summary>
