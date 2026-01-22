@@ -88,6 +88,16 @@ public unsafe partial class SameBoy : IDisposable
             throw new Exception($"Error {error} loading boot ROM: " + path);
     }
 
+    public unsafe void LoadBootRomFromBuffer(Span<byte> buffer)
+    {
+        VerifyNotDisposed();
+
+        fixed (byte* ptr = buffer)
+        {
+            Native.GB_load_boot_rom_from_buffer(_gb, (IntPtr)ptr, (nuint)buffer.Length);
+        }
+    }
+
     public void LoadRom(string path)
     {
         VerifyNotDisposed();

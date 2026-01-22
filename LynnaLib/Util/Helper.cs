@@ -96,6 +96,14 @@ namespace Util
             return data;
         }
 
+        public static byte[] ReadResourceFileBytes(string name)
+        {
+            Stream stream = GetResourceStream(name, Assembly.GetCallingAssembly());
+            byte[] data = new byte[stream.Length];
+            stream.Read(data, 0, (int)stream.Length);
+            return data;
+        }
+
         /// <summary>
         /// Returns a version string representing the current git commit.
         /// </summary>

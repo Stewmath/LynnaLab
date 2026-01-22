@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="version.txt" />
+    <EmbeddedResource Include="resource/cgb_boot_fast.bin" />
   </ItemGroup>
 
   <ItemGroup>

@@ -19,8 +19,6 @@ public class TestEmulator
         AssertEval(emu.GB, "begin", 0x150, 0x00);
 
         Assert.Equal(0xfe, emu.GB.SafeReadMemory(0xff50));
-        emu.RunBootRom();
-        Assert.Equal(0x100, emu.GB.Registers.PC);
 
         emu.Dispose();
     }

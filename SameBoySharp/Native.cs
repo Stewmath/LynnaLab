@@ -68,6 +68,9 @@ internal unsafe static class Native
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int GB_load_boot_rom(IntPtr gb, string path);
 
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int GB_load_boot_rom_from_buffer(IntPtr gb, IntPtr buffer, nuint size);
+
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     internal static extern int GB_load_rom(IntPtr gb, string path);
 
