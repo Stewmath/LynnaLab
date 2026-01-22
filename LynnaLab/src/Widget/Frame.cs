@@ -29,6 +29,8 @@ public abstract class Frame
     // TODO: Should probably put dockable rendering into a separate class - this is messy.
     Vector2 lastRequestedWindowSize = Vector2.Zero;
 
+    List<(ImGuiStyleVar, Vector2)> styleVars = new();
+
     // ================================================================================
     // Events
     // ================================================================================
@@ -109,6 +111,14 @@ public abstract class Frame
                 ImGui.SetNextWindowSize(lastWindowSize * factor);
             }
 
+            int numStyleVars = 0;
+
+            foreach (var (variable, value) in styleVars)
+            {
+                ImGui.PushStyleVar(variable, value);
+                numStyleVars++;
+            }
+
             if (ImGui.Begin($"{WindowID}##{extraIdentifier}", ref active, WindowFlags))
             {
                 Render();
@@ -117,6 +127,9 @@ public abstract class Frame
                 lastScaleFactor = ImGuiX.ScaleUnit;
             }
             ImGui.End();
+
+            if (numStyleVars != 0)
+                ImGui.PopStyleVar(numStyleVars);
         }
 
         grabFocus = false;
@@ -168,6 +181,14 @@ public abstract class Frame
     public void Focus()
     {
         grabFocus = true;
+    }
+
+    /// <summary>
+    /// Use this for window style vars that must be applied before ImGui.Begin().
+    /// </summary>
+    public void AddStyleVar(ImGuiStyleVar var, Vector2 value)
+    {
+        styleVars.Add((var, value));
     }
 
     /// <summary>

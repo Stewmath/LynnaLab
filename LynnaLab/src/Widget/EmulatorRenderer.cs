@@ -29,7 +29,8 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
             screenTexture.CopyPixels(emu.PixelData, 160, 144, 4);
         });
 
-        WindowFlags |= ImGuiWindowFlags.NoResize;
+        base.WindowFlags |= ImGuiWindowFlags.AlwaysAutoResize;
+        base.AddStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 
         if (Top.AudioAvailable)
             SetupAudio();
