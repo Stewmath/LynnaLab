@@ -24,6 +24,7 @@ public abstract class Frame
     // For automatic size adjustment when display scale changes (windows only)
     Vector2 lastWindowSize = Vector2.Zero;
     float lastScaleFactor = 0.0f;
+    bool isDocked = false;
 
     // Used by dockable frames only.
     // TODO: Should probably put dockable rendering into a separate class - this is messy.
@@ -115,7 +116,15 @@ public abstract class Frame
 
             foreach (var (variable, value) in styleVars)
             {
-                ImGui.PushStyleVar(variable, value);
+                var setValue = value;
+
+                // Workaround for docked windows eating into tab bar when window padding is zero
+                if (variable == ImGuiStyleVar.WindowPadding && value.Y == 0 && isDocked)
+                {
+                    setValue.Y = ImGuiX.Unit(3);
+                }
+
+                ImGui.PushStyleVar(variable, setValue);
                 numStyleVars++;
             }
 
@@ -125,6 +134,7 @@ public abstract class Frame
 
                 lastWindowSize = ImGui.GetWindowSize();
                 lastScaleFactor = ImGuiX.ScaleUnit;
+                isDocked = ImGui.GetWindowDockID() != 0;
             }
             ImGui.End();
 

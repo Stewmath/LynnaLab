@@ -10,7 +10,6 @@ public class EmulatorDebugger : Frame
     {
         this.emu = emulator;
         emu.GB.SetLogCallback((s) => text += s);
-        drawer = new EmulatorRenderer(emulator, 4);
 
         //emu.GB.SetTurboMode(true);
         new Thread(() => { while (true) emu.GB.Run(); }).Start();
@@ -20,13 +19,9 @@ public class EmulatorDebugger : Frame
     string text = "";
     string currentLine = "";
     int jumpToBottom = 0;
-    EmulatorRenderer drawer;
 
     public override void Render()
     {
-        drawer.RenderAsWindow("Emulator");
-        drawer.Active = this.Active;
-
         var size = new Vector2(0.0f, ImGui.GetWindowSize().Y * 0.8f);
         ImGui.BeginChild("CHILD", size, 0, ImGuiWindowFlags.AlwaysVerticalScrollbar);
         foreach (string l in text.Split('\n'))
