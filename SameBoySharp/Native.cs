@@ -11,15 +11,6 @@ internal unsafe static class Native
     private const string DLL = "sameboy"; // sameboy.dll / libsameboy.so
 
     // ================================================================================
-    // Structs
-    // ================================================================================
-
-    internal struct GB_registers_t
-    {
-        internal ushort af, bc, de, hl, sp, pc;
-    }
-
-    // ================================================================================
     // Callbacks
     // ================================================================================
 
@@ -160,7 +151,7 @@ internal unsafe static class Native
     // ================================================================================
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
-    internal static extern GB_registers_t* GB_get_registers(IntPtr gb);
+    internal static extern SameBoy.GB_registers_t* GB_get_registers(IntPtr gb);
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
     internal static extern uint GB_get_rom_crc32(IntPtr gb);
@@ -170,4 +161,7 @@ internal unsafe static class Native
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
     internal static extern byte GB_safe_read_memory(IntPtr gb, ushort addr);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void GB_write_memory(IntPtr gb, ushort addr, byte value);
 }

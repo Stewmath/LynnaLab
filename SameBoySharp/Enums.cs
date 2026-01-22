@@ -1,5 +1,7 @@
 // Enums whose values should match up with corresponding enums in libsameboy.
 
+using System.Runtime.InteropServices;
+
 namespace SameBoySharp;
 
 public partial class SameBoy
@@ -116,24 +118,176 @@ public partial class SameBoy
     }
 
 
-    public unsafe class RegisterList
-    {
-        internal RegisterList(Native.GB_registers_t* registers)
-        {
-            this.registers = registers;
-        }
-
-        Native.GB_registers_t* registers;
-
-
-        public ushort PC {
-            get { return registers->pc; }
-            set { registers->pc = value; }
-        }
-    }
+    // ================================================================================
+    // Structs
+    // ================================================================================
 
     public struct GB_sample_t
     {
         public short left, right;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct GB_registers_t
+    {
+        [FieldOffset(0)] public ushort af;
+        [FieldOffset(2)] public ushort bc;
+        [FieldOffset(4)] public ushort de;
+        [FieldOffset(6)] public ushort hl;
+        [FieldOffset(8)] public ushort sp;
+        [FieldOffset(10)] public ushort pc;
+
+        [FieldOffset(0)] public byte f;
+        [FieldOffset(1)] public byte a;
+        [FieldOffset(2)] public byte c;
+        [FieldOffset(3)] public byte b;
+        [FieldOffset(4)] public byte e;
+        [FieldOffset(5)] public byte d;
+        [FieldOffset(6)] public byte l;
+        [FieldOffset(7)] public byte h;
+    }
+
+    /// <summary>
+    /// A wrapper around register accesses. As a ref struct, this never leaves the stack, so using
+    /// this is just as efficient as passing a pointer around, without needing any unsafe pointer
+    /// usage. Memory safety is guaranteed in the debug configuration.
+    /// </summary>
+    public readonly unsafe ref struct RegisterRef
+    {
+        internal RegisterRef(SameBoy gb, SameBoy.GB_registers_t* registers)
+        {
+#if DEBUG
+            this.gb = gb;
+#endif
+            this.registers = ref *registers;
+        }
+
+#if DEBUG
+        readonly SameBoy gb;
+#endif
+
+        readonly ref SameBoy.GB_registers_t registers;
+
+        public ref ushort AF
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.af;
+            }
+        }
+        public ref ushort BC
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.bc;
+            }
+        }
+        public ref ushort DE
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.de;
+            }
+        }
+        public ref ushort HL
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.hl;
+            }
+        }
+        public ref ushort SP
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.sp;
+            }
+        }
+        public ref ushort PC
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.pc;
+            }
+        }
+
+        public ref byte A
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.a;
+            }
+        }
+        public ref byte F
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.f;
+            }
+        }
+        public ref byte B
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.b;
+            }
+        }
+        public ref byte C
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.c;
+            }
+        }
+        public ref byte D
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.d;
+            }
+        }
+        public ref byte E
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.e;
+            }
+        }
+        public ref byte H
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.h;
+            }
+        }
+        public ref byte L
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return ref registers.l;
+            }
+        }
+
+
+        void VerifyNotDisposed()
+        {
+#if DEBUG
+            gb.VerifyNotDisposed();
+#endif
+        }
     }
 }

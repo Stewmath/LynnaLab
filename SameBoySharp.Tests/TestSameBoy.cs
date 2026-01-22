@@ -37,11 +37,37 @@ public class TestSameBoy
         gb.DebuggerLoadSymbolFile(Path.ChangeExtension(TestRomNibbles, ".sym"));
         AssertEval(gb, "init", 0x21f, 0x00);
 
-        // load boot ROM prior to running anything
+        // Boot ROM can be loaded
         gb.LoadBootRom(CgbBios);
 
         // Test memory access and BIOS was loaded
         Assert.Equal(0x31, gb.SafeReadMemory(0));
+
+        // WriteMemory, ReadMemory
+        gb.WriteMemory(0xd000, 0xdb);
+        //Assert.Equal(0xdb, gb.ReadMemory(0xd000));
+        Assert.Equal(0xdb, gb.SafeReadMemory(0xd000));
+
+        gb.SetRenderingDisabled(true);
+
+        // Test execution, register access
+        Assert.Equal(0, gb.Registers.PC);
+        gb.Run();
+        Assert.Equal(3, gb.Registers.PC);
+
+        // Register assignment works
+        gb.Registers.AF = 0x1234;
+        Assert.Equal(0x12, gb.Registers.A);
+        Assert.Equal(0x34, gb.Registers.F);
+        gb.Registers.BC = 0x5678;
+        Assert.Equal(0x56, gb.Registers.B);
+        Assert.Equal(0x78, gb.Registers.C);
+        gb.Registers.DE = 0x9abc;
+        Assert.Equal(0x9a, gb.Registers.D);
+        Assert.Equal(0xbc, gb.Registers.E);
+        gb.Registers.HL = 0xdef0;
+        Assert.Equal(0xde, gb.Registers.H);
+        Assert.Equal(0xf0, gb.Registers.L);
 
         gb.Dispose();
     }

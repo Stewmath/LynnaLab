@@ -38,8 +38,7 @@ public unsafe partial class SameBoy : IDisposable
     Native.GB_rgb_encode_callback_t? _rgbEncodeCallback;
     Native.GB_sample_callback_t? _sampleCallback;
 
-    Native.GB_registers_t* _native_registers = null;
-    RegisterList? _managed_registers = null;
+    GB_registers_t* _native_registers = null;
 
     bool renderingDisabled = false;
     bool pixelOutputAssigned = false;
@@ -48,16 +47,15 @@ public unsafe partial class SameBoy : IDisposable
     // Register access
     // ================================================================================
 
-    public RegisterList Registers
+    public RegisterRef Registers
     {
         get
         {
-            if (_managed_registers == null)
+            if (_native_registers == null)
             {
                 _native_registers = Native.GB_get_registers(_gb);
-                _managed_registers = new RegisterList(_native_registers);
             }
-            return _managed_registers;
+            return new RegisterRef(this, _native_registers);
         }
     }
 
@@ -283,6 +281,16 @@ public unsafe partial class SameBoy : IDisposable
     // Inspection
     // ================================================================================
 
+    /// <summary>
+    /// It's recommended that you use the Registers property instead of this.
+    /// </summary>
+    public GB_registers_t* GetRegisters()
+    {
+        VerifyNotDisposed();
+
+        return Native.GB_get_registers(_gb);
+    }
+
     public uint GetRomCrc32()
     {
         VerifyNotDisposed();
@@ -304,6 +312,13 @@ public unsafe partial class SameBoy : IDisposable
         VerifyNotDisposed();
 
         return Native.GB_safe_read_memory(_gb, addr);
+    }
+
+    public void WriteMemory(ushort addr, byte value)
+    {
+        VerifyNotDisposed();
+
+        Native.GB_write_memory(_gb, addr, value);
     }
 
     // ================================================================================
