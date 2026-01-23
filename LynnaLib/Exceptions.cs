@@ -112,4 +112,12 @@ namespace LynnaLib
         public EmulatorException(string s) : base(s) { }
         public EmulatorException(Exception e) : base(e.Message) { }
     }
+
+    /// <summary>
+    /// Error evaluating a symbol
+    /// </summary>
+    public class EmulatorEvalException : EmulatorException
+    {
+        public EmulatorEvalException(string s) : base(s) { }
+    }
 }

@@ -54,6 +54,8 @@ public class OraclesEmulator : IDisposable
                 log.Warn($"Couldn't hook {hook} function");
             }
         }
+
+        LoadIntoRoom(0x20, Season.Summer, 0x58, 0x58);
     }
 
     // ================================================================================
@@ -64,7 +66,7 @@ public class OraclesEmulator : IDisposable
     string romPath;
     IntPtr pixelData;
 
-    Dictionary<GbAddr, Action> breakpoints = new();
+    Dictionary<GbPointer, Action> breakpoints = new();
 
     // ================================================================================
     // Properties
@@ -82,8 +84,19 @@ public class OraclesEmulator : IDisposable
             return bank;
         }
     }
+    public short SramBank
+    {
+        get
+        {
+            gb.GetDirectAccess(SameBoy.GBDirectAccess.CART_RAM, out short bank);
+            return bank;
+        }
+    }
     public short VramBank { get { return (short)(gb.SafeReadMemory(0xff4f) & 1); } }
     public short WramBank { get { return (short)(gb.SafeReadMemory(0xff70) & 7); } }
+
+    public Span<byte> Wram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.RAM); } }
+    public Span<byte> Hram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.HRAM); } }
 
     // ================================================================================
     // Public methods
@@ -97,20 +110,20 @@ public class OraclesEmulator : IDisposable
     {
         gb.Run();
 
-        GbAddr addr = ConstructAddr(gb.Registers.PC);
+        GbPointer ptr = ConstructPointer(gb.Registers.PC);
 
-        if (breakpoints.TryGetValue(addr, out Action? act))
+        if (breakpoints.TryGetValue(ptr, out Action? act))
             act();
     }
 
     // TODO: Need to test this
     public byte ReadSymbolByte(string symbol)
     {
-        if (!TryEvaluate(symbol, out var addr))
+        if (!TryEvaluate(symbol, out var ptr))
             throw new Exception($"ReadSymbolByte: Failed to resolve symbol \"{symbol}\"");
 
-        if (!addr.IsBanked)
-            return gb.SafeReadMemory(addr.BaseAddr);
+        if (!ptr.IsBanked)
+            return gb.SafeReadMemory(ptr.Addr);
         else
             throw new Exception("ReadSymbolByte: Banked reads not implemented yet");
     }
@@ -119,15 +132,15 @@ public class OraclesEmulator : IDisposable
     /// Do something when execution reaches a particular line. The callback will be invoked on
     /// whatever thread called OraclesEmulator.Run().
     /// </summary>
-    public void AddBreakpoint(GbAddr addr, Action act)
+    public void AddBreakpoint(GbPointer ptr, Action act)
     {
-        breakpoints.Add(addr, act);
+        breakpoints.Add(ptr, act);
     }
 
     /// <summary>
     /// Wrapper over SameBoy.DebuggerEvaluate. Returns true on success.
     /// </summary>
-    public bool TryEvaluate(string str, out GbAddr addr)
+    public bool TryEvaluate(string str, out GbPointer addr)
     {
         if (gb.DebuggerEvaluate(str, out ushort result, out short result_bank))
         {
@@ -137,6 +150,58 @@ public class OraclesEmulator : IDisposable
 
         addr = new(result, result_bank);
         return true;
+    }
+
+    public GbPointer Evaluate(string str)
+    {
+        if (!TryEvaluate(str, out GbPointer addr))
+            throw new EmulatorEvalException($"OraclesEmulator: Couldn't evaluate {str}.");
+        return addr;
+    }
+
+    /// <summary>
+    /// Reset the game at the specified room and position
+    /// </summary>
+    public bool LoadIntoRoom(int roomIndex, Season season, byte x, byte y)
+    {
+        InitializeWithoutBios();
+
+        // TODO: Save state to recover from error here?
+
+        try
+        {
+            if (!RunUntil(Evaluate("_mainLoop"), 1000000))
+            {
+                log.Error($"LoadIntoRoom: Didn't reach _mainLoop ({Evaluate("_mainLoop")})");
+                return false;
+            }
+
+            Call(ConstructPointer(0x8dc)); // TODO: loadFile
+            RunToCurrentFunctionEnd();
+
+            // TODO: These are seasons addresses (symbol file not loading these)
+            WriteByte(ConstructPointer(0xff9b), 2); // TODO: hNextLcdInterruptBehaviour
+            WriteByte(ConstructPointer(0xffb7), 1); // TODO: hIntroInputsEnabled
+
+            WriteByte("wDeathRespawnBuffer.group", (byte)(roomIndex >> 8));
+            WriteByte("wDeathRespawnBuffer.room", (byte)(roomIndex & 0xff));
+            if (season != Season.None)
+                WriteByte("wDeathRespawnBuffer.stateModifier", (byte)season);
+            WriteByte("wDeathRespawnBuffer.y", y);
+            WriteByte("wDeathRespawnBuffer.x", x);
+
+            // Hack initial thread states to run game thread
+            GbPointer wThreadStates = ConstructPointer(0xc2e0); // TODO: wThreadStateBuffer
+            WriteWord(wThreadStates + 0 + 4, Evaluate("stubThreadStart").Addr);
+            WriteWord(wThreadStates + 8 + 4, Evaluate("mainThreadStart").Addr);
+
+            return true;
+        }
+        catch (EmulatorEvalException e)
+        {
+            log.Error($"LoadIntoRoom: {e.Message}");
+            return false;
+        }
     }
 
     public void Dispose()
@@ -184,13 +249,13 @@ public class OraclesEmulator : IDisposable
 
         gb.Registers.SP = 0xfffe;
         gb.Registers.A = 0x11; // GBC
-        gb.Registers.BC = 0x0113;
+        gb.Registers.BC = 0x0013;
         gb.Registers.DE = 0x00d8;
         gb.Registers.HL = 0x014d;
         gb.Registers.PC = 0x100; // Entry point
     }
 
-    GbAddr ConstructAddr(ushort baseAddr)
+    GbPointer ConstructPointer(ushort baseAddr)
     {
         switch (baseAddr >> 12)
         {
@@ -209,7 +274,7 @@ public class OraclesEmulator : IDisposable
                 return new(baseAddr, VramBank);
             case 0xa:
             case 0xb:
-                return new(baseAddr, -1); // Don't know how to get SRAM bank
+                return new(baseAddr, SramBank);
             case 0xc:
             case 0xe:
                 return new(baseAddr, 0);
@@ -224,6 +289,11 @@ public class OraclesEmulator : IDisposable
                 // Should never reach here
                 return new(baseAddr, -1);
         }
+    }
+
+    bool AddressEquals(ushort addr, GbPointer ptr)
+    {
+        return ptr.Equals(ConstructPointer(addr));
     }
 
     /// <summary>
@@ -243,6 +313,10 @@ public class OraclesEmulator : IDisposable
         }
     }
 
+    // ================================================================================
+    // Emulator manipulation functions: memory access, stepping through functions, etc.
+    // ================================================================================
+
     /// <summary>
     /// Run to the end of the current function. It assumes we've reached the end when the stack
     /// pointer is decremented to before the initial position. Takes a timeout value in milliseconds
@@ -254,7 +328,7 @@ public class OraclesEmulator : IDisposable
     {
         int initialSP = gb.Registers.SP;
 
-        int cycleTimeout = 8000000 * timeout / 1000;
+        long cycleTimeout = 8000000L * timeout / 1000;
 
         while (gb.Registers.SP <= initialSP)
         {
@@ -267,39 +341,131 @@ public class OraclesEmulator : IDisposable
         return true;
     }
 
+    /// <summary>
+    /// Run until the specified address is hit.
+    /// </summary>
+    bool RunUntil(GbPointer pointer, int timeout = 100)
+    {
+        long cycleTimeout = 8000000L * timeout / 1000;
+
+        while (!AddressEquals(gb.Registers.PC, pointer))
+        {
+            cycleTimeout -= (int)gb.Run();
+
+            if (cycleTimeout < 0)
+                return false;
+        }
+
+        return true;
+    }
+
+    void Call(GbPointer pointer)
+    {
+        if (pointer.Addr < 0x4000)
+        {
+        }
+        else if (pointer.Addr < 0x8000)
+        {
+            if (RomBank != pointer.Bank)
+            {
+                // Use interBankCall. Not all registers will be preserved.
+                Call("interBankCall");
+                gb.Registers.E = (byte)pointer.Bank;
+                gb.Registers.HL = pointer.Addr;
+                return;
+            }
+        }
+        else
+        {
+            throw new EmulatorException($"Call {pointer}: Unimplemented region");
+        }
+
+        Push(gb.Registers.PC);
+        gb.Registers.PC = pointer.Addr;
+    }
+
+    void Call(string symbol)
+    {
+        Call(Evaluate(symbol));
+    }
+
+    /// <summary>
+    /// Push a word onto the stack.
+    /// </summary>
+    void Push(ushort value)
+    {
+        gb.Registers.SP -= 2;
+        gb.WriteMemory(gb.Registers.SP, (byte)(value & 0xff));
+        gb.WriteMemory((ushort)(gb.Registers.SP + 1), (byte)(value >> 8));
+    }
+
+    /// <summary>
+    /// Write a byte to an address. Differs from gb.WriteMemory in that it can write to arbitrary
+    /// memory banks based on the pointer passed in.
+    /// </summary>
+    void WriteByte(GbPointer pointer, byte value)
+    {
+        if (pointer.Addr >= 0xc000 && pointer.Addr < 0xd000)
+            Wram[pointer.Addr - 0xc000] = value;
+        else if (pointer.Addr >= 0xff80)
+            Hram[pointer.Addr - 0xff80] = value;
+        else
+            throw new EmulatorException($"WriteByte: Unimplemented write addr: {pointer}");
+    }
+
+    void WriteByte(string symbol, byte value)
+    {
+        WriteByte(Evaluate(symbol), value);
+    }
+
+    void WriteWord(GbPointer addr, ushort value)
+    {
+        WriteByte(addr, (byte)(value & 0xff));
+        WriteByte(addr + 1, (byte)(value >> 8));
+    }
 }
 
 /// <summary>
 /// Represents a gameboy address, including (optionally) a bank number.
 /// </summary>
-public readonly struct GbAddr
+public readonly struct GbPointer
 {
-    public GbAddr(ushort addr, short bank)
+    public GbPointer(ushort addr, short bank)
     {
-        BaseAddr = addr;
+        Addr = addr;
         Bank = bank;
 
         // TODO: Do some validation here? I'm not really sure whether "bank = -1" should ever be a
         // thing. Anyway, don't go crazy with validation since this is called by ExecutionCallback.
     }
 
-    public ushort BaseAddr { get; init; }
+    public ushort Addr { get; init; }
     public short Bank { get; init; }
 
     public bool IsBanked { get { return Bank != -1; } }
-
 
     // Equal/HashCode overrides for efficient dictionary usage
 
     public override bool Equals(object? obj)
     {
-        return obj is GbAddr o
-               && BaseAddr == o.BaseAddr
+        return obj is GbPointer o
+               && Addr == o.Addr
                && Bank == o.Bank;
     }
 
     public override int GetHashCode()
     {
-        return (int)(BaseAddr.GetHashCode() * 0x9e3779b9 + Bank);
+        return (int)(Addr.GetHashCode() * 0x9e3779b9 + Bank);
+    }
+
+
+    public override string ToString()
+    {
+        return $"{Bank:X2}.{Addr:X4}";
+    }
+
+    public static GbPointer operator+(GbPointer p, int i)
+    {
+        return new GbPointer((ushort)(p.Addr + i), p.Bank);
     }
 }
