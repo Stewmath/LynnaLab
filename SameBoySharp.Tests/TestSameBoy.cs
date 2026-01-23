@@ -72,11 +72,44 @@ public class TestSameBoy
         gb.Dispose();
     }
 
+    [Fact]
+    public static void TestExecutionCallback()
+    {
+        LoadRom(out SameBoy gb, TestRomNibbles);
+
+        bool executed = false;
+        gb.DebuggerEvaluate("init", out ushort initAddr, out _);
+
+        var callback = (ushort addr, byte opcode) =>
+        {
+            if (addr == initAddr)
+                executed = true;
+        };
+
+        gb.SetExecutionCallback(callback);
+
+        while (gb.Registers.PC != initAddr)
+            gb.Run();
+
+        Assert.False(executed);
+        gb.Run();
+        Assert.True(executed);
+    }
+
 
     static void AssertEval(SameBoy gb, string str, ushort val, short bank)
     {
         Assert.True(gb.DebuggerEvaluate(str, out ushort v, out short b));
         Assert.Equal(val, v);
         Assert.Equal(bank, b);
+    }
+
+    static void LoadRom(out SameBoy gb, string rom)
+    {
+        gb = new SameBoy(SameBoy.Model.GB_MODEL_CGB_E);
+        gb.LoadRom(rom);
+        gb.LoadBootRom(CgbBios);
+        gb.DebuggerLoadSymbolFile(Path.ChangeExtension(rom, ".sym"));
+        gb.SetRenderingDisabled(true);
     }
 }

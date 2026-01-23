@@ -37,11 +37,13 @@ public unsafe partial class SameBoy : IDisposable
     Native.GB_vblank_callback_t? _vblankCallback;
     Native.GB_rgb_encode_callback_t? _rgbEncodeCallback;
     Native.GB_sample_callback_t? _sampleCallback;
+    Native.GB_execution_callback_t? _executionCallback;
 
     GB_registers_t* _native_registers = null;
 
     bool renderingDisabled = false;
     bool pixelOutputAssigned = false;
+    bool disposed = false;
 
     // ================================================================================
     // Register access
@@ -159,13 +161,9 @@ public unsafe partial class SameBoy : IDisposable
         VerifyNotDisposed();
 
         if (action != null)
-        {
             _vblankCallback = (gb, type) => action(type);
-        }
         else
-        {
             _vblankCallback = null;
-        }
 
         Native.GB_set_vblank_callback(_gb, _vblankCallback);
     }
@@ -324,6 +322,18 @@ public unsafe partial class SameBoy : IDisposable
         return Native.GB_safe_read_memory(_gb, addr);
     }
 
+    public void SetExecutionCallback(Action<ushort, byte> action)
+    {
+        VerifyNotDisposed();
+
+        if (action == null)
+            _executionCallback = null;
+        else
+            _executionCallback = (gb, addr, opcode) => action(addr, opcode);
+
+        Native.GB_set_execution_callback(_gb, _executionCallback);
+    }
+
     public void WriteMemory(ushort addr, byte value)
     {
         VerifyNotDisposed();
@@ -339,6 +349,7 @@ public unsafe partial class SameBoy : IDisposable
     {
         VerifyNotDisposed();
 
+        disposed = true;
         Native.GB_free(_gb);
         Native.GB_dealloc(_gb);
         _gb = IntPtr.Zero;
@@ -351,7 +362,7 @@ public unsafe partial class SameBoy : IDisposable
     void VerifyNotDisposed()
     {
 #if DEBUG
-        if (_gb == IntPtr.Zero)
+        if (disposed)
             throw new Exception("SameBoySharp: Tried to use a SameBoy instance after disposing it");
 #endif
     }
