@@ -104,6 +104,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
                 (ImGuiKey.O, SameBoy.GBKeyMask.GB_KEY_DOWN_MASK),
                 (ImGuiKey.C, SameBoy.GBKeyMask.GB_KEY_A_MASK),
                 (ImGuiKey.H, SameBoy.GBKeyMask.GB_KEY_B_MASK),
+                (ImGuiKey.Backslash, SameBoy.GBKeyMask.GB_KEY_SELECT_MASK),
             ];
 
             SameBoy.GBKeyMask mask = 0;

@@ -75,13 +75,17 @@ internal unsafe static class Native
     internal static extern int GB_load_boot_rom(IntPtr gb, string path);
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
-    internal static extern int GB_load_boot_rom_from_buffer(IntPtr gb, IntPtr buffer, nuint size);
+    internal static extern void GB_load_boot_rom_from_buffer(IntPtr gb, IntPtr buffer, nuint size);
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     internal static extern int GB_load_rom(IntPtr gb, string path);
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void GB_load_rom_from_buffer(IntPtr gb, byte[] buffer, UIntPtr size);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr GB_get_direct_access(
+        IntPtr gb, SameBoy.GBDirectAccess access, nuint* size, short* bank);
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
     internal static extern bool GB_is_cgb(IntPtr gb);
@@ -129,6 +133,16 @@ internal unsafe static class Native
 
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void GB_set_key_mask(IntPtr gb, SameBoy.GBKeyMask mask);
+
+    // ================================================================================
+    // Saves
+    // ================================================================================
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    internal static extern int GB_save_battery(IntPtr gb, string path);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    internal static extern int GB_load_battery(IntPtr gb, string path);
 
     // ================================================================================
     // Debugger

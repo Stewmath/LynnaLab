@@ -12,7 +12,7 @@ public class EmulatorDebugger : Frame
         emu.GB.SetLogCallback((s) => text += s);
 
         //emu.GB.SetTurboMode(true);
-        new Thread(() => { while (true) emu.GB.Run(); }).Start();
+        new Thread(() => { while (true) emu.Run(); }).Start();
     }
 
     OraclesEmulator emu;

@@ -26,7 +26,7 @@ public class TestEmulator
 
     static void AssertEval(SameBoy gb, string str, ushort val, short bank)
     {
-        Assert.True(gb.DebuggerEvaluate(str, out ushort v, out short b));
+        Assert.False(gb.DebuggerEvaluate(str, out ushort v, out short b));
         Assert.Equal(val, v);
         Assert.Equal(bank, b);
     }

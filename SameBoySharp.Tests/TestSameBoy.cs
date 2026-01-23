@@ -69,6 +69,9 @@ public class TestSameBoy
         Assert.Equal(0xde, gb.Registers.H);
         Assert.Equal(0xf0, gb.Registers.L);
 
+        // Direct access
+        Assert.Equal(1, gb.GetDirectAccess(SameBoy.GBDirectAccess.IE).Length);
+
         gb.Dispose();
     }
 
@@ -99,7 +102,7 @@ public class TestSameBoy
 
     static void AssertEval(SameBoy gb, string str, ushort val, short bank)
     {
-        Assert.True(gb.DebuggerEvaluate(str, out ushort v, out short b));
+        Assert.False(gb.DebuggerEvaluate(str, out ushort v, out short b));
         Assert.Equal(val, v);
         Assert.Equal(bank, b);
     }

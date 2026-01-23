@@ -117,6 +117,21 @@ public partial class SameBoy
         GB_KEY_START_MASK =  1 << GBKey.GB_KEY_START,
     }
 
+    public enum GBDirectAccess : int
+    {
+        ROM,
+        RAM,
+        CART_RAM,
+        VRAM,
+        HRAM,
+        IO,
+        BOOTROM,
+        OAM,
+        BGP,
+        OBP,
+        IE,
+        ROM0,
+    }
 
     // ================================================================================
     // Structs

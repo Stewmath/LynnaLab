@@ -108,6 +108,25 @@ public unsafe partial class SameBoy : IDisposable
             throw new InvalidOperationException("Sameboy failed to load ROM: " + path);
     }
 
+    public unsafe Span<byte> GetDirectAccess(GBDirectAccess access, out short bank)
+    {
+        VerifyNotDisposed();
+
+        nuint size;
+        short b;
+
+        void* data = (void*)Native.GB_get_direct_access(_gb, access, &size, &b);
+
+        bank = b;
+        return new Span<byte>(data, (int)size);
+    }
+
+    public Span<byte> GetDirectAccess(GBDirectAccess access)
+    {
+        return GetDirectAccess(access, out _);
+    }
+
+
     public bool IsCgb()
     {
         VerifyNotDisposed();
@@ -222,11 +241,29 @@ public unsafe partial class SameBoy : IDisposable
     }
 
     // ================================================================================
+    // Player controls
+    // ================================================================================
+
+    public int SaveBattery(string path)
+    {
+        VerifyNotDisposed();
+
+        return Native.GB_save_battery(_gb, path);
+    }
+
+    public int LoadBattery(string path)
+    {
+        VerifyNotDisposed();
+
+        return Native.GB_load_battery(_gb, path);
+    }
+
+    // ================================================================================
     // Debugger functions
     // ================================================================================
 
     /// <summary>
-    /// Returns true on success (opposite of the real library!)
+    /// Returns FALSE on success.
     ///
     /// result_bank = -1 if there is no bank number.
     /// </summary>
@@ -240,7 +277,7 @@ public unsafe partial class SameBoy : IDisposable
             bool retval = Native.GB_debugger_evaluate(_gb, utf8, &r, &rb);
             result = r;
             result_bank = (short)rb;
-            return !retval;
+            return retval;
         }
     }
 

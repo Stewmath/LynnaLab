@@ -97,7 +97,7 @@ public static class Top
                 Top.OpenProject(path, game);
         }
 
-        emulator = new OraclesEmulator("../oracles-disasm/ages.gbc");
+        emulator = new OraclesEmulator("../oracles-disasm/seasons.gbc");
         emulatorFrame = new EmulatorDebugger(emulator);
         emulatorFrame.Active = true;
         emulatorDrawer = new EmulatorRenderer(emulator, 4);
