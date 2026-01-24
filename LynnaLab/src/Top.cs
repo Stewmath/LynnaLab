@@ -121,8 +121,6 @@ public static class Top
     // Variables
     // ================================================================================
 
-    static ProjectWorkspace workspace2;
-
     static Backend backend;
     static Stopwatch stopwatch;
 
@@ -290,7 +288,6 @@ public static class Top
         if (renderWorkspace)
         {
             Workspace.Render(deltaTime);
-            workspace2?.Render(deltaTime);
         }
 
         emulatorFrame.RenderAsWindow("Debugger");

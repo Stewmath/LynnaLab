@@ -100,7 +100,7 @@ namespace Util
         {
             Stream stream = GetResourceStream(name, Assembly.GetCallingAssembly());
             byte[] data = new byte[stream.Length];
-            stream.Read(data, 0, (int)stream.Length);
+            stream.ReadExactly(data, 0, (int)stream.Length);
             return data;
         }
 

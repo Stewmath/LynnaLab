@@ -78,8 +78,8 @@ namespace Util
             if (Position + size > Length)
                 size = (int)(Length - Position);
             stream.Position = Position + streamOffset;
-            stream.Read(buffer, offset, size);
-            Position = Position + size;
+            int b = stream.Read(buffer, offset, size);
+            Position = Position + b;
             return size;
         }
         public override void Write(byte[] buffer, int offset, int count)
