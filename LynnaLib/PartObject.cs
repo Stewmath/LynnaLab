@@ -1,85 +1,81 @@
-using System;
+namespace LynnaLib;
 
-namespace LynnaLib
+/// <summary>
+///  An interaction object. The "index" is the full ID (2 bytes, including subid).
+/// </summary>
+public class PartObject : GameObject, IndexedProjectDataInstantiator
 {
 
-    /// <summary>
-    ///  An interaction object. The "index" is the full ID (2 bytes, including subid).
-    /// </summary>
-    public class PartObject : GameObject, IndexedProjectDataInstantiator
+    readonly Data objectData;
+
+    readonly byte _objectGfxHeaderIndex;
+    readonly byte _tileIndexBase;
+    readonly byte _oamFlagsBase;
+
+    private PartObject(Project p, int i) : base(p, i)
     {
-
-        readonly Data objectData;
-
-        readonly byte _objectGfxHeaderIndex;
-        readonly byte _tileIndexBase;
-        readonly byte _oamFlagsBase;
-
-        private PartObject(Project p, int i) : base(p, i)
+        try
         {
-            try
-            {
-                objectData = p.GetData("partData", ID * 8);
+            objectData = p.GetData("partData", ID * 8);
 
-                Data data = objectData;
+            Data data = objectData;
 
-                _objectGfxHeaderIndex = (byte)data.GetIntValue(0);
-                for (int j = 0; j < 5; j++)
-                    data = data.NextData;
-                _tileIndexBase = (byte)data.GetIntValue(0);
+            _objectGfxHeaderIndex = (byte)data.GetIntValue(0);
+            for (int j = 0; j < 5; j++)
                 data = data.NextData;
-                _oamFlagsBase = (byte)data.GetIntValue(0);
-            }
-            catch (InvalidLookupException e)
-            {
-                Console.WriteLine(e.ToString());
-                objectData = null;
-            }
-            catch (FormatException e)
-            {
-                Console.WriteLine(e.ToString());
-                objectData = null;
-            }
+            _tileIndexBase = (byte)data.GetIntValue(0);
+            data = data.NextData;
+            _oamFlagsBase = (byte)data.GetIntValue(0);
         }
-
-        static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+        catch (InvalidLookupException e)
         {
-            return new PartObject(p, index);
+            Console.WriteLine(e.ToString());
+            objectData = null;
         }
-
-
-        // GameObject properties
-        public override string TypeName
+        catch (FormatException e)
         {
-            get { return "Part"; }
+            Console.WriteLine(e.ToString());
+            objectData = null;
         }
+    }
 
-        public override ConstantsMapping IDConstantsMapping
-        {
-            get { return Project.PartMapping; }
-        }
+    static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+    {
+        return new PartObject(p, index);
+    }
 
 
-        public override bool DataValid
-        {
-            get { return objectData != null; }
-        }
+    // GameObject properties
+    public override string TypeName
+    {
+        get { return "Part"; }
+    }
 
-        public override byte ObjectGfxHeaderIndex
-        {
-            get { return _objectGfxHeaderIndex; }
-        }
-        public override byte TileIndexBase
-        {
-            get { return _tileIndexBase; }
-        }
-        public override byte OamFlagsBase
-        {
-            get { return _oamFlagsBase; }
-        }
-        public override byte DefaultAnimationIndex
-        {
-            get { return 0; }
-        }
+    public override ConstantsMapping IDConstantsMapping
+    {
+        get { return Project.PartMapping; }
+    }
+
+
+    public override bool DataValid
+    {
+        get { return objectData != null; }
+    }
+
+    public override byte ObjectGfxHeaderIndex
+    {
+        get { return _objectGfxHeaderIndex; }
+    }
+    public override byte TileIndexBase
+    {
+        get { return _tileIndexBase; }
+    }
+    public override byte OamFlagsBase
+    {
+        get { return _oamFlagsBase; }
+    }
+    public override byte DefaultAnimationIndex
+    {
+        get { return 0; }
     }
 }

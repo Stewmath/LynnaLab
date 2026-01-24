@@ -1,9 +1,9 @@
 #nullable enable
-namespace LynnaLib;
-
 using System.IO;
 using System.Runtime.InteropServices;
 using SameBoySharp;
+
+namespace LynnaLib;
 
 public class OraclesEmulator : IDisposable
 {

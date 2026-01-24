@@ -1,122 +1,118 @@
-using System;
+namespace LynnaLib;
 
-namespace LynnaLib
+/// <summary>
+///  An enemy object. The "index" is the full ID (2 bytes, including subid).
+/// </summary>
+public class EnemyObject : GameObject, IndexedProjectDataInstantiator
 {
 
-    /// <summary>
-    ///  An enemy object. The "index" is the full ID (2 bytes, including subid).
-    /// </summary>
-    public class EnemyObject : GameObject, IndexedProjectDataInstantiator
+    readonly Data objectData;
+
+    readonly byte _objectGfxHeaderIndex;
+    readonly byte _collisionReactionSet;
+    readonly byte _tileIndexBase;
+    readonly byte _oamFlagsBase;
+
+    private EnemyObject(Project p, int i) : base(p, i)
     {
-
-        readonly Data objectData;
-
-        readonly byte _objectGfxHeaderIndex;
-        readonly byte _collisionReactionSet;
-        readonly byte _tileIndexBase;
-        readonly byte _oamFlagsBase;
-
-        private EnemyObject(Project p, int i) : base(p, i)
+        try
         {
-            try
+            if ((i >> 8) >= 0x80)
+                throw new ProjectErrorException($"Invalid enemy index {i:x2}");
+
+            objectData = p.GetData("enemyData", ID * 4);
+
+            _objectGfxHeaderIndex = (byte)objectData.GetIntValue(0);
+            _collisionReactionSet = (byte)objectData.GetIntValue(1);
+
+            byte lookupIndex; // TODO: use this
+            byte b3;
+
+            if (objectData.GetNumValues() == 4)
             {
-                if ((i >> 8) >= 0x80)
-                    throw new ProjectErrorException($"Invalid enemy index {i:x2}");
+                lookupIndex = (byte)objectData.GetIntValue(2);
+                b3 = (byte)(objectData.GetIntValue(3));
+            }
+            else
+            {
+                Data subidData = Project.GetData(objectData.GetValue(2));
+                int count = SubID;
 
-                objectData = p.GetData("enemyData", ID * 4);
-
-                _objectGfxHeaderIndex = (byte)objectData.GetIntValue(0);
-                _collisionReactionSet = (byte)objectData.GetIntValue(1);
-
-                byte lookupIndex; // TODO: use this
-                byte b3;
-
-                if (objectData.GetNumValues() == 4)
+                // If this points to more data, follow the pointer
+                while (count > 0)
                 {
-                    lookupIndex = (byte)objectData.GetIntValue(2);
-                    b3 = (byte)(objectData.GetIntValue(3));
-                }
-                else
-                {
-                    Data subidData = Project.GetData(objectData.GetValue(2));
-                    int count = SubID;
-
-                    // If this points to more data, follow the pointer
-                    while (count > 0)
+                    count--;
+                    var next = subidData.NextData;
+                    if (next.CommandLowerCase == "m_enemysubiddata")
                     {
-                        count--;
-                        var next = subidData.NextData;
-                        if (next.CommandLowerCase == "m_enemysubiddata")
-                        {
-                            subidData = next;
-                            continue;
-                        }
-                        else if (next.CommandLowerCase == "m_enemysubiddataend")
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            throw new ProjectErrorException("Enemy Subid data ended unexpectedly");
-                        }
+                        subidData = next;
+                        continue;
                     }
-                    lookupIndex = (byte)subidData.GetIntValue(0);
-                    b3 = (byte)(subidData.GetIntValue(1));
+                    else if (next.CommandLowerCase == "m_enemysubiddataend")
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        throw new ProjectErrorException("Enemy Subid data ended unexpectedly");
+                    }
                 }
-
-                _tileIndexBase = (byte)((b3 & 0xf) * 2);
-                _oamFlagsBase = (byte)(b3 >> 4);
+                lookupIndex = (byte)subidData.GetIntValue(0);
+                b3 = (byte)(subidData.GetIntValue(1));
             }
-            catch (InvalidLookupException e)
-            {
-                Console.WriteLine(e.ToString());
-                objectData = null;
-            }
-            catch (FormatException e)
-            {
-                Console.WriteLine(e.ToString());
-                objectData = null;
-            }
-        }
 
-        static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+            _tileIndexBase = (byte)((b3 & 0xf) * 2);
+            _oamFlagsBase = (byte)(b3 >> 4);
+        }
+        catch (InvalidLookupException e)
         {
-            return new EnemyObject(p, index);
+            Console.WriteLine(e.ToString());
+            objectData = null;
         }
-
-
-        // GameObject properties
-        public override string TypeName
+        catch (FormatException e)
         {
-            get { return "Enemy"; }
+            Console.WriteLine(e.ToString());
+            objectData = null;
         }
+    }
 
-        public override ConstantsMapping IDConstantsMapping
-        {
-            get { return Project.EnemyMapping; }
-        }
+    static ProjectDataType IndexedProjectDataInstantiator.Instantiate(Project p, int index)
+    {
+        return new EnemyObject(p, index);
+    }
 
 
-        public override bool DataValid
-        {
-            get { return objectData != null; }
-        }
+    // GameObject properties
+    public override string TypeName
+    {
+        get { return "Enemy"; }
+    }
 
-        public override byte ObjectGfxHeaderIndex
-        {
-            get { return _objectGfxHeaderIndex; }
-        }
-        public override byte TileIndexBase
-        {
-            get { return _tileIndexBase; }
-        }
-        public override byte OamFlagsBase
-        {
-            get { return _oamFlagsBase; }
-        }
-        public override byte DefaultAnimationIndex
-        {
-            get { return 0; }
-        }
+    public override ConstantsMapping IDConstantsMapping
+    {
+        get { return Project.EnemyMapping; }
+    }
+
+
+    public override bool DataValid
+    {
+        get { return objectData != null; }
+    }
+
+    public override byte ObjectGfxHeaderIndex
+    {
+        get { return _objectGfxHeaderIndex; }
+    }
+    public override byte TileIndexBase
+    {
+        get { return _tileIndexBase; }
+    }
+    public override byte OamFlagsBase
+    {
+        get { return _oamFlagsBase; }
+    }
+    public override byte DefaultAnimationIndex
+    {
+        get { return 0; }
     }
 }

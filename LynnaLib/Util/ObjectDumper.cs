@@ -6,9 +6,7 @@
 //
 // Printing of properties is disabled as they caused errors for some reason.
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 
