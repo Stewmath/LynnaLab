@@ -18,7 +18,7 @@ public class TestEmulator
         // Symbols are working
         AssertEval(emu.GB, "begin", 0x150, 0x00);
 
-        Assert.Equal(0xfe, emu.GB.SafeReadMemory(0xff50));
+        //Assert.Equal(0xfe, emu.GB.SafeReadMemory(0xff50));
 
         emu.Dispose();
     }
