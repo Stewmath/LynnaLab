@@ -1152,6 +1152,8 @@ class ServerPacketHandler : PacketHandlerBase, IPacketHandler
         await NetworkInterfacer.DoOnMainThread((transactionManager) =>
         {
             var history = transactionManager.TransactionHistory;
+            if (history.FirstNode == null || history.LastNode == null)
+                throw new Exception("Internal error: No initial project state to send?");
             base.QueueTransactions(history.FirstNode, history.LastNode);
             initialStateSent = true;
         });
@@ -1434,6 +1436,9 @@ class ClientPacketHandler : PacketHandlerBase, IPacketHandler
         {
             if (OutstandingAcks != 0)
                 return;
+
+            if (ServerTransactionHistory.Last == null)
+                throw new Exception("Internal error: ServerTransactionHistory.Last == null");
 
             transactionManager.SynchronizeWith(ServerTransactionHistory, lastCommonAncestor);
             lastCommonAncestor = ServerTransactionHistory.Last.NodeID;

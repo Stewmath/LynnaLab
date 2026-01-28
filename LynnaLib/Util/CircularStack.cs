@@ -1,3 +1,4 @@
+#nullable enable
 using System.Collections;
 
 namespace Util;
@@ -6,7 +7,7 @@ namespace Util;
 /// Behaves like a stack with a set maximum capacity. If the maximum is exceeded, the oldest
 /// elements are dropped
 /// </summary>
-public class CircularStack<T> : IEnumerable<T>
+public class CircularStack<T> : IEnumerable<T?>
 {
     // ================================================================================
     // Constructors
@@ -21,7 +22,7 @@ public class CircularStack<T> : IEnumerable<T>
     // Variables
     // ================================================================================
 
-    T[] elements;
+    T?[] elements;
     int nextPos = 0;
     int version = 0;
 
@@ -46,20 +47,20 @@ public class CircularStack<T> : IEnumerable<T>
         version++;
     }
 
-    public T Pop()
+    public T? Pop()
     {
         if (Count == 0)
             throw new InvalidOperationException("Tried to pop from an empty stack");
 
         nextPos = PrevIndex();
-        T retval = elements[nextPos];
+        T? retval = elements[nextPos];
         elements[nextPos] = default;
         Count--;
         version++;
         return retval;
     }
 
-    public T Peek()
+    public T? Peek()
     {
         if (Count == 0)
             throw new InvalidOperationException("Tried to peek from an empty stack");
@@ -75,7 +76,7 @@ public class CircularStack<T> : IEnumerable<T>
         version++;
     }
 
-    IEnumerator<T> IEnumerable<T>.GetEnumerator()
+    IEnumerator<T?> IEnumerable<T?>.GetEnumerator()
     {
         int pos = (this.nextPos - Count + Capacity) % Capacity;
         int v = version;

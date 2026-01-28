@@ -1,3 +1,4 @@
+#nullable enable
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -7,7 +8,7 @@ namespace Util;
 // Some static functions
 public class Helper
 {
-    public static Action<Action> mainThreadInvokeFunction;
+    public static Action<Action>? mainThreadInvokeFunction;
 
     // LynnaLib doesn't import Gtk, but to help with thread safety, we use this function to
     // help ensure everything important runs on the main thread.
@@ -76,11 +77,12 @@ public class Helper
     }
 
     // Get a sttream of a resource file
-    public static Stream GetResourceStream(string name, Assembly assembly = null)
+    public static Stream GetResourceStream(string name, Assembly? assembly = null)
     {
         if (assembly == null)
             assembly = Assembly.GetCallingAssembly();
-        return assembly.GetManifestResourceStream(name);
+        return assembly.GetManifestResourceStream(name)
+               ?? throw new Exception($"GetResourceStream: Could not load resource {name} from {assembly}.");
     }
 
     // Read a resource file
@@ -112,7 +114,7 @@ public class Helper
     /// Throw an exception if the value is false. An alternative to Debug.Assert that applies to
     /// release builds.
     /// </summary>
-    public static void Assert(bool condition, string message = null)
+    public static void Assert(bool condition, string? message = null)
     {
         if (!condition)
             throw new Exception(message);
@@ -157,7 +159,8 @@ public class Helper
         object watcherLock = new();
 
         FileSystemWatcher watcher = new FileSystemWatcher();
-        watcher.Path = Path.GetDirectoryName(path);
+        watcher.Path = Path.GetDirectoryName(path)
+                       ?? throw new Exception($"Could not locate directory for file watcher: {path}.");
         watcher.Filter = Path.GetFileName(path);
 
         watcher.NotifyFilter = 0

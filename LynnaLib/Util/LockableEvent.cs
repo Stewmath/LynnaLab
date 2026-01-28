@@ -1,10 +1,11 @@
+#nullable enable
 namespace Util;
 
 // This is just like an Event, but you can "Lock" it to pause callbacks, and "Unlock" it to
 // resume them. Useful for doing atomic operations.
 public class LockableEvent<T>
 {
-    EventHandler<T> handler;
+    EventHandler<T>? handler;
 
     int locked = 0;
 

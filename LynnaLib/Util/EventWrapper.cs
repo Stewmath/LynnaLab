@@ -1,3 +1,4 @@
+#nullable enable
 using System.Reflection;
 
 namespace Util;
@@ -16,9 +17,9 @@ namespace Util;
 public class EventWrapper<TEventSource> where TEventSource : class
 {
     List<EventStruct> eventList = new List<EventStruct>();
-    TEventSource eventSource;
+    TEventSource? eventSource;
 
-    public EventWrapper(TEventSource eventSource = null)
+    public EventWrapper(TEventSource? eventSource = null)
     {
         this.eventSource = eventSource;
     }
@@ -30,7 +31,7 @@ public class EventWrapper<TEventSource> where TEventSource : class
         // Could add BindingFlag.NonInstance, but there's no benefit to using this class in that
         // case? (since the whole point is to allow the GC to free the object)
         var bindingFlags = BindingFlags.Public | BindingFlags.Instance;
-        EventInfo eventInfo = typeof(TEventSource).GetEvent(eventName, bindingFlags);
+        EventInfo? eventInfo = typeof(TEventSource).GetEvent(eventName, bindingFlags);
 
         if (eventInfo == null)
         {
@@ -44,9 +45,13 @@ public class EventWrapper<TEventSource> where TEventSource : class
     public void Bind<TEventArgs>(EventInfo eventInfo, EventHandler<TEventArgs> handler, bool weak = true)
     {
         EventStruct ev = new EventStruct();
+        ev.eventInfo = eventInfo;
 
         Action addHandlerMethod = () =>
         {
+            if (eventSource == null)
+                throw new Exception("EventWrapper: Called addHandlerMethod() with null eventSource");
+
             if (weak)
             {
                 var signaller = new WeakEventBinder<TEventSource, TEventArgs>(
@@ -55,15 +60,14 @@ public class EventWrapper<TEventSource> where TEventSource : class
             }
             else
             {
-                eventInfo.GetAddMethod().Invoke(eventSource, new object[] { handler });
+                eventInfo.GetAddMethod()!.Invoke(eventSource, new object[] { handler });
                 ev.removeHandlerMethod = () =>
                 {
-                    eventInfo.GetRemoveMethod().Invoke(eventSource, new object[] { handler });
+                    eventInfo.GetRemoveMethod()!.Invoke(eventSource, new object[] { handler });
                 };
             }
         };
 
-        ev.eventInfo = eventInfo;
         ev.addHandlerMethod = addHandlerMethod;
 
         if (eventSource != null)
@@ -86,6 +90,8 @@ public class EventWrapper<TEventSource> where TEventSource : class
         {
             foreach (var ev in eventList)
             {
+                if (ev.addHandlerMethod == null)
+                    throw new Exception("EventWrapper: addHandlerMethod() == null?");
                 ev.addHandlerMethod();
             }
         }
@@ -103,9 +109,9 @@ public class EventWrapper<TEventSource> where TEventSource : class
 
     class EventStruct
     {
-        public EventInfo eventInfo;
-        public Action addHandlerMethod;
-        public Action removeHandlerMethod;
+        public EventInfo? eventInfo;
+        public Action? addHandlerMethod;
+        public Action? removeHandlerMethod;
     }
 }
 
@@ -123,7 +129,7 @@ public class EventWrapper<TEventSource> where TEventSource : class
 class WeakEventBinder<TEventSource, TEventArgs> where TEventSource : class
 {
 
-    EventHandler<TEventArgs> intermediateHandler = null;
+    EventHandler<TEventArgs> intermediateHandler;
 
     WeakReference<TEventSource> source;
     WeakReference<EventHandler<TEventArgs>> handler;
@@ -136,17 +142,10 @@ class WeakEventBinder<TEventSource, TEventArgs> where TEventSource : class
         this.handler = new WeakReference<EventHandler<TEventArgs>>(handler);
         this.eventInfo = eventInfo;
 
-        AddHandler(source);
-    }
-
-
-    void AddHandler(TEventSource tangibleSource)
-    {
         // Create intermediate callback
         intermediateHandler = (sender, args) =>
         {
-            EventHandler<TEventArgs> h;
-            handler.TryGetTarget(out h);
+            this.handler.TryGetTarget(out EventHandler<TEventArgs>? h);
 
             if (h != null) // may be null if handler object was freed by GC
                 h(sender, args);
@@ -154,14 +153,13 @@ class WeakEventBinder<TEventSource, TEventArgs> where TEventSource : class
                 RemoveHandler();
         };
 
-        eventInfo.GetAddMethod().Invoke(tangibleSource, new object[] { intermediateHandler });
+        eventInfo.GetAddMethod()!.Invoke(source, new object[] { intermediateHandler });
     }
 
 
     public void RemoveHandler()
     {
-        TEventSource s;
-        if (source.TryGetTarget(out s))
-            eventInfo.GetRemoveMethod().Invoke(s, new object[] { intermediateHandler });
+        if (source.TryGetTarget(out TEventSource? s))
+            eventInfo.GetRemoveMethod()!.Invoke(s, new object[] { intermediateHandler });
     }
 }

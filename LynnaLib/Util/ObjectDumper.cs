@@ -1,3 +1,4 @@
+#nullable disable
 // Handy class to print all the fields from an object. Useful for debugging.
 //
 // Use with: ObjectDumper.Dump(object)

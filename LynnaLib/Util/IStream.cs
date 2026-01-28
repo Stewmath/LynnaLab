@@ -1,3 +1,4 @@
+#nullable enable
 namespace Util;
 
 /// <summary>
@@ -44,7 +45,7 @@ public class StreamModifiedEventArgs
         return new StreamModifiedEventArgs(0, stream.Length);
     }
 
-    public static StreamModifiedEventArgs FromChangedRange(byte[] first, byte[] second)
+    public static StreamModifiedEventArgs? FromChangedRange(byte[] first, byte[] second)
     {
         if (first.Length == second.Length)
         {

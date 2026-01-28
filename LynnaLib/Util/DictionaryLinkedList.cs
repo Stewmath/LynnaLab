@@ -1,3 +1,4 @@
+#nullable enable
 using System.Collections;
 
 namespace Util;
@@ -9,6 +10,8 @@ namespace Util;
 /// By implementing ICollection<T>, this can be serialized and deserialized by System.Text.Json.
 /// </summary>
 public class DictionaryLinkedList<K, V> : IEnumerable<V>
+    where K : notnull
+    where V : notnull
 {
     protected LinkedList<V> linkedList = new LinkedList<V>();
     protected Dictionary<K, LinkedListNode<V>> dict = new Dictionary<K, LinkedListNode<V>>();
@@ -16,11 +19,11 @@ public class DictionaryLinkedList<K, V> : IEnumerable<V>
 
     public int Count { get { return linkedList.Count; } }
 
-    public LinkedListNode<V> FirstNode { get { return linkedList.First; } }
-    public LinkedListNode<V> LastNode { get { return linkedList.Last; } }
+    public LinkedListNode<V>? FirstNode { get { return linkedList.First; } }
+    public LinkedListNode<V>? LastNode { get { return linkedList.Last; } }
 
-    public V First { get { return FirstNode == null ? default(V) : FirstNode.Value; } }
-    public V Last { get { return LastNode == null ? default(V) : LastNode.Value; } }
+    public V? First { get { return FirstNode == null ? default(V) : FirstNode.Value; } }
+    public V? Last { get { return LastNode == null ? default(V) : LastNode.Value; } }
 
     public DictionaryLinkedList()
     {
@@ -84,7 +87,7 @@ public class DictionaryLinkedList<K, V> : IEnumerable<V>
         AddLast(key, new LinkedListNode<V>(value));
     }
 
-    public LinkedListNode<V> Find(K value)
+    public LinkedListNode<V>? Find(K value)
     {
         if (!dict.ContainsKey(value))
             return null;
@@ -127,6 +130,7 @@ public class DictionaryLinkedList<K, V> : IEnumerable<V>
 /// a LinkedListNode with the value that the node contains).
 /// </summary>
 public class DictionaryLinkedList<T> : DictionaryLinkedList<T, T>, ICollection<T>
+    where T : notnull
 {
     public DictionaryLinkedList()
     {
@@ -168,7 +172,9 @@ public class DictionaryLinkedList<T> : DictionaryLinkedList<T, T>, ICollection<T
     }
     public void AddAfter(T valueBefore, T value)
     {
-        LinkedListNode<T> node = Find(valueBefore);
+        LinkedListNode<T>? node = Find(valueBefore);
+        if (node == null)
+            throw new Exception($"AddBefore: Couldn't find reference node {valueBefore}.");
         base.AddAfter(node, value, value);
     }
 
@@ -182,7 +188,9 @@ public class DictionaryLinkedList<T> : DictionaryLinkedList<T, T>, ICollection<T
     }
     public void AddBefore(T valueAfter, T value)
     {
-        LinkedListNode<T> node = Find(valueAfter);
+        LinkedListNode<T>? node = Find(valueAfter);
+        if (node == null)
+            throw new Exception($"AddBefore: Couldn't find reference node {valueAfter}.");
         base.AddBefore(node, value, value);
     }
 

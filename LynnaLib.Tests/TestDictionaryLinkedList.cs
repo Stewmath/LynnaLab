@@ -30,6 +30,7 @@ public class TestDictionaryLinkedList
     }
 
     void TryDeserialize<T>(string data, IEnumerable<T> expected)
+        where T : notnull
     {
         var dict = JsonSerializer.Deserialize<DictionaryLinkedList<T>>(data);
         Assert.True(dict?.SequenceEqual(expected),
@@ -37,6 +38,7 @@ public class TestDictionaryLinkedList
     }
 
     void TrySerialize<T>(DictionaryLinkedList<T> data, string expected)
+        where T : notnull
     {
         string s = JsonSerializer.Serialize<DictionaryLinkedList<T>>(data);
         Assert.True(s == expected,

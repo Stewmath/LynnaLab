@@ -1,3 +1,4 @@
+#nullable enable
 namespace Util;
 
 public interface IDisposeNotifier : IDisposable
@@ -12,7 +13,9 @@ public interface IDisposeNotifier : IDisposable
 /// This listens to the DisposedEvent on the ValueClass and automatically removes any values that
 /// are disposed.
 /// </summary>
-public class Cacher<KeyClass, ValueClass> : IDisposable where ValueClass : IDisposeNotifier
+public class Cacher<KeyClass, ValueClass> : IDisposable
+    where KeyClass : class
+    where ValueClass : IDisposeNotifier
 {
     // ================================================================================
     // Constructors
@@ -48,7 +51,7 @@ public class Cacher<KeyClass, ValueClass> : IDisposable where ValueClass : IDisp
 
     public ValueClass GetOrCreate(KeyClass key)
     {
-        ValueClass tx;
+        ValueClass? tx;
         if (cache.TryGetValue(key, out tx))
             return tx;
 
@@ -59,7 +62,7 @@ public class Cacher<KeyClass, ValueClass> : IDisposable where ValueClass : IDisp
         return tx;
     }
 
-    public bool TryGetValue(KeyClass key, out ValueClass value)
+    public bool TryGetValue(KeyClass key, out ValueClass? value)
     {
         return cache.TryGetValue(key, out value);
     }
@@ -77,17 +80,17 @@ public class Cacher<KeyClass, ValueClass> : IDisposable where ValueClass : IDisp
         {
             DisposeKey(key);
         }
-        cache = null;
-        cacheByValue = null;
+        cache = null!;
+        cacheByValue = null!;
     }
 
     // ================================================================================
     // Private methods
     // ================================================================================
 
-    void OnChildDisposed(object sender, object args)
+    void OnChildDisposed(object? sender, EventArgs args)
     {
-        ValueClass value = (ValueClass)sender;
+        ValueClass value = (ValueClass)sender!;
         KeyClass key = cacheByValue[value];
 
         cache.Remove(key);

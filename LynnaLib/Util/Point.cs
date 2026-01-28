@@ -1,3 +1,4 @@
+#nullable enable
 using System.Numerics;
 
 namespace Util;

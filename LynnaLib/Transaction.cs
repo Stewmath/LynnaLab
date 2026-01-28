@@ -183,7 +183,7 @@ public class TransactionManager
                         TransactionNode newNode = new TransactionNode(transaction, apply: redo);
                         TransactionHistory.AddLast(newNode.NodeID, newNode);
                         lastDescription = transaction.Description;
-                        TransactionAddedEvent?.Invoke(TransactionHistory.LastNode);
+                        TransactionAddedEvent?.Invoke(TransactionHistory.LastNode!);
 
                         mainStack.Pop();
                         otherStack.Push(transaction);
@@ -434,8 +434,24 @@ public class TransactionManager
         // Optimization: Passed common ancestor may not account for client transactions made since
         // the last synchronization. See if there's a more recent common ancestor.
         {
-            var rNode = commonAncestor == null ? remote.FirstNode : remote.Find(commonAncestor).Next;
-            var lNode = commonAncestor == null ? TransactionHistory.FirstNode : TransactionHistory.Find(commonAncestor).Next;
+            LinkedListNode<TransactionNode>? rNode, lNode;
+
+            if (commonAncestor == null)
+            {
+                rNode = remote.FirstNode;
+                lNode = TransactionHistory.FirstNode;
+            }
+            else
+            {
+                rNode = remote.Find(commonAncestor);
+                lNode = TransactionHistory.Find(commonAncestor);
+
+                if (rNode == null || lNode == null)
+                    throw new Exception($"SynchronizeWith: Invalid common ancestor {commonAncestor}.");
+
+                rNode = rNode.Next;
+                lNode = lNode.Next;
+            }
 
             while (rNode != null && lNode != null && rNode.Value.NodeID == lNode.Value.NodeID)
             {
@@ -447,7 +463,7 @@ public class TransactionManager
 
         log.Debug($"SynchronizeWith: Adjusted last common ancestor: {commonAncestor}");
 
-        if (commonAncestor == remote.Last.NodeID)
+        if (commonAncestor == remote.Last!.NodeID)
         {
             log.Debug("SynchronizeWith: Nothing to do.");
             return;
@@ -481,7 +497,7 @@ public class TransactionManager
             throw new Exception($"Couldn't find node '{localNodeID}' in remote transaction history");
 
         // Apply all new transactions.
-        ApplyRange(firstNode, remote.LastNode);
+        ApplyRange(firstNode, remote.LastNode!);
     }
 
     /// <summary>
@@ -543,7 +559,7 @@ public class TransactionManager
                 redoStack.Clear();
             }
             pushed = true;
-            TransactionAddedEvent?.Invoke(TransactionHistory.LastNode);
+            TransactionAddedEvent?.Invoke(TransactionHistory.LastNode!);
         }
         else
         {

@@ -1,3 +1,4 @@
+#nullable enable
 using System.Numerics;
 
 namespace Util;
@@ -46,7 +47,7 @@ public class FRect
             && point.Y >= Y && point.Y <= Y + Height;
     }
 
-    public override bool Equals(object o)
+    public override bool Equals(object? o)
     {
         return (o is FRect r) && this == r;
     }

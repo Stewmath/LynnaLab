@@ -1,3 +1,4 @@
+#nullable enable
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using PixelFormats = SixLabors.ImageSharp.PixelFormats;
@@ -63,8 +64,8 @@ public class Bitmap : System.IDisposable
     System.Buffers.MemoryHandle memoryHandle;
     int lockCount;
 
-    public event Action ModifiedEvent;
-    public event Action<object> DisposedEvent;
+    public event Action? ModifiedEvent;
+    public event Action<object>? DisposedEvent;
 
     // ================================================================================
     // Properties
@@ -175,7 +176,7 @@ public class Bitmap : System.IDisposable
         {
             if (image != null)
                 image.Dispose();
-            image = null;
+            image = null!;
             ModifiedEvent = null;
         }
     }

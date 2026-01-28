@@ -1,3 +1,4 @@
+#nullable enable
 namespace Util;
 
 // Unlike "LockableEvent" class this operates tn the event handlers. Allows one to define a set
@@ -6,7 +7,7 @@ public class LockableEventGroup
 {
     int locked = 0;
 
-    event Action unlockEvent;
+    event Action? unlockEvent;
     List<Action> handlers = new List<Action>();
     List<int> unlockLevels = new List<int>();
 
@@ -71,7 +72,7 @@ public class LockableEventGroup
 
     void AddHandler(Action handler)
     {
-        Action func = null;
+        Action? func = null;
         func = () =>
         {
             unlockEvent -= func;

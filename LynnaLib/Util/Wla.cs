@@ -1,3 +1,4 @@
+#nullable enable
 // Class of static functions
 
 namespace Util;
