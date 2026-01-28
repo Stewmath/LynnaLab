@@ -596,6 +596,7 @@ public class ConnectionController
         IncludeFields = true,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+        RespectNullableAnnotations = true,
     };
 
     public EndPoint RemoteEndPoint { get; }
