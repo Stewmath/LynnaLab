@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 public class WarpDestData : Data
@@ -22,7 +23,13 @@ public class WarpDestData : Data
 
     class WarpDestState : Data.DataState
     {
-        public HashSet<InstanceResolver<WarpSourceData>> referenceSet;
+        public WarpDestState(FileParser? p, IList<string>? s, string command,
+                             IEnumerable<string>? values, int size)
+            : base(p, s, command, values, size)
+        {
+        }
+
+        public HashSet<InstanceResolver<WarpSourceData>>? referenceSet;
 
         public override void CaptureInitialState(FileComponent parent)
         {
@@ -101,7 +108,7 @@ public class WarpDestData : Data
 
     public WarpDestData(Project p, string id, string command, IEnumerable<string> values,
             FileParser parser, IList<string> spacing)
-        : base(p, id, command, values, 3, parser, spacing, () => new WarpDestState())
+        : base(p, id, new WarpDestState(parser, spacing, command, values, 3))
     {
         vrg = new ValueReferenceGroup(GetWarpValueReferences(this));
 

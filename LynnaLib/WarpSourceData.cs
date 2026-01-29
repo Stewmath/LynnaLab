@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 public enum WarpSourceType
@@ -103,7 +104,13 @@ public class WarpSourceData : Data
 
     class WarpSourceState : Data.DataState
     {
-        public InstanceResolver<WarpDestData> referencedDestData; // Can be null
+        public WarpSourceState(FileParser? p, IList<string>? s, string command,
+                               IEnumerable<string> values, int size)
+            : base(p, s, command, values, size)
+        {
+        }
+
+        public InstanceResolver<WarpDestData>? referencedDestData;
 
         public override void CaptureInitialState(FileComponent parent)
         {
@@ -291,7 +298,7 @@ public class WarpSourceData : Data
 
     public WarpSourceData(Project p, string id, string command, IEnumerable<string> values,
             FileParser parser, IList<string> spacing)
-        : base(p, id, command, values, -1, parser, spacing, () => new WarpSourceState())
+        : base(p, id, new WarpSourceState(parser, spacing, command, values, -1))
     {
         _type = DetermineType(this.CommandLowerCase);
 

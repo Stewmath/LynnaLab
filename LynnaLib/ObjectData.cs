@@ -1,4 +1,5 @@
-﻿namespace LynnaLib;
+﻿#nullable enable
+namespace LynnaLib;
 
 public enum ObjectType
 {
@@ -165,6 +166,12 @@ public class ObjectData : Data
 
     class ObjectDataState : Data.DataState
     {
+        public ObjectDataState(FileParser? p, IList<string>? s, string command,
+                               IEnumerable<string>? values, int size)
+            : base(p, s, command, values, size)
+        {
+        }
+
         public ObjectType objectType;
 
         public override void CaptureInitialState(FileComponent parent)
@@ -200,7 +207,7 @@ public class ObjectData : Data
 
     // Creation from a FileParser
     public ObjectData(Project p, string id, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int objType, ObjectData last)
-        : base(p, id, command, values, -1, parser, spacing, () => new ObjectDataState())
+        : base(p, id, new ObjectDataState(parser, spacing, command, values, -1))
     {
         this.ObjectType = (ObjectType)objType;
         InitializeValueReferenceGroup();
@@ -210,7 +217,7 @@ public class ObjectData : Data
 
     // Creates a new ObjectData instance, not based on existing data.
     public ObjectData(Project p, FileParser parser, ObjectType type)
-        : base(p, GenerateID(p), "", null, -1, parser, new string[] { "\t" }, () => new ObjectDataState())
+        : base(p, GenerateID(p), new ObjectDataState(parser, new string[] { "\t" }, "", null, -1))
     {
         this.ObjectType = type;
 
@@ -232,9 +239,8 @@ public class ObjectData : Data
 
     // Copy constructor
     public ObjectData(ObjectData o)
-        : base(o.Project, GenerateID(o.Project), "", null, -1, null, new string[] { "\t" }, () => new ObjectDataState())
+        : base(o.Project, GenerateID(o.Project), new ObjectDataState(null, new string[] { "\t" }, o.Command, null, -1))
     {
-        this.Command = o.Command;
         this.ObjectType = o.ObjectType;
 
         base.SetNumValues(o.GetNumValues(), "$00");

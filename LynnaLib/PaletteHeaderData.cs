@@ -1,3 +1,4 @@
+#nullable enable
 using System.Text.Json.Serialization;
 
 namespace LynnaLib;
@@ -17,8 +18,14 @@ public class PaletteHeaderData : Data
 
     class PaletteHeaderState : Data.DataState
     {
+        public PaletteHeaderState(FileParser? p, IList<string>? s, string command,
+                                  IEnumerable<string>? values, int size)
+            : base(p, s, command, values, size)
+        {
+        }
+
         [JsonRequired]
-        public InstanceResolver<FileParser> PaletteDataFile; // Can be null
+        public InstanceResolver<FileParser>? PaletteDataFile;
         public bool IsResolvable;
 
         public override void CaptureInitialState(FileComponent parent)
@@ -73,7 +80,7 @@ public class PaletteHeaderData : Data
 
 
     public PaletteHeaderData(Project p, string id, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
-        : base(p, id, command, values, 3, parser, spacing, () => new PaletteHeaderState())
+        : base(p, id, new PaletteHeaderState(parser, spacing, command, values, 3))
     {
 
         int dest;

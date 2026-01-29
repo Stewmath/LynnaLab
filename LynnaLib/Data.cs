@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 // Args passed by the "AddModifiedEventHandler" function.
@@ -15,23 +16,23 @@ public class DataModifiedEventArgs
 
 public class Data : FileComponent
 {
-    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
 
 
     // Event invoked whenever data is modified
     LockableEvent<DataModifiedEventArgs> dataModifiedEvent = new LockableEvent<DataModifiedEventArgs>();
 
     // TODO: replace above with this
-    public event EventHandler<DataModifiedEventArgs> ModifiedEvent;
+    public event EventHandler<DataModifiedEventArgs>? ModifiedEvent;
 
     // Event invoked when the "GetString" method is invoked (before it does anything) allowing
     // last-minute adjustments to the data
-    public event EventHandler<EventArgs> ResolveEvent;
+    public event EventHandler<EventArgs>? ResolveEvent;
 
 
     // State (things that undo/redo can affect)
 
-    private DataState State { get { return base.state as DataState; } }
+    private DataState State { get { return (DataState)base.state; } }
 
     // Command is like .db, .dw, or a macro.
     public string Command
@@ -65,7 +66,7 @@ public class Data : FileComponent
         private set { State.size = value; }
     }
 
-    public Data NextData
+    public Data? NextData
     {
         get
         {
@@ -80,7 +81,7 @@ public class Data : FileComponent
             return c as Data;
         }
     }
-    public Data LastData
+    public Data? LastData
     {
         get
         {
@@ -99,33 +100,16 @@ public class Data : FileComponent
 
     // Constructor
 
-    protected Data(Project p, string id, string command, IEnumerable<string> values, int size, FileParser parser, IList<string> spacing, Func<FileComponentState> stateConstructor)
-        : base(p, id, parser, spacing, stateConstructor)
+    internal Data(Project p, string id, string command, IEnumerable<string> values, int size, FileParser parser, IList<string> spacing)
+        : base(p, id, new DataState(parser, spacing, command, values, size))
     {
-        this.Command = command;
-        if (values == null)
-            this.Values = new List<string>();
-        else
-            this.Values = new List<string>(values);
-        this.Size = size;
-
-        if (this.Spacing == null)
-            this.Spacing = new List<string>();
-        while (this.Spacing.Count < this.Values.Count + 2)
-            this.Spacing.Add("");
-
-        PrintCommand = true;
-
         dataModifiedEvent += (sender, args) => ModifiedEvent?.Invoke(sender, args);
     }
 
-    public Data(Project p, string id, string command, IEnumerable<string> values, int size, FileParser parser, IList<string> spacing)
-        : this(p, id, command, values, size, parser, spacing, () => new DataState())
-    {
-    }
-
     /// <summary>
-    /// State-based constructor, for network transfer (located via reflection)
+    /// State-based constructor, for network transfer (located via reflection).
+    ///
+    /// Also used by some subclasses. Consider both cases if modifying this.
     /// </summary>
     protected Data(Project p, string id, TransactionState state)
         : base(p, id, state)
@@ -261,6 +245,7 @@ public class Data : FileComponent
     // Generally only works with ".db" and ".dw" data, otherwise there is no size defined.
     public Data GetDataAtOffset(int offset)
     {
+        VerifyFileParserExists("GetDataAtOffset");
         return FileParser.GetData(this, offset);
     }
 
@@ -291,6 +276,22 @@ public class Data : FileComponent
         public bool printCommand;
         public int size;
 
+        public DataState(FileParser? p, IList<string>? s, string command,
+                         IEnumerable<string>? values, int size)
+            : base(p, s)
+        {
+            this.command = command;
+            if (values == null)
+                this.values = new List<string>();
+            else
+                this.values = new List<string>(values);
+            this.size = size;
+
+            while (spacing.Count < this.values.Count + 2)
+                spacing.Add("");
+
+            printCommand = true;
+        }
 
         public override void CaptureInitialState(FileComponent parent)
         {

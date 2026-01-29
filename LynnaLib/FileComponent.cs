@@ -1,3 +1,6 @@
+#nullable enable
+using System.Diagnostics.CodeAnalysis;
+
 namespace LynnaLib;
 
 /// <summary>
@@ -39,14 +42,14 @@ public abstract class FileComponent : TrackedProjectData
     }
 
 
-    public FileComponent Next
+    public FileComponent? Next
     {
         get
         {
             return FileParser?.GetNextFileComponent(this);
         }
     }
-    public FileComponent Prev
+    public FileComponent? Prev
     {
         get
         {
@@ -54,7 +57,7 @@ public abstract class FileComponent : TrackedProjectData
         }
     }
     // This can be null, if the data is orphaned.
-    public FileParser FileParser
+    public FileParser? FileParser
     {
         get { return state.parser?.Instance; }
     }
@@ -65,23 +68,11 @@ public abstract class FileComponent : TrackedProjectData
         set { state.spacing = value; }
     }
 
-    protected FileComponent(Project p, string id, FileParser parser,
-                            IList<string> spacing, Func<FileComponentState> stateConstructor)
+    protected FileComponent(Project p, string id, FileComponentState state)
         : base(p, id)
     {
-        state = stateConstructor();
-        EndsLine = true;
-        Fake = false;
-        if (spacing != null)
-            state.spacing = new List<string>(spacing);
-        this.state.parser = parser == null ? null : new(parser);
+        this.state = state;
         _modified = false;
-    }
-
-    protected FileComponent(string id, FileParser parser,
-                            IList<string> spacing, Func<FileComponentState> stateConstructor)
-        : this(parser.Project, id, parser, spacing, stateConstructor)
-    {
     }
 
     /// <summary>
@@ -126,16 +117,19 @@ public abstract class FileComponent : TrackedProjectData
     }
     public virtual void Detach()
     {
+        VerifyFileParserExists("Detach");
         RecordChange();
         FileParser.RemoveFileComponent(this);
         state.parser = null;
     }
     public void InsertIntoParserAfter(Data reference)
     {
+        VerifyFileParserExists("InsertIntoParserAfter");
         FileParser.InsertComponentAfter(reference, this);
     }
     public void InsertIntoParserBefore(Data reference)
     {
+        VerifyFileParserExists("InsertIntoParserBefore");
         FileParser.InsertComponentBefore(reference, this);
     }
 
@@ -151,6 +145,13 @@ public abstract class FileComponent : TrackedProjectData
         Modified = true;
         if (FileParser != null)
             FileParser.Modified = true;
+    }
+
+    [MemberNotNull(nameof(FileParser))]
+    protected void VerifyFileParserExists(string error)
+    {
+        ArgumentNullException.ThrowIfNull(FileParser,
+            $"Can't call {error} without being attached to a FileParser");
     }
 
     // ================================================================================
@@ -179,10 +180,21 @@ public abstract class FileComponent : TrackedProjectData
     /// </summary>
     protected class FileComponentState : TransactionState
     {
-        public InstanceResolver<FileParser> parser; // Can be null
+        public InstanceResolver<FileParser>? parser;
         public List<string> spacing;
         public bool endsLine;
         public bool fake;
+
+        public FileComponentState(FileParser? p, IList<string>? s)
+        {
+            parser = p == null ? null : new(p);
+            spacing = s == null
+                ? new List<string>()
+                : new List<string>(s);
+
+            endsLine = true;
+            fake = false;
+        }
 
         public virtual void CaptureInitialState(FileComponent parent)
         {
@@ -193,10 +205,9 @@ public abstract class FileComponent : TrackedProjectData
 
 public class StringFileComponent : FileComponent
 {
-    public StringFileComponent(string id, FileParser parser, string s, IList<string> spacing)
-        : base(id, parser, spacing, () => new StringFileComponentState())
+    public StringFileComponent(string id, FileParser parser, string str, IList<string> spacing)
+        : base(parser.Project, id, new StringFileComponentState(parser, spacing, str))
     {
-        State.str = s;
         if (this.Spacing == null)
             this.Spacing = new List<string>();
         while (this.Spacing.Count < 2)
@@ -212,7 +223,7 @@ public class StringFileComponent : FileComponent
     }
 
     // Properties
-    StringFileComponentState State { get { return base.state as StringFileComponentState; } }
+    StringFileComponentState State { get { return (StringFileComponentState)base.state; } }
 
     // Methods
 
@@ -231,6 +242,12 @@ public class StringFileComponent : FileComponent
     {
         public string str;
 
+        public StringFileComponentState(FileParser? p, IList<string>? spacing, string str)
+            : base(p, spacing)
+        {
+            this.str = str;
+        }
+
         public override void CaptureInitialState(FileComponent parent)
         {
             parent.Project.TransactionManager.CaptureInitialState<StringFileComponentState>(parent);
@@ -244,23 +261,28 @@ public class Label : FileComponent
     {
         public string name;
 
+        public LabelState(FileParser? p, IList<string>? s, string name)
+            : base(p, s)
+        {
+            this.name = name;
+        }
+
         public override void CaptureInitialState(FileComponent parent)
         {
             parent.Project.TransactionManager.CaptureInitialState<LabelState>(parent);
         }
     }
 
-    LabelState State { get { return base.state as LabelState; } }
+    LabelState State { get { return (LabelState)base.state; } }
 
     public string Name
     {
         get { return State.name; }
     }
 
-    public Label(string id, FileParser parser, string n, IList<string> spacing = null)
-        : base(id, parser, spacing, () => new LabelState())
+    public Label(string id, FileParser parser, string n, IList<string>? spacing = null)
+        : base(parser.Project, id, new LabelState(parser, spacing, n))
     {
-        State.name = n;
         if (spacing == null)
         {
             this.Spacing = new List<string> { "", "" };

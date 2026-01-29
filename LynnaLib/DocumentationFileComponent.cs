@@ -24,7 +24,7 @@ public class DocumentationFileComponent : FileComponent
     }
 
     public DocumentationFileComponent(string id, FileParser parser, string str)
-        : base(id, parser, null, () => new FileComponentState())
+        : base(parser.Project, id, new FileComponentState(parser, null))
     {
         // Setup default fields
         defaultFields["postype"] = "normal";
