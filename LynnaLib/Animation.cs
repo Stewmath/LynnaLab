@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 public class Animation : ProjectDataType, ProjectDataInstantiator
@@ -38,10 +39,15 @@ public class Animation : ProjectDataType, ProjectDataInstantiator
     public GfxHeaderData GetGfxHeader(int i)
     {
         int index = gfxHeaderIndices[i];
-        FileParser parser = Project.GetFileWithLabel("animationGfxHeaders");
-        var header = parser.GetData("animationGfxHeaders") as GfxHeaderData;
+        GfxHeaderData? header = Project.GetData("animationGfxHeaders") as GfxHeaderData;
         for (int j = 0; j < index; j++)
+        {
+            if (header == null)
+                throw new ProjectErrorException("animationGfxHeaders wasn't an instance of GfxHeaderData?");
             header = header.NextData as GfxHeaderData;
+        }
+        if (header == null)
+            throw new ProjectErrorException("animationGfxHeaders wasn't an instance of GfxHeaderData?");
         return header;
     }
 }

@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 public class AnimationGroup : ProjectIndexedDataType, IndexedProjectDataInstantiator

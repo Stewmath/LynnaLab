@@ -1,4 +1,5 @@
-﻿namespace LynnaLib;
+﻿#nullable disable
+namespace LynnaLib;
 
 /// <summary>
 ///  Takes a file from the constants folder and creates a 1:1 mapping between definitions and

@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// <summary>
@@ -5,7 +6,7 @@ namespace LynnaLib;
 /// </summary>
 public class AbstractBoolValueReference : AbstractIntValueReference
 {
-    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
 
 
     // ================================================================================
@@ -15,7 +16,7 @@ public class AbstractBoolValueReference : AbstractIntValueReference
     public AbstractBoolValueReference(Project project,
                                       Func<bool> getter, Action<bool> setter,
                                       ValueReferenceType type = ValueReferenceType.Bool,
-                                      string constantsMappingString = null)
+                                      string? constantsMappingString = null)
         : base(
             project,
             getter: () => getter() ? 1 : 0,
@@ -45,8 +46,8 @@ public class AbstractBoolValueReference : AbstractIntValueReference
         Action<bool> setter,
         ValueReferenceType type = ValueReferenceType.Int,
         bool editable = true,
-        string constantsMappingString = null,
-        string tooltip = null)
+        string? constantsMappingString = null,
+        string? tooltip = null)
     {
         var vr = new AbstractBoolValueReference(project, getter, setter, type,
                                                 constantsMappingString);

@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// <summary>
@@ -8,14 +9,14 @@ public class Chest
     readonly Data dataStart;
     readonly Room room;
 
-    public event EventHandler<EventArgs> DeletedEvent;
+    public event EventHandler<EventArgs?>? DeletedEvent;
 
 
     internal Chest(Room room, Data dataStart)
     {
         this.room = room;
         this.dataStart = dataStart;
-        GenerateValueReferenceGroup();
+        this.ValueReferenceGroup = GenerateValueReferenceGroup();
 
         ValueReferenceGroup.ModifiedEvent += (sender, args) =>
         {
@@ -89,7 +90,7 @@ public class Chest
     {
         get { return Project.GetIndexedDataType<TreasureGroup>(TreasureID); }
     }
-    public TreasureObject Treasure
+    public TreasureObject? Treasure
     {
         get
         {
@@ -104,6 +105,8 @@ public class Chest
         }
         set
         {
+            if (value == null)
+                throw new Exception("Cannot set Chest.Treasure to null");
             TreasureIndex = (value.ID << 8) | value.SubID;
         }
     }
@@ -139,7 +142,7 @@ public class Chest
     // Private methods
     // ================================================================================
 
-    void GenerateValueReferenceGroup()
+    ValueReferenceGroup GenerateValueReferenceGroup()
     {
         var v1 = DataValueReference.Descriptor(dataStart,
                 name: "Y",
@@ -180,8 +183,9 @@ public class Chest
                 v1, v2, v3, v4, v5
             };
 
-        ValueReferenceGroup = new ValueReferenceGroup(list);
-        ValueReferenceGroup.EnableTransactions("Edit chest#" + TransactionIdentifier, true);
+        ValueReferenceGroup vrg = new ValueReferenceGroup(list);
+        vrg.EnableTransactions("Edit chest#" + TransactionIdentifier, true);
+        return vrg;
     }
 
     void UpdateTreasureName(int id = -1, int subid = -1)

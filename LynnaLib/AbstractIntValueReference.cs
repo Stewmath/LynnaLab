@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// <summary>
@@ -10,7 +11,7 @@ namespace LynnaLib;
 public class AbstractIntValueReference : ValueReference
 {
 
-    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
 
 
     // ================================================================================
@@ -19,7 +20,7 @@ public class AbstractIntValueReference : ValueReference
 
 
     public AbstractIntValueReference(Project project, Func<int> getter, Action<int> setter, int maxValue, int minValue = 0, ValueReferenceType type = ValueReferenceType.Int,
-            string constantsMappingString = null)
+            string? constantsMappingString = null)
     : base(project, type, constantsMappingString)
     {
         this.getter = getter;
@@ -29,18 +30,21 @@ public class AbstractIntValueReference : ValueReference
         base.MinValue = minValue;
     }
 
-    public AbstractIntValueReference(ValueReference r, int maxValue, int minValue = 0, Func<int> getter = null, Action<int> setter = null)
+    public AbstractIntValueReference(ValueReference r, int maxValue, int minValue = 0, Func<int>? getter = null, Action<int>? setter = null)
         : base(r.Project, r.ValueType, r.ConstantsMappingString)
     {
         this.MaxValue = maxValue;
         this.MinValue = minValue;
-        this.getter = getter;
-        this.setter = setter;
 
-        if (this.getter == null)
+        if (getter == null)
             this.getter = r.GetIntValue;
-        if (this.setter == null)
+        else
+            this.getter = getter;
+
+        if (setter == null)
             this.setter = r.SetValue;
+        else
+            this.setter = setter;
     }
 
     // ================================================================================
@@ -111,8 +115,8 @@ public class AbstractIntValueReference : ValueReference
         int minValue = 0,
         ValueReferenceType type = ValueReferenceType.Int,
         bool editable = true,
-        string constantsMappingString = null,
-        string tooltip = null)
+        string? constantsMappingString = null,
+        string? tooltip = null)
     {
         var vr = new AbstractIntValueReference(project, getter, setter,
                                                maxValue, minValue, type, constantsMappingString);
