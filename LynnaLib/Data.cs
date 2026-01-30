@@ -30,7 +30,7 @@ public class Data : FileComponent
 
     // Event invoked when the "GetString" method is invoked (before it does anything) allowing
     // last-minute adjustments to the data
-    public event EventHandler<EventArgs>? ResolveEvent;
+    public event EventHandler<EventArgs?>? ResolveEvent;
 
 
     // State (things that undo/redo can affect)
@@ -267,6 +267,7 @@ public class Data : FileComponent
         return space;
     }
 
+    [DoesNotReturn]
     public void ThrowException(Exception e)
     {
         throw e;

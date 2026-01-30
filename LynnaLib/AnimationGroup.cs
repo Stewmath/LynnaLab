@@ -17,7 +17,7 @@ public class AnimationGroup : ProjectIndexedDataType, IndexedProjectDataInstanti
         Data pointer = parser.GetData("animationGroupTable", 2 * Index);
         string label = pointer.GetValue(0);
 
-        Data data = parser.GetData(label);
+        Data? data = parser.GetData(label);
         int b1 = Project.Eval(data.GetValue(0));
         data = data.NextData;
         int bits = b1 & 0xf;
@@ -35,7 +35,7 @@ public class AnimationGroup : ProjectIndexedDataType, IndexedProjectDataInstanti
 
         for (int j = 0; j < NumAnimations; j++)
         {
-            if (data.CommandLowerCase != ".dw")
+            if (data?.CommandLowerCase != ".dw")
                 throw new Exception("Malformatted animation group data (index 0x" +
                         Index.ToString("x") + "\n");
             animations[j] = Project.GetDataType<Animation>(data.GetValue(0), createIfMissing: true);

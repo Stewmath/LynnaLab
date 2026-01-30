@@ -15,12 +15,12 @@ public class Animation : ProjectDataType, ProjectDataInstantiator
     private Animation(Project p, string label) : base(p, label)
     {
         FileParser parser = Project.GetFileWithLabel(label);
-        Data data = parser.GetData(label);
+        Data? data = parser.GetData(label);
         while (data != null && data.CommandLowerCase == ".db")
         {
             counters.Add(Project.Eval(data.GetValue(0)));
             data = data.NextData;
-            if (data.CommandLowerCase != ".db")
+            if (data?.CommandLowerCase != ".db")
                 throw new Exception("Malformatted animation data");
             gfxHeaderIndices.Add(Project.Eval(data.GetValue(0)));
             data = data.NextData;

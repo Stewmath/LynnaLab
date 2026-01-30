@@ -29,7 +29,7 @@ public enum ObjectType
 /// "0", and this value will be returned if one attempts to access them.
 public class ObjectData : Data
 {
-    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
 
     public static string[] ObjectCommands = {
             "obj_Condition",
@@ -160,7 +160,8 @@ public class ObjectData : Data
                 { // Garbage
                 };
         }
-        return null;
+
+        throw new Exception("No descriptors defined for object type: {type}");
     }
 
 
@@ -190,7 +191,7 @@ public class ObjectData : Data
         }
     }
 
-    private ValueReferenceGroup _vrg;
+    private ValueReferenceGroup? _vrg;
 
 
     // Properties
@@ -199,7 +200,7 @@ public class ObjectData : Data
         get
         {
             if (_vrg == null)
-                InitializeValueReferenceGroup();
+                _vrg = InitializeValueReferenceGroup();
             return _vrg;
         }
     }
@@ -210,7 +211,7 @@ public class ObjectData : Data
         set { State.objectType = value; }
     }
 
-    private ObjectDataState State { get { return state as ObjectDataState; } }
+    private ObjectDataState State { get { return (ObjectDataState)state; } }
 
 
     // Constructors
@@ -219,7 +220,7 @@ public class ObjectData : Data
     public ObjectData(Project p, string id, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int objType, ObjectData last)
         : base(p, id, new ObjectDataState(parser, spacing, command, values, -1, (ObjectType)objType))
     {
-        InitializeValueReferenceGroup();
+        _vrg = InitializeValueReferenceGroup();
 
         ExpandParameters(last);
     }
@@ -231,7 +232,7 @@ public class ObjectData : Data
         Command = ObjectCommands[(int)ObjectType];
         base.SetNumValues(ObjectCommandDefaultParams[(int)ObjectType], "$00");
 
-        InitializeValueReferenceGroup();
+        _vrg = InitializeValueReferenceGroup();
 
         base.LockModifiedEvents();
 
@@ -269,9 +270,9 @@ public class ObjectData : Data
     }
 
     // Common code for constructors
-    void InitializeValueReferenceGroup()
+    ValueReferenceGroup InitializeValueReferenceGroup()
     {
-        _vrg = new ValueReferenceGroup(GetObjectValueReferenceDescriptors(ObjectType, this));
+        return new ValueReferenceGroup(GetObjectValueReferenceDescriptors(ObjectType, this));
     }
 
     public ObjectType GetObjectType()
@@ -313,7 +314,7 @@ public class ObjectData : Data
     // For types which take a variable number of parameters, this sets the number of values to
     // the maximum, inserting placeholders where necessary. This is done as soon as the data is
     // loaded, and is only undone temporarily while saving.
-    void ExpandParameters(ObjectData last)
+    void ExpandParameters(ObjectData? last)
     {
         // We're "modifying" the data but only for internal purposes, it doesn't need to be
         // marked as modified just for doing this.
@@ -352,7 +353,7 @@ public class ObjectData : Data
     // The opposite of ExpandParameters; called while saving.
     // DO NOT call this before ExpandParameters has been called at least once! This assumes that
     // it is in the expanded state at the moment it is called.
-    void ContractParameters(ObjectData last)
+    void ContractParameters(ObjectData? last)
     {
         suppressUndoRecording++;
 
@@ -400,9 +401,9 @@ public class ObjectData : Data
     // this ObjectData and the last one, this returns null. This is necessary because, for
     // object data types which reuse values, they must not reuse a value from an ObjectData that
     // came before a label.
-    ObjectData GetLastObjectData()
+    ObjectData? GetLastObjectData()
     {
-        FileComponent last = Prev;
+        FileComponent? last = Prev;
 
         while (last != null)
         {

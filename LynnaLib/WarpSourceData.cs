@@ -52,7 +52,7 @@ public class WarpSourceData : Data
         },
     };
 
-    private static List<ValueReferenceDescriptor> GetWarpDescriptors(WarpSourceType type, Data data)
+    private static List<ValueReferenceDescriptor>? GetWarpDescriptors(WarpSourceType type, Data data)
     {
         switch (type)
         {
@@ -127,14 +127,14 @@ public class WarpSourceData : Data
     }
 
     readonly WarpSourceType _type;
-    ValueReferenceGroup _vrg;
+    ValueReferenceGroup? _vrg;
 
 
     // Properties
 
-    private WarpSourceState State { get { return base.state as WarpSourceState; } }
+    private WarpSourceState State { get { return (WarpSourceState)base.state; } }
 
-    public WarpDestData ReferencedDestData
+    public WarpDestData? ReferencedDestData
     {
         get { return State.referencedDestData?.Instance; }
         private set
@@ -340,19 +340,22 @@ public class WarpSourceData : Data
     }
 
     // If this is the kind of warp which points to another warp, return the pointed warp,
-    // otherwise return null
+    // otherwise throw an exception.
     public WarpSourceData GetPointedWarp()
     {
         if (WarpSourceType != WarpSourceType.Pointer)
             throw new ArgumentException("Invalid warp type for 'GetPointedWarp' call.");
 
-        WarpSourceData data = Project.GetData(vrg.GetValue("Pointer")) as WarpSourceData;
-        return data;
+        Data data = Project.GetData(vrg.GetValue("Pointer"));
+        WarpSourceData? warpData = data as WarpSourceData;
+        if (warpData == null)
+            throw new AssemblyErrorException($"Invalid warp source data? {data}");
+        return warpData;
     }
 
     // If this is a WarpSourceData which is pointed to from another one,
     // return the next in the sequence, or null if the sequence is over.
-    public WarpSourceData GetNextWarp()
+    public WarpSourceData? GetNextWarp()
     {
         // Check for m_WarpListEndNoDefault here (on top of m_WarpListEndWithDefault) as it's used
         // inappropriately in a few places
@@ -365,7 +368,7 @@ public class WarpSourceData : Data
             throw new ArgumentException("Invalid warp type for 'GetNextWarp' call.");
         }
 
-        FileComponent next = Next;
+        FileComponent? next = Next;
         while (next != null)
         {
             if (next is WarpSourceData)
@@ -405,12 +408,16 @@ public class WarpSourceData : Data
 
         if (count == 0)
             return this;
-        return GetNextWarp().TraversePointedChain(count - 1);
+
+        WarpSourceData? next = GetNextWarp();
+        if (next == null)
+            throw new Exception($"Couldn't get pointed warp #{count} for warp: {this}");
+        return next.TraversePointedChain(count - 1);
     }
 
-    private (int group, WarpDestData destData) GetReferencedDestData()
+    private (int group, WarpDestData? destData) GetReferencedDestData()
     {
-        WarpDestGroup group = GetReferencedDestGroup();
+        WarpDestGroup? group = GetReferencedDestGroup();
         if (group == null) return (-1, null);
 
         try
@@ -423,7 +430,7 @@ public class WarpSourceData : Data
         }
     }
 
-    public WarpDestGroup GetReferencedDestGroup()
+    public WarpDestGroup? GetReferencedDestGroup()
     {
         if (_type == WarpSourceType.Pointer || IsEndOpcode)
             return null;
@@ -486,7 +493,7 @@ public class WarpSourceData : Data
         else if (WarpSourceType != WarpSourceType.Position)
             throw new ArgumentException("Invalid warp type for 'GetPointedChainLength' call.");
 
-        WarpSourceData next = GetNextWarp();
+        WarpSourceData? next = GetNextWarp();
         if (next == null)
         {
             // Sanity check: Last entry should be an end opcode

@@ -29,15 +29,17 @@ public class WarpDestData : Data
                              IEnumerable<string>? values, int size)
             : base(p, s, command, values, size)
         {
+            referenceSet = new HashSet<InstanceResolver<WarpSourceData>>();
         }
 
         // For deserialization only
         [JsonConstructor]
         protected WarpDestState()
         {
+            referenceSet = null!;
         }
 
-        public HashSet<InstanceResolver<WarpSourceData>>? referenceSet;
+        public HashSet<InstanceResolver<WarpSourceData>> referenceSet;
 
         public override void CaptureInitialState(FileComponent parent)
         {
@@ -50,7 +52,7 @@ public class WarpDestData : Data
 
     // Properties
 
-    private WarpDestState State { get { return base.state as WarpDestState; } }
+    private WarpDestState State { get { return (WarpDestState)base.state; } }
 
     public int Map
     {
@@ -119,8 +121,6 @@ public class WarpDestData : Data
         : base(p, id, new WarpDestState(parser, spacing, command, values, 3))
     {
         vrg = new ValueReferenceGroup(GetWarpValueReferences(this));
-
-        State.referenceSet = new HashSet<InstanceResolver<WarpSourceData>>();
     }
 
     /// <summary>
@@ -129,6 +129,7 @@ public class WarpDestData : Data
     private WarpDestData(Project p, string id, TransactionState state)
         : base(p, id, state)
     {
+        vrg = null!; // We set this in OnInitializedFromTransfer
     }
 
     public void AddReference(WarpSourceData data)

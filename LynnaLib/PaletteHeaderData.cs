@@ -44,17 +44,17 @@ public class PaletteHeaderData : Data
     /// This is DIFFERENT from the base class's "ModifiedEvent" because this triggers when the
     /// underlying palette data is modified, rather than when the metadata (pointers, etc) is
     /// modified!
-    public event EventHandler<EventArgs> PaletteDataModifiedEvent;
+    public event EventHandler<EventArgs?>? PaletteDataModifiedEvent;
 
 
-    public RgbData Data
+    public RgbData? Data
     {
         get
         {
             if (!IsResolvable)
                 return null;
             Debug.Assert(State.PaletteDataFile != null);
-            return (RgbData)State.PaletteDataFile?.Instance.GetData(GetValue(2));
+            return (RgbData?)State.PaletteDataFile?.Instance.GetData(GetValue(2));
         }
     }
 
@@ -82,7 +82,7 @@ public class PaletteHeaderData : Data
         get { return State.IsResolvable; }
     }
 
-    private PaletteHeaderState State { get { return state as PaletteHeaderState; } }
+    private PaletteHeaderState State { get { return (PaletteHeaderState)state; } }
 
 
     public PaletteHeaderData(Project p, string id, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing)
@@ -130,13 +130,15 @@ public class PaletteHeaderData : Data
     {
         Color[][] ret = new Color[NumPalettes][];
 
-        RgbData data = Data;
+        RgbData? data = Data;
 
         for (int i = 0; i < NumPalettes; i++)
         {
             ret[i] = new Color[4];
             for (int j = 0; j < 4; j++)
             {
+                if (data == null)
+                    throw new AssemblyErrorException($"Error retrieving palettes referenced by: {this}");
                 ret[i][j] = data.Color;
                 data = data.NextData as RgbData;
             }
@@ -166,18 +168,22 @@ public class PaletteHeaderData : Data
             throw new Exception($"Requested palette index {palette} from palette header, out of range");
 
         palette -= FirstPalette;
-        RgbData data = Data;
+        RgbData? data = Data;
 
         for (int i = 0; i < palette * 4 + colorIndex; i++)
         {
+            if (data == null)
+                throw new AssemblyErrorException($"Error retrieving palettes referenced by: {this}");
             data = data.NextData as RgbData;
         }
+        if (data == null)
+            throw new AssemblyErrorException($"Error retrieving palettes referenced by: {this}");
         return data;
     }
 
     void Foreach(Action<RgbData> action)
     {
-        RgbData data = Data;
+        RgbData? data = Data;
         for (int i = 0; i < NumPalettes * 4; i++)
         {
             if (data == null)
