@@ -1,5 +1,6 @@
 #nullable enable
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace LynnaLib;
 
@@ -192,8 +193,15 @@ public abstract class FileComponent : TrackedProjectData
                 ? new List<string>()
                 : new List<string>(s);
 
-            endsLine = true;
-            fake = false;
+            this.endsLine = true;
+            this.fake = false;
+        }
+
+        // For deserialization only
+        [JsonConstructor]
+        protected FileComponentState()
+        {
+            spacing = null!;
         }
 
         public virtual void CaptureInitialState(FileComponent parent)
@@ -248,6 +256,13 @@ public class StringFileComponent : FileComponent
             this.str = str;
         }
 
+        // For deserialization only
+        [JsonConstructor]
+        protected StringFileComponentState() : base()
+        {
+            str = null!;
+        }
+
         public override void CaptureInitialState(FileComponent parent)
         {
             parent.Project.TransactionManager.CaptureInitialState<StringFileComponentState>(parent);
@@ -265,6 +280,13 @@ public class Label : FileComponent
             : base(p, s)
         {
             this.name = name;
+        }
+
+        // For deserialization only
+        [JsonConstructor]
+        protected LabelState() : base()
+        {
+            name = null!;
         }
 
         public override void CaptureInitialState(FileComponent parent)

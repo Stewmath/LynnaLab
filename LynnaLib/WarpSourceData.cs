@@ -1,4 +1,6 @@
 #nullable enable
+using System.Text.Json.Serialization;
+
 namespace LynnaLib;
 
 public enum WarpSourceType
@@ -107,6 +109,12 @@ public class WarpSourceData : Data
         public WarpSourceState(FileParser? p, IList<string>? s, string command,
                                IEnumerable<string> values, int size)
             : base(p, s, command, values, size)
+        {
+        }
+
+        // For deserialization only
+        [JsonConstructor]
+        protected WarpSourceState()
         {
         }
 

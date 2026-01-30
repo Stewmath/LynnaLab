@@ -342,6 +342,7 @@ public partial class Project
             //RespectRequiredConstructorParameters = true,
             UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
             DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+            RespectNullableAnnotations = true,
         };
 
         SerializerOptions.Converters.Add(new InstanceResolverConverter(this));
@@ -1779,6 +1780,12 @@ public partial class Project
         }
         catch (DeserializationException)
         {
+            // A LynnaLib class threw an exception
+            throw;
+        }
+        catch (InvalidOperationException)
+        {
+            // System.Text.Json failure
             throw;
         }
         if (s == null)

@@ -1,4 +1,6 @@
 ﻿#nullable enable
+using System.Text.Json.Serialization;
+
 namespace LynnaLib;
 
 public enum ObjectType
@@ -166,9 +168,17 @@ public class ObjectData : Data
 
     class ObjectDataState : Data.DataState
     {
-        public ObjectDataState(FileParser? p, IList<string>? s, string command,
-                               IEnumerable<string>? values, int size)
-            : base(p, s, command, values, size)
+        public ObjectDataState(
+            FileParser? parser, IList<string>? spacing, string command,
+            IEnumerable<string>? values, int size, ObjectType objectType)
+            : base(parser, spacing, command, values, size)
+        {
+            this.objectType = objectType;
+        }
+
+        // For deserialization only
+        [JsonConstructor]
+        private ObjectDataState()
         {
         }
 
@@ -207,9 +217,8 @@ public class ObjectData : Data
 
     // Creation from a FileParser
     public ObjectData(Project p, string id, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int objType, ObjectData last)
-        : base(p, id, new ObjectDataState(parser, spacing, command, values, -1))
+        : base(p, id, new ObjectDataState(parser, spacing, command, values, -1, (ObjectType)objType))
     {
-        this.ObjectType = (ObjectType)objType;
         InitializeValueReferenceGroup();
 
         ExpandParameters(last);
@@ -217,10 +226,8 @@ public class ObjectData : Data
 
     // Creates a new ObjectData instance, not based on existing data.
     public ObjectData(Project p, FileParser parser, ObjectType type)
-        : base(p, GenerateID(p), new ObjectDataState(parser, new string[] { "\t" }, "", null, -1))
+        : base(p, GenerateID(p), new ObjectDataState(parser, new string[] { "\t" }, "", null, -1, type))
     {
-        this.ObjectType = type;
-
         Command = ObjectCommands[(int)ObjectType];
         base.SetNumValues(ObjectCommandDefaultParams[(int)ObjectType], "$00");
 
@@ -239,10 +246,9 @@ public class ObjectData : Data
 
     // Copy constructor
     public ObjectData(ObjectData o)
-        : base(o.Project, GenerateID(o.Project), new ObjectDataState(null, new string[] { "\t" }, o.Command, null, -1))
+        : base(o.Project, GenerateID(o.Project), new ObjectDataState(null, new string[] { "\t" },
+            o.Command, null, -1, o.ObjectType))
     {
-        this.ObjectType = o.ObjectType;
-
         base.SetNumValues(o.GetNumValues(), "$00");
         for (int i = 0; i < o.GetNumValues(); i++)
             SetValue(i, o.GetValue(i));

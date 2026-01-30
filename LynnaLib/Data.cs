@@ -1,4 +1,7 @@
 #nullable enable
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
+
 namespace LynnaLib;
 
 // Args passed by the "AddModifiedEventHandler" function.
@@ -290,7 +293,15 @@ public class Data : FileComponent
             while (spacing.Count < this.values.Count + 2)
                 spacing.Add("");
 
-            printCommand = true;
+            this.printCommand = true;
+        }
+
+        // For deserialization only
+        [JsonConstructor]
+        protected DataState() : base()
+        {
+            command = null!;
+            values = null!;
         }
 
         public override void CaptureInitialState(FileComponent parent)

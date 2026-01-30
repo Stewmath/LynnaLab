@@ -24,6 +24,12 @@ public class PaletteHeaderData : Data
         {
         }
 
+        // For deserialization only
+        [JsonConstructor]
+        protected PaletteHeaderState()
+        {
+        }
+
         [JsonRequired]
         public InstanceResolver<FileParser>? PaletteDataFile;
         public bool IsResolvable;
