@@ -1,4 +1,3 @@
-#nullable enable
 namespace LynnaLib;
 
 /// Represents a "treasure object", which is a treasure with additional properties including

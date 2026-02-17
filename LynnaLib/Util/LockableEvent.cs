@@ -1,4 +1,3 @@
-#nullable enable
 namespace Util;
 
 // This is just like an Event, but you can "Lock" it to pause callbacks, and "Unlock" it to

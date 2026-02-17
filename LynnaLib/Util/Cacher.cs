@@ -1,4 +1,3 @@
-#nullable enable
 namespace Util;
 
 public interface IDisposeNotifier : IDisposable

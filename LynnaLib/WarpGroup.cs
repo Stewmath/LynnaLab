@@ -1,4 +1,3 @@
-#nullable enable
 namespace LynnaLib;
 
 // Reads/writes warp source data per room. Searches through all of a group's warp data to get

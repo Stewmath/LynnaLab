@@ -1,4 +1,3 @@
-#nullable enable
 namespace LynnaLib;
 
 /// This basically consists of a list of "PaletteHeaderData"s. Keep in mind that some

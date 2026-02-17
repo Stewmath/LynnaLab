@@ -1,4 +1,3 @@
-#nullable enable
 namespace Util;
 
 // Unlike "LockableEvent" class this operates tn the event handlers. Allows one to define a set

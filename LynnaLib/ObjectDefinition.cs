@@ -1,4 +1,3 @@
-#nullable enable
 namespace LynnaLib;
 
 /// Public interface over the ObjectData class.

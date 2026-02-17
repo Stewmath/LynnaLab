@@ -1,5 +1,4 @@
-﻿#nullable enable
-namespace LynnaLib;
+﻿namespace LynnaLib;
 
 // Class represents macro:
 // m_GfxHeader filename destAddress [size] [startOffset]

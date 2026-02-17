@@ -1,4 +1,3 @@
-#nullable enable
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using PixelFormats = SixLabors.ImageSharp.PixelFormats;

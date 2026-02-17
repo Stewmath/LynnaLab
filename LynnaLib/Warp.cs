@@ -1,4 +1,3 @@
-#nullable enable
 namespace LynnaLib;
 
 // This class is an abstraction of WarpSourceData and WarpDestData, managed by the WarpGroup

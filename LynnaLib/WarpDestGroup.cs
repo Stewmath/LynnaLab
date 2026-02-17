@@ -1,4 +1,3 @@
-#nullable enable
 namespace LynnaLib;
 
 public class WarpDestGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiator

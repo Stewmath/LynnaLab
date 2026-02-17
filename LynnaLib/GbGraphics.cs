@@ -1,4 +1,3 @@
-#nullable enable
 namespace LynnaLib;
 
 public static class GbGraphics

@@ -1,4 +1,3 @@
-#nullable enable
 using Collections = System.Collections.Generic;
 
 

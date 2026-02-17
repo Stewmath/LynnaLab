@@ -1,5 +1,3 @@
-#nullable enable
-
 using System.Runtime.InteropServices;
 using SameBoySharp;
 using SDL;

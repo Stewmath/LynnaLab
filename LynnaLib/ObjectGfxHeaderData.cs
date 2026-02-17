@@ -1,4 +1,3 @@
-#nullable enable
 namespace LynnaLib;
 
 // Class represents macro:

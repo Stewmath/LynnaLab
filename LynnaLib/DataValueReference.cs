@@ -1,4 +1,3 @@
-#nullable enable
 namespace LynnaLib;
 
 // Enum of types of values that can be had.
