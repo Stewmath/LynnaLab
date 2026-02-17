@@ -75,7 +75,7 @@ public class Data : FileComponent
         {
             if (FileParser == null)
                 return null;
-            FileComponent c = this;
+            FileComponent? c = this;
             do
             {
                 c = FileParser.GetNextFileComponent(c);
@@ -90,7 +90,7 @@ public class Data : FileComponent
         {
             if (FileParser == null)
                 return null;
-            FileComponent c = this;
+            FileComponent? c = this;
             do
             {
                 c = FileParser.GetPrevFileComponent(c);

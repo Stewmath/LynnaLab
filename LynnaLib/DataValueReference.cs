@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 // Enum of types of values that can be had.
@@ -25,7 +26,7 @@ public class DataValueReference : ValueReference
     // Static things
     // ================================================================================
 
-    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
 
     // Static default value stuff
 
@@ -88,7 +89,7 @@ public class DataValueReference : ValueReference
         int startBit = 0,
         int endBit = 0,
         int maxValue = -1,
-        string constantsMappingString = null)
+        string? constantsMappingString = null)
     : base(data.Project, GetValueType(type), constantsMappingString)
     {
         this._data = data;
@@ -244,7 +245,7 @@ public class DataValueReference : ValueReference
     // ================================================================================
 
 
-    void OnDataModified(object sender, DataModifiedEventArgs args)
+    void OnDataModified(object? sender, DataModifiedEventArgs args)
     {
         if (sender != _data)
             throw new Exception("DataValueReference.OnDataModified: Wrong data object?");
@@ -270,9 +271,9 @@ public class DataValueReference : ValueReference
         int startBit = 0,
         int endBit = 0,
         int maxValue = -1,
-        string constantsMappingString = null,
+        string? constantsMappingString = null,
         bool editable = true,
-        string tooltip = null)
+        string? tooltip = null)
     {
         var vr = new DataValueReference(data, index, type,
                                         startBit, endBit, maxValue, constantsMappingString);

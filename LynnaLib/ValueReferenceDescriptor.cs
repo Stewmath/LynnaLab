@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// <summary>
@@ -12,7 +13,7 @@ public class ValueReferenceDescriptor
     public ValueReferenceDescriptor(ValueReference valueReference,
                                     string name,
                                     bool editable = true,
-                                    string tooltip = null)
+                                    string? tooltip = null)
     {
         this.valueReference = valueReference;
         this.Name = name;
@@ -21,7 +22,7 @@ public class ValueReferenceDescriptor
 
         if (ValueReference.ConstantsMapping != null)
         {
-            Documentation = valueReference.ConstantsMapping.OverallDocumentation;
+            Documentation = ValueReference.ConstantsMapping.OverallDocumentation;
             Documentation.Name = "Field: " + Name;
         }
     }
@@ -41,11 +42,11 @@ public class ValueReferenceDescriptor
 
     public string Name { get; private set; }
     public bool Editable { get; private set; }
-    public string Tooltip { get; private set; }
+    public string? Tooltip { get; private set; }
 
-    public ConstantsMapping ConstantsMapping { get { return ValueReference.ConstantsMapping; } }
+    public ConstantsMapping? ConstantsMapping { get { return ValueReference.ConstantsMapping; } }
     // This documentation tends to change based on what the current value is...
-    public Documentation Documentation { get; private set; }
+    public Documentation? Documentation { get; private set; }
 
 
     // ================================================================================
@@ -55,7 +56,7 @@ public class ValueReferenceDescriptor
     /// <summary>
     ///  Returns a field from documentation (ie. "@desc{An interaction}").
     /// </summary>
-    public string GetDocumentationField(string name)
+    public string? GetDocumentationField(string name)
     {
         if (Documentation == null)
             return null;

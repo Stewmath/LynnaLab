@@ -1,4 +1,7 @@
-﻿namespace LynnaLib;
+﻿#nullable enable
+using System.Diagnostics.CodeAnalysis;
+
+namespace LynnaLib;
 
 // The lower the value, the lower the priority
 public enum GfxHeaderType
@@ -16,7 +19,7 @@ public enum PaletteGroupType
 public class GraphicsState
 {
     // Called when a tile is changed ("-1, -1" means full invalidation)
-    event Action<int, int> tileModifiedEvent;
+    event Action<int, int>? tileModifiedEvent;
 
     bool gfxModified, palettesModified;
 
@@ -202,7 +205,7 @@ public class GraphicsState
         {
             if (header.IsResolvable)
             {
-                RgbData data = header.Data;
+                RgbData? data = header.Data;
                 for (int i = header.FirstPalette; i < header.FirstPalette + header.NumPalettes; i++)
                 {
                     for (int j = 0; j < 4; j++)
@@ -217,6 +220,7 @@ public class GraphicsState
         });
     }
 
+    [MemberNotNull(nameof(vramBuffer), nameof(wramBuffer))]
     void RegenerateBuffers()
     {
         vramBuffer = new byte[2][];
@@ -245,6 +249,8 @@ public class GraphicsState
         if (tileModifiedEvent != null)
             tileModifiedEvent(-1, -1);
     }
+
+    [MemberNotNull(nameof(paletteBuffer))]
     void RegeneratePalettes()
     {
         paletteBuffer = new Color[2][][];

@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// <summary>
@@ -5,8 +6,8 @@ namespace LynnaLib;
 /// </summary>
 public class EnemyObject : GameObject, IndexedProjectDataInstantiator
 {
-
-    readonly Data objectData;
+    // Can be null if the EnemyObject is invalid / there was a lookup failure
+    readonly Data? objectData;
 
     readonly byte _objectGfxHeaderIndex;
     readonly byte _collisionReactionSet;
@@ -42,13 +43,13 @@ public class EnemyObject : GameObject, IndexedProjectDataInstantiator
                 while (count > 0)
                 {
                     count--;
-                    var next = subidData.NextData;
-                    if (next.CommandLowerCase == "m_enemysubiddata")
+                    Data? next = subidData.NextData;
+                    if (next?.CommandLowerCase == "m_enemysubiddata")
                     {
                         subidData = next;
                         continue;
                     }
-                    else if (next.CommandLowerCase == "m_enemysubiddataend")
+                    else if (next?.CommandLowerCase == "m_enemysubiddataend")
                     {
                         break;
                     }

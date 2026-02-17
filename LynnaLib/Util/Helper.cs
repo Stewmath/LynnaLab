@@ -1,4 +1,5 @@
 #nullable enable
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -114,7 +115,7 @@ public class Helper
     /// Throw an exception if the value is false. An alternative to Debug.Assert that applies to
     /// release builds.
     /// </summary>
-    public static void Assert(bool condition, string? message = null)
+    public static void Assert([DoesNotReturnIf(false)] bool condition, string? message = null)
     {
         if (!condition)
             throw new Exception(message);

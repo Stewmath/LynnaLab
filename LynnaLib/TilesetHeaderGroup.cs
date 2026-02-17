@@ -1,3 +1,4 @@
+#nullable enable
 using System.IO;
 
 namespace LynnaLib;
@@ -5,7 +6,7 @@ namespace LynnaLib;
 // This class is only used when "ExpandedTilesets" is false in config.yaml.
 public class TilesetHeaderGroup : ProjectIndexedDataType, IndexedProjectDataInstantiator
 {
-    readonly TrackedStream mappingsDataFile, collisionsDataFile;
+    readonly TrackedStream? mappingsDataFile, collisionsDataFile;
 
     private TilesetHeaderGroup(Project p, int i) : base(p, i)
     {
@@ -14,7 +15,7 @@ public class TilesetHeaderGroup : ProjectIndexedDataType, IndexedProjectDataInst
         string labelName = pointerData.GetValue(0);
 
         FileParser headerFile = Project.GetFileWithLabel(labelName);
-        TilesetLayoutHeaderData headerData = headerFile.GetData(labelName) as TilesetLayoutHeaderData;
+        TilesetLayoutHeaderData? headerData = headerFile.GetData(labelName) as TilesetLayoutHeaderData;
         bool next = true;
 
         while (next)

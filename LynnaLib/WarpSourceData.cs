@@ -52,7 +52,7 @@ public class WarpSourceData : Data
         },
     };
 
-    private static List<ValueReferenceDescriptor>? GetWarpDescriptors(WarpSourceType type, Data data)
+    private static List<ValueReferenceDescriptor> GetWarpDescriptors(WarpSourceType type, Data data)
     {
         switch (type)
         {
@@ -96,7 +96,7 @@ public class WarpSourceData : Data
                 };
         }
 
-        return null;
+        throw new Exception($"Unknown warp data type: {type}");
     }
 
 

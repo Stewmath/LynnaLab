@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 // Class represents macro:
@@ -32,7 +33,7 @@ public class ObjectGfxHeaderData : Data, IGfxHeader
     }
 
     // Should only request this if the "ShouldHaveNext" property is true.
-    public ObjectGfxHeaderData NextGfxHeader
+    public ObjectGfxHeaderData? NextGfxHeader
     {
         get
         {
@@ -46,7 +47,7 @@ public class ObjectGfxHeaderData : Data, IGfxHeader
     {
         string filename = GetValue(0);
 
-        IStream stream = Project.GetGfxStream(filename);
+        IStream? stream = Project.GetGfxStream(filename);
         if (stream == null)
         {
             throw new Exception("Could not find graphics file " + filename);
@@ -60,10 +61,12 @@ public class ObjectGfxHeaderData : Data, IGfxHeader
     private ObjectGfxHeaderData(Project p, string id, TransactionState state)
         : base(p, id, state)
     {
+        gfxStream = null!;
     }
 
     public override void OnInitializedFromTransfer()
     {
-        gfxStream = Project.GetGfxStream(GetValue(0));
+        gfxStream = Project.GetGfxStream(GetValue(0))
+                    ?? throw new Exception($"Null GFX stream for {Identifier}");
     }
 }

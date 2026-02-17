@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿#nullable enable
+using System.IO;
 using System.Text.Json.Serialization;
 
 namespace LynnaLib;
@@ -24,7 +25,7 @@ struct Command
 
 public class FileParser : TrackedProjectData
 {
-    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
 
 
     // List of commands thas should be interpreted as "Data" instances (not all are listed here)
@@ -54,16 +55,17 @@ public class FileParser : TrackedProjectData
         // Maps a string (key) to a pair (v,d), where v is the value, and d is
         // a DocumentationFileComponent (possible null).
         [JsonRequired]
-        public Dictionary<string, Tuple<string, InstanceResolver<DocumentationFileComponent>>> definesDictionary = new();
+        public Dictionary<string, Tuple<string, InstanceResolver<DocumentationFileComponent>?>> definesDictionary = new();
 
         [JsonRequired]
         public ulong idCounter;
     }
 
     // Never track these with state - could be a security problem, allowing clients to have
-    // filesystem access
-    readonly string filename; // Relative to base directory
-    readonly string fullFilename; // Full path
+    // filesystem access.
+    // These can be null on the clients.
+    readonly string? filename; // Relative to base directory
+    readonly string? fullFilename; // Full path
 
     State state = new State();
     bool _modified;
@@ -79,7 +81,7 @@ public class FileParser : TrackedProjectData
     // "context" variable should equal "DOCUMENTATION" while parsing a documentation block.
     //
     // TODO: comments will be lost if this is at the very end of the file...
-    string documentationString;
+    string? documentationString;
 
     // Line index (only used for warning strings)
     int currentLine = -1;
@@ -147,7 +149,7 @@ public class FileParser : TrackedProjectData
     // Properties
 
     public DictionaryLinkedList<InstanceResolver<FileComponent>> FileStructure { get { return state.fileStructure; } }
-    public Dictionary<string, Tuple<string, InstanceResolver<DocumentationFileComponent>>> DefinesDictionary
+    public Dictionary<string, Tuple<string, InstanceResolver<DocumentationFileComponent>?>> DefinesDictionary
     {
         get { return state.definesDictionary; }
     }
@@ -165,7 +167,7 @@ public class FileParser : TrackedProjectData
     }
     public string Filename
     {
-        get { return filename; }
+        get { return filename!; } // TODO: Fix null reference on client
     }
     public string WarningString
     {
@@ -179,13 +181,20 @@ public class FileParser : TrackedProjectData
     }
     protected string FullFilename
     {
-        get { return fullFilename; }
+        get
+        {
+            if (fullFilename == null)
+                throw new Exception("FileParser: Can't get FullFilename on client instance");
+            return fullFilename;
+        }
     }
 
     public string Basename
     {
         get
         {
+            if (filename == null)
+                throw new Exception("FileParser: Can't get Basename on client instance");
             int i = filename.LastIndexOf('.');
             if (i == -1)
                 return filename;
@@ -217,14 +226,14 @@ public class FileParser : TrackedProjectData
         {
             fileStructure.AddLast(component);
             if (component is Label)
-                AddLabelToDictionaries(component as Label);
+                AddLabelToDictionaries((component as Label)!);
         };
         Action PopFileStructure = () =>
         {
-            LinkedListNode<InstanceResolver<FileComponent>> last = fileStructure.LastNode;
-            Helper.Assert(fileStructure.Remove(last),
+            LinkedListNode<InstanceResolver<FileComponent>>? last = fileStructure.LastNode;
+            Helper.Assert(last != null && fileStructure.Remove(last),
                           "Internal error: FileStructure to remove wasn't in list.");
-            Project.RemoveDataType<FileComponent>(last.Value.Instance.Identifier);
+            Project.RemoveDataType<FileComponent>(last!.Value.Instance.Identifier);
         };
         Action<FileComponent> AddDataAndPopFileStructure = (data) =>
         {
@@ -540,7 +549,7 @@ public class FileParser : TrackedProjectData
 
                 default:
                     {
-                        Data d = null;
+                        Data? d = null;
 
                         // Try generic command list
                         foreach (Command command in genericCommandList)
@@ -580,7 +589,7 @@ public class FileParser : TrackedProjectData
 
                                 int objectDefinitionType = j;
 
-                                ObjectData lastObjectData = null;
+                                ObjectData? lastObjectData = null;
                                 for (var node = fileStructure.LastNode; node != null; node = node.Previous)
                                 {
                                     if (node.Value.Instance is Data)
@@ -626,6 +635,9 @@ public class FileParser : TrackedProjectData
         // If we're in a documentation block, add any comments to the documentation
         if (context == "DOCUMENTATION")
         {
+            if (documentationString == null)
+                throw new Exception("Internal error: documentationString is null");
+
             if (pureTrimmedLine.Length > 0 && pureTrimmedLine[0] == ';')
             {
                 documentationString += pureLine + '\n';
@@ -636,6 +648,7 @@ public class FileParser : TrackedProjectData
                 context = "";
                 AddComponent(new DocumentationFileComponent(GenID(), this, documentationString));
                 context = "";
+                documentationString = null;
             }
         }
 
@@ -920,9 +933,9 @@ public class FileParser : TrackedProjectData
     {
         AddDefinition(def, value);
 
-        DocumentationFileComponent doc = null;
+        DocumentationFileComponent? doc = null;
         if (FileStructure.Count >= 2)
-            doc = FileStructure.LastNode.Previous.Value.Instance as DocumentationFileComponent;
+            doc = FileStructure.LastNode?.Previous?.Value.Instance as DocumentationFileComponent;
 
         // Replace the value from the "AddDefinition" call
         if (doc == null)
@@ -961,13 +974,13 @@ public class FileParser : TrackedProjectData
     }
     public Data GetData(FileComponent component, int offset = 0)
     {
-        FileComponent orig = component;
+        FileComponent? comp = component;
         int origOffset = offset;
 
-        while (component != null && !(component is Data))
-            component = component.Next;
+        while (comp != null && !(comp is Data))
+            comp = comp.Next;
 
-        Data data = component as Data;
+        Data? data = comp as Data;
         while (data != null)
         {
             if (offset == 0)
@@ -980,14 +993,14 @@ public class FileParser : TrackedProjectData
             data = data.NextData;
         }
         throw new InvalidLookupException("Provided offset (" + origOffset + ") relative to file component \""
-                + orig.GetString() + "\" was invalid.");
+                + component.GetString() + "\" was invalid.");
     }
 
     // Returns the label immediately before this data, or null if there is
     // no label or there is another Data between itself and the label.
-    public Label GetDataLabel(Data data)
+    public Label? GetDataLabel(Data data)
     {
-        FileComponent cmp = data.Prev;
+        FileComponent? cmp = data.Prev;
 
         while (cmp != null)
         {
@@ -1002,7 +1015,7 @@ public class FileParser : TrackedProjectData
 
     // Attempt to insert newComponent after refComponent, or at the end if
     // refComponent is null.
-    public FileComponent InsertComponentAfter(FileComponent refComponent, FileComponent newComponent)
+    public FileComponent InsertComponentAfter(FileComponent? refComponent, FileComponent newComponent)
     {
         RecordChange();
         if (refComponent == null)
@@ -1018,12 +1031,12 @@ public class FileParser : TrackedProjectData
         // TODO: this is messy. Would be better if the "fileStructure" was smarter and could
         // handle the labels as we add them, or else just use another function for adding to it.
         if (newComponent is Label)
-            AddLabelToDictionaries(newComponent as Label);
+            AddLabelToDictionaries((newComponent as Label)!);
         return newComponent;
     }
 
     // Insert at the beginning if refComponent is null.
-    public FileComponent InsertComponentBefore(FileComponent refComponent, FileComponent newComponent)
+    public FileComponent InsertComponentBefore(FileComponent? refComponent, FileComponent newComponent)
     {
         RecordChange();
         if (refComponent == null)
@@ -1037,13 +1050,13 @@ public class FileParser : TrackedProjectData
         newComponent.Attach(this);
 
         if (newComponent is Label)
-            AddLabelToDictionaries(newComponent as Label);
+            AddLabelToDictionaries((newComponent as Label)!);
         return newComponent;
     }
 
     // Parse an array of text (each element is a line) and insert it after refComponent (or at
     // the end if refComponent is null). Returns the final inserted FileComponent.
-    public FileComponent InsertParseableTextAfter(FileComponent refComponent, string[] text)
+    public FileComponent InsertParseableTextAfter(FileComponent? refComponent, string[] text)
     {
         RecordChange();
         context = "";
@@ -1066,9 +1079,9 @@ public class FileParser : TrackedProjectData
             node = nextNode;
         }
 
-        return structure.Last;
+        return structure.Last!;
     }
-    public FileComponent InsertParseableTextBefore(FileComponent refComponent, string[] text)
+    public FileComponent InsertParseableTextBefore(FileComponent? refComponent, string[] text)
     {
         RecordChange();
         context = "";
@@ -1091,21 +1104,25 @@ public class FileParser : TrackedProjectData
             node = nextNode;
         }
 
-        return structure.First;
+        return structure.First!;
     }
 
-    public FileComponent GetNextFileComponent(FileComponent reference)
+    public FileComponent? GetNextFileComponent(FileComponent reference)
     {
         if (reference == null)
             throw new Exception("Can't get next FileComponent from null reference");
         var node = FileStructure.Find(new(reference));
+        if (node == null)
+            throw new Exception($"Can't find node '{reference}' in {this}");
         return node.Next?.Value.Instance;
     }
-    public FileComponent GetPrevFileComponent(FileComponent reference)
+    public FileComponent? GetPrevFileComponent(FileComponent reference)
     {
         if (reference == null)
             throw new Exception("Can't get prev FileComponent from null reference");
         var node = FileStructure.Find(new(reference));
+        if (node == null)
+            throw new Exception($"Can't find node '{reference}' in {this}");
         return node.Previous?.Value.Instance;
     }
 
@@ -1115,7 +1132,7 @@ public class FileParser : TrackedProjectData
         RecordChange();
         FileStructure.Remove(component);
 
-        Label l = component as Label;
+        Label? l = component as Label;
         if (l != null)
         {
             LabelDictionary.Remove(l.Name);
@@ -1125,7 +1142,7 @@ public class FileParser : TrackedProjectData
 
     public void RemoveLabel(string label)
     {
-        InstanceResolver<Label> l;
+        InstanceResolver<Label>? l;
         if (!LabelDictionary.TryGetValue(label, out l))
             return;
         RemoveFileComponent(l);
@@ -1146,11 +1163,11 @@ public class FileParser : TrackedProjectData
         if (!Modified) return;
 
         List<string> output = new List<string>();
-        FileComponent lastComponent = null;
+        FileComponent? lastComponent = null;
         foreach (var ir in FileStructure)
         {
             FileComponent d = ir.Instance;
-            string s = null;
+            string? s = null;
 
             if (d.Fake)
                 s = null;
@@ -1170,7 +1187,7 @@ public class FileParser : TrackedProjectData
                 output.Add(s);
 
             if (d is Data)
-                (d as Data).Modified = false;
+                (d as Data)!.Modified = false;
 
             lastComponent = d;
         }
@@ -1333,9 +1350,9 @@ public class FileParser : TrackedProjectData
     // Shouldn't really need to do anything in particular here, since the file isn't kept open
     public void Close()
     {
-        state.labelDictionary = null;
-        state.definesDictionary = null;
-        state.fileStructure = null;
+        state.labelDictionary = null!;
+        state.definesDictionary = null!;
+        state.fileStructure = null!;
     }
 
     /// <summary>

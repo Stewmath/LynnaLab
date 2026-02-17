@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 public abstract class ProjectDataType

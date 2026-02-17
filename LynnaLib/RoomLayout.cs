@@ -1,3 +1,6 @@
+#nullable enable
+using System.Diagnostics.CodeAnalysis;
+
 namespace LynnaLib;
 
 /// Represents a possible tileset/layout combination of a room. Currently, the only reason this
@@ -21,9 +24,9 @@ public class RoomLayout
 
 
     // Event invoked when tileset used for this room is changed
-    public event EventHandler<RoomTilesetChangedEventArgs> TilesetChangedEvent;
+    public event EventHandler<RoomTilesetChangedEventArgs>? TilesetChangedEvent;
     // Event invoked when room layout is changed
-    public event EventHandler<RoomLayoutChangedEventArgs> LayoutChangedEvent;
+    public event EventHandler<RoomLayoutChangedEventArgs>? LayoutChangedEvent;
 
 
     internal RoomLayout(Room room, Season season)
@@ -107,6 +110,7 @@ public class RoomLayout
     /// Tied to the Room's ValueReference for the tileset assignment. This means that this
     /// should be invoked in all cases the tileset changes, including undo/redo.
     /// </summary>
+    [MemberNotNull(nameof(loadedTileset), nameof(tileDataFile))]
     internal void UpdateTileset()
     {
         if (loadedTileset != Tileset)
@@ -127,19 +131,22 @@ public class RoomLayout
                 this,
                 new RoomTilesetChangedEventArgs { oldTileset = oldTileset, newTileset = Tileset });
         }
+        else if (tileDataFile == null)
+        {
+            throw new Exception("RoomLayout internal error: Didn't initialize tileDataFile?");
+        }
     }
 
 
     // Private methods
 
+    [MemberNotNull(nameof(tileDataFile))]
     void UpdateRoomData()
     {
         if (tileDataFile != null)
         {
             tileDataFile.RemoveModifiedEventHandler(TileDataModified);
-            tileDataFile = null;
         }
-
 
         int layoutGroup;
         if (Project.Config.ExpandedTilesets)
@@ -184,7 +191,7 @@ public class RoomLayout
     }
 
     // Room layout modified
-    void TileDataModified(object sender, StreamModifiedEventArgs args)
+    void TileDataModified(object? sender, StreamModifiedEventArgs args)
     {
         LayoutChangedEvent?.Invoke(this, new RoomLayoutChangedEventArgs { });
     }
@@ -197,7 +204,8 @@ public class RoomLayout
 
 public struct RoomTilesetChangedEventArgs
 {
-    public Tileset newTileset, oldTileset;
+    public Tileset newTileset;
+    public Tileset? oldTileset;
 }
 
 public struct RoomLayoutChangedEventArgs // stub in case we need this later

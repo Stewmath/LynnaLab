@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// <summary>
@@ -6,7 +7,7 @@ namespace LynnaLib;
 public class InteractionObject : GameObject, IndexedProjectDataInstantiator
 {
 
-    readonly Data objectData;
+    readonly Data? objectData;
 
     readonly byte b0, b1, b2;
 
@@ -27,13 +28,13 @@ public class InteractionObject : GameObject, IndexedProjectDataInstantiator
                 {
                     count--;
                     var next = objectData.NextData;
-                    if (next.CommandLowerCase == "m_interactionsubiddata")
+                    if (next?.CommandLowerCase == "m_interactionsubiddata")
                     {
                         objectData = next;
                         continue;
                     }
-                    else if (next.CommandLowerCase == "m_interactionsubiddataend"
-                             || next.CommandLowerCase == "m_continuebithelperunsetlast")
+                    else if (next?.CommandLowerCase == "m_interactionsubiddataend"
+                             || next?.CommandLowerCase == "m_continuebithelperunsetlast")
                     {
                         break;
                     }

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿#nullable enable
+using System.IO;
 
 namespace LynnaLib;
 
@@ -27,7 +28,7 @@ public abstract class Tileset : IDisposable
     GraphicsState graphicsState;
 
     // Animation stuff below here - undo/redo not tested
-    AnimationGroup animationGroup;
+    AnimationGroup? animationGroup;
 
     int[] animationPos = new int[4];
     int[] animationCounter = new int[4];
@@ -42,12 +43,12 @@ public abstract class Tileset : IDisposable
     public delegate void LayoutGroupModifiedHandler();
 
     // Invoked whenever the image of a tile is modified
-    public event EventHandler<int> TileModifiedEvent;
+    public event EventHandler<int>? TileModifiedEvent;
 
-    public event LayoutGroupModifiedHandler LayoutGroupModifiedEvent;
+    public event LayoutGroupModifiedHandler? LayoutGroupModifiedEvent;
 
     // This is mainly used by FakeTileset instances
-    public event Action<object> DisposedEvent;
+    public event Action<object>? DisposedEvent;
 
 
     // ================================================================================
@@ -102,7 +103,10 @@ public abstract class Tileset : IDisposable
     // End of properties that subclass must set in constructor
 
 
-    public PaletteHeaderGroup PaletteHeaderGroup
+    /// <summary>
+    /// This can be null if the tileset is misconfigured.
+    /// </summary>
+    public PaletteHeaderGroup? PaletteHeaderGroup
     {
         get
         {
@@ -145,9 +149,36 @@ public abstract class Tileset : IDisposable
 
         // Subclass constructor should call SubclassInitializationFinished() after their
         // constructors are finished to begin loading the graphics.
+        //
         // Ideally we'd have all the information we need already within this constructor, but
         // subclasses are providing data through protected properties which aren't initialized
         // yet. This is probably against some kind of C# design pattern.
+        //
+        // Therefore, the following properties should be defined in subclass constructors. This
+        // pattern became extremely ugly when I enabled nullability checks, resulting in me needing
+        // to add this boilerplate.
+        //
+        // TODO: Clean this up, especially the game-specific flags which can be null.
+        TilesetHeaderGroup = null!;
+        GfxFileStream = null!;
+        CollisionType = null!;
+        DungeonIndex = null!;
+        AnimationIndex = null!;
+        LayoutGroup = null!;
+        TilesetLayoutIndex = null!;
+        PaletteHeader = null!;
+        MainGfx = null!;
+        UniqueGfx = null!;
+        UnderwaterFlag = null!;
+        PastFlag = null!;
+        SubrosiaFlag = null!;
+        OutdoorFlag = null!;
+        MakuTreeFlag = null!;
+        SmallIndoorFlag = null!;
+        DungeonFlag = null!;
+        LargeIndoorFlag = null!;
+        SidescrollFlag = null!;
+        ValueReferenceGroup = null!;
     }
 
     // ================================================================================
@@ -478,10 +509,10 @@ public abstract class Tileset : IDisposable
     public void Dispose()
     {
         graphicsState.ClearGfx();
-        graphicsState = null;
+        graphicsState = null!;
         foreach (Bitmap b in tileImagesCache)
             b?.Dispose();
-        tileImagesCache = null;
+        tileImagesCache = null!;
         paletteEventWrapper.UnbindAll();
         gfxStreamEventWrapper.UnbindAll();
         DisposedEvent?.Invoke(this);
@@ -550,16 +581,16 @@ public abstract class Tileset : IDisposable
 
         graphicsState.RemoveGfxHeaderType(GfxHeaderType.Main);
 
-        GfxHeaderData header = Project.GetData($"gfxHeader{MainGfx:x2}") as GfxHeaderData;
+        GfxHeaderData? header = Project.GetData($"gfxHeader{MainGfx:x2}") as GfxHeaderData;
         if (header != null)
         {
             while (true)
             {
                 graphicsState.AddGfxHeader(header, GfxHeaderType.Main);
-                Data next = header.NextData;
-                if (next.CommandLowerCase == "m_gfxheaderend")
+                Data? next = header.NextData;
+                if (next?.CommandLowerCase == "m_gfxheaderend")
                     break;
-                GfxHeaderData nextHeader = next as GfxHeaderData;
+                GfxHeaderData? nextHeader = next as GfxHeaderData;
                 if (nextHeader != null)
                 {
                     header = nextHeader;
@@ -581,17 +612,17 @@ public abstract class Tileset : IDisposable
         graphicsState.RemoveGfxHeaderType(GfxHeaderType.Unique);
         if (UniqueGfx != 0)
         {
-            GfxHeaderData header =
+            GfxHeaderData? header =
                 Project.GetData($"uniqueGfxHeader{UniqueGfx:x2}") as GfxHeaderData;
             if (header != null)
             {
                 while (true)
                 {
                     graphicsState.AddGfxHeader(header, GfxHeaderType.Unique);
-                    Data next = header.NextData;
-                    if (next.CommandLowerCase == "m_gfxheaderend")
+                    Data? next = header.NextData;
+                    if (next?.CommandLowerCase == "m_gfxheaderend")
                         break;
-                    GfxHeaderData nextHeader = header.NextData as GfxHeaderData;
+                    GfxHeaderData? nextHeader = header.NextData as GfxHeaderData;
                     if (nextHeader != null)
                     {
                         header = nextHeader;
@@ -669,7 +700,7 @@ public abstract class Tileset : IDisposable
     /// <summary>
     /// Palette data modified (NOT the palette header index but the data it references)
     /// </summary>
-    void OnPaletteDataModified(object sender, EventArgs args)
+    void OnPaletteDataModified(object? sender, EventArgs args)
     {
         ReloadPalettes();
     }
@@ -691,7 +722,7 @@ public abstract class Tileset : IDisposable
     {
         var descList = new List<ValueReferenceDescriptor>();
 
-        var addDescriptor = (ValueReference vr, string name, bool editable = true, string tooltip = null) =>
+        var addDescriptor = (ValueReference vr, string name, bool editable = true, string? tooltip = null) =>
         {
             var descriptor = new ValueReferenceDescriptor(
                 vr, name, editable, tooltip);

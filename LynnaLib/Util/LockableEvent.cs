@@ -5,21 +5,21 @@ namespace Util;
 // resume them. Useful for doing atomic operations.
 public class LockableEvent<T>
 {
-    EventHandler<T>? handler;
+    EventHandler<T?>? handler;
 
     int locked = 0;
 
-    List<Tuple<object, T>> savedInvokes = new List<Tuple<object, T>>();
+    List<Tuple<object?, T?>> savedInvokes = new List<Tuple<object?, T?>>();
 
     public LockableEvent()
     {
     }
 
-    public void Invoke(object sender, T args)
+    public void Invoke(object? sender, T? args)
     {
         if (locked != 0)
         {
-            savedInvokes.Add(new Tuple<object, T>(sender, args));
+            savedInvokes.Add(new Tuple<object?, T?>(sender, args));
         }
         else
         {

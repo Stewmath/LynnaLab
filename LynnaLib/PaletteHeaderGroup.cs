@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// This basically consists of a list of "PaletteHeaderData"s. Keep in mind that some
@@ -6,7 +7,7 @@ public class PaletteHeaderGroup : ProjectIndexedDataType, IndexedProjectDataInst
 {
     readonly PaletteHeaderData firstPaletteHeader;
 
-    public event EventHandler<EventArgs> ModifiedEvent;
+    public event EventHandler<EventArgs?>? ModifiedEvent;
 
 
     public PaletteHeaderData FirstPaletteHeader
@@ -70,17 +71,20 @@ public class PaletteHeaderGroup : ProjectIndexedDataType, IndexedProjectDataInst
 
     public void Foreach(Action<PaletteHeaderData> action)
     {
-        PaletteHeaderData palette = firstPaletteHeader;
+        PaletteHeaderData? palette = firstPaletteHeader;
         while (true)
         {
+            if (palette == null)
+                throw new ProjectErrorException($"Palette data incomplete: {Identifier}");
+
             action(palette);
-            Data nextData = palette.NextData;
+            Data? nextData = palette.NextData;
             if (nextData is PaletteHeaderData)
             {
-                palette = palette.NextData as PaletteHeaderData;
+                palette = (PaletteHeaderData?)palette.NextData;
                 continue;
             }
-            else if (nextData.CommandLowerCase == "m_paletteheaderend")
+            else if (nextData?.CommandLowerCase == "m_paletteheaderend")
             {
                 break;
             }

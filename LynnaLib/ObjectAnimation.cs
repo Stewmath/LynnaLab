@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// <summary>
@@ -83,16 +84,22 @@ public class ObjectAnimation
 
         try
         {
-            Data data = loadedFrames.Last().AnimDataStart;
+            Data? data = loadedFrames.Last().AnimDataStart;
 
             while (true)
             {
                 if (i < loadedFrames.Count)
                     return loadedFrames[i];
 
-                data = data.NextData;
-                data = data.NextData;
-                data = data.NextData;
+                data = data?.NextData;
+                data = data?.NextData;
+                data = data?.NextData;
+
+                if (data == null)
+                {
+                    // Will be immediately caught below
+                    throw new InvalidLookupException("GetFrame(): data ended abruptly");
+                }
 
                 var frame = new ObjectAnimationFrame(this, data);
                 loadedFrames.Add(frame);
@@ -113,7 +120,7 @@ public class ObjectAnimation
     {
         Color[][] palettes = new Color[8][];
         Color[][] standardPal = Project.GetStandardSpritePalettes();
-        Color[][] customPal = _gameObject.GetCustomPalettes();
+        Color[][]? customPal = _gameObject.GetCustomPalettes();
 
         for (int i = 0; i < 6; i++)
         {

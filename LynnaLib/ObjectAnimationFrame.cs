@@ -1,3 +1,4 @@
+#nullable disable // TODO: Enable nullable
 using System.IO;
 
 namespace LynnaLib;

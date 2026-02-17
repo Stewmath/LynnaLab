@@ -1,3 +1,6 @@
+#nullable enable
+using System.Diagnostics.CodeAnalysis;
+
 namespace LynnaLib;
 
 /// Represents an "INTERACID_TREASURE" value (1 byte). This can be used to lookup
@@ -37,10 +40,10 @@ public class TreasureGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
 
     class State : TransactionState
     {
-        public InstanceResolver<Data> dataStart;
+        public required InstanceResolver<Data> dataStart;
     };
 
-    State state = new State();
+    State state;
 
     // ================================================================================
     // Properties
@@ -80,9 +83,9 @@ public class TreasureGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
     // Methods
     // ================================================================================
 
-    public TreasureObject GetTreasureObject(int subid)
+    public TreasureObject? GetTreasureObject(int subid)
     {
-        Data data = GetSubidBaseData(subid);
+        Data? data = GetSubidBaseData(subid);
         if (data == null)
             return null;
         string identifier = $"{Identifier}-{subid}";
@@ -92,12 +95,12 @@ public class TreasureGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
         return obj;
     }
 
-    public TreasureObject AddTreasureObjectSubid()
+    public TreasureObject? AddTreasureObjectSubid()
     {
         if (NumTreasureObjectSubids >= 256)
             return null;
 
-        Func<int, bool, TreasureObject, string> ConstructTreasureSubidString
+        Func<int, bool, TreasureObject?, string> ConstructTreasureSubidString
             = (subid, inSubidTable, lastTreasureObject) =>
         {
             byte lastGfx = 0;
@@ -126,7 +129,7 @@ public class TreasureGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
         {
             // This should only happen when the treasure is using "m_treasurepointer", but has
             // a null pointer. So rewrite that line with a blank treasure.
-            DataStart.FileParser.InsertParseableTextAfter(DataStart, new string[] {
+            DataStart.FileParser!.InsertParseableTextAfter(DataStart, new string[] {
                     ConstructTreasureSubidString(0, false, null)
                 });
             DataStart.Detach();
@@ -134,14 +137,14 @@ public class TreasureGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
             // Update dataStart (since the old data was deleted)
             DetermineDataStart();
 
-            TreasureObject retval2 = GetTreasureObject(0);
+            TreasureObject? retval2 = GetTreasureObject(0);
 
             Project.EndTransaction();
             return retval2;
         }
 
         // Otherwise, a previous subid existed, so let's copy over some parameters from it
-        TreasureObject lastSubid = GetTreasureObject(NumTreasureObjectSubids - 1);
+        TreasureObject? lastSubid = GetTreasureObject(NumTreasureObjectSubids - 1);
 
         if (!UsesPointer)
         {
@@ -149,7 +152,7 @@ public class TreasureGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
             // of the list. Be careful to ensure that the old data objects are moved, and not
             // deleted, so that we don't break the TreasureObject's that were built on them.
             // Create pointer
-            FileParser parser = DataStart.FileParser;
+            FileParser parser = DataStart.FileParser!;
             string labelName = Project.GetUniqueLabelName(
                     string.Format("treasureObjectData{0:x2}", Index));
             parser.InsertParseableTextBefore(DataStart, new string[] { string.Format(
@@ -161,7 +164,7 @@ public class TreasureGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
             // We want to insert the data at the end of the file, but it must be within the
             // section, so we need to check for the ".ends" directive and put it above there.
             var sectionEnd = parser.FileStructure.Where((x) => x.Instance.GetString().Trim().ToLower() == ".ends");
-            FileComponent insertPos = (sectionEnd.Count() == 0 ? null : sectionEnd.Last().Instance.Prev);
+            FileComponent? insertPos = (sectionEnd.Count() == 0 ? null : sectionEnd.Last().Instance.Prev);
 
             // Create label
             insertPos = parser.InsertParseableTextAfter(insertPos, new string[] { labelName + ":" });
@@ -190,10 +193,10 @@ public class TreasureGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
         Data lastSubidData = Project.GetData(DataStart.GetValue(0));
         TraverseSubidData(ref lastSubidData, NumTreasureObjectSubids - 1);
 
-        DataStart.FileParser.InsertParseableTextAfter(lastSubidData,
+        DataStart.FileParser!.InsertParseableTextAfter(lastSubidData,
                 new string[] { ConstructTreasureSubidString(NumTreasureObjectSubids, true, lastSubid) });
 
-        TreasureObject retval = GetTreasureObject(NumTreasureObjectSubids - 1);
+        TreasureObject? retval = GetTreasureObject(NumTreasureObjectSubids - 1);
 
         Project.EndTransaction();
         return retval;
@@ -221,7 +224,7 @@ public class TreasureGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
     // Private methods
     // ================================================================================
 
-    Data GetSubidBaseData(int subid)
+    Data? GetSubidBaseData(int subid)
     {
         Data data = DataStart;
 
@@ -253,10 +256,10 @@ public class TreasureGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
     /// Traverses subid data up to "subid", returns the total number of subids actually
     /// traversed (there may be less than requested).
     /// Labels are considered to end a sequence of subid data.
-    int TraverseSubidData(ref Data data, int subid, Action<FileComponent> action = null)
+    int TraverseSubidData(ref Data data, int subid, Action<FileComponent>? action = null)
     {
         int count = 0;
-        FileComponent com = data;
+        FileComponent? com = data;
         while (count <= subid)
         {
             while (!(com is Data))
@@ -268,14 +271,18 @@ public class TreasureGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
             if (action != null)
                 action(com);
             count++;
-            data = com as Data;
+            data = (Data)com;
             com = com.Next;
         }
         return count;
     }
 
+    [MemberNotNull(nameof(state))]
     void DetermineDataStart()
     {
-        DataStart = Project.GetData("treasureObjectData", Index * 4);
+        state = new()
+        {
+            dataStart = new(Project.GetData("treasureObjectData", Index * 4))
+        };
     }
 }

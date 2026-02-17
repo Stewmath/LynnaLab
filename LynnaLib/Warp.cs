@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 // This class is an abstraction of WarpSourceData and WarpDestData, managed by the WarpGroup
@@ -45,13 +46,13 @@ public class Warp : TrackedProjectData
     // Everything in the State class is affected by undo/redo
     class State : TransactionState
     {
-        public InstanceResolver<WarpGroup> sourceGroup { get; init; }
-        public int uniqueID { get; init; } // ID that's unique compared to any warp in this room
-        public InstanceResolver<WarpSourceData> warpSource;
+        public required InstanceResolver<WarpGroup> sourceGroup { get; init; }
+        public required int uniqueID { get; init; } // ID that's unique compared to any warp in this room
+        public required InstanceResolver<WarpSourceData> warpSource;
     };
 
-    State state = new State();
-    ValueReferenceGroup _vrg;
+    State state;
+    ValueReferenceGroup? _vrg;
 
     LockableEvent<EventArgs> ModifiedEvent = new LockableEvent<EventArgs>();
 
@@ -76,7 +77,7 @@ public class Warp : TrackedProjectData
         get
         {
             if (_vrg == null)
-                ConstructValueReferenceGroup();
+                _vrg = ConstructValueReferenceGroup();
             return _vrg;
         }
     }
@@ -176,7 +177,15 @@ public class Warp : TrackedProjectData
         }
     }
 
-    WarpDestData DestData { get { return SourceData.ReferencedDestData; } }
+    WarpDestData DestData
+    {
+        get
+        {
+            if (SourceData.ReferencedDestData == null)
+                throw new Exception($"Couldn't resolve destination for warp source: {Identifier}");
+            return SourceData.ReferencedDestData;
+        }
+    }
 
     ValueReferenceGroup SourceVrg { get { return SourceData.ValueReferenceGroup; } }
     ValueReferenceGroup DestVrg { get { return DestData.ValueReferenceGroup; } }
@@ -226,7 +235,7 @@ public class Warp : TrackedProjectData
     // ValueReferenceGroup for simpler editing based on a few named parameters.
     // All modifications to the underlying data should be done through the ValueReferenceGroup
     // when possible, so that its "value changed" event handlers are properly invoked.
-    void ConstructValueReferenceGroup()
+    ValueReferenceGroup ConstructValueReferenceGroup()
     {
         var descriptors = new List<ValueReferenceDescriptor>();
 
@@ -361,9 +370,10 @@ public class Warp : TrackedProjectData
                 constantsMappingString: "DestTransitionMapping");
         descriptors.Add(desc);
 
-        _vrg = new ValueReferenceGroup(descriptors);
-        _vrg.AddValueModifiedHandler((sender, args) => OnDataModified(sender, null));
-        _vrg.EnableTransactions($"Edit warp data#{TransactionIdentifier}", true);
+        var vrg = new ValueReferenceGroup(descriptors);
+        vrg.AddValueModifiedHandler((sender, args) => OnDataModified(sender, null));
+        vrg.EnableTransactions($"Edit warp data#{TransactionIdentifier}", true);
+        return vrg;
     }
 
 
@@ -416,7 +426,7 @@ public class Warp : TrackedProjectData
     }
 
 
-    void OnDataModified(object sender, DataModifiedEventArgs args)
+    void OnDataModified(object? sender, DataModifiedEventArgs? args)
     {
         // Because the ValueReferenceGroup is made up entirely of AbstractIntValueReferences, it
         // does not have any listeners installed on the underlying data. This is done on

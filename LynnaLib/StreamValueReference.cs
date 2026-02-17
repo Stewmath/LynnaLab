@@ -1,3 +1,4 @@
+#nullable enable
 using System.IO;
 
 namespace LynnaLib;
@@ -13,7 +14,7 @@ public class StreamValueReference : ValueReference
 
     // Standard constructor
     public StreamValueReference(Project project, MemoryFileStream stream, int offset, DataValueType type, int startBit = 0, int endBit = 0, int maxValue = -1,
-            string constantsMappingString = null)
+            string? constantsMappingString = null)
         : base(project, DataValueReference.GetValueType(type), constantsMappingString)
     {
         this.stream = stream;
@@ -143,7 +144,7 @@ public class StreamValueReference : ValueReference
     // ================================================================================
 
 
-    void OnStreamModified(object sender, StreamModifiedEventArgs args)
+    void OnStreamModified(object? sender, StreamModifiedEventArgs args)
     {
         if (sender != stream)
             throw new Exception("StreamValueReference.OnStreamModified: Wrong stream object?");
@@ -171,8 +172,8 @@ public class StreamValueReference : ValueReference
         int endBit = 0,
         int maxValue = -1,
         bool editable = true,
-        string constantsMappingString = null,
-        string tooltip = null)
+        string? constantsMappingString = null,
+        string? tooltip = null)
     {
         var vr = new StreamValueReference(project, stream, offset, type, startBit, endBit, maxValue, constantsMappingString);
         var descriptor = new ValueReferenceDescriptor(vr, name, editable, tooltip);

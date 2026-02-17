@@ -76,7 +76,7 @@ public class EventWrapper<TEventSource> where TEventSource : class
         eventList.Add(ev);
     }
 
-    public void ReplaceEventSource(TEventSource source)
+    public void ReplaceEventSource(TEventSource? source)
     {
         foreach (var ev in eventList)
         {

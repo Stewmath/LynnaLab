@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 public enum ValueReferenceType
@@ -19,15 +20,14 @@ public class ValueModifiedEventArgs : EventArgs
 /// </summary>
 public abstract class ValueReference
 {
-
-    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
 
     // ================================================================================
     // Constuctors
     // ================================================================================
 
     public ValueReference(Project project,
-                          ValueReferenceType type, string constantsMappingString)
+                          ValueReferenceType type, string? constantsMappingString)
     {
         Project = project;
         ValueType = type;
@@ -35,8 +35,8 @@ public abstract class ValueReference
         if (constantsMappingString != null)
         {
             this.ConstantsMappingString = constantsMappingString;
-            constantsMapping = (ConstantsMapping)typeof(Project).GetProperty(ConstantsMappingString)
-                .GetValue(Project);
+            constantsMapping = (ConstantsMapping)typeof(Project).GetProperty(ConstantsMappingString)!
+                .GetValue(Project)!;
         }
     }
 
@@ -45,8 +45,8 @@ public abstract class ValueReference
     // Variables
     // ================================================================================
 
-    ConstantsMapping constantsMapping;
-    string transactionDescription;
+    ConstantsMapping? constantsMapping;
+    string? transactionDescription;
     bool transactionMerge;
 
     // ================================================================================
@@ -66,10 +66,10 @@ public abstract class ValueReference
 
     // Other properties
 
-    public string ConstantsMappingString { get; private set; }
-    public ConstantsMapping ConstantsMapping { get { return constantsMapping; } }
+    public string? ConstantsMappingString { get; private set; }
+    public ConstantsMapping? ConstantsMapping { get { return constantsMapping; } }
 
-    public event EventHandler<ValueModifiedEventArgs> ModifiedEvent;
+    public event EventHandler<ValueModifiedEventArgs?>? ModifiedEvent;
 
 
     // ================================================================================
@@ -82,17 +82,17 @@ public abstract class ValueReference
     public abstract void SetValue(int i);
 
     // TODO: Remove these functions in favor of just using the Modified event
-    public void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler)
+    public void AddValueModifiedHandler(EventHandler<ValueModifiedEventArgs?> handler)
     {
         ModifiedEvent += handler;
     }
-    public void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs> handler)
+    public void RemoveValueModifiedHandler(EventHandler<ValueModifiedEventArgs?> handler)
     {
         ModifiedEvent -= handler;
     }
 
     // Subclasses must call this to raise the event
-    protected void RaiseModifiedEvent(ValueModifiedEventArgs args)
+    protected void RaiseModifiedEvent(ValueModifiedEventArgs? args)
     {
         ModifiedEvent?.Invoke(this, args);
     }

@@ -1,4 +1,5 @@
-﻿namespace LynnaLib;
+﻿#nullable enable
+namespace LynnaLib;
 
 // Class represents macro:
 // m_GfxHeader filename destAddress [size] [startOffset]
@@ -46,7 +47,7 @@ public class GfxHeaderData : Data, IGfxHeader
     {
         string filename = GetValue(0);
 
-        IStream stream = Project.GetGfxStream(filename);
+        IStream? stream = Project.GetGfxStream(filename);
 
         if (stream == null)
         {
@@ -72,10 +73,12 @@ public class GfxHeaderData : Data, IGfxHeader
     private GfxHeaderData(Project p, string id, TransactionState state)
         : base(p, id, state)
     {
+        gfxStream = null!;
     }
 
     public override void OnInitializedFromTransfer()
     {
-        gfxStream = Project.GetGfxStream(GetValue(0));
+        gfxStream = Project.GetGfxStream(GetValue(0))
+                    ?? throw new Exception($"Null GFX stream for {Identifier}");
     }
 }

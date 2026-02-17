@@ -1,3 +1,4 @@
+#nullable disable // TODO
 using System.IO;
 using System.Text.Json.Serialization;
 using YamlDotNet.Serialization;

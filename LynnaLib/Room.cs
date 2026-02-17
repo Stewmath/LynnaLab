@@ -1,3 +1,4 @@
+#nullable enable
 using System.IO;
 using System.Text.Json.Serialization;
 
@@ -16,7 +17,7 @@ public enum Season
 /// relating to room layout variants, warps or objects.
 public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstantiator
 {
-    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
 
     // ================================================================================
     // Constructors
@@ -74,10 +75,10 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
     class State : TransactionState
     {
         [JsonInclude, JsonRequired]
-        public InstanceResolver<Data> _chestDataStart; // Can be null
+        public InstanceResolver<Data>? _chestDataStart;
 
         [JsonIgnore]
-        public Data ChestDataStart
+        public Data? ChestDataStart
         {
             get { return _chestDataStart?.Instance; }
             set
@@ -93,12 +94,12 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
     State state = new();
 
     // These are not tracked, but are created once when needed and then never changed.
-    MemoryFileStream _dungeonFlagStream;
-    List<RoomLayout> _layouts; // Different season layouts
-    ValueReferenceGroup _vrg;
+    MemoryFileStream? _dungeonFlagStream;
+    List<RoomLayout>? _layouts; // Different season layouts
+    ValueReferenceGroup? _vrg;
 
     // This is not directly tracked, but is kept up to date through events triggered by undos.
-    Chest chest;
+    Chest? chest;
 
     // ================================================================================
     // Events
@@ -106,7 +107,7 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
 
     // Event invoked upon adding a chest. For removing a chest, use the event in the Chest
     // class.
-    public event EventHandler<EventArgs> ChestAddedEvent;
+    public event EventHandler<EventArgs?>? ChestAddedEvent;
 
     // ================================================================================
     // Properties
@@ -186,7 +187,7 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
         get { return Project.Game == Game.Seasons && Group == 0; }
     }
 
-    public Chest Chest
+    public Chest? Chest
     {
         get { return chest; }
     }
@@ -329,7 +330,7 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
         get
         {
             if (_vrg == null)
-                GenerateValueReferenceGroup();
+                _vrg = GenerateValueReferenceGroup();
             return _vrg;
         }
     }
@@ -366,7 +367,7 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
         {
             if (_layouts == null)
                 CreateRoomLayouts();
-            return _layouts;
+            return _layouts!;
         }
     }
 
@@ -500,7 +501,7 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
         return Project.GetFileStream(path);
     }
 
-    MemoryFileStream GetRoomPackFile()
+    MemoryFileStream? GetRoomPackFile()
     {
         string s;
         if (Project.GameString == "seasons")
@@ -533,7 +534,7 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
             DungeonFlags |= (byte)(1 << bit);
     }
 
-    void GenerateValueReferenceGroup()
+    ValueReferenceGroup GenerateValueReferenceGroup()
     {
         ValueReferenceDescriptor roomPackDesc;
 
@@ -545,7 +546,7 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
         {
             roomPackDesc = StreamValueReference.Descriptor(
                 Project,
-                stream: GetRoomPackFile(),
+                stream: GetRoomPackFile()!,
                 name: "Room Pack",
                 offset: Index & 0xff,
                 type: DataValueType.Byte,
@@ -589,18 +590,19 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
                         tooltip: "Check to load this screen's tileset graphics after the screen transition, instead of before."),
             };
 
-        _vrg = new ValueReferenceGroup(descriptors);
+        var vrg = new ValueReferenceGroup(descriptors);
 
-        _vrg["Tileset"].ValueReference.AddValueModifiedHandler((sender, args) =>
+        vrg["Tileset"].ValueReference.AddValueModifiedHandler((sender, args) =>
         {
             UpdateTileset();
         });
 
-        _vrg.EnableTransactions($"Edit room property#{TransactionIdentifier}", true);
+        vrg.EnableTransactions($"Edit room property#{TransactionIdentifier}", true);
+        return vrg;
     }
 
     // Find the data corresponding to the chest for this room, or "null" if it doesn't exist.
-    Data GetChestData()
+    Data? GetChestData()
     {
         int room = Index;
 
@@ -610,9 +612,12 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
         FileParser chestFileParser = Project.GetFileWithLabel("chestDataGroupTable");
         Data chestPointer = chestFileParser.GetData("chestDataGroupTable", group * 2);
         string pointerString = chestPointer.GetValue(0);
-        Data chestGroupData = Project.GetData(pointerString);
+        Data? chestGroupData = Project.GetData(pointerString);
 
-        while (chestGroupData.Command == "m_ChestData")
+        if (chestGroupData == null)
+            throw new ProjectErrorException($"GetChestData(): Couldn't resolve pointer '{pointerString}'?");
+
+        while (chestGroupData?.Command == "m_ChestData")
         {
             if (chestGroupData.GetIntValue(1) == room)
                 return chestGroupData;
@@ -638,7 +643,7 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
     /// </summary>
     void UpdateChestRef(bool inConstructor)
     {
-        Data d = GetChestData();
+        Data? d = GetChestData();
         if (d == state.ChestDataStart)
             return;
 
@@ -657,7 +662,7 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
     /// </summary>
     void OnChestDataChanged(bool invokeEvents)
     {
-        Chest oldChest = chest;
+        Chest? oldChest = chest;
 
         if (state.ChestDataStart == null)
             chest = null;

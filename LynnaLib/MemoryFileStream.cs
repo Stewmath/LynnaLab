@@ -1,3 +1,5 @@
+#nullable enable
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
@@ -9,8 +11,7 @@ public class MemoryFileStream : TrackedStream
 {
     public class State : TransactionState
     {
-        [JsonRequired]
-        public byte[] data;
+        public required byte[] data;
     }
 
     // ================================================================================
@@ -27,7 +28,7 @@ public class MemoryFileStream : TrackedStream
         set { _position = value; }
     }
 
-    public string FilePath
+    public string? FilePath
     {
         get { return filepath; }
     }
@@ -51,15 +52,15 @@ public class MemoryFileStream : TrackedStream
 
     private static readonly log4net.ILog log = LogHelper.GetLogger();
 
-    FileSystemWatcher watcher;
+    FileSystemWatcher? watcher;
 
-    State state = new State();
+    State state;
 
     // NOTE: Not tracked with state. Every time the stream is accessed the position should be
     // set to whatever we're reading.
     long _position;
 
-    readonly string filepath;
+    readonly string? filepath;
     bool _modified;
 
     // ================================================================================
@@ -78,6 +79,9 @@ public class MemoryFileStream : TrackedStream
         // Sanity check for security - don't access any new files after project is initialized
         if (!project.IsInConstructor)
             throw new Exception("Initializing MemoryFileStream outside of Project constructor");
+
+        if (project.BaseDirectory == null)
+            throw new Exception($"Can't create new MemoryFileStream for file '{filename}' from a client instance");
 
         this.filepath = Path.Combine(project.BaseDirectory, filename);
 
@@ -116,11 +120,15 @@ public class MemoryFileStream : TrackedStream
         this.state = (State)state;
     }
 
+    [MemberNotNull(nameof(state))]
     bool LoadFromFile()
     {
+        if (filepath == null)
+            throw new Exception("MemoryFileStream: Internal error");
+
         FileStream input = new FileStream(filepath, FileMode.Open);
 
-        if (input.Length == 0)
+        if (input.Length == 0 && state != null)
         {
             // It seems like when a filewatcher is installed, this can get triggered when it's
             // seen as "empty"? Perhaps because it can't open the file properly. Obviously this
@@ -134,9 +142,9 @@ public class MemoryFileStream : TrackedStream
             throw new Exception("MemoryFileStream: Didn't read enough bytes");
         input.Close();
 
-        if (state.data == null || !state.data.SequenceEqual(data))
+        if (state?.data == null || !state.data.SequenceEqual(data))
         {
-            state.data = data;
+            state = new State() { data = data };
             return true;
         }
         else
@@ -149,6 +157,9 @@ public class MemoryFileStream : TrackedStream
 
     public void Save()
     {
+        if (filepath == null)
+            throw new Exception("MemoryFileStream: Tried to call Save() on a client instance?");
+
         // TODO: How to handle this when on a remote client (probably just do nothing)
         if (Modified)
         {

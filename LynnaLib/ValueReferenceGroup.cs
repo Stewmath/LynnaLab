@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// <summary>
@@ -9,7 +10,7 @@ public class ValueReferenceGroup
     readonly IList<ValueReferenceDescriptor> descriptors;
     readonly LockableEvent<ValueModifiedEventArgs> lockableModifiedEvent = new LockableEvent<ValueModifiedEventArgs>();
 
-    string transactionDescription;
+    string? transactionDescription;
     bool transactionMerge;
 
 
@@ -27,13 +28,13 @@ public class ValueReferenceGroup
     }
 
 
-    public event EventHandler<ValueModifiedEventArgs> ModifiedEvent;
+    public event EventHandler<ValueModifiedEventArgs?>? ModifiedEvent;
 
 
 
     // Properties
 
-    public Project Project
+    public Project? Project
     {
         get
         {
@@ -182,12 +183,18 @@ public class ValueReferenceGroup
 
     void BeginTransaction()
     {
+        if (Project == null)
+            throw new Exception("ValueReferenceGroup.BeginTransation(): No project?");
+
         if (transactionDescription != null)
             Project.BeginTransaction(transactionDescription, transactionMerge);
     }
 
     void EndTransaction()
     {
+        if (Project == null)
+            throw new Exception("ValueReferenceGroup.BeginTransation(): No project?");
+
         if (transactionDescription != null)
             Project.EndTransaction();
     }

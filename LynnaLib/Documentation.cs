@@ -1,3 +1,4 @@
+#nullable enable
 using System.Text.Json.Serialization;
 
 namespace LynnaLib;
@@ -22,7 +23,7 @@ public class Documentation
 
     public string Name { get; set; }
     public string KeyName { get; set; } = "Key";
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     [JsonIgnore]
     public ICollection<string> Keys
@@ -65,7 +66,7 @@ public class Documentation
             if (key == "desc")
                 Description = fileComponent.GetField(key);
             else
-                _fieldDict[key.ToLower()] = fileComponent.GetField(key);
+                _fieldDict[key.ToLower()] = fileComponent.GetField(key)!;
         }
 
         _fieldKeys = new SortedSet<string>(fileComponent.Keys);
@@ -84,11 +85,13 @@ public class Documentation
     // Blank constructor just for deserialization
     public Documentation()
     {
-
+        Name = null!;
+        _fieldKeys = null!;
+        _fieldDict = null!;
     }
 
 
-    public string GetField(string field)
+    public string? GetField(string field)
     {
         field = field.ToLower();
         return _fieldDict.GetValueOrDefault(field);
@@ -107,9 +110,9 @@ public class Documentation
     }
 
 
-    public Documentation GetSubDocumentation(string field)
+    public Documentation? GetSubDocumentation(string field)
     {
-        string value = GetField(field);
+        string? value = GetField(field);
         if (value == null)
             return null;
 

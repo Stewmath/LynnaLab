@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// <summary>
@@ -9,7 +10,7 @@ public class DungeonChangedEventArgs
     public bool AllRoomsChanged { get; init; } // True if all room assignments are potentially modified
     public bool FloorsChanged { get; init; } // True if number of floors has potentially changed
     public bool RoomPosValid { get; init; } // True if a single room is modified.
-    public Dungeon.Floor SingleFloorChanged { get; init; } // A full floor that must be redrawn, or null
+    public Dungeon.Floor? SingleFloorChanged { get; init; } // A full floor that must be redrawn, or null
 
     // If RoomPosValid is true, this is the position in the grid of the changed room.
     public (int x, int y, Dungeon.Floor floorPlan) RoomPos { get; init; }
@@ -106,8 +107,8 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
     readonly int index;
 
     State state;
-    Data _dataStart;
-    ValueReferenceGroup _vrg;
+    Data? _dataStart;
+    ValueReferenceGroup? _vrg;
 
     // ================================================================================
     // Properties
@@ -164,7 +165,7 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
     /// - Number of floors change
     /// - Room layout changes
     /// </summary>
-    public event EventHandler<DungeonChangedEventArgs> DungeonChangedEvent;
+    public event EventHandler<DungeonChangedEventArgs>? DungeonChangedEvent;
 
 
 
@@ -177,7 +178,7 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
         get
         {
             if (_vrg == null)
-                GenerateValueReferenceGroup();
+                _vrg = GenerateValueReferenceGroup();
             return _vrg;
         }
     }
@@ -240,6 +241,11 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
         for (int y = 0; y < 8; y++)
             textToInsert.Add("\t.db $00 $00 $00 $00 $00 $00 $00 $00");
 
+        if (component.FileParser == null)
+        {
+            throw new Exception("InsertFloor: Tried to insert next to non-existent data?");
+        }
+
         // Location to add extra newline differs if this is the first floor
         if (floorIndex == 0)
         {
@@ -270,14 +276,22 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
         if (NumFloors <= 1)
             throw new ArgumentException("Can't remove last remaining floor in a dungeon. (Or at least it's not a good idea.)");
 
-        FileComponent component = GetFloorLayoutData(floorIndex);
-        FileParser parser = component.FileParser;
+        FileComponent? component = GetFloorLayoutData(floorIndex);
+        FileParser? parser = component.FileParser;
+
+        if (parser == null)
+        {
+            throw new Exception("RemoveFloor: Floor data not found in a file?");
+        }
+
         int count = 0;
         while (count < 64)
         {
+            if (component == null)
+                throw new AssemblyErrorException("RemoveFloor: Tried to remove an incomplete floor?");
             if (component is Data)
                 count++;
-            FileComponent next = component.Next;
+            FileComponent? next = component.Next;
             parser.RemoveFileComponent(component);
             component = next;
         }
@@ -294,7 +308,7 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
     }
 
 
-    void GenerateValueReferenceGroup()
+    ValueReferenceGroup GenerateValueReferenceGroup()
     {
         var groupDescriptor = AbstractIntValueReference.Descriptor(
             Project,
@@ -327,8 +341,9 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
                         tooltip: "A bitset of floors that will appear on the map when the compass is obtained.\n\nEg. If this is $05, then floors 0 and 2 will be unlocked (bits 0 and 2 are set)."),
             };
 
-        _vrg = new ValueReferenceGroup(list);
-        _vrg.EnableTransactions($"Edit dungeon property#{TransactionIdentifier}", true);
+        var vrg = new ValueReferenceGroup(list);
+        vrg.EnableTransactions($"Edit dungeon property#{TransactionIdentifier}", true);
+        return vrg;
     }
 
     /// <summary>
@@ -436,9 +451,11 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
         public Floor(Dungeon d, string id, Data floorLayoutData)
             : base(d.Project, id)
         {
-            this.state = new();
-            this.state._dungeon = new(d);
-            this.state._floorLayoutData = new(floorLayoutData);
+            this.state = new()
+            {
+                _dungeon = new(d),
+                _floorLayoutData = new(floorLayoutData),
+            };
             DetermineRoomsUsed(fromConstructor: true);
         }
 
@@ -461,8 +478,14 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
             public List<(int x, int y)>[] roomLookup;
 
             // These should never change
-            public InstanceResolver<Data> _floorLayoutData;
-            public InstanceResolver<Dungeon> _dungeon;
+            public required InstanceResolver<Data> _floorLayoutData;
+            public required InstanceResolver<Dungeon> _dungeon;
+
+            public State()
+            {
+                // Shut up the null warning. I'm too lazy to clean this up.
+                roomLookup = null!;
+            }
         }
 
         State state;

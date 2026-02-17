@@ -217,7 +217,7 @@ public class ObjectData : Data
     // Constructors
 
     // Creation from a FileParser
-    public ObjectData(Project p, string id, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int objType, ObjectData last)
+    public ObjectData(Project p, string id, string command, IEnumerable<string> values, FileParser parser, IList<string> spacing, int objType, ObjectData? last)
         : base(p, id, new ObjectDataState(parser, spacing, command, values, -1, (ObjectType)objType))
     {
         _vrg = InitializeValueReferenceGroup();

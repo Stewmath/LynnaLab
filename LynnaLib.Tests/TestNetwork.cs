@@ -51,7 +51,7 @@ public class TestNetwork
         // Some sanity checks to see if the project data was transferred successfully
         CompareBoth(p1, p2, (p) => p.GetRoomLayout(0, 0).GetTile(0, 0), 0xb8);
         CompareBoth(p1, p2, (p) => p.GetRoomLayout(0, 0).Tileset.Index, 0x11);
-        CompareBoth(p1, p2, (p) => p.GetRoom(0).GetObjectGroup().GetObject(0).GetGameObject().ID, 0xb3);
+        CompareBoth(p1, p2, (p) => p.GetRoom(0).GetObjectGroup().GetObject(0).GetGameObject()?.ID ?? -1, 0xb3);
         CompareBoth(p1, p2, (p) => p.GetRoom(0).GetWarpGroup().GetWarp(0).DestRoom.Index, 0x4ba);
         CompareBoth(p1, p2, (p) => p.GetRoom(0x406).Chest?.TreasureIndex, 0x0500);
 
@@ -63,7 +63,7 @@ public class TestNetwork
         Assert.Equal(0x50, p2.GetRoomLayout(0x103, Season.None).GetTile(3, 3));
 
         // Test chest deletion
-        p2.GetRoom(0xf9).Chest.Delete();
+        p2.GetRoom(0xf9).Chest!.Delete();
         await synchronize();
         Assert.Null(p1.GetRoom(0xf9).Chest);
 

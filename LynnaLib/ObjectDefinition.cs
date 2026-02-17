@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// Public interface over the ObjectData class.
@@ -30,7 +31,7 @@ public class ObjectDefinition : TrackedProjectData
             throw new DeserializationException($"Bad ObjectDefinition ID; expected {expectedID}, got {Identifier}");
     }
 
-    void CreateValueReferenceGroup()
+    ValueReferenceGroup CreateValueReferenceGroup()
     {
         var descriptors = new List<ValueReferenceDescriptor>();
 
@@ -51,8 +52,9 @@ public class ObjectDefinition : TrackedProjectData
             descriptors.Add(new ValueReferenceDescriptor(newVref, name));
         }
 
-        _vrg = new ValueReferenceGroup(descriptors);
-        _vrg.EnableTransactions($"Edit Object#{TransactionIdentifier}", true);
+        var vrg = new ValueReferenceGroup(descriptors);
+        vrg.EnableTransactions($"Edit Object#{TransactionIdentifier}", true);
+        return vrg;
     }
 
     static string CreateIdentifier(string groupID, int uniqueID)
@@ -73,7 +75,7 @@ public class ObjectDefinition : TrackedProjectData
         public required InstanceResolver<ObjectData> objectDataIR { get; set; } // Can be null
     }
 
-    ValueReferenceGroup _vrg;
+    ValueReferenceGroup? _vrg;
 
     State state;
 
@@ -100,7 +102,7 @@ public class ObjectDefinition : TrackedProjectData
         get
         {
             if (_vrg == null)
-                CreateValueReferenceGroup();
+                _vrg = CreateValueReferenceGroup();
             return _vrg;
         }
     }
@@ -193,7 +195,7 @@ public class ObjectDefinition : TrackedProjectData
             vrg.SetValue("Y", n);
     }
 
-    public GameObject GetGameObject()
+    public GameObject? GetGameObject()
     {
         if (GetObjectType() == ObjectType.Interaction)
         {
@@ -223,12 +225,12 @@ public class ObjectDefinition : TrackedProjectData
         return null;
     }
 
-    public Documentation GetIDDocumentation()
+    public Documentation? GetIDDocumentation()
     {
         return GetGameObject()?.GetIDDocumentation();
     }
 
-    public Documentation GetSubIDDocumentation()
+    public Documentation? GetSubIDDocumentation()
     {
         return GetGameObject()?.GetSubIDDocumentation();
     }

@@ -1,3 +1,4 @@
+#nullable enable
 using System.IO;
 
 namespace LynnaLib;
@@ -46,10 +47,9 @@ public class RealTileset : Tileset
             else
                 GfxFileName = String.Format("gfx_tileset{0:x2}", Index);
 
-            base.GfxFileStream = Project.GetGfxStream(GfxFileName);
-
-            if (base.GfxFileStream == null)
-                throw new ProjectErrorException("Couldn't find \"" + GfxFileName + "\" in project.");
+            base.GfxFileStream = Project.GetGfxStream(GfxFileName)
+                                 ?? throw new ProjectErrorException(
+                                     "Couldn't find \"" + GfxFileName + "\" in project.");
         }
 
         ConstructValueReferenceGroup();
@@ -248,9 +248,13 @@ public class RealTileset : Tileset
 
     Data GetDataIndex(int i)
     {
-        Data data = tilesetData;
+        Data? data = tilesetData;
         for (int j = 0; j < i; j++)
-            data = data.NextData;
+            data = data?.NextData;
+
+        if (data == null)
+            throw new ProjectErrorException($"RealTileset: Data index {i} not found?");
+
         return data;
     }
 

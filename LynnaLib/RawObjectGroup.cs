@@ -1,4 +1,5 @@
-﻿namespace LynnaLib;
+﻿#nullable enable
+namespace LynnaLib;
 
 // This class provides an interface to edit an "object group" (list of object data ending with
 // "obj_End" or "obj_EndPointer"). For most cases it's recommended to use the "ObjectGroup"
@@ -11,11 +12,11 @@ internal class RawObjectGroup : TrackedProjectData, ProjectDataInstantiator
 
     private RawObjectGroup(Project p, string id) : base(p, id)
     {
-        ObjectData data = Parser.GetData(Identifier) as ObjectData;
+        ObjectData? data = Parser.GetData(Identifier) as ObjectData;
 
-        while (data.GetObjectType() != ObjectType.End && data.GetObjectType() != ObjectType.EndPointer)
+        while (data != null && data.GetObjectType() != ObjectType.End && data.GetObjectType() != ObjectType.EndPointer)
         {
-            ObjectData next = data.NextData as ObjectData;
+            ObjectData? next = data.NextData as ObjectData;
 
             if (data.GetObjectType() == ObjectType.Garbage)
             {
@@ -30,6 +31,9 @@ internal class RawObjectGroup : TrackedProjectData, ProjectDataInstantiator
 
             data = next;
         }
+
+        if (data == null)
+            throw new ProjectErrorException($"Couldn't parse data for {Identifier} (not defined?)");
         ObjectDataList.Add(new(data));
     }
 
@@ -58,7 +62,7 @@ internal class RawObjectGroup : TrackedProjectData, ProjectDataInstantiator
     }
 
     State state = new();
-    FileParser _parser;
+    FileParser? _parser;
 
     // ================================================================================
     // Properties

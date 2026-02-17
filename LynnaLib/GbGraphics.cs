@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 public static class GbGraphics
@@ -17,7 +18,7 @@ public static class GbGraphics
     /// sprites.)
     /// Caller should probably invoke Bitmap.MarkModified() after calling this.
     /// </summary>
-    public static unsafe void RenderRawTile(Bitmap bitmap, int xO, int yO, ReadOnlySpan<byte> data, IList<Color> palette = null, int flags = 0)
+    public static unsafe void RenderRawTile(Bitmap bitmap, int xO, int yO, ReadOnlySpan<byte> data, IList<Color>? palette = null, int flags = 0)
     {
         Debug.Assert(data.Length == 16 || data.Length == 32);
 
@@ -83,7 +84,7 @@ public static class GbGraphics
     /// Convert a single tile to a bitmap. (Supports 8x8 or 8x16 tiles; 8x16 are treated as
     /// sprites.)
     /// </summary>
-    public static Bitmap RawTileToBitmap(ReadOnlySpan<byte> data, IList<Color> palette = null, int flags = 0)
+    public static Bitmap RawTileToBitmap(ReadOnlySpan<byte> data, IList<Color>? palette = null, int flags = 0)
     {
         Debug.Assert(data.Length == 16 || data.Length == 32);
         bool sprite = (data.Length == 32);

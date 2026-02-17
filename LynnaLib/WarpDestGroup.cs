@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 public class WarpDestGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiator
@@ -12,13 +13,13 @@ public class WarpDestGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
 
         string label = tmp.GetValue(0);
 
-        WarpDestData data = FileParser.GetData(label) as WarpDestData;
+        WarpDestData? data = FileParser.GetData(label) as WarpDestData;
 
         while (data != null)
         {
             WarpDestDataList.Add(new(data));
 
-            FileComponent component = data.Next;
+            FileComponent? component = data.Next;
             data = null;
             while (component != null)
             {
@@ -65,7 +66,7 @@ public class WarpDestGroup : TrackedIndexedProjectData, IndexedProjectDataInstan
     };
 
     State state = new State();
-    FileParser _fileParser;
+    FileParser? _fileParser;
 
     // ================================================================================
     // Properties

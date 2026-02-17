@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -52,7 +54,7 @@ public class InstanceResolver<T> where T : ProjectDataType
             throw new Exception("InstanceResolver: couldn't find " + FullIdentifier);
     }
 
-    T instance;
+    T? instance;
     Project project;
     bool resolveImplicitly;
 
@@ -128,7 +130,7 @@ public class InstanceResolver<T> where T : ProjectDataType
         Resolve();
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         return obj is InstanceResolver<T> other
             && this.Identifier == other.Identifier
@@ -146,12 +148,12 @@ public class InstanceResolver<T> where T : ProjectDataType
         return r.Instance;
     }
 
-    public static bool operator==(InstanceResolver<T> r1, InstanceResolver<T> r2)
+    public static bool operator==(InstanceResolver<T>? r1, InstanceResolver<T>? r2)
     {
         return (!(r1 is null) && r1.Equals(r2)) || (r1 is null && r2 is null);
     }
 
-    public static bool operator!=(InstanceResolver<T> r1, InstanceResolver<T> r2)
+    public static bool operator!=(InstanceResolver<T>? r1, InstanceResolver<T>? r2)
     {
         return !(r1 == r2);
     }
@@ -224,7 +226,7 @@ public class InstanceResolverConverter : JsonConverterFactory
                 throw new JsonException("Expected StartObject token.");
             }
 
-            string typeStr = null, id = null;
+            string? typeStr = null, id = null;
 
             while (reader.Read())
             {
@@ -241,7 +243,7 @@ public class InstanceResolverConverter : JsonConverterFactory
                     throw new JsonException($"Unexpected token type {reader.TokenType}.");
                 }
 
-                string propertyName = reader.GetString();
+                string? propertyName = reader.GetString();
 
                 reader.Read();
 

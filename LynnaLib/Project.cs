@@ -1,3 +1,5 @@
+#nullable enable
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
@@ -10,8 +12,7 @@ namespace LynnaLib;
 /// </summary>
 public partial class Project
 {
-    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(
-            System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
 
     /// <summary>
     /// Subclass: Holds project state that must be tracked for undo/redo. (The fields in here
@@ -114,8 +115,8 @@ public partial class Project
     Color[][] _standardSpritePalettes;
 
     // --- Only valid server-side ---
-    readonly string baseDirectory;
-    log4net.Appender.RollingFileAppender logAppender;
+    readonly string? baseDirectory;
+    log4net.Appender.RollingFileAppender? logAppender;
 
 
     TransactionManager transactionManager;
@@ -222,7 +223,7 @@ public partial class Project
 
     public ProjectConfig Config { get { return stateHolder.State.projectConfig; } }
 
-    public string BaseDirectory
+    public string? BaseDirectory
     {
         get { return baseDirectory; }
     }
@@ -315,13 +316,13 @@ public partial class Project
     // Events
     // ================================================================================
 
-    public event Action AnnotationsAddedOrRemovedEvent;
+    public event Action? AnnotationsAddedOrRemovedEvent;
 
     // ================================================================================
     // Constructors
     // ================================================================================
 
-    private Project(string baseDirectory)
+    private Project(string? baseDirectory)
     {
         IsInConstructor = true;
 
@@ -346,6 +347,13 @@ public partial class Project
         };
 
         SerializerOptions.Converters.Add(new InstanceResolverConverter(this));
+
+        // Shut up nullable warnings. Not an elegant way to handle this.
+        LinkBitmap = null!;
+        transactionManager = null!;
+        logAppender = null!;
+        _standardSpritePalettes = null!;
+        stateHolder = null!;
     }
 
     /// <summary>
@@ -649,6 +657,9 @@ public partial class Project
 
     void VisitDirectoriesRecursively(string directory, Action<string> action)
     {
+        if (baseDirectory == null)
+            throw new Exception("Project: Can't call VisitDirectoriesRecursively on client");
+
         if (!directory.EndsWith("/"))
             directory += "/";
         foreach (string f in Helper.GetSortedFiles(baseDirectory + directory))
@@ -741,13 +752,17 @@ public partial class Project
 
         try
         {
-            var obj = (TrackedProjectData)Activator.CreateInstance(
+            var obj = (TrackedProjectData?)Activator.CreateInstance(
                 instanceType,
                 BindingFlags.NonPublic | BindingFlags.CreateInstance | BindingFlags.Instance,
                 null,
                 new object[] { this, identifier, state },
                 null
             );
+
+            Helper.Assert(obj != null,
+                "AddExternalData: Got a null result");
+
             Helper.Assert(identifier == obj.Identifier,
                           $"AddExternalData: Identifier mismatch ({identifier}, {obj.Identifier})");
 
@@ -788,6 +803,8 @@ public partial class Project
     {
         if (!IsInConstructor)
             throw new Exception("Called LoadFileStream outside of Project constructor");
+        if (BaseDirectory == null)
+            throw new Exception("Project: Can't call LoadFileStream from client");
 
         if (CheckHasDataType<MemoryFileStream>(filename))
             return;
@@ -837,7 +854,7 @@ public partial class Project
     /// PngGfxStream (.png). The PNG is converted to binary in the gameboy's 2bpp format when
     /// accessed through the IStream.
     /// </summary>
-    public IStream GetGfxStream(string filename)
+    public IStream? GetGfxStream(string filename)
     {
         var directories = new List<string>();
 
@@ -1027,7 +1044,7 @@ public partial class Project
     /// </summary>
     internal ProjectDataType GetDataType(Type type, string identifier, bool createIfMissing)
     {
-        ProjectDataType instance;
+        ProjectDataType? instance;
 
         // Sanity check: Any class that doesn't extend TrackedProjectData should implement an
         // instantiator.
@@ -1068,13 +1085,15 @@ public partial class Project
 
         if (typeof(ProjectDataInstantiator).IsAssignableFrom(type))
         {
-            MethodInfo method = type.GetMethod(
+            MethodInfo? method = type.GetMethod(
                 "LynnaLib.ProjectDataInstantiator.Instantiate",
                 BindingFlags.Static | BindingFlags.NonPublic
             );
             if (method != null)
             {
-                instance = (ProjectDataType)method.Invoke(null, new object[] { this, identifier });
+                instance = (ProjectDataType?)method.Invoke(null, new object[] { this, identifier });
+                if (instance == null)
+                    throw new Exception($"GetDataType: Failed to instantiate {identifier}");
                 return instance;
             }
             else
@@ -1094,7 +1113,7 @@ public partial class Project
     // TODO: useDefaultConstructor argument (or createifmissing)
     public ProjectDataType GetIndexedDataType(Type type, int index)
     {
-        ProjectDataType instance;
+        ProjectDataType? instance;
         string identifier = index.ToString();
 
         // This call verifies the type is ok to use
@@ -1104,13 +1123,15 @@ public partial class Project
         // Doesn't exist, must create it.
         if (typeof(IndexedProjectDataInstantiator).IsAssignableFrom(type))
         {
-            MethodInfo method = type.GetMethod(
+            MethodInfo? method = type.GetMethod(
                 "LynnaLib.IndexedProjectDataInstantiator.Instantiate",
                 BindingFlags.Static | BindingFlags.NonPublic
             );
             if (method != null)
             {
-                instance = (ProjectDataType)method.Invoke(null, new object[] { this, index });
+                instance = (ProjectDataType?)method.Invoke(null, new object[] { this, index });
+                if (instance == null)
+                    throw new Exception($"GetIndexedDataType: Failed to instantiate {identifier}");
                 return instance;
             }
             else
@@ -1127,15 +1148,15 @@ public partial class Project
     }
 
 
-    bool TryLookupDataType<T>(string identifier, out T data)
+    bool TryLookupDataType<T>(string identifier, out T? data)
         where T : ProjectDataType
     {
-        ProjectDataType o;
+        ProjectDataType? o;
         bool retval = TryLookupDataType(typeof(T), identifier, out o);
-        data = (T)o;
+        data = o as T;
         return retval;
     }
-    bool TryLookupDataType(Type type, string identifier, out ProjectDataType data)
+    bool TryLookupDataType(Type type, string identifier, [NotNullWhen(true)] out ProjectDataType? data)
     {
         if (identifier == null)
             throw new Exception("GetDataType: identifier can't be null.");
@@ -1143,7 +1164,7 @@ public partial class Project
         // This call verifies the type is ok to use
         string s = GetFullIdentifier(type, identifier);
 
-        ProjectDataType o;
+        ProjectDataType? o;
         if (dataStructDictionary.TryGetValue(s, out o))
         {
             data = o;
@@ -1165,7 +1186,7 @@ public partial class Project
 
         season = ValidateTilesetSeason(index, season, autoCorrect);
 
-        RealTileset retval;
+        RealTileset? retval;
         tilesetCache.TryGetValue(new Tuple<int, Season>(index, season), out retval);
         if (retval == null)
         {
@@ -1300,7 +1321,7 @@ public partial class Project
     /// </summary>
     public ObjectGfxHeaderData GetObjectGfxHeaderData(int index)
     {
-        return GetData("objectGfxHeaderTable", 3 * index) as ObjectGfxHeaderData;
+        return (ObjectGfxHeaderData)GetData("objectGfxHeaderTable", 3 * index);
     }
 
     // This should only be used for getting "top-level" object groups (groupXMapYObjectData).
@@ -1327,7 +1348,7 @@ public partial class Project
 
     }
 
-    public PaletteHeaderGroup GetPaletteHeaderGroup(int index)
+    public PaletteHeaderGroup? GetPaletteHeaderGroup(int index)
     {
         if (!HasLabel(PaletteHeaderGroup.GetLabelName(index)))
             return null;
@@ -1352,7 +1373,7 @@ public partial class Project
     }
     public void RemoveLabel(string label)
     {
-        InstanceResolver<FileParser> f;
+        InstanceResolver<FileParser>? f;
         if (!LabelDictionary.TryGetValue(label, out f))
             return;
         LabelDictionary.Remove(label);
@@ -1413,9 +1434,9 @@ public partial class Project
         return GetFileWithLabel(label).GetData(label, offset);
     }
 
-    public string GetDefinition(string val)
+    public string? GetDefinition(string val)
     {
-        string mapping;
+        string? mapping;
         if (DefinesDictionary.TryGetValue(val, out mapping))
             return mapping;
         return null;
@@ -1427,7 +1448,7 @@ public partial class Project
     {
         val = val.Trim();
 
-        string mapping;
+        string? mapping;
         if (DefinesDictionary.TryGetValue(val, out mapping))
             return mapping;
         return val;
@@ -1597,13 +1618,15 @@ public partial class Project
 
         _standardSpritePalettes = new Color[6][];
 
-        RgbData data = GetData("standardSpritePaletteData") as RgbData;
+        RgbData? data = GetData("standardSpritePaletteData") as RgbData;
 
         for (int i = 0; i < 6; i++)
         {
             _standardSpritePalettes[i] = new Color[4];
             for (int j = 0; j < 4; j++)
             {
+                if (data == null)
+                    throw new ProjectErrorException("GetStandardSpritePalettes() failed: Data ended?");
                 _standardSpritePalettes[i][j] = data.Color;
                 data = data.NextData as RgbData;
             }
@@ -1614,7 +1637,7 @@ public partial class Project
 
     // Gets the dungeon a room is in. Also returns the coordinates within the dungeon in x/y
     // parameters.
-    public Dungeon GetRoomDungeon(Room room, out Dungeon.Floor floor, out int x, out int y)
+    public Dungeon? GetRoomDungeon(Room room, out Dungeon.Floor? floor, out int x, out int y)
     {
         x = -1;
         y = -1;
@@ -1754,7 +1777,7 @@ public partial class Project
         return Serialize(typeof(T), state);
     }
 
-    public string Serialize(Type type, object state)
+    public string Serialize(Type type, object? state)
     {
         string s = JsonSerializer.Serialize(state, type, SerializerOptions);
         if (s == null)
@@ -1773,7 +1796,7 @@ public partial class Project
     /// </summary>
     public object Deserialize(Type type, string stateStr)
     {
-        object s;
+        object? s;
         try
         {
             s = JsonSerializer.Deserialize(stateStr, type, SerializerOptions);
@@ -1805,6 +1828,8 @@ public partial class Project
     Bitmap LoadLinkBitmap()
     {
         var stream = GetGfxStream("spr_link");
+        if (stream == null)
+            throw new ProjectErrorException("Couldn't open spr_link.png");
         stream.Seek(32 * 16, SeekOrigin.Begin);
         byte[] leftHalf = new byte[32];
         byte[] rightHalf = new byte[32];
@@ -1856,7 +1881,7 @@ public partial class Project
 
     public static Type GetStateType(string type)
     {
-        Type t = Type.GetType(type);
+        Type? t = Type.GetType(type);
         if (t == null)
             throw new Exception("Could not resolve type: " + type);
         if (!(typeof(TransactionState).IsAssignableFrom(t)))
@@ -1866,7 +1891,7 @@ public partial class Project
 
     public static Type GetInstType(string type)
     {
-        Type t = Type.GetType(type);
+        Type? t = Type.GetType(type);
         if (t == null)
             throw new Exception("Could not resolve type: " + type);
         if (!(typeof(TrackedProjectData).IsAssignableFrom(t)))

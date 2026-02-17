@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// <summary>
@@ -10,6 +11,7 @@ namespace LynnaLib;
 /// </summary>
 public abstract class GameObject : ProjectIndexedDataType
 {
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
 
     // Using a dictionary because I don't know what the upper limit is to # of animations...
     Dictionary<int, ObjectAnimation> _animations = new Dictionary<int, ObjectAnimation>();
@@ -75,9 +77,9 @@ public abstract class GameObject : ProjectIndexedDataType
     }
 
 
-    public Color[][] GetCustomPalettes()
+    public Color[][]? GetCustomPalettes()
     {
-        string field = GetSubIDDocumentation()?.GetField("palette");
+        string? field = GetSubIDDocumentation()?.GetField("palette");
         if (field == null)
             return null;
 
@@ -100,7 +102,7 @@ public abstract class GameObject : ProjectIndexedDataType
     /// <summary>
     ///  Returns the documentation for the object with this ID (not specific to subID).
     /// </summary>
-    public Documentation GetIDDocumentation()
+    public Documentation? GetIDDocumentation()
     {
         Documentation doc = IDConstantsMapping.GetDocumentationForValue(ID);
 
@@ -113,7 +115,11 @@ public abstract class GameObject : ProjectIndexedDataType
             if (key.Length >= 6 && key.Substring(0, 6) == "subid_")
             {
                 string subidName = key.Substring(6);
-                doc.SetField(subidName, doc.GetSubDocumentation(key).GetField("desc"));
+                var field = doc.GetSubDocumentation(key)?.GetField("desc");
+                if (field == null)
+                    log.Warn("Couldn't get description for field: " + key);
+                else
+                    doc.SetField(subidName, field);
             }
             else
             {
@@ -136,7 +142,7 @@ public abstract class GameObject : ProjectIndexedDataType
     ///  (TODO: cache, and make it so that not every object stores the subid values for everything;
     ///  might need some kind of new "BaseObject" class that only has ID, not SubID.)
     /// </summary>
-    public Documentation GetSubIDDocumentation()
+    public Documentation? GetSubIDDocumentation()
     {
         Documentation doc = IDConstantsMapping.GetDocumentationForValue(ID);
 
@@ -150,7 +156,7 @@ public abstract class GameObject : ProjectIndexedDataType
                 string range = key.Substring(6);
                 if (Helper.GetIntListFromRange(range).Contains(SubID))
                 {
-                    Documentation subidDoc = doc.GetSubDocumentation(key);
+                    Documentation? subidDoc = doc.GetSubDocumentation(key);
                     return subidDoc;
                 }
             }

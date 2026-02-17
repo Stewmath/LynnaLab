@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// <summary>
@@ -6,7 +7,7 @@ namespace LynnaLib;
 /// </summary>
 public class DocumentationFileComponent : FileComponent
 {
-    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
 
     readonly Dictionary<string, string> documentationParams;
     readonly string origString;
@@ -44,6 +45,9 @@ public class DocumentationFileComponent : FileComponent
         : base(p, id, state)
     {
         // TODO: DESERIALIZATION UNFINISHED
+        documentationParams = null!;
+        origString = null!;
+        _keys = null!;
     }
 
     public override string GetString()
@@ -56,10 +60,10 @@ public class DocumentationFileComponent : FileComponent
     ///  Returns the string corresponding to a documentation block. Example: if the file
     ///  had "@name{Test}", then GetField("name") would return "Test".
     /// </summary>
-    public string GetField(string name)
+    public string? GetField(string name)
     {
         name = name.ToLower();
-        string output;
+        string? output;
         documentationParams.TryGetValue(name, out output);
         if (output == null)
             defaultFields.TryGetValue(name, out output);
@@ -83,7 +87,7 @@ public class DocumentationFileComponent : FileComponent
     ///
     ///  TODO: use StringBuilder
     /// </summary>
-    public static Dictionary<string, string> ParseDoc(string str, List<string> keys = null)
+    public static Dictionary<string, string> ParseDoc(string str, List<string>? keys = null)
     {
         var fields = new Dictionary<string, string>();
 
@@ -166,7 +170,8 @@ public class DocumentationFileComponent : FileComponent
 
         description = description.Trim();
         fields.Add("desc", description);
-        keys.Add("desc");
+        if (keys != null)
+            keys.Add("desc");
 
         return fields;
     }

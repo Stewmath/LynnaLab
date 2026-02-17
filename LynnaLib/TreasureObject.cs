@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// Represents a "treasure object", which is a treasure with additional properties including
@@ -31,7 +32,7 @@ public class TreasureObject : TrackedProjectData
         if (ID >= Project.NumTreasures)
             throw new InvalidTreasureException(string.Format("ID {0:X2} for treasure was too high!", ID));
 
-        GenerateValueReferenceGroup();
+        vrg = GenerateValueReferenceGroup();
 
         // Add the treasure definition to the Project's definition list and to the
         // TreasureObjectMapping.
@@ -46,6 +47,7 @@ public class TreasureObject : TrackedProjectData
         : base(p, id)
     {
         this.state = (State)state;
+        this.vrg = null!;
     }
 
 
@@ -99,9 +101,9 @@ public class TreasureObject : TrackedProjectData
 
     // Private methods
 
-    void GenerateValueReferenceGroup()
+    ValueReferenceGroup GenerateValueReferenceGroup()
     {
-        vrg = new ValueReferenceGroup(new ValueReferenceDescriptor[] {
+        var vrg = new ValueReferenceGroup(new ValueReferenceDescriptor[] {
                 DataValueReference.Descriptor(BaseData,
                         index: 0,
                         name: "Spawn Mode",
@@ -138,6 +140,7 @@ public class TreasureObject : TrackedProjectData
             });
 
         vrg.EnableTransactions("Edit treasure object#" + TransactionIdentifier, true);
+        return vrg;
     }
 
     // ================================================================================
@@ -159,6 +162,6 @@ public class TreasureObject : TrackedProjectData
     {
         // Can't put this in the state-based constructor since it involves dereferencing
         // "BaseData".
-        GenerateValueReferenceGroup();
+        vrg = GenerateValueReferenceGroup();
     }
 }

@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 // Reads/writes warp source data per room. Searches through all of a group's warp data to get
@@ -12,7 +13,7 @@ namespace LynnaLib;
 //   the top level, PositionWarp only as the data pointed to by a PointerWarp).
 public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiator
 {
-    private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly log4net.ILog log = LogHelper.GetLogger();
 
     // ================================================================================
     // Constructors
@@ -53,10 +54,19 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
         public List<InstanceResolver<WarpSourceData>> warpSourceDataList;
 
         public InstanceResolver<WarpSourceData> endWarp; // "m_WarpListEnd" opcode for top level data (shouldn't be null)
-        public InstanceResolver<WarpSourceData> pointerWarp; // "m_PointerWarp" (can be null but should be unique)
-        public InstanceResolver<WarpSourceData> lastStandardWarp; // New data added goes after this (can be null)
+        public InstanceResolver<WarpSourceData>? pointerWarp; // "m_PointerWarp" (can be null but should be unique)
+        public InstanceResolver<WarpSourceData>? lastStandardWarp; // New data added goes after this (can be null)
 
         public int uniqueIDCounter;
+
+
+        // TODO: Clean this up
+        public State()
+        {
+            fileParser = null!;
+            warpSourceDataList = null!;
+            endWarp = null!;
+        }
     };
 
 
@@ -77,7 +87,7 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
         get { return state.endWarp.Instance; }
         set { state.endWarp = new(value); }
     }
-    WarpSourceData PointerWarp
+    WarpSourceData? PointerWarp
     {
         get
         {
@@ -93,7 +103,7 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
                 state.pointerWarp = new(value);
         }
     }
-    WarpSourceData LastStandardWarp
+    WarpSourceData? LastStandardWarp
     {
         get
         {
@@ -147,7 +157,7 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
     // Event invoked when:
     // - Warps are added to or removed from the warp group. "sender" is "this" (WarpGroup).
     // - Underlying warp data is modified. "sender" is the "Warp" object that was modified.
-    public event EventHandler<EventArgs> ModifiedEvent;
+    public event EventHandler<EventArgs?>? ModifiedEvent;
 
     // ================================================================================
     // Public methods
@@ -276,6 +286,9 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
         data.SetDestData(data.DestGroup.Index, destIndex, destData);
 
         // Default values (we may be overwriting a previously unused warp)
+        if (data.ReferencedDestData == null)
+            throw new ProjectErrorException($"Couldn't resolve destination of warp: {data.Identifier}");
+
         data.ReferencedDestData.Map = 0;
         data.ReferencedDestData.Y = 0;
         data.ReferencedDestData.X = 0;
@@ -299,7 +312,6 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
         Project.TransactionManager.CaptureInitialState<State>(this);
 
         WarpSourceData data = warp.SourceData;
-        WarpDestData destData = data.ReferencedDestData;
 
         if (data.WarpSourceType == WarpSourceType.Standard)
         {
@@ -320,6 +332,8 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
                 // it'll start reading subsequent data and get an incorrect count)
                 PointerWarp.Detach();
                 // Delete end opcode
+                if (data.NextData == null)
+                    throw new ProjectErrorException($"Expected warp data {data.Identifier} to have an end opcode after it");
                 data.NextData.Detach();
             }
 
@@ -391,7 +405,7 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
         var newWarpList = new List<InstanceResolver<Warp>>();
         state.warpSourceDataList = new List<InstanceResolver<WarpSourceData>>();
 
-        WarpSourceData warpData = FileParser.GetData(label) as WarpSourceData;
+        WarpSourceData? warpData = FileParser.GetData(label) as WarpSourceData;
 
         PointerWarp = null;
         LastStandardWarp = null;
@@ -408,7 +422,7 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
                                     "Room {0:X3} has multiple 'Pointer' warp sources!", Index));
                     }
                     PointerWarp = warpData;
-                    WarpSourceData pWarp = warpData.GetPointedWarp();
+                    WarpSourceData? pWarp = warpData.GetPointedWarp();
                     while (pWarp != null)
                     {
                         if (pWarp.IsEndOpcode)
@@ -480,7 +494,7 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
     }
 
 
-    void OnDataModified(object sender, EventArgs args)
+    void OnDataModified(object? sender, EventArgs? args)
     {
         ModifiedEvent?.Invoke(sender, null);
     }

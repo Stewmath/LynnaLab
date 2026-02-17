@@ -116,7 +116,7 @@ public class WarpDestData : Data
     }
 
 
-    public WarpDestData(Project p, string id, string command, IEnumerable<string> values,
+    public WarpDestData(Project p, string id, string command, IEnumerable<string>? values,
             FileParser parser, IList<string> spacing)
         : base(p, id, new WarpDestState(parser, spacing, command, values, 3))
     {

@@ -1,3 +1,4 @@
+#nullable enable
 using System.IO;
 using System.Text.Json.Serialization;
 using YamlDotNet.Serialization;
@@ -14,17 +15,14 @@ public class PngGfxStream : TrackedStream, IStream
         : base(p, GetID(baseFilename))
     {
         this.pngFilePath = baseFilename + ".png";
-        this.state = new()
-        {
-            PngFile = new(p.GetFileStream(pngFilePath)),
-        };
-        LoadFromPngFile();
+        this.pngFile = p.GetFileStream(pngFilePath);
+        this.state = LoadFile();
 
         // PNG files, specifically, watch for changes on the filesystem.
-        this.PngFile.ModifiedEvent += (_, _) =>
+        pngFile.ModifiedEvent += (_, _) =>
         {
             Project.TransactionManager.BeginTransaction("Reload PNG file", merge: false, disallowUndo: true);
-            LoadFromPngFile();
+            this.state = LoadFile();
             InvokeModifiedEvent(StreamModifiedEventArgs.All(this));
             Project.TransactionManager.EndTransaction(false);
         };
@@ -53,27 +51,22 @@ public class PngGfxStream : TrackedStream, IStream
 
     class State : TransactionState
     {
-        [JsonRequired]
-        public byte[] Data { get; set; }
+        public required byte[] Data { get; set; }
 
-        [JsonRequired]
-        public PngProperties Properties { get; set; }
-
-        [JsonRequired]
-        public InstanceResolver<MemoryFileStream> PngFile { get; init; }
+        public required PngProperties Properties { get; set; }
     }
 
     State state;
 
     // These are only valid on the server
-    readonly string pngFilePath;
+    readonly string? pngFilePath;
+    readonly MemoryFileStream? pngFile;
 
     // ================================================================================
     // Properties
     // ================================================================================
 
     byte[] Data { get { return state.Data; } }
-    MemoryFileStream PngFile { get { return state.PngFile; } }
     PngProperties Properties { get { return state.Properties; } }
 
     // Stream Properties
@@ -168,7 +161,7 @@ public class PngGfxStream : TrackedStream, IStream
         if (!Modified)
             return;
 
-        if (pngFilePath == null)
+        if (pngFilePath == null || Project.BaseDirectory == null)
         {
             log.Error("Can't save PNG file on remote instance.");
             return;
@@ -260,7 +253,7 @@ public class PngGfxStream : TrackedStream, IStream
         Project.BeginTransaction("Load external PNG file", merge: false, disallowUndo: false);
         try
         {
-            LoadFromPngData(data, false);
+            state.Data = LoadFromPngData(data, state.Properties);
         }
         catch (Exception)
         {
@@ -276,20 +269,31 @@ public class PngGfxStream : TrackedStream, IStream
     // Private methods
     // ================================================================================
 
-    void LoadFromPngFile()
+    State LoadFile()
     {
+        if (pngFile == null)
+            throw new Exception("PngGfxStream: Called LoadFile() from client?");
+
         string propertiesFilename = Path.GetDirectoryName(pngFilePath) + "/" +
             Path.GetFileNameWithoutExtension(pngFilePath) + ".properties";
 
-        state.Properties = LoadProperties(Project, propertiesFilename);
+        var properties = LoadProperties(Project, propertiesFilename);
 
-        LoadFromPngData(PngFile.ReadAllBytes().ToArray(), true);
+        byte[] data = LoadFromPngData(pngFile.ReadAllBytes().ToArray(), properties);
+
+        this.Modified = true;
+
+        return new()
+        {
+            Data = data,
+            Properties = properties,
+        };
     }
 
     /// <summary>
     /// Throws InvalidImageException if there was a problem with the image.
     /// </summary>
-    void LoadFromPngData(byte[] pngData, bool fromProjectData)
+    byte[] LoadFromPngData(byte[] pngData, PngProperties properties)
     {
         Project.TransactionManager.CaptureInitialState<State>(this);
         using (var bitmap = new Bitmap(pngData))
@@ -306,7 +310,7 @@ public class PngGfxStream : TrackedStream, IStream
                 {
                     if (color == GbGraphics.GrayPalette[i])
                     {
-                        if (Properties.invert)
+                        if (properties.invert)
                             return 3 - i;
                         else
                             return i;
@@ -327,7 +331,7 @@ public class PngGfxStream : TrackedStream, IStream
 
                     int tile;
 
-                    if (Properties.interleave)
+                    if (properties.interleave)
                     {
                         tile = (y / 16) * bitmap.Width / 8 * 2;
                         tile += x / 8 * 2;
@@ -342,11 +346,8 @@ public class PngGfxStream : TrackedStream, IStream
                 }
             }
 
-            state.Data = data;
+            return data;
         }
-
-        // Don't write back to the PNG file after loading from it
-        this.Modified = !fromProjectData;
     }
 
     // ================================================================================

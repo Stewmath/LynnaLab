@@ -213,7 +213,7 @@ public abstract class FileComponent : TrackedProjectData
 
 public class StringFileComponent : FileComponent
 {
-    public StringFileComponent(string id, FileParser parser, string str, IList<string> spacing)
+    public StringFileComponent(string id, FileParser parser, string str, IList<string>? spacing)
         : base(parser.Project, id, new StringFileComponentState(parser, spacing, str))
     {
         if (this.Spacing == null)

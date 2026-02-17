@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLib;
 
 /// <summary>
@@ -6,7 +7,7 @@ namespace LynnaLib;
 public class PartObject : GameObject, IndexedProjectDataInstantiator
 {
 
-    readonly Data objectData;
+    readonly Data? objectData;
 
     readonly byte _objectGfxHeaderIndex;
     readonly byte _tileIndexBase;
@@ -18,14 +19,18 @@ public class PartObject : GameObject, IndexedProjectDataInstantiator
         {
             objectData = p.GetData("partData", ID * 8);
 
-            Data data = objectData;
+            Data? data = objectData;
 
             _objectGfxHeaderIndex = (byte)data.GetIntValue(0);
             for (int j = 0; j < 5; j++)
-                data = data.NextData;
-            _tileIndexBase = (byte)data.GetIntValue(0);
-            data = data.NextData;
-            _oamFlagsBase = (byte)data.GetIntValue(0);
+                data = data?.NextData;
+            _tileIndexBase = (byte)(data?.GetIntValue(0)
+                                    ?? throw new ProjectErrorException(
+                                        $"Part data ended abruptly: {Identifier}"));
+            data = data?.NextData;
+            _oamFlagsBase = (byte)(data?.GetIntValue(0)
+                                    ?? throw new ProjectErrorException(
+                                        $"Part data ended abruptly: {Identifier}"));
         }
         catch (InvalidLookupException e)
         {
