@@ -9,6 +9,8 @@ namespace LynnaLab;
 /// </summary>
 public unsafe class EmulatorRenderer : Frame, IDisposable
 {
+    const uint SAMPLE_RATE = 44100;
+
     // ================================================================================
     // Constructors
     // ================================================================================
@@ -36,8 +38,6 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
     void SetupAudio()
     {
-        const uint SAMPLE_RATE = 44100;
-
         SDL_AudioSpec audioSpec;
         audioSpec.format = SDL_AudioFormat.SDL_AUDIO_S16LE;
         audioSpec.channels = 2;
@@ -73,6 +73,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     SDL_AudioStream* audioStream;
 
     int scale;
+    bool muted = false;
 
     // ================================================================================
     // Public methods
@@ -81,6 +82,17 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     public override void Render()
     {
         ImGuiX.DrawImage(screenTexture, scale);
+
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Right))
+        {
+            ImGui.OpenPopup("EmulatorPopupMenu");
+        }
+
+        if (ImGui.BeginPopup("EmulatorPopupMenu"))
+        {
+            ImGuiX.Checkbox("Mute", muted, (b) => SetMuted(b));
+            ImGui.End();
+        }
 
         // Handle input
         if (ImGui.IsWindowFocused())
@@ -137,4 +149,18 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
             audioStream = null;
         }
     }
+
+    // ================================================================================
+    // Private functions
+    // ================================================================================
+
+    void SetMuted(bool b)
+    {
+        if (b)
+            emu.GB.SetSampleRate(0);
+        else
+            emu.GB.SetSampleRate(SAMPLE_RATE);
+        muted = b;
+    }
+
 }
