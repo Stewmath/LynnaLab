@@ -1,5 +1,6 @@
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using SameBoySharp;
 
 namespace LynnaLib;
@@ -14,6 +15,7 @@ public class OraclesEmulator : IDisposable
 
     public OraclesEmulator(string romPath)
     {
+        log.Info($"Loading Emulator ROM: {romPath}");
         this.romPath = romPath;
 
         gb = new SameBoy(SameBoy.Model.GB_MODEL_CGB_E);
@@ -94,6 +96,7 @@ public class OraclesEmulator : IDisposable
     public short VramBank { get { return (short)(gb.SafeReadMemory(0xff4f) & 1); } }
     public short WramBank { get { return (short)(gb.SafeReadMemory(0xff70) & 7); } }
 
+    public Span<byte> Rom { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.ROM); } }
     public Span<byte> Wram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.RAM); } }
     public Span<byte> Hram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.HRAM); } }
 
@@ -167,6 +170,8 @@ public class OraclesEmulator : IDisposable
 
         // TODO: Save state to recover from error here?
 
+        gb.SetTurboMode(true);
+
         try
         {
             if (!RunUntil(Evaluate("_mainLoop"), 1000000))
@@ -175,12 +180,23 @@ public class OraclesEmulator : IDisposable
                 return false;
             }
 
-            Call(ConstructPointer(0x8dc)); // TODO: loadFile
+            // Note: This usually resolves to the fileManagement.s loadFile, not the bank 0
+            // loadFile. But either works.
+            Call("loadFile");
             RunToCurrentFunctionEnd();
 
-            // TODO: These are seasons addresses (symbol file not loading these)
-            WriteByte(ConstructPointer(0xff9b), 2); // TODO: hNextLcdInterruptBehaviour
-            WriteByte(ConstructPointer(0xffb7), 1); // TODO: hIntroInputsEnabled
+            // TODO: These addresses are hardcoded for compatibility with older projects because at
+            // the time of coding, hack-base does not put these labels in ramsections.
+            if (DetermineGame() == Game.Ages)
+            {
+                WriteByte(ConstructPointer(0xff9d), 2); // hNextLcdInterruptBehaviour
+                WriteByte(ConstructPointer(0xffb9), 1); // hIntroInputsEnabled
+            }
+            else
+            {
+                WriteByte(ConstructPointer(0xff9b), 2); // hNextLcdInterruptBehaviour
+                WriteByte(ConstructPointer(0xffb7), 1); // hIntroInputsEnabled
+            }
 
             WriteByte("wDeathRespawnBuffer.group", (byte)(roomIndex >> 8));
             WriteByte("wDeathRespawnBuffer.room", (byte)(roomIndex & 0xff));
@@ -200,6 +216,10 @@ public class OraclesEmulator : IDisposable
         {
             log.Error($"LoadIntoRoom: {e.Message}");
             return false;
+        }
+        finally
+        {
+            gb.SetTurboMode(false);
         }
     }
 
@@ -322,6 +342,8 @@ public class OraclesEmulator : IDisposable
     /// (in gameboy time).
     ///
     /// Returns false if it took too long.
+    ///
+    /// Recommended to set Turbo mode before calling this.
     /// </summary>
     bool RunToCurrentFunctionEnd(int timeout = 100)
     {
@@ -373,6 +395,7 @@ public class OraclesEmulator : IDisposable
                 gb.Registers.HL = pointer.Addr;
                 return;
             }
+            // Else fall through
         }
         else
         {
@@ -422,6 +445,24 @@ public class OraclesEmulator : IDisposable
         WriteByte(addr, (byte)(value & 0xff));
         WriteByte(addr + 1, (byte)(value >> 8));
     }
+
+
+    /// <summary>
+    /// Make a best-effort attempt to determine what game is running. Ideally we would not rely on
+    /// this result for anything.
+    /// </summary>
+    Game DetermineGame()
+    {
+        var title = Encoding.ASCII.GetString(Rom.Slice(0x134, 9));
+
+        if (title == "ZELDA DIN")
+            return Game.Seasons;
+        else if (title == "ZELDA NAY")
+            return Game.Ages;
+        else
+            // They changed the title, this won't work =)
+            return Game.Ages;
+    }
 }
 
 /// <summary>
@@ -460,7 +501,7 @@ public readonly struct GbPointer
 
     public override string ToString()
     {
-        return $"{Bank:X2}.{Addr:X4}";
+        return $"{Bank:X2}:{Addr:X4}";
     }
 
     public static GbPointer operator+(GbPointer p, int i)
