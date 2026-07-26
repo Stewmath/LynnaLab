@@ -34,6 +34,8 @@ public unsafe partial class SameBoy : IDisposable
 
     IntPtr _gb;
     Native.GB_log_callback_t? _logCallback;
+    Native.GB_input_callback_t? _inputCallback;
+    Native.GB_input_callback_t? _asyncInputCallback;
     Native.GB_vblank_callback_t? _vblankCallback;
     Native.GB_rgb_encode_callback_t? _rgbEncodeCallback;
     Native.GB_sample_callback_t? _sampleCallback;
@@ -241,7 +243,7 @@ public unsafe partial class SameBoy : IDisposable
     }
 
     // ================================================================================
-    // Player controls
+    // Save data
     // ================================================================================
 
     public int SaveBattery(string path)
@@ -272,7 +274,7 @@ public unsafe partial class SameBoy : IDisposable
         VerifyNotDisposed();
 
         ushort r, rb;
-        fixed (byte* utf8 = Encoding.UTF8.GetBytes(str))
+        fixed (byte* utf8 = Encoding.UTF8.GetBytes(str + '\0'))
         {
             bool retval = Native.GB_debugger_evaluate(_gb, utf8, &r, &rb);
             result = r;
@@ -290,7 +292,7 @@ public unsafe partial class SameBoy : IDisposable
     {
         VerifyNotDisposed();
 
-        fixed (byte* utf8 = Encoding.UTF8.GetBytes(str))
+        fixed (byte* utf8 = Encoding.UTF8.GetBytes(str + '\0'))
         {
             Native.GB_debugger_execute_command(_gb, utf8);
         }
@@ -320,6 +322,40 @@ public unsafe partial class SameBoy : IDisposable
         };
 
         Native.GB_set_log_callback(_gb, _logCallback);
+    }
+
+    public void SetInputCallback(Func<string?> callback)
+    {
+        VerifyNotDisposed();
+
+        _inputCallback = (gb) =>
+        {
+            string? s = callback();
+            if (s == null)
+                return 0;
+            var utf8Bytes = System.Text.Encoding.UTF8.GetBytes(s + '\0');
+            IntPtr ptr = Marshal.AllocHGlobal(utf8Bytes.Length);
+            Marshal.Copy(utf8Bytes, 0, ptr, utf8Bytes.Length);
+            return ptr;
+        };
+        Native.GB_set_input_callback(_gb, _inputCallback);
+    }
+
+    public void SetAsyncInputCallback(Func<string?> callback)
+    {
+        VerifyNotDisposed();
+
+        _asyncInputCallback = (gb) =>
+        {
+            string? s = callback();
+            if (s == null)
+                return 0;
+            var utf8Bytes = System.Text.Encoding.UTF8.GetBytes(s + '\0');
+            IntPtr ptr = Marshal.AllocHGlobal(utf8Bytes.Length);
+            Marshal.Copy(utf8Bytes, 0, ptr, utf8Bytes.Length);
+            return ptr;
+        };
+        Native.GB_set_async_input_callback(_gb, _asyncInputCallback);
     }
 
     // ================================================================================

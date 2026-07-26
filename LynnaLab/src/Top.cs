@@ -165,6 +165,11 @@ public static class Top
     public static ImFontPtr MenuFont { get { return fontDict[GlobalConfig.MenuFont].menuSize; } }
     public static ImFontPtr MenuFontLarge { get { return fontDict[GlobalConfig.MenuFont].menuSizeLarge; } }
 
+    /// <summary>
+    /// Monospace font used by sameboy debugger console.
+    /// </summary>
+    public static ImFontPtr MonoFont { get { return fontDict["ProggyClean"].infoSize; } }
+
     public static RgbaTexture PegasusSeedTexture { get; private set; }
 
     // Private properties
@@ -498,7 +503,7 @@ public static class Top
 
     public static void SetClipboardData(string mimeType, string value)
     {
-        SDLUtil.SDLHelper.SetClipboardData([mimeType], Encoding.UTF8.GetBytes(value));
+        SDLUtil.SDLHelper.SetClipboardData([mimeType], Encoding.UTF8.GetBytes(value + '\0'));
     }
 
     public static string GetClipboardData(string mimeType)

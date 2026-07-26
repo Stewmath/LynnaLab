@@ -1,3 +1,4 @@
+#nullable enable
 using System.Threading;
 
 namespace LynnaLab;
@@ -7,19 +8,36 @@ public class EmulatorDebugger : Frame
     public EmulatorDebugger(OraclesEmulator emulator) : base("Debugger")
     {
         this.emu = emulator;
-        emu.GB.SetLogCallback((s) => text += s);
 
-        //emu.GB.SetTurboMode(true);
-        new Thread(() => { while (true) emu.Run(); }).Start();
+        text = "This is the SameBoy debugger console. Type 'help' for help.\n";
+        emu.GB.SetLogCallback((s) =>
+        {
+            text += s;
+        });
+
+        emu.GB.SetInputCallback(SyncInputCallback);
+        emu.GB.SetAsyncInputCallback(AsyncInputCallback);
+
+        emuThread = new Thread(RunEmuThreadCallback);
+        emuThread.Start();
     }
 
     OraclesEmulator emu;
     string text = "";
     string currentLine = "";
+    string lastLine = "";
+    string? inputText = null;
     int jumpToBottom = 0;
+    bool paused = false;
+
+    Thread emuThread;
+    bool inputReady = false;
+    readonly object inputLock = new();
 
     public override void Render()
     {
+        ImGui.PushFont(Top.MonoFont);
+
         var size = new Vector2(0.0f, ImGui.GetWindowSize().Y * 0.8f);
         ImGui.BeginChild("CHILD", size, 0, ImGuiWindowFlags.AlwaysVerticalScrollbar);
         foreach (string l in text.Split('\n'))
@@ -40,22 +58,97 @@ public class EmulatorDebugger : Frame
 
         if (ImGui.InputText("##Text input", ref currentLine, Annotation.MAX_TEXT_LENGTH, ImGuiInputTextFlags.EnterReturnsTrue))
         {
-            text += ("> " + currentLine) + '\n';
-            emu.GB.DebuggerExecuteCommand(currentLine);
+            if (currentLine.Trim().Length == 0)
+                currentLine = lastLine;
+
+            text += '\n' + ("> " + currentLine) + '\n';
+            lock (inputLock)
+            {
+                inputText += currentLine;
+                inputReady = true;
+                Monitor.PulseAll(inputLock);
+            }
+            lastLine = currentLine;
             currentLine = "";
-            jumpToBottom = 2;
+            jumpToBottom = 4;
         }
 
-        if (ImGui.Button("Run"))
+        if (paused)
         {
-            var ticks = emu.GB.Run();
-            Console.WriteLine("Run: " + ticks);
+            if (ImGui.Button("Unpause"))
+            {
+                paused = false;
+                Debug.Assert(!emuThread.IsAlive);
+                emuThread = new Thread(RunEmuThreadCallback);
+                emuThread.Start();
+            }
+        }
+        else
+        {
+            if (ImGui.Button("Pause"))
+            {
+                paused = true;
+                emuThread.Join();
+            }
         }
         ImGui.SameLine();
+
+        if (!paused)
+            ImGui.BeginDisabled();
         if (ImGui.Button("Run Frame"))
         {
             var ticks = emu.GB.RunFrame();
             Console.WriteLine("Run frames: " + ticks);
+        }
+        if (!paused)
+            ImGui.EndDisabled();
+
+        ImGui.PopFont();
+    }
+
+    /// <summary>
+    /// Input callback while emulator is paused
+    /// </summary>
+    string? SyncInputCallback()
+    {
+        string? retval;
+        lock (inputLock)
+        {
+            while (!inputReady)
+                Monitor.Wait(inputLock);
+
+            Debug.Assert(inputText != null);
+            retval = inputText;
+            inputText = null;
+            inputReady = false;
+        }
+        return retval;
+    }
+
+    /// <summary>
+    /// Input callback while emulator is running
+    /// </summary>
+    string? AsyncInputCallback()
+    {
+        if (inputText == null)
+            return null;
+
+        string? retval;
+        lock (inputLock)
+        {
+            retval = inputText;
+            inputText = null;
+            inputReady = false;
+        }
+
+        return retval;
+    }
+
+    void RunEmuThreadCallback()
+    {
+        while (!paused)
+        {
+            emu.Run();
         }
     }
 }

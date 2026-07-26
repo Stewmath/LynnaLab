@@ -38,6 +38,10 @@ internal unsafe static class Native
         SameBoy.LogAttributes attributes);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    internal delegate IntPtr GB_input_callback_t(
+        IntPtr gb);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void GB_execution_callback_t(
         IntPtr gb,
         ushort addr,
@@ -168,6 +172,16 @@ internal unsafe static class Native
     internal static extern void GB_set_log_callback(
         IntPtr gb,
         GB_log_callback_t callback);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void GB_set_input_callback(
+        IntPtr gb,
+        GB_input_callback_t callback);
+
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void GB_set_async_input_callback(
+        IntPtr gb,
+        GB_input_callback_t callback);
 
     // ================================================================================
     // Inspection
