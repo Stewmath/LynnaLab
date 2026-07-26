@@ -83,7 +83,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     {
         ImGuiX.DrawImage(screenTexture, scale);
 
-        if (ImGui.IsMouseClicked(ImGuiMouseButton.Right))
+        if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Right))
         {
             ImGui.OpenPopup("EmulatorPopupMenu");
         }
@@ -91,7 +91,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         if (ImGui.BeginPopup("EmulatorPopupMenu"))
         {
             ImGuiX.Checkbox("Mute", muted, (b) => SetMuted(b));
-            ImGui.End();
+            ImGui.EndPopup();
         }
 
         // Handle input
