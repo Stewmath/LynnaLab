@@ -9,7 +9,28 @@ public class EmulatorDebugger : Frame
     {
         this.emu = emulator;
 
-        text = "This is the SameBoy debugger console. Type 'help' for help.\n";
+        text = """
+This is the SameBoy debugger console.
+
+Examples to get you started:
+
+- See Link's health:
+    > p [wLinkHealth]
+
+- Watchpoint triggering when Link gains or loses health:
+    > watch wLinkHealth
+
+- Breakpoint that triggers on textboxes:
+    > break showText
+
+- Resume execution after a watchpoint or breakpoint triggers:
+    > continue
+
+- Get general help, or help on a specific command:
+    > help
+    > help watch
+
+""";
         emu.GB.SetLogCallback((s) =>
         {
             text += s;
