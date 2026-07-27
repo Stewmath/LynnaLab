@@ -37,6 +37,7 @@ public abstract class Frame
     // ================================================================================
 
     public event EventHandler ClosedEvent;
+    public event EventHandler OpenedEvent;
 
     // ================================================================================
     // Properties
@@ -58,6 +59,10 @@ public abstract class Frame
             if (old && !active)
             {
                 ClosedEvent?.Invoke(this, null);
+            }
+            if (!old && active)
+            {
+                OpenedEvent?.Invoke(this, null);
             }
         }
     }
@@ -140,6 +145,10 @@ public abstract class Frame
 
             if (numStyleVars != 0)
                 ImGui.PopStyleVar(numStyleVars);
+
+            // "ref active" doesn't trigger Closed handler in the property
+            if (!active)
+                ClosedEvent?.Invoke(this, null);
         }
 
         grabFocus = false;

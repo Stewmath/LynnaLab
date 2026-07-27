@@ -39,8 +39,7 @@ Examples to get you started:
         emu.GB.SetInputCallback(SyncInputCallback);
         emu.GB.SetAsyncInputCallback(AsyncInputCallback);
 
-        emuThread = new Thread(RunEmuThreadCallback);
-        emuThread.Start();
+        Unpause();
     }
 
     OraclesEmulator emu;
@@ -49,9 +48,9 @@ Examples to get you started:
     string lastLine = "";
     string? inputText = null;
     int jumpToBottom = 0;
-    bool paused = false;
+    bool paused = true;
 
-    Thread emuThread;
+    Thread? emuThread;
     bool inputReady = false;
     readonly object inputLock = new();
 
@@ -94,26 +93,7 @@ Examples to get you started:
             jumpToBottom = 4;
         }
 
-        if (paused)
-        {
-            if (ImGui.Button("Unpause"))
-            {
-                paused = false;
-                Debug.Assert(!emuThread.IsAlive);
-                emuThread = new Thread(RunEmuThreadCallback);
-                emuThread.Start();
-            }
-        }
-        else
-        {
-            if (ImGui.Button("Pause"))
-            {
-                paused = true;
-                emuThread.Join();
-            }
-        }
-        ImGui.SameLine();
-
+        /*
         if (!paused)
             ImGui.BeginDisabled();
         if (ImGui.Button("Run Frame"))
@@ -123,9 +103,44 @@ Examples to get you started:
         }
         if (!paused)
             ImGui.EndDisabled();
+        */
 
         ImGui.PopFont();
     }
+
+    public void Pause()
+    {
+        paused = true;
+
+        if (emuThread?.IsAlive ?? false)
+            emuThread.Join();
+
+        emuThread = null;
+    }
+
+    public void Unpause()
+    {
+        bool wasPaused = paused;
+        paused = false;
+
+        if (wasPaused)
+        {
+            Debug.Assert(emuThread == null);
+            emuThread = new Thread(RunEmuThreadCallback);
+            emuThread.Start();
+        }
+    }
+
+    public void Dispose()
+    {
+        Pause();
+
+        emu = null!;
+    }
+
+    // ================================================================================
+    // Private methods
+    // ================================================================================
 
     /// <summary>
     /// Input callback while emulator is paused
@@ -163,16 +178,6 @@ Examples to get you started:
         }
 
         return retval;
-    }
-
-    public void Dispose()
-    {
-        paused = true;
-
-        if (emuThread.IsAlive)
-            emuThread.Join();
-
-        emu = null!;
     }
 
     void RunEmuThreadCallback()

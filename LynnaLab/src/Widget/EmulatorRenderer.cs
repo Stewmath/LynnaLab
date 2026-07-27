@@ -34,6 +34,11 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
         if (Top.AudioAvailable)
             SetupAudio();
+
+        base.ClosedEvent += (_, _) =>
+        {
+            this.isClosed = true;
+        };
     }
 
     void SetupAudio()
@@ -74,6 +79,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
     int scale;
     bool muted = false;
+    bool isClosed = false;
 
     // ================================================================================
     // Public methods
@@ -81,6 +87,11 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
     public override void Render()
     {
+        if (isClosed)
+        {
+            isClosed = false;
+        }
+
         ImGuiX.DrawImage(screenTexture, scale);
 
         if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Right))

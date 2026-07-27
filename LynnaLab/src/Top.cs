@@ -127,8 +127,7 @@ public static class Top
 
     static SettingsDialog settingsDialog;
     static OraclesEmulator emulator;
-    static EmulatorDebugger emulatorFrame;
-    static EmulatorRenderer emulatorDrawer;
+    static EmulatorManager emulatorManager;
 
 
     // ================================================================================
@@ -289,8 +288,7 @@ public static class Top
             Workspace.Render(deltaTime);
         }
 
-        emulatorFrame?.RenderAsWindow("Debugger");
-        emulatorDrawer?.RenderAsWindow("Emulator");
+        emulatorManager?.RenderAll();
 
         ImGui.End(); // Dockspace window
 
@@ -539,16 +537,11 @@ public static class Top
 
     public static void StartEmulator(string romFile, EmulatorStartOptions options)
     {
+        emulatorManager?.Dispose();
         emulator?.Dispose();
 
         emulator = new OraclesEmulator(romFile, options);
-        emulatorFrame = new EmulatorDebugger(emulator);
-        emulatorDrawer = new EmulatorRenderer(emulator, 4);
-
-        emulatorFrame.Active = true;
-        emulatorDrawer.Active = true;
-
-        emulatorDrawer.Focus();
+        emulatorManager = new EmulatorManager(emulator);
     }
 
     // ================================================================================
