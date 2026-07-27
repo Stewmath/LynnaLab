@@ -59,6 +59,11 @@ public class OraclesEmulator : IDisposable
             }
         }
 
+        for (ushort addr = 0xd000; addr <= 0xdfff; addr += 0x40)
+        {
+            objects.Add(new EmulatorObject(this, addr));
+        }
+
         if (startOptions.Quickstart)
             LoadIntoRoom(startOptions.RoomIndex, startOptions.Season, startOptions.X, startOptions.Y);
     }
@@ -74,6 +79,7 @@ public class OraclesEmulator : IDisposable
     IntPtr pixelData;
 
     Dictionary<GbPointer, Action> breakpoints = new();
+    readonly List<EmulatorObject> objects = new();
 
     // ================================================================================
     // Properties
@@ -106,6 +112,20 @@ public class OraclesEmulator : IDisposable
     public Span<byte> Wram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.RAM); } }
     public Span<byte> Hram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.HRAM); } }
 
+
+    public short CameraY
+    {
+        // TODO: Use proper labels
+        get { return (short)ReadWord(
+            DetermineGame() == Game.Ages ? ConstructPointer(0xffaa) : ConstructPointer(0xffac)); }
+    }
+    public short CameraX
+    {
+        // TODO: Use proper labels
+        get { return (short)ReadWord(
+            DetermineGame() == Game.Ages ? ConstructPointer(0xffac) : ConstructPointer(0xffaa)); }
+    }
+
     // ================================================================================
     // Public methods
     // ================================================================================
@@ -133,7 +153,7 @@ public class OraclesEmulator : IDisposable
         if (!ptr.IsBanked)
             return gb.SafeReadMemory(ptr.Addr);
         else
-            throw new Exception("ReadSymbolByte: Banked reads not implemented yet");
+            return ReadByte(ptr);
     }
 
     /// <summary>
@@ -165,6 +185,11 @@ public class OraclesEmulator : IDisposable
         if (!TryEvaluate(str, out GbPointer addr))
             throw new EmulatorEvalException($"OraclesEmulator: Couldn't evaluate {str}.");
         return addr;
+    }
+
+    public List<EmulatorObject> GetObjects()
+    {
+        return objects.Where(o => o.Enabled != 0).ToList();
     }
 
     /// <summary>
@@ -428,6 +453,21 @@ public class OraclesEmulator : IDisposable
         gb.Registers.SP -= 2;
         gb.WriteMemory(gb.Registers.SP, (byte)(value & 0xff));
         gb.WriteMemory((ushort)(gb.Registers.SP + 1), (byte)(value >> 8));
+    }
+
+    byte ReadByte(GbPointer pointer)
+    {
+        if (pointer.Addr >= 0xc000 && pointer.Addr < 0xd000)
+            return Wram[pointer.Addr - 0xc000];
+        else if (pointer.Addr >= 0xff80)
+            return Hram[pointer.Addr - 0xff80];
+        else
+            throw new EmulatorException($"ReadByte: Unimplemented read addr: {pointer}");
+    }
+
+    ushort ReadWord(GbPointer pointer)
+    {
+        return (ushort)(ReadByte(pointer) | (ReadByte(pointer + 1) << 8));
     }
 
     /// <summary>

@@ -1,5 +1,8 @@
 namespace Emulation;
 
+/// <summary>
+/// Represents an object (Link/enemy/etc) within a running emulator instance.
+/// </summary>
 public class EmulatorObject
 {
     // ================================================================================
@@ -39,10 +42,23 @@ public class EmulatorObject
     public ref byte Y { get { return ref Memory[0xb]; } }
     public ref byte X { get { return ref Memory[0xd]; } }
     public ref byte Z { get { return ref Memory[0xf]; } }
+    public ref byte CollisionRadiusY { get { return ref Memory[0x26]; } }
+    public ref byte CollisionRadiusX { get { return ref Memory[0x27]; } }
 
     // ================================================================================
     // Public methods
     // ================================================================================
+
+    public FRect GetRectangle()
+    {
+        float w = CollisionRadiusX * 2;
+        float h = CollisionRadiusY * 2;
+        if (w == 0)
+            w = 8;
+        if (h == 0)
+            h = 8;
+        return new FRect(X - w / 2, Y - h / 2, w, h);
+    }
 
     // ================================================================================
     // Private methods

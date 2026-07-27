@@ -21,25 +21,13 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         this.emu = emu;
         this.scale = scale;
 
-        screenTexture = Top.Backend.CreateTexture(160, 144);
-        screenTexture.CopyPixels(emu.PixelData, 160, 144, 4);
-
-        // On vblank, update the texture
-        emu.GB.SetVBlankCallback((type) =>
-        {
-            screenTexture.CopyPixels(emu.PixelData, 160, 144, 4);
-        });
-
         base.WindowFlags |= ImGuiWindowFlags.AlwaysAutoResize;
         base.AddStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 
         if (Top.AudioAvailable)
             SetupAudio();
 
-        base.ClosedEvent += (_, _) =>
-        {
-            this.isClosed = true;
-        };
+        renderWidget = new(this, emu);
     }
 
     void SetupAudio()
@@ -75,12 +63,11 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     // ================================================================================
 
     OraclesEmulator emu;
-    RgbaTexture screenTexture;
     SDL_AudioStream* audioStream;
+    ScreenWidget renderWidget;
 
-    int scale;
+    readonly int scale;
     bool muted = false;
-    bool isClosed = false;
 
     // ================================================================================
     // Public methods
@@ -88,12 +75,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
     public override void Render()
     {
-        if (isClosed)
-        {
-            isClosed = false;
-        }
-
-        ImGuiX.DrawImage(screenTexture, scale);
+        renderWidget.Render();
 
         if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Right))
         {
@@ -146,13 +128,13 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
                 SDL3.SDL_ClearAudioStream(audioStream);
             }
         }
+
     }
 
     public void Dispose()
     {
         emu.GB.SetVBlankCallback(null);
-        screenTexture.Dispose();
-        screenTexture = null!;
+        renderWidget.Dispose();
 
         if (audioStream != null)
         {
@@ -175,4 +157,114 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         muted = b;
     }
 
+
+    /// <summary>
+    /// A SizedWidget that renders the image.
+    /// </summary>
+    class ScreenWidget : SizedWidget, IDisposable
+    {
+        // ================================================================================
+        // Constructors
+        // ================================================================================
+        public ScreenWidget(EmulatorRenderer parent, OraclesEmulator emu) : base()
+        {
+            this.parent = parent;
+            this.emu = emu;
+
+            base.CenterX = true;
+            base.CenterY = true;
+
+            screenTexture = Top.Backend.CreateTexture(160, 144);
+            screenTexture.CopyPixels(emu.PixelData, 160, 144, (uint)Scale);
+
+            // On vblank, update the texture
+            emu.GB.SetVBlankCallback((type) =>
+            {
+                screenTexture.CopyPixels(emu.PixelData, 160, 144, (uint)Scale);
+            });
+
+        }
+
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        EmulatorRenderer parent;
+        OraclesEmulator emu;
+        RgbaTexture screenTexture;
+
+        // ================================================================================
+        // Properties
+        // ================================================================================
+
+        public override Vector2 WidgetSize { get { return new Vector2(160, 144) * Scale; } }
+
+        public int Scale { get { return parent.scale; } }
+
+        // ================================================================================
+        // Public methods
+        // ================================================================================
+
+
+        public void Render()
+        {
+            base.RenderPrep();
+
+            ImGuiX.DrawImage(screenTexture, Scale);
+
+            HandleObjectDrag();
+        }
+
+        public void Dispose()
+        {
+            screenTexture.Dispose();
+            screenTexture = null!;
+        }
+
+        // ================================================================================
+        // Private methods
+        // ================================================================================
+
+        /// <summary>
+        /// Handle using the mouse to drag objects around.
+        /// TODO: Synchronize this with gameboy vblank for stability?
+        /// </summary>
+        void HandleObjectDrag()
+        {
+            foreach (var obj in emu.GetObjects())
+            {
+                FRect rect = (obj.GetRectangle() + new Vector2(0, 16));
+
+                bool inTransition = emu.ReadSymbolByte("wScreenTransitionState") == 5;
+                int direction = emu.ReadSymbolByte("wScreenTransitionDirection") & 3;
+
+                if (inTransition)
+                {
+                    if ((obj.Enabled & 3) != 2)
+                    {
+                        // TODO: handle large rooms
+                        switch (direction)
+                        {
+                            case 0:
+                                rect -= new Vector2(0, 128);
+                                break;
+                            case 1:
+                                rect += new Vector2(160, 0);
+                                break;
+                            case 2:
+                                rect += new Vector2(0, 128);
+                                break;
+                            case 3:
+                                rect -= new Vector2(160, 0);
+                                break;
+                        }
+                    }
+                }
+
+                rect -= new Vector2(emu.CameraX, emu.CameraY);
+
+                base.AddRect(rect * Scale, Color.DarkOrange, Scale);
+            }
+        }
+    }
 }
