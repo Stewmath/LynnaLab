@@ -175,19 +175,25 @@ public class SettingsDialog : Frame
 
         if (beginSection("External programs"))
         {
-            if (ImGui.Button("Choose emulator path..."))
+            ImGuiX.Checkbox("Use external emulator", new Accessor<bool>(() => GlobalConfig.UseExternalEmulator));
+            ImGuiX.TooltipOnHover("Choose between LynnaLab's internal emulator and an external one.");
+
+            if (GlobalConfig.UseExternalEmulator)
             {
-                BuildDialog.SelectEmulatorDialog((cmd) =>
+                if (ImGui.Button("Choose emulator path..."))
                 {
-                    if (cmd != null)
-                        GlobalConfig.EmulatorCommand = cmd;
-                });
+                    BuildDialog.SelectEmulatorDialog((cmd) =>
+                    {
+                        if (cmd != null)
+                            GlobalConfig.EmulatorCommand = cmd;
+                    });
+                }
+                ImGui.SameLine();
+                ImGui.Text("?");
+                ImGuiX.TooltipOnHover(GlobalConfig.EmulatorCommand == null
+                                      ? "UNSET"
+                                      : GlobalConfig.EmulatorCommand.Replace(" | ", " "));
             }
-            ImGui.SameLine();
-            ImGui.Text("?");
-            ImGuiX.TooltipOnHover(GlobalConfig.EmulatorCommand == null
-                                  ? "UNSET"
-                                  : GlobalConfig.EmulatorCommand.Replace(" | ", " "));
 
             if (ImGui.Button("Choose PNG editor path..."))
             {

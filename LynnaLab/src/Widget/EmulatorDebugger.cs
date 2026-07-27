@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace LynnaLab;
 
-public class EmulatorDebugger : Frame
+public class EmulatorDebugger : Frame, IDisposable
 {
     public EmulatorDebugger(OraclesEmulator emulator) : base("Debugger")
     {
@@ -163,6 +163,16 @@ Examples to get you started:
         }
 
         return retval;
+    }
+
+    public void Dispose()
+    {
+        paused = true;
+
+        if (emuThread.IsAlive)
+            emuThread.Join();
+
+        emu = null!;
     }
 
     void RunEmuThreadCallback()

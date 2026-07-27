@@ -115,7 +115,7 @@ public class ProjectWorkspace
     Cacher<RoomLayout, RoomTextureCacher> roomTextureCacher;
     Cacher<FloorPlan, MapTextureCacher> mapTextureCacher;
 
-    Process emulatorProcess;
+    Process externalEmulatorProcess;
 
     // ================================================================================
     // Properties
@@ -365,13 +365,13 @@ public class ProjectWorkspace
     /// <summary>
     /// Set the current active emulator process, killing the previous process if it exists.
     /// </summary>
-    public void RegisterEmulatorProcess(Process process)
+    public void RegisterExternalEmulatorProcess(Process process)
     {
-        if (emulatorProcess != null)
+        if (externalEmulatorProcess != null)
         {
-            emulatorProcess.Kill(true); // Pass true to kill whole process tree
+            externalEmulatorProcess.Kill(true); // Pass true to kill whole process tree
         }
-        emulatorProcess = process;
+        externalEmulatorProcess = process;
     }
 
     public void ShowDocumentation(Documentation documentation)
@@ -536,6 +536,26 @@ public class ProjectWorkspace
         }
     }
 
+    public void StartInternalEmulator()
+    {
+        var options = new EmulatorStartOptions();
+
+        if (QuickstartData.Enabled)
+        {
+            options = options with
+            {
+                Quickstart = true,
+                RoomIndex = (QuickstartData.group << 8) | QuickstartData.room,
+                Season = (Season)QuickstartData.season,
+                X = QuickstartData.x,
+                Y = QuickstartData.y,
+            };
+        }
+
+        Top.StartEmulator(Path.Combine(Project.BaseDirectory, $"{Project.GameString}.gbc"),
+                options);
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================
@@ -552,9 +572,16 @@ public class ProjectWorkspace
 
     void RunGame()
     {
-        Project.Save();
-        buildDialog.BeginCompile();
-        buildDialog.Focus();
+        if (Project.Save() || Top.GlobalConfig.UseExternalEmulator)
+        {
+            buildDialog.BeginCompile();
+            buildDialog.Focus();
+        }
+        else
+        {
+            // Internal emulator
+            StartInternalEmulator();
+        }
     }
 
     HashSet<RoomLayout> modifiedRoomLayouts = new();

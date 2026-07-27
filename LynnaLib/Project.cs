@@ -898,10 +898,13 @@ public partial class Project
         return null;
     }
 
-    public void Save()
+    public bool Save()
     {
         if (IsClient) // Nothing to do on clients - don't have filesystem access
-            return;
+            return false;
+
+        if (!Modified)
+            return false;
 
         // Note the separate foreach loops. Ordering can be important.
         foreach (ProjectDataType data in dataStructDictionary.Values)
@@ -919,6 +922,8 @@ public partial class Project
         SaveAnnotations();
 
         Modified = false;
+
+        return true;
     }
 
     public void Close()

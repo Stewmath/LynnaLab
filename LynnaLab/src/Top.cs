@@ -90,18 +90,12 @@ public static class Top
                     {
                         retval = true;
                     }
-                   return retval;
+                    return retval;
                 });
             }
             else
                 Top.OpenProject(path, game);
         }
-
-        emulator = new OraclesEmulator("../oracles-disasm/seasons.gbc");
-        emulatorFrame = new EmulatorDebugger(emulator);
-        emulatorFrame.Active = true;
-        emulatorDrawer = new EmulatorRenderer(emulator, 4);
-        emulatorDrawer.Active = true;
     }
 
     // ================================================================================
@@ -295,8 +289,8 @@ public static class Top
             Workspace.Render(deltaTime);
         }
 
-        emulatorFrame.RenderAsWindow("Debugger");
-        emulatorDrawer.RenderAsWindow("Emulator");
+        emulatorFrame?.RenderAsWindow("Debugger");
+        emulatorDrawer?.RenderAsWindow("Emulator");
 
         ImGui.End(); // Dockspace window
 
@@ -541,6 +535,20 @@ public static class Top
             log.Warn($"SDL audio failed to intiialize: {SDL3.SDL_GetError()}.");
 
         return retval;
+    }
+
+    public static void StartEmulator(string romFile, EmulatorStartOptions options)
+    {
+        emulator?.Dispose();
+
+        emulator = new OraclesEmulator(romFile, options);
+        emulatorFrame = new EmulatorDebugger(emulator);
+        emulatorDrawer = new EmulatorRenderer(emulator, 4);
+
+        emulatorFrame.Active = true;
+        emulatorDrawer.Active = true;
+
+        emulatorDrawer.Focus();
     }
 
     // ================================================================================

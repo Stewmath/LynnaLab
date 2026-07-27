@@ -13,10 +13,11 @@ public class OraclesEmulator : IDisposable
     // Constructors
     // ================================================================================
 
-    public OraclesEmulator(string romPath)
+    public OraclesEmulator(string romPath, EmulatorStartOptions startOptions = new())
     {
         log.Info($"Loading Emulator ROM: {romPath}");
         this.romPath = romPath;
+        this.startOptions = startOptions;
 
         gb = new SameBoy(SameBoy.Model.GB_MODEL_CGB_E);
         gb.LoadBootRomFromBuffer(Helper.ReadResourceFileBytes("LynnaLib.resource.cgb_boot_fast.bin"));
@@ -56,12 +57,15 @@ public class OraclesEmulator : IDisposable
             }
         }
 
-        LoadIntoRoom(0x20, Season.Summer, 0x58, 0x58);
+        if (startOptions.Quickstart)
+            LoadIntoRoom(startOptions.RoomIndex, startOptions.Season, startOptions.X, startOptions.Y);
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
+
+    readonly EmulatorStartOptions startOptions;
 
     SameBoy gb;
     string romPath;
@@ -166,6 +170,9 @@ public class OraclesEmulator : IDisposable
     /// </summary>
     public bool LoadIntoRoom(int roomIndex, Season season, byte x, byte y)
     {
+        if (!startOptions.Quickstart)
+            return false;
+
         InitializeWithoutBios();
 
         // TODO: Save state to recover from error here?
@@ -508,4 +515,13 @@ public readonly struct GbPointer
     {
         return new GbPointer((ushort)(p.Addr + i), p.Bank);
     }
+}
+
+public readonly struct EmulatorStartOptions
+{
+    public bool Quickstart { get; init; }
+    public int RoomIndex { get; init; }
+    public Season Season { get; init; }
+    public byte X { get; init; }
+    public byte Y { get; init; }
 }

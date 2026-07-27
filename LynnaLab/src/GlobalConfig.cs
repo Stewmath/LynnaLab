@@ -90,6 +90,7 @@ public class GlobalConfig
 
     // External programs
     public string MakeCommand { get; set; }
+    public bool UseExternalEmulator { get; set; } = true;
     public string EmulatorCommand { get; set; }
     public string EditPngProgram { get; set; }
 

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace LynnaLab;
@@ -144,7 +145,7 @@ public class BuildDialog : Frame
 
         // When using quickstart, the environment variable EXTRA_DEFINES is
         // passed to the assembler by the makefile to set the position
-        if (Workspace.QuickstartData.Enabled)
+        if (Top.GlobalConfig.UseExternalEmulator && Workspace.QuickstartData.Enabled)
         {
             string definitions = "";
             var q = Workspace.QuickstartData;
@@ -222,7 +223,12 @@ public class BuildDialog : Frame
 
         processView.AppendText("\nBuild completed successfully!\n", "success");
 
-        if (GlobalConfig.EmulatorCommand != null)
+        if (!GlobalConfig.UseExternalEmulator)
+        {
+            Workspace.StartInternalEmulator();
+            return;
+        }
+        else if (GlobalConfig.EmulatorCommand != null)
         {
             RunGame(GlobalConfig.EmulatorCommand);
             return;
@@ -298,7 +304,7 @@ public class BuildDialog : Frame
         GlobalConfig.Save();
 
         // Kill existing emulator process if it exists
-        Workspace.RegisterEmulatorProcess(emulatorProcess);
+        Workspace.RegisterExternalEmulatorProcess(emulatorProcess);
     }
 
     (string, string) SubstituteString(string s)
