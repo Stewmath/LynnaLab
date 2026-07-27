@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using SixLabors.ImageSharp;
 using Color = LynnaLib.Color;
+using Emulation;
 
 namespace LynnaLab;
 

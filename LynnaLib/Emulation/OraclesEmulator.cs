@@ -3,7 +3,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using SameBoySharp;
 
-namespace LynnaLib;
+namespace Emulation;
+
+using LynnaLib;
 
 public class OraclesEmulator : IDisposable
 {

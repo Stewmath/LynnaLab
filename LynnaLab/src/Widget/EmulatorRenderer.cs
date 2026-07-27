@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using SameBoySharp;
+using Emulation;
 using SDL;
 
 namespace LynnaLab;

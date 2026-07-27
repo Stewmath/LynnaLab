@@ -1,4 +1,5 @@
 namespace LynnaLab;
+using Emulation;
 
 public class EmulatorManager : IDisposable
 {

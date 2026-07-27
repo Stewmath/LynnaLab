@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using SDL;
 using Backend = VeldridBackend.VeldridBackend;
+using Emulation;
 
 namespace LynnaLab;
 

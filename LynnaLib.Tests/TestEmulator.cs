@@ -2,6 +2,7 @@
 namespace LynnaLib.Tests;
 
 using SameBoySharp;
+using Emulation;
 
 public class TestEmulator
 {
