@@ -2,6 +2,10 @@ namespace LynnaLab;
 
 /// <summary>
 /// A widget whose size is precisely defined.
+///
+/// Most of the properties or methods in this class are not valid in any way unless RenderPrep() has
+/// been called beforehand, mainly because it needs to record the value of "origin" to do any
+/// further calculations.
 /// </summary>
 public abstract class SizedWidget
 {
@@ -17,6 +21,10 @@ public abstract class SizedWidget
     // Leave this much space above and to the left of the start of the render area.
     // Usually this is (0,0). Specify this in coordinates BEFORE global scaling.
     public Vector2 RenderOffset { get; set; }
+
+    // Following properties are only valid after RenderPrep() is called.
+
+    public Vector2 Origin { get { return origin; } }
 
     // ================================================================================
     // Public methods
@@ -43,6 +51,9 @@ public abstract class SizedWidget
         ImGui.SetCursorScreenPos(origin);
         drawList = ImGui.GetWindowDrawList();
     }
+
+    // All methods below here are only allowed to be called during rendering, and sometime after
+    // RenderPrep() has been called while rendering the current frame.
 
     /// <summary>
     /// Get the position of the mouse relative to the widget origin

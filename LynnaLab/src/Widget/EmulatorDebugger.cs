@@ -185,7 +185,10 @@ Examples to get you started:
     {
         while (!paused)
         {
-            emu.Run();
+            lock (emu)
+            {
+                emu.Run();
+            }
         }
     }
 }

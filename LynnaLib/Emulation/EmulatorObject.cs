@@ -29,6 +29,8 @@ public class EmulatorObject
     /// </summary>
     private readonly ushort address;
 
+    public ushort Address { get { return address; } }
+
     // ================================================================================
     // Properties
     // ================================================================================

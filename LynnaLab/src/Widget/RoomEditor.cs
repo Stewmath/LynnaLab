@@ -107,7 +107,7 @@ public class RoomEditor : Frame
         };
 
         objectGroupEditor.ObjectSelectedEvent += (s, a) => handleObjectSelection(objectGroupEditor.SelectedObject);
-        roomLayoutEditor.ChangedSelectedRoomComponentEvent += (s, a) => handleObjectSelection(roomLayoutEditor.SelectedObject);
+        roomLayoutEditor.ChangeSelectedOverlayBoxEvent += (s, a) => handleObjectSelection(roomLayoutEditor.SelectedObject);
 
         // Keeping selected warp synchronized between ObjectGroupEditor & RoomLayoutEditor
         var handleWarpSelection = (Warp warp) =>
@@ -124,7 +124,7 @@ public class RoomEditor : Frame
         };
 
         warpEditor.SelectedWarpEvent += (s, a) => handleWarpSelection(warpEditor.SelectedWarp);
-        roomLayoutEditor.ChangedSelectedRoomComponentEvent += (s, a) => handleWarpSelection(roomLayoutEditor.SelectedWarpSource);
+        roomLayoutEditor.ChangeSelectedOverlayBoxEvent += (s, a) => handleWarpSelection(roomLayoutEditor.SelectedWarpSource);
 
         // Watch for the destination warp we're handling being deleted under our nose (can happen
         // with undo/redo)
@@ -506,7 +506,7 @@ public class RoomEditor : Frame
     {
         EditingWarpDestination = warp;
         SetRoom(warp.DestRoom, 2);
-        roomLayoutEditor.UpdateRoomComponents();
+        roomLayoutEditor.UpdateOverlayBoxes();
     }
 
     /// <summary>
@@ -519,12 +519,12 @@ public class RoomEditor : Frame
         Room room = EditingWarpDestination.SourceRoom;
         EditingWarpDestination = null;
         SetRoom(room.Index, 2);
-        roomLayoutEditor.UpdateRoomComponents(); // This line only necessary if dest room is same as source room
+        roomLayoutEditor.UpdateOverlayBoxes(); // This line only necessary if dest room is same as source room
     }
 
-    public void UpdateRoomComponents()
+    public void UpdateOverlayBoxes()
     {
-        roomLayoutEditor.UpdateRoomComponents();
+        roomLayoutEditor.UpdateOverlayBoxes();
     }
 
     // ================================================================================

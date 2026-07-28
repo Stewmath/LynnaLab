@@ -7,6 +7,36 @@ namespace LynnaLab;
 /// </summary>
 public class RoomLayoutEditor : TileGrid
 {
+    public class RoomLayoutOverlayBox : LynnaLab.IOverlayBoxUser
+    {
+        readonly RoomLayoutEditor editor;
+
+        public RoomLayoutOverlayBox(RoomLayoutEditor editor)
+        {
+            this.editor = editor;
+        }
+
+        public bool SelectingRectangle { get { return editor.SelectingRectangle; } }
+        public bool DraggingComponent
+        {
+            get { return editor.draggingComponent; }
+            set { editor.draggingComponent = value; }
+        }
+        public Vector2 DraggingComponentOffset { get { return editor.draggingComponentOffset; } }
+        public OverlayBox Selected { get { return editor.selectedOverlayBox; } }
+        public float Scale { get { return editor.Scale; } }
+
+        public void SetSelected(OverlayBox comp, bool startDrag = false, Vector2? dragOffset = null)
+        {
+            editor.SetSelectedOverlayBox(comp, startDrag, dragOffset);
+        }
+
+        public void SuppressCurrentClick()
+        {
+            editor.suppressCurrentClick = true;
+        }
+    }
+
     // ================================================================================
     // Constructors
     // ================================================================================
@@ -36,9 +66,9 @@ public class RoomLayoutEditor : TileGrid
             () => RoomLayout.Height,
             () => Project.TransactionManager.InsertBarrier());
 
-        QuickstartData.enableToggledEvent += (s, a) => UpdateQuickstartRoomComponent();
-        RoomEditor.TabChangedEvent += (s, a) => UpdateRoomComponents();
-        Project.AnnotationsAddedOrRemovedEvent += () => UpdateRoomComponents();
+        QuickstartData.enableToggledEvent += (s, a) => UpdateQuickstartOverlayBox();
+        RoomEditor.TabChangedEvent += (s, a) => UpdateOverlayBoxes();
+        Project.AnnotationsAddedOrRemovedEvent += () => UpdateOverlayBoxes();
 
         // Show coordinate tooltip
         base.OnHover = (int tile) =>
@@ -66,22 +96,24 @@ public class RoomLayoutEditor : TileGrid
         objectGroupEventWrapper = new EventWrapper<ObjectGroup>();
         objectGroupEventWrapper.Bind<EventArgs>(
             "StructureModifiedEvent",
-            (_, _) => UpdateRoomComponents(),
+            (_, _) => UpdateOverlayBoxes(),
             weak: false);
 
         warpGroupEventWrapper = new EventWrapper<WarpGroup>();
         warpGroupEventWrapper.Bind<EventArgs>(
             "ModifiedEvent",
-            (_, _) => UpdateRoomComponents(),
+            (_, _) => UpdateOverlayBoxes(),
             weak: false);
+
+        overlayBoxUser = new(this);
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
     TextureBase texture;
-    RoomComponent selectedRoomComponent;
-    List<RoomComponent> roomComponents;
+    OverlayBox selectedOverlayBox;
+    List<OverlayBox> overlayBoxes;
     bool draggingComponent;
     Vector2 draggingComponentOffset;
     bool suppressCurrentClick;
@@ -91,12 +123,14 @@ public class RoomLayoutEditor : TileGrid
     EventWrapper<Chest> chestEventWrapper;
     EventWrapper<WarpGroup> warpGroupEventWrapper;
 
+    RoomLayoutOverlayBox overlayBoxUser;
+
     // ================================================================================
     // Events
     // ================================================================================
 
-    // Invoked when the selected RoomComponent is changed.
-    public event EventHandler ChangedSelectedRoomComponentEvent;
+    // Invoked when the selected OverlayBox is changed.
+    public event EventHandler ChangeSelectedOverlayBoxEvent;
 
     // ================================================================================
     // Properties
@@ -108,8 +142,8 @@ public class RoomLayoutEditor : TileGrid
     public QuickstartData QuickstartData { get { return Workspace.QuickstartData; } }
     public Brush<int> Brush { get; private set; }
 
-    public ObjectDefinition SelectedObject { get { return (selectedRoomComponent as ObjectRoomComponent)?.obj; } }
-    public Warp SelectedWarpSource { get { return (selectedRoomComponent as WarpSourceRoomComponent)?.warp; } }
+    public ObjectDefinition SelectedObject { get { return (selectedOverlayBox as ObjectOverlayBox)?.obj; } }
+    public Warp SelectedWarpSource { get { return (selectedOverlayBox as WarpSourceOverlayBox)?.warp; } }
 
     // TileGrid overrides
 
@@ -177,114 +211,27 @@ public class RoomLayoutEditor : TileGrid
             }
         }
 
-        RoomComponent hoveringComponent = null;
-        var mousePos = base.GetRelativeMousePos() / Scale;
-        int componentIndex = 0;
-
-        // Render room components
-        foreach (var com in roomComponents)
-        {
-            // Draw background box
-            if (com.BoxColor != null)
-            {
-                base.AddRectFilled(com.BoxRectangle * Scale, (Color)com.BoxColor);
-            }
-
-            // Create an InvisibleButton so that we can select it without dragging the entire window.
-            // Names are not unique... probably not an issue? These don't really do anything.
-            ImGui.SetCursorScreenPos(origin + com.BoxRectangle.TopLeft * Scale);
-            ImGui.InvisibleButton($"RoomComponent button {componentIndex}", com.BoxSize * Scale);
-
-            // Draw it. (Ensure "com.Render" is immediately after ImGui.InvisibleButton so that the
-            // Render function can manipulate it if necessary.)
-            ImGui.SetCursorScreenPos(origin);
-            com.Render(com == selectedRoomComponent);
-
-            // Check if we're hovering over it. But don't draw the hovering rectangle right now
-            // because we don't want to draw it on more than one RoomComponent.
-            var rect = com.BoxRectangle;
-            if (isWindowHovered && rect.Contains(mousePos))
-            {
-                hoveringComponent = com;
-            }
-
-            componentIndex++;
-        }
-
-        // If the mouse is clicked while not focused on the window, do not allow the tile grid to be
-        // modified through mouse dragging until the mouse is released and clicked again. Prevents
-        // accidental tile grid modifications in some situations, ie. when clicking outside a
-        // right-click popup menu.
-        if (!isWindowHovered && ImGui.IsMouseDown(ImGuiMouseButton.Left) && !SelectingRectangle)
-            suppressCurrentClick = true;
-
-        // Draw hover outline if something is being hovered over
-        if (hoveringComponent != null)
-        {
-            base.AddRect(hoveringComponent.BoxRectangle * Scale, Color.Cyan, thickness: Scale);
-        }
-        // Draw selection outline if something is selected
-        if (selectedRoomComponent != null)
-        {
-            base.AddRect(selectedRoomComponent.BoxRectangle * Scale, Color.White, thickness: Scale);
-        }
-
-        // Check if we clicked on the hoveringComponent
-        if (hoveringComponent != null)
-        {
-            var rect = hoveringComponent.BoxRectangle;
-
-            if (rect.Contains(mousePos))
-            {
-                // Left or right click
-                if ((ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseClicked(ImGuiMouseButton.Right)) && !draggingComponent)
-                {
-                    // Set dragOffset to non-null if we should start dragging it.
-                    // In any case the hovered object will become the selected object.
-                    Vector2? dragOffset = null;
-                    if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
-                    {
-                        if (hoveringComponent.HasXY)
-                            dragOffset = new Vector2(hoveringComponent.X, hoveringComponent.Y) - mousePos;
-                        else
-                            dragOffset = new Vector2(0, 0); // Just set it to anything non-null
-                    }
-                    SetSelectedRoomComponent(hoveringComponent, dragOffset != null, dragOffset);
-                }
-
-                // Right click
-                if (ImGui.IsMouseClicked(ImGuiMouseButton.Right) && !draggingComponent)
-                {
-                    ImGui.OpenPopup(Top.RightClickPopupName);
-                }
-
-                // Double-click
-                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                {
-                    hoveringComponent.OnDoubleClicked();
-                }
-            }
-        }
+        var hoveringComponent = IOverlayBoxUser.UpdateOverlayBoxes(Project, overlayBoxUser, this, overlayBoxes);
 
         // Render right-click menu
         if (ImGui.BeginPopup(Top.RightClickPopupName))
         {
-            var com = selectedRoomComponent;
+            var com = selectedOverlayBox;
 
             // This can happen if a remote client deleted the object we were looking at.
             if (com == null)
             {
                 ImGui.CloseCurrentPopup();
             }
-            else if (com is ObjectRoomComponent ocom)
+            else if (com is ObjectOverlayBox ocom)
             {
                 ObjectBox.ObjectPopupMenu(ocom.obj, Room, Workspace);
             }
-            else if (com is WarpSourceRoomComponent wcom)
+            else if (com is WarpSourceOverlayBox wcom)
             {
                 WarpEditor.WarpPopupMenu(wcom.warp, RoomEditor);
             }
-            else if (com is WarpDestRoomComponent dcom)
+            else if (com is WarpDestOverlayBox dcom)
             {
                 if (ImGui.Selectable("Done"))
                 {
@@ -300,70 +247,6 @@ public class RoomLayoutEditor : TileGrid
                 }
             }
             ImGui.EndPopup();
-        }
-
-        // Update room component dragging
-        if (draggingComponent)
-        {
-            var com = selectedRoomComponent;
-
-            if (ImGui.IsMouseDown(ImGuiMouseButton.Left))
-            {
-                Project.BeginTransaction("Move " + com.GetTransactionIdentifier(), true);
-
-                // No XY: Can't move this at all by dragging.
-                if (!com.HasXY)
-                {
-                }
-                // Shortened XY: Snapping is "automatic" due to low resolution of XY variables;
-                // also don't add draggingComponentOffset as it only works well with smooth
-                // movement
-                else if (com.HasShortenedXY)
-                {
-                    com.X = (int)Math.Round(mousePos.X);
-                    com.Y = (int)Math.Round(mousePos.Y);
-                }
-                // Ctrl pressed: No snapping
-                else if (ImGui.IsKeyDown(ImGuiKey.ModCtrl))
-                {
-                    com.X = (int)Math.Round(mousePos.X + draggingComponentOffset.X);
-                    com.Y = (int)Math.Round(mousePos.Y + draggingComponentOffset.Y);
-                }
-                // Ctrl not pressed: Snap to 8x8
-                else
-                {
-                    const int snap = 8;
-
-                    var snapTo = (int oldPos, int mousePos) =>
-                    {
-                        int snapLog = (int)Math.Log(snap, 2);
-                        int data = oldPos + snap / 2;
-                        int align = data % snap;
-                        int newp = (mousePos - align) >> snapLog;
-                        newp = newp * snap + align + snap / 2;
-                        return newp;
-                    };
-
-                    com.X = snapTo(com.X, (int)Math.Round(mousePos.X));
-                    com.Y = snapTo(com.Y, (int)Math.Round(mousePos.Y));
-                }
-
-                Project.EndTransaction();
-            }
-            else
-            {
-                // Released the component
-                Project.TransactionManager.InsertBarrier();
-                draggingComponent = false;
-            }
-        }
-
-        if (ImGui.IsKeyPressed(ImGuiKey.Delete))
-        {
-            if (selectedRoomComponent != null
-                && !(selectedRoomComponent is AnnotationRoomComponent) // Delete key interferes with textbox
-                && selectedRoomComponent.Deletable)
-                selectedRoomComponent.Delete();
         }
 
         if (hoveringComponent == null && !draggingComponent && !SuppressTileSelection)
@@ -382,22 +265,22 @@ public class RoomLayoutEditor : TileGrid
     {
         if (obj == null)
         {
-            if (selectedRoomComponent is ObjectRoomComponent)
-                SetSelectedRoomComponent(null);
+            if (selectedOverlayBox is ObjectOverlayBox)
+                SetSelectedOverlayBox(null);
             return;
         }
 
-        foreach (RoomComponent com in roomComponents)
+        foreach (OverlayBox com in overlayBoxes)
         {
-            if ((com as ObjectRoomComponent)?.obj == obj)
+            if ((com as ObjectOverlayBox)?.obj == obj)
             {
-                SetSelectedRoomComponent(com);
+                SetSelectedOverlayBox(com);
                 return;
             }
         }
 
         // Not fonud
-        SetSelectedRoomComponent(null);
+        SetSelectedOverlayBox(null);
     }
 
     /// <summary>
@@ -407,16 +290,16 @@ public class RoomLayoutEditor : TileGrid
     {
         if (warp == null)
         {
-            if (selectedRoomComponent is WarpSourceRoomComponent)
-                SetSelectedRoomComponent(null);
+            if (selectedOverlayBox is WarpSourceOverlayBox)
+                SetSelectedOverlayBox(null);
             return;
         }
 
-        foreach (RoomComponent com in roomComponents)
+        foreach (OverlayBox com in overlayBoxes)
         {
-            if ((com as WarpSourceRoomComponent)?.warp == warp)
+            if ((com as WarpSourceOverlayBox)?.warp == warp)
             {
-                SetSelectedRoomComponent(com);
+                SetSelectedOverlayBox(com);
                 break;
             }
         }
@@ -425,20 +308,20 @@ public class RoomLayoutEditor : TileGrid
     /// <summary>
     /// If any room component is selected, unselect it.
     /// </summary>
-    public void UnselectRoomComponent()
+    public void UnselectOverlayBox()
     {
-        SetSelectedRoomComponent(null);
+        SetSelectedOverlayBox(null);
     }
 
     // ================================================================================
     // Private methods
     // ================================================================================
 
-    void SetSelectedRoomComponent(RoomComponent comp, bool startDrag = false, Vector2? dragOffset = null)
+    void SetSelectedOverlayBox(OverlayBox comp, bool startDrag = false, Vector2? dragOffset = null)
     {
-        // Even if the RoomComponent object changed, the underlying data may actually be the same as before.
-        // "isDifferent" checks the underlying data rather than the RoomComponents themselves.
-        bool isDifferent = comp == null || !comp.Compare(selectedRoomComponent);
+        // Even if the OverlayBox object changed, the underlying data may actually be the same as before.
+        // "isDifferent" checks the underlying data rather than the OverlayBoxes themselves.
+        bool isDifferent = comp == null || !comp.Compare(selectedOverlayBox);
         if (isDifferent || startDrag)
         {
             draggingComponent = startDrag;
@@ -446,13 +329,13 @@ public class RoomLayoutEditor : TileGrid
                 draggingComponentOffset = (Vector2)dragOffset;
         }
 
-        if (selectedRoomComponent == comp)
+        if (selectedOverlayBox == comp)
             return;
-        RoomComponent old = selectedRoomComponent;
-        selectedRoomComponent = comp;
+        OverlayBox old = selectedOverlayBox;
+        selectedOverlayBox = comp;
 
         if (isDifferent)
-            ChangedSelectedRoomComponentEvent?.Invoke(this, null);
+            ChangeSelectedOverlayBoxEvent?.Invoke(this, null);
     }
 
     /// <summary>
@@ -465,7 +348,7 @@ public class RoomLayoutEditor : TileGrid
         base.Width = RoomLayout.Width;
         base.Height = RoomLayout.Height;
 
-        UpdateRoomComponents();
+        UpdateOverlayBoxes();
 
         roomEventWrapper.ReplaceEventSource(Room);
         chestEventWrapper.ReplaceEventSource(Room.Chest);
@@ -479,20 +362,20 @@ public class RoomLayoutEditor : TileGrid
     void UpdateChest()
     {
         chestEventWrapper.ReplaceEventSource(Room.Chest);
-        UpdateRoomComponents();
+        UpdateOverlayBoxes();
     }
 
     /// <summary>
     /// Regenerate room component list
     /// </summary>
-    public void UpdateRoomComponents()
+    public void UpdateOverlayBoxes()
     {
-        roomComponents = new List<RoomComponent>();
+        overlayBoxes = new List<OverlayBox>();
 
         if (Room == null)
             return;
 
-        UpdateQuickstartRoomComponent();
+        UpdateQuickstartOverlayBox();
 
         // Object room components
         if (DrawObjects)
@@ -503,8 +386,8 @@ public class RoomLayoutEditor : TileGrid
                 {
                     if (obj.HasXY())
                     {
-                        var com = new ObjectRoomComponent(this, obj);
-                        roomComponents.Add(com);
+                        var com = new ObjectOverlayBox(this, obj);
+                        overlayBoxes.Add(com);
                     }
                 }
             }
@@ -513,7 +396,7 @@ public class RoomLayoutEditor : TileGrid
         // Chest
         if (DrawChests)
         {
-            roomComponents.Add(new ChestRoomComponent(this, Room.Chest));
+            overlayBoxes.Add(new ChestOverlayBox(this, Room.Chest));
         }
 
         // Warps
@@ -527,8 +410,8 @@ public class RoomLayoutEditor : TileGrid
                 Action<int, int, int, int> addWarpComponent = (x, y, width, height) =>
                 {
                     var rect = new FRect(x, y, width, height);
-                    var com = new WarpSourceRoomComponent(this, warp, warpIndex, rect);
-                    roomComponents.Add(com);
+                    var com = new WarpSourceOverlayBox(this, warp, warpIndex, rect);
+                    overlayBoxes.Add(com);
                 };
 
                 if (warp.WarpSourceType == WarpSourceType.Standard)
@@ -566,52 +449,52 @@ public class RoomLayoutEditor : TileGrid
         {
             foreach (Annotation ann in Project.GetRoomAnnotations(Room.Index))
             {
-                roomComponents.Add(new AnnotationRoomComponent(this, ann));
+                overlayBoxes.Add(new AnnotationOverlayBox(this, ann));
             }
         }
 
         // Warp destination editing mode
         if (RoomEditor.EditingWarpDestination != null)
         {
-            var com = new WarpDestRoomComponent(this, RoomEditor.EditingWarpDestination);
-            roomComponents.Add(com);
+            var com = new WarpDestOverlayBox(this, RoomEditor.EditingWarpDestination);
+            overlayBoxes.Add(com);
         }
 
-        // Below here, we are concerned with updating the selectedRoomComponent.
-        if (selectedRoomComponent == null)
+        // Below here, we are concerned with updating the selectedOverlayBox.
+        if (selectedOverlayBox == null)
             return;
 
-        // Check if the previous selectedRoomComponent has an equivalent in the new list. If not,
+        // Check if the previous selectedOverlayBox has an equivalent in the new list. If not,
         // unselect it.
-        foreach (var com in roomComponents)
+        foreach (var com in overlayBoxes)
         {
-            if (com.Compare(selectedRoomComponent))
+            if (com.Compare(selectedOverlayBox))
             {
-                SetSelectedRoomComponent(com);
+                SetSelectedOverlayBox(com);
                 return;
             }
         }
 
-        // We are unselecting the previous selected RoomComponent. If we were dragging it, suppress
+        // We are unselecting the previous selected OverlayBox. If we were dragging it, suppress
         // mouse inputs so that we don't suddenly start drawing room tiles.
         // This can occur when double-clicking on a warp to follow it, or toggling quickstart (F4
         // key) while dragging the Link icon.
         if (draggingComponent)
             suppressCurrentClick = true;
-        SetSelectedRoomComponent(null);
+        SetSelectedOverlayBox(null);
     }
 
     /// <summary>
     /// Called when quickstart is toggled or room component list is updated
     /// </summary>
-    void UpdateQuickstartRoomComponent()
+    void UpdateQuickstartOverlayBox()
     {
         bool validInRoom = QuickstartData.Enabled
             && QuickstartData.group == Room.Group
             && QuickstartData.room == (Room.Index & 0xff);
 
-        // Search for existing QuickstartRoomComponent
-        var existingComponents = roomComponents.Where((com) => com is QuickstartRoomComponent);
+        // Search for existing QuickstartOverlayBox
+        var existingComponents = overlayBoxes.Where((com) => com is QuickstartOverlayBox);
 
         if (existingComponents.Count() >= 2)
         {
@@ -625,10 +508,10 @@ public class RoomLayoutEditor : TileGrid
                 return;
             else
             {
-                roomComponents.Remove(com);
-                if (com == selectedRoomComponent)
+                overlayBoxes.Remove(com);
+                if (com == selectedOverlayBox)
                 {
-                    SetSelectedRoomComponent(null);
+                    SetSelectedOverlayBox(null);
                 }
             }
         }
@@ -636,8 +519,8 @@ public class RoomLayoutEditor : TileGrid
         {
             if (validInRoom)
             {
-                var com = new QuickstartRoomComponent(this, QuickstartData);
-                roomComponents.Add(com);
+                var com = new QuickstartOverlayBox(this, QuickstartData);
+                overlayBoxes.Add(com);
             }
             else
                 return;
@@ -648,105 +531,11 @@ public class RoomLayoutEditor : TileGrid
     // Nested classes
     // ================================================================================
 
-    /// <summary>
-    /// Things drawn on top of the room (like objects and warps) which can be selected and moved
-    /// around.
-    /// </summary>
-    abstract class RoomComponent
-    {
-        // ================================================================================
-        // Constructors
-        // ================================================================================
-        public RoomComponent(RoomLayoutEditor parent)
-        {
-            this.Parent = parent;
-        }
-
-        // ================================================================================
-        // Events
-        // ================================================================================
-
-        public event EventHandler<EventArgs> SelectedEvent;
-
-        // ================================================================================
-        // Properties
-        // ================================================================================
-
-        public abstract Color? BoxColor { get; }
-
-        public abstract bool Deletable { get; }
-        public abstract bool HasXY { get; }
-        public abstract bool HasShortenedXY { get; }
-        public abstract int X { get; set; } // These are always in the full range even if "HasShortedenXY" is true
-        public abstract int Y { get; set; }
-        public abstract int BoxWidth { get; }
-        public abstract int BoxHeight { get; }
-
-        public RoomLayoutEditor Parent { get; private set; }
-
-        public Vector2 BoxSize
-        {
-            get { return new Vector2(BoxWidth, BoxHeight); }
-        }
-        public virtual FRect BoxRectangle
-        {
-            get { return new FRect(X - BoxWidth / 2.0f, Y - BoxHeight / 2.0f, BoxWidth, BoxHeight); }
-        }
-
-        // ================================================================================
-        // Public methods
-        // ================================================================================
-
-        public abstract void Render(bool selected);
-
-        public virtual void Select()
-        {
-            if (SelectedEvent != null)
-                SelectedEvent(this, null);
-        }
-
-        /// <summary>
-        /// Returns true if the underlying data is the same
-        /// </summary>
-        public abstract bool Compare(RoomComponent com);
-
-        /// <summary>
-        /// Right-click, select "delete", or press "Delete" key while selected
-        /// </summary>
-        public virtual void Delete() { }
-
-        public virtual void OnDoubleClicked() {}
-
-        /// <summary>
-        /// Identifier used for uniquely identifying undo-able events.
-        /// </summary>
-        public abstract string GetTransactionIdentifier();
-
-        // ================================================================================
-        // Protected methods
-        // ================================================================================
-
-        /// <summary>
-        /// Helper function for drawing an object's sprites at this position.
-        /// </summary>
-        protected void SpriteDrawer(Bitmap sprite, int xOffset, int yOffset)
-        {
-            // NOTE: Objects are drawn sprite-by-sprite, so don't try to use anything other than
-            // nearest-neighbor interpolation here.
-            var origin = ImGui.GetCursorScreenPos();
-            var offset = new Vector2(X + xOffset, Y + yOffset);
-            TextureBase texture = Top.TextureFromBitmapTracked(sprite);
-            ImGui.SetCursorScreenPos(origin + offset * Parent.Scale);
-            ImGuiX.DrawImage(texture, Parent.Scale);
-            ImGui.SetCursorScreenPos(origin);
-        }
-    }
-
-    class QuickstartRoomComponent : RoomComponent
+    class QuickstartOverlayBox : OverlayBox
     {
         QuickstartData quickstart;
 
-        public QuickstartRoomComponent(RoomLayoutEditor parent, QuickstartData data) : base(parent)
+        public QuickstartOverlayBox(RoomLayoutEditor parent, QuickstartData data) : base(parent)
         {
             this.quickstart = data;
         }
@@ -792,9 +581,9 @@ public class RoomLayoutEditor : TileGrid
             ImGuiX.DrawImage(linkTexture, Parent.Scale);
         }
 
-        public override bool Compare(RoomComponent com)
+        public override bool Compare(OverlayBox com)
         {
-            return quickstart == (com as QuickstartRoomComponent)?.quickstart;
+            return quickstart == (com as QuickstartOverlayBox)?.quickstart;
         }
 
         public override void Delete()
@@ -811,11 +600,11 @@ public class RoomLayoutEditor : TileGrid
     /// <summary>
     /// Draggable chest
     /// </summary>
-    class ChestRoomComponent : RoomComponent
+    class ChestOverlayBox : OverlayBox
     {
         Chest chest;
 
-        public ChestRoomComponent(RoomLayoutEditor parent, Chest chest) : base(parent)
+        public ChestOverlayBox(RoomLayoutEditor parent, Chest chest) : base(parent)
         {
             this.chest = chest;
         }
@@ -866,9 +655,9 @@ public class RoomLayoutEditor : TileGrid
             base.Select();
         }
 
-        public override bool Compare(RoomComponent com)
+        public override bool Compare(OverlayBox com)
         {
-            return chest == (com as ChestRoomComponent)?.chest;
+            return chest == (com as ChestOverlayBox)?.chest;
         }
 
         public override void Delete()
@@ -882,12 +671,12 @@ public class RoomLayoutEditor : TileGrid
         }
     }
 
-    class ObjectRoomComponent : RoomComponent
+    class ObjectOverlayBox : OverlayBox
     {
         public ObjectDefinition obj;
 
 
-        public ObjectRoomComponent(RoomLayoutEditor parent, ObjectDefinition obj) : base(parent)
+        public ObjectOverlayBox(RoomLayoutEditor parent, ObjectDefinition obj) : base(parent)
         {
             this.obj = obj;
         }
@@ -948,9 +737,9 @@ public class RoomLayoutEditor : TileGrid
             }
         }
 
-        public override bool Compare(RoomComponent com)
+        public override bool Compare(OverlayBox com)
         {
-            return obj == (com as ObjectRoomComponent)?.obj;
+            return obj == (com as ObjectOverlayBox)?.obj;
         }
 
         public override void Delete()
@@ -964,7 +753,7 @@ public class RoomLayoutEditor : TileGrid
         }
     }
 
-    class WarpSourceRoomComponent : RoomComponent
+    class WarpSourceOverlayBox : OverlayBox
     {
         public Warp warp;
         public int index;
@@ -972,7 +761,7 @@ public class RoomLayoutEditor : TileGrid
         FRect rect;
 
 
-        public WarpSourceRoomComponent(RoomLayoutEditor parent, Warp warp, int index, FRect rect) : base(parent)
+        public WarpSourceOverlayBox(RoomLayoutEditor parent, Warp warp, int index, FRect rect) : base(parent)
         {
             this.warp = warp;
             this.index = index;
@@ -1036,9 +825,9 @@ public class RoomLayoutEditor : TileGrid
             ImGui.PopFont();
         }
 
-        public override bool Compare(RoomComponent com)
+        public override bool Compare(OverlayBox com)
         {
-            return warp == (com as WarpSourceRoomComponent)?.warp;
+            return warp == (com as WarpSourceOverlayBox)?.warp;
         }
 
         public override void Delete()
@@ -1063,11 +852,11 @@ public class RoomLayoutEditor : TileGrid
     }
 
     // Represents the singular "warp destination" object that appears when in warp dest editing mode
-    class WarpDestRoomComponent : RoomComponent
+    class WarpDestOverlayBox : OverlayBox
     {
         public Warp warp;
 
-        public WarpDestRoomComponent(RoomLayoutEditor parent, Warp warp) : base(parent)
+        public WarpDestOverlayBox(RoomLayoutEditor parent, Warp warp) : base(parent)
         {
             this.warp = warp;
         }
@@ -1123,9 +912,9 @@ public class RoomLayoutEditor : TileGrid
             ImGui.PopFont();
         }
 
-        public override bool Compare(RoomComponent com)
+        public override bool Compare(OverlayBox com)
         {
-            return warp == (com as WarpDestRoomComponent)?.warp;
+            return warp == (com as WarpDestOverlayBox)?.warp;
         }
 
         public override string GetTransactionIdentifier()
@@ -1137,13 +926,13 @@ public class RoomLayoutEditor : TileGrid
     /// <summary>
     /// Text strings inserted into the room as notes.
     /// </summary>
-    class AnnotationRoomComponent : RoomComponent
+    public class AnnotationOverlayBox : OverlayBox
     {
         Annotation annotation;
         bool wasOpenLastFrame = false;
         bool isActive = false;
 
-        public AnnotationRoomComponent(RoomLayoutEditor parent, Annotation annotation) : base(parent)
+        public AnnotationOverlayBox(RoomLayoutEditor parent, Annotation annotation) : base(parent)
         {
             this.annotation = annotation;
         }
@@ -1197,8 +986,8 @@ public class RoomLayoutEditor : TileGrid
             var mousePos = ImGui.GetMousePos();
 
             // This is checked to auto-close the popup window when it's cilcked off of, _unless_
-            // we're clicking onto the RoomComponent box. Can't use IsItemHovered() for this because
-            // it's not triggered while the mouse is held down.
+            // we're clicking onto the OverlayBox. Can't use IsItemHovered() for this because it's
+            // not triggered while the mouse is held down.
             bool hovering = realRect.Contains(mousePos);
 
             if (selected)
@@ -1214,7 +1003,7 @@ public class RoomLayoutEditor : TileGrid
                     | ImGuiWindowFlags.NoCollapse
                     | ImGuiWindowFlags.NoSavedSettings;
 
-                // Popup window follows the RoomComponent box
+                // Popup window follows the OverlayBox
                 ImGui.SetNextWindowPos(origin + BoxRectangle.TopLeft * Parent.Scale
                                        + ImGuiX.Unit(16, 0) * Parent.RequestedScale,
                                        0,
@@ -1291,7 +1080,7 @@ public class RoomLayoutEditor : TileGrid
                 {
                     isActive = false;
                     if (selected)
-                        Parent.UnselectRoomComponent();
+                        Parent.UnselectOverlayBox();
                 }
 
                 wasOpenLastFrame = true;
@@ -1310,9 +1099,9 @@ public class RoomLayoutEditor : TileGrid
             ImGui.PopFont();
         }
 
-        public override bool Compare(RoomComponent com)
+        public override bool Compare(OverlayBox com)
         {
-            return annotation == (com as AnnotationRoomComponent)?.annotation;
+            return annotation == (com as AnnotationOverlayBox)?.annotation;
         }
 
         public override void Delete()
@@ -1326,3 +1115,4 @@ public class RoomLayoutEditor : TileGrid
         }
     }
 }
+

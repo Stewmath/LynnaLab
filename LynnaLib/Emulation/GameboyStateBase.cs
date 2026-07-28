@@ -35,7 +35,7 @@ public abstract class GameboyStateBase
     {
         // TODO: Use proper labels
         get { return (short)ReadWord(
-            ConstructPointer(DetermineGame() == Game.Ages ? (ushort)0xffaa : (ushort)0xffac)); }
+            ConstructPointer(DetermineGame() == Game.Ages ? (ushort)0xffaa : (ushort)0xffa8)); }
     }
     public short CameraX
     {

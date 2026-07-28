@@ -220,13 +220,13 @@ public class ProjectWorkspace
         {
             ImGuiX.MenuItemCheckbox("View objects",
                                     new Accessor<bool>(() => ViewObjects),
-                                    (_) => roomEditor.UpdateRoomComponents());
+                                    (_) => roomEditor.UpdateOverlayBoxes());
             ImGuiX.MenuItemCheckbox("View warps",
                                     new Accessor<bool>(() => ViewWarps),
-                                    (_) => roomEditor.UpdateRoomComponents());
+                                    (_) => roomEditor.UpdateOverlayBoxes());
             ImGuiX.MenuItemCheckbox("View annotations",
                                     new Accessor<bool>(() => ViewAnnotations),
-                                    (_) => roomEditor.UpdateRoomComponents());
+                                    (_) => roomEditor.UpdateOverlayBoxes());
             ImGui.EndMenu();
         }
         if (ImGui.BeginMenu("Insert"))
