@@ -21,6 +21,8 @@ public class OraclesEmulator : IDisposable
         this.romPath = romPath;
         this.startOptions = startOptions;
 
+        state = new GameboyState(this);
+
         gb = new SameBoy(SameBoy.Model.GB_MODEL_CGB_E);
         gb.LoadBootRomFromBuffer(Helper.ReadResourceFileBytes("LynnaLib.resource.cgb_boot_fast.bin"));
         gb.LoadRom(romPath);
@@ -59,13 +61,10 @@ public class OraclesEmulator : IDisposable
             }
         }
 
-        for (ushort addr = 0xd000; addr <= 0xdfff; addr += 0x40)
-        {
-            objects.Add(new EmulatorObject(this, addr));
-        }
-
         if (startOptions.Quickstart)
             LoadIntoRoom(startOptions.RoomIndex, startOptions.Season, startOptions.X, startOptions.Y);
+
+        latestSnapshot = new GameboySnapshot(this);
     }
 
     // ================================================================================
@@ -79,13 +78,23 @@ public class OraclesEmulator : IDisposable
     IntPtr pixelData;
 
     Dictionary<GbPointer, Action> breakpoints = new();
-    readonly List<EmulatorObject> objects = new();
+    readonly GameboyState state;
+    GameboySnapshot latestSnapshot;
 
     // ================================================================================
     // Properties
     // ================================================================================
 
     public SameBoy GB { get { return gb; } }
+
+    public GameboyState State { get { return state; } }
+
+    /// <summary>
+    /// Latest snapshot of emulator state taken during vblank. Use this instead of inspecting
+    /// emulator state directly so that we're pretty sure we're not in the middle of some logic that
+    /// would interfere with whatever we're checking.
+    /// </summary>
+    public GameboySnapshot LatestSnapshot { get { return latestSnapshot; } }
 
     public IntPtr PixelData { get { return pixelData; } }
 
@@ -111,20 +120,8 @@ public class OraclesEmulator : IDisposable
     public Span<byte> Rom { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.ROM); } }
     public Span<byte> Wram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.RAM); } }
     public Span<byte> Hram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.HRAM); } }
-
-
-    public short CameraY
-    {
-        // TODO: Use proper labels
-        get { return (short)ReadWord(
-            DetermineGame() == Game.Ages ? ConstructPointer(0xffaa) : ConstructPointer(0xffac)); }
-    }
-    public short CameraX
-    {
-        // TODO: Use proper labels
-        get { return (short)ReadWord(
-            DetermineGame() == Game.Ages ? ConstructPointer(0xffac) : ConstructPointer(0xffaa)); }
-    }
+    public Span<byte> Vram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.VRAM); } }
+    public Span<byte> Sram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.CART_RAM); } }
 
     // ================================================================================
     // Public methods
@@ -138,7 +135,10 @@ public class OraclesEmulator : IDisposable
     {
         gb.Run();
 
-        GbPointer ptr = ConstructPointer(gb.Registers.PC);
+        if (gb.Registers.PC == 0x40)
+            latestSnapshot = new GameboySnapshot(this);
+
+        GbPointer ptr = state.ConstructPointer(gb.Registers.PC);
 
         if (breakpoints.TryGetValue(ptr, out Action? act))
             act();
@@ -153,7 +153,7 @@ public class OraclesEmulator : IDisposable
         if (!ptr.IsBanked)
             return gb.SafeReadMemory(ptr.Addr);
         else
-            return ReadByte(ptr);
+            return state.ReadByte(ptr);
     }
 
     /// <summary>
@@ -187,11 +187,6 @@ public class OraclesEmulator : IDisposable
         return addr;
     }
 
-    public List<EmulatorObject> GetObjects()
-    {
-        return objects.Where(o => o.Enabled != 0).ToList();
-    }
-
     /// <summary>
     /// Reset the game at the specified room and position
     /// </summary>
@@ -221,15 +216,15 @@ public class OraclesEmulator : IDisposable
 
             // TODO: These addresses are hardcoded for compatibility with older projects because at
             // the time of coding, hack-base does not put these labels in ramsections.
-            if (DetermineGame() == Game.Ages)
+            if (State.DetermineGame() == Game.Ages)
             {
-                WriteByte(ConstructPointer(0xff9d), 2); // hNextLcdInterruptBehaviour
-                WriteByte(ConstructPointer(0xffb9), 1); // hIntroInputsEnabled
+                WriteByte(State.ConstructPointer(0xff9d), 2); // hNextLcdInterruptBehaviour
+                WriteByte(State.ConstructPointer(0xffb9), 1); // hIntroInputsEnabled
             }
             else
             {
-                WriteByte(ConstructPointer(0xff9b), 2); // hNextLcdInterruptBehaviour
-                WriteByte(ConstructPointer(0xffb7), 1); // hIntroInputsEnabled
+                WriteByte(State.ConstructPointer(0xff9b), 2); // hNextLcdInterruptBehaviour
+                WriteByte(State.ConstructPointer(0xffb7), 1); // hIntroInputsEnabled
             }
 
             WriteByte("wDeathRespawnBuffer.group", (byte)(roomIndex >> 8));
@@ -240,7 +235,7 @@ public class OraclesEmulator : IDisposable
             WriteByte("wDeathRespawnBuffer.x", x);
 
             // Hack initial thread states to run game thread
-            GbPointer wThreadStates = ConstructPointer(0xc2e0); // TODO: wThreadStateBuffer
+            GbPointer wThreadStates = State.ConstructPointer(0xc2e0); // TODO: wThreadStateBuffer
             WriteWord(wThreadStates + 0 + 4, Evaluate("stubThreadStart").Addr);
             WriteWord(wThreadStates + 8 + 4, Evaluate("mainThreadStart").Addr);
 
@@ -308,47 +303,6 @@ public class OraclesEmulator : IDisposable
         gb.Registers.PC = 0x100; // Entry point
     }
 
-    GbPointer ConstructPointer(ushort baseAddr)
-    {
-        switch (baseAddr >> 12)
-        {
-            case 0x0:
-            case 0x1:
-            case 0x2:
-            case 0x3:
-                return new(baseAddr, 0);
-            case 0x4:
-            case 0x5:
-            case 0x6:
-            case 0x7:
-                return new(baseAddr, RomBank);
-            case 0x8:
-            case 0x9:
-                return new(baseAddr, VramBank);
-            case 0xa:
-            case 0xb:
-                return new(baseAddr, SramBank);
-            case 0xc:
-            case 0xe:
-                return new(baseAddr, 0);
-            case 0xd:
-                return new(baseAddr, WramBank);
-            case 0xf:
-                if (baseAddr < 0xfe00)
-                    return new(baseAddr, WramBank);
-                else
-                    return new(baseAddr, -1);
-            default:
-                // Should never reach here
-                return new(baseAddr, -1);
-        }
-    }
-
-    bool AddressEquals(ushort addr, GbPointer ptr)
-    {
-        return ptr.Equals(ConstructPointer(addr));
-    }
-
     /// <summary>
     /// Called when one of the file management functions is called. It's a signal to flush the save
     /// data to disk.
@@ -403,7 +357,7 @@ public class OraclesEmulator : IDisposable
     {
         long cycleTimeout = 8000000L * timeout / 1000;
 
-        while (!AddressEquals(gb.Registers.PC, pointer))
+        while (!State.AddressEquals(gb.Registers.PC, pointer))
         {
             cycleTimeout -= (int)gb.Run();
 
@@ -455,21 +409,6 @@ public class OraclesEmulator : IDisposable
         gb.WriteMemory((ushort)(gb.Registers.SP + 1), (byte)(value >> 8));
     }
 
-    byte ReadByte(GbPointer pointer)
-    {
-        if (pointer.Addr >= 0xc000 && pointer.Addr < 0xd000)
-            return Wram[pointer.Addr - 0xc000];
-        else if (pointer.Addr >= 0xff80)
-            return Hram[pointer.Addr - 0xff80];
-        else
-            throw new EmulatorException($"ReadByte: Unimplemented read addr: {pointer}");
-    }
-
-    ushort ReadWord(GbPointer pointer)
-    {
-        return (ushort)(ReadByte(pointer) | (ReadByte(pointer + 1) << 8));
-    }
-
     /// <summary>
     /// Write a byte to an address. Differs from gb.WriteMemory in that it can write to arbitrary
     /// memory banks based on the pointer passed in.
@@ -493,24 +432,6 @@ public class OraclesEmulator : IDisposable
     {
         WriteByte(addr, (byte)(value & 0xff));
         WriteByte(addr + 1, (byte)(value >> 8));
-    }
-
-
-    /// <summary>
-    /// Make a best-effort attempt to determine what game is running. Ideally we would not rely on
-    /// this result for anything.
-    /// </summary>
-    Game DetermineGame()
-    {
-        var title = Encoding.ASCII.GetString(Rom.Slice(0x134, 9));
-
-        if (title == "ZELDA DIN")
-            return Game.Seasons;
-        else if (title == "ZELDA NAY")
-            return Game.Ages;
-        else
-            // They changed the title, this won't work =)
-            return Game.Ages;
     }
 }
 

@@ -8,9 +8,9 @@ public class EmulatorObject
     // ================================================================================
     // Constructors
     // ================================================================================
-    public EmulatorObject(OraclesEmulator emulator, ushort address)
+    public EmulatorObject(GameboyStateBase state, ushort address)
     {
-        this.emulator = emulator;
+        this.state = state;
         this.address = address;
 
         if (!(address >= 0xd000 && address < 0xe000 && (address % 0x40) == 0))
@@ -21,7 +21,7 @@ public class EmulatorObject
     // Variables
     // ================================================================================
 
-    private readonly OraclesEmulator emulator;
+    private readonly GameboyStateBase state;
 
     /// <summary>
     /// Start address of object memory, as a system bus address.
@@ -35,7 +35,7 @@ public class EmulatorObject
 
     public Span<byte> Memory
     {
-        get { return emulator.Wram.Slice(address - 0xc000, 0x40); }
+        get { return state.Wram.Slice(address - 0xc000, 0x40); }
     }
 
     public ref byte Enabled { get { return ref Memory[0]; } }

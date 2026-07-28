@@ -231,7 +231,9 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         /// </summary>
         void HandleObjectDrag()
         {
-            foreach (var obj in emu.GetObjects())
+            GameboySnapshot state = emu.LatestSnapshot;
+
+            foreach (var obj in state.GetObjects())
             {
                 FRect rect = (obj.GetRectangle() + new Vector2(0, 16));
 
@@ -261,7 +263,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
                     }
                 }
 
-                rect -= new Vector2(emu.CameraX, emu.CameraY);
+                rect -= new Vector2(state.CameraX, state.CameraY);
 
                 base.AddRect(rect * Scale, Color.DarkOrange, Scale);
             }
