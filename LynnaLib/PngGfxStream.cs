@@ -22,7 +22,13 @@ public class PngGfxStream : TrackedStream, IStream
         {
             Project.TransactionManager.BeginTransaction("Reload PNG file", merge: false, disallowUndo: true);
             this.state = LoadFile();
+
+            // No change in relation to the filesystem...
+            this.Modified = false;
+
+            // ...But from LynnaLab clients' perspective it has changed.
             InvokeModifiedEvent(StreamModifiedEventArgs.All(this));
+
             Project.TransactionManager.EndTransaction(false);
         };
     }
@@ -80,7 +86,12 @@ public class PngGfxStream : TrackedStream, IStream
 
     public override long Position { get; set; }
 
-    // TODO: Do something with this
+    /// <summary>
+    /// Tracks whether loaded data is (potentially) out of sync with the PNG file.
+    /// This is a little weird because PNG files are the only ones that we dynamically reload when
+    /// changes are detected on the filesystem. But they can get out of sync if we modify it within
+    /// LynnaLab.
+    /// </summary>
     public bool Modified { get; private set; }
 
     // ================================================================================
@@ -279,8 +290,6 @@ public class PngGfxStream : TrackedStream, IStream
         var properties = LoadProperties(Project, propertiesFilename);
 
         byte[] data = LoadFromPngData(pngFile.ReadAllBytes().ToArray(), properties);
-
-        this.Modified = true;
 
         return new()
         {
