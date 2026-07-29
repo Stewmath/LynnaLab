@@ -25,7 +25,8 @@ public interface IOverlayBoxUser
         Project project, // Can be null, only for recording undo/redo info
         IOverlayBoxUser user,
         SizedWidget canvas,
-        IList<OverlayBox> overlayBoxes)
+        IList<OverlayBox> overlayBoxes,
+        bool alwaysFullPrecision)
     {
         OverlayBox hoveringComponent = null;
         var mousePos = canvas.GetRelativeMousePos() / user.Scale;
@@ -123,7 +124,7 @@ public interface IOverlayBoxUser
         {
             var com = user.Selected;
 
-            if (ImGui.IsMouseDown(ImGuiMouseButton.Left))
+            if (com != null && ImGui.IsMouseDown(ImGuiMouseButton.Left))
             {
                 project?.BeginTransaction("Move " + com.GetTransactionIdentifier(), true);
 
@@ -140,7 +141,7 @@ public interface IOverlayBoxUser
                     com.Y = (int)Math.Round(mousePos.Y);
                 }
                 // Ctrl pressed: No snapping
-                else if (ImGui.IsKeyDown(ImGuiKey.ModCtrl))
+                else if (alwaysFullPrecision || ImGui.IsKeyDown(ImGuiKey.ModCtrl))
                 {
                     com.X = (int)Math.Round(mousePos.X + user.DraggingComponentOffset.X);
                     com.Y = (int)Math.Round(mousePos.Y + user.DraggingComponentOffset.Y);

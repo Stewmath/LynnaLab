@@ -229,7 +229,7 @@ class ScreenWidget : SizedWidget, IDisposable
         lock (emu)
         {
             UpdateOverlayBoxes();
-            IOverlayBoxUser.UpdateOverlayBoxes(null, overlayBoxUser, this, overlayBoxes);
+            IOverlayBoxUser.UpdateOverlayBoxes(null, overlayBoxUser, this, overlayBoxes, true);
         }
     }
 
