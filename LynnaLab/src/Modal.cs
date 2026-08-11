@@ -289,6 +289,11 @@ public static class Modal
         });
     }
 
+    public static void DisplayMessageModal(string message)
+    {
+        DisplayMessageModal("Generic Message", message);
+    }
+
     /// <summary>
     /// Display a message for a certain number of seconds. Can left click anywhere to close.
     /// </summary>
@@ -303,6 +308,30 @@ public static class Modal
                 return true;
 
             return watch.Elapsed.Seconds >= seconds;
+        });
+    }
+
+    /// <summary>
+    /// Open a yes/no modal which calls "callback" when an option is chosen.
+    /// </summary>
+    public static void YesNoModal(string title, string message, Action<bool> callback)
+    {
+        OpenModal(title, () =>
+        {
+            ImGui.Text(message);
+
+            if (ImGui.Button("Yes"))
+            {
+                callback(true);
+                return true;
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("No"))
+            {
+                callback(false);
+                return true;
+            }
+            return false;
         });
     }
 

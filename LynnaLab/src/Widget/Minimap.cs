@@ -5,7 +5,8 @@ public class Minimap : TileGrid
     // ================================================================================
     // Constructors
     // ================================================================================
-    public Minimap(ProjectWorkspace workspace)
+    public Minimap(ProjectWorkspace workspace,
+                   bool doPostRendering)
         : base("Minimap")
     {
         this.Workspace = workspace;
@@ -16,49 +17,55 @@ public class Minimap : TileGrid
         base.MaxScale = 1.0f;
         base.RequestedScale = 0.2f;
 
-        base.AfterRenderTileGrid += (_, _) =>
+        if (doPostRendering)
         {
-            // Darken rooms which are already used in a dungeon, or rooms considered "duplicates"
-            // (not the main version of the room). These both have the effect of discouraging
-            // interacting with these rooms as there is a more canonical version of it somewhere.
-            if (Workspace.DarkenDuplicateRooms && !(floorPlan is Dungeon.Floor))
+            base.AfterRenderTileGrid += (_, _) =>
             {
-                for (int tile = 0; tile < MaxIndex; tile++)
+                // Darken rooms which are already used in a dungeon, or rooms considered "duplicates"
+                // (not the main version of the room). These both have the effect of discouraging
+                // interacting with these rooms as there is a more canonical version of it somewhere.
+                if (Workspace.DarkenDuplicateRooms && !(floorPlan is Dungeon.Floor))
                 {
-                    int x = tile % Width, y = tile / Width;
-                    Room room = floorPlan.GetRoom(x, y);
-                    if (Project.RoomUsedInDungeon(room.Index) || room.Index != room.ExpectedIndex)
+                    for (int tile = 0; tile < MaxIndex; tile++)
                     {
-                        var rect = base.TileRect(tile);
-                        base.AddRectFilled(rect, Color.FromRgba(0, 0, 0, 0xa0));
+                        int x = tile % Width, y = tile / Width;
+                        Room room = floorPlan.GetRoom(x, y);
+                        if (Project.RoomUsedInDungeon(room.Index) || room.Index != room.ExpectedIndex)
+                        {
+                            var rect = base.TileRect(tile);
+                            base.AddRectFilled(rect, Color.FromRgba(0, 0, 0, 0xa0));
+                        }
                     }
                 }
-            }
 
-            // Draw cursors for remote instances
-            foreach (var remoteState in Workspace.RemoteStates.Values)
-            {
-                CursorPosition cursor = remoteState.CursorPosition;
-                if (FloorPlan.GetRoomPosition(Project.GetRoom(cursor.room), out int x, out int y))
+                // Draw cursors for remote instances
+                foreach (var remoteState in Workspace.RemoteStates.Values)
                 {
-                    // Rectangle around whole room
-                    FRect rect = base.TileRect(x, y);
-                    base.AddRect(rect, remoteState.Color, ImGuiX.Unit(base.RectThickness));
-
-                    float tileSize = 16 * base.Scale;
-
-                    // Draw the cursor within the room
-                    if (cursor.tileStart != -1)
+                    CursorPosition cursor = remoteState.CursorPosition;
+                    if (FloorPlan.GetRoomPosition(Project.GetRoom(cursor.room), out int x, out int y))
                     {
-                        float p1x = rect.X + (cursor.tileStart % floorPlan.RoomWidth) * tileSize;
-                        float p1y = rect.Y + (cursor.tileStart / floorPlan.RoomWidth) * tileSize;
-                        float p2x = rect.X + (cursor.tileEnd % floorPlan.RoomWidth) * tileSize + tileSize;
-                        float p2y = rect.Y + (cursor.tileEnd / floorPlan.RoomWidth) * tileSize + tileSize;
-                        base.AddRect(new FRect(p1x, p1y, p2x - p1x, p2y - p1y), remoteState.Color, base.RectThickness * base.Scale);
+                        // Rectangle around whole room
+                        FRect rect = base.TileRect(x, y);
+                        base.AddRect(rect, remoteState.Color, ImGuiX.Unit(base.RectThickness));
+
+                        float tileSize = 16 * base.Scale;
+
+                        // Draw the cursor within the room
+                        if (cursor.tileStart != -1)
+                        {
+                            float p1x = rect.X + (cursor.tileStart % floorPlan.RoomWidth) * tileSize;
+                            float p1y = rect.Y + (cursor.tileStart / floorPlan.RoomWidth) * tileSize;
+                            float p2x = rect.X + (cursor.tileEnd % floorPlan.RoomWidth) * tileSize + tileSize;
+                            float p2y = rect.Y + (cursor.tileEnd / floorPlan.RoomWidth) * tileSize + tileSize;
+                            base.AddRect(
+                                new FRect(p1x, p1y, p2x - p1x, p2y - p1y),
+                                remoteState.Color,
+                                base.RectThickness * base.Scale);
+                        }
                     }
                 }
-            }
-        };
+            };
+        }
 
         // Show coordinate tooltip
         base.OnHover = (int tile) =>
@@ -133,7 +140,7 @@ public class Minimap : TileGrid
     }
 
     /// <summary>
-    /// Sets the map to display
+    /// Sets the map to display. Must call this once before calling Render().
     /// </summary>
     public void SetFloorPlan(FloorPlan plan)
     {

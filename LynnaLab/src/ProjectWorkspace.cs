@@ -55,6 +55,9 @@ public class ProjectWorkspace
         scratchpad = new ScratchPad(this, "Scratchpad", roomEditor.TilesetViewer, Brush);
         transactionDialog = new TransactionDialog(this, "Transaction History");
         networkDialog = new NetworkDialog(this, "Networking");
+        roomWiperDialog = new RoomWiper(this);
+        roomWiperDialog.Active = true;
+        roomWiperDialog.SetFloorPlan(Project.GetWorldMap(0, Season.Summer));
 
         frames.AddRange(new Frame[] {
                 roomEditor,
@@ -66,6 +69,7 @@ public class ProjectWorkspace
                 documentationDialog,
                 transactionDialog,
                 networkDialog,
+                roomWiperDialog,
             });
         frames.Sort((f1, f2) => f1.Name.CompareTo(f2.Name));
 
@@ -106,6 +110,7 @@ public class ProjectWorkspace
     DocumentationDialog documentationDialog;
     TransactionDialog transactionDialog;
     NetworkDialog networkDialog;
+    RoomWiper roomWiperDialog;
 
     List<Frame> frames = new List<Frame>();
     bool showImGuiDemoWindow;

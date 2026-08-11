@@ -105,6 +105,12 @@ public class RoomLayout
         Project.EndTransaction();
     }
 
+    public void Wipe()
+    {
+        byte[] data = new byte[tileDataFile.Length];
+        tileDataFile.WriteAllBytes(data);
+    }
+
     /// <summary>
     /// Tied to the Room's ValueReference for the tileset assignment. This means that this
     /// should be invoked in all cases the tileset changes, including undo/redo.

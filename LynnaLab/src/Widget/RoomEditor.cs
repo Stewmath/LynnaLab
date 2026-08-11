@@ -42,8 +42,8 @@ public class RoomEditor : Frame
                 Brush.SetTiles(tilesetViewer, args.RectArray((x, y) => x + y * 16));
             });
 
-        overworldMinimap = new Minimap(this.Workspace);
-        dungeonMinimap = new Minimap(this.Workspace);
+        overworldMinimap = new Minimap(this.Workspace, doPostRendering: true);
+        dungeonMinimap = new Minimap(this.Workspace, doPostRendering: true);
         objectGroupEditor = new ObjectGroupEditor(this, "Object Group Editor", Room.GetObjectGroup());
         warpEditor = new WarpEditor(this, "Warp Editor", Room.GetWarpGroup());
 

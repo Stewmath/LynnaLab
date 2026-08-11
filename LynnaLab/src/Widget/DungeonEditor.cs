@@ -11,7 +11,7 @@ public class DungeonEditor : Frame
         this.Workspace = workspace;
         base.DefaultSize = new Vector2(800, 500);
 
-        minimap = new Minimap(Workspace);
+        minimap = new Minimap(Workspace, doPostRendering: true);
         SetDungeon(Project.GetDungeon(0));
 
         dungeonEW.Bind<DungeonChangedEventArgs>("DungeonChangedEvent", (_, args) =>

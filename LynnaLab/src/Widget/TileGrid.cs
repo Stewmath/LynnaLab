@@ -1230,6 +1230,9 @@ public struct TileGridEventArgs
     public int SelectedWidth { get { return bottomRight.X - topLeft.X + 1; } }
     public int SelectedHeight { get { return bottomRight.Y - topLeft.Y + 1; } }
 
+    // For GridAction.SelectRange
+    public PRect SelectedRect { get { return PRect.FromPoints(topLeft, bottomRight); } }
+
     public void Foreach(System.Action<int, int> action)
     {
         if (gridAction == GridAction.SelectRangeCallback)
