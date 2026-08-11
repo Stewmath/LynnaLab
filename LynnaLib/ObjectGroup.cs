@@ -441,6 +441,36 @@ public class ObjectGroup : TrackedProjectData
         Project.EndTransaction();
     }
 
+    /// <summary>
+    /// Delete all objects in this group and in all child groups. When called on the main
+    /// ObjectGroup for a room, all objects should be gone after this is called.
+    ///
+    /// For shared object groups, this does not delete the objects, just detaches them from the
+    /// room.
+    /// </summary>
+    public void Wipe()
+    {
+        Project.BeginTransaction($"Wipe Object Group {Identifier}");
+
+        while (GetNumObjects() != 0)
+            RemoveObject(0);
+
+        var toRemove = Children.Where((c) => c.Instance.Type == ObjectGroupType.Shared).ToList();
+        foreach (var group in toRemove)
+        {
+            RemoveGroup(group);
+        }
+
+        foreach (ObjectGroup g in Children)
+        {
+            if (g == this)
+                continue;
+            g.Wipe();
+        }
+
+        Project.EndTransaction();
+    }
+
 
     // ================================================================================
     // Internal methods

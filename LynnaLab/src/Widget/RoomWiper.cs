@@ -100,6 +100,9 @@ public class RoomWiper : Frame
 
             if (wipeLayout)
                 layout.Wipe();
+
+            if (wipeObjects)
+                layout.Room.GetObjectGroup().Wipe();
         });
 
         Workspace.Project.EndTransaction();

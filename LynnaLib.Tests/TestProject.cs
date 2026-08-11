@@ -77,6 +77,38 @@ public class TestProject
         }
     }
 
+    [Fact]
+    public static void TestObjectWipe()
+    {
+        Project p = LoadProject(Game.Seasons);
+
+        // Room contains shared object data, good for testing an edge case.
+        var r = p.GetRoom(0x542);
+        ObjectGroup group = r.GetObjectGroup();
+        Assert.Equal(ObjectGroupType.Main, group.GetGroupType());
+        Assert.Equal(5, group.GetAllGroups().Count());
+        Assert.Equal(4, group.GetObjects().Count);
+
+        group.Wipe();
+
+        Assert.Equal(4, group.GetAllGroups().Count());
+        Assert.Equal(0, group.GetObjects().Count);
+        foreach (ObjectGroup g in group.GetAllGroups())
+            Assert.Equal(0, g.GetObjects().Count);
+
+        // Ensure that the respawning bush shared object data exists in another room still
+        GameObject? obj = p.GetRoom(0x46a).GetObjectGroup().GetAllGroups().Where(
+            (g) => g.GetGroupType() == ObjectGroupType.Shared).First().GetObject(0).GetGameObject();
+        Assert.IsType<InteractionObject>(obj);
+        Assert.Equal(0xc7, obj.ID);
+
+        p.TransactionManager.Undo();
+
+        Assert.Equal(ObjectGroupType.Main, group.GetGroupType());
+        Assert.Equal(5, group.GetAllGroups().Count());
+        Assert.Equal(4, group.GetObjects().Count);
+    }
+
     // ================================================================================
     // Static methods
     // ================================================================================
