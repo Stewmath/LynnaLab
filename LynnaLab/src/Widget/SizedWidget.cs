@@ -84,6 +84,28 @@ public abstract class SizedWidget
             color.ToUInt());
     }
 
+    public unsafe void AddPolyline(Polygon polygon, Color color, float thickness)
+    {
+        var coords = (polygon + origin).Coordinates.ToArray();
+        fixed (Vector2* v = coords)
+        {
+            drawList.AddPolyline(ref *v,
+                polygon.Coordinates.Count,
+                color.ToUInt(),
+                ImDrawFlags.Closed,
+                thickness);
+        }
+    }
+
+    public unsafe void AddConcavePolyFilled(Polygon polygon, Color color)
+    {
+        var coords = (polygon + origin).Coordinates.ToArray();
+        fixed (Vector2* v = coords)
+        {
+            drawList.AddConcavePolyFilled(ref *v, polygon.Coordinates.Count, color.ToUInt());
+        }
+    }
+
     // ================================================================================
     // Variables
     // ================================================================================

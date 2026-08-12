@@ -135,6 +135,11 @@ public struct Color
         return (uint)(R | (G << 8) | (B << 16) | (A << 24));
     }
 
+    public Color WithAlpha(int a)
+    {
+        return Color.FromRgba(R, G, B, a);
+    }
+
     public static implicit operator PixelFormats.Rgba32(Color c)
     {
         return new PixelFormats.Rgba32((Vector4)c);

@@ -18,6 +18,17 @@ public class RoomWiper : Frame
             MouseButton.Any, MouseModifier.Any, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
             (sender, args) => { selectedRect = args.SelectedRect; }
         );
+
+        minimap.AfterRenderTileGrid += (_, _) =>
+        {
+            if (gridRegions == null)
+                return;
+            foreach (var r in gridRegions)
+            {
+                Polygon p = r.Polygon * new Vector2(minimap.TileWidth, minimap.TileHeight) * minimap.Scale;
+                minimap.AddConcavePolyFilled(p, r.Color.WithAlpha(0x80));
+            }
+        };
     }
 
     // ================================================================================
@@ -29,6 +40,8 @@ public class RoomWiper : Frame
 
     Minimap minimap;
     PRect? selectedRect;
+
+    IReadOnlyList<GridRegion>? gridRegions;
 
     // ================================================================================
     // Properties
@@ -71,13 +84,17 @@ public class RoomWiper : Frame
         if (minimap.TileWidth == 0)
             ImGui.Text("No map selected?");
         else
+        {
             minimap.Render();
+        }
         ImGui.EndChild();
     }
 
     public void SetFloorPlan(FloorPlan plan)
     {
         minimap.SetFloorPlan(plan);
+
+        gridRegions = new GridRegionGenerator(minimap, (i) => plan.GetRoom(i % plan.MapWidth, i / plan.MapWidth).GetMusicID()).Regions;
     }
 
     // ================================================================================
