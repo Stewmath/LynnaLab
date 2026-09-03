@@ -54,7 +54,7 @@ public class GridRegion
         public Vector2 End { get; }
     }
 
-    // TODO: How does this handle "islands" in the polygon?
+    // TODO: How does this handle "islands" in the polygon? Need multiple polygons?
     static Polygon GeneratePolygon(IEnumerable<Point> points)
     {
         var pointSet = new HashSet<Point>(points);

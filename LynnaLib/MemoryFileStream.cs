@@ -43,6 +43,8 @@ public class MemoryFileStream : TrackedStream
         }
     }
 
+    public IReadOnlyList<byte> DataReadOnly { get { return state.data.AsReadOnly(); } }
+
     private byte[] Data { get { return state.data; } }
 
     // ================================================================================

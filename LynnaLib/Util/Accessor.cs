@@ -23,6 +23,12 @@ public class Accessor<T>
         _getter = expression.Compile();
     }
 
+    public Accessor(Func<T> getter, Action<T> setter)
+    {
+        this._getter = getter;
+        this._setter = setter;
+    }
+
     public void Set(T value) => _setter(value);
     public T Get() => _getter();
 

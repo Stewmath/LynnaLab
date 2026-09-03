@@ -35,6 +35,23 @@ public class RoomWiper : Frame
     // Variables
     // ================================================================================
 
+    static readonly string[] modeOptionStrings = {
+        "Wipe Data",
+        "Tileset",
+        "Music",
+        "Room Pack",
+    };
+
+    enum ModeOption
+    {
+        Wipe,
+        Tileset,
+        Music,
+        RoomPack,
+        COUNT
+    }
+
+    ModeOption selectedMode;
     bool wipeLayout;
     bool wipeObjects;
 
@@ -56,24 +73,44 @@ public class RoomWiper : Frame
     public override void Render()
     {
         ImGui.BeginChild("Checkboxes", ImGuiX.Unit(200.0f, 0.0f));
-        ImGui.Checkbox("Layout", ref wipeLayout);
-        ImGui.Checkbox("Objects", ref wipeObjects);
 
-        if (ImGui.Button("Clear Data"))
+        ImGui.Text("Operation Mode:");
+        bool changedMode = ImGuiX.Combo(
+            "##ModeCombo",
+            new(() => (int)selectedMode, (s) => selectedMode = (ModeOption)s),
+            modeOptionStrings);
+
+        if (changedMode)
+            UpdateGridRegions();
+
+        ImGui.Separator();
+        ImGui.Separator();
+
+        if (selectedMode == ModeOption.Wipe)
         {
-            if (selectedRect is null)
-                Modal.DisplayMessageModal("Must select a region!");
-            else
+            ImGui.Checkbox("Layout", ref wipeLayout);
+            ImGui.Checkbox("Objects", ref wipeObjects);
+
+            if (ImGui.Button("Clear Data"))
             {
-                Modal.YesNoModal("MapClearConfirm", "Really clear data in this region???",
-                    (clickedYes) =>
-                    {
-                        if (clickedYes)
+                if (selectedRect is null)
+                    Modal.DisplayMessageModal("Must select a region!");
+                else
+                {
+                    Modal.YesNoModal("MapClearConfirm", "Really clear data in this region???",
+                        (clickedYes) =>
                         {
-                            WipeRect();
-                        }
-                    });
+                            if (clickedYes)
+                            {
+                                WipeRect();
+                            }
+                        });
+                }
             }
+        }
+        else // Not ModeOption.Wipe
+        {
+            
         }
 
         ImGui.EndChild();
@@ -93,8 +130,6 @@ public class RoomWiper : Frame
     public void SetFloorPlan(FloorPlan plan)
     {
         minimap.SetFloorPlan(plan);
-
-        gridRegions = new GridRegionGenerator(minimap, (i) => plan.GetRoom(i % plan.MapWidth, i / plan.MapWidth).GetMusicID()).Regions;
     }
 
     // ================================================================================
@@ -123,5 +158,31 @@ public class RoomWiper : Frame
         });
 
         Workspace.Project.EndTransaction();
+    }
+
+    void UpdateGridRegions()
+    {
+        var plan = minimap.FloorPlan;
+        Func<int, int, int> regionGetter;
+
+        switch (selectedMode)
+        {
+            case ModeOption.Wipe:
+                gridRegions = null;
+                return;
+            case ModeOption.Tileset:
+                regionGetter = (x, y) => plan.GetRoom(x, y).TilesetIndex;
+                break;
+            case ModeOption.Music:
+                regionGetter = (x, y) => plan.GetRoom(x, y).GetMusicID();
+                break;
+            case ModeOption.RoomPack:
+                regionGetter = (x, y) => plan.GetRoom(x, y).RoomPack;
+                break;
+            default:
+                throw new Exception("Internal error");
+        }
+
+        gridRegions = new GridRegionGenerator(minimap, (i) => regionGetter(i % plan.MapWidth, i / plan.MapWidth)).Regions;
     }
 }

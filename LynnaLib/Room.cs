@@ -215,6 +215,16 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
         }
     }
 
+    public byte RoomPack
+    {
+        get { return GetRoomPackFile()!.DataReadOnly[Index & 0xff]; }
+        set
+        {
+            GetRoomPackFile()!.Seek(Index & 0xff, SeekOrigin.Begin);
+            GetRoomPackFile()!.WriteByte(value);
+        }
+    }
+
     public byte DungeonFlags
     {
         get

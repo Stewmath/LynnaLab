@@ -192,6 +192,32 @@ public static class ImGuiX
     }
 
     /// <summary>
+    /// Alternate version of ImGui.Combo() which takes an Accessor<int>.
+    /// </summary>
+    public static bool Combo(string name, Accessor<int> selection, IList<string> options)
+    {
+        bool retval = false;
+        int oldSelection = selection.Get();
+        if (ImGui.BeginCombo(name, options[oldSelection]))
+        {
+            for (int i = 0; i < options.Count; i++)
+            {
+                bool selected = oldSelection == i;
+                string v = options[i];
+                if (ImGui.Selectable(v, selected))
+                {
+                    selection.Set(i);
+                    retval = true;
+                }
+                if (selected)
+                    ImGui.SetItemDefaultFocus();
+            }
+            ImGui.EndCombo();
+        }
+        return retval;
+    }
+
+    /// <summary>
     /// Alternate version of ImGui.Combo() which takes the name of the selected value, rather than
     /// just an index.
     /// </summary>
