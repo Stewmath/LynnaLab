@@ -19,6 +19,9 @@ public static class ImGuiX
     static Stack<float> alphaStack = new Stack<float>();
     static Stack<Interpolation> interpolationStack = new Stack<Interpolation>();
 
+    // Target object to use in ImDraw callbacks
+    static IntPtr renderCallbackTarget;
+
     // ================================================================================
     // Properties
     // ================================================================================
@@ -132,7 +135,12 @@ public static class ImGuiX
     public static void PushAlpha(float alpha)
     {
         alphaStack.Push(alpha);
-        AddCallback<float>(ImGuiXCallback.SetAlpha, alpha);
+        AddCallback(new RenderCallbackData
+        {
+            Target = renderCallbackTarget,
+            Type = ImGuiXCallback.SetAlpha,
+            Alpha = alpha,
+        });
     }
 
     public static void PopAlpha()
@@ -141,7 +149,12 @@ public static class ImGuiX
         float alpha = 1.0f;
         if (alphaStack.Count != 0)
             alpha = alphaStack.Peek();
-        AddCallback<float>(ImGuiXCallback.SetAlpha, alpha);
+        AddCallback(new RenderCallbackData
+        {
+            Target = renderCallbackTarget,
+            Type = ImGuiXCallback.SetAlpha,
+            Alpha = alpha,
+        });
     }
 
     /// <summary>
@@ -150,7 +163,12 @@ public static class ImGuiX
     public static void PushInterpolation(Interpolation mode)
     {
         interpolationStack.Push(mode);
-        AddCallback<int>(ImGuiXCallback.SetInterpolation, (int)mode);
+        AddCallback(new RenderCallbackData
+        {
+            Target = renderCallbackTarget,
+            Type = ImGuiXCallback.SetInterpolation,
+            Interpolation = (int)mode,
+        });
     }
 
     public static void PopInterpolation()
@@ -159,7 +177,12 @@ public static class ImGuiX
         Interpolation mode = Interpolation.Nearest; // Default interpolation mode
         if (interpolationStack.Count != 0)
             mode = interpolationStack.Peek();
-        AddCallback<int>(ImGuiXCallback.SetInterpolation, (int)mode);
+        AddCallback(new RenderCallbackData
+        {
+            Target = renderCallbackTarget,
+            Type = ImGuiXCallback.SetInterpolation,
+            Interpolation = (int)mode,
+        });
     }
 
     // ================================================================================
@@ -274,12 +297,34 @@ public static class ImGuiX
         return Marshal.PtrToStructure<T>(ptr);
     }
 
-    public static unsafe void AddCallback<T>(ImGuiXCallback callbackType, T payload) where T : unmanaged
+    /// <summary>
+    /// Register GCHandle for main ImGuiController instance
+    /// </summary>
+    public static void SetRenderCallbackTarget(IntPtr target)
     {
-        IntPtr ptr = Marshal.AllocHGlobal(sizeof(T));
-        Marshal.StructureToPtr(payload, ptr, false);
+        renderCallbackTarget = target;
+    }
+
+    /// <summary>
+    /// Data passed to the render callback.
+    /// </summary>
+    public struct RenderCallbackData
+    {
+        public IntPtr Target;
+        public ImGuiXCallback Type;
+        public float Alpha;
+        public int Interpolation;
+    }
+
+    /// <summary>
+    /// Queues a render callback on the current window's draw list.
+    /// </summary>
+    static unsafe void AddCallback(RenderCallbackData data)
+    {
+        IntPtr ptr = Marshal.AllocHGlobal(sizeof(RenderCallbackData));
+        *(RenderCallbackData*)ptr = data;
         ImDrawListPtr drawList = ImGui.GetWindowDrawList();
-        drawList.AddCallback((nint)callbackType, ptr);
+        drawList.AddCallback(&ImGuiController.RenderCallback, (void*)ptr);
     }
 
     /// <summary>

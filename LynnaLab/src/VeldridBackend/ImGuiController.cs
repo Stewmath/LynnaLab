@@ -51,6 +51,10 @@ public class ImGuiController : IDisposable
 
     IntPtr fontAtlasID = (IntPtr)1;
 
+    // A GCHandle to this controller, handed to ImGuiX so that render callbacks can dispatch back
+    // into instance methods (through the reference stored in their data argument).
+    GCHandle selfHandle;
+
     // Texture trackers
     readonly Dictionary<VeldridTextureBase, ResourceSetInfo> setsByTexture = new ();
     readonly Dictionary<IntPtr, ResourceSetInfo> viewsById = new();
@@ -106,6 +110,10 @@ public class ImGuiController : IDisposable
 
         CreateDeviceResources(outputDescription);
         SetPerFrameImGuiData(1f / 60f);
+
+        // Register ourselves as the target that render callbacks dispatch into.
+        selfHandle = GCHandle.Alloc(this);
+        LynnaLab.ImGuiX.SetRenderCallbackTarget(GCHandle.ToIntPtr(selfHandle));
     }
 
     public VeldridBackend Backend { get { return backend; } }
@@ -620,21 +628,8 @@ public class ImGuiController : IDisposable
                     // use UpdateBuffer in the middle of a render pass?
                     if (gd.BackendType != GraphicsBackend.Vulkan)
                     {
-                        switch ((ImGuiXCallback)(nint)pcmd.UserCallback)
-                        {
-                            case ImGuiXCallback.SetAlpha:
-                                float alpha = Marshal.PtrToStructure<float>(userCallbackData);
-                                textureGlobalsStruct.alpha = alpha;
-                                cl.UpdateBuffer(textureGlobalsBuffer, 0, textureGlobalsStruct);
-                                break;
-                            case ImGuiXCallback.SetInterpolation:
-                                int interp = Marshal.PtrToStructure<int>(userCallbackData);
-                                textureGlobalsStruct.InterpolationMode = interp;
-                                cl.UpdateBuffer(textureGlobalsBuffer, 0, textureGlobalsStruct);
-                                break;
-                            default:
-                                throw new NotImplementedException();
-                        }
+                        var callback = (delegate*<ImDrawList*, ImDrawCmd*, void>)pcmd.UserCallback;
+                        callback((ImDrawList*)cmd_list, &pcmd);
                     }
 
                     Marshal.FreeHGlobal(userCallbackData);
@@ -673,6 +668,29 @@ public class ImGuiController : IDisposable
     }
 
     /// <summary>
+    /// Callback function used by all ImGui render callbacks. These callbacks are invoked from
+    /// RenderImDrawData above.
+    /// </summary>
+    public static unsafe void RenderCallback(ImDrawList* parentList, ImDrawCmd* cmd)
+    {
+        var data = *(LynnaLab.ImGuiX.RenderCallbackData*)cmd->UserCallbackData;
+        var controller = (ImGuiController)GCHandle.FromIntPtr(data.Target).Target;
+        switch (data.Type)
+        {
+            case ImGuiXCallback.SetAlpha:
+                controller.textureGlobalsStruct.alpha = data.Alpha;
+                controller.cl.UpdateBuffer(controller.textureGlobalsBuffer, 0, controller.textureGlobalsStruct);
+                break;
+            case ImGuiXCallback.SetInterpolation:
+                controller.textureGlobalsStruct.InterpolationMode = data.Interpolation;
+                controller.cl.UpdateBuffer(controller.textureGlobalsBuffer, 0, controller.textureGlobalsStruct);
+                break;
+            default:
+                throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
     /// Frees all graphics resources used by the renderer.
     /// </summary>
     public void Dispose()
@@ -692,6 +710,9 @@ public class ImGuiController : IDisposable
         {
             resource.Dispose();
         }
+
+        if (selfHandle.IsAllocated)
+            selfHandle.Free();
     }
 
     void SetupRenderTilesetPipeline(OutputDescription outputDescription)
