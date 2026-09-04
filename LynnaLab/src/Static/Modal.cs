@@ -60,7 +60,7 @@ public static class Modal
 
             if (ImGui.BeginPopupModal(modal.Name, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar))
             {
-                ImGui.PushFont(Top.InfoFont);
+                ImGui.PushFont(Top.InfoFont, 0.0f);
                 if (modal.RenderFunc())
                 {
                     modalQueue.Dequeue();
@@ -98,7 +98,7 @@ public static class Modal
             // Display message boxes (if there are multiple, newer ones are higher up)
             if (ImGui.Begin($"{message.Title}##MessageBox {message.ID}", ref enabled, flags))
             {
-                ImGui.PushFont(Top.InfoFont);
+                ImGui.PushFont(Top.InfoFont, 0.0f);
 
                 ImGui.Text(message.Message);
 

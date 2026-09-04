@@ -208,7 +208,7 @@ public static class Top
     public static void Render(float deltaTime)
     {
         ImGui.NewFrame();
-        ImGui.PushFont(MenuFont);
+        ImGui.PushFont(MenuFont, 0.0f);
 
         Modal.RenderModalsAndMessages();
 
@@ -334,7 +334,6 @@ public static class Top
         }
 
         ImGuiX.UpdateStyle();
-        Backend.RecreateFontTexture();
     }
 
     public static void CheckAvailableFonts()

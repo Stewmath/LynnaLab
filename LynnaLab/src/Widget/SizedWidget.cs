@@ -72,8 +72,8 @@ public abstract class SizedWidget
             origin + new Vector2(rect.X + rect.Width, rect.Y + rect.Height),
             color.ToUInt(),
             0,
-            0,
-            thickness);
+            thickness,
+            0);
     }
 
     public void AddRectFilled(FRect rect, Color color)
@@ -97,8 +97,8 @@ public abstract class SizedWidget
             drawList.AddPolyline(ref *v,
                 polygon.Coordinates.Count,
                 color.ToUInt(),
-                ImDrawFlags.Closed,
-                thickness);
+                thickness,
+                ImDrawFlags.Closed);
         }
     }
 

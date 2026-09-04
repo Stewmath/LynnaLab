@@ -65,7 +65,7 @@ public abstract class VeldridTextureBase : IDisposable
     /// <summary>
     /// Returns an image binding usable with ImGui.Image().
     /// </summary>
-    public IntPtr GetBinding()
+    public ImTextureRef GetBinding()
     {
         return controller.GetOrCreateImGuiBinding(this);
     }

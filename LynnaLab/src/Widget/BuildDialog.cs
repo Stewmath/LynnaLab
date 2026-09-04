@@ -47,7 +47,7 @@ public class BuildDialog : Frame
 
     public override void Render()
     {
-        ImGui.PushFont(Top.InfoFont);
+        ImGui.PushFont(Top.InfoFont, 0.0f);
         ImGui.TextWrapped("Building oracles-disasm. The first time will take several minutes.");
         ImGui.PopFont();
 

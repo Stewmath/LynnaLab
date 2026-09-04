@@ -304,7 +304,7 @@ public class ProjectWorkspace
 
         if (showImGuiDemoWindow)
         {
-            ImGui.PushFont(Top.InfoFont);
+            ImGui.PushFont(Top.InfoFont, 0.0f);
             ImGui.ShowDemoWindow(ref showImGuiDemoWindow);
             ImGui.PopFont();
         }
@@ -313,9 +313,9 @@ public class ProjectWorkspace
             ToggleQuickstart(!QuickstartData.Enabled);
         if (ImGui.IsKeyPressed(ImGuiKey.F5))
             RunGame();
-        if (ImGui.IsKeyChordPressed(ImGuiKey.ModCtrl | ImGuiKey.Z))
+        if (ImGui.IsKeyChordPressed((int)(ImGuiKey.ModCtrl | ImGuiKey.Z)))
             TryUndo();
-        if (ImGui.IsKeyChordPressed(ImGuiKey.ModCtrl | ImGuiKey.ModShift | ImGuiKey.Z))
+        if (ImGui.IsKeyChordPressed((int)(ImGuiKey.ModCtrl | ImGuiKey.ModShift | ImGuiKey.Z)))
             TryRedo();
 
         // Rendering frames should be the last thing done. In particular, undo/redo operations

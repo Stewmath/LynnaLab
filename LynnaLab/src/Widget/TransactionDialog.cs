@@ -31,7 +31,7 @@ public class TransactionDialog : Frame
 
     public override void Render()
     {
-        ImGui.PushFont(Top.InfoFont);
+        ImGui.PushFont(Top.InfoFont, 0.0f);
 
         if (TransactionManager.constructingTransaction.Empty)
         {

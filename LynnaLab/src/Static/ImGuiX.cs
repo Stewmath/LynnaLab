@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using VeldridBackend;
 
 namespace LynnaLab;
 
@@ -185,10 +186,10 @@ public static class ImGuiX
     public static unsafe bool BeginTabItem(string label, ImGuiTabItemFlags flags)
     {
         byte* native_label = (byte*)Marshal.StringToCoTaskMemUTF8(label);
-        byte ret;
-        ret = ImGuiNative.igBeginTabItem(native_label, (byte*)0, flags);
+        bool ret;
+        ret = ImGui.BeginTabItem(native_label, (bool*)0, flags);
         Marshal.FreeCoTaskMem((nint)native_label);
-        return ret != 0;
+        return ret;
     }
 
     /// <summary>
@@ -265,7 +266,7 @@ public static class ImGuiX
     public static unsafe T? AcceptDragDropPayload<T>(string type) where T : unmanaged
     {
         ImGuiPayloadPtr payload = ImGui.AcceptDragDropPayload(type);
-        if (payload.NativePtr == null)
+        if (payload.IsNull)
             return null;
         Debug.Assert(payload.DataSize == sizeof(T));
 
@@ -385,7 +386,7 @@ public static class ImGuiX
     /// </summary>
     public static bool MenuItemCheckbox(string name, ref bool value)
     {
-        return ImGui.MenuItem(name, null, ref value);
+        return ImGui.MenuItem(name, (string)null, ref value);
     }
 
     /// <summary>
@@ -394,7 +395,7 @@ public static class ImGuiX
     public static void MenuItemCheckbox(string name, Accessor<bool> accessor, Action<bool> onChanged = null)
     {
         bool value = accessor.Get();
-        bool changed = ImGui.MenuItem(name, null, ref value);
+        bool changed = ImGui.MenuItem(name, (string)null, ref value);
         if (changed)
         {
             accessor.Set(value);
@@ -408,7 +409,7 @@ public static class ImGuiX
     public static void MenuItemCheckbox(string name, bool initial, Action<bool> onChanged)
     {
         bool value = initial;
-        bool changed = ImGui.MenuItem(name, null, ref value);
+        bool changed = ImGui.MenuItem(name, (string)null, ref value);
         if (changed)
             onChanged(value);
     }
@@ -448,7 +449,7 @@ public static class ImGuiX
     /// </summary>
     public static void Tooltip(string text)
     {
-        ImGui.PushFont(Top.InfoFont);
+        ImGui.PushFont(Top.InfoFont, 0.0f);
 
         var textSize = ImGui.CalcTextSize(text);
 
@@ -512,7 +513,7 @@ public static class ImGuiX
     /// <summary>
     /// A button which stays pressed down. Imitates the style of builtin ImGui buttons as closely as possible.
     /// </summary>
-    public static bool ToggleImageButton(string name, nint textureID, Vector2 size, ref bool toggled)
+    public static bool ToggleImageButton(string name, ImTextureRef textureRef, Vector2 size, ref bool toggled)
     {
         // ImageButtons add FramePadding * 2 to size, so we do that too
         Vector2 framePadding = ImGui.GetStyle().FramePadding;
@@ -541,15 +542,15 @@ public static class ImGuiX
         ImGui.GetWindowDrawList().AddRectFilled(startPos, startPos + buttonSize, rectColor);
 
         ImGui.SetCursorScreenPos(startPos + framePadding);
-        ImGui.Image(textureID, size);
+        ImGui.Image(textureRef, size);
 
         ImGui.EndGroup();
         return clicked;
     }
 
-    public static void ToggleImageButton(string name, nint textureID, Vector2 size, bool toggled, Action<bool> onToggled)
+    public static void ToggleImageButton(string name, ImTextureRef textureRef, Vector2 size, bool toggled, Action<bool> onToggled)
     {
-        if (ToggleImageButton(name, textureID, size, ref toggled))
+        if (ToggleImageButton(name, textureRef, size, ref toggled))
             onToggled(toggled);
     }
 }

@@ -34,7 +34,7 @@ public class NetworkDialog : Frame
 
     public override void Render()
     {
-        ImGui.PushFont(Top.InfoFont);
+        ImGui.PushFont(Top.InfoFont, 0.0f);
 
         Workspace.NetworkConnection.Switch(
             (none) =>

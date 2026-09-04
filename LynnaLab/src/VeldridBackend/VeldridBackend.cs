@@ -188,11 +188,6 @@ public class VeldridBackend
         controller.RenderTileset(dest, tileset);
     }
 
-    public void RecreateFontTexture()
-    {
-        controller.RecreateFontDeviceTexture();
-    }
-
     public void SetIcon(string path)
     {
         window.SetIcon(path);

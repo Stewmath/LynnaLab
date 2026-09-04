@@ -21,6 +21,8 @@ namespace VeldridBackend;
 /// </summary>
 public class ImGuiController : IDisposable
 {
+    readonly ImTextureID IMTEXTURE_INVALID = (ImTextureID)(nint)0;
+
     VeldridBackend backend;
     GraphicsDevice gd;
     CommandList cl;
@@ -96,7 +98,8 @@ public class ImGuiController : IDisposable
 
         ImGui.CreateContext();
         var io = ImGui.GetIO();
-        io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
+        io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset
+                           | ImGuiBackendFlags.RendererHasTextures;
         io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard |
             ImGuiConfigFlags.DockingEnable;
         io.Fonts.Flags |= ImFontAtlasFlags.NoBakedLines;
@@ -199,8 +202,6 @@ public class ImGuiController : IDisposable
             projMatrixBuffer,
             gd.PointSampler));
 
-        RecreateFontDeviceTexture();
-
         ownedResources.Add(vertexShader);
         ownedResources.Add(fragmentShader);
     }
@@ -272,9 +273,9 @@ public class ImGuiController : IDisposable
     /// Gets or creates a handle for a texture to be drawn with ImGui.
     /// Pass the returned handle to Image() or ImageButton().
     /// </summary>
-    public IntPtr GetOrCreateImGuiBinding(VeldridTextureBase texture)
+    public ImTextureRef GetOrCreateImGuiBinding(VeldridTextureBase texture)
     {
-        return GetOrCreateResourceSet(texture).ImGuiBinding;
+        return GetOrCreateResourceSet(texture).TextureRef;
     }
 
     private ResourceSetInfo GetOrCreateResourceSet(VeldridTextureBase texture)
@@ -391,60 +392,6 @@ public class ImGuiController : IDisposable
     }
 
     /// <summary>
-    /// Recreates the device texture used to render text.
-    /// </summary>
-    public void RecreateFontDeviceTexture()
-    {
-        ImGuiIOPtr io = ImGui.GetIO();
-        // Build
-        IntPtr pixels;
-        int width, height, bytesPerPixel;
-        io.Fonts.GetTexDataAsRGBA32(out pixels, out width, out height, out bytesPerPixel);
-        // Store our identifier
-        io.Fonts.SetTexID(fontAtlasID);
-
-        if (fontTextureResourceSet != null)
-            gd.DisposeWhenIdle(fontTextureResourceSet);
-        if (fontTexture != null)
-            gd.DisposeWhenIdle(fontTexture);
-        if (fontTextureView != null)
-            gd.DisposeWhenIdle(fontTextureView);
-
-        fontTexture = gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
-            (uint)width,
-            (uint)height,
-            1,
-            1,
-            PixelFormat.R8_G8_B8_A8_UNorm,
-            TextureUsage.Sampled));
-        fontTexture.Name = "ImGui.NET Font Texture";
-        gd.UpdateTexture(
-            fontTexture,
-            pixels,
-            (uint)(bytesPerPixel * width * height),
-            0,
-            0,
-            0,
-            (uint)width,
-            (uint)height,
-            1,
-            0,
-            0);
-        fontTextureView = gd.ResourceFactory.CreateTextureView(fontTexture);
-
-        fontTextureResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
-            textureLayout,
-            fontTextureView,
-            gd.PointSampler,
-            fontTextureView,
-            gd.LinearSampler,
-            fontFragBuffer,
-            fullSourceViewportBuffer));
-
-        io.Fonts.ClearTexData();
-    }
-
-    /// <summary>
     /// Renders the ImGui draw list data.
     /// This method requires a <see cref="GraphicsDevice"/> because it may create new
     /// DeviceBuffers if the size of vertex or index data has increased beyond the capacity of
@@ -494,7 +441,7 @@ public class ImGuiController : IDisposable
             SDL_Keycode.SDLK_KP_0 => ImGuiKey.Keypad0,
             >= SDL_Keycode.SDLK_KP_1 and <= SDL_Keycode.SDLK_KP_9 => KeyToImGuiKeyShortcut(key, SDL_Keycode.SDLK_KP_1, ImGuiKey.Keypad1),
             >= SDL_Keycode.SDLK_A and <= SDL_Keycode.SDLK_Z => KeyToImGuiKeyShortcut(key, SDL_Keycode.SDLK_A, ImGuiKey.A),
-            >= SDL_Keycode.SDLK_0 and <= SDL_Keycode.SDLK_9 => KeyToImGuiKeyShortcut(key, SDL_Keycode.SDLK_0, ImGuiKey._0),
+            >= SDL_Keycode.SDLK_0 and <= SDL_Keycode.SDLK_9 => KeyToImGuiKeyShortcut(key, SDL_Keycode.SDLK_0, ImGuiKey.Key0),
             SDL_Keycode.SDLK_LSHIFT or SDL_Keycode.SDLK_RSHIFT => ImGuiKey.ModShift,
             SDL_Keycode.SDLK_LCTRL or SDL_Keycode.SDLK_RCTRL => ImGuiKey.ModCtrl,
             SDL_Keycode.SDLK_LALT or SDL_Keycode.SDLK_RALT => ImGuiKey.ModAlt,
@@ -579,17 +526,19 @@ public class ImGuiController : IDisposable
         }
     }
 
-    private void RenderImDrawData(ImDrawDataPtr draw_data)
+    private unsafe void RenderImDrawData(ImDrawDataPtr draw_data)
     {
         uint vertexOffsetInVertices = 0;
         uint indexOffsetInElements = 0;
 
-        if (draw_data.CmdListsCount == 0)
+        if (draw_data.CmdLists.Size == 0)
         {
             return;
         }
 
         cl.UpdateBuffer(textureGlobalsBuffer, 0, textureGlobalsStruct);
+
+        // Update vertex, index buffers
 
         uint totalVBSize = (uint)(draw_data.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
         if (totalVBSize > vertexBuffer.SizeInBytes)
@@ -605,20 +554,20 @@ public class ImGuiController : IDisposable
             indexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription((uint)(totalIBSize * 1.5f), BufferUsage.IndexBuffer | BufferUsage.Dynamic));
         }
 
-        for (int i = 0; i < draw_data.CmdListsCount; i++)
+        for (int i = 0; i < draw_data.CmdLists.Size; i++)
         {
             ImDrawListPtr cmd_list = draw_data.CmdLists[i];
 
             cl.UpdateBuffer(
                 vertexBuffer,
                 vertexOffsetInVertices * (uint)Unsafe.SizeOf<ImDrawVert>(),
-                cmd_list.VtxBuffer.Data,
+                ref *cmd_list.VtxBuffer.Data,
                 (uint)(cmd_list.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>()));
 
             cl.UpdateBuffer(
                 indexBuffer,
                 indexOffsetInElements * sizeof(ushort),
-                cmd_list.IdxBuffer.Data,
+                ref *cmd_list.IdxBuffer.Data,
                 (uint)(cmd_list.IdxBuffer.Size * sizeof(ushort)));
 
             vertexOffsetInVertices += (uint)cmd_list.VtxBuffer.Size;
@@ -645,30 +594,41 @@ public class ImGuiController : IDisposable
 
         draw_data.ScaleClipRects(io.DisplayFramebufferScale);
 
+        // Render textures
+        if (!Unsafe.IsNullRef(ref draw_data.Textures))
+        {
+            for (int i = 0; i < draw_data.Textures.Size; i++)
+            {
+                ImTextureDataPtr tex = draw_data.Textures[i];
+                if (tex.Status != ImTextureStatus.Ok)
+                    UpdateTexture(tex);
+            }
+        }
         // Render command lists
         int vtx_offset = 0;
         int idx_offset = 0;
-        for (int n = 0; n < draw_data.CmdListsCount; n++)
+        for (int n = 0; n < draw_data.CmdLists.Size; n++)
         {
             ImDrawListPtr cmd_list = draw_data.CmdLists[n];
             for (int cmd_i = 0; cmd_i < cmd_list.CmdBuffer.Size; cmd_i++)
             {
-                ImDrawCmdPtr pcmd = cmd_list.CmdBuffer[cmd_i];
-                if (pcmd.UserCallback != IntPtr.Zero)
+                ImDrawCmd pcmd = cmd_list.CmdBuffer[cmd_i];
+                nint userCallbackData = (nint)pcmd.UserCallbackData;
+                if (pcmd.UserCallback != (void*)0)
                 {
                     // This doesn't play nice with Vulkan. I think it's because I'm not supposed to
                     // use UpdateBuffer in the middle of a render pass?
                     if (gd.BackendType != GraphicsBackend.Vulkan)
                     {
-                        switch ((ImGuiXCallback)pcmd.UserCallback)
+                        switch ((ImGuiXCallback)(nint)pcmd.UserCallback)
                         {
                             case ImGuiXCallback.SetAlpha:
-                                float alpha = Marshal.PtrToStructure<float>(pcmd.UserCallbackData);
+                                float alpha = Marshal.PtrToStructure<float>(userCallbackData);
                                 textureGlobalsStruct.alpha = alpha;
                                 cl.UpdateBuffer(textureGlobalsBuffer, 0, textureGlobalsStruct);
                                 break;
                             case ImGuiXCallback.SetInterpolation:
-                                int interp = Marshal.PtrToStructure<int>(pcmd.UserCallbackData);
+                                int interp = Marshal.PtrToStructure<int>(userCallbackData);
                                 textureGlobalsStruct.InterpolationMode = interp;
                                 cl.UpdateBuffer(textureGlobalsBuffer, 0, textureGlobalsStruct);
                                 break;
@@ -677,19 +637,19 @@ public class ImGuiController : IDisposable
                         }
                     }
 
-                    Marshal.FreeHGlobal(pcmd.UserCallbackData);
+                    Marshal.FreeHGlobal(userCallbackData);
                 }
                 else
                 {
-                    if (pcmd.TextureId != IntPtr.Zero)
+                    if (pcmd.GetTexID() != IntPtr.Zero)
                     {
-                        if (pcmd.TextureId == fontAtlasID)
+                        if (pcmd.GetTexID() == fontAtlasID)
                         {
                             cl.SetGraphicsResourceSet(1, fontTextureResourceSet);
                         }
                         else
                         {
-                            var rsi = GetTextureResourceSetInfo(pcmd.TextureId);
+                            var rsi = GetTextureResourceSetInfo(pcmd.GetTexID());
                             cl.SetGraphicsResourceSet(1, rsi.ResourceSet);
                         }
                     }
@@ -869,17 +829,131 @@ public class ImGuiController : IDisposable
         gd.DisposeWhenIdle(resourceSet);
     }
 
+    // ================================================================================
+    // Private methods
+    // ================================================================================
+
+    /// <summary>
+    /// Render a texture with pixel data provided by ImGui
+    /// </summary>
+    unsafe void UpdateTexture(ImTextureDataPtr tex)
+    {
+        if (tex.Format != ImTextureFormat.Rgba32)
+            throw new NotImplementedException($"Unsupported ImGui texture format: {tex.Format}");
+
+        if (tex.Status == ImTextureStatus.WantCreate)
+        {
+            Texture texture = gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
+                (uint)tex.Width,
+                (uint)tex.Height,
+                1,
+                1,
+                PixelFormat.R8_G8_B8_A8_UNorm,
+                TextureUsage.Sampled));
+
+            gd.UpdateTexture(
+                texture,
+                (nint)tex.GetPixels(),
+                (uint)(tex.Width * tex.Height * 4),
+                0,
+                0,
+                0,
+                (uint)tex.Width,
+                (uint)tex.Height,
+                1,
+                0,
+                0);
+
+            var resourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
+                textureLayout,
+                texture,
+                gd.PointSampler,
+                texture,
+                gd.LinearSampler,
+                fontFragBuffer,
+                fullSourceViewportBuffer));
+
+            IntPtr id = GetNextImGuiBindingID();
+            viewsById.Add(id, new ResourceSetInfo(id, resourceSet, null));
+            ownedResources.Add(texture);
+            ownedResources.Add(resourceSet);
+
+            tex.SetTexID(id);
+            tex.SetStatus(ImTextureStatus.Ok);
+            tex.BackendUserData = (void*)GCHandle.ToIntPtr(GCHandle.Alloc(texture));
+        }
+        if (tex.Status == ImTextureStatus.WantUpdates)
+        {
+            Texture texture = (Texture)GCHandle.FromIntPtr((IntPtr)tex.BackendUserData).Target;
+
+            // Veldrid does not support copying a texture from a byte array with a particular pitch,
+            // instead we must pack the data into an array first.
+            byte[] packed = new byte[tex.UpdateRect.W * tex.UpdateRect.H * tex.BytesPerPixel];
+            fixed (byte* dest = packed)
+            {
+                for (int y = 0; y < tex.UpdateRect.H; y++)
+                {
+                    Buffer.MemoryCopy(tex.GetPixelsAt(tex.UpdateRect.X, tex.UpdateRect.Y + y),
+                        dest + y * tex.UpdateRect.W * tex.BytesPerPixel,
+                        tex.UpdateRect.W * tex.BytesPerPixel,
+                        tex.UpdateRect.W * tex.BytesPerPixel);
+                }
+                gd.UpdateTexture(
+                    texture,
+                    (nint)dest,
+                    (uint)(tex.UpdateRect.W * tex.UpdateRect.H * 4),
+                    (uint)tex.UpdateRect.X,
+                    (uint)tex.UpdateRect.Y,
+                    0,
+                    (uint)tex.UpdateRect.W,
+                    (uint)tex.UpdateRect.H,
+                    1,
+                    0,
+                    0);
+            }
+
+            tex.SetStatus(ImTextureStatus.Ok);
+        }
+        if (tex.Status == ImTextureStatus.WantDestroy && tex.UnusedFrames > 0)
+        {
+            IntPtr id = (IntPtr)tex.TexID;
+            if (viewsById.TryGetValue(id, out ResourceSetInfo rsi))
+            {
+                ownedResources.Remove(rsi.ResourceSet);
+                gd.DisposeWhenIdle(rsi.ResourceSet);
+                viewsById.Remove(id);
+            }
+
+            GCHandle handle = GCHandle.FromIntPtr((IntPtr)tex.BackendUserData);
+            Texture texture = (Texture)handle.Target;
+            ownedResources.Remove(texture);
+            gd.DisposeWhenIdle(texture);
+            handle.Free();
+            tex.BackendUserData = null;
+
+            tex.SetTexID(IMTEXTURE_INVALID);
+            tex.SetStatus(ImTextureStatus.Destroyed);
+        }
+    }
+
+
+    /// <summary>
+    /// ResourceSetInfo: Identifies a texture with ImGui and Veldrid bindings.
+    /// </summary>
     private struct ResourceSetInfo
     {
         public readonly IntPtr ImGuiBinding;
+        public readonly ImTextureRef TextureRef;
         public readonly ResourceSet ResourceSet;
         public readonly VeldridTextureBase Texture;
 
-        public ResourceSetInfo(IntPtr imGuiBinding, ResourceSet resourceSet, VeldridTextureBase texture)
+        public unsafe ResourceSetInfo(IntPtr imGuiBinding, ResourceSet resourceSet, VeldridTextureBase texture)
         {
             ImGuiBinding = imGuiBinding;
             ResourceSet = resourceSet;
             Texture = texture;
+
+            TextureRef = new(texId: ImGuiBinding);
         }
     }
 }

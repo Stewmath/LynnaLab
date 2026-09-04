@@ -177,19 +177,19 @@ public class TilesetEditor : Frame
         if (tilesetViewer.SubTileMode && tilesetViewer.HoveredTile != -1)
         {
             // Change flip X
-            if (ImGui.IsKeyPressed(ImGuiKey._1))
+            if (ImGui.IsKeyPressed(ImGuiKey.Key1))
             {
                 var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
                 toggleFlipX(t, tx, ty);
             }
             // Change flip Y
-            if (ImGui.IsKeyPressed(ImGuiKey._2))
+            if (ImGui.IsKeyPressed(ImGuiKey.Key2))
             {
                 var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
                 toggleFlipY(t, tx, ty);
             }
             // Change priority
-            if (ImGui.IsKeyPressed(ImGuiKey._3))
+            if (ImGui.IsKeyPressed(ImGuiKey.Key3))
             {
                 var (t, tx, ty) = tilesetViewer.ToSubTileIndex(tilesetViewer.HoveredTile);
                 togglePriority(t, tx, ty);
@@ -208,17 +208,17 @@ public class TilesetEditor : Frame
         if (tileEditor.HoveredTile != -1)
         {
             // Change flip X
-            if (ImGui.IsKeyPressed(ImGuiKey._1))
+            if (ImGui.IsKeyPressed(ImGuiKey.Key1))
             {
                 toggleFlipX(tileEditor.TileIndex, tileEditor.HoveredTile % 2, tileEditor.HoveredTile / 2);
             }
             // Change flip Y
-            if (ImGui.IsKeyPressed(ImGuiKey._2))
+            if (ImGui.IsKeyPressed(ImGuiKey.Key2))
             {
                 toggleFlipY(tileEditor.TileIndex, tileEditor.HoveredTile % 2, tileEditor.HoveredTile / 2);
             }
             // Change priority
-            if (ImGui.IsKeyPressed(ImGuiKey._3))
+            if (ImGui.IsKeyPressed(ImGuiKey.Key3))
             {
                 togglePriority(tileEditor.TileIndex, tileEditor.HoveredTile % 2, tileEditor.HoveredTile / 2);
             }
@@ -739,7 +739,7 @@ class SubTileViewer : GfxViewer
         base.OnHover = (index) =>
         {
             ImGui.BeginTooltip();
-            ImGui.PushFont(Top.InfoFont);
+            ImGui.PushFont(Top.InfoFont, 0.0f);
             ImGui.Text($"SubTile Index: {index^0x80:X2}");
             ImGui.PopFont();
             ImGui.EndTooltip();

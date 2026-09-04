@@ -3,7 +3,7 @@ global using System;
 global using System.Collections.Generic;
 global using System.Linq;
 global using System.Numerics;
-global using ImGuiNET;
+global using Hexa.NET.ImGui;
 global using LynnaLib;
 global using Util;
 global using OneOf;

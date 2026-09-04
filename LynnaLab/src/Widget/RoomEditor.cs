@@ -307,7 +307,7 @@ public class RoomEditor : Frame
 
         if (Workspace.IsNetworkActive)
         {
-            ImGui.PushFont(Top.InfoFont);
+            ImGui.PushFont(Top.InfoFont, 0.0f);
             int count = Workspace.RemoteStates.Values.Where((s) => s.CursorPosition.room == Room.Index).Count();
             if (count == 1)
                 ImGui.Text($"1 other is in this room.");

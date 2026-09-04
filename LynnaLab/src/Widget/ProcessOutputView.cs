@@ -31,7 +31,7 @@ public class ProcessOutputView
 
     public void Render()
     {
-        ImGui.PushFont(Top.InfoFont);
+        ImGui.PushFont(Top.InfoFont, 0.0f);
         foreach (var entry in textList)
         {
             if (entry.color != null)
