@@ -19,14 +19,42 @@ public class RoomWiper : Frame
             (sender, args) => { selectedRect = args.SelectedRect; }
         );
 
+        // Color the minimap based on the grid regions
         minimap.AfterRenderTileGrid += (_, _) =>
         {
             if (gridRegions == null)
                 return;
             foreach (var r in gridRegions)
             {
-                Polygon p = r.Polygon * new Vector2(minimap.TileWidth, minimap.TileHeight) * minimap.Scale;
-                minimap.AddConcavePolyFilled(p, r.Color.WithAlpha(0x80));
+                Color fillColor = r.Color.WithAlpha(0x80);
+                float thickness = 4.0f; // TODO: Account for DPI?
+
+                foreach (GridPoint p in r.Points)
+                {
+                    var rect = minimap.TileRect(p.X, p.Y);
+
+                    Vector2 xoffset = new Vector2(thickness, 0) / 2.0f;
+                    Vector2 yoffset = new Vector2(0, thickness) / 2.0f;
+
+                    // Must do this to align to pixels (and thickness must be a multiple of 2?)
+                    Vector2 off1 = new Vector2(-0.5f, -0.5f);
+
+                    Vector2 topLeft = rect.TopLeft + off1;
+                    Vector2 topRight = rect.TopRight + off1;
+                    Vector2 bottomLeft = rect.BottomLeft + off1;
+                    Vector2 bottomRight = rect.BottomRight + off1;
+
+                    minimap.AddRectFilled(rect, fillColor);
+
+                    if (p.TopEdge)
+                        minimap.AddLine(topLeft + yoffset, topRight + yoffset, r.Color, thickness);
+                    if (p.RightEdge)
+                        minimap.AddLine(topRight - xoffset, bottomRight - xoffset, r.Color, thickness);
+                    if (p.BottomEdge)
+                        minimap.AddLine(bottomLeft - yoffset, bottomRight - yoffset, r.Color, thickness);
+                    if (p.LeftEdge)
+                        minimap.AddLine(topLeft + xoffset, bottomLeft + xoffset, r.Color, thickness);
+                }
             }
         };
     }
@@ -183,6 +211,6 @@ public class RoomWiper : Frame
                 throw new Exception("Internal error");
         }
 
-        gridRegions = new GridRegionGenerator(minimap, (i) => regionGetter(i % plan.MapWidth, i / plan.MapWidth)).Regions;
+        gridRegions = new GridRegionGenerator(plan.MapWidth, plan.MapHeight, regionGetter).Generate();
     }
 }

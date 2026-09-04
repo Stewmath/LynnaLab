@@ -33,6 +33,8 @@ public class FRect
     public Vector2 Size { get { return new Vector2(Width, Height); } }
 
     public Vector2 TopLeft { get { return new Vector2(X, Y); } }
+    public Vector2 TopRight { get { return new Vector2(X + Width, Y); } }
+    public Vector2 BottomLeft { get { return new Vector2(X, Y + Height); } }
     public Vector2 BottomRight { get { return TopLeft + Size; } }
     public Vector2 Center { get { return (TopLeft + BottomRight) / 2; } }
 

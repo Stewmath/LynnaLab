@@ -84,6 +84,11 @@ public abstract class SizedWidget
             color.ToUInt());
     }
 
+    public unsafe void AddLine(Vector2 p1, Vector2 p2, Color color, float thickness = 1.0f)
+    {
+        drawList.AddLine(origin + p1, origin + p2, color.ToUInt(), thickness);
+    }
+
     public unsafe void AddPolyline(Polygon polygon, Color color, float thickness)
     {
         var coords = (polygon + origin).Coordinates.ToArray();
