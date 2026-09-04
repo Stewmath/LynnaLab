@@ -267,10 +267,15 @@ public static class ImGuiMarkdown
             formatInfo.Type = FormatType.Link;
             cfg.FormatCallback(formatInfo, true);
             ImGui.PushTextWrapPos(-1.0f);
+
+            Vector2 pos = ImGui.GetCursorScreenPos();
             ImGui.TextUnformatted(text, textEnd);
             ImGui.PopTextWrapPos();
 
+            ImGui.SetCursorScreenPos(pos);
+            ImGui.InvisibleButton($"##Btn-{link.Text.Start}", ImGui.GetItemRectSize());
             bool thisItemHovered = ImGui.IsItemHovered();
+
             if (thisItemHovered)
             {
                 linkHoverStart = link.Text.Start;
