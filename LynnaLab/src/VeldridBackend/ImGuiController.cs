@@ -45,9 +45,6 @@ public class ImGuiController : IDisposable
     ResourceLayout renderTilesetLayout;
     Pipeline pipeline, renderTilesetPipeline;
     ResourceSet mainResourceSet;
-    ResourceSet fontTextureResourceSet;
-
-    IntPtr fontAtlasID = (IntPtr)1;
 
     // A GCHandle to this controller, handed to ImGuiX so that render callbacks can dispatch back
     // into instance methods (through the reference stored in their data argument).
@@ -636,15 +633,8 @@ public class ImGuiController : IDisposable
                 {
                     if (pcmd.GetTexID() != IntPtr.Zero)
                     {
-                        if (pcmd.GetTexID() == fontAtlasID)
-                        {
-                            cl.SetGraphicsResourceSet(1, fontTextureResourceSet);
-                        }
-                        else
-                        {
-                            var rsi = GetTextureResourceSetInfo(pcmd.GetTexID());
-                            cl.SetGraphicsResourceSet(1, rsi.ResourceSet);
-                        }
+                        var rsi = GetTextureResourceSetInfo(pcmd.GetTexID());
+                        cl.SetGraphicsResourceSet(1, rsi.ResourceSet);
                     }
 
                     // Vulkan crashes if we send rect values < 0, and apparently imgui does this

@@ -5,6 +5,8 @@ namespace LynnaLab;
 /// </summary>
 public static class ImGuiLL
 {
+    public const float MenuFontLargeScale = 1.333f;
+
     public static float ENTRY_ITEM_WIDTH { get { return ImGuiX.Unit(120.0f); } }
 
     private static ImGuiMarkdown.MarkdownConfig markdownConfig;
@@ -379,18 +381,30 @@ public static class ImGuiLL
         ImGui.SetNextWindowSizeConstraints(ImGuiX.Unit(600.0f, 0.0f), ImGuiX.Unit(0.0f, 600.0f));
         if (ImGui.BeginPopup("Help Popup"))
         {
-            ImGui.PushFont(Top.InfoFont, 0.0f);
+            ImGuiLL.PushInfoFont();
 
-            markdownConfig.HeadingFormats[0].FontSize = ImGuiX.Unit(Top.GlobalConfig.InfoFontSize * 1.5f);
             markdownConfig.HeadingFormats[0].Font = Top.InfoFontBold;
+            markdownConfig.HeadingFormats[0].FontSize = Top.GlobalConfig.InfoFontSize * 1.5f;
             markdownConfig.HeadingFormats[1].Font = Top.InfoFontBold;
+            markdownConfig.HeadingFormats[1].FontSize = Top.GlobalConfig.InfoFontSize * 1.2f;
             markdownConfig.HeadingFormats[2].Font = Top.InfoFontBold;
+            markdownConfig.HeadingFormats[1].FontSize = Top.GlobalConfig.InfoFontSize;
 
             string data = MarkdownFileContents(markdownFile);
             ImGuiMarkdown.Markdown(data, markdownConfig);
             ImGui.PopFont();
             ImGui.EndPopup();
         }
+    }
+
+    public static void PushInfoFont()
+    {
+        ImGui.PushFont(Top.InfoFont, Top.GlobalConfig.InfoFontSize);
+    }
+
+    public static void PushMenuFont(float scale = 1.0f)
+    {
+        ImGui.PushFont(Top.MenuFont, Top.GlobalConfig.MenuFontSize * scale);
     }
 
     // ================================================================================

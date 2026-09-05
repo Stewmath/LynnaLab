@@ -25,7 +25,7 @@ public class TilesetViewer : TileGrid
             if (!base.TooltipImagePreview)
                 return;
             ImGui.BeginTooltip();
-            ImGui.PushFont(Top.InfoFont, 0.0f);
+            ImGuiLL.PushInfoFont();
             if (subTileMode)
             {
                 var (t, x, y) = ToSubTileIndex(tile);

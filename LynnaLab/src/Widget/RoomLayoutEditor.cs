@@ -817,7 +817,7 @@ public class RoomLayoutEditor : TileGrid
         public override void Render(bool selected)
         {
             // Draw digit representing the warp index in the center of the rectangle
-            ImGui.PushFont(Top.MenuFontLarge, 0.0f);
+            ImGuiLL.PushMenuFont(ImGuiLL.MenuFontLargeScale);
             var origin = ImGui.GetCursorScreenPos();
             string text = index.ToString("X");
             ImGuiX.DrawTextAt(text, origin + BoxRectangle.Center * Parent.Scale);
@@ -905,7 +905,7 @@ public class RoomLayoutEditor : TileGrid
 
         public override void Render(bool selected)
         {
-            ImGui.PushFont(Top.MenuFontLarge, 0.0f);
+            ImGuiLL.PushMenuFont(ImGuiLL.MenuFontLargeScale);
             var origin = ImGui.GetCursorScreenPos();
             ImGuiX.DrawTextAt("W", origin + BoxRectangle.Center * Parent.Scale);
             ImGui.SetCursorScreenPos(origin);
@@ -1013,7 +1013,7 @@ public class RoomLayoutEditor : TileGrid
 
                 if (ImGui.Begin("Annotation", ref isActive, flags))
                 {
-                    ImGui.PushFont(Top.InfoFont, 0.0f);
+                    ImGuiLL.PushInfoFont();
 
                     // Letter input
                     ImGui.Text("Letter:");
@@ -1093,7 +1093,7 @@ public class RoomLayoutEditor : TileGrid
                 wasOpenLastFrame = false;
             }
 
-            ImGui.PushFont(Top.MenuFontLarge, 0.0f);
+            ImGuiLL.PushMenuFont(ImGuiLL.MenuFontLargeScale);
             ImGuiX.DrawTextAt(annotation.Letter.ToString(), origin + BoxRectangle.Center * Parent.Scale);
             ImGui.SetCursorScreenPos(origin);
             ImGui.PopFont();

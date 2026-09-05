@@ -89,6 +89,7 @@ public static class ImGuiX
         ImGuiStylePtr stylePtr = ImGui.GetStyle();
         *(ImGuiStyle*)stylePtr = backupStyle;
         stylePtr.ScaleAllSizes(ScaleUnit);
+        stylePtr.FontScaleDpi = ScaleUnit;
 
         if (Top.GlobalConfig.LightMode)
             ImGui.StyleColorsLight();
@@ -497,7 +498,7 @@ public static class ImGuiX
     /// </summary>
     public static void Tooltip(string text)
     {
-        ImGui.PushFont(Top.InfoFont, 0.0f);
+        ImGuiLL.PushInfoFont();
 
         var textSize = ImGui.CalcTextSize(text);
 

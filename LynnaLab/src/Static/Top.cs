@@ -154,19 +154,18 @@ public static class Top
     /// Font used for detailed text displays. (It can be a bit difficult to read text dumps in the
     /// oracles font.)
     /// </summary>
-    public static ImFontPtr InfoFont { get { return fontDict[GlobalConfig.InfoFont].infoSize; } }
+    public static ImFontPtr InfoFont { get { return fontDict[GlobalConfig.InfoFont].normal; } }
     public static ImFontPtr InfoFontBold { get { return fontDict[GlobalConfig.InfoFont].bold; } }
 
     /// <summary>
     /// Font used for window titles, labels, etc. The default in most contexts.
     /// </summary>
-    public static ImFontPtr MenuFont { get { return fontDict[GlobalConfig.MenuFont].menuSize; } }
-    public static ImFontPtr MenuFontLarge { get { return fontDict[GlobalConfig.MenuFont].menuSizeLarge; } }
+    public static ImFontPtr MenuFont { get { return fontDict[GlobalConfig.MenuFont].normal; } }
 
     /// <summary>
     /// Monospace font used by sameboy debugger console.
     /// </summary>
-    public static ImFontPtr MonoFont { get { return fontDict["ProggyClean"].infoSize; } }
+    public static ImFontPtr MonoFont { get { return fontDict["ProggyClean"].normal; } }
 
     public static RgbaTexture PegasusSeedTexture { get; private set; }
     public static RgbaTexture FaroresMemoryTexture { get; private set; }
@@ -213,7 +212,7 @@ public static class Top
     public static void Render(float deltaTime)
     {
         ImGui.NewFrame();
-        ImGui.PushFont(MenuFont, 0.0f);
+        ImGuiLL.PushMenuFont();
 
         Modal.RenderModalsAndMessages();
 
@@ -325,8 +324,6 @@ public static class Top
     {
         ImGui.GetIO().Fonts.Clear();
 
-        float largeFontScale = 1.333f;
-
         foreach (FontData font in fontDict.Values)
         {
             if (font.name == "ProggyClean") // TODO: Vectorized version
@@ -338,26 +335,18 @@ public static class Top
                 config.RasterizerDensity = 1.0f;
                 config.OversampleH = config.OversampleV = 1;
 
-                config.SizePixels = (int)(GlobalConfig.InfoFontSize * ImGuiX.ScaleUnit);
-                font.infoSize = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
-                font.bold = font.infoSize; // TODO: Bold version
-
-                config.SizePixels = (int)(GlobalConfig.MenuFontSize * ImGuiX.ScaleUnit);
-                font.menuSize = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
-
-                config.SizePixels = (int)(GlobalConfig.MenuFontSize * ImGuiX.ScaleUnit * largeFontScale);
-                font.menuSizeLarge = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
+                config.SizePixels = (int)(GlobalConfig.InfoFontSize);
+                font.normal = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
+                font.bold = font.normal; // TODO: Bold version
             }
             else
             {
                 ImFontConfig boldConfig = BasicImFontConfig();
                 boldConfig.FontLoaderFlags = (uint)ImGuiFreeTypeLoaderFlags.Bold;
-                font.infoSize = ImGuiX.LoadFont(font.name, (int)(GlobalConfig.InfoFontSize * ImGuiX.ScaleUnit));
+                font.normal = ImGuiX.LoadFont(font.name, (int)(GlobalConfig.InfoFontSize));
                 font.bold = ImGuiX.LoadFont(font.name,
-                    (int)(GlobalConfig.InfoFontSize * ImGuiX.ScaleUnit),
+                    (int)(GlobalConfig.InfoFontSize),
                     boldConfig);
-                font.menuSize = ImGuiX.LoadFont(font.name, (int)(GlobalConfig.MenuFontSize * ImGuiX.ScaleUnit));
-                font.menuSizeLarge = ImGuiX.LoadFont(font.name, (int)(GlobalConfig.MenuFontSize * ImGuiX.ScaleUnit * largeFontScale));
             }
         }
 
@@ -547,9 +536,7 @@ public static class Top
     {
         FontData font = new();
         font.name = name;
-        font.infoSize = null; // Will be loaded later
-        font.menuSize = null;
-        font.menuSizeLarge = null;
+        font.normal = null; // Will be loaded later
         fontDict[name] = font;
     }
 
@@ -580,10 +567,8 @@ public static class Top
     {
         public string name;
 
-        // Variants of the font loaded at different sizes
-        public ImFontPtr infoSize;
+        // Variants of the font
+        public ImFontPtr normal;
         public ImFontPtr bold;
-        public ImFontPtr menuSize;
-        public ImFontPtr menuSizeLarge;
     }
 }

@@ -115,7 +115,8 @@ public class SettingsDialog : Frame
                 // Combo box (not using the simpler "Combo()" function so I can change the font of
                 // each entry)
                 var oldFont = Top.GetFont(fontName.Get());
-                ImGui.PushFont(menu ? oldFont.menuSize : oldFont.infoSize, 0.0f);
+                float displaySize = menu ? GlobalConfig.MenuFontSize : GlobalConfig.InfoFontSize;
+                ImGui.PushFont(oldFont.normal, displaySize);
                 if (ImGui.BeginCombo($"##{name}", oldFont.name))
                 {
                     ImGui.PopFont();
@@ -123,7 +124,7 @@ public class SettingsDialog : Frame
                     {
                         var font = Top.GetFont(v);
                         bool selected = v == oldFont.name;
-                        ImGui.PushFont(font.menuSize, 0.0f);
+                        ImGui.PushFont(font.normal, displaySize);
                         if (ImGui.Selectable(v, selected))
                             fontName.Set(v);
                         if (selected)

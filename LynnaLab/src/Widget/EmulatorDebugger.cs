@@ -57,7 +57,7 @@ Examples to get you started:
 
     public override void Render()
     {
-        ImGui.PushFont(Top.MonoFont, 0.0f);
+        ImGui.PushFont(Top.MonoFont, Top.GlobalConfig.MenuFontSize);
 
         var size = new Vector2(0.0f, ImGui.GetWindowSize().Y * 0.8f);
         ImGui.BeginChild("CHILD", size, 0, ImGuiWindowFlags.AlwaysVerticalScrollbar);

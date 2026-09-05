@@ -32,7 +32,7 @@ public class DocumentationDialog : Frame
 
     public override void Render()
     {
-        ImGui.PushFont(Top.InfoFont, 0.0f);
+        ImGuiLL.PushInfoFont();
 
         if (Documentation == null)
         {
