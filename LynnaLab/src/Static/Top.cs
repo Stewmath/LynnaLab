@@ -54,6 +54,8 @@ public static class Top
                 GlobalConfig.Save();
         }
 
+        UpdateDefaultFont();
+
         stopwatch = Stopwatch.StartNew();
 
         ImGuiX.BackupStyle();
@@ -361,6 +363,20 @@ public static class Top
                 font.bold = ImGuiX.LoadFont(font.name, boldConfig);
             }
         }
+    }
+
+    /// <summary>
+    /// The default font generally doesn't matter, because we use PushFont everywhere. However the
+    /// one thing we can't use PushFont for is the title string for docked windows; for some reason
+    /// this seems to exist outside of anything we can influence except by setting the DefaultFont.
+    /// (Not for regular floating windows! Only when docked together.)
+    ///
+    /// This responds to DPI scaling, but not to user updates to the font size. Fixing that would
+    /// require changing FontScaleBase or something? Not really worth it for this edge case...
+    /// </summary>
+    public static void UpdateDefaultFont()
+    {
+        ImGui.GetIO().FontDefault = MenuFont;
     }
 
     public static FontData GetFont(string name)

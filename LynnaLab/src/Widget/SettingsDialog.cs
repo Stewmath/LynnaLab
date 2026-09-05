@@ -126,7 +126,10 @@ public class SettingsDialog : Frame
                         bool selected = v == oldFont.name;
                         ImGui.PushFont(font.normal, displaySize);
                         if (ImGui.Selectable(v, selected))
+                        {
                             fontName.Set(v);
+                            Top.UpdateDefaultFont();
+                        }
                         if (selected)
                             ImGui.SetItemDefaultFocus();
                         ImGui.PopFont();
