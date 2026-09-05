@@ -94,7 +94,7 @@ public abstract class SizedWidget
         var coords = (polygon + origin).Coordinates.ToArray();
         fixed (Vector2* v = coords)
         {
-            drawList.AddPolyline(ref *v,
+            drawList.AddPolyline(in *v,
                 polygon.Coordinates.Count,
                 color.ToUInt(),
                 thickness,
@@ -107,7 +107,7 @@ public abstract class SizedWidget
         var coords = (polygon + origin).Coordinates.ToArray();
         fixed (Vector2* v = coords)
         {
-            drawList.AddConcavePolyFilled(ref *v, polygon.Coordinates.Count, color.ToUInt());
+            drawList.AddConcavePolyFilled(in *v, polygon.Coordinates.Count, color.ToUInt());
         }
     }
 

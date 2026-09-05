@@ -92,9 +92,9 @@ public class TestProject
         group.Wipe();
 
         Assert.Equal(4, group.GetAllGroups().Count());
-        Assert.Equal(0, group.GetObjects().Count);
+        Assert.Empty(group.GetObjects());
         foreach (ObjectGroup g in group.GetAllGroups())
-            Assert.Equal(0, g.GetObjects().Count);
+            Assert.Empty(g.GetObjects());
 
         // Ensure that the respawning bush shared object data exists in another room still
         GameObject? obj = p.GetRoom(0x46a).GetObjectGroup().GetAllGroups().Where(

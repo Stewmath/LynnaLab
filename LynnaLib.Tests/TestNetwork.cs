@@ -32,9 +32,9 @@ public class TestNetwork
         };
 
         // Connect new client to project 1 (create project 2)
-        var (p2, clientConn) = await ConnectionController.CreateForClientAsync(serverAddress, invoker);
+        var (p2, clientConn) = await ConnectionController.CreateForClientAsync(serverAddress, invoker, TestContext.Current.CancellationToken);
 
-        Task clientRunTask = clientConn.RunUntilClosed();
+        Task clientRunTask = clientConn.RunUntilClosed(TestContext.Current.CancellationToken);
 
         await clientConn.WaitUntilSynchronizedAsync();
 
@@ -75,7 +75,7 @@ public class TestNetwork
         // Test pausing outgoing packets
         serverConn.PauseOutgoingPackets = true;
         p1.GetRoomLayout(3, Season.Winter).SetTile(0, 0, 51);
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         Assert.Equal(162, p2.GetRoomLayout(3, Season.Winter).GetTile(0, 0));
         serverConn.PauseOutgoingPackets = false;
         await synchronize();

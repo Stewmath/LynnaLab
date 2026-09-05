@@ -18,7 +18,6 @@ public class SettingsDialog : Frame
     // ================================================================================
 
     float newScale = 0.0f;
-    bool fontSizeChanged = false;
 
     // ================================================================================
     // Properties
@@ -152,8 +151,7 @@ public class SettingsDialog : Frame
                 float offset = ImGuiX.Unit(20.0f);
                 ImGuiX.ShiftCursorScreenPos(offset, 0.0f);
                 ImGui.PushItemWidth(width - offset);
-                if (ImGuiX.SliderInt($" Size##{name}", size, 10, 40))
-                    fontSizeChanged = true;
+                ImGuiX.SliderInt($" Size##{name}", size, 10, 40);
                 ImGui.PopItemWidth();
             };
 
@@ -252,7 +250,6 @@ public class SettingsDialog : Frame
             });
 
             newScale = 0.0f;
-            fontSizeChanged = false;
         }
     }
 

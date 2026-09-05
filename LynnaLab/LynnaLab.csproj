@@ -50,7 +50,8 @@
 
   <ItemGroup>
     <PackageReference Include="Hexa.NET.ImGui" Version="3.1.0-experimental" />
-    <PackageReference Include="ppy.SDL3-CS" Version="2025.1205.0" />
+    <PackageReference Include="log4net" Version="3.4.0" />
+    <PackageReference Include="ppy.SDL3-CS" Version="2026.722.0" />
     <PackageReference Include="Veldrid" Version="4.9.0" />
     <PackageReference Include="Veldrid.RenderDoc" Version="1.0.1" />
   </ItemGroup>

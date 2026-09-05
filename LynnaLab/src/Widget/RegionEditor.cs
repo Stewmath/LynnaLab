@@ -79,7 +79,6 @@ public class RegionEditor : Frame
     ModeOption selectedMode;
 
     Minimap minimap;
-    PRect? selectedRect;
 
     IReadOnlyList<GridRegion>? gridRegions;
 
