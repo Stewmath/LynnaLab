@@ -105,6 +105,8 @@ public class SettingsDialog : Frame
             endSection();
         }
 
+        int newMenuFontSize = 0;
+
         if (beginSection("Fonts"))
         {
             // Subfunction to display options for one of the two font types
@@ -156,7 +158,7 @@ public class SettingsDialog : Frame
             };
 
             fontOptions(new(() => GlobalConfig.MenuFont),
-                        new(() => GlobalConfig.MenuFontSize),
+                        new(() => GlobalConfig.MenuFontSize, (v) => { newMenuFontSize = v; }),
                         "Menu font",
                         "Font to use for menus, labels, etc.",
                         true);
@@ -237,13 +239,15 @@ public class SettingsDialog : Frame
         }
 
         // Only update scale when the mouse is released
-        if ((newScale != 0.0f || fontSizeChanged) && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        if ((newScale != 0.0f || newMenuFontSize != 0) && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
             float value = newScale; // Capture current value for closure
             Top.DoNextFrame(() =>
             {
                 if (value != 0.0f)
                     GlobalConfig.DisplayScaleFactor = value;
+                if (newMenuFontSize != 0)
+                    GlobalConfig.MenuFontSize = newMenuFontSize;
                 Top.ReAdjustScale();
             });
 
