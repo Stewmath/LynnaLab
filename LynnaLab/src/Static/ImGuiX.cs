@@ -88,7 +88,9 @@ public static class ImGuiX
     {
         ImGuiStylePtr stylePtr = ImGui.GetStyle();
         *(ImGuiStyle*)stylePtr = backupStyle;
+
         stylePtr.ScaleAllSizes(ScaleUnit);
+        stylePtr.FontSizeBase = 20.0f;
         stylePtr.FontScaleDpi = ScaleUnit;
 
         if (Top.GlobalConfig.LightMode)
@@ -97,13 +99,13 @@ public static class ImGuiX
             ImGui.StyleColorsDark();
     }
 
-    public static unsafe ImFontPtr LoadFont(string filename, int size, ImFontConfig? config = null)
+    public static unsafe ImFontPtr LoadFont(string filename, ImFontConfig? config = null)
     {
         string path = Top.FontDir + filename;
         if (config != null)
-            return ImGui.GetIO().Fonts.AddFontFromFileTTF(path, size, (ImFontConfig)config);
+            return ImGui.GetIO().Fonts.AddFontFromFileTTF(path, 0.0f, (ImFontConfig)config);
         else
-            return ImGui.GetIO().Fonts.AddFontFromFileTTF(path, size);
+            return ImGui.GetIO().Fonts.AddFontFromFileTTF(path, 0.0f);
     }
 
     public static Vector2 GetScroll()

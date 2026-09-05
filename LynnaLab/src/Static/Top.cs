@@ -322,48 +322,44 @@ public static class Top
     /// </summary>
     public static unsafe void ReAdjustScale()
     {
-        ImGui.GetIO().Fonts.Clear();
-
-        foreach (FontData font in fontDict.Values)
-        {
-            if (font.name == "ProggyClean") // TODO: Vectorized version
-            {
-                ImFontConfig config;
-                config.FontDataOwnedByAtlas = 1;
-                config.GlyphMaxAdvanceX = float.MaxValue;
-                config.RasterizerMultiply = 1.0f;
-                config.RasterizerDensity = 1.0f;
-                config.OversampleH = config.OversampleV = 1;
-
-                config.SizePixels = (int)(GlobalConfig.InfoFontSize);
-                font.normal = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
-                font.bold = font.normal; // TODO: Bold version
-            }
-            else
-            {
-                ImFontConfig boldConfig = BasicImFontConfig();
-                boldConfig.FontLoaderFlags = (uint)ImGuiFreeTypeLoaderFlags.Bold;
-                font.normal = ImGuiX.LoadFont(font.name, (int)(GlobalConfig.InfoFontSize));
-                font.bold = ImGuiX.LoadFont(font.name,
-                    (int)(GlobalConfig.InfoFontSize),
-                    boldConfig);
-            }
-        }
-
         ImGuiX.UpdateStyle();
     }
 
-    public static void CheckAvailableFonts()
+    public unsafe static void CheckAvailableFonts()
     {
         fontDict = new();
 
-        AddFont("ProggyClean"); // Default, built-in font
+        // Built in ImGui fonts
+        AddFont("ProggyClean");
+        AddFont("ProggyVector");
 
         string[] fonts = Directory.GetFiles(FontDir, "*.ttf");
         foreach (string path in fonts)
         {
             string name = Path.GetFileName(path);
             AddFont(name);
+        }
+
+        ImFontConfig boldConfig = BasicImFontConfig();
+        boldConfig.FontLoaderFlags = (uint)ImGuiFreeTypeLoaderFlags.Bold;
+
+        foreach (FontData font in fontDict.Values)
+        {
+            if (font.name == "ProggyClean") // Built into ImGui
+            {
+                font.normal = ImGui.GetIO().Fonts.AddFontDefaultBitmap();
+                font.bold = ImGui.GetIO().Fonts.AddFontDefaultBitmap(boldConfig);
+            }
+            else if (font.name == "ProggyVector") // Built into ImGui
+            {
+                font.normal = ImGui.GetIO().Fonts.AddFontDefaultVector();
+                font.bold = ImGui.GetIO().Fonts.AddFontDefaultVector(boldConfig);
+            }
+            else
+            {
+                font.normal = ImGuiX.LoadFont(font.name);
+                font.bold = ImGuiX.LoadFont(font.name, boldConfig);
+            }
         }
     }
 
