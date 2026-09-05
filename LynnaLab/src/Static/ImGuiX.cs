@@ -96,10 +96,13 @@ public static class ImGuiX
             ImGui.StyleColorsDark();
     }
 
-    public static unsafe ImFontPtr LoadFont(string filename, int size)
+    public static unsafe ImFontPtr LoadFont(string filename, int size, ImFontConfig? config = null)
     {
         string path = Top.FontDir + filename;
-        return ImGui.GetIO().Fonts.AddFontFromFileTTF(path, size);
+        if (config != null)
+            return ImGui.GetIO().Fonts.AddFontFromFileTTF(path, size, (ImFontConfig)config);
+        else
+            return ImGui.GetIO().Fonts.AddFontFromFileTTF(path, size);
     }
 
     public static Vector2 GetScroll()

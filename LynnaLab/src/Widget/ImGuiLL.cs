@@ -3,9 +3,33 @@ namespace LynnaLab;
 /// <summary>
 /// LynnaLab-specific helper functions for ImGui.
 /// </summary>
-public class ImGuiLL
+public static class ImGuiLL
 {
     public static float ENTRY_ITEM_WIDTH { get { return ImGuiX.Unit(120.0f); } }
+
+    private static ImGuiMarkdown.MarkdownConfig markdownConfig;
+
+    /// <summary>
+    /// Depends on Top class having done its initialization already
+    /// </summary>
+    public static void Initialize()
+    {
+        markdownConfig = new ImGuiMarkdown.MarkdownConfig();
+        markdownConfig.ImageCallback = MarkdownImageCallback;
+        markdownConfig.Flags = ImGuiMarkdown.FormatFlags.NoNewLineBeforeHeading;
+        markdownConfig.LinkCallback = (data) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = data.Link,
+            UseShellExecute = true,
+        });
+        markdownConfig.TooltipCallback = (data) =>
+        {
+            if (data.LinkData.Link != null)
+            {
+                ImGui.SetTooltip(data.LinkData.Link);
+            }
+        };
+    }
 
     /// <summary>
     /// Displays a ComboBox along with (optionally) the raw integer field as an alternate way to set
@@ -334,5 +358,102 @@ public class ImGuiLL
 
         ImGui.PopItemWidth();
         ImGui.EndGroup();
+    }
+
+
+    static readonly Vector2 HELP_BUTTON_SIZE = new Vector2(20.0f, 20.0f);
+
+    /// <summary>
+    /// A help button which opens a popup showing markdown-formatted text.
+    /// </summary>
+    public static void HelpButton(string markdownFile)
+    {
+        Vector2 size = ImGuiX.Unit(HELP_BUTTON_SIZE);
+        float x = (ImGui.GetContentRegionAvail().X - size.X - ImGui.GetStyle().FramePadding.X * 2);
+        ImGuiX.ShiftCursorScreenPos(x, 0);
+        if (ImGui.ImageButton("Help", Top.FaroresMemoryTexture.GetBinding(), size))
+        {
+            ImGui.OpenPopup("Help Popup");
+        }
+
+        ImGui.SetNextWindowSizeConstraints(ImGuiX.Unit(600.0f, 0.0f), ImGuiX.Unit(0.0f, 600.0f));
+        if (ImGui.BeginPopup("Help Popup"))
+        {
+            ImGui.PushFont(Top.InfoFont, 0.0f);
+
+            markdownConfig.HeadingFormats[0].FontSize = ImGuiX.Unit(Top.GlobalConfig.InfoFontSize * 1.5f);
+            markdownConfig.HeadingFormats[0].Font = Top.InfoFontBold;
+            markdownConfig.HeadingFormats[1].Font = Top.InfoFontBold;
+            markdownConfig.HeadingFormats[2].Font = Top.InfoFontBold;
+
+            string data = MarkdownFileContents(markdownFile);
+            ImGuiMarkdown.Markdown(data, markdownConfig);
+            ImGui.PopFont();
+            ImGui.EndPopup();
+        }
+    }
+
+    // ================================================================================
+    // Private methods
+    // ================================================================================
+
+    static Dictionary<string, string> markdownFileDict = new();
+    static Dictionary<string, ImageData> markdownImageDict = new();
+
+    /// <summary>
+    /// Retrieve cached text from a markdown file for rendering
+    /// </summary>
+    static string MarkdownFileContents(string filename)
+    {
+        if (markdownFileDict.TryGetValue(filename, out string content))
+        {
+            return content;
+        }
+
+        content = Helper.ReadResourceFile($"Docs/{filename}");
+        markdownFileDict[filename] = content;
+        return content;
+    }
+
+    /// <summary>
+    /// Store a bit of extra data for cached markdown images
+    /// </summary>
+    class ImageData
+    {
+        public ImGuiMarkdown.MarkdownImageData data;
+        public Vector2 baseSize;
+    }
+
+    /// <summary>
+    /// Retrieve a saved image & metadata for markdown rendering
+    /// </summary>
+    static ImGuiMarkdown.MarkdownImageData MarkdownImageCallback(ImGuiMarkdown.LinkCallbackData linkData)
+    {
+        VeldridBackend.VeldridRgbaTexture texture;
+
+        if (markdownImageDict.TryGetValue(linkData.Link, out ImageData imgData))
+        {
+            goto end;
+        }
+
+        imgData = new();
+        imgData.data = ImGuiMarkdown.MarkdownImageData.Default;
+        imgData.data.IsValid = true;
+        using (var bitmap = new Bitmap(Helper.ReadResourceFileBytes($"Docs/{linkData.Link}")))
+        {
+            texture = Top.Backend.TextureFromBitmap(bitmap);
+            imgData.data.TextureRef = texture.GetBinding();
+            imgData.baseSize = new Vector2(bitmap.Width, bitmap.Height);
+        }
+
+        markdownImageDict[linkData.Link] = imgData;
+
+        end:
+
+        // Divide size by 1.6f because that's the DPI scale of my laptop where I'm taking the
+        // screenshots
+        imgData.data.Size = ImGuiX.Unit(imgData.baseSize) / 1.6f;
+
+        return imgData.data;
     }
 }

@@ -40,8 +40,6 @@ public class ImGuiController : IDisposable
     DeviceBuffer fullSourceViewportBuffer;
 
     // More veldrid objects
-    Texture fontTexture;
-    TextureView fontTextureView;
     ResourceLayout layout;
     ResourceLayout textureLayout;
     ResourceLayout renderTilesetLayout;
@@ -698,8 +696,6 @@ public class ImGuiController : IDisposable
         vertexBuffer.Dispose();
         indexBuffer.Dispose();
         projMatrixBuffer.Dispose();
-        fontTexture.Dispose();
-        fontTextureView.Dispose();
         layout.Dispose();
         textureLayout.Dispose();
         pipeline.Dispose();

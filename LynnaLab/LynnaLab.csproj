@@ -18,8 +18,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Shaders/OpenGL/*.glsl" LogicalName="%(Filename)%(Extension)" />
-    <EmbeddedResource Include="Shaders/SPIR-V/*.spv" LogicalName="%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Embedded/Shaders/OpenGL/*.glsl" LogicalName="%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Embedded/Shaders/SPIR-V/*.spv" LogicalName="%(Filename)%(Extension)" />
+
+    <EmbeddedResource Include="Embedded/Docs/*" LogicalName="Docs/%(Filename)%(Extension)" />
   </ItemGroup>
 
 

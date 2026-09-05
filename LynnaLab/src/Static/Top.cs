@@ -40,6 +40,7 @@ public static class Top
 
         backend.SetIcon(ImageDir + "icon.bmp");
         PegasusSeedTexture = backend.TextureFromFile(ImageDir + "Pegasus_Seed_OOX.png");
+        FaroresMemoryTexture = backend.TextureFromFile(ImageDir + "Farores_Memory.png");
 
         Helper.mainThreadInvokeFunction = Top.DoNextFrame;
 
@@ -97,6 +98,8 @@ public static class Top
             else
                 Top.OpenProject(path, game);
         }
+
+        ImGuiLL.Initialize();
     }
 
     // ================================================================================
@@ -152,6 +155,7 @@ public static class Top
     /// oracles font.)
     /// </summary>
     public static ImFontPtr InfoFont { get { return fontDict[GlobalConfig.InfoFont].infoSize; } }
+    public static ImFontPtr InfoFontBold { get { return fontDict[GlobalConfig.InfoFont].bold; } }
 
     /// <summary>
     /// Font used for window titles, labels, etc. The default in most contexts.
@@ -165,6 +169,7 @@ public static class Top
     public static ImFontPtr MonoFont { get { return fontDict["ProggyClean"].infoSize; } }
 
     public static RgbaTexture PegasusSeedTexture { get; private set; }
+    public static RgbaTexture FaroresMemoryTexture { get; private set; }
 
     // Private properties
     private static ProjectWorkspace Workspace { get; set; }
@@ -297,6 +302,23 @@ public static class Top
     }
 
     /// <summary>
+    /// Mimics the C++ ImGui default constructor for ImFontConfig
+    /// </summary>
+    static ImFontConfig BasicImFontConfig()
+    {
+        ImFontConfig config = new();
+        config.FontDataOwnedByAtlas = 1;
+        config.OversampleH = 0; // Auto == 1 or 2 depending on size
+        config.OversampleV = 0; // Auto == 1
+        config.ExtraSizeScale = 1.0f;
+        config.GlyphMaxAdvanceX = float.MaxValue;
+        config.RasterizerMultiply = 1.0f;
+        config.RasterizerDensity = 1.0f;
+        config.EllipsisChar = 0;
+        return config;
+    }
+
+    /// <summary>
     /// Scales fonts and styles with the given scale value, for high-DPI displays.
     /// </summary>
     public static unsafe void ReAdjustScale()
@@ -307,7 +329,7 @@ public static class Top
 
         foreach (FontData font in fontDict.Values)
         {
-            if (font.name == "ProggyClean")
+            if (font.name == "ProggyClean") // TODO: Vectorized version
             {
                 ImFontConfig config;
                 config.FontDataOwnedByAtlas = 1;
@@ -318,6 +340,7 @@ public static class Top
 
                 config.SizePixels = (int)(GlobalConfig.InfoFontSize * ImGuiX.ScaleUnit);
                 font.infoSize = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
+                font.bold = font.infoSize; // TODO: Bold version
 
                 config.SizePixels = (int)(GlobalConfig.MenuFontSize * ImGuiX.ScaleUnit);
                 font.menuSize = ImGui.GetIO().Fonts.AddFontDefault(new ImFontConfigPtr(&config));
@@ -327,7 +350,12 @@ public static class Top
             }
             else
             {
+                ImFontConfig boldConfig = BasicImFontConfig();
+                boldConfig.FontLoaderFlags = (uint)ImGuiFreeTypeLoaderFlags.Bold;
                 font.infoSize = ImGuiX.LoadFont(font.name, (int)(GlobalConfig.InfoFontSize * ImGuiX.ScaleUnit));
+                font.bold = ImGuiX.LoadFont(font.name,
+                    (int)(GlobalConfig.InfoFontSize * ImGuiX.ScaleUnit),
+                    boldConfig);
                 font.menuSize = ImGuiX.LoadFont(font.name, (int)(GlobalConfig.MenuFontSize * ImGuiX.ScaleUnit));
                 font.menuSizeLarge = ImGuiX.LoadFont(font.name, (int)(GlobalConfig.MenuFontSize * ImGuiX.ScaleUnit * largeFontScale));
             }
@@ -554,6 +582,7 @@ public static class Top
 
         // Variants of the font loaded at different sizes
         public ImFontPtr infoSize;
+        public ImFontPtr bold;
         public ImFontPtr menuSize;
         public ImFontPtr menuSizeLarge;
     }
