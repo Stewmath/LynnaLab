@@ -77,6 +77,9 @@ public class RegionEditor : Frame
     // Variables
     // ================================================================================
 
+    // These strings are used for display, but they also must match with the names used by the Room
+    // class's ValueReferenceGroup in order to register event handlers based on the corresponding
+    // ValueReferences.
     static readonly string[] regionOptionStrings = {
         "Tileset",
         "Music",
@@ -102,14 +105,16 @@ public class RegionEditor : Frame
         BulkEdit,
     }
 
+    Minimap minimap;
+
     RegionOption selectedRegionType;
     ModeOption selectedMode;
 
-    Minimap minimap;
-
     GridRegionGenerator gridRegions;
 
+    // These change based on the RegionOption
     Accessor<Point, int> regionAccessor;
+    Action? unregisterEventHandlers = null;
 
     // Tile Edit Mode
     int regionValueToSet = 0;
@@ -122,6 +127,9 @@ public class RegionEditor : Frame
     // ================================================================================
 
     public ProjectWorkspace Workspace { get; }
+    public Project Project { get { return Workspace.Project; } }
+
+    string RegionTypeString { get { return regionOptionStrings[(int)selectedRegionType]; } }
 
     // ================================================================================
     // Public methods
@@ -132,7 +140,7 @@ public class RegionEditor : Frame
         ImGui.BeginChild("Checkboxes", ImGuiX.Unit(200.0f, 0.0f));
 
         ImGui.Text("Region To Edit:");
-        bool changedRegion = ImGuiX.Combo(
+        bool changedRegionType = ImGuiX.Combo(
             "##RegionCombo",
             new(() => (int)selectedRegionType, (s) => selectedRegionType = (RegionOption)s),
             regionOptionStrings);
@@ -156,8 +164,11 @@ public class RegionEditor : Frame
             RegisterMouseActions();
         }
 
-        if (changedRegion)
+        if (changedRegionType)
+        {
             UpdateGridRegions();
+            RegisterEventHandlers();
+        }
 
         ImGuiX.ShiftCursorScreenPos(ImGuiX.Unit(0.0f, 10.0f));
 
@@ -171,10 +182,12 @@ public class RegionEditor : Frame
                 () => regionAccessor.Get(selectedRegion!.Points.First().Point),
                 (v) =>
                 {
+                    Project.BeginTransaction($"Bulk region {RegionTypeString} edit", merge: true);
                     foreach (var p in selectedRegion!.Points)
                     {
                         regionAccessor.Set(p.Point, v);
                     }
+                    Project.EndTransaction();
                 }
             );
             ImGuiX.InputHex("Value", accessor);
@@ -200,8 +213,9 @@ public class RegionEditor : Frame
     {
         minimap.SetFloorPlan(plan);
 
-        // TODO: Update whenever underlying data is changed
+        // TODO: Update whenever underlying data is changed (dungeon floors rearranged)
         UpdateGridRegions();
+        RegisterEventHandlers();
     }
 
     // ================================================================================
@@ -266,28 +280,28 @@ public class RegionEditor : Frame
             MouseButton.LeftClick, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
             (sender, args) =>
             {
+                Project.BeginTransaction($"Edit region {RegionTypeString}#{minimap.FloorPlan.Identifier}", merge: true);
                 int x = args.selectedIndex % minimap.Width;
                 int y = args.selectedIndex / minimap.Width;
                 regionAccessor.Set(new Point(x, y), regionValueToSet);
-
-                // TODO: Update whenever underlying data is changed
-                UpdateGridRegions();
-            });
+                Project.EndTransaction();
+            },
+            onRelease: () => Project.TransactionManager.InsertBarrier()
+        );
 
         // Ctrl+Left click to set range of tiles
         minimap.AddMouseAction(
             MouseButton.LeftClick, MouseModifier.Ctrl, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
             (sender, args) =>
             {
+                Project.BeginTransaction($"Edit region {RegionTypeString}");
                 args.Foreach((i) =>
                 {
                     int x = i % minimap.Width;
                     int y = i / minimap.Width;
                     regionAccessor.Set(new Point(x, y), regionValueToSet);
-
-                    // TODO: Update whenever underlying data is changed
-                    UpdateGridRegions();
                 });
+                Project.EndTransaction();
             },
             brushPreview: true);
 
@@ -310,20 +324,48 @@ public class RegionEditor : Frame
 
         TileGrid.TileGridEventHandler selectAction = (object sender, TileGridEventArgs args) =>
         {
-            setSelectedRegion(gridRegions.GetRegionForPoint(minimap.PointFromIndex(args.selectedIndex)));
+            SetSelectedRegion(gridRegions.GetRegionForPoint(minimap.PointFromIndex(args.selectedIndex)));
         };
 
         // Click to select
         minimap.AddMouseAction(
-            MouseButton.Any, MouseModifier.None, MouseAction.ClickDrag, GridAction.Callback,
+            MouseButton.Any, MouseModifier.None, MouseAction.Click, GridAction.Callback,
             selectAction);
     }
 
-    void setSelectedRegion(GridRegion region)
+    void SetSelectedRegion(GridRegion region)
     {
         Debug.Assert(selectedMode == ModeOption.BulkEdit);
         Debug.Assert(gridRegions.Regions.Contains(region));
 
         selectedRegion = region;
+    }
+
+    /// <summary>
+    /// Events are tied to the FloorPlan, so this only needs to be done once per FloorPlan change,
+    /// or when selectedRegionType changes.
+    /// </summary>
+    [MemberNotNull(nameof(unregisterEventHandlers))]
+    void RegisterEventHandlers()
+    {
+        if (unregisterEventHandlers != null)
+        {
+            unregisterEventHandlers();
+            unregisterEventHandlers = null;
+        }
+
+        string name = regionOptionStrings[(int)selectedRegionType];
+        unregisterEventHandlers = Project.RegisterEventOnAllRooms(name, OnRoomValueChanged);
+    }
+
+    /// <summary>
+    /// Called whenever any room has its watch value changed (music, tileset, etc).
+    ///
+    /// Yes, ANY room, not just the ones displayed. I don't feel like handling dungeons where the
+    /// room indexes can change arbitrarily.
+    /// </summary>
+    void OnRoomValueChanged()
+    {
+        UpdateGridRegions();
     }
 }

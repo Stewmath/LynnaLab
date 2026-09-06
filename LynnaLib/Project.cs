@@ -106,16 +106,13 @@ public partial class Project
     ProjectStateHolder stateHolder;
 
     // --- Don't need synchronization for these ---
+
     Dictionary<Tuple<int, Season>, RealTileset> tilesetCache = new();
     Dictionary<int, bool> tilesetSeasonalCache = new Dictionary<int, bool>();
 
-    int numTilesets;
-    // See "GetStandardSpritePalettes"
-    Color[][] _standardSpritePalettes;
+    // For implementation of RegisterEventOnAll
+    List<Action> transactionEndCallbacks = new();
 
-    // --- Only valid server-side ---
-    readonly string? baseDirectory;
-    log4net.Appender.RollingFileAppender? logAppender;
 
 
     TransactionManager transactionManager;
@@ -128,6 +125,19 @@ public partial class Project
     // - FileComponent / Data
     // - And more.
     Dictionary<string, ProjectDataType> dataStructDictionary = new();
+
+
+    // --- These never change ---
+
+    int numTilesets;
+    // See "GetStandardSpritePalettes" (TODO: Actually, should handle the case where underlying data changes?)
+    Color[][] _standardSpritePalettes;
+
+    // --- Only valid server-side ---
+
+    readonly string? baseDirectory;
+    log4net.Appender.RollingFileAppender? logAppender;
+
 
     // ================================================================================
     // Properties
@@ -365,6 +375,7 @@ public partial class Project
         IsClient = false;
 
         transactionManager = new(this, NetworkID.Server);
+        transactionManager.EndTransactionOrUndoEvent += OnEndTransaction;
         transactionManager.BeginTransaction("Initial project load", merge: false, disallowUndo: true);
 
         this.stateHolder = new(this, game, config);
@@ -604,6 +615,7 @@ public partial class Project
         IsClient = true;
 
         transactionManager = new(this, NetworkID.Unassigned); // ID will be assigned later
+        transactionManager.EndTransactionOrUndoEvent += OnEndTransaction;
 
         IsInConstructor = false;
 
@@ -1663,6 +1675,61 @@ public partial class Project
         return null;
     }
 
+    /// <summary>
+    /// Register a modified event handler on every ValueReference passed in.
+    ///
+    /// This handler will only fire at the end of the current transaction, and only one time, even
+    /// if multiple ValueReferences in the list were modified in the transaction.
+    ///
+    /// Returns a delegate to unregister the modified handlers.
+    /// </summary>
+    public Action RegisterEventOnAll(IEnumerable<ValueReference> references, Action _action)
+    {
+        Action action = () => _action(); // Ensure this is a unique object
+
+        EventHandler<ValueModifiedEventArgs?> onValueReferenceModified = (obj, args) =>
+        {
+            ValueReference reference = (ValueReference)obj!;
+
+            if (!TransactionManager.InTransaction && !TransactionManager.IsUndoing)
+                throw new Exception("ValueReference callback invoked outside of a transaction!");
+            if (!transactionEndCallbacks.Contains(action))
+                transactionEndCallbacks.Add(action);
+        };
+
+        foreach (var reference in references)
+        {
+            reference.AddValueModifiedHandler(onValueReferenceModified);
+        }
+
+        Action unregister = () =>
+        {
+            foreach (var reference in references)
+            {
+                reference.RemoveValueModifiedHandler(onValueReferenceModified);
+            }
+        };
+
+        return unregister;
+    }
+
+    /// <summary>
+    /// Register an event on all instances of Room.ValueReferenceGroup[name]. See RegisterEventOnAll
+    /// for details.
+    /// </summary>
+    public Action RegisterEventOnAllRooms(string name, Action action)
+    {
+        List<ValueReference> l = new();
+        for (int r = 0; r < NumRooms; r++)
+        {
+            Room room = GetRoom(r);
+            ValueReference reference = room.ValueReferenceGroup[name].ValueReference;
+            l.Add(reference);
+        }
+        return RegisterEventOnAll(l, action);
+    }
+
+
     public FileParser GetDefaultEnemyObjectFile()
     {
         string filename = "objects/" + GameString + "/enemyData.s";
@@ -1736,6 +1803,7 @@ public partial class Project
     /// </summary>
     public void BeginTransaction(string description, bool merge = false, bool disallowUndo = false)
     {
+        Debug.Assert(transactionEndCallbacks.Count == 0 || TransactionManager.InTransaction);
         TransactionManager.BeginTransaction(description, merge, disallowUndo);
     }
 
@@ -1847,6 +1915,15 @@ public partial class Project
         leftBitmap.Dispose();
         rightBitmap.Dispose();
         return fullBitmap;
+    }
+
+    void OnEndTransaction()
+    {
+        foreach (Action action in transactionEndCallbacks)
+        {
+            action();
+        }
+        transactionEndCallbacks.Clear();
     }
 
     // ================================================================================

@@ -543,6 +543,12 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
             DungeonFlags |= (byte)(1 << bit);
     }
 
+    /// <summary>
+    /// Generate ValueReferenceGroup which exposes editable data in the gui.
+    ///
+    /// Don't change the names of the descriptors without checking elsewhere first! They are used as
+    /// lookup keys for the ValueReferenceGroup.
+    /// </summary>
     ValueReferenceGroup GenerateValueReferenceGroup()
     {
         ValueReferenceDescriptor roomPackDesc;

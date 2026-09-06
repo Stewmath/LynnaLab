@@ -109,6 +109,68 @@ public class TestProject
         Assert.Equal(4, group.GetObjects().Count);
     }
 
+    [Fact]
+    public static void TestRegisterEventOnAll()
+    {
+        Project p = LoadProject(Game.Seasons);
+
+        int tilesetCalled = 0;
+        int musicCalled = 0;
+
+        void tilesetCallback()
+        {
+            tilesetCalled++;
+        }
+        void musicCallback()
+        {
+            musicCalled++;
+        }
+
+        var unregisterTileset = p.RegisterEventOnAllRooms("Tileset", tilesetCallback);
+        var unregisterMusic = p.RegisterEventOnAllRooms("Music", musicCallback);
+
+        Assert.Equal(0, tilesetCalled);
+        Assert.Equal(0, musicCalled);
+
+        p.BeginTransaction("Transaction");
+
+        p.GetRoom(0).TilesetIndex = 0xff;
+        p.GetRoom(0).SetMusicID(0xff);
+
+        // No callback until EndTransaction
+        Assert.Equal(0, tilesetCalled);
+        Assert.Equal(0, musicCalled);
+
+        // Callback happens after EndTransaction
+        p.EndTransaction();
+        Assert.Equal(1, tilesetCalled);
+        Assert.Equal(1, musicCalled);
+
+        // Multiple callbacks don't mix each other up
+        p.BeginTransaction("Transaction");
+        p.GetRoom(1).TilesetIndex = 0xfe;
+        p.EndTransaction();
+        Assert.Equal(2, tilesetCalled);
+        Assert.Equal(1, musicCalled);
+
+        // Multiple writes only cause one callback
+        p.BeginTransaction("Transaction");
+        p.GetRoom(5).SetMusicID(0xfd);
+        p.GetRoom(6).SetMusicID(0xfd);
+        p.EndTransaction();
+        Assert.Equal(2, tilesetCalled);
+        Assert.Equal(2, musicCalled);
+
+        // Unregistration works
+        unregisterTileset();
+        p.BeginTransaction("Transaction");
+        p.GetRoom(7).TilesetIndex = 0xfc;
+        p.GetRoom(7).SetMusicID(0xfc);
+        p.EndTransaction();
+        Assert.Equal(2, tilesetCalled);
+        Assert.Equal(3, musicCalled);
+    }
+
     // ================================================================================
     // Static methods
     // ================================================================================

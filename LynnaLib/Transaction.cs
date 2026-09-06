@@ -29,6 +29,7 @@ public class TransactionManager
     // ================================================================================
 
     public event Action<LinkedListNode<TransactionNode>>? TransactionAddedEvent;
+    public event Action? EndTransactionOrUndoEvent;
 
     // ================================================================================
     // Variables
@@ -93,7 +94,7 @@ public class TransactionManager
         }
     }
 
-    bool InTransaction { get { return beginTransactionCalls != 0; } }
+    public bool InTransaction { get { return beginTransactionCalls != 0; } }
 
     bool HaveIncompleteTransaction { get { return !constructingTransaction.Empty; } }
 
@@ -206,11 +207,15 @@ public class TransactionManager
 
         doInProgress = false;
 
+        if (didAnything)
+            EndTransactionOrUndoEvent?.Invoke();
+
         if (failedTransaction != null)
         {
             log.Info($"Undo/redo failed on transaction {failedTransaction.UniqueID}: {failedTransaction.Description}");
             return false;
         }
+
         return didAnything;
     }
 
@@ -300,6 +305,8 @@ public class TransactionManager
 
             if (changed && markModified)
                 Project.MarkModified();
+
+            EndTransactionOrUndoEvent?.Invoke();
         }
     }
 
@@ -576,7 +583,7 @@ public class TransactionManager
 }
 
 /// <summary>
-/// History is tracked with "TransactionNode" instances; either an applicaion or de-application of a
+/// History is tracked with "TransactionNode" instances; either an application or de-application of a
 /// transaction.
 /// </summary>
 public class TransactionNode
