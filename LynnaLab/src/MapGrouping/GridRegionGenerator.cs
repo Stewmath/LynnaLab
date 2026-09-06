@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLab;
 
 /// <summary>
@@ -12,18 +13,20 @@ public class GridRegionGenerator
     // ================================================================================
     // Constructors
     // ================================================================================
-    public GridRegionGenerator(int width, int height, Func<int, int, int> getRegion)
+    public GridRegionGenerator(int width, int height, Func<Point, int> getRegion)
     {
         this.Width = width;
         this.Height = height;
         this.getRegion = getRegion;
+
+        Regenerate();
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
 
-    Func<int, int, int> getRegion;
+    Func<Point, int> getRegion;
 
     // ================================================================================
     // Properties
@@ -32,11 +35,14 @@ public class GridRegionGenerator
     public int Width { get; }
     public int Height { get; }
 
+    public IReadOnlyList<GridRegion> Regions { get; private set; }
+
     // ================================================================================
     // Public methods
     // ================================================================================
 
-    public IReadOnlyList<GridRegion> Generate(TileGrid unused = null)
+    [MemberNotNull(nameof(Regions))]
+    public IReadOnlyList<GridRegion> Regenerate()
     {
         Dictionary<int, List<Point>> regionDictPass1 = new();
 
@@ -44,7 +50,7 @@ public class GridRegionGenerator
         for (int y = 0; y < Height; y++)
         for (int x = 0; x < Width; x++)
         {
-            int region = getRegion(x, y);
+            int region = getRegion(new Point(x, y));
             if (!regionDictPass1.TryGetValue(region, out var points))
             {
                 points = new List<Point>();
@@ -119,10 +125,24 @@ public class GridRegionGenerator
         if (!TryAssignColors(adjacency, orderedRegionIds, colors.Length, assignedColors))
             throw new InvalidOperationException("Unable to assign a color to all adjacent regions with the available palette.");
 
-        return Enumerable.Range(0, regionPoints.Count)
-            .Select(regionId => new GridRegion(regionPoints[regionId], colors[assignedColors[regionId]]))
+        Regions = Enumerable.Range(0, regionPoints.Count)
+            .Select(regionId => new GridRegion(
+                regionId,
+                regionPoints[regionId],
+                colors[assignedColors[regionId]]))
             .ToList();
+
+        return Regions;
     }
+
+    public GridRegion GetRegionForPoint(Point p)
+    {
+        return Regions.First(region => region.Points.Any(gridPoint => gridPoint.Point == p));
+    }
+
+    // ================================================================================
+    // Private methods
+    // ================================================================================
 
     bool TryAssignColors(Dictionary<int, HashSet<int>> adjacency, List<int> orderedRegionIds, int numColors, int[] assignedColors, int orderIndex=0)
     {

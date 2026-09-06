@@ -70,7 +70,7 @@ public class Minimap : TileGrid
         // Show coordinate tooltip
         base.OnHover = (int tile) =>
         {
-            if (Top.GlobalConfig.ShowCoordinateTooltip)
+            if (ShowCoordinateTooltip && Top.GlobalConfig.ShowCoordinateTooltip)
             {
                 int x = tile % Width;
                 int y = tile / Width;
@@ -127,6 +127,12 @@ public class Minimap : TileGrid
     {
         get { return floorPlan.GetRoomLayout(SelectedX, SelectedY); }
     }
+
+    /// <summary>
+    /// Must have both this set to true and GlobalConfig.ShowCoordinateTooltip set to true in order
+    /// to show it.
+    /// </summary>
+    public bool ShowCoordinateTooltip { get; set; } = true;
 
     // ================================================================================
     // Public methods

@@ -13,7 +13,7 @@ public class TileGrid : SizedWidget
     public TileGrid(string name)
     {
         this.Name = name;
-        AddMouseAction(MouseButton.LeftClick, MouseModifier.Any, MouseAction.Click, GridAction.Select);
+        ResetMouseActions();
     }
 
     // ================================================================================
@@ -257,7 +257,7 @@ public class TileGrid : SizedWidget
         }
     }
 
-    public Color HoverColor { get; protected set; } = Color.Red;
+    public Color HoverColor { get; set; } = Color.Red;
     public Color SelectColor { get; protected set; } = Color.White;
     public Color DragColor { get; protected set; } = Color.Cyan;
 
@@ -795,6 +795,12 @@ public class TileGrid : SizedWidget
         actionList.RemoveAll(act => act.name == name);
     }
 
+    public void ResetMouseActions()
+    {
+        actionList.Clear();
+        AddMouseAction(MouseButton.LeftClick, MouseModifier.Any, MouseAction.Click, GridAction.Select);
+    }
+
     /// <summary>
     /// Converts a RELATIVE ImGui position vector in pixels to a tile index.
     /// </summary>
@@ -953,6 +959,13 @@ public class TileGrid : SizedWidget
         Vector2 tl = new Vector2((TilePaddingX + x * PaddedTileWidth) * Scale,
                                  (TilePaddingY + y * PaddedTileHeight) * Scale);
         return new FRect(tl.X, tl.Y, TileWidth * Scale, TileHeight * Scale);
+    }
+
+    public Point PointFromIndex(int index)
+    {
+        if (index < 0 || index >= MaxIndex)
+            throw new Exception($"PointFromIndex: Invalid index {index}");
+        return new Point(index % Width, index / Width);
     }
 
     // ================================================================================

@@ -10,7 +10,7 @@ namespace Util;
 ///
 /// I'm unsure about the performance of this. It involves compiling some IL code (but not much).
 /// </summary>
-public class Accessor<T>
+public struct Accessor<T>
 {
     public Accessor(Expression<Func<T>> expression)
     {
@@ -34,4 +34,23 @@ public class Accessor<T>
 
     private readonly Action<T> _setter;
     private readonly Func<T> _getter;
+}
+
+
+/// <summary>
+/// Variant of above that takes a key
+/// </summary>
+public struct Accessor<TKey, TValue>
+{
+    public Accessor(Func<TKey, TValue> getter, Action<TKey, TValue> setter)
+    {
+        Getter = getter;
+        Setter = setter;
+    }
+
+    Func<TKey, TValue> Getter { get; }
+    Action<TKey, TValue> Setter { get; }
+
+    public TValue Get(TKey key) { return Getter(key); }
+    public void Set(TKey key, TValue value) { Setter(key, value); }
 }

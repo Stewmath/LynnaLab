@@ -1,3 +1,4 @@
+#nullable enable
 namespace LynnaLab;
 
 /// <summary>
@@ -42,7 +43,7 @@ public class GridRegion
     // ================================================================================
     // Constructors
     // ================================================================================
-    public GridRegion(IEnumerable<Point> points, Color color)
+    public GridRegion(int regionID, IEnumerable<Point> points, Color color)
     {
         List<Point> pointList = points.ToList();
         HashSet<Point> pointSet = pointList.ToHashSet();
@@ -54,6 +55,7 @@ public class GridRegion
             !pointSet.Contains(new Point(p.X, p.Y + 1)),
             !pointSet.Contains(new Point(p.X - 1, p.Y)))).ToList();
         this.Color = color;
+        this.RegionID = regionID;
     }
 
     // ================================================================================
@@ -63,4 +65,11 @@ public class GridRegion
     public IEnumerable<GridPoint> Points { get; }
 
     public Color Color { get; }
+
+    /// <summary>
+    /// A unique region ID value. NOT equivalent to the underlying value that the region uses (ie.
+    /// tileset index) because multiple regions can have the same tileset (if detached from each
+    /// other).
+    /// </summary>
+    public int RegionID { get; }
 }

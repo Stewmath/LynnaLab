@@ -15,8 +15,8 @@ public class TestGridRegionGenerator
             { 0, 1, 0 },
         };
 
-        var generator = new GridRegionGenerator(3, 3, (x, y) => grid[y, x]);
-        var regions = generator.Generate();
+        var generator = new GridRegionGenerator(3, 3, (p) => grid[p.Y, p.X]);
+        var regions = generator.Regions;
 
         Assert.Equal(5, regions.Count);
         Assert.Equal([1, 1, 1, 1, 5], regions.Select(r => r.Points.Count()).Order().ToArray());
@@ -49,8 +49,8 @@ public class TestGridRegionGenerator
             { 2, 1, 1, 3 },
         };
 
-        var generator = new GridRegionGenerator(4, 4, (x, y) => grid[y, x]);
-        var regions = generator.Generate();
+        var generator = new GridRegionGenerator(4, 4, (p) => grid[p.Y, p.X]);
+        var regions = generator.Regions;
 
         Assert.Equal(9, regions.Count);
 
