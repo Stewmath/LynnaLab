@@ -574,8 +574,6 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
                 throw new Exception("Internal error: Dungeon room lookup table invalid");
             state.roomLookup[(byte)room].Add((x, y));
 
-            DetermineRoomsUsed();
-
             Dungeon.DungeonChangedEvent?.Invoke(Dungeon, DungeonChangedEventArgs.CreateRoomChanged(this, x, y));
 
             Project.EndTransaction();
