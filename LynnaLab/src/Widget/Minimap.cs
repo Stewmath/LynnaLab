@@ -107,6 +107,12 @@ public class Minimap : TileGrid
     EventWrapper<Dungeon> dungeonEW = new();
 
     // ================================================================================
+    // Events
+    // ================================================================================
+
+    public event EventHandler<EventArgs> ChangedFloorPlanEvent;
+
+    // ================================================================================
     // Properties
     // ================================================================================
 
@@ -168,6 +174,7 @@ public class Minimap : TileGrid
         }
 
         dungeonEW.ReplaceEventSource((plan as Dungeon.Floor)?.Dungeon);
+        ChangedFloorPlanEvent?.Invoke(this, null);
     }
 
     public RoomLayout GetRoomLayout(int x, int y)

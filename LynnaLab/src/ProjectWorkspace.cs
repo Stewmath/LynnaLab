@@ -58,7 +58,7 @@ public class ProjectWorkspace
         roomWiperDialog = new RoomWiper(this);
         roomWiperDialog.Active = true;
         roomWiperDialog.SetFloorPlan(Project.GetWorldMap(0, Season.Summer));
-        regionEditorDialog = new(this, Project.GetWorldMap(0, Season.Summer));
+        regionEditorDialog = new(this);
         regionEditorDialog.Active = true;
 
         frames.AddRange(new Frame[] {

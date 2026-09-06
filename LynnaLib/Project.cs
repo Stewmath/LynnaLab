@@ -1219,7 +1219,8 @@ public partial class Project
     /// </summary>
     public bool TilesetIsSeasonal(int index)
     {
-        Debug.Assert(index >= 0 && index < NumTilesets);
+        if (index < 0 || index >= NumTilesets)
+            throw new ArgumentException($"Tileset number {index} is invalid.");
 
         // Though this seems trivial, we need to cache this for performance. Traversing
         // FileParsers is expensive.
@@ -1270,12 +1271,40 @@ public partial class Project
     public bool GroupSeasonIsValid(int group, Season season)
     {
         if (group < 0 || group >= NumGroups)
-            return false;
-        else if (Game == Game.Seasons && group == 0)
+            throw new ArgumentException($"Group number {group} is invalid.");
+
+        if (Game == Game.Seasons && group == 0)
             return (int)season >= 0 && (int)season <= 3;
         else
             return season == Season.None;
     }
+    /// <summary>
+    /// Determine if the given season is valid for the given group, then either throws an exception
+    /// or returns an acceptable value.
+    ///
+    /// Do NOT use this to check the validity of a season for a tileset! Use the tileset variants
+    /// instead!
+    /// </summary>
+    public Season ValidateGroupSeason(int group, Season season, bool autoCorrect = false)
+    {
+        if (!GroupSeasonIsValid(group, season))
+        {
+            if (autoCorrect)
+                return GroupHasSeason(group) ? Season.Spring : Season.None;
+            else
+                throw new ProjectErrorException($"Invalid season {season} for group {group}");
+        }
+        return season;
+    }
+    public bool GroupHasSeason(int group)
+    {
+        return group == 0 && Game == Game.Seasons;
+    }
+    public Season DefaultGroupSeason(int group)
+    {
+        return GroupHasSeason(group) ? Season.Spring : Season.None;
+    }
+
 
     /// <summary>
     /// Perform an action for every valid season in a given group.

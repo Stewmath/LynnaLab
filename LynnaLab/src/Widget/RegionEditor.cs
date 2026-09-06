@@ -10,14 +10,17 @@ public class RegionEditor : Frame
     // ================================================================================
     // Constructors
     // ================================================================================
-    public RegionEditor(ProjectWorkspace workspace, FloorPlan plan) : base("Region Editor")
+    public RegionEditor(ProjectWorkspace workspace) : base("Region Editor")
     {
         this.Workspace = workspace;
         this.minimap = new(workspace, doPostRendering: false);
 
         minimap.Selectable = false;
 
-        SetFloorPlan(plan);
+        mapChooser = new(Project, minimap);
+
+        OnFloorPlanChanged(minimap.FloorPlan); // Set by MapChooser constructor
+        minimap.ChangedFloorPlanEvent += (_, _) => OnFloorPlanChanged(minimap.FloorPlan);
 
         // Color the minimap based on the grid regions
         minimap.AfterRenderTileGrid += (_, _) =>
@@ -106,6 +109,7 @@ public class RegionEditor : Frame
     }
 
     Minimap minimap;
+    MapChooser mapChooser;
 
     RegionOption selectedRegionType;
     ModeOption selectedMode;
@@ -210,14 +214,18 @@ public class RegionEditor : Frame
             ImGui.Text("No map selected?");
         else
         {
-            minimap.Render();
+            mapChooser.Render();
         }
         ImGui.EndChild();
     }
 
+    // ================================================================================
+    // Private methods
+    // ================================================================================
+
     [MemberNotNull(nameof(regionAccessor))]
     [MemberNotNull(nameof(gridRegions))]
-    public void SetFloorPlan(FloorPlan plan)
+    void OnFloorPlanChanged(FloorPlan plan)
     {
         minimap.SetFloorPlan(plan);
 
@@ -225,10 +233,6 @@ public class RegionEditor : Frame
         UpdateGridRegions();
         RegisterEventHandlers();
     }
-
-    // ================================================================================
-    // Private methods
-    // ================================================================================
 
     [MemberNotNull(nameof(regionAccessor))]
     [MemberNotNull(nameof(gridRegions))]
