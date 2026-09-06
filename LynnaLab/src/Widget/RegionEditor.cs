@@ -113,7 +113,7 @@ public class RegionEditor : Frame
     GridRegionGenerator gridRegions;
 
     // These change based on the RegionOption
-    Accessor<Point, int> regionAccessor;
+    RegionAccessor regionAccessor;
     Action? unregisterEventHandlers = null;
 
     // Tile Edit Mode
@@ -175,7 +175,7 @@ public class RegionEditor : Frame
 
         if (selectedMode == ModeOption.TileEdit)
         {
-            ImGuiX.InputHex("Value", ref regionValueToSet);
+            regionAccessor.RenderSelector(ref regionValueToSet);
         }
         else
         {
@@ -198,7 +198,7 @@ public class RegionEditor : Frame
                     suppressChangeEvent = false;
                 }
             );
-            ImGuiX.InputHex("Value", accessor);
+            regionAccessor.RenderSelector(accessor);
         }
 
         ImGui.EndChild();
@@ -236,26 +236,7 @@ public class RegionEditor : Frame
     {
         var plan = minimap.FloorPlan;
 
-        switch (selectedRegionType)
-        {
-            case RegionOption.Tileset:
-                regionAccessor = new(
-                    (p) => plan.GetRoom(p.X, p.Y).TilesetIndex,
-                    (p, v) => plan.GetRoom(p.X, p.Y).TilesetIndex = v);
-                break;
-            case RegionOption.Music:
-                regionAccessor = new(
-                    (p) => plan.GetRoom(p.X, p.Y).GetMusicID(),
-                    (p, v) => plan.GetRoom(p.X, p.Y).SetMusicID(v));
-                break;
-            case RegionOption.RoomPack:
-                regionAccessor = new(
-                    (p) => plan.GetRoom(p.X, p.Y).RoomPack,
-                    (p, v) => plan.GetRoom(p.X, p.Y).RoomPack = (byte)v);
-                break;
-            default:
-                throw new Exception("Internal error");
-        }
+        regionAccessor = new DescriptorRegionAccessor((Point p) => plan.GetRoom(p.X, p.Y).ValueReferenceGroup[RegionTypeString]);
 
         gridRegions = new GridRegionGenerator(plan.MapWidth, plan.MapHeight, regionAccessor.Get);
 
@@ -377,5 +358,77 @@ public class RegionEditor : Frame
         if (suppressChangeEvent)
             return;
         UpdateGridRegions();
+    }
+
+
+    /// <summary>
+    /// A class which is responsible for getting & setting some per-room value, and rendering a
+    /// selector widget.
+    ///
+    /// Does this really need to have an abstract base class? Probably not...
+    /// </summary>
+    abstract class RegionAccessor
+    {
+        public RegionAccessor()
+        {
+        }
+
+        // ================================================================================
+        // Public methods
+        // ================================================================================
+
+        public abstract int Get(Point point);
+        public abstract void Set(Point point, int value);
+
+        public abstract void RenderSelector(Accessor<int> accessor);
+
+        public void RenderSelector(ref int value)
+        {
+            int v = value;
+            RenderSelector(new(() => v));
+            value = v;
+        }
+    }
+
+    class DescriptorRegionAccessor : RegionAccessor
+    {
+        public DescriptorRegionAccessor(Func<Point, ValueReferenceDescriptor> getDescriptor)
+        {
+            this.getDescriptor = getDescriptor;
+        }
+
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        Func<Point, ValueReferenceDescriptor> getDescriptor;
+
+        // ================================================================================
+        // Public methods
+        // ================================================================================
+
+        public override int Get(Point point)
+        {
+            return getDescriptor(point).GetIntValue();
+        }
+
+        public override void Set(Point point, int value)
+        {
+            getDescriptor(point).SetValue(value);
+        }
+
+        public override void RenderSelector(Accessor<int> accessor)
+        {
+            var descriptor = getDescriptor(new(0, 0));
+            ConstantsMapping? mapping = descriptor.ConstantsMapping;
+            int value = accessor.Get();
+            int initial = value;
+            if (mapping == null)
+                ImGuiX.InputHex(descriptor.Name, ref value);
+            else
+                ImGuiLL.ComboBoxFromConstants(descriptor.Name, mapping, ref value, true, true);
+            if (initial != value)
+                accessor.Set(value);
+        }
     }
 }
