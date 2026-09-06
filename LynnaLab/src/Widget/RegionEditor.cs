@@ -121,6 +121,7 @@ public class RegionEditor : Frame
 
     // Bulk Edit Mode
     GridRegion? selectedRegion = null; // null iff selectedMode == TileEdit
+    bool suppressChangeEvent = false;
 
     // ================================================================================
     // Properties
@@ -182,12 +183,19 @@ public class RegionEditor : Frame
                 () => regionAccessor.Get(selectedRegion!.Points.First().Point),
                 (v) =>
                 {
+                    // Don't update the region grid while doing bulk edits, because we don't have a
+                    // good way to keep the same region as before selected after it updates! This
+                    // just means that some adjacent regions may have the same value, which normally
+                    // isn't possible, but should make the editing experience better.
+                    suppressChangeEvent = true;
+
                     Project.BeginTransaction($"Bulk region {RegionTypeString} edit", merge: true);
                     foreach (var p in selectedRegion!.Points)
                     {
                         regionAccessor.Set(p.Point, v);
                     }
                     Project.EndTransaction();
+                    suppressChangeEvent = false;
                 }
             );
             ImGuiX.InputHex("Value", accessor);
@@ -366,6 +374,8 @@ public class RegionEditor : Frame
     /// </summary>
     void OnRoomValueChanged()
     {
+        if (suppressChangeEvent)
+            return;
         UpdateGridRegions();
     }
 }
