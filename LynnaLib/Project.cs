@@ -1729,7 +1729,6 @@ public partial class Project
         return RegisterEventOnAll(l, action);
     }
 
-
     public FileParser GetDefaultEnemyObjectFile()
     {
         string filename = "objects/" + GameString + "/enemyData.s";
@@ -1775,6 +1774,17 @@ public partial class Project
             throw new Exception();
     }
 
+    public MapleLocationTable GetMapleLocationTable(Companion companion, bool past)
+    {
+        string age = past ? "Past" : "Present";
+        string label;
+        if (Game == Game.Ages && past)
+            label = $"maple{age}Locations";
+        else
+            label = $"maple{age}Locations{companion.GetString()}Companion";
+        return GetDataType<MapleLocationTable>(label, true);
+    }
+
     // This method only works on EXISTING constants in a specific file defined with ".define".
     // Unlike the "AddDefinition" method, this modifies a file with a new value.
     // TODO: Update the ConstantsMappings somehow. (Should overhaul those and use the
@@ -1789,6 +1799,10 @@ public partial class Project
     {
         return DefinesDictionary;
     }
+
+    // ================================================================================
+    // End of oracles-disasm data handling functions
+    // ================================================================================
 
     /// <summary>
     /// Mark the current state of the project as the starting point for an undo-able operation.
@@ -1994,10 +2008,4 @@ public partial class Project
             return typeof(TrackedStream);
         return type;
     }
-}
-
-public enum Game
-{
-    Seasons = 0,
-    Ages
 }

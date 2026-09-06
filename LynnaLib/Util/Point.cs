@@ -35,7 +35,7 @@ public struct Point
 
     public override string ToString()
     {
-        return $"<X: {X}, Y: {Y}";
+        return $"<X: {X}, Y: {Y}>";
     }
 
     public override int GetHashCode()
@@ -48,6 +48,11 @@ public struct Point
         if (!(o is Point p))
             return false;
         return this == p;
+    }
+
+    public bool InRange(int x1, int y1, int x2, int y2)
+    {
+        return X >= x1 && Y >= y1 && X < x2 && Y < y2;
     }
 
     // ================================================================================
