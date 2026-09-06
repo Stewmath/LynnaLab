@@ -37,6 +37,9 @@ public unsafe static class Startup
 
         SDL_SetAppMetadata(title, version, null);
 
+        // Don't inhibit sleep / screen lock
+        SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
+
         // On Linux, prefer wayland if available. (X11+Vulkan has a crashing bug when resizing the
         // window. Probably my fault somehow, but I couldn't figure it out.)
         if (SDL_GetPlatform() == "Linux")
