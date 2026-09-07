@@ -644,7 +644,7 @@ public class ObjectGroup : TrackedProjectData
         // Search for shared data before this label
 
         d = d.Prev;
-        while (!(d is Label || d is Data))
+        while (!(d is Label || (d is Data d2 && d2.CommandLowerCase != "obj_garbage")))
             d = d.Prev;
 
         if (!(d is Label))

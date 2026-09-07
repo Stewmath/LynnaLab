@@ -186,14 +186,14 @@ public class TestProject
         for (int r = 0; r < p.NumRooms; r++)
         {
             Room room = p.GetRoom(r);
-            //room.GetObjectGroup().Wipe(); // TODO
+            room.GetObjectGroup().Wipe();
             room.GetWarpGroup().Wipe();
         }
 
         for (int r = 0; r < p.NumRooms; r++)
         {
             Room room = p.GetRoom(r);
-            //Assert.Equal(0, room.GetObjectGroup().GetNumObjects()); // TODO
+            Assert.Equal(0, room.GetObjectGroup().GetNumObjects());
             Assert.Equal(0, room.GetWarpGroup().Count);
         }
     }
