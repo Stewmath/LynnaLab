@@ -156,9 +156,11 @@ public class RegionEditor : Frame
 
     public override void Render()
     {
-        ImGui.BeginChild("Checkboxes", ImGuiX.Unit(200.0f, 0.0f));
+        ImGui.BeginChild("Left pane", ImGuiX.Unit(250.0f, 0.0f));
 
-        ImGui.Text("Region To Edit:");
+        ImGuiLL.HelpButton("RegionEditor.md");
+
+        ImGui.Text("Data To Edit:");
         bool changedRegionType = ImGuiX.Combo(
             "##RegionCombo",
             new(() => regionOptionStrings[(int)selectedRegionType],
