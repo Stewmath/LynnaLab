@@ -173,6 +173,7 @@ public struct Color
     public static readonly Color Black = FromRgb(0x00, 0x00, 0x00);
     public static readonly Color Blue = FromRgb(0x00, 0x00, 0xff);
     public static readonly Color Cyan = FromRgb(0x00, 0xff, 0xff);
+    public static readonly Color LightBlue = FromRgb(0x50, 0x50, 0xff);
     public static readonly Color DarkOrange = FromRgb(0xff, 0x8c, 0x00);
     public static readonly Color Gray = FromRgb(0x80, 0x80, 0x80);
     public static readonly Color Green = FromRgb(0x00, 0x80, 0x00);
@@ -181,6 +182,11 @@ public struct Color
     public static readonly Color Purple = FromRgb(0x80, 0x00, 0x80);
     public static readonly Color White = FromRgb(0xff, 0xff, 0xff);
     public static readonly Color Yellow = FromRgb(0xff, 0xff, 0x00);
+    public static readonly Color Magenta = FromRgb(0xff, 0x00, 0xff);
+    public static readonly Color Chartreuse = FromRgb(0x7f, 0xff, 0x00);
+    public static readonly Color DeepPink = FromRgb(0xff, 0x14, 0x93);
+    public static readonly Color Azure = FromRgb(0x00, 0x7f, 0xff);
+    public static readonly Color Violet = FromRgb(0x7f, 0x00, 0xff);
     public static readonly Color Transparent = FromRgba(0, 0, 0, 0);
 
     // ================================================================================

@@ -13,13 +13,13 @@ public class GridRegionGenerator
     // ================================================================================
     // Constructors
     // ================================================================================
-    public GridRegionGenerator(int width, int height, Func<Point, int> getRegion)
+    public GridRegionGenerator(int width, int height, Func<Point, int> getRegion, bool consistentColors=true)
     {
         this.Width = width;
         this.Height = height;
         this.getRegion = getRegion;
 
-        Regenerate();
+        Regenerate(consistentColors);
     }
 
     // ================================================================================
@@ -42,7 +42,7 @@ public class GridRegionGenerator
     // ================================================================================
 
     [MemberNotNull(nameof(Regions))]
-    public IReadOnlyList<GridRegion> Regenerate()
+    public void Regenerate(bool consistentColors)
     {
         Dictionary<int, List<Point>> regionDictPass1 = new();
 
@@ -115,6 +115,76 @@ public class GridRegionGenerator
 
         // Fourth pass: Assign colors.
 
+        if (consistentColors)
+            AssignConsistentColors(regionPoints, adjacency);
+        else
+            AssignNonOverlappingColors(regionPoints, adjacency);
+    }
+
+    public GridRegion GetRegionForPoint(Point p)
+    {
+        return Regions.First(region => region.Points.Any(gridPoint => gridPoint.Point == p));
+    }
+
+    // ================================================================================
+    // Private methods
+    // ================================================================================
+
+    /// <summary>
+    /// Using this coloring algorithm: Any two regions that share the same value have the same
+    /// color. But this does not guarantee that adjacent regions have different colors.
+    /// </summary>
+    [MemberNotNull(nameof(Regions))]
+    void AssignConsistentColors(List<List<Point>> regionPoints, Dictionary<int, HashSet<int>> adjacency)
+    {
+        Color[] colors = [
+            Color.Cyan,
+            Color.DarkOrange,
+            Color.Lime,
+            Color.Red,
+            Color.Azure,
+            Color.Yellow,
+            Color.LightBlue,
+            Color.Magenta,
+            Color.DeepPink,
+            Color.Purple,
+            Color.Green,
+        ];
+        int colorIndex = 0;
+        int[] assignedColors = Enumerable.Repeat(-1, regionPoints.Count).ToArray();
+
+        for (int r = 0; r < regionPoints.Count; r++)
+        {
+            if (assignedColors[r] != -1)
+                continue;
+            assignedColors[r] = colorIndex;
+            colorIndex = (colorIndex + 1) % colors.Length;
+
+            int value = getRegion(regionPoints[r].First());
+
+            for (int i = r + 1; i < regionPoints.Count; i++)
+            {
+                if (value == getRegion(regionPoints[i].First()))
+                    assignedColors[i] = assignedColors[r];
+            }
+        }
+
+        Regions = Enumerable.Range(0, regionPoints.Count)
+            .Select(regionId => new GridRegion(
+                regionId,
+                regionPoints[regionId],
+                colors[assignedColors[regionId]]))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Assign colors using a solution to the map coloring problem so that no adjacent regions have
+    /// the same color. I'm not really using this because it seems more important to ensure that
+    /// detached regions with the same value share a color, which this doesn't guarantee.
+    /// </summary>
+    [MemberNotNull(nameof(Regions))]
+    void AssignNonOverlappingColors(List<List<Point>> regionPoints, Dictionary<int, HashSet<int>> adjacency)
+    {
         Color[] colors = [Color.Cyan, Color.DarkOrange, Color.Lime, Color.Red];
         int[] assignedColors = Enumerable.Repeat(-1, regionPoints.Count).ToArray();
 
@@ -131,18 +201,7 @@ public class GridRegionGenerator
                 regionPoints[regionId],
                 colors[assignedColors[regionId]]))
             .ToList();
-
-        return Regions;
     }
-
-    public GridRegion GetRegionForPoint(Point p)
-    {
-        return Regions.First(region => region.Points.Any(gridPoint => gridPoint.Point == p));
-    }
-
-    // ================================================================================
-    // Private methods
-    // ================================================================================
 
     bool TryAssignColors(Dictionary<int, HashSet<int>> adjacency, List<int> orderedRegionIds, int numColors, int[] assignedColors, int orderIndex=0)
     {
