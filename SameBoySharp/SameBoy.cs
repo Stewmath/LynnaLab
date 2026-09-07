@@ -33,6 +33,8 @@ public unsafe partial class SameBoy : IDisposable
 
 
     IntPtr _gb;
+
+    // Maintain references to the callbacks so they don't get garbage collected
     Native.GB_log_callback_t? _logCallback;
     Native.GB_input_callback_t? _inputCallback;
     Native.GB_input_callback_t? _asyncInputCallback;
@@ -345,6 +347,7 @@ public unsafe partial class SameBoy : IDisposable
     {
         VerifyNotDisposed();
 
+        // TODO: Possible race condition here? (Old callback could be garbage collected?)
         _asyncInputCallback = (gb) =>
         {
             string? s = callback();
