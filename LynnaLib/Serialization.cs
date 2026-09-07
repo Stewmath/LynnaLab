@@ -49,6 +49,12 @@ public class InstanceResolver<T> where T : ProjectDataType
         this.Identifier = instance.Identifier;
         this.ResolvedValue = true;
 
+        // An InstanceResolver being created that doesn't belong to the project is a sign of
+        // something odd going on, but it shouldn't really cause an issue on its own. Though, it
+        // could happen when, say, the GUI has a handle to an object that has since vanished after
+        // an undo operation.
+        // In principle we could try to proceed anyway, but I'd prefer to catch this odd situation
+        // early, as it will cause problems later if this ends up being serialized.
         if (!project.CheckHasDataType(InstanceType, Identifier))
             throw new Exception("InstanceResolver: couldn't find " + FullIdentifier);
     }

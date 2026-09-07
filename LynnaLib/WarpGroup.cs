@@ -182,9 +182,14 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
         return WarpList[index];
     }
 
+    /// <summary>
+    /// Note: Don't convert input parameter to an InstanceResolver. RoomEditor uses this function to
+    /// check if this group still contains a warp after an undo, and we shouldn't create an
+    /// InstanceResolver for something that's no longer tracked by the project.
+    /// </summary>
     public bool ContainsWarp(Warp warp)
     {
-        return WarpList.Contains(new(warp));
+        return WarpList.Any((i) => i.Instance == warp);
     }
 
     // Adds the given data to the group and inserts the data into the FileParser.
