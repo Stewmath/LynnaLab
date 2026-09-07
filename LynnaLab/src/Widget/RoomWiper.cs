@@ -33,6 +33,7 @@ public class RoomWiper : Frame
 
     bool wipeLayout;
     bool wipeObjects;
+    bool wipeWarps;
 
     PRect? selectedRect;
 
@@ -54,6 +55,7 @@ public class RoomWiper : Frame
 
         ImGui.Checkbox("Layout", ref wipeLayout);
         ImGui.Checkbox("Objects", ref wipeObjects);
+        ImGui.Checkbox("Warps", ref wipeWarps);
 
         if (ImGui.Button("Clear Data"))
         {
@@ -114,6 +116,9 @@ public class RoomWiper : Frame
 
             if (wipeObjects)
                 layout.Room.GetObjectGroup().Wipe();
+
+            if (wipeWarps)
+                layout.Room.GetWarpGroup().Wipe();
         });
 
         Workspace.Project.EndTransaction();
