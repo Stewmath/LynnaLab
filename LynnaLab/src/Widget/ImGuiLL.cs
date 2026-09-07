@@ -373,11 +373,19 @@ public static class ImGuiLL
         Vector2 size = ImGuiX.Unit(HELP_BUTTON_SIZE);
         float x = (ImGui.GetContentRegionAvail().X - size.X - ImGui.GetStyle().FramePadding.X * 2);
         ImGuiX.ShiftCursorScreenPos(x, 0);
-        if (ImGui.ImageButton("Help", Top.FaroresMemoryTexture.GetBinding(), size))
+
+        ImTextureRef tex = ImGui.IsPopupOpen("Help Popup")
+            ? Top.FaroresMemoryOpenTexture.GetBinding()
+            : Top.FaroresMemoryTexture.GetBinding();
+
+        if (ImGui.ImageButton("Help", tex, size))
         {
             ImGui.OpenPopup("Help Popup");
         }
 
+        Vector2 pos = ImGui.GetCursorScreenPos();
+        ImGui.SameLine();
+        ImGui.SetNextWindowPos(ImGui.GetCursorScreenPos());
         ImGui.SetNextWindowSizeConstraints(ImGuiX.Unit(600.0f, 0.0f), ImGuiX.Unit(0.0f, 600.0f));
         if (ImGui.BeginPopup("Help Popup"))
         {
@@ -395,6 +403,8 @@ public static class ImGuiLL
             ImGui.PopFont();
             ImGui.EndPopup();
         }
+
+        ImGui.SetCursorScreenPos(pos);
     }
 
     public static void PushInfoFont()

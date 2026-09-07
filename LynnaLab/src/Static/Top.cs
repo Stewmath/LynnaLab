@@ -41,6 +41,7 @@ public static class Top
         backend.SetIcon(ImageDir + "icon.bmp");
         PegasusSeedTexture = backend.TextureFromFile(ImageDir + "Pegasus_Seed_OOX.png");
         FaroresMemoryTexture = backend.TextureFromFile(ImageDir + "Farores_Memory.png");
+        FaroresMemoryOpenTexture = backend.TextureFromFile(ImageDir + "book_open.png");
 
         Helper.mainThreadInvokeFunction = Top.DoNextFrame;
 
@@ -171,6 +172,7 @@ public static class Top
 
     public static RgbaTexture PegasusSeedTexture { get; private set; }
     public static RgbaTexture FaroresMemoryTexture { get; private set; }
+    public static RgbaTexture FaroresMemoryOpenTexture { get; private set; }
 
     // Private properties
     private static ProjectWorkspace Workspace { get; set; }
