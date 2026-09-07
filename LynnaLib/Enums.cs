@@ -4,6 +4,15 @@ public enum Game
     Ages
 }
 
+public enum Season
+{
+    None = -1,
+    Spring = 0,
+    Summer = 1,
+    Autumn = 2,
+    Winter = 3,
+}
+
 public enum Companion
 {
     None = -1,

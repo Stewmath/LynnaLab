@@ -3,15 +3,6 @@ using System.Text.Json.Serialization;
 
 namespace LynnaLib;
 
-public enum Season
-{
-    None = -1,
-    Spring = 0,
-    Summer = 1,
-    Autumn = 2,
-    Winter = 3,
-}
-
 /// Provides an interface for accessing various room properties, or to get related classes, ie.
 /// relating to room layout variants, warps or objects.
 public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstantiator
