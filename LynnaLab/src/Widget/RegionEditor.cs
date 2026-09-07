@@ -250,7 +250,6 @@ public class RegionEditor : Frame
             selectedRegionType = options.First();
         }
 
-        // TODO: Update whenever underlying data is changed (dungeon floors rearranged)
         UpdateGridRegions();
         RegisterEventHandlers();
     }
@@ -275,7 +274,12 @@ public class RegionEditor : Frame
                 (Point p) => plan.GetRoom(p.X, p.Y).ValueReferenceGroup[RegionTypeString]);
         }
 
-        gridRegions = new GridRegionGenerator(plan.MapWidth, plan.MapHeight, regionAccessor.Get);
+        Func<int, Color>? colorMapper = null;
+        if (regionAccessor is MapleRegionAccessor)
+            colorMapper = (x) => x == 0 ? Color.Red : Color.LightBlue;
+
+        gridRegions = new GridRegionGenerator(
+            plan.MapWidth, plan.MapHeight, regionAccessor.Get, true, colorMapper);
 
         if (selectedMode == ModeOption.BulkEdit)
         {
@@ -544,7 +548,7 @@ public class RegionEditor : Frame
 
         public override void RenderSelector(Accessor<int> accessor)
         {
-            ImGuiX.Checkbox("Present", new Accessor<bool>(
+            ImGuiX.Checkbox("Spawns", new Accessor<bool>(
                 () => accessor.Get() != 0,
                 (v) => accessor.Set(v ? 1 : 0)));
         }
