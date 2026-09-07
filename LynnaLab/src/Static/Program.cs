@@ -73,7 +73,7 @@ class Program
             Console.WriteLine("Unhandled exception occurred!");
             Console.WriteLine(e);
 
-            string message = "An unhandled exception occurred! Take a screenshot and show this to Stewmat.\n\nLynnaLab will now terminate. Click \"Save & exit\" to attempt to save your project before closing.\n\n" + e;
+            string message = $"A fatal error occurred! Take a screenshot and show this to Stewmat, maybe he can fix it?\n\nLynnaLab will now terminate. Click \"Save & exit\" to attempt to save your project before closing.\n\nVersion: {Helper.GetVersionString()}\n\n" + e;
             int option = SDLUtil.SDLHelper.ShowErrorMessageBox(
                 "Error",
                 message,
