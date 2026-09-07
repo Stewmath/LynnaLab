@@ -161,6 +161,9 @@ public class TileGrid : SizedWidget
 
     /// <summary>
     /// Whether tiles can be selected (selected tile is accessible through SelectedIndex).
+    ///
+    /// This is mainly for single-tile selection, but it must also be true for rectangle selection
+    /// to work.
     /// </summary>
     public bool Selectable
     {
@@ -198,6 +201,8 @@ public class TileGrid : SizedWidget
 
     /// <summary>
     /// Index of selected tile, -1 if none selected.
+    ///
+    /// Setting this value will remove any rectangle selection.
     /// </summary>
     public int SelectedIndex
     {

@@ -18,16 +18,22 @@ public class RoomWiper : Frame
             MouseButton.Any, MouseModifier.Any, MouseAction.ClickDrag, GridAction.SelectRangeCallback,
             (sender, args) => { selectedRect = args.SelectedRect; }
         );
+
+        minimap.ChangedFloorPlanEvent += OnChangedFloorPlan;
+
+        mapChooser = new(Workspace.Project, minimap);
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
 
+    Minimap minimap;
+    MapChooser mapChooser;
+
     bool wipeLayout;
     bool wipeObjects;
 
-    Minimap minimap;
     PRect? selectedRect;
 
     // ================================================================================
@@ -44,8 +50,7 @@ public class RoomWiper : Frame
     {
         ImGui.BeginChild("Checkboxes", ImGuiX.Unit(200.0f, 0.0f));
 
-        ImGui.Separator();
-        ImGui.Separator();
+        ImGuiLL.HelpButton("RoomWiper.md");
 
         ImGui.Checkbox("Layout", ref wipeLayout);
         ImGui.Checkbox("Objects", ref wipeObjects);
@@ -76,7 +81,7 @@ public class RoomWiper : Frame
             ImGui.Text("No map selected?");
         else
         {
-            minimap.Render();
+            mapChooser.Render();
         }
         ImGui.EndChild();
     }
@@ -112,5 +117,11 @@ public class RoomWiper : Frame
         });
 
         Workspace.Project.EndTransaction();
+    }
+
+    void OnChangedFloorPlan(object? obj, EventArgs args)
+    {
+        selectedRect = null;
+        minimap.SelectedIndex = -1;
     }
 }
