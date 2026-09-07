@@ -271,7 +271,7 @@ public class RegionEditor : Frame
             regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable(Companion.None, true));
         else
         {
-            regionAccessor = new DescriptorRegionAccessor(
+            regionAccessor = new DescriptorRegionAccessor(Workspace,
                 (Point p) => plan.GetRoom(p.X, p.Y).ValueReferenceGroup[RegionTypeString]);
         }
 
@@ -452,8 +452,9 @@ public class RegionEditor : Frame
     /// </summary>
     class DescriptorRegionAccessor : RegionAccessor
     {
-        public DescriptorRegionAccessor(Func<Point, ValueReferenceDescriptor> getDescriptor)
+        public DescriptorRegionAccessor(ProjectWorkspace workspace, Func<Point, ValueReferenceDescriptor> getDescriptor)
         {
+            this.Workspace = workspace;
             this.getDescriptor = getDescriptor;
         }
 
@@ -462,6 +463,11 @@ public class RegionEditor : Frame
         // ================================================================================
 
         Func<Point, ValueReferenceDescriptor> getDescriptor;
+
+        // ================================================================================
+        // Properties
+        // ================================================================================
+        ProjectWorkspace Workspace { get; }
 
         // ================================================================================
         // Public methods
@@ -486,7 +492,10 @@ public class RegionEditor : Frame
             if (mapping == null)
                 ImGuiX.InputHex(descriptor.Name, ref value);
             else
-                ImGuiLL.ComboBoxFromConstants(descriptor.Name, mapping, ref value, true, false);
+            {
+                if (ImGuiLL.ComboBoxFromConstants(descriptor.Name, mapping, ref value, true, false))
+                    Workspace.ShowDocumentation(descriptor.Documentation);
+            }
             if (initial != value)
                 accessor.Set(value);
         }
