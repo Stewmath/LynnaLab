@@ -48,7 +48,7 @@ public class RegionEditor : Frame
                 else
                     fillColor = color.WithAlpha(0x80);
 
-                float thickness = 4.0f; // TODO: Account for DPI?
+                float thickness = ImGuiX.Unit(3.0f);
 
                 foreach (GridPoint p in r.Points)
                 {
