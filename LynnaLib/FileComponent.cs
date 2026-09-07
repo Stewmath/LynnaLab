@@ -97,7 +97,7 @@ public abstract class FileComponent : TrackedProjectData
 
     /// <summary>
     /// Called immediately before "GetString()" when the FileComponent is about to be written
-    /// back to the file.
+    /// back to the file (or when generating the string).
     /// </summary>
     public virtual void AboutToSave() { }
 

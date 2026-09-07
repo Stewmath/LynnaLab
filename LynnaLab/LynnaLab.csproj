@@ -17,6 +17,13 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
+  <!-- Internal members visible to test project -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>LynnaLib.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <ItemGroup>
     <EmbeddedResource Include="Embedded/Shaders/OpenGL/*.glsl" LogicalName="%(Filename)%(Extension)" />
     <EmbeddedResource Include="Embedded/Shaders/SPIR-V/*.spv" LogicalName="%(Filename)%(Extension)" />

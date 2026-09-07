@@ -1319,7 +1319,7 @@ public interface Trackable
 /// something?)
 ///
 /// Serialization notes:
-/// - All public fields and properties are serialized by default. (Setter must be public.)
+/// - All public fields and properties are serialized by default. (Setter or init must be public.)
 /// - Readonly fields and properties are ignored. (Does this include properties with only a getter?)
 /// - Private fields/properties can be serialized with [JsonInclude].
 /// - Ignore fields/properties with [JsonIgnore].

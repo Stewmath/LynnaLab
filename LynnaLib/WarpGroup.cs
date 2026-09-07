@@ -3,13 +3,15 @@ namespace LynnaLib;
 // Reads/writes warp source data per room. Searches through all of a group's warp data to get
 // only data for a particular room index (a list of "WarpSourceData" instances).
 //
-// Assertions:
+// Assertions (things this class does not handle):
 // - A full-screen warp is not used with "specific-position" warps. (Whichever comes first takes
 //   precedence.)
 // - If a "PointerWarp" referencing "PositionWarps" is used, no warp data for the room is defined
 //   after that point. (The game would not see it.)
 // - Each warp type is only used in its appropriate location (StandardWarp and PointerWarp at
 //   the top level, PositionWarp only as the data pointed to by a PointerWarp).
+// - There is no overlapping of PositionWarp data. No two labels should reference the same data
+//   without a WarpListEnd macro between them.
 public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiator
 {
     private static readonly log4net.ILog log = LogHelper.GetLogger();
@@ -21,7 +23,7 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
     private WarpGroup(Project p, int id) : base(p, id)
     {
         state.fileParser = new(Project.GetFileWithLabel("warpSourcesTable"));
-        RegenWarpSourceDataList();
+        RegenWarpSourceDataList(fromConstructor: true);
     }
 
     /// <summary>
@@ -240,32 +242,13 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
                     spacing: new List<string> { "\t", "  " });
                 PointerWarp.Map = Map;
 
-                // Create a unique pointer after top-level data end
-                string name = Project.GetUniqueLabelName(
-                        String.Format("group{0}Room{1:x2}WarpSources", Index >> 8, Index & 0xff));
-                PointerWarp.PointerString = name;
-                Label newLabel = new Label(Project.GenUniqueID(typeof(Label)), FileParser, name);
+                Label newLabel = CreateNewPositionWarpTable();
 
-                InsertInMainList(PointerWarp);
-
-                // Insert label after top-level data end
-                FileParser.InsertComponentAfter(EndWarp, newLabel);
-
-                // Extra spacing (keeping this disabled for now as it causes the file size to
-                // keep growing)
-                //FileParser.InsertParseableTextAfter(EndWarp, new string[] { "" });
-
-                // Insert m_WarpListEndNoDefault opcode
-                var endOpcode = new WarpSourceData(
-                    Project,
-                    Project.GenUniqueID(typeof(WarpSourceData)),
-                    command: WarpSourceData.WarpCommands[(int)WarpSourceType.EndNoDefault],
-                    values: WarpSourceData.DefaultValues[(int)WarpSourceType.EndNoDefault],
-                    parser: FileParser,
-                    spacing: new List<string> { "\t" });
-                FileParser.InsertComponentAfter(newLabel, endOpcode);
+                PointerWarp.PointerString = newLabel.Name;
+                GetPointerRefCounter(PointerWarp).AddReference(PointerWarp);
 
                 pointedDataInsertPosition = newLabel;
+                InsertInMainList(PointerWarp);
             }
             else
             { // Already exists, jump to the end of the pointed warp list
@@ -325,6 +308,8 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
             // all the data.
             if (PointerWarp.GetNumPointedWarps() == 1)
             {
+                // Update reference counter
+                GetPointerRefCounter(PointerWarp).RemoveReference(PointerWarp);
                 // Delete label
                 FileParser.RemoveFileComponent(Project.GetLabel(PointerWarp.PointerString));
                 // Delete PointerWarp (do this before deleting its last PositionWarp, otherwise
@@ -353,6 +338,15 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
     public void RemoveWarp(int index)
     {
         RemoveWarp(GetWarp(index));
+    }
+
+    /// <summary>
+    /// Delete all warps in this WarpGroup.
+    /// </summary>
+    public void Wipe()
+    {
+        while (Count > 0)
+            RemoveWarp(GetWarp(0));
     }
 
     // ================================================================================
@@ -394,7 +388,7 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
         }
     }
 
-    void RegenWarpSourceDataList()
+    void RegenWarpSourceDataList(bool fromConstructor = false)
     {
         // Now begin reading the file data for the new warps
         Data d = FileParser.GetData("warpSourcesTable", (Index >> 8) * 2);
@@ -404,8 +398,22 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
         var newWarpList = new List<InstanceResolver<Warp>>();
         state.warpSourceDataList = new List<InstanceResolver<WarpSourceData>>();
 
+        // Locate the end of the warp list for this group (new tables will be inserted after this)
         WarpSourceData? warpData = FileParser.GetData(label) as WarpSourceData;
+        while (warpData != null && !warpData.IsEndOpcode)
+        {
+            warpData = warpData.NextData as WarpSourceData;
+        }
+        if (warpData != null)
+            EndWarp = warpData;
+        else
+        {
+            throw new AssemblyErrorException(string.Format(
+                        "Warp source data for room {0:X3} doesn't have an end?", Index));
+        }
 
+        // Now go through the warp list again and create a Warp object for each warp source
+        warpData = FileParser.GetData(label) as WarpSourceData;
         PointerWarp = null;
         LastStandardWarp = null;
 
@@ -420,18 +428,26 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
                         throw new AssemblyErrorException(string.Format(
                                     "Room {0:X3} has multiple 'Pointer' warp sources!", Index));
                     }
-                    PointerWarp = warpData;
-                    WarpSourceData? pWarp = warpData.GetPointedWarp();
-                    while (pWarp != null)
+
+                    // On initial load only, check for multiple pointers referencing the same label.
+                    // It won't work after initial load because we don't remove the refs before
+                    // calling RegenWarpSourceDataList again.
+                    if (fromConstructor)
                     {
-                        if (pWarp.IsEndOpcode)
-                            break;
-                        if (pWarp.WarpSourceType != WarpSourceType.Position)
-                            throw new AssemblyErrorException(string.Format(
-                                        "Unexpected warp type '{0}' in {1}!",
-                                        pWarp.WarpSourceType, warpData.PointerString));
+                        var refCounter = GetPointerRefCounter(warpData);
+                        if (refCounter.Count > 0)
+                        {
+                            IsolatePointerWarp(warpData);
+                        }
+                        else
+                            refCounter.AddReference(warpData);
+                    }
+
+                    PointerWarp = warpData;
+
+                    foreach (WarpSourceData pWarp in WalkPositionWarps(PointerWarp))
+                    {
                         WarpSourceDataList.Add(new(pWarp));
-                        pWarp = pWarp.GetNextWarp();
                     }
                 }
                 else if (warpData.WarpSourceType == WarpSourceType.Standard)
@@ -479,19 +495,108 @@ public class WarpGroup : TrackedIndexedProjectData, IndexedProjectDataInstantiat
 
             warpData = warpData.NextData as WarpSourceData;
         }
-        if (warpData != null)
-            EndWarp = warpData;
-        else
-        {
-            throw new AssemblyErrorException(string.Format(
-                        "Warp source data for room {0:X3} doesn't have an end?", Index));
-        }
 
         state.warpList = newWarpList;
 
         UpdateWarpModifiedHandlers();
     }
 
+    /// <summary>
+    /// Get the reference counter for the pointer used by the given PointerWarp. Use this to
+    /// determine whether multiple WarpSourceData's are pointing to the same label.
+    /// </summary>
+    RefCounter<Label, WarpSourceData> GetPointerRefCounter(WarpSourceData data)
+    {
+        if (data.WarpSourceType != WarpSourceType.Pointer)
+            throw new ArgumentException($"AlreadyUsedPointerWarp: Invalid warp type {data.WarpSourceType}");
+
+        Label label = Project.GetLabel(data.PointerString);
+        var refCounter = Project.GetRefCounter<Label, WarpSourceData>(label);
+
+        return refCounter;
+    }
+
+    /// <summary>
+    /// Reads the data that a PointerWarp references and creates a copy of it. Call this when
+    /// multiple PointerWarps reference the same data so that no two rooms' warp data are linked
+    /// together. (See warpSource77ef in Seasons)
+    /// </summary>
+    void IsolatePointerWarp(WarpSourceData pointerWarp)
+    {
+        Label label = CreateNewPositionWarpTable();
+        FileComponent dataPos = label;
+
+        foreach (WarpSourceData pWarp in WalkPositionWarps(pointerWarp))
+        {
+            WarpSourceData newData = new(pWarp, Project.GenUniqueID(typeof(WarpSourceData)));
+            FileParser.InsertComponentAfter(dataPos, newData);
+            dataPos = newData;
+        }
+
+        pointerWarp.PointerString = label.Name;
+        GetPointerRefCounter(pointerWarp).AddReference(pointerWarp);
+    }
+
+    /// <summary>
+    /// Takes a PointerWarp, returns all PositionWarps that it points to.
+    /// </summary>
+    IEnumerable<WarpSourceData> WalkPositionWarps(WarpSourceData pointerWarp)
+    {
+        WarpSourceData? pWarp = pointerWarp.GetPointedWarp();
+
+        while (pWarp != null)
+        {
+            if (pWarp.IsEndOpcode)
+                break;
+            if (pWarp.WarpSourceType != WarpSourceType.Position)
+                throw new AssemblyErrorException(string.Format(
+                    "Unexpected warp type '{0}' in {1}!",
+                    pWarp.WarpSourceType, pointerWarp.PointerString));
+
+            yield return pWarp;
+
+            pWarp = pWarp.GetNextWarp();
+        }
+    }
+
+    /// <summary>
+    /// Label name for new per-room position warp tables.
+    /// </summary>
+    string GetUniquePositionWarpLabel()
+    {
+        return Project.GetUniqueLabelName(
+            String.Format("group{0}Room{1:x2}WarpSources", Index >> 8, Index & 0xff));
+    }
+
+    /// <summary>
+    /// Creates a new stub table for per-room position warps. Only call this if one doesn't already
+    /// exist for the room.
+    /// </summary>
+    Label CreateNewPositionWarpTable()
+    {
+        // Create a unique pointer after top-level data end
+        string name = GetUniquePositionWarpLabel();
+        Label newLabel = new Label(Project.GenUniqueID(typeof(Label)), FileParser, name);
+
+        // Insert label after top-level data end
+        FileParser.InsertComponentAfter(EndWarp, newLabel);
+
+        // Extra spacing (keeping this disabled for now as it causes the file size to
+        // keep growing)
+        //FileParser.InsertParseableTextAfter(EndWarp, new string[] { "" });
+
+        // Insert m_WarpListEndNoDefault opcode
+        var endOpcode = new WarpSourceData(
+            Project,
+            Project.GenUniqueID(typeof(WarpSourceData)),
+            command: WarpSourceData.WarpCommands[(int)WarpSourceType.EndNoDefault],
+            values: WarpSourceData.DefaultValues[(int)WarpSourceType.EndNoDefault],
+            parser: FileParser,
+            spacing: new List<string> { "\t" });
+        FileParser.InsertComponentAfter(newLabel, endOpcode);
+
+        return newLabel;
+    }
 
     void OnDataModified(object? sender, EventArgs? args)
     {

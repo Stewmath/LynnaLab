@@ -1161,6 +1161,20 @@ public class FileParser : TrackedProjectData
 
         if (!Modified) return;
 
+        string output = GetOutputString();
+
+        // NOTE: This is asymmetrical - we're writing directly to the filesystem, unlike loading
+        // where we loaded through a MemoryFileStream. Doesn't really matter since saving only
+        // works on the server anyway. It does mean the MemoryFileStream will be out of sync
+        // with the file itself though - not that that should matter at all.
+        // Don't use WriteAllLines as that writes CRLF on windows.
+        File.WriteAllText(FullFilename, output);
+
+        Modified = false;
+    }
+
+    internal string GetOutputString()
+    {
         List<string> output = new List<string>();
         FileComponent? lastComponent = null;
         foreach (var ir in FileStructure)
@@ -1190,14 +1204,8 @@ public class FileParser : TrackedProjectData
 
             lastComponent = d;
         }
-        // NOTE: This is asymmetrical - we're writing directly to the filesystem, unlike loading
-        // where we loaded through a MemoryFileStream. Doesn't really matter since saving only
-        // works on the server anyway. It does mean the MemoryFileStream will be out of sync
-        // with the file itself though - not that that should matter at all.
-        // Don't use WriteAllLines as that writes CRLF on windows.
-        File.WriteAllText(FullFilename, string.Join('\n', output));
 
-        Modified = false;
+        return string.Join('\n', output);
     }
 
     /// <summary>

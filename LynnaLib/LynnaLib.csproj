@@ -13,6 +13,13 @@
     <PreBuildEvent>git describe --always --abbrev=7 &gt; "$(MSBuildProjectDirectory)/version.txt"</PreBuildEvent>
   </PropertyGroup>
 
+  <!-- Internal members visible to test project -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>LynnaLib.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <ItemGroup>
     <EmbeddedResource Include="version.txt" />
     <EmbeddedResource Include="resource/cgb_boot_fast.bin" />

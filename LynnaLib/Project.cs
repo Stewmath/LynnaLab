@@ -1164,7 +1164,7 @@ public partial class Project
     }
 
 
-    bool TryLookupDataType<T>(string identifier, out T? data)
+    bool TryLookupDataType<T>(string identifier, [NotNullWhen(true)] out T? data)
         where T : ProjectDataType
     {
         ProjectDataType? o;
@@ -1829,6 +1829,22 @@ public partial class Project
         return DefinesDictionary;
     }
 
+    /// <summary>
+    /// Get or create a reference counter for the given ProjectDataType instance.
+    /// </summary>
+    public RefCounter<T1, T2> GetRefCounter<T1, T2>(T1 instance)
+        where T1 : ProjectDataType
+        where T2 : ProjectDataType
+    {
+        if (TryLookupDataType<RefCounter<T1, T2>>(
+            RefCounter<T1, T2>.ComputeIdentifier(instance), out var result))
+        {
+            return result;
+        }
+
+        return new(this, instance);
+    }
+
     // ================================================================================
     // End of oracles-disasm data handling functions
     // ================================================================================
@@ -1988,7 +2004,7 @@ public partial class Project
         if (!typeof(ProjectDataType).IsAssignableFrom(type))
             throw new Exception($"GetFullIdentifier: Invalid type {type.FullName}");
         type = FixTypeForTracking(type);
-        return type.FullName + "_" + id;
+        return type.FullName + "::" + id;
     }
 
     public static (Type, string) SplitFullIdentifier(string fullID)

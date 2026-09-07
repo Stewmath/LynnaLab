@@ -105,11 +105,17 @@ public class WarpSourceData : Data
 
     class WarpSourceState : Data.DataState
     {
-        public WarpSourceState(FileParser? p, IList<string>? s, string command,
+        internal WarpSourceState(FileParser? p, IList<string>? s, string command,
                                IEnumerable<string> values, int size)
             : base(p, s, command, values, size)
         {
         }
+
+        internal WarpSourceState(WarpSourceState s, FileParser parser)
+            : base(parser, s.spacing, s.command, s.values, s.size)
+        {
+        }
+
 
         // For deserialization only
         [JsonConstructor]
@@ -303,7 +309,7 @@ public class WarpSourceData : Data
     }
 
 
-    public WarpSourceData(Project p, string id, string command, IEnumerable<string> values,
+    internal WarpSourceData(Project p, string id, string command, IEnumerable<string> values,
             FileParser parser, IList<string> spacing)
         : base(p, id, new WarpSourceState(parser, spacing, command, values, -1))
     {
@@ -314,6 +320,11 @@ public class WarpSourceData : Data
             ReferencedDestData.AddReference(this);
 
         Sanitize();
+    }
+
+    internal WarpSourceData(WarpSourceData source, string identifier)
+        : this(source.Project, identifier, new WarpSourceState(source.State, source.FileParser!))
+    {
     }
 
     /// <summary>

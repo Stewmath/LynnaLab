@@ -6,7 +6,7 @@ public class TestProject
 
 
     [Fact]
-    public static void TestProject1()
+    public static void TestWarpCreationAndDeletion()
     {
         Project p = LoadProject(Game.Seasons);
 
@@ -18,6 +18,23 @@ public class TestProject
             group.RemoveWarp(3);
             Assert.Equal(3, group.Count);
         }
+    }
+
+    [Fact]
+    public static void TestWarpDataFilePristine()
+    {
+        // Creating & deleting warps should leave the file in exactly the same state as before.
+        Project p = LoadProject(Game.Seasons);
+        WarpGroup group = p.GetRoom(0).GetWarpGroup();
+        Assert.Equal(3, group.Count);
+        string initial = group.FileParser.GetOutputString();
+        group.AddWarp(WarpSourceType.Position);
+        group.AddWarp(WarpSourceType.Standard);
+        group.AddWarp(WarpSourceType.Position);
+        group.RemoveWarp(3);
+        group.RemoveWarp(3);
+        group.RemoveWarp(3);
+        Assert.Equal(initial, group.FileParser.GetOutputString());
     }
 
     [Fact]
@@ -107,6 +124,78 @@ public class TestProject
         Assert.Equal(ObjectGroupType.Main, group.GetGroupType());
         Assert.Equal(5, group.GetAllGroups().Count());
         Assert.Equal(4, group.GetObjects().Count);
+    }
+
+    [Fact]
+    public static void TestWarpWipe()
+    {
+        Project p = LoadProject(Game.Ages);
+
+        var r = p.GetRoom(0x68); // Shop entrance
+        var g = r.GetWarpGroup();
+        Assert.Equal(2, g.Count);
+        g.Wipe();
+        Assert.Equal(0, g.Count);
+    }
+
+    [Fact]
+    public static void TestDuplicateWarpSources()
+    {
+        // The maku tree top variants in Seasons reuse a warp source (warpSource77ef). It's the only
+        // place that does that! How annoying!
+        Project p = LoadProject(Game.Seasons);
+
+        WarpGroup g1 = p.GetRoom(0x26b).GetWarpGroup();
+        WarpGroup g2 = p.GetRoom(0x21b).GetWarpGroup();
+
+        // WarpGroup should automatically create separate WarpSourceData instances for each
+        Assert.NotEqual(g1.GetWarp(0).SourceData, g2.GetWarp(0).SourceData);
+
+        // But the data itself should be identical
+        Assert.Equal(g1.GetWarp(0).SourceData.GetString(), g2.GetWarp(0).SourceData.GetString());
+
+        // Make sure both of the two PositionWarps were duplicated, not just the one
+        Assert.Equal(2, g1.Count);
+        Assert.Equal(2, g2.Count);
+
+        // In a normal room: Simply adding or removing a warp should not trigger the code that
+        // duplicates the warp data.
+        WarpGroup g = p.GetRoom(0xf6).GetWarpGroup(); // Bipin & Blossom's house
+        WarpSourceData d = g.GetWarp(0).SourceData;
+        Assert.Equal(WarpSourceType.Position, d.WarpSourceType);
+        g.AddWarp(WarpSourceType.Position);
+        Assert.Equal(d, g.GetWarp(0).SourceData);
+    }
+
+    [Fact]
+    public static void TestWipeSeasons()
+    {
+        TestWipeEverything(Game.Seasons);
+    }
+    [Fact]
+    public static void TestWipeAges()
+    {
+        TestWipeEverything(Game.Ages);
+    }
+
+    // Destroy all... Kill all...
+    static void TestWipeEverything(Game game)
+    {
+        Project p = LoadProject(game);
+
+        for (int r = 0; r < p.NumRooms; r++)
+        {
+            Room room = p.GetRoom(r);
+            //room.GetObjectGroup().Wipe(); // TODO
+            room.GetWarpGroup().Wipe();
+        }
+
+        for (int r = 0; r < p.NumRooms; r++)
+        {
+            Room room = p.GetRoom(r);
+            //Assert.Equal(0, room.GetObjectGroup().GetNumObjects()); // TODO
+            Assert.Equal(0, room.GetWarpGroup().Count);
+        }
     }
 
     [Fact]
