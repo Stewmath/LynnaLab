@@ -22,6 +22,12 @@ public class RegionEditor : Frame
         OnFloorPlanChanged(minimap.FloorPlan); // Set by MapChooser constructor
         minimap.ChangedFloorPlanEvent += (_, _) => OnFloorPlanChanged(minimap.FloorPlan);
 
+        // Watch for dungeon rooms being rearranged, must recalculate the regions when that happens.
+        dungeonEW.Bind<DungeonChangedEventArgs>("DungeonChangedEvent", (_, args) =>
+        {
+            UpdateGridRegions();
+        });
+
         // Color the minimap based on the grid regions
         minimap.AfterRenderTileGrid += (_, _) =>
         {
@@ -118,10 +124,10 @@ public class RegionEditor : Frame
 
     Minimap minimap;
     MapChooser mapChooser;
+    EventWrapper<Dungeon> dungeonEW = new();
 
     RegionOption selectedRegionType;
     ModeOption selectedMode;
-
     GridRegionGenerator gridRegions;
 
     // These change based on the RegionOption
@@ -236,7 +242,7 @@ public class RegionEditor : Frame
     [MemberNotNull(nameof(gridRegions))]
     void OnFloorPlanChanged(FloorPlan plan)
     {
-        minimap.SetFloorPlan(plan);
+        dungeonEW.ReplaceEventSource((plan as Dungeon.Floor)?.Dungeon);
 
         var options = GetRegionTypeOptions();
         if (!options.Contains(selectedRegionType))
