@@ -20,6 +20,7 @@ public abstract class FloorPlan : TrackedProjectData
     public abstract int RoomWidth { get; }
     public abstract int RoomHeight { get; }
     public abstract Season Season { get; }
+    public abstract bool HasRoomPack { get; }
 
     protected FloorPlan(Project p, string id) : base(p, id)
     {

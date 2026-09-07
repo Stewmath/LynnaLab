@@ -57,7 +57,7 @@ public class ProjectWorkspace
         networkDialog = new NetworkDialog(this, "Networking");
         roomWiperDialog = new RoomWiper(this);
         roomWiperDialog.Active = true;
-        roomWiperDialog.SetFloorPlan(Project.GetWorldMap(0, Season.Summer));
+        roomWiperDialog.SetFloorPlan(Project.GetWorldMap(1, Season.None));
         regionEditorDialog = new(this);
         regionEditorDialog.Active = true;
 

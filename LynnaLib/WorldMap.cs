@@ -97,6 +97,7 @@ public class WorldMap : FloorPlan, ProjectDataInstantiator
         }
     }
     public override Season Season { get { return state.season; } }
+    public override bool HasRoomPack { get { return MainGroup == 0; } }
 
 
     // Map methods

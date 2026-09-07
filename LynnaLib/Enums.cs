@@ -6,6 +6,7 @@ public enum Game
 
 public enum Companion
 {
+    None = -1,
     Ricky = 0,
     Dimitri = 1,
     Moosh = 2,

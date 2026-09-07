@@ -84,9 +84,13 @@ public class RegionEditor : Frame
     // class's ValueReferenceGroup in order to register event handlers based on the corresponding
     // ValueReferences.
     static readonly string[] regionOptionStrings = {
-        "Tileset",
         "Music",
+        "Tileset",
         "Room Pack",
+        "Maple (Ricky)",
+        "Maple (Dimitri)",
+        "Maple (Moosh)",
+        "Maple (Past)",
     };
 
     static readonly string[] modeOptionStrings = {
@@ -96,9 +100,13 @@ public class RegionEditor : Frame
 
     enum RegionOption
     {
-        Tileset,
         Music,
+        Tileset,
         RoomPack,
+        MapleRicky,
+        MapleDimitri,
+        MapleMoosh,
+        MaplePast,
         COUNT
     }
 
@@ -147,8 +155,9 @@ public class RegionEditor : Frame
         ImGui.Text("Region To Edit:");
         bool changedRegionType = ImGuiX.Combo(
             "##RegionCombo",
-            new(() => (int)selectedRegionType, (s) => selectedRegionType = (RegionOption)s),
-            regionOptionStrings);
+            new(() => regionOptionStrings[(int)selectedRegionType],
+                (s) => selectedRegionType = (RegionOption)regionOptionStrings.IndexOf(s)),
+            GetRegionTypeOptions().Select((x) => regionOptionStrings[(int)x]));
 
         ImGui.Text("Edit Mode:");
         bool changedMode = ImGuiX.Combo(
@@ -229,6 +238,12 @@ public class RegionEditor : Frame
     {
         minimap.SetFloorPlan(plan);
 
+        var options = GetRegionTypeOptions();
+        if (!options.Contains(selectedRegionType))
+        {
+            selectedRegionType = options.First();
+        }
+
         // TODO: Update whenever underlying data is changed (dungeon floors rearranged)
         UpdateGridRegions();
         RegisterEventHandlers();
@@ -240,7 +255,19 @@ public class RegionEditor : Frame
     {
         var plan = minimap.FloorPlan;
 
-        regionAccessor = new DescriptorRegionAccessor((Point p) => plan.GetRoom(p.X, p.Y).ValueReferenceGroup[RegionTypeString]);
+        if (selectedRegionType == RegionOption.MapleRicky)
+            regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable(Companion.Ricky, false));
+        else if (selectedRegionType == RegionOption.MapleDimitri)
+            regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable(Companion.Dimitri, false));
+        else if (selectedRegionType == RegionOption.MapleMoosh)
+            regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable(Companion.Moosh, false));
+        else if (selectedRegionType == RegionOption.MaplePast)
+            regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable(Companion.None, true));
+        else
+        {
+            regionAccessor = new DescriptorRegionAccessor(
+                (Point p) => plan.GetRoom(p.X, p.Y).ValueReferenceGroup[RegionTypeString]);
+        }
 
         gridRegions = new GridRegionGenerator(plan.MapWidth, plan.MapHeight, regionAccessor.Get);
 
@@ -348,7 +375,7 @@ public class RegionEditor : Frame
         }
 
         string name = regionOptionStrings[(int)selectedRegionType];
-        unregisterEventHandlers = Project.RegisterEventOnAllRooms(name, OnRoomValueChanged);
+        unregisterEventHandlers = regionAccessor.RegisterEvents(OnRoomValueChanged);
     }
 
     /// <summary>
@@ -361,15 +388,35 @@ public class RegionEditor : Frame
     {
         if (suppressChangeEvent)
             return;
+
         UpdateGridRegions();
+    }
+
+    /// <summary>
+    /// Get the list of region types applicable to the current FloorPlan.
+    /// </summary>
+    IEnumerable<RegionOption> GetRegionTypeOptions()
+    {
+        List<RegionOption> results = new() { RegionOption.Tileset, RegionOption.Music };
+        if (minimap.FloorPlan.HasRoomPack)
+            results.Add(RegionOption.RoomPack);
+        if (minimap.FloorPlan.MainGroup == 0)
+        {
+            results.Add(RegionOption.MapleRicky);
+            results.Add(RegionOption.MapleDimitri);
+            results.Add(RegionOption.MapleMoosh);
+        }
+        if (Project.Game == Game.Ages && minimap.FloorPlan.MainGroup == 1)
+        {
+            results.Add(RegionOption.MaplePast);
+        }
+        return results;
     }
 
 
     /// <summary>
     /// A class which is responsible for getting & setting some per-room value, and rendering a
     /// selector widget.
-    ///
-    /// Does this really need to have an abstract base class? Probably not...
     /// </summary>
     abstract class RegionAccessor
     {
@@ -383,8 +430,8 @@ public class RegionEditor : Frame
 
         public abstract int Get(Point point);
         public abstract void Set(Point point, int value);
-
         public abstract void RenderSelector(Accessor<int> accessor);
+        public abstract Action RegisterEvents(Action action);
 
         public void RenderSelector(ref int value)
         {
@@ -394,6 +441,9 @@ public class RegionEditor : Frame
         }
     }
 
+    /// <summary>
+    /// A RegionAccessor based on ValueReferences.
+    /// </summary>
     class DescriptorRegionAccessor : RegionAccessor
     {
         public DescriptorRegionAccessor(Func<Point, ValueReferenceDescriptor> getDescriptor)
@@ -423,16 +473,70 @@ public class RegionEditor : Frame
 
         public override void RenderSelector(Accessor<int> accessor)
         {
-            var descriptor = getDescriptor(new(0, 0));
+            var descriptor = GetDefaultDescriptor();
             ConstantsMapping? mapping = descriptor.ConstantsMapping;
             int value = accessor.Get();
             int initial = value;
             if (mapping == null)
                 ImGuiX.InputHex(descriptor.Name, ref value);
             else
-                ImGuiLL.ComboBoxFromConstants(descriptor.Name, mapping, ref value, true, true);
+                ImGuiLL.ComboBoxFromConstants(descriptor.Name, mapping, ref value, true, false);
             if (initial != value)
                 accessor.Set(value);
+        }
+
+        public override Action RegisterEvents(Action action)
+        {
+            var descriptor = GetDefaultDescriptor();
+            return descriptor.Project.RegisterEventOnAllRooms(descriptor.Name, action);
+        }
+
+        ValueReferenceDescriptor GetDefaultDescriptor()
+        {
+            return getDescriptor(new(0, 0));
+        }
+    }
+
+    /// <summary>
+    /// A RegionAccessor specifically for handling maple location data.
+    /// </summary>
+    class MapleRegionAccessor : RegionAccessor
+    {
+        public MapleRegionAccessor(MapleLocationTable maple)
+        {
+            this.maple = maple;
+        }
+
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        MapleLocationTable maple;
+
+        // ================================================================================
+        // Public methods
+        // ================================================================================
+
+        public override int Get(Point point)
+        {
+            return maple.IsPresent(point) ? 1 : 0;
+        }
+
+        public override void Set(Point point, int value)
+        {
+            maple.SetPresent(point, value != 0);
+        }
+
+        public override void RenderSelector(Accessor<int> accessor)
+        {
+            ImGuiX.Checkbox("Present", new Accessor<bool>(
+                () => accessor.Get() != 0,
+                (v) => accessor.Set(v ? 1 : 0)));
+        }
+
+        public override Action RegisterEvents(Action action)
+        {
+            return maple.RegisterModifiedEvent(action);
         }
     }
 }

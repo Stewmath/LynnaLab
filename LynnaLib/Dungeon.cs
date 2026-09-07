@@ -541,6 +541,8 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
             get { return Season.None; }
         }
 
+        public override bool HasRoomPack { get { return false; } }
+
         Data FloorLayoutData { get { return state._floorLayoutData.Instance; } }
 
         // ================================================================================

@@ -181,6 +181,11 @@ public class TestProject
         Assert.True(maple.IsPresent(new(1, 0)));
         Assert.True(maple.IsPresent(new(0, 6)));
         Assert.False(maple.IsPresent(new(4, 6)));
+
+        maple.SetPresent(new(0, 0), true);
+        Assert.True(maple.IsPresent(new(0, 0)));
+        maple.SetPresent(new(0, 6), false);
+        Assert.False(maple.IsPresent(new(0, 6)));
     }
 
     // ================================================================================
