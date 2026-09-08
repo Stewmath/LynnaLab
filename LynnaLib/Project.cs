@@ -659,7 +659,7 @@ namespace LynnaLib
             string ignoreDirectory = (GameString == "ages" ? "seasons" : "ages");
             foreach (string d in Helper.GetSortedDirectories(baseDirectory + directory))
             {
-                if (d == ignoreDirectory)
+                if (d == ignoreDirectory || d == "combo")
                     continue;
                 VisitDirectoriesRecursively(directory + d, action);
             }
