@@ -22,18 +22,58 @@ public class RoomWiper : Frame
         minimap.ChangedFloorPlanEvent += OnChangedFloorPlan;
 
         mapChooser = new(Workspace.Project, minimap);
+
+        wiperList.AddRange([
+            new()
+            {
+                label="Layout",
+                wipe=(layout) => layout.Wipe(),
+            },
+            new()
+            {
+                label="Objects",
+                wipe=(layout) => layout.Room.GetObjectGroup().Wipe(),
+            },
+            new()
+            {
+                label="Warps",
+                wipe=(layout) => layout.Room.GetWarpGroup().Wipe(),
+            },
+            new()
+            {
+                label="Chests",
+                wipe=(layout) => layout.Room.Chest?.Delete(),
+
+            },
+            new()
+            {
+                label="Dungeon Properties",
+                wipe=(layout) =>
+                {
+                    if (layout.Room.HasDungeonFlags)
+                        layout.Room.DungeonFlags = 0;
+                },
+                show = () => InDungeon,
+            },
+        ]);
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
 
+    class DataWiper
+    {
+        public required string label;
+        public required Action<RoomLayout> wipe;
+        public Func<bool> show = () => true;
+        public bool enable;
+    }
+
     Minimap minimap;
     MapChooser mapChooser;
 
-    bool wipeLayout;
-    bool wipeObjects;
-    bool wipeWarps;
+    List<DataWiper> wiperList = new();
 
     PRect? selectedRect;
 
@@ -43,19 +83,25 @@ public class RoomWiper : Frame
 
     public ProjectWorkspace Workspace { get; }
 
+    bool InDungeon { get { return minimap.FloorPlan is Dungeon.Floor; } }
+
     // ================================================================================
     // Public methods
     // ================================================================================
 
     public override void Render()
     {
-        ImGui.BeginChild("Checkboxes", ImGuiX.Unit(200.0f, 0.0f));
+        ImGui.BeginChild("Checkboxes", ImGuiX.Unit(220.0f, 0.0f));
 
         ImGuiLL.HelpButton("RoomWiper.md");
 
-        ImGui.Checkbox("Layout", ref wipeLayout);
-        ImGui.Checkbox("Objects", ref wipeObjects);
-        ImGui.Checkbox("Warps", ref wipeWarps);
+        foreach (var wiper in wiperList)
+        {
+            if (wiper.show())
+                ImGui.Checkbox(wiper.label, ref wiper.enable);
+            else
+                wiper.enable = false;
+        }
 
         if (ImGui.Button("Clear Data"))
         {
@@ -111,14 +157,13 @@ public class RoomWiper : Frame
         {
             RoomLayout layout = minimap.GetRoomLayout(p.X, p.Y);
 
-            if (wipeLayout)
-                layout.Wipe();
-
-            if (wipeObjects)
-                layout.Room.GetObjectGroup().Wipe();
-
-            if (wipeWarps)
-                layout.Room.GetWarpGroup().Wipe();
+            foreach (var wiper in wiperList)
+            {
+                if (wiper.enable && wiper.show())
+                {
+                    wiper.wipe(layout);
+                }
+            }
         });
 
         Workspace.Project.EndTransaction();

@@ -216,18 +216,20 @@ public partial class Room : TrackedIndexedProjectData, IndexedProjectDataInstant
         }
     }
 
+    public bool HasDungeonFlags { get { return (Group >= 4 && Group < 8); } }
+
     public byte DungeonFlags
     {
         get
         {
-            if (!(Group >= 4 && Group < 8))
+            if (!HasDungeonFlags)
                 throw new Exception(string.Format("Room {0:X3} is not in a dungeon group, doesn't have dungeon flags.", Index));
             DungeonFlagStream.Seek(Index & 0xff, SeekOrigin.Begin);
             return (byte)DungeonFlagStream.ReadByte();
         }
         set
         {
-            if (!(Group >= 4 && Group < 8))
+            if (!HasDungeonFlags)
                 throw new Exception(string.Format("Room {0:X3} is not in a dungeon group, doesn't have dungeon flags.", Index));
             DungeonFlagStream.Seek(Index & 0xff, SeekOrigin.Begin);
             DungeonFlagStream.WriteByte(value);
