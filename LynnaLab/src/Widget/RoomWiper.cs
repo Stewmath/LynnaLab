@@ -107,6 +107,8 @@ public class RoomWiper : Frame
         {
             if (selectedRect is null)
                 Modal.DisplayMessageModal("Must select a region!");
+            else if (!wiperList.Any((w) => w.enable))
+                Modal.DisplayMessageModal("Must choose something to wipe!");
             else
             {
                 Modal.YesNoModal("MapClearConfirm", "Really clear data in this region???",
