@@ -282,17 +282,17 @@ public class RoomEditor : Frame
                 ImGuiLL.RenderValueReferenceGroup(Room.ValueReferenceGroup, null, Workspace.ShowDocumentation);
                 ImGui.EndTabItem();
             }
-            if (TrackedTabItem("Objects"))
+            if (TrackedTabItem("Object"))
             {
                 objectGroupEditor.Render();
                 ImGui.EndTabItem();
             }
-            if (TrackedTabItem("Warps"))
+            if (TrackedTabItem("Warp"))
             {
                 warpEditor.Render();
                 ImGui.EndTabItem();
             }
-            if (TrackedTabItem("Chests"))
+            if (TrackedTabItem("Chest"))
             {
                 DisplayChestTab();
                 ImGui.EndTabItem();
