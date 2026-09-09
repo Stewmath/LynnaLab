@@ -18,6 +18,7 @@ public class SettingsDialog : Frame
     // ================================================================================
 
     float newScale = 0.0f;
+    int newMenuFontSize = 0;
 
     // ================================================================================
     // Properties
@@ -103,8 +104,6 @@ public class SettingsDialog : Frame
             }
             endSection();
         }
-
-        int newMenuFontSize = 0;
 
         if (beginSection("Fonts"))
         {
@@ -239,17 +238,19 @@ public class SettingsDialog : Frame
         // Only update scale when the mouse is released
         if ((newScale != 0.0f || newMenuFontSize != 0) && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
-            float value = newScale; // Capture current value for closure
+            float scaleValue = newScale; // Capture current value for closure
+            int menuValue = newMenuFontSize;
             Top.DoNextFrame(() =>
             {
-                if (value != 0.0f)
-                    GlobalConfig.DisplayScaleFactor = value;
-                if (newMenuFontSize != 0)
-                    GlobalConfig.MenuFontSize = newMenuFontSize;
+                if (scaleValue != 0.0f)
+                    GlobalConfig.DisplayScaleFactor = scaleValue;
+                if (menuValue != 0)
+                    GlobalConfig.MenuFontSize = menuValue;
                 Top.ReAdjustScale();
             });
 
             newScale = 0.0f;
+            newMenuFontSize = 0;
         }
     }
 
