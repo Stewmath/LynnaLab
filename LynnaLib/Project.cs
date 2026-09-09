@@ -1541,9 +1541,9 @@ public partial class Project
 
                 string left = val.Substring(0, i);
                 int middle;
-                string right = val.Substring(j + 1, val.Length);
+                string right = val.Substring(j + 1);
 
-                if (!TryEval(val.Substring(i + 1, j), out middle))
+                if (!TryEval(val.Substring(i + 1, j - (i + 1)), out middle))
                     return false;
 
                 val = left + middle + right;
