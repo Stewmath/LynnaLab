@@ -396,7 +396,7 @@ public static class ImGuiLL
             markdownConfig.HeadingFormats[1].Font = Top.InfoFontBold;
             markdownConfig.HeadingFormats[1].FontSize = Top.GlobalConfig.InfoFontSize * 1.2f;
             markdownConfig.HeadingFormats[2].Font = Top.InfoFontBold;
-            markdownConfig.HeadingFormats[1].FontSize = Top.GlobalConfig.InfoFontSize;
+            markdownConfig.HeadingFormats[2].FontSize = Top.GlobalConfig.InfoFontSize;
 
             string data = MarkdownFileContents(markdownFile);
             ImGuiMarkdown.Markdown(data, markdownConfig);
