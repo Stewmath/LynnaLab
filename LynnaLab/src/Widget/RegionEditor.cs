@@ -179,14 +179,14 @@ public class RegionEditor : Frame
     List<RegionOption> regionOptions;
 
     static readonly string[] modeOptionStrings = {
-        "Tile Edit",
         "Bulk Edit",
+        "Tile Edit",
     };
 
     enum ModeOption
     {
-        TileEdit,
         BulkEdit,
+        TileEdit,
     }
 
     Minimap minimap;
@@ -205,7 +205,7 @@ public class RegionEditor : Frame
     int regionValueToSet = 0;
 
     // Bulk Edit Mode
-    GridRegion? selectedRegion = null; // null iff selectedMode == TileEdit
+    GridRegion? selectedRegion = null;
     bool suppressChangeEvent = false;
 
     // ================================================================================
@@ -242,19 +242,13 @@ public class RegionEditor : Frame
 
         if (changedMode)
         {
-            if (selectedMode == ModeOption.TileEdit)
-            {
-                selectedRegion = null;
-            }
-            else
-            {
-                selectedRegion = gridRegions.Regions[0];
-            }
+            selectedRegion = null;
             RegisterMouseActions();
         }
 
         if (changedRegionType)
         {
+            selectedRegion = null;
             UpdateGridRegions();
             RegisterEventHandlers();
         }
@@ -264,6 +258,10 @@ public class RegionEditor : Frame
         if (selectedMode == ModeOption.TileEdit)
         {
             regionAccessor.RenderSelector(ref regionValueToSet);
+        }
+        else if (selectedRegion == null)
+        {
+            ImGui.Text("Select a region.");
         }
         else
         {
@@ -320,6 +318,7 @@ public class RegionEditor : Frame
             selectedRegionOption = options.First();
         }
 
+        selectedRegion = null;
         UpdateGridRegions();
         RegisterEventHandlers();
     }
@@ -339,9 +338,11 @@ public class RegionEditor : Frame
 
         if (selectedMode == ModeOption.BulkEdit)
         {
+            // Best effort: Try to keep the selection the same or similar to before the grid regions
+            // were regenerated.
             selectedRegion = gridRegions.Regions.FirstOrDefault(
-                (r) => r.RegionID == selectedRegion.RegionID)
-                             ?? gridRegions.Regions[0];
+                (r) => r.RegionID == selectedRegion?.RegionID)
+                             ?? null;
         }
     }
 
