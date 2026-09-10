@@ -2,6 +2,8 @@ namespace LynnaLib;
 
 /// <summary>
 /// Represents one Maple Location table (ie. table for Ricky).
+///
+/// This is not a good name, it also applies to the "companionCallableRooms" table.
 /// </summary>
 public class MapleLocationTable : ProjectDataType, ProjectDataInstantiator
 {
@@ -28,6 +30,18 @@ public class MapleLocationTable : ProjectDataType, ProjectDataInstantiator
     // ================================================================================
     public string Label { get; }
 
+    /// <summary>
+    /// Whether to invert the meaning of the bits (inverted: 0="present", 1="absent")
+    /// </summary>
+    bool Invert
+    {
+        get
+        {
+            // Yeah yeah this is hacky
+            return Label != "companionCallableRooms";
+        }
+    }
+
     // ================================================================================
     // Public methods
     // ================================================================================
@@ -40,7 +54,7 @@ public class MapleLocationTable : ProjectDataType, ProjectDataInstantiator
         var (data, bitmask) = GetDataAndBitmask(point);
 
         int value = data.GetIntValue(0);
-        return (value & bitmask) == 0;
+        return ((value & bitmask) != 0) ^ Invert;
     }
 
     /// <summary>
@@ -51,10 +65,10 @@ public class MapleLocationTable : ProjectDataType, ProjectDataInstantiator
         var (data, bitmask) = GetDataAndBitmask(point);
 
         int value = data.GetIntValue(0);
-        if (present)
-            value &= ~bitmask;
-        else
+        if (present ^ Invert)
             value |= bitmask;
+        else
+            value &= ~bitmask;
 
         data.SetValue(0, "%" + Convert.ToString(value, 2).PadLeft(8, '0'));
     }

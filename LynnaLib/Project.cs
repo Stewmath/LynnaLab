@@ -1811,6 +1811,11 @@ public partial class Project
             label = $"maple{age}Locations";
         else
             label = $"maple{age}Locations{companion.GetString()}Companion";
+        return GetMapleLocationTable(label);
+    }
+
+    public MapleLocationTable GetMapleLocationTable(string label)
+    {
         return GetDataType<MapleLocationTable>(label, true);
     }
 

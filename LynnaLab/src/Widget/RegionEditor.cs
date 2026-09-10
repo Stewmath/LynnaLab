@@ -93,15 +93,11 @@ public class RegionEditor : Frame
         "Music",
         "Tileset",
         "Room Pack",
+        "Companion Callable",
         "Maple (Ricky)",
         "Maple (Dimitri)",
         "Maple (Moosh)",
         "Maple (Past)",
-    };
-
-    static readonly string[] modeOptionStrings = {
-        "Tile Edit",
-        "Bulk Edit",
     };
 
     enum RegionOption
@@ -109,12 +105,18 @@ public class RegionEditor : Frame
         Music,
         Tileset,
         RoomPack,
+        CompanionCallable,
         MapleRicky,
         MapleDimitri,
         MapleMoosh,
         MaplePast,
         COUNT
     }
+
+    static readonly string[] modeOptionStrings = {
+        "Tile Edit",
+        "Bulk Edit",
+    };
 
     enum ModeOption
     {
@@ -262,7 +264,9 @@ public class RegionEditor : Frame
     {
         var plan = minimap.FloorPlan;
 
-        if (selectedRegionType == RegionOption.MapleRicky)
+        if (selectedRegionType == RegionOption.CompanionCallable)
+            regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable("companionCallableRooms"));
+        else if (selectedRegionType == RegionOption.MapleRicky)
             regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable(Companion.Ricky, false));
         else if (selectedRegionType == RegionOption.MapleDimitri)
             regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable(Companion.Dimitri, false));
@@ -409,11 +413,16 @@ public class RegionEditor : Frame
     /// </summary>
     IEnumerable<RegionOption> GetRegionTypeOptions()
     {
-        List<RegionOption> results = new() { RegionOption.Tileset, RegionOption.Music };
+        List<RegionOption> results = new() {
+            RegionOption.Tileset,
+            RegionOption.Music
+        };
+
         if (minimap.FloorPlan.HasRoomPack)
             results.Add(RegionOption.RoomPack);
         if (minimap.FloorPlan.MainGroup == 0)
         {
+            results.Add(RegionOption.CompanionCallable);
             results.Add(RegionOption.MapleRicky);
             results.Add(RegionOption.MapleDimitri);
             results.Add(RegionOption.MapleMoosh);
