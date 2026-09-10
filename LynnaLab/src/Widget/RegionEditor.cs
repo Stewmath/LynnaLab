@@ -249,8 +249,8 @@ public class RegionEditor : Frame
         if (changedRegionType)
         {
             selectedRegion = null;
+            UpdateRegionAccessor();
             UpdateGridRegions();
-            RegisterEventHandlers();
         }
 
         ImGuiX.ShiftCursorScreenPos(ImGuiX.Unit(0.0f, 10.0f));
@@ -319,17 +319,14 @@ public class RegionEditor : Frame
         }
 
         selectedRegion = null;
+        UpdateRegionAccessor();
         UpdateGridRegions();
-        RegisterEventHandlers();
     }
 
-    [MemberNotNull(nameof(regionAccessor))]
     [MemberNotNull(nameof(gridRegions))]
     void UpdateGridRegions()
     {
         var plan = minimap.FloorPlan;
-
-        regionAccessor = selectedRegionOption.constructAccessor(Project, plan);
 
         Func<int, Color>? colorMapper = selectedRegionOption.colorMapper;
 
@@ -344,6 +341,13 @@ public class RegionEditor : Frame
                 (r) => r.RegionID == selectedRegion?.RegionID)
                              ?? null;
         }
+    }
+
+    [MemberNotNull(nameof(regionAccessor))]
+    void UpdateRegionAccessor()
+    {
+        regionAccessor = selectedRegionOption.constructAccessor(Project, minimap.FloorPlan);
+        RegisterEventHandlers();
     }
 
     void RegisterMouseActions()
