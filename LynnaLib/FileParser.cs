@@ -516,6 +516,8 @@ namespace LynnaLib
                             break;
                         }
                     case "m_dungeondata":
+                    case "m_dungeondata_ages":
+                    case "m_dungeondata_seasons":
                         {
                             if (!(fTokens.Count == 9))
                             {
@@ -673,11 +675,13 @@ namespace LynnaLib
                 // Check if we're currently skipping over stuff because of .ifdefs
                 if (ifdefCondition == false)
                 {
-                    if (tokens[0].ToLower() == ".ifdef" || tokens[0].ToLower() == ".ifndef")
+                    if (tokens[0].ToLower() == ".ifdef" || tokens[0].ToLower() == ".ifndef" ||
+                        tokens[0].ToLower() == ".if")
                     {
                         ifdefDepth++;
                     }
-                    else if (tokens[0].ToLower() == ".else" && failedIfdefDepth == ifdefDepth - 1)
+                    else if ((tokens[0].ToLower() == ".else" || tokens[0].ToLower() == ".elif") &&
+                             failedIfdefDepth == ifdefDepth - 1)
                     {
                         ifdefCondition = true;
                     }
@@ -782,6 +786,64 @@ namespace LynnaLib
                             break;
                         }
 
+                    case ".if":
+                    case ".elif":
+                        {
+                            bool definedConditionFound = false;
+                            bool definedCondition = false;
+                            bool logicalOr = true;
+                            for (int j = 1; j < tokens.Count; j++)
+                            {
+                                if (tokens[j] == "&&") {
+                                    logicalOr = false;
+                                    j++;
+                                }
+                                else if (tokens[j] == "||") 
+                                {
+                                    logicalOr = true;
+                                    j++;
+                                }
+
+                                if (tokens[j].StartsWith("defined", StringComparison.CurrentCultureIgnoreCase) ||
+                                    tokens[j].StartsWith("!defined", StringComparison.CurrentCultureIgnoreCase))
+                                {
+                                    if (tokens[j].Contains('(') && tokens[j].Contains(')')) {
+                                        definedConditionFound = true;
+
+                                        bool negate = tokens[j].StartsWith('!');
+                                        string tokenName = tokens[j].Split("(", 2)[1].TrimEnd(')');
+
+                                        bool exists = Project.GetDefinition(tokenName) != null;
+                                        if (negate) exists = !exists;
+                                        if (logicalOr)
+                                        {
+                                            definedCondition = definedCondition || exists;
+                                        }
+                                        else 
+                                        {
+                                            definedCondition = definedCondition && exists;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (definedConditionFound) {
+                                ifdefDepth++;
+                                if (definedCondition)
+                                {
+                                    ifdefCondition = true;
+                                }
+                                else
+                                {
+                                    ifdefCondition = false;
+                                    failedIfdefDepth = ifdefDepth - 1;
+                                }
+                                break;
+                            }
+                            // fall through if the matching failed
+                            goto default;
+                        }
+
                     case ".ifdef":
                         if (tokens.Count < 2)
                         {
@@ -856,11 +918,11 @@ namespace LynnaLib
                                 if (tokens[0][tokens[0].Length - 1] == ':')
                                     s = tokens[0].Substring(0, tokens[0].Length - 1);
 
-                                if (s[0] == '@')
+                                /*if (s[0] == '@')
                                 {
                                     log.Info(warningString + "Ignoring label '" + s + "': child labels not supported.");
                                     break;
-                                }
+                                }*/
 
                                 FileComponent addedComponent;
                                 if (context == "RAMSECTION" || context == "ENUM")
@@ -943,8 +1005,12 @@ namespace LynnaLib
         void AddLabelToDictionaries(Label label)
         {
             // See above note about RecordChange().
-            LabelDictionary.Add(label.Name, new(label));
-            Project.AddLabel(label.Name, this);
+            if (!(label.Name.StartsWith('@') && LabelDictionary.ContainsKey(label.Name))) {
+                LabelDictionary.Add(label.Name, new(label));
+            }
+            if (!(label.Name.StartsWith('@') && Project.HasLabel(label.Name))) {
+                Project.AddLabel(label.Name, this);
+            }
         }
 
         public Label GetLabel(string labelStr)
