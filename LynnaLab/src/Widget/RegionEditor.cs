@@ -49,6 +49,31 @@ public class RegionEditor : Frame
             DescriptorOption("Music", (_, _) => true),
             DescriptorOption("Room Pack", (_, plan) => plan.HasRoomPack),
             new() {
+                name = "Companion Callable",
+                showIn = (_, plan) => plan.MainGroup == 0,
+                colorMapper = mapleColorMapper,
+                constructAccessor = (p, _) =>
+                    new MapleRegionAccessor(p.GetMapleLocationTable("companionCallableRooms")),
+            },
+            new() {
+                name = "Map Text",
+                showIn = (_, plan) => plan.MainGroup == 0,
+                colorMapper = null,
+                constructAccessor = (p, _) => new ByteTableAccessor(p,
+                    "presentMapTextIndices",
+                    p.Game == Game.Ages ? 14 : 16,
+                    p.Game == Game.Ages ? 14 : 16),
+            },
+            new() {
+                name = "Map Text",
+                showIn = (_, plan) => plan.MainGroup == 1,
+                colorMapper = null,
+                constructAccessor = (p, _) => new ByteTableAccessor(p,
+                    "pastMapTextIndices",
+                    p.Game == Game.Ages ? 14 : 11,
+                    p.Game == Game.Ages ? 14 : 8),
+            },
+            new() {
                 name = "Maple (Ricky)",
                 showIn = (_, plan) => plan.MainGroup == 0,
                 colorMapper = mapleColorMapper,
@@ -75,13 +100,6 @@ public class RegionEditor : Frame
                 colorMapper = mapleColorMapper,
                 constructAccessor = (p, _) =>
                     new MapleRegionAccessor(p.GetMapleLocationTable(Companion.None, true)),
-            },
-            new() {
-                name = "Companion Callable",
-                showIn = (_, plan) => plan.MainGroup == 0,
-                colorMapper = mapleColorMapper,
-                constructAccessor = (p, _) =>
-                    new MapleRegionAccessor(p.GetMapleLocationTable("companionCallableRooms")),
             },
         ];
 
@@ -250,7 +268,7 @@ public class RegionEditor : Frame
         else
         {
             Accessor<int> accessor = new(
-                () => regionAccessor.Get(selectedRegion!.Points.First().Point),
+                () => regionAccessor.Get(selectedRegion.Points.First().Point),
                 (v) =>
                 {
                     // Don't update the region grid while doing bulk edits, because we don't have a
@@ -260,7 +278,7 @@ public class RegionEditor : Frame
                     suppressChangeEvent = true;
 
                     Project.BeginTransaction($"Bulk region {RegionTypeString} edit", merge: true);
-                    foreach (var p in selectedRegion!.Points)
+                    foreach (var p in selectedRegion.Points)
                     {
                         regionAccessor.Set(p.Point, v);
                     }
@@ -322,7 +340,7 @@ public class RegionEditor : Frame
         if (selectedMode == ModeOption.BulkEdit)
         {
             selectedRegion = gridRegions.Regions.FirstOrDefault(
-                (r) => r.RegionID == selectedRegion!.RegionID)
+                (r) => r.RegionID == selectedRegion.RegionID)
                              ?? gridRegions.Regions[0];
         }
     }
@@ -580,6 +598,88 @@ public class RegionEditor : Frame
         public override Action RegisterEvents(Action action)
         {
             return maple.RegisterModifiedEvent(action);
+        }
+    }
+
+    /// <summary>
+    /// A RegionAccessor for byte tables of room text indices.
+    /// </summary>
+    class ByteTableAccessor : RegionAccessor
+    {
+        public ByteTableAccessor(Project project, string label, int width, int height)
+        {
+            this.width = width;
+            this.height = height;
+
+            // TODO: This is parsing-level stuff, should be moved to LynnaLib
+            data = new Data[width * height];
+            Data current = project.GetData(label);
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                data[i] = current;
+
+                current = current.NextData
+                          ?? throw new AssemblyErrorException(
+                              $"Unexpected end of byte table: {label}");
+            }
+        }
+
+        // ================================================================================
+        // Variables
+        // ================================================================================
+
+        int width;
+        int height;
+        Data[] data;
+
+        // ================================================================================
+        // Properties
+        // ================================================================================
+
+        Project Project { get { return data[0].Project; } }
+
+        // ================================================================================
+        // Public methods
+        // ================================================================================
+
+        public override int Get(Point point)
+        {
+            int index = GetIndex(point);
+            return index < 0 ? 0 : data[index].GetIntValue(0);
+        }
+
+        public override void Set(Point point, int value)
+        {
+            int index = GetIndex(point);
+            if (index >= 0)
+                data[index].SetByteValue(0, (byte)value);
+        }
+
+        public override void RenderSelector(Accessor<int> accessor)
+        {
+            int value = accessor.Get();
+            int initial = value;
+            ImGuiX.InputHex("Map text index", ref value);
+            if (initial != value)
+                accessor.Set(value);
+        }
+
+        public override Action RegisterEvents(Action action)
+        {
+            return Project.RegisterEventOnAll(data.Select((d) => new EventSource<DataModifiedEventArgs>(
+                (ev) => d.AddModifiedEventHandler(ev),
+                (ev) => d.RemoveModifiedEventHandler(ev))),
+                action);
+        }
+
+        // The source tables omit unused map columns. The dimensions supplied by the option
+        // therefore describe the actual populated rectangle, rather than the 16x16 FloorPlan.
+        int GetIndex(Point point)
+        {
+            if (!point.InRange(0, 0, width, height))
+                return -1;
+            return point.X + point.Y * width;
         }
     }
 }

@@ -1705,41 +1705,53 @@ public partial class Project
     }
 
     /// <summary>
-    /// Register a modified event handler on every ValueReference passed in.
+    /// Register a modified event handler on every event passed in.
     ///
     /// This handler will only fire at the end of the current transaction, and only one time, even
-    /// if multiple ValueReferences in the list were modified in the transaction.
+    /// if multiple EventSources in the list were modified in the transaction.
     ///
     /// Returns a delegate to unregister the modified handlers.
     /// </summary>
-    public Action RegisterEventOnAll(IEnumerable<ValueReference> references, Action _action)
+    public Action RegisterEventOnAll<T>(IEnumerable<EventSource<T>> sources, Action _action)
     {
         Action action = () => _action(); // Ensure this is a unique object
 
-        EventHandler<ValueModifiedEventArgs?> onValueReferenceModified = (obj, args) =>
+        EventHandler<T> onModified = (obj, args) =>
         {
-            ValueReference reference = (ValueReference)obj!;
-
             if (!TransactionManager.InTransaction && !TransactionManager.IsUndoing)
-                throw new Exception("ValueReference callback invoked outside of a transaction!");
+                throw new Exception("EventSource callback invoked outside of a transaction!");
             if (!transactionEndCallbacks.Contains(action))
                 transactionEndCallbacks.Add(action);
         };
 
-        foreach (var reference in references)
+        foreach (var source in sources)
         {
-            reference.AddValueModifiedHandler(onValueReferenceModified);
+            source.Subscribe(onModified);
         }
 
         Action unregister = () =>
         {
-            foreach (var reference in references)
+            foreach (var source in sources)
             {
-                reference.RemoveValueModifiedHandler(onValueReferenceModified);
+                source.Unsubscribe(onModified);
             }
         };
 
         return unregister;
+    }
+
+    /// <summary>
+    /// Register an event on all ValueReferenceGroup instances passed in. See RegisterEventOnAll<T>
+    /// for details.
+    /// </summary>
+    public Action RegisterEventOnAll(IEnumerable<ValueReference> references, Action _action)
+    {
+        return RegisterEventOnAll(
+            references.Select((x) => new EventSource<ValueModifiedEventArgs?>(
+                (ev) => x.AddValueModifiedHandler(ev),
+                (ev) => x.RemoveValueModifiedHandler(ev))),
+            _action
+        );
     }
 
     /// <summary>
