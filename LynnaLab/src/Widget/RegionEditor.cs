@@ -19,7 +19,6 @@ public class RegionEditor : Frame
 
         mapChooser = new(Project, minimap);
 
-        OnFloorPlanChanged(minimap.FloorPlan); // Set by MapChooser constructor
         minimap.ChangedFloorPlanEvent += (_, _) => OnFloorPlanChanged(minimap.FloorPlan);
 
         // Watch for dungeon rooms being rearranged, must recalculate the regions when that happens.
@@ -80,38 +79,81 @@ public class RegionEditor : Frame
         };
 
         RegisterMouseActions();
+
+        Func<int, Color> mapleColorMapper = (x) => x == 0 ? Color.Red : Color.LightBlue;
+
+        // Helper to build a DescriptorRegionAccessor for a given region name.
+        RegionOption DescriptorOption(string name, Func<Project, FloorPlan, bool> showIn)
+        {
+            return new() {
+                name = name,
+                showIn = showIn,
+                colorMapper = null,
+                constructAccessor = (p, plan) => new DescriptorRegionAccessor(Workspace,
+                    (Point pt) => plan.GetRoom(pt.X, pt.Y).ValueReferenceGroup[name]),
+            };
+        }
+
+        this.regionOptions = [
+            DescriptorOption("Tileset", (_, _) => true),
+            DescriptorOption("Music", (_, _) => true),
+            DescriptorOption("Room Pack", (_, plan) => plan.HasRoomPack),
+            new() {
+                name = "Maple (Ricky)",
+                showIn = (_, plan) => plan.MainGroup == 0,
+                colorMapper = mapleColorMapper,
+                constructAccessor = (p, _) =>
+                    new MapleRegionAccessor(p.GetMapleLocationTable(Companion.Ricky, false)),
+            },
+            new() {
+                name = "Maple (Dimitri)",
+                showIn = (_, plan) => plan.MainGroup == 0,
+                colorMapper = mapleColorMapper,
+                constructAccessor = (p, _) =>
+                    new MapleRegionAccessor(p.GetMapleLocationTable(Companion.Dimitri, false)),
+            },
+            new() {
+                name = "Maple (Moosh)",
+                showIn = (_, plan) => plan.MainGroup == 0,
+                colorMapper = mapleColorMapper,
+                constructAccessor = (p, _) =>
+                    new MapleRegionAccessor(p.GetMapleLocationTable(Companion.Moosh, false)),
+            },
+            new() {
+                name = "Maple (Past)",
+                showIn = (proj, plan) => proj.Game == Game.Ages && plan.MainGroup == 1,
+                colorMapper = mapleColorMapper,
+                constructAccessor = (p, _) =>
+                    new MapleRegionAccessor(p.GetMapleLocationTable(Companion.None, true)),
+            },
+            new() {
+                name = "Companion Callable",
+                showIn = (_, plan) => plan.MainGroup == 0,
+                colorMapper = mapleColorMapper,
+                constructAccessor = (p, _) =>
+                    new MapleRegionAccessor(p.GetMapleLocationTable("companionCallableRooms")),
+            },
+        ];
+
+        // Call this after regionOptions are initialized
+        OnFloorPlanChanged(minimap.FloorPlan);
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
 
-    // These strings are used for display, but they also must match with the names used by the Room
-    // class's ValueReferenceGroup in order to register event handlers based on the corresponding
-    // ValueReferences.
-    static readonly string[] regionOptionStrings = {
-        "Music",
-        "Tileset",
-        "Room Pack",
-        "Companion Callable",
-        "Maple (Ricky)",
-        "Maple (Dimitri)",
-        "Maple (Moosh)",
-        "Maple (Past)",
-    };
-
-    enum RegionOption
+    // NOTE: The name field is used for display, but for DescriptorRegionAccessor-based options it
+    // must also match the names used by the Room class's ValueReferenceGroup.
+    class RegionOption
     {
-        Music,
-        Tileset,
-        RoomPack,
-        CompanionCallable,
-        MapleRicky,
-        MapleDimitri,
-        MapleMoosh,
-        MaplePast,
-        COUNT
+        public required string name;
+        public required Func<Project, FloorPlan, bool> showIn;
+        public required Func<int, Color>? colorMapper;
+        public required Func<Project, FloorPlan, RegionAccessor> constructAccessor;
     }
+
+    List<RegionOption> regionOptions;
 
     static readonly string[] modeOptionStrings = {
         "Tile Edit",
@@ -128,7 +170,7 @@ public class RegionEditor : Frame
     MapChooser mapChooser;
     EventWrapper<Dungeon> dungeonEW = new();
 
-    RegionOption selectedRegionType;
+    RegionOption selectedRegionOption;
     ModeOption selectedMode;
     GridRegionGenerator gridRegions;
 
@@ -150,7 +192,7 @@ public class RegionEditor : Frame
     public ProjectWorkspace Workspace { get; }
     public Project Project { get { return Workspace.Project; } }
 
-    string RegionTypeString { get { return regionOptionStrings[(int)selectedRegionType]; } }
+    string RegionTypeString { get { return selectedRegionOption.name; } }
 
     // ================================================================================
     // Public methods
@@ -165,9 +207,9 @@ public class RegionEditor : Frame
         ImGui.Text("Data To Edit:");
         bool changedRegionType = ImGuiX.Combo(
             "##RegionCombo",
-            new(() => regionOptionStrings[(int)selectedRegionType],
-                (s) => selectedRegionType = (RegionOption)regionOptionStrings.IndexOf(s)),
-            GetRegionTypeOptions().Select((x) => regionOptionStrings[(int)x]));
+            new(() => selectedRegionOption.name,
+                (s) => selectedRegionOption = GetRegionTypeOptions().First((o) => o.name == s)),
+            GetRegionTypeOptions().Select((o) => o.name));
 
         ImGui.Text("Edit Mode:");
         bool changedMode = ImGuiX.Combo(
@@ -244,14 +286,15 @@ public class RegionEditor : Frame
 
     [MemberNotNull(nameof(regionAccessor))]
     [MemberNotNull(nameof(gridRegions))]
+    [MemberNotNull(nameof(selectedRegionOption))]
     void OnFloorPlanChanged(FloorPlan plan)
     {
         dungeonEW.ReplaceEventSource((plan as Dungeon.Floor)?.Dungeon);
 
-        var options = GetRegionTypeOptions();
-        if (!options.Contains(selectedRegionType))
+        var options = GetRegionTypeOptions().ToList();
+        if (selectedRegionOption == null || !options.Contains(selectedRegionOption))
         {
-            selectedRegionType = options.First();
+            selectedRegionOption = options.First();
         }
 
         UpdateGridRegions();
@@ -264,25 +307,9 @@ public class RegionEditor : Frame
     {
         var plan = minimap.FloorPlan;
 
-        if (selectedRegionType == RegionOption.CompanionCallable)
-            regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable("companionCallableRooms"));
-        else if (selectedRegionType == RegionOption.MapleRicky)
-            regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable(Companion.Ricky, false));
-        else if (selectedRegionType == RegionOption.MapleDimitri)
-            regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable(Companion.Dimitri, false));
-        else if (selectedRegionType == RegionOption.MapleMoosh)
-            regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable(Companion.Moosh, false));
-        else if (selectedRegionType == RegionOption.MaplePast)
-            regionAccessor = new MapleRegionAccessor(Project.GetMapleLocationTable(Companion.None, true));
-        else
-        {
-            regionAccessor = new DescriptorRegionAccessor(Workspace,
-                (Point p) => plan.GetRoom(p.X, p.Y).ValueReferenceGroup[RegionTypeString]);
-        }
+        regionAccessor = selectedRegionOption.constructAccessor(Project, plan);
 
-        Func<int, Color>? colorMapper = null;
-        if (regionAccessor is MapleRegionAccessor)
-            colorMapper = (x) => x == 0 ? Color.Red : Color.LightBlue;
+        Func<int, Color>? colorMapper = selectedRegionOption.colorMapper;
 
         gridRegions = new GridRegionGenerator(
             plan.MapWidth, plan.MapHeight, regionAccessor.Get, true, colorMapper);
@@ -390,7 +417,6 @@ public class RegionEditor : Frame
             unregisterEventHandlers = null;
         }
 
-        string name = regionOptionStrings[(int)selectedRegionType];
         unregisterEventHandlers = regionAccessor.RegisterEvents(OnRoomValueChanged);
     }
 
@@ -413,25 +439,7 @@ public class RegionEditor : Frame
     /// </summary>
     IEnumerable<RegionOption> GetRegionTypeOptions()
     {
-        List<RegionOption> results = new() {
-            RegionOption.Tileset,
-            RegionOption.Music
-        };
-
-        if (minimap.FloorPlan.HasRoomPack)
-            results.Add(RegionOption.RoomPack);
-        if (minimap.FloorPlan.MainGroup == 0)
-        {
-            results.Add(RegionOption.CompanionCallable);
-            results.Add(RegionOption.MapleRicky);
-            results.Add(RegionOption.MapleDimitri);
-            results.Add(RegionOption.MapleMoosh);
-        }
-        if (Project.Game == Game.Ages && minimap.FloorPlan.MainGroup == 1)
-        {
-            results.Add(RegionOption.MaplePast);
-        }
-        return results;
+        return regionOptions.Where((o) => o.showIn(Project, minimap.FloorPlan));
     }
 
 
