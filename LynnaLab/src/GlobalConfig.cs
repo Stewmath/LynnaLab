@@ -115,4 +115,5 @@ public class GlobalConfig
     // Other
     public bool AutoAdjustGroupNumber { get; set; } = true;
     public bool ScrollToZoom { get; set; } = true;
+    public bool BuildComboRom { get; set; } = true;
 }
