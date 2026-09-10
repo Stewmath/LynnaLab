@@ -27,58 +27,8 @@ public class RegionEditor : Frame
             UpdateGridRegions();
         });
 
-        // Color the minimap based on the grid regions
-        minimap.AfterRenderTileGrid += (_, _) =>
-        {
-            GridRegion? hoveredRegion = null;
-            if (minimap.HoveredTile != -1)
-                hoveredRegion = gridRegions.GetRegionForPoint(minimap.PointFromIndex(minimap.HoveredTile));
 
-            foreach (var r in gridRegions.Regions)
-            {
-                Color color = r.Color;
-                Color fillColor;
-
-                if (r == selectedRegion)
-                    color = Color.White;
-
-                if (selectedMode == ModeOption.BulkEdit && r == hoveredRegion)
-                    fillColor = color.WithAlpha(0xc0);
-                else
-                    fillColor = color.WithAlpha(0x80);
-
-                float thickness = ImGuiX.Unit(3.0f);
-
-                foreach (GridPoint p in r.Points)
-                {
-                    var rect = minimap.TileRect(p.X, p.Y);
-
-                    Vector2 xoffset = new Vector2(thickness, 0) / 2.0f;
-                    Vector2 yoffset = new Vector2(0, thickness) / 2.0f;
-
-                    // Must do this to align to pixels (and thickness must be a multiple of 2?)
-                    Vector2 off1 = new Vector2(-0.5f, -0.5f);
-
-                    Vector2 topLeft = rect.TopLeft + off1;
-                    Vector2 topRight = rect.TopRight + off1;
-                    Vector2 bottomLeft = rect.BottomLeft + off1;
-                    Vector2 bottomRight = rect.BottomRight + off1;
-
-                    minimap.AddRectFilled(rect, fillColor);
-
-                    if (p.TopEdge)
-                        minimap.AddLine(topLeft + yoffset, topRight + yoffset, color, thickness);
-                    if (p.RightEdge)
-                        minimap.AddLine(topRight - xoffset, bottomRight - xoffset, color, thickness);
-                    if (p.BottomEdge)
-                        minimap.AddLine(bottomLeft - yoffset, bottomRight - yoffset, color, thickness);
-                    if (p.LeftEdge)
-                        minimap.AddLine(topLeft + xoffset, bottomLeft + xoffset, color, thickness);
-                }
-            }
-        };
-
-        RegisterMouseActions();
+        // --- Register the list of editable regions ---
 
         Func<int, Color> mapleColorMapper = (x) => x == 0 ? Color.Red : Color.LightBlue;
 
@@ -137,6 +87,61 @@ public class RegionEditor : Frame
 
         // Call this after regionOptions are initialized
         OnFloorPlanChanged(minimap.FloorPlan);
+
+
+        // --- Color the minimap based on the grid regions ---
+
+        minimap.AfterRenderTileGrid += (_, _) =>
+        {
+            GridRegion? hoveredRegion = null;
+            if (minimap.HoveredTile != -1)
+                hoveredRegion = gridRegions.GetRegionForPoint(minimap.PointFromIndex(minimap.HoveredTile));
+
+            foreach (var r in gridRegions.Regions)
+            {
+                Color color = r.Color;
+                Color fillColor;
+
+                if (r == selectedRegion)
+                    color = Color.White;
+
+                if (selectedMode == ModeOption.BulkEdit && r == hoveredRegion)
+                    fillColor = color.WithAlpha(0xc0);
+                else
+                    fillColor = color.WithAlpha(0x80);
+
+                float thickness = ImGuiX.Unit(3.0f);
+
+                foreach (GridPoint p in r.Points)
+                {
+                    var rect = minimap.TileRect(p.X, p.Y);
+
+                    Vector2 xoffset = new Vector2(thickness, 0) / 2.0f;
+                    Vector2 yoffset = new Vector2(0, thickness) / 2.0f;
+
+                    // Must do this to align to pixels (and thickness must be a multiple of 2?)
+                    Vector2 off1 = new Vector2(-0.5f, -0.5f);
+
+                    Vector2 topLeft = rect.TopLeft + off1;
+                    Vector2 topRight = rect.TopRight + off1;
+                    Vector2 bottomLeft = rect.BottomLeft + off1;
+                    Vector2 bottomRight = rect.BottomRight + off1;
+
+                    minimap.AddRectFilled(rect, fillColor);
+
+                    if (p.TopEdge)
+                        minimap.AddLine(topLeft + yoffset, topRight + yoffset, color, thickness);
+                    if (p.RightEdge)
+                        minimap.AddLine(topRight - xoffset, bottomRight - xoffset, color, thickness);
+                    if (p.BottomEdge)
+                        minimap.AddLine(bottomLeft - yoffset, bottomRight - yoffset, color, thickness);
+                    if (p.LeftEdge)
+                        minimap.AddLine(topLeft + xoffset, bottomLeft + xoffset, color, thickness);
+                }
+            }
+        };
+
+        RegisterMouseActions();
     }
 
     // ================================================================================
