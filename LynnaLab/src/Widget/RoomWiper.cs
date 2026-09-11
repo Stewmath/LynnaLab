@@ -83,6 +83,7 @@ public class RoomWiper : Frame
 
     public ProjectWorkspace Workspace { get; }
 
+    Project Project { get { return Workspace.Project; } }
     bool InDungeon { get { return minimap.FloorPlan is Dungeon.Floor; } }
 
     // ================================================================================
@@ -93,7 +94,7 @@ public class RoomWiper : Frame
     {
         ImGui.BeginChild("Checkboxes", ImGuiX.Unit(220.0f, 0.0f));
 
-        ImGuiLL.HelpButton("RoomWiper.md");
+        ImGuiLL.HelpButton(Project, "RoomWiper.md");
 
         foreach (var wiper in wiperList)
         {

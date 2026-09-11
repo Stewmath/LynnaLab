@@ -232,6 +232,9 @@ public partial class Project
 
     public ProjectConfig Config { get { return stateHolder.State.projectConfig; } }
 
+    /// <summary>
+    /// This is null on network clients
+    /// </summary>
     public string? BaseDirectory
     {
         get { return baseDirectory; }
@@ -576,9 +579,7 @@ public partial class Project
                 g.GetTreasureObject(s);
         }
 
-        numTilesets = determineNumTilesets();
-
-        LinkBitmap = LoadLinkBitmap();
+        FinalizeLoad();
 
         // Preload some data. Generally we want most "TrackedProjectData" instances to be loaded
         // in the Project constructor, because otherwise it may appear to the undo system as if
@@ -625,7 +626,9 @@ public partial class Project
     /// <summary>
     /// Called after all data is finished loading. For client instances, this may be a fair bit
     /// after the constructor is finished.
-    /// TODO: delete this
+    /// It only makes sense to use this to calculate cached stuff that is computed exactly once
+    /// after the project is loaded. But this is putting constructor-like logic in a non-constructor
+    /// function, which isn't kosher.
     /// </summary>
     public void FinalizeLoad()
     {

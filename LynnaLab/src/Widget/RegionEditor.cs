@@ -225,7 +225,7 @@ public class RegionEditor : Frame
     {
         ImGui.BeginChild("Left pane", ImGuiX.Unit(250.0f, 0.0f));
 
-        ImGuiLL.HelpButton("RegionEditor.md");
+        ImGuiLL.HelpButton(Project, "RegionEditor.md");
 
         ImGui.Text("Data To Edit:");
         bool changedRegionType = ImGuiX.Combo(

@@ -19,18 +19,6 @@ public static class ImGuiLL
         markdownConfig = new ImGuiMarkdown.MarkdownConfig();
         markdownConfig.ImageCallback = MarkdownImageCallback;
         markdownConfig.Flags = ImGuiMarkdown.FormatFlags.NoNewLineBeforeHeading;
-        markdownConfig.LinkCallback = (data) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = data.Link,
-            UseShellExecute = true,
-        });
-        markdownConfig.TooltipCallback = (data) =>
-        {
-            if (data.LinkData.Link != null)
-            {
-                ImGui.SetTooltip(data.LinkData.Link);
-            }
-        };
     }
 
     /// <summary>
@@ -368,7 +356,7 @@ public static class ImGuiLL
     /// <summary>
     /// A help button which opens a popup showing markdown-formatted text.
     /// </summary>
-    public static void HelpButton(string markdownFile)
+    public static void HelpButton(Project project, string markdownFile)
     {
         Vector2 size = ImGuiX.Unit(HELP_BUTTON_SIZE);
         float x = (ImGui.GetContentRegionAvail().X - size.X - ImGui.GetStyle().FramePadding.X * 2);
@@ -385,8 +373,8 @@ public static class ImGuiLL
 
         Vector2 pos = ImGui.GetCursorScreenPos();
         ImGui.SameLine();
-        ImGui.SetNextWindowPos(ImGui.GetCursorScreenPos());
-        ImGui.SetNextWindowSizeConstraints(ImGuiX.Unit(600.0f, 0.0f), ImGuiX.Unit(0.0f, 600.0f));
+        //ImGui.SetNextWindowPos(ImGui.GetCursorScreenPos()); // Position to right of button
+        ImGui.SetNextWindowSizeConstraints(ImGuiX.Unit(700.0f, 0.0f), ImGuiX.Unit(700.0f, 800.0f));
         if (ImGui.BeginPopup("Help Popup"))
         {
             ImGuiLL.PushInfoFont();
@@ -394,9 +382,12 @@ public static class ImGuiLL
             markdownConfig.HeadingFormats[0].Font = Top.InfoFontBold;
             markdownConfig.HeadingFormats[0].FontSize = Top.GlobalConfig.InfoFontSize * 1.5f;
             markdownConfig.HeadingFormats[1].Font = Top.InfoFontBold;
-            markdownConfig.HeadingFormats[1].FontSize = Top.GlobalConfig.InfoFontSize * 1.2f;
-            markdownConfig.HeadingFormats[2].Font = Top.InfoFontBold;
-            markdownConfig.HeadingFormats[2].FontSize = Top.GlobalConfig.InfoFontSize;
+            markdownConfig.HeadingFormats[1].FontSize = Top.GlobalConfig.InfoFontSize * 1.3f;
+            markdownConfig.HeadingFormats[2].Font = Top.InfoFont;
+            markdownConfig.HeadingFormats[2].FontSize = Top.GlobalConfig.InfoFontSize * 1.1f;
+
+            markdownConfig.LinkCallback = (d) => MarkdownLinkCallback(project, d);
+            markdownConfig.TooltipCallback = (d) => MarkdownTooltipCallback(project, d);
 
             string data = MarkdownFileContents(markdownFile);
             ImGuiMarkdown.Markdown(data, markdownConfig);
@@ -479,5 +470,34 @@ public static class ImGuiLL
         imgData.data.Size = ImGuiX.Unit(imgData.baseSize) / 1.6f;
 
         return imgData.data;
+    }
+
+    static void MarkdownLinkCallback(Project project, ImGuiMarkdown.LinkCallbackData data)
+    {
+        string link;
+        if (data.Link.StartsWith("disasm:"))
+        {
+            if (project.BaseDirectory == null) // Clients don't have a file to open
+                return;
+            link = project.BaseDirectory + "/"
+                   + data.Link.Substring(7).Replace("{game}", project.GameString);
+        }
+        else
+            link = data.Link;
+
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = link,
+            UseShellExecute = true,
+        });
+    }
+
+    static void MarkdownTooltipCallback(Project project, ImGuiMarkdown.TooltipCallbackData data)
+    {
+        if (data.LinkData.Link != null)
+        {
+            string text = data.LinkData.Link.Replace("{game}", project.GameString);
+            ImGui.SetTooltip(text);
+        }
     }
 }
