@@ -70,7 +70,17 @@ public class MapChooser
                     int newSeason = (int)season;
                     ImGuiLL.ComboBoxFromConstants($"##Season", Project.SeasonMapping, ref newSeason,
                         withIntInput: false, omitPrefix: true);
-                    if (newSeason != (int)season)
+
+                    ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, ImGuiX.Unit(4.0f, 0.0f));
+                    ImGui.SameLine();
+                    if (ImGui.Button("-"))
+                        newSeason = (int)season - 1;
+                    ImGui.SameLine();
+                    if (ImGui.Button("+"))
+                        newSeason = (int)season + 1;
+                    ImGui.PopStyleVar();
+
+                    if (newSeason != (int)season && newSeason >= 0 && newSeason <= 3)
                         OnWorldChanged(worldIndex, (Season)newSeason);
                 }
                 ImGui.PopItemWidth();
