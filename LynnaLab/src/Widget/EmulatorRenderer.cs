@@ -22,8 +22,10 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         this.emu = emu;
         this.scale = scale;
 
-        base.WindowFlags |= ImGuiWindowFlags.AlwaysAutoResize;
+        base.WindowFlags |= ImGuiWindowFlags.NoScrollbar;
         base.AddStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
+
+        base.RequestSize(new Vector2(160, 144) * Scale);
 
         if (Top.AudioAvailable)
             SetupAudio();
@@ -153,7 +155,19 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     }
 
     // ================================================================================
-    // Private functions
+    // Protected methods
+    // ================================================================================
+
+    /// <summary>
+    /// For now, to ensure integer scaling, just ignore DPI.
+    /// </summary>
+    protected override Vector2 RecalculateSizeOnDPIChange(Vector2 lastWindowSize)
+    {
+        return lastWindowSize;
+    }
+
+    // ================================================================================
+    // Private methods
     // ================================================================================
 
     void SetMuted(bool b)
@@ -184,12 +198,12 @@ class ScreenWidget : SizedWidget, IDisposable
         base.CenterY = true;
 
         screenTexture = Top.Backend.CreateTexture(160, 144);
-        screenTexture.CopyPixels(emu.PixelData, 160, 144, (uint)Scale);
+        screenTexture.CopyPixels(emu.PixelData, 160, 144, 4);
 
         // On vblank, update the texture
         emu.GB.SetVBlankCallback((type) =>
         {
-            screenTexture.CopyPixels(emu.PixelData, 160, 144, (uint)Scale);
+            screenTexture.CopyPixels(emu.PixelData, 160, 144, 4);
         });
 
         overlayBoxUser = new(this);
@@ -225,6 +239,10 @@ class ScreenWidget : SizedWidget, IDisposable
     {
         base.RenderPrep();
 
+        // Don't allow ObjectBoxes to be draw outside of the game screen
+        Vector2 clipRectStart = ImGui.GetCursorScreenPos();
+        ImGui.PushClipRect(clipRectStart, clipRectStart + WidgetSize, true);
+
         ImGuiX.DrawImage(screenTexture, Scale);
 
         lock (emu)
@@ -232,6 +250,8 @@ class ScreenWidget : SizedWidget, IDisposable
             UpdateOverlayBoxes();
             IOverlayBoxUser.UpdateOverlayBoxes(null, overlayBoxUser, this, overlayBoxes, true);
         }
+
+        ImGui.PopClipRect();
     }
 
     public void Dispose()

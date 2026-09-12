@@ -1,4 +1,3 @@
-#nullable disable
 namespace LynnaLab;
 
 /// <summary>
@@ -19,7 +18,7 @@ public abstract class OverlayBox
     // Events
     // ================================================================================
 
-    public event EventHandler<EventArgs> SelectedEvent;
+    public event EventHandler<EventArgs?>? SelectedEvent;
 
     // ================================================================================
     // Properties

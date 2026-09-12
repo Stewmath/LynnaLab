@@ -21,6 +21,7 @@ public abstract class Frame
 
     bool active;
     bool grabFocus;
+    Vector2? requestedSize;
 
     // For automatic size adjustment when display scale changes (windows only)
     Vector2 lastWindowSize = Vector2.Zero;
@@ -111,11 +112,16 @@ public abstract class Frame
             // saved window sizes are retrieved from a .ini file)
             ImGui.SetNextWindowSize(DefaultSize * ImGuiX.ScaleUnit, ImGuiCond.FirstUseEver);
 
+            if (requestedSize != null)
+            {
+                ImGui.SetNextWindowSize(requestedSize.Value);
+                requestedSize = null;
+            }
+
             // Auto-adjust window size when scale factor is changed
             if (lastScaleFactor != 0.0f && lastScaleFactor != ImGuiX.ScaleUnit)
             {
-                float factor = ImGuiX.ScaleUnit / lastScaleFactor;
-                ImGui.SetNextWindowSize(lastWindowSize * factor);
+                ImGui.SetNextWindowSize(RecalculateSizeOnDPIChange(lastWindowSize));
             }
 
             int numStyleVars = 0;
@@ -196,6 +202,14 @@ public abstract class Frame
     }
 
     /// <summary>
+    /// Request to set the size (post-DPI scaled units).
+    /// </summary>
+    public void RequestSize(Vector2 size)
+    {
+        requestedSize = size + new Vector2(0, ImGui.GetFrameHeight());
+    }
+
+    /// <summary>
     /// Makes this window grab focus
     /// </summary>
     public void Focus()
@@ -215,4 +229,17 @@ public abstract class Frame
     /// Render contents of the window, without concern to what context it's being rendered to
     /// </summary>
     public abstract void Render();
+
+    // ================================================================================
+    // Protected methods
+    // ================================================================================
+
+    /// <summary>
+    /// Called when DPI scale is changed
+    /// </summary>
+    protected virtual Vector2 RecalculateSizeOnDPIChange(Vector2 lastWindowSize)
+    {
+        float factor = ImGuiX.ScaleUnit / lastScaleFactor;
+        return lastWindowSize * factor;
+    }
 }
