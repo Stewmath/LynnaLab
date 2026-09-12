@@ -58,6 +58,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
         emu.GB.SetSampleRate(SAMPLE_RATE);
 
+        SDL3.SDL_SetAudioStreamGain(audioStream, 0.25f);
         SDL3.SDL_ResumeAudioStreamDevice(audioStream);
     }
 
