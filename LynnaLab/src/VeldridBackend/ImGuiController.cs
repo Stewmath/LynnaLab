@@ -1,3 +1,4 @@
+#nullable disable
 using System.Reflection;
 using System.IO;
 using Veldrid;

@@ -1,3 +1,4 @@
+#nullable disable
 using Veldrid;
 using SDLUtil;
 

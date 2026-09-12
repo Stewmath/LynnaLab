@@ -1,3 +1,4 @@
+#nullable disable
 namespace LynnaLab;
 
 public class DocumentationDialog : Frame

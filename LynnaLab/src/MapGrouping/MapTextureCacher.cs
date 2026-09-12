@@ -1,3 +1,4 @@
+#nullable disable
 using SixLabors.ImageSharp;
 using PixelFormats = SixLabors.ImageSharp.PixelFormats;
 

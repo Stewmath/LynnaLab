@@ -1,4 +1,5 @@
-﻿// global using directives apply to all files in the project (C#10 feature).
+﻿#nullable disable
+// global using directives apply to all files in the project (C#10 feature).
 global using System;
 global using System.Collections.Generic;
 global using System.Linq;

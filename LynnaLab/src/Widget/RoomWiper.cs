@@ -1,4 +1,3 @@
-#nullable enable
 namespace LynnaLab;
 
 public class RoomWiper : Frame

@@ -1,3 +1,4 @@
+#nullable disable
 using Veldrid;
 using Veldrid.OpenGLBinding;
 using static SDL.SDL3;

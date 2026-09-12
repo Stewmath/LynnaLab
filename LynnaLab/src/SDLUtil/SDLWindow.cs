@@ -1,3 +1,4 @@
+#nullable disable
 using System.Text;
 using SDL;
 using static SDL.SDL3;
