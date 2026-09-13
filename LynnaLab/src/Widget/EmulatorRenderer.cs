@@ -34,9 +34,10 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     // Constructors
     // ================================================================================
 
-    public EmulatorRenderer(OraclesEmulator emu) : base("Emulator")
+    public EmulatorRenderer(EmulatorManager manager) : base("Emulator")
     {
-        this.emu = emu;
+        this.emu = manager.Emulator;
+        this.Manager = manager;
         this.scale = Top.GlobalConfig.EmulatorScale;
 
         base.WindowFlags |= ImGuiWindowFlags.NoScrollbar;
@@ -85,6 +86,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     // ================================================================================
 
     public int Scale { get { return scale; } }
+    public EmulatorManager Manager { get; init; }
     public OraclesEmulator Emulator { get { return emu; } }
 
     // ================================================================================
@@ -113,6 +115,9 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
         if (ImGui.BeginPopup("EmulatorPopupMenu"))
         {
+            bool paused = Manager.Paused;
+            if (ImGui.Checkbox("Pause", ref paused))
+                Manager.SetPaused(paused);
             ImGuiX.Checkbox("Mute", muted, (b) => SetMuted(b));
             ImGui.EndPopup();
         }
@@ -292,6 +297,8 @@ class ScreenWidget : SizedWidget, IDisposable
     {
         base.RenderPrep();
 
+        ImGui.BeginGroup();
+
         // Don't allow ObjectBoxes to be draw outside of the game screen
         Vector2 clipRectStart = ImGui.GetCursorScreenPos();
         ImGui.PushClipRect(clipRectStart, clipRectStart + WidgetSize, true);
@@ -303,7 +310,13 @@ class ScreenWidget : SizedWidget, IDisposable
             lock (emu)
             {
                 UpdateOverlayBoxes();
-                IOverlayBoxUser.UpdateOverlayBoxes(null, overlayBoxUser, this, overlayBoxes, true);
+                IOverlayBoxUser.UpdateOverlayBoxes(
+                    null,
+                    overlayBoxUser,
+                    this,
+                    overlayBoxes,
+                    alwaysFullPrecision: true,
+                    allowMove: !parent.Manager.Paused);
             }
         }
         else
@@ -313,6 +326,7 @@ class ScreenWidget : SizedWidget, IDisposable
         }
 
         ImGui.PopClipRect();
+        ImGui.EndGroup();
     }
 
     public void Dispose()

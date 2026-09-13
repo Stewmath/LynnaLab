@@ -27,7 +27,9 @@ public interface IOverlayBoxUser
         IOverlayBoxUser user,
         SizedWidget canvas,
         IList<OverlayBox> overlayBoxes,
-        bool alwaysFullPrecision)
+        bool alwaysFullPrecision,
+        bool allowMove = false
+    )
     {
         OverlayBox hoveringComponent = null;
         var mousePos = canvas.GetRelativeMousePos() / user.Scale;
@@ -96,7 +98,8 @@ public interface IOverlayBoxUser
                     // Set dragOffset to non-null if we should start dragging it.
                     // In any case the hovered object will become the selected object.
                     Vector2? dragOffset = null;
-                    if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+
+                    if (allowMove && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
                     {
                         if (hoveringComponent.HasXY)
                             dragOffset = new Vector2(hoveringComponent.X, hoveringComponent.Y) - mousePos;
@@ -121,7 +124,11 @@ public interface IOverlayBoxUser
         }
 
         // Update room component dragging
-        if (user.DraggingComponent)
+        if (!allowMove)
+        {
+            user.DraggingComponent = false;
+        }
+        else if (user.DraggingComponent)
         {
             var com = user.Selected;
 

@@ -5,9 +5,10 @@ namespace LynnaLab;
 
 public class EmulatorDebugger : Frame, IDisposable
 {
-    public EmulatorDebugger(OraclesEmulator emulator) : base("Debugger")
+    public EmulatorDebugger(EmulatorManager manager) : base("Debugger")
     {
-        this.emu = emulator;
+        this.emu = manager.Emulator;
+        this.manager = manager;
 
         text = """
 This is the SameBoy debugger console.
@@ -38,19 +39,15 @@ Examples to get you started:
 
         emu.GB.SetInputCallback(SyncInputCallback);
         emu.GB.SetAsyncInputCallback(AsyncInputCallback);
-
-        Unpause();
     }
 
     OraclesEmulator emu;
+    EmulatorManager manager;
     string text = "";
     string currentLine = "";
     string lastLine = "";
     string? inputText = null;
     int jumpToBottom = 0;
-    bool paused = true;
-
-    Thread? emuThread;
     bool inputReady = false;
     readonly object inputLock = new();
 
@@ -108,33 +105,8 @@ Examples to get you started:
         ImGui.PopFont();
     }
 
-    public void Pause()
-    {
-        paused = true;
-
-        if (emuThread?.IsAlive ?? false)
-            emuThread.Join();
-
-        emuThread = null;
-    }
-
-    public void Unpause()
-    {
-        bool wasPaused = paused;
-        paused = false;
-
-        if (wasPaused)
-        {
-            Debug.Assert(emuThread == null);
-            emuThread = new Thread(RunEmuThreadCallback);
-            emuThread.Start();
-        }
-    }
-
     public void Dispose()
     {
-        Pause();
-
         emu = null!;
     }
 
@@ -178,16 +150,5 @@ Examples to get you started:
         }
 
         return retval;
-    }
-
-    void RunEmuThreadCallback()
-    {
-        while (!paused)
-        {
-            lock (emu)
-            {
-                emu.Run();
-            }
-        }
     }
 }

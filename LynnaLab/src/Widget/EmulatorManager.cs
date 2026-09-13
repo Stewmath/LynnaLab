@@ -1,5 +1,6 @@
-#nullable disable
 namespace LynnaLab;
+
+using System.Threading;
 using Emulation;
 
 public class EmulatorManager : IDisposable
@@ -10,22 +11,23 @@ public class EmulatorManager : IDisposable
     public EmulatorManager(OraclesEmulator emulator)
     {
         this.emulator = emulator;
-        this.debugger = new EmulatorDebugger(emulator);
-        this.renderer = new EmulatorRenderer(emulator);
+        this.debugger = new EmulatorDebugger(this);
+        this.renderer = new EmulatorRenderer(this);
 
         this.debugger.Active = true;
         this.renderer.Active = true;
 
-        renderer.ClosedEvent += (_, _) =>
+        this.renderer.ClosedEvent += (_, _) =>
         {
-            // Debugger controls execution flow
-            Console.WriteLine("Pause");
-            debugger.Pause();
+            SetPaused(true);
         };
-        renderer.OpenedEvent += (_, _) =>
+        this.renderer.OpenedEvent += (_, _) =>
         {
-            debugger.Unpause();
+            SetPaused(false);
         };
+
+        paused = true; // Set to true to enable SetPaused(false) to do something
+        SetPaused(false);
     }
 
     // ================================================================================
@@ -34,10 +36,15 @@ public class EmulatorManager : IDisposable
     OraclesEmulator emulator;
     EmulatorDebugger debugger;
     EmulatorRenderer renderer;
+    bool paused;
+    Thread? emuThread;
 
     // ================================================================================
     // Properties
     // ================================================================================
+
+    public OraclesEmulator Emulator { get { return emulator; } }
+    public bool Paused { get { return paused; } }
 
     // ================================================================================
     // Public methods
@@ -55,7 +62,39 @@ public class EmulatorManager : IDisposable
         renderer.Dispose();
     }
 
+    public void SetPaused(bool value)
+    {
+        if (paused == value)
+            return;
+
+        paused = value;
+        if (paused)
+        {
+            if (emuThread?.IsAlive ?? false)
+                emuThread.Join();
+            emuThread = null;
+        }
+        else
+        {
+            Debug.Assert(emuThread == null);
+            emuThread = new Thread(RunEmuThreadCallback);
+            emuThread.Start();
+        }
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================
+
+
+    void RunEmuThreadCallback()
+    {
+        while (!Paused)
+        {
+            lock (emulator)
+            {
+                emulator.Run();
+            }
+        }
+    }
 }
