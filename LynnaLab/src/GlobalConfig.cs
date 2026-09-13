@@ -114,17 +114,14 @@ public class GlobalConfig : INotifyPropertyChanged
         set => SetProperty(ref field, value);
     } = 0.5f;
 
-    public bool EmulatorDrawObjectBoxes
-    {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
-
     public int EmulatorScale
     {
         get;
         set => SetProperty(ref field, value);
     } = 3;
+
+    public bool EmulatorDrawObjectBoxes { get; set; } = true;
+    public bool EmulatorUnfocusedInput { get; set; } = false;
 
     public KeybindSet<EmulatorKey> EmulatorKeybindings { get; set; } = DefaultEmulatorKeybindings();
 

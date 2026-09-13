@@ -122,11 +122,12 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
             ImGui.EndPopup();
         }
 
+        bool turbo = false;
+
         // Handle input
-        if (ImGui.IsWindowFocused())
+        if (Top.GlobalConfig.EmulatorUnfocusedInput || ImGui.IsWindowFocused())
         {
             SameBoy.GBKeyMask mask = 0;
-            bool turbo = false;
 
             foreach (var (imKey, emulatorKey) in Top.GlobalConfig.EmulatorKeybindings.KeyMap)
             {
@@ -139,16 +140,16 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
                     mask |= ToGBKeyMask(emulatorKey);
             }
             emu.GB.SetKeyMask(mask);
-
-
-            emu.GB.SetTurboMode(turbo);
-            if (turbo)
-            {
-                // Don't let audio stream fall behind
-                SDL3.SDL_ClearAudioStream(audioStream);
-            }
         }
+        else
+            emu.GB.SetKeyMask(0);
 
+        emu.GB.SetTurboMode(turbo);
+        if (turbo)
+        {
+            // Don't let audio stream fall behind
+            SDL3.SDL_ClearAudioStream(audioStream);
+        }
     }
 
     public void Dispose()
