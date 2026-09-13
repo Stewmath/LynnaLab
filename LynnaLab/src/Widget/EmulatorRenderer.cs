@@ -122,13 +122,12 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
             ImGui.EndPopup();
         }
 
+        SameBoy.GBKeyMask mask = 0;
         bool turbo = false;
 
         // Handle input
         if (Top.GlobalConfig.EmulatorUnfocusedInput || ImGui.IsWindowFocused())
         {
-            SameBoy.GBKeyMask mask = 0;
-
             foreach (var (imKey, emulatorKey) in Top.GlobalConfig.EmulatorKeybindings.KeyMap)
             {
                 if (!ImGui.IsKeyDown(imKey))
@@ -139,10 +138,15 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
                 else
                     mask |= ToGBKeyMask(emulatorKey);
             }
+        }
+
+        // The SameBoy API docs claim that SetKeyMask is thread-safe, but I don't think this
+        // entirely true.
+        // https://github.com/LIJI32/SameBoy/issues/774
+        lock (emu)
+        {
             emu.GB.SetKeyMask(mask);
         }
-        else
-            emu.GB.SetKeyMask(0);
 
         emu.GB.SetTurboMode(turbo);
         if (turbo)
@@ -197,10 +201,13 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
     void SetMuted(bool b)
     {
-        if (b)
-            emu.GB.SetSampleRate(0);
-        else
-            emu.GB.SetSampleRate(SAMPLE_RATE);
+        lock (emu)
+        {
+            if (b)
+                emu.GB.SetSampleRate(0);
+            else
+                emu.GB.SetSampleRate(SAMPLE_RATE);
+        }
         muted = b;
     }
 
