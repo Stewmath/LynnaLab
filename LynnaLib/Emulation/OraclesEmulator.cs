@@ -128,8 +128,8 @@ public class OraclesEmulator : IDisposable
     // ================================================================================
 
     /// <summary>
-    /// Runs some indeterminate amount of code before returning. Similar to gb.Run but with a bunch
-    /// of hacks to implement advanced functionality.
+    /// Runs some indeterminate amount of code before returning (but usually about one opcode).
+    /// Similar to gb.Run but with a bunch of hacks to implement advanced functionality.
     /// </summary>
     public void Run()
     {

@@ -58,6 +58,7 @@ public class EmulatorManager : IDisposable
 
     public void Dispose()
     {
+        SetPaused(true);
         debugger.Dispose();
         renderer.Dispose();
     }
