@@ -8,6 +8,22 @@ using System.ComponentModel;
 namespace LynnaLab;
 
 /// <summary>
+/// An input accepted by EmulatorRenderer.
+/// </summary>
+public enum EmulatorKey
+{
+    Right,
+    Left,
+    Up,
+    Down,
+    A,
+    B,
+    Select,
+    Start,
+    Speedup,
+}
+
+/// <summary>
 /// Helper class to render an emulator instance in ImGui. Also deals with audio and input.
 /// </summary>
 public unsafe class EmulatorRenderer : Frame, IDisposable
@@ -105,15 +121,21 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         if (ImGui.IsWindowFocused())
         {
             SameBoy.GBKeyMask mask = 0;
+            bool turbo = false;
 
-            foreach (var (imKey, gbKey) in Top.GlobalConfig.EmulatorKeybindings.KeyMap)
+            foreach (var (imKey, emulatorKey) in Top.GlobalConfig.EmulatorKeybindings.KeyMap)
             {
-                if (ImGui.IsKeyDown(imKey))
-                    mask |= gbKey;
+                if (!ImGui.IsKeyDown(imKey))
+                    continue;
+
+                if (emulatorKey == EmulatorKey.Speedup)
+                    turbo = true;
+                else
+                    mask |= ToGBKeyMask(emulatorKey);
             }
             emu.GB.SetKeyMask(mask);
 
-            bool turbo = ImGui.IsKeyDown(ImGuiKey.Space);
+
             emu.GB.SetTurboMode(turbo);
             if (turbo)
             {
@@ -187,6 +209,26 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         volume *= 0.5f;
         if (audioStream != null)
             SDL3.SDL_SetAudioStreamGain(audioStream, volume);
+    }
+
+    // ================================================================================
+    // Static methods
+    // ================================================================================
+
+    static SameBoy.GBKeyMask ToGBKeyMask(EmulatorKey key)
+    {
+        return key switch
+        {
+            EmulatorKey.Right => SameBoy.GBKeyMask.GB_KEY_RIGHT_MASK,
+            EmulatorKey.Left => SameBoy.GBKeyMask.GB_KEY_LEFT_MASK,
+            EmulatorKey.Up => SameBoy.GBKeyMask.GB_KEY_UP_MASK,
+            EmulatorKey.Down => SameBoy.GBKeyMask.GB_KEY_DOWN_MASK,
+            EmulatorKey.A => SameBoy.GBKeyMask.GB_KEY_A_MASK,
+            EmulatorKey.B => SameBoy.GBKeyMask.GB_KEY_B_MASK,
+            EmulatorKey.Select => SameBoy.GBKeyMask.GB_KEY_SELECT_MASK,
+            EmulatorKey.Start => SameBoy.GBKeyMask.GB_KEY_START_MASK,
+            _ => throw new ArgumentOutOfRangeException(nameof(key)),
+        };
     }
 }
 

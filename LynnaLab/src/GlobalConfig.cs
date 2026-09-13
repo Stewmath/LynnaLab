@@ -2,7 +2,6 @@ using System.IO;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using YamlDotNet.Serialization;
-using SameBoySharp;
 
 namespace LynnaLab;
 
@@ -127,7 +126,7 @@ public class GlobalConfig : INotifyPropertyChanged
         set => SetProperty(ref field, value);
     } = 3;
 
-    public KeybindSet<SameBoy.GBKeyMask> EmulatorKeybindings { get; set; } = DefaultEmulatorKeybindings();
+    public KeybindSet<EmulatorKey> EmulatorKeybindings { get; set; } = DefaultEmulatorKeybindings();
 
     // Other
     public bool AutoAdjustGroupNumber { get; set; } = true;
@@ -170,18 +169,19 @@ public class GlobalConfig : INotifyPropertyChanged
         return true;
     }
 
-    static KeybindSet<SameBoy.GBKeyMask> DefaultEmulatorKeybindings()
+    static KeybindSet<EmulatorKey> DefaultEmulatorKeybindings()
     {
-        KeybindSet<SameBoy.GBKeyMask> ret = new();
-        foreach (var (k, v) in new (ImGuiKey, SameBoy.GBKeyMask)[] {
-                (ImGuiKey.RightArrow, SameBoy.GBKeyMask.GB_KEY_RIGHT_MASK),
-                (ImGuiKey.LeftArrow, SameBoy.GBKeyMask.GB_KEY_LEFT_MASK),
-                (ImGuiKey.UpArrow, SameBoy.GBKeyMask.GB_KEY_UP_MASK),
-                (ImGuiKey.DownArrow, SameBoy.GBKeyMask.GB_KEY_DOWN_MASK),
-                (ImGuiKey.Z, SameBoy.GBKeyMask.GB_KEY_A_MASK),
-                (ImGuiKey.X, SameBoy.GBKeyMask.GB_KEY_B_MASK),
-                (ImGuiKey.RightShift, SameBoy.GBKeyMask.GB_KEY_SELECT_MASK),
-                (ImGuiKey.Enter, SameBoy.GBKeyMask.GB_KEY_START_MASK),
+        KeybindSet<EmulatorKey> ret = new();
+        foreach (var (k, v) in new (ImGuiKey, EmulatorKey)[] {
+                (ImGuiKey.RightArrow, EmulatorKey.Right),
+                (ImGuiKey.LeftArrow, EmulatorKey.Left),
+                (ImGuiKey.UpArrow, EmulatorKey.Up),
+                (ImGuiKey.DownArrow, EmulatorKey.Down),
+                (ImGuiKey.Z, EmulatorKey.A),
+                (ImGuiKey.X, EmulatorKey.B),
+                (ImGuiKey.RightShift, EmulatorKey.Select),
+                (ImGuiKey.Enter, EmulatorKey.Start),
+                (ImGuiKey.Space, EmulatorKey.Speedup),
 
         }) {
             ret.KeyMap[k] = v;

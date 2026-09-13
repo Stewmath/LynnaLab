@@ -1,6 +1,4 @@
 #nullable disable
-using SameBoySharp;
-
 namespace LynnaLab;
 
 /// <summary>
@@ -20,20 +18,21 @@ public class SettingsDialog : Frame
     // Variables
     // ================================================================================
 
-    static readonly (string Name, SameBoy.GBKeyMask Mask)[] EmulatorButtons = [
-        ("Right", SameBoy.GBKeyMask.GB_KEY_RIGHT_MASK),
-        ("Left", SameBoy.GBKeyMask.GB_KEY_LEFT_MASK),
-        ("Up", SameBoy.GBKeyMask.GB_KEY_UP_MASK),
-        ("Down", SameBoy.GBKeyMask.GB_KEY_DOWN_MASK),
-        ("A", SameBoy.GBKeyMask.GB_KEY_A_MASK),
-        ("B", SameBoy.GBKeyMask.GB_KEY_B_MASK),
-        ("Select", SameBoy.GBKeyMask.GB_KEY_SELECT_MASK),
-        ("Start", SameBoy.GBKeyMask.GB_KEY_START_MASK),
+    static readonly (string Name, EmulatorKey Key)[] EmulatorButtons = [
+        ("Right", EmulatorKey.Right),
+        ("Left", EmulatorKey.Left),
+        ("Up", EmulatorKey.Up),
+        ("Down", EmulatorKey.Down),
+        ("A", EmulatorKey.A),
+        ("B", EmulatorKey.B),
+        ("Select", EmulatorKey.Select),
+        ("Start", EmulatorKey.Start),
+        ("Speedup", EmulatorKey.Speedup),
     ];
 
     float newScale = 0.0f;
     int newMenuFontSize = 0;
-    SameBoy.GBKeyMask? keybindingBeingAdded;
+    EmulatorKey? keybindingBeingAdded;
 
     // ================================================================================
     // Properties
@@ -366,7 +365,7 @@ public class SettingsDialog : Frame
         return false;
     }
 
-    void CaptureKeybinding(Dictionary<ImGuiKey, SameBoy.GBKeyMask> keyMap)
+    void CaptureKeybinding(Dictionary<ImGuiKey, EmulatorKey> keyMap)
     {
         if (ImGui.IsKeyPressed(ImGuiKey.Escape))
         {
