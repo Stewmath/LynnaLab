@@ -104,29 +104,9 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         // Handle input
         if (ImGui.IsWindowFocused())
         {
-            (ImGuiKey, SameBoy.GBKeyMask)[] keyList = [
-                (ImGuiKey.RightArrow, SameBoy.GBKeyMask.GB_KEY_RIGHT_MASK),
-                (ImGuiKey.LeftArrow, SameBoy.GBKeyMask.GB_KEY_LEFT_MASK),
-                (ImGuiKey.UpArrow, SameBoy.GBKeyMask.GB_KEY_UP_MASK),
-                (ImGuiKey.DownArrow, SameBoy.GBKeyMask.GB_KEY_DOWN_MASK),
-                (ImGuiKey.Z, SameBoy.GBKeyMask.GB_KEY_A_MASK),
-                (ImGuiKey.X, SameBoy.GBKeyMask.GB_KEY_B_MASK),
-                (ImGuiKey.RightShift, SameBoy.GBKeyMask.GB_KEY_SELECT_MASK),
-                (ImGuiKey.Enter, SameBoy.GBKeyMask.GB_KEY_START_MASK),
-
-                // Dvorak weirdo bindings
-                (ImGuiKey.E, SameBoy.GBKeyMask.GB_KEY_RIGHT_MASK),
-                (ImGuiKey.A, SameBoy.GBKeyMask.GB_KEY_LEFT_MASK),
-                (ImGuiKey.Comma, SameBoy.GBKeyMask.GB_KEY_UP_MASK),
-                (ImGuiKey.O, SameBoy.GBKeyMask.GB_KEY_DOWN_MASK),
-                (ImGuiKey.C, SameBoy.GBKeyMask.GB_KEY_A_MASK),
-                (ImGuiKey.H, SameBoy.GBKeyMask.GB_KEY_B_MASK),
-                (ImGuiKey.Backslash, SameBoy.GBKeyMask.GB_KEY_SELECT_MASK),
-            ];
-
             SameBoy.GBKeyMask mask = 0;
 
-            foreach (var (imKey, gbKey) in keyList)
+            foreach (var (imKey, gbKey) in Top.GlobalConfig.EmulatorKeybindings.KeyMap)
             {
                 if (ImGui.IsKeyDown(imKey))
                     mask |= gbKey;

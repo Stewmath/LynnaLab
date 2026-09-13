@@ -1,4 +1,6 @@
 #nullable disable
+using SameBoySharp;
+
 namespace LynnaLab;
 
 /// <summary>
@@ -18,8 +20,20 @@ public class SettingsDialog : Frame
     // Variables
     // ================================================================================
 
+    static readonly (string Name, SameBoy.GBKeyMask Mask)[] EmulatorButtons = [
+        ("Right", SameBoy.GBKeyMask.GB_KEY_RIGHT_MASK),
+        ("Left", SameBoy.GBKeyMask.GB_KEY_LEFT_MASK),
+        ("Up", SameBoy.GBKeyMask.GB_KEY_UP_MASK),
+        ("Down", SameBoy.GBKeyMask.GB_KEY_DOWN_MASK),
+        ("A", SameBoy.GBKeyMask.GB_KEY_A_MASK),
+        ("B", SameBoy.GBKeyMask.GB_KEY_B_MASK),
+        ("Select", SameBoy.GBKeyMask.GB_KEY_SELECT_MASK),
+        ("Start", SameBoy.GBKeyMask.GB_KEY_START_MASK),
+    ];
+
     float newScale = 0.0f;
     int newMenuFontSize = 0;
+    SameBoy.GBKeyMask? keybindingBeingAdded;
 
     // ================================================================================
     // Properties
@@ -194,6 +208,9 @@ public class SettingsDialog : Frame
             ImGuiX.Checkbox("Draw object boxes", new Accessor<bool>(() => GlobalConfig.EmulatorDrawObjectBoxes));
             ImGuiX.TooltipOnHover("Objects can be manipulated by clicking and dragging.");
 
+            if (ImGui.Button("Edit keybindings..."))
+                OpenKeybindingsModal();
+
             endSection();
         }
 
@@ -278,4 +295,103 @@ public class SettingsDialog : Frame
     // ================================================================================
     // Private methods
     // ================================================================================
+
+    void OpenKeybindingsModal()
+    {
+        keybindingBeingAdded = null;
+        Modal.OpenModal("Edit emulator keybindings", RenderKeybindingsModal);
+    }
+
+    bool RenderKeybindingsModal()
+    {
+        var keyMap = GlobalConfig.EmulatorKeybindings.KeyMap;
+
+        ImGui.Text("Internal emulator keybindings");
+        ImGui.Separator();
+
+        if (ImGui.BeginTable("Emulator keybindings", 3, ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGui.TableSetupColumn("Button", ImGuiTableColumnFlags.WidthFixed, ImGuiX.Unit(70.0f));
+            ImGui.TableSetupColumn("Key", ImGuiTableColumnFlags.WidthFixed, ImGuiX.Unit(120.0f));
+            ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed, ImGuiX.Unit(150.0f));
+            ImGui.TableHeadersRow();
+
+            foreach (var (name, mask) in EmulatorButtons)
+            {
+                ImGuiKey? key = keyMap
+                    .Where(pair => pair.Value.Equals(mask))
+                    .Select(pair => (ImGuiKey?)pair.Key)
+                    .FirstOrDefault();
+
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGui.Text(name);
+                ImGui.TableNextColumn();
+                ImGui.Text(key == null ? "Unbound" : key.ToString());
+                ImGui.TableNextColumn();
+
+                if (keybindingBeingAdded == mask)
+                {
+                    ImGui.Text("Press a key...");
+                }
+                else if (ImGui.SmallButton($"Change##{name}"))
+                {
+                    keybindingBeingAdded = mask;
+                }
+
+                if (key != null && keybindingBeingAdded != mask)
+                {
+                    ImGui.SameLine();
+                    if (ImGui.SmallButton($"Clear##{name}"))
+                        keyMap.Remove(key.Value);
+                }
+            }
+
+            ImGui.EndTable();
+        }
+
+        if (keybindingBeingAdded != null)
+            CaptureKeybinding(keyMap);
+
+        ImGui.Separator();
+        if (ImGui.Button("Restore defaults"))
+        {
+            GlobalConfig.ResetEmulatorKeybindings();
+            keybindingBeingAdded = null;
+        }
+        ImGui.SameLine();
+        if (ImGui.Button("Done"))
+            return true;
+
+        return false;
+    }
+
+    void CaptureKeybinding(Dictionary<ImGuiKey, SameBoy.GBKeyMask> keyMap)
+    {
+        if (ImGui.IsKeyPressed(ImGuiKey.Escape))
+        {
+            keybindingBeingAdded = null;
+            return;
+        }
+
+        foreach (ImGuiKey key in Enum.GetValues<ImGuiKey>())
+        {
+            if (key < ImGuiKey.NamedKeyBegin || key >= ImGuiKey.NamedKeyEnd)
+                continue;
+            if (!ImGui.IsKeyPressed(key))
+                continue;
+
+            var existingKeys = keyMap
+                .Where(pair => pair.Value.Equals(keybindingBeingAdded.Value))
+                .Select(pair => pair.Key)
+                .ToList();
+            foreach (var existingKey in existingKeys)
+                keyMap.Remove(existingKey);
+
+            keyMap.Remove(key);
+            keyMap[key] = keybindingBeingAdded.Value;
+            keybindingBeingAdded = null;
+            return;
+        }
+    }
 }

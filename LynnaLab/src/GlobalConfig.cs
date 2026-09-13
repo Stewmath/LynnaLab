@@ -2,6 +2,7 @@ using System.IO;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using YamlDotNet.Serialization;
+using SameBoySharp;
 
 namespace LynnaLab;
 
@@ -77,19 +78,6 @@ public class GlobalConfig : INotifyPropertyChanged
         }
     }
 
-    public void Save()
-    {
-        if (this.Equals(oldValues))
-            return;
-
-        var serializer = new SerializerBuilder()
-            .Build();
-        var yaml = serializer.Serialize(this);
-        System.IO.File.WriteAllText(ConfigFile, ConfigFileComment + yaml);
-
-        oldValues = new GlobalConfig(this);
-    }
-
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -139,10 +127,34 @@ public class GlobalConfig : INotifyPropertyChanged
         set => SetProperty(ref field, value);
     } = 3;
 
+    public KeybindSet<SameBoy.GBKeyMask> EmulatorKeybindings { get; set; } = DefaultEmulatorKeybindings();
+
     // Other
     public bool AutoAdjustGroupNumber { get; set; } = true;
     public bool ScrollToZoom { get; set; } = true;
 
+
+    // ================================================================================
+    // Public methods
+    // ================================================================================
+
+    public void Save()
+    {
+        if (this.Equals(oldValues))
+            return;
+
+        var serializer = new SerializerBuilder()
+            .Build();
+        var yaml = serializer.Serialize(this);
+        System.IO.File.WriteAllText(ConfigFile, ConfigFileComment + yaml);
+
+        oldValues = new GlobalConfig(this);
+    }
+
+    public void ResetEmulatorKeybindings()
+    {
+        EmulatorKeybindings = DefaultEmulatorKeybindings();
+    }
 
     // ================================================================================
     // Private methods
@@ -157,4 +169,33 @@ public class GlobalConfig : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         return true;
     }
+
+    static KeybindSet<SameBoy.GBKeyMask> DefaultEmulatorKeybindings()
+    {
+        KeybindSet<SameBoy.GBKeyMask> ret = new();
+        foreach (var (k, v) in new (ImGuiKey, SameBoy.GBKeyMask)[] {
+                (ImGuiKey.RightArrow, SameBoy.GBKeyMask.GB_KEY_RIGHT_MASK),
+                (ImGuiKey.LeftArrow, SameBoy.GBKeyMask.GB_KEY_LEFT_MASK),
+                (ImGuiKey.UpArrow, SameBoy.GBKeyMask.GB_KEY_UP_MASK),
+                (ImGuiKey.DownArrow, SameBoy.GBKeyMask.GB_KEY_DOWN_MASK),
+                (ImGuiKey.Z, SameBoy.GBKeyMask.GB_KEY_A_MASK),
+                (ImGuiKey.X, SameBoy.GBKeyMask.GB_KEY_B_MASK),
+                (ImGuiKey.RightShift, SameBoy.GBKeyMask.GB_KEY_SELECT_MASK),
+                (ImGuiKey.Enter, SameBoy.GBKeyMask.GB_KEY_START_MASK),
+
+        }) {
+            ret.KeyMap[k] = v;
+        }
+        return ret;
+    }
+}
+
+public class KeybindSet<T>
+{
+    // ================================================================================
+    // Properties
+    // ================================================================================
+
+    [YamlMember]
+    public Dictionary<ImGuiKey, T> KeyMap { get; init; } = new();
 }

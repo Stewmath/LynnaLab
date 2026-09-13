@@ -446,10 +446,14 @@ public class ImGuiController : IDisposable
             >= SDL_Keycode.SDLK_KP_1 and <= SDL_Keycode.SDLK_KP_9 => KeyToImGuiKeyShortcut(key, SDL_Keycode.SDLK_KP_1, ImGuiKey.Keypad1),
             >= SDL_Keycode.SDLK_A and <= SDL_Keycode.SDLK_Z => KeyToImGuiKeyShortcut(key, SDL_Keycode.SDLK_A, ImGuiKey.A),
             >= SDL_Keycode.SDLK_0 and <= SDL_Keycode.SDLK_9 => KeyToImGuiKeyShortcut(key, SDL_Keycode.SDLK_0, ImGuiKey.Key0),
-            SDL_Keycode.SDLK_LSHIFT or SDL_Keycode.SDLK_RSHIFT => ImGuiKey.ModShift,
-            SDL_Keycode.SDLK_LCTRL or SDL_Keycode.SDLK_RCTRL => ImGuiKey.ModCtrl,
-            SDL_Keycode.SDLK_LALT or SDL_Keycode.SDLK_RALT => ImGuiKey.ModAlt,
-            SDL_Keycode.SDLK_LGUI or SDL_Keycode.SDLK_RGUI => ImGuiKey.ModSuper,
+            SDL_Keycode.SDLK_LSHIFT => ImGuiKey.LeftShift,
+            SDL_Keycode.SDLK_RSHIFT => ImGuiKey.RightShift,
+            SDL_Keycode.SDLK_LCTRL => ImGuiKey.LeftCtrl,
+            SDL_Keycode.SDLK_RCTRL => ImGuiKey.RightCtrl,
+            SDL_Keycode.SDLK_LALT => ImGuiKey.LeftAlt,
+            SDL_Keycode.SDLK_RALT => ImGuiKey.RightAlt,
+            SDL_Keycode.SDLK_LGUI => ImGuiKey.LeftSuper,
+            SDL_Keycode.SDLK_RGUI => ImGuiKey.RightSuper,
             SDL_Keycode.SDLK_MENU => ImGuiKey.Menu,
             SDL_Keycode.SDLK_UP => ImGuiKey.UpArrow,
             SDL_Keycode.SDLK_DOWN => ImGuiKey.DownArrow,
@@ -516,6 +520,35 @@ public class ImGuiController : IDisposable
             if (TryMapKey(keyEvent.Key, out ImGuiKey imguikey))
             {
                 io.AddKeyEvent(imguikey, keyEvent.Down);
+
+                // Submit modifier keys
+                switch (imguikey)
+                {
+                    case ImGuiKey.LeftCtrl:
+                        io.AddKeyEvent(ImGuiKey.ModCtrl, keyEvent.Down || ImGui.IsKeyDown(ImGuiKey.RightCtrl));
+                        break;
+                    case ImGuiKey.RightCtrl:
+                        io.AddKeyEvent(ImGuiKey.ModCtrl, keyEvent.Down || ImGui.IsKeyDown(ImGuiKey.LeftCtrl));
+                        break;
+                    case ImGuiKey.LeftShift:
+                        io.AddKeyEvent(ImGuiKey.ModShift, keyEvent.Down || ImGui.IsKeyDown(ImGuiKey.RightShift));
+                        break;
+                    case ImGuiKey.RightShift:
+                        io.AddKeyEvent(ImGuiKey.ModShift, keyEvent.Down || ImGui.IsKeyDown(ImGuiKey.LeftShift));
+                        break;
+                    case ImGuiKey.LeftAlt:
+                        io.AddKeyEvent(ImGuiKey.ModAlt, keyEvent.Down || ImGui.IsKeyDown(ImGuiKey.RightAlt));
+                        break;
+                    case ImGuiKey.RightAlt:
+                        io.AddKeyEvent(ImGuiKey.ModAlt, keyEvent.Down || ImGui.IsKeyDown(ImGuiKey.LeftAlt));
+                        break;
+                    case ImGuiKey.LeftSuper:
+                        io.AddKeyEvent(ImGuiKey.ModSuper, keyEvent.Down || ImGui.IsKeyDown(ImGuiKey.RightSuper));
+                        break;
+                    case ImGuiKey.RightSuper:
+                        io.AddKeyEvent(ImGuiKey.ModSuper, keyEvent.Down || ImGui.IsKeyDown(ImGuiKey.LeftSuper));
+                        break;
+                }
             }
         }
 
