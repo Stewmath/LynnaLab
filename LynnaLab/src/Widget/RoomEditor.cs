@@ -144,6 +144,11 @@ public class RoomEditor : Frame
     // Variables
     // ================================================================================
 
+    static readonly string ROOM_TAB_NAME = "Room";
+    static readonly string OBJECT_TAB_NAME = "Object";
+    static readonly string WARP_TAB_NAME = "Warp";
+    static readonly string CHEST_TAB_NAME = "Chest";
+
     // Windows / rendering areas
     RoomLayoutEditor roomLayoutEditor;
     TilesetViewer tilesetViewer;
@@ -195,9 +200,9 @@ public class RoomEditor : Frame
 
     public Brush<int> Brush { get { return Workspace.Brush; } }
 
-    public bool ObjectTabActive { get { return ActiveLeftTabName == "Objects"; } }
-    public bool WarpTabActive { get { return ActiveLeftTabName == "Warps"; } }
-    public bool ChestTabActive { get { return ActiveLeftTabName == "Chests"; } }
+    public bool ObjectTabActive { get { return ActiveLeftTabName == OBJECT_TAB_NAME; } }
+    public bool WarpTabActive { get { return ActiveLeftTabName == WARP_TAB_NAME; } }
+    public bool ChestTabActive { get { return ActiveLeftTabName == CHEST_TAB_NAME; } }
 
     public Warp EditingWarpDestination
     {
@@ -270,7 +275,7 @@ public class RoomEditor : Frame
         ImGui.BeginChild("Left Panel", new Vector2(tilesetViewer.WidgetSize.X + X_OFFSET + ImGuiX.Unit(20.0f), 0.0f));
         if (ImGui.BeginTabBar("##Left Panel Tabs"))
         {
-            if (TrackedTabItem("Room"))
+            if (TrackedTabItem(ROOM_TAB_NAME))
             {
                 ImGui.SeparatorText("Tileset");
                 tilesetViewer.Render();
@@ -283,17 +288,17 @@ public class RoomEditor : Frame
                 ImGuiLL.RenderValueReferenceGroup(Room.ValueReferenceGroup, null, Workspace.ShowDocumentation);
                 ImGui.EndTabItem();
             }
-            if (TrackedTabItem("Object"))
+            if (TrackedTabItem(OBJECT_TAB_NAME))
             {
                 objectGroupEditor.Render();
                 ImGui.EndTabItem();
             }
-            if (TrackedTabItem("Warp"))
+            if (TrackedTabItem(WARP_TAB_NAME))
             {
                 warpEditor.Render();
                 ImGui.EndTabItem();
             }
-            if (TrackedTabItem("Chest"))
+            if (TrackedTabItem(CHEST_TAB_NAME))
             {
                 DisplayChestTab();
                 ImGui.EndTabItem();
