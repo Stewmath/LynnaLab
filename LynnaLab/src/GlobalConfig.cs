@@ -113,7 +113,7 @@ public class GlobalConfig : INotifyPropertyChanged
     // Fonts
     public string MenuFont { get; set; } = DefaultMenuFont;
     public string InfoFont { get; set; } = DefaultInfoFont;
-    public int MenuFontSize { get; set; } = 18;
+    public int MenuFontSize { get; set; } = 20;
     public int InfoFontSize { get; set; } = 20;
 
     // Build & Run dialog
