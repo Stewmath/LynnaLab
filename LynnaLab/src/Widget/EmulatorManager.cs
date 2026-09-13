@@ -11,7 +11,7 @@ public class EmulatorManager : IDisposable
     {
         this.emulator = emulator;
         this.debugger = new EmulatorDebugger(emulator);
-        this.renderer = new EmulatorRenderer(emulator, 4);
+        this.renderer = new EmulatorRenderer(emulator);
 
         this.debugger.Active = true;
         this.renderer.Active = true;

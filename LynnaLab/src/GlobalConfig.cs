@@ -1,5 +1,7 @@
 #nullable disable
 using System.IO;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using YamlDotNet.Serialization;
 
 namespace LynnaLab;
@@ -7,7 +9,7 @@ namespace LynnaLab;
 /// Class to manage global configuration (stored in the LynnaLab program
 /// folder). Distinct from per-project configuration (see ProjectConfig.cs
 /// in LynnaLib).
-public class GlobalConfig
+public class GlobalConfig : INotifyPropertyChanged
 {
     static readonly string ConfigFile = "global_config.yaml";
     static readonly string ConfigFileComment = @"
@@ -70,6 +72,8 @@ public class GlobalConfig
         var fields = this.GetType().GetFields();
         foreach (var field in fields)
         {
+            if (field.FieldType == typeof(PropertyChangedEventHandler))
+                continue;
             field.SetValue(this, field.GetValue(c));
         }
     }
@@ -86,6 +90,9 @@ public class GlobalConfig
 
         oldValues = new GlobalConfig(this);
     }
+
+
+    public event PropertyChangedEventHandler PropertyChanged;
 
     // Variables imported from YAML config file
 
@@ -114,7 +121,41 @@ public class GlobalConfig
     public bool CloseRunDialogWithEmulator { get; set; } = false;
     public bool CloseEmulatorWithRunDialog { get; set; } = false;
 
+    // Internal emulator
+    public float EmulatorVolume
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } = 0.5f;
+
+    public bool EmulatorDrawObjectBoxes
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } = true;
+
+    public int EmulatorScale
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } = 3;
+
     // Other
     public bool AutoAdjustGroupNumber { get; set; } = true;
     public bool ScrollToZoom { get; set; } = true;
+
+
+    // ================================================================================
+    // Private methods
+    // ================================================================================
+
+    bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(storage, value))
+            return false;
+
+        storage = value;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        return true;
+    }
 }

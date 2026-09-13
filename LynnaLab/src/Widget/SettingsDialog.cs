@@ -177,6 +177,26 @@ public class SettingsDialog : Frame
             endSection();
         }
 
+        if (beginSection("Internal emulator"))
+        {
+            ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
+            float volume = GlobalConfig.EmulatorVolume;
+            if (ImGui.SliderFloat("Volume", ref volume, 0.0f, 1.0f, "%.2f"))
+                GlobalConfig.EmulatorVolume = volume;
+            ImGui.PopItemWidth();
+
+            ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
+            int emulatorScale = GlobalConfig.EmulatorScale;
+            if (ImGui.SliderInt("Scale", ref emulatorScale, 1, 8))
+                GlobalConfig.EmulatorScale = emulatorScale;
+            ImGui.PopItemWidth();
+
+            ImGuiX.Checkbox("Draw object boxes", new Accessor<bool>(() => GlobalConfig.EmulatorDrawObjectBoxes));
+            ImGuiX.TooltipOnHover("Objects can be manipulated by clicking and dragging.");
+
+            endSection();
+        }
+
         if (beginSection("External programs"))
         {
             ImGuiX.Checkbox("Use external emulator", new Accessor<bool>(() => GlobalConfig.UseExternalEmulator));

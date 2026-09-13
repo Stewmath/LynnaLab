@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using SameBoySharp;
 using Emulation;
 using SDL;
+using System.ComponentModel;
 
 namespace LynnaLab;
 
@@ -17,10 +18,10 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     // Constructors
     // ================================================================================
 
-    public EmulatorRenderer(OraclesEmulator emu, int scale = 1) : base("Emulator")
+    public EmulatorRenderer(OraclesEmulator emu) : base("Emulator")
     {
         this.emu = emu;
-        this.scale = scale;
+        this.scale = Top.GlobalConfig.EmulatorScale;
 
         base.WindowFlags |= ImGuiWindowFlags.NoScrollbar;
         base.AddStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
@@ -30,6 +31,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         if (Top.AudioAvailable)
             SetupAudio();
 
+        Top.GlobalConfig.PropertyChanged += OnGlobalConfigPropertyChanged;
         renderWidget = new(this, emu);
     }
 
@@ -58,7 +60,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
         emu.GB.SetSampleRate(SAMPLE_RATE);
 
-        SDL3.SDL_SetAudioStreamGain(audioStream, 0.25f);
+        SetVolume(Top.GlobalConfig.EmulatorVolume);
         SDL3.SDL_ResumeAudioStreamDevice(audioStream);
     }
 
@@ -77,7 +79,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     SDL_AudioStream* audioStream;
     ScreenWidget renderWidget;
 
-    readonly int scale;
+    int scale;
     bool muted = false;
 
     // ================================================================================
@@ -144,6 +146,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
     public void Dispose()
     {
+        Top.GlobalConfig.PropertyChanged -= OnGlobalConfigPropertyChanged;
         emu.GB.SetVBlankCallback(null);
         renderWidget.Dispose();
 
@@ -171,6 +174,19 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     // Private methods
     // ================================================================================
 
+    void OnGlobalConfigPropertyChanged(object sender, PropertyChangedEventArgs args)
+    {
+        switch (args.PropertyName)
+        {
+            case nameof(GlobalConfig.EmulatorScale):
+                SetScale(Top.GlobalConfig.EmulatorScale);
+                break;
+            case nameof(GlobalConfig.EmulatorVolume):
+                SetVolume(Top.GlobalConfig.EmulatorVolume);
+                break;
+        }
+    }
+
     void SetMuted(bool b)
     {
         if (b)
@@ -178,6 +194,19 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         else
             emu.GB.SetSampleRate(SAMPLE_RATE);
         muted = b;
+    }
+
+    void SetScale(int scale)
+    {
+        this.scale = scale;
+        RequestSize(new Vector2(160, 144) * Scale);
+    }
+
+    void SetVolume(float volume)
+    {
+        volume *= 0.5f;
+        if (audioStream != null)
+            SDL3.SDL_SetAudioStreamGain(audioStream, volume);
     }
 }
 
@@ -214,11 +243,12 @@ class ScreenWidget : SizedWidget, IDisposable
     // Variables
     // ================================================================================
 
+    readonly EmulatorOverlayBoxUser overlayBoxUser;
+
     EmulatorRenderer parent;
     OraclesEmulator emu;
     RgbaTexture screenTexture;
 
-    EmulatorOverlayBoxUser overlayBoxUser;
     List<OverlayBox> overlayBoxes = new();
     Dictionary<ushort, EmulatorObjectOverlayBox> overlayBoxMap = new();
 
@@ -246,10 +276,18 @@ class ScreenWidget : SizedWidget, IDisposable
 
         ImGuiX.DrawImage(screenTexture, Scale);
 
-        lock (emu)
+        if (Top.GlobalConfig.EmulatorDrawObjectBoxes)
         {
-            UpdateOverlayBoxes();
-            IOverlayBoxUser.UpdateOverlayBoxes(null, overlayBoxUser, this, overlayBoxes, true);
+            lock (emu)
+            {
+                UpdateOverlayBoxes();
+                IOverlayBoxUser.UpdateOverlayBoxes(null, overlayBoxUser, this, overlayBoxes, true);
+            }
+        }
+        else
+        {
+            overlayBoxes.Clear();
+            overlayBoxMap.Clear();
         }
 
         ImGui.PopClipRect();
