@@ -1,4 +1,3 @@
-#nullable disable
 using System.IO;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -22,14 +21,14 @@ public class GlobalConfig : INotifyPropertyChanged
     static readonly string DefaultInfoFont = "RocknRollOne-Regular.ttf";
 
 
-    GlobalConfig oldValues;
+    GlobalConfig? oldValues;
 
     public static bool FileExists()
     {
         return File.Exists(ConfigFile);
     }
 
-    public static GlobalConfig Load()
+    public static GlobalConfig? Load()
     {
         if (!FileExists())
             return null;
@@ -38,7 +37,7 @@ public class GlobalConfig : INotifyPropertyChanged
             .IgnoreUnmatchedProperties()
             .Build();
 
-        GlobalConfig retval = null;
+        GlobalConfig? retval = null;
         try
         {
             retval = deserializer.Deserialize<GlobalConfig>(input);
@@ -92,15 +91,15 @@ public class GlobalConfig : INotifyPropertyChanged
     }
 
 
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     // Variables imported from YAML config file
 
     // External programs
-    public string MakeCommand { get; set; } = null;
+    public string? MakeCommand { get; set; } = null;
     public bool UseExternalEmulator { get; set; } = false;
-    public string EmulatorCommand { get; set; } = null;
-    public string EditPngProgram { get; set; } = null;
+    public string? EmulatorCommand { get; set; } = null;
+    public string? EditPngProgram { get; set; } = null;
 
     // Display
     public bool LightMode { get; set; } = false;
@@ -149,7 +148,7 @@ public class GlobalConfig : INotifyPropertyChanged
     // Private methods
     // ================================================================================
 
-    bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = null)
+    bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = "DEFAULT")
     {
         if (EqualityComparer<T>.Default.Equals(storage, value))
             return false;
