@@ -167,7 +167,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     /// </summary>
     protected override Vector2 RecalculateSizeOnDPIChange(Vector2 lastWindowSize)
     {
-        return lastWindowSize;
+        return new Vector2(160, 144) * Scale + new Vector2(0, ImGui.GetFrameHeight());
     }
 
     // ================================================================================
