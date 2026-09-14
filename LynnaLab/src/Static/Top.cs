@@ -102,8 +102,6 @@ public static class Top
             else
                 Top.OpenProject(path, game);
         }
-
-        ImGuiLL.Initialize();
     }
 
     // ================================================================================
@@ -134,6 +132,7 @@ public static class Top
     static ConcurrentQueue<Action> actionsForNextFrame = new();
 
     static SettingsDialog settingsDialog;
+    static HelpWindow helpWindow = new();
     static OraclesEmulator emulator;
     static EmulatorManager emulatorManager;
 
@@ -258,8 +257,18 @@ public static class Top
 
         if (ImGuiX.BeginDocked("Toolbar", new Vector2(0, ypos), ImGuiX.Unit(0, 50.0f), scrollbar: false))
         {
+
+            if (ImGui.ImageButton("Help",
+                Top.FaroresMemoryTexture.GetBinding(),
+                ImGuiX.Unit(ImGuiLL.TOOLBAR_BUTTON_SIZE)))
+            {
+                helpWindow.Focus();
+            }
+            ImGuiX.TooltipOnHover("Help (F1)");
+
             if (renderWorkspace)
             {
+                ImGui.SameLine();
                 Workspace.RenderToolbar();
             }
             ypos += ImGui.GetWindowHeight();
@@ -299,8 +308,13 @@ public static class Top
         }
 
         emulatorManager?.RenderAll();
+        helpWindow.RenderAsWindow("Help");
 
         ImGui.End(); // Dockspace window
+
+        // Keybindings
+        if (ImGui.IsKeyPressed(ImGuiKey.F1))
+            helpWindow.Focus();
 
         ImGui.PopFont();
     }

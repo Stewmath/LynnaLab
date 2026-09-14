@@ -6,21 +6,24 @@ namespace LynnaLab;
 /// </summary>
 public static class ImGuiLL
 {
+    // ================================================================================
+    // Constants
+    // ================================================================================
+
     public const float MenuFontLargeScale = 1.333f;
 
     public static float ENTRY_ITEM_WIDTH { get { return ImGuiX.Unit(120.0f); } }
+    public static readonly Vector2 TOOLBAR_BUTTON_SIZE = new Vector2(30.0f, 30.0f);
 
-    private static ImGuiMarkdown.MarkdownConfig markdownConfig;
+    // ================================================================================
+    // Variables
+    // ================================================================================
 
-    /// <summary>
-    /// Depends on Top class having done its initialization already
-    /// </summary>
-    public static void Initialize()
-    {
-        markdownConfig = new ImGuiMarkdown.MarkdownConfig();
-        markdownConfig.ImageCallback = MarkdownImageCallback;
-        markdownConfig.Flags = ImGuiMarkdown.FormatFlags.NoNewLineBeforeHeading;
-    }
+    public static ImGuiMarkdown.MarkdownConfig markdownConfig;
+
+    // ================================================================================
+    // Public methods
+    // ================================================================================
 
     /// <summary>
     /// Displays a ComboBox along with (optionally) the raw integer field as an alternate way to set
@@ -353,11 +356,12 @@ public static class ImGuiLL
 
 
     static readonly Vector2 HELP_BUTTON_SIZE = new Vector2(20.0f, 20.0f);
+    static HelpWidget popupHelpWidget;
 
     /// <summary>
     /// A help button which opens a popup showing markdown-formatted text.
     /// </summary>
-    public static void HelpButton(Project project, string markdownFile)
+    public static void HelpButton(string markdownFile, Project project = null)
     {
         Vector2 size = ImGuiX.Unit(HELP_BUTTON_SIZE);
         float x = (ImGui.GetContentRegionAvail().X - size.X - ImGui.GetStyle().FramePadding.X * 2);
@@ -369,30 +373,15 @@ public static class ImGuiLL
 
         if (ImGui.ImageButton("Help", tex, size))
         {
+            popupHelpWidget = new(markdownFile);
             ImGui.OpenPopup("Help Popup");
         }
 
         Vector2 pos = ImGui.GetCursorScreenPos();
         ImGui.SameLine();
-        //ImGui.SetNextWindowPos(ImGui.GetCursorScreenPos()); // Position to right of button
-        ImGui.SetNextWindowSizeConstraints(ImGuiX.Unit(700.0f, 0.0f), ImGuiX.Unit(700.0f, 800.0f));
         if (ImGui.BeginPopup("Help Popup"))
         {
-            ImGuiLL.PushInfoFont();
-
-            markdownConfig.HeadingFormats[0].Font = Top.InfoFontBold;
-            markdownConfig.HeadingFormats[0].FontSize = Top.GlobalConfig.InfoFontSize * 1.5f;
-            markdownConfig.HeadingFormats[1].Font = Top.InfoFontBold;
-            markdownConfig.HeadingFormats[1].FontSize = Top.GlobalConfig.InfoFontSize * 1.3f;
-            markdownConfig.HeadingFormats[2].Font = Top.InfoFont;
-            markdownConfig.HeadingFormats[2].FontSize = Top.GlobalConfig.InfoFontSize * 1.1f;
-
-            markdownConfig.LinkCallback = (d) => MarkdownLinkCallback(project, d);
-            markdownConfig.TooltipCallback = (d) => MarkdownTooltipCallback(project, d);
-
-            string data = MarkdownFileContents(markdownFile);
-            ImGuiMarkdown.Markdown(data, markdownConfig);
-            ImGui.PopFont();
+            popupHelpWidget.Render(ImGuiX.Unit(700.0f, 800.0f));
             ImGui.EndPopup();
         }
 
@@ -407,98 +396,5 @@ public static class ImGuiLL
     public static void PushMenuFont(float scale = 1.0f)
     {
         ImGui.PushFont(Top.MenuFont, Top.GlobalConfig.MenuFontSize * scale);
-    }
-
-    // ================================================================================
-    // Private methods
-    // ================================================================================
-
-    static Dictionary<string, string> markdownFileDict = new();
-    static Dictionary<string, ImageData> markdownImageDict = new();
-
-    /// <summary>
-    /// Retrieve cached text from a markdown file for rendering
-    /// </summary>
-    static string MarkdownFileContents(string filename)
-    {
-        if (markdownFileDict.TryGetValue(filename, out string content))
-        {
-            return content;
-        }
-
-        content = Helper.ReadResourceFile($"Docs/{filename}");
-        markdownFileDict[filename] = content;
-        return content;
-    }
-
-    /// <summary>
-    /// Store a bit of extra data for cached markdown images
-    /// </summary>
-    class ImageData
-    {
-        public ImGuiMarkdown.MarkdownImageData data;
-        public Vector2 baseSize;
-    }
-
-    /// <summary>
-    /// Retrieve a saved image & metadata for markdown rendering
-    /// </summary>
-    static ImGuiMarkdown.MarkdownImageData MarkdownImageCallback(ImGuiMarkdown.LinkCallbackData linkData)
-    {
-        VeldridBackend.VeldridRgbaTexture texture;
-
-        if (markdownImageDict.TryGetValue(linkData.Link, out ImageData imgData))
-        {
-            goto end;
-        }
-
-        imgData = new();
-        imgData.data = ImGuiMarkdown.MarkdownImageData.Default;
-        imgData.data.IsValid = true;
-        using (var bitmap = new Bitmap(Helper.ReadResourceFileBytes($"Docs/{linkData.Link}")))
-        {
-            texture = Top.Backend.TextureFromBitmap(bitmap);
-            imgData.data.TextureRef = texture.GetBinding();
-            imgData.baseSize = new Vector2(bitmap.Width, bitmap.Height);
-        }
-
-        markdownImageDict[linkData.Link] = imgData;
-
-        end:
-
-        // Divide size by 1.6f because that's the DPI scale of my laptop where I'm taking the
-        // screenshots
-        imgData.data.Size = ImGuiX.Unit(imgData.baseSize) / 1.6f;
-
-        return imgData.data;
-    }
-
-    static void MarkdownLinkCallback(Project project, ImGuiMarkdown.LinkCallbackData data)
-    {
-        string link;
-        if (data.Link.StartsWith("disasm:"))
-        {
-            if (project.BaseDirectory == null) // Clients don't have a file to open
-                return;
-            link = project.BaseDirectory + "/"
-                   + data.Link.Substring(7).Replace("{game}", project.GameString);
-        }
-        else
-            link = data.Link;
-
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = link,
-            UseShellExecute = true,
-        });
-    }
-
-    static void MarkdownTooltipCallback(Project project, ImGuiMarkdown.TooltipCallbackData data)
-    {
-        if (data.LinkData.Link != null)
-        {
-            string text = data.LinkData.Link.Replace("{game}", project.GameString);
-            ImGui.SetTooltip(text);
-        }
     }
 }

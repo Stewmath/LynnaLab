@@ -93,7 +93,7 @@ public class RoomWiper : Frame
     {
         ImGui.BeginChild("Checkboxes", ImGuiX.Unit(220.0f, 0.0f));
 
-        ImGuiLL.HelpButton(Project, "RoomWiper.md");
+        ImGuiLL.HelpButton("RoomWiper.md", Project);
 
         foreach (var wiper in wiperList)
         {

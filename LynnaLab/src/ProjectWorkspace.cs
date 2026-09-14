@@ -93,12 +93,6 @@ public class ProjectWorkspace
     }
 
     // ================================================================================
-    // Constants
-    // ================================================================================
-
-    readonly Vector2 TOOLBAR_BUTTON_SIZE = new Vector2(30.0f, 30.0f);
-
-    // ================================================================================
     // Variables
     // ================================================================================
 
@@ -284,14 +278,18 @@ public class ProjectWorkspace
 
     public void RenderToolbar()
     {
-        if (ImGui.ImageButton("Run", Top.PegasusSeedTexture.GetBinding(), ImGuiX.Unit(TOOLBAR_BUTTON_SIZE)))
+        if (ImGui.ImageButton("Run",
+            Top.PegasusSeedTexture.GetBinding(),
+            ImGuiX.Unit(ImGuiLL.TOOLBAR_BUTTON_SIZE)))
         {
             RunGame();
         }
         ImGuiX.TooltipOnHover("Run (F5)");
 
         ImGui.SameLine();
-        ImGuiX.ToggleImageButton("Quickstart", linkTexture.GetBinding(), ImGuiX.Unit(TOOLBAR_BUTTON_SIZE),
+        ImGuiX.ToggleImageButton("Quickstart",
+            linkTexture.GetBinding(),
+            ImGuiX.Unit(ImGuiLL.TOOLBAR_BUTTON_SIZE),
                 QuickstartData.Enabled, ToggleQuickstart);
         ImGuiX.TooltipOnHover("Toggle Quickstart (F4)");
     }
