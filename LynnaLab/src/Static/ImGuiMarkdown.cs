@@ -413,7 +413,7 @@ public static class ImGuiMarkdown
         Vector2 min = ImGui.GetItemRectMin();
         Vector2 max = ImGui.GetItemRectMax();
         min.Y = max.Y;
-        ImGui.GetWindowDrawList().AddLine(min, max, col, 1.0f);
+        ImGui.GetWindowDrawList().AddLine(min, max, col, ImGuiX.Unit(1.0f));
     }
 
     static unsafe void RenderLine(byte* markdown, Line line, TextRegion textRegion, MarkdownConfig cfg)
@@ -836,6 +836,10 @@ public static class ImGuiMarkdown
         }
 
         textRegion.ResetIndent();
+
+        // Want one extra pixel at the bottom so that underlines on links at the bottom of the area
+        // don't get cut off.
+        ImGui.Dummy(ImGuiX.Unit(0.0f, 1.0f));
 
         if (-1 != linkHoverStart || linkHoverID == s_linkHoverID)
         {
