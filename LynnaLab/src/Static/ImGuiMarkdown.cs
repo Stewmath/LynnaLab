@@ -274,7 +274,8 @@ public static class ImGuiMarkdown
             ImGui.PopTextWrapPos();
 
             ImGui.SetCursorScreenPos(pos);
-            ImGui.InvisibleButton($"##Btn-{link.Text.Start}", ImGui.GetItemRectSize());
+            int textStart = (int)(text - markdown);
+            ImGui.InvisibleButton($"##Btn-{textStart}", ImGui.GetItemRectSize());
             bool thisItemHovered = ImGui.IsItemHovered();
 
             if (thisItemHovered)
@@ -286,7 +287,7 @@ public static class ImGuiMarkdown
             formatInfo.ItemHovered = hovered;
             cfg.FormatCallback(formatInfo, false);
 
-            if (hovered)
+            if (thisItemHovered)
             {
                 if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) && cfg.LinkCallback != null)
                 {
