@@ -488,6 +488,7 @@ public static class Top
                 log.Info($"Loaded project in {((float)watch.ElapsedMilliseconds) / 1000:f3}s");
                 Workspace = new ProjectWorkspace(project, "MainProject");
                 helpWindow.SetProject(project);
+                ImGuiLL.SetActiveProject(project);
             });
         };
 
@@ -529,6 +530,7 @@ public static class Top
         Workspace?.Close();
         Workspace = null;
         helpWindow.SetProject(null);
+        ImGuiLL.SetActiveProject(null);
     }
 
     public static void SetWorkspace(ProjectWorkspace workspace)

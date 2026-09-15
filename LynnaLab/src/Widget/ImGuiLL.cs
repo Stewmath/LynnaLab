@@ -15,15 +15,27 @@ public static class ImGuiLL
     public static float ENTRY_ITEM_WIDTH { get { return ImGuiX.Unit(120.0f); } }
     public static readonly Vector2 TOOLBAR_BUTTON_SIZE = new Vector2(30.0f, 30.0f);
 
+
+    static readonly Vector2 HELP_BUTTON_SIZE = new Vector2(20.0f, 20.0f);
+
+
     // ================================================================================
     // Variables
     // ================================================================================
 
     public static ImGuiMarkdown.MarkdownConfig markdownConfig;
 
+    static HelpWidget popupHelpWidget;
+    static Project activeProject;
+
     // ================================================================================
     // Public methods
     // ================================================================================
+
+    public static void SetActiveProject(Project p)
+    {
+        activeProject = p;
+    }
 
     /// <summary>
     /// Displays a ComboBox along with (optionally) the raw integer field as an alternate way to set
@@ -354,10 +366,6 @@ public static class ImGuiLL
         ImGui.EndGroup();
     }
 
-
-    static readonly Vector2 HELP_BUTTON_SIZE = new Vector2(20.0f, 20.0f);
-    static HelpWidget popupHelpWidget;
-
     /// <summary>
     /// A help button which opens a popup showing markdown-formatted text.
     /// </summary>
@@ -374,6 +382,7 @@ public static class ImGuiLL
         if (ImGui.ImageButton("Help", tex, size))
         {
             popupHelpWidget = new(markdownFile);
+            popupHelpWidget.SetProject(activeProject);
             ImGui.OpenPopup("Help Popup");
         }
 
