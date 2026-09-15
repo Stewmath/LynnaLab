@@ -7,6 +7,8 @@ public class HelpWidget
     // ================================================================================
     public HelpWidget(string firstPage = "TOC.md")
     {
+        defaultPage = firstPage;
+
         markdownConfig = new ImGuiMarkdown.MarkdownConfig();
         markdownConfig.ImageCallback = MarkdownImageCallback;
         markdownConfig.Flags = ImGuiMarkdown.FormatFlags.NoNewLineBeforeHeading;
@@ -21,6 +23,7 @@ public class HelpWidget
     static Dictionary<string, string> markdownFileDict = new();
     static Dictionary<string, ImageData> markdownImageDict = new();
 
+    string defaultPage;
     Stack<NavigationNode> navigationNodesBack = new();
     Stack<NavigationNode> navigationNodesForward = new();
     NavigationNode currentNode;
@@ -81,14 +84,21 @@ public class HelpWidget
         Project = p;
     }
 
+    public void Reset()
+    {
+        navigationNodesBack.Clear();
+        navigationNodesForward.Clear();
+        NavigateToNode(defaultPage, saveCurrent: false);
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================
 
     [MemberNotNull(nameof(currentNode))]
-    void NavigateToNode(string filename)
+    void NavigateToNode(string filename, bool saveCurrent=true)
     {
-        if (currentNode != null)
+        if (currentNode != null && saveCurrent)
             navigationNodesBack.Push(currentNode);
         currentNode = new() { filename=filename };
         navigationNodesForward.Clear();

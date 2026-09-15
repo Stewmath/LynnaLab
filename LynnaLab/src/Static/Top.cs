@@ -262,6 +262,7 @@ public static class Top
                 Top.FaroresMemoryTexture.GetBinding(),
                 ImGuiX.Unit(ImGuiLL.TOOLBAR_BUTTON_SIZE)))
             {
+                helpWindow.HelpWidget.Reset();
                 helpWindow.Focus();
             }
             ImGuiX.TooltipOnHover("Help (F1)");
