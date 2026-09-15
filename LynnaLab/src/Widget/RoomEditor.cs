@@ -329,7 +329,7 @@ public class RoomEditor : Frame
         ImGui.SameLine();
         ImGui.BeginChild("Right Panel", Vector2.Zero, ImGuiChildFlags.Borders);
 
-        ImGui.SeparatorText("Map Selector");
+        ImGui.SeparatorText("Room Selector");
 
         // Input fields for either minimap type
         {
@@ -382,7 +382,7 @@ public class RoomEditor : Frame
                 ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
 
                 int worldIndex = Room.Group;
-                if (ImGuiX.InputHex("World", ref worldIndex, 1))
+                if (ImGuiX.InputHex("Group", ref worldIndex, 1))
                 {
                     if (worldIndex >= 0 && worldIndex < Project.NumGroups)
                     {

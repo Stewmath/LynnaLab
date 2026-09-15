@@ -471,10 +471,7 @@ public static class Top
     /// </summary>
     public static void OpenProject(string path, string gameOverride = null)
     {
-        if (Workspace != null)
-        {
-            Workspace.Close();
-        }
+        CloseProject();
 
         // Try to load project config
         ProjectConfig config = ProjectConfig.Load(path);
@@ -489,6 +486,7 @@ public static class Top
                 watch.Stop();
                 log.Info($"Loaded project in {((float)watch.ElapsedMilliseconds) / 1000:f3}s");
                 Workspace = new ProjectWorkspace(project, "MainProject");
+                helpWindow.SetProject(project);
             });
         };
 
@@ -529,6 +527,7 @@ public static class Top
     {
         Workspace?.Close();
         Workspace = null;
+        helpWindow.SetProject(null);
     }
 
     public static void SetWorkspace(ProjectWorkspace workspace)

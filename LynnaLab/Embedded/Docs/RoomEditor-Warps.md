@@ -1,4 +1,4 @@
-# Warp Editor
+# Room Editor: Warps
 ## Controls
   * Select a warp to show the fields for that warp (source & destination parameters).
   * Right-click in an empty space to add new warps.

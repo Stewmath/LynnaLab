@@ -20,6 +20,8 @@ public class HelpWindow : Frame
     // Properties
     // ================================================================================
 
+    public HelpWidget HelpWidget { get { return helpWidget; } }
+
     // ================================================================================
     // Public methods
     // ================================================================================
@@ -27,6 +29,11 @@ public class HelpWindow : Frame
     public override void Render()
     {
         helpWidget.Render();
+    }
+
+    public void SetProject(Project p)
+    {
+        HelpWidget.SetProject(p);
     }
 
     // ================================================================================

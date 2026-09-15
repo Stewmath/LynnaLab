@@ -31,6 +31,8 @@ public class HelpWidget
     // Properties
     // ================================================================================
 
+    Project? Project { get; set; }
+
     // ================================================================================
     // Public methods
     // ================================================================================
@@ -64,14 +66,19 @@ public class HelpWidget
         markdownConfig.HeadingFormats[2].FontSize = Top.GlobalConfig.InfoFontSize * 1.1f;
 
         // TODO: Supply project
-        markdownConfig.LinkCallback = (d) => MarkdownLinkCallback(null, d);
-        markdownConfig.TooltipCallback = (d) => MarkdownTooltipCallback(null, d);
+        markdownConfig.LinkCallback = MarkdownLinkCallback;
+        markdownConfig.TooltipCallback = MarkdownTooltipCallback;
 
         string data = MarkdownFileContents(currentNode.filename);
         ImGuiMarkdown.Markdown(data, markdownConfig);
 
         ImGui.EndChild();
         ImGui.PopFont();
+    }
+
+    public void SetProject(Project p)
+    {
+        Project = p;
     }
 
     // ================================================================================
@@ -81,7 +88,6 @@ public class HelpWidget
     [MemberNotNull(nameof(currentNode))]
     void NavigateToNode(string filename)
     {
-        Console.WriteLine("Navigate: " + filename);
         if (currentNode != null)
             navigationNodesBack.Push(currentNode);
         currentNode = new() { filename=filename };
@@ -106,18 +112,17 @@ public class HelpWidget
         return true;
     }
 
-    void MarkdownLinkCallback(Project? project, ImGuiMarkdown.LinkCallbackData data)
+    void MarkdownLinkCallback(ImGuiMarkdown.LinkCallbackData data)
     {
-        string link = data.Link;
+        string link = ExtractLink(data);
         if (link.StartsWith("disasm:"))
         {
-            if (project?.BaseDirectory == null) // Clients don't have a file to open
+            if (Project?.BaseDirectory == null) // Clients don't have a file to open
             {
                 Modal.DisplayErrorMessage("Can't follow link (no local project is open).");
                 return;
             }
-            link = project.BaseDirectory + "/"
-                   + link.Substring(7).Replace("{game}", project.GameString);
+            link = Project.BaseDirectory + "/" + link.Substring(7);
         }
         else if (link.StartsWith("http"))
         {
@@ -135,6 +140,25 @@ public class HelpWidget
         });
     }
 
+    void MarkdownTooltipCallback(ImGuiMarkdown.TooltipCallbackData data)
+    {
+        if (data.LinkData.Link != null)
+        {
+            string text = ExtractLink(data.LinkData);
+            ImGui.SetTooltip(text);
+        }
+    }
+
+    string ExtractLink(ImGuiMarkdown.LinkCallbackData data)
+    {
+        string text = data.Link;
+        if (text.Length == 0)
+            text = data.Text;
+        if (Project != null)
+            text = text.Replace("{game}", Project.GameString);
+        return text;
+    }
+
     // ================================================================================
     // Static methods
     // ================================================================================
@@ -149,7 +173,11 @@ public class HelpWidget
             return content;
         }
 
-        content = Helper.ReadResourceFile($"Docs/{filename}");
+        string resource = $"Docs/{filename}";
+        if (Helper.ResourceExists(resource))
+            content = Helper.ReadResourceFile(resource);
+        else
+            content = "You clicked on a broken link! Stewmat made an oopsie :-)";
         markdownFileDict[filename] = content;
         return content;
     }
@@ -194,17 +222,6 @@ public class HelpWidget
         imgData.data.Size = ImGuiX.Unit(imgData.baseSize) / 1.6f;
 
         return imgData.data;
-    }
-
-    static void MarkdownTooltipCallback(Project? project, ImGuiMarkdown.TooltipCallbackData data)
-    {
-        if (data.LinkData.Link != null)
-        {
-            string text = data.LinkData.Link;
-            if (project != null)
-                text = data.LinkData.Link.Replace("{game}", project.GameString);
-            ImGui.SetTooltip(text);
-        }
     }
 }
 

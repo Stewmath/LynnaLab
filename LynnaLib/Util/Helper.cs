@@ -76,6 +76,13 @@ public class Helper
         return new List<string>(files.Select((x) => x.Substring(x.LastIndexOf("/") + 1)));
     }
 
+    public static bool ResourceExists(string name, Assembly? assembly = null)
+    {
+        if (assembly == null)
+            assembly = Assembly.GetCallingAssembly();
+        return assembly.GetManifestResourceStream(name) != null;
+    }
+
     // Get a stream of a resource file
     public static Stream GetResourceStream(string name, Assembly? assembly = null)
     {

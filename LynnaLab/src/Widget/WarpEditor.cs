@@ -87,7 +87,7 @@ public class WarpEditor : Frame
 
     public override void Render()
     {
-        ImGuiLL.HelpButton("WarpEditor.md", Project);
+        ImGuiLL.HelpButton("RoomEditor-Warps.md", Project);
         ImGui.SeparatorText("Warps");
 
         if (ImGui.BeginChild("WarpSourceBox Frame",

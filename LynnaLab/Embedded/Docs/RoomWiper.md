@@ -1,10 +1,12 @@
 # Room Wiper
-The room wiper allows you to clear data in all rooms.
+The room wiper allows you to clear data in a selection of rooms, leaving you with a "mostly" blank slate to work with.
 
 ## Limitations
-The Room Wiper does not wipe:
+The Room Wiper doesn't leave everything as an entirely blank slate, for a few reasons.
 
-  * Tile changes (data/{game}/singleTileChanges.s, data/{game}/roomSpecificTileChanges.s)
-    * TODO: Hyperlink
-  * Hardcoded stuff (code that uses ROOM\_AGES\_XXX or ROOM\_SEASONS\_XXX constants)
-  * Anything that the Region Editor handles (ie. tileset/music assignments)
+1. Anything that the [region editor](RegionEditor.md) deals with is out of scope (ie. tileset/music assignments).
+
+2. There is some data which LynnaLab just doesn't handle at all. See: [Manual Data Editing](ManualData.md) for some of these cases. (Look out for room-specific tile changes in particular.)
+
+3. There are also some hardcoded events, ie. code that uses the constants "ROOM_AGES_XXX" or "ROOM_SEASONS_XXX" to do specific things in specific rooms, which can cause surprises even after wiping rooms clean. (One example: You can't use the Cane of Somaria in Patch's room, ROOM_AGES_5e8.)
+

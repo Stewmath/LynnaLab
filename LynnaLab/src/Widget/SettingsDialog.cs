@@ -252,7 +252,7 @@ public class SettingsDialog : Frame
 
         if (beginSection("Other"))
         {
-            ImGuiX.Checkbox("Auto-Adjust World Number",
+            ImGuiX.Checkbox("Auto-Adjust Group Number",
                                     new Accessor<bool>(() => GlobalConfig.AutoAdjustGroupNumber));
             ImGuiX.TooltipOnHover("The subrosia map & dungeons have duplicates in the World tab. Check this box to auto-adjust the group number to its expected value when selecting these rooms.");
 
