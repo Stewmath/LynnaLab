@@ -12,7 +12,10 @@ public static class ImGuiLL
 
     public const float MenuFontLargeScale = 1.333f;
 
-    public static float ENTRY_ITEM_WIDTH { get { return ImGuiX.Unit(120.0f); } }
+    // This should be large enough to fit a spinbutton with up to 3 digits. (Currently doesn't scale
+    // with font size though...)
+    public static float ENTRY_ITEM_WIDTH { get { return ImGuiX.Unit(110.0f); } }
+
     public static readonly Vector2 TOOLBAR_BUTTON_SIZE = new Vector2(30.0f, 30.0f);
 
 

@@ -119,10 +119,12 @@ public class DungeonEditor : Frame
 
             ImGui.SeparatorText("Room properties");
 
+            ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
             ImGuiX.InputHex("Room", SelectedRoom.Index & 0xff, (newIndex) =>
             {
                 FloorPlan.SetRoom(minimap.SelectedX, minimap.SelectedY, newIndex);
             }, digits: 2, min: 0, max: 255);
+            ImGui.PopItemWidth();
 
             if (ImGui.BeginTable("Room property table", 2))
             {

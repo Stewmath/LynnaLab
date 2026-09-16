@@ -9,7 +9,7 @@ This lets you edit the layout and properties of dungeons.
     * $01: The bottom floor is 'B2'.
     * $02: The bottom floor is 'B1'.
     * $03: The bottom floor is 'F1'.
-  * Floors unlocked with compass: A bitset of floors that will be shown on the map when the compass is obtained. This should include all floors in the dungeon.
+  * Compass-unlocked floors: A bitset of floors that will be shown on the map when the compass is obtained. This should include all floors in the dungeon.
     * You'll need to do some bit math on this! IE. Value $05 means bits 0 and 2 are set (floors 0 and 2 are unlocked).
   * You can freely add & remove floors with the buttons available. Staircases will automatically send you to the corresponding room on the next floor even with no warps defined (but if there is a warp, that takes precedence).
 

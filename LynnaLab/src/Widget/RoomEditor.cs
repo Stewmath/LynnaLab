@@ -661,7 +661,7 @@ public class RoomEditor : Frame
         {
             int id = Room.Chest.TreasureID;
             int subid = Room.Chest.TreasureSubID;
-            if (ImGui.CollapsingHeader($"Treasure object data: {id:X2} {subid:X2}###TreasureObjectHeader {id}"))
+            if (ImGui.CollapsingHeader($"Treasure object: {id:X2} {subid:X2}###TreasureObjectHeader {id}"))
             {
                 ImGuiX.ShiftCursorScreenPos(ImGuiX.Unit(10.0f, 0.0f));
                 ImGuiLL.RenderValueReferenceGroup(treasureObj.ValueReferenceGroup, null, Workspace.ShowDocumentation);

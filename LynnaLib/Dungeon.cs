@@ -334,7 +334,7 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
                         tooltip: "Determines what the game will call the bottom floor. For a value of:\n$00: The bottom floor is 'B3'.\n$01: The bottom floor is 'B2'.\n$02: The bottom floor is 'B1'.\n$03: The bottom floor is 'F1'."),
                 DataValueReference.Descriptor(
                         data: DataStart,
-                        name: "Floors unlocked with compass",
+                        name: "Compass-unlocked floors",
                         index: 5,
                         type: DataValueType.Byte,
                         tooltip: "A bitset of floors that will appear on the map when the compass is obtained.\n\nEg. If this is $05, then floors 0 and 2 will be unlocked (bits 0 and 2 are set)."),
