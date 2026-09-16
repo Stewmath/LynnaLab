@@ -4,11 +4,13 @@
   * [LynnaLab Basics](LynnaLab-Basics.md)
 
 ## Windows
+  * [Dungeon Editor](DungeonEditor.md)
   * [Room Editor](RoomEditor.md)
-  * [Warp Editor](WarpEditor.md)
   * [Room Wiper](RoomWiper.md)
   * [Region Editor](RegionEditor.md)
-  * [Object Editor](ObjectEditor.md)
+  * [Networking](Networking.md)
+  * [Scratchpad](Scratchpad.md)
+  * [Tileset Cloner](TilesetCloner.md)
 
 ## Other
   * [Sameboy](Sameboy.md)

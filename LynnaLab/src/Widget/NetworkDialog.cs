@@ -35,6 +35,8 @@ public class NetworkDialog : Frame
 
     public override void Render()
     {
+        ImGuiLL.HelpButton("Networking.md", Project);
+
         ImGuiLL.PushInfoFont();
 
         Workspace.NetworkConnection.Switch(

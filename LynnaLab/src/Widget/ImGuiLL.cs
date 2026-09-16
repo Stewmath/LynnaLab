@@ -367,6 +367,21 @@ public static class ImGuiLL
     }
 
     /// <summary>
+    /// An ImGui.SeparatorText with a help button at the right end of it.
+    /// </summary>
+    public static void SeparatorWithHelpButton(string separator, string markdownFile, Project project = null)
+    {
+        Vector2 size = new(
+            ImGui.GetContentRegionAvail().X - ImGuiX.Unit(HELP_BUTTON_SIZE.X) - ImGui.GetStyle().FramePadding.X * 3,
+            0.0f);
+        ImGui.BeginChild("HelpContainer-" + separator, size, ImGuiChildFlags.AutoResizeY);
+        ImGui.SeparatorText(separator);
+        ImGui.EndChild();
+        ImGui.SameLine();
+        HelpButton(markdownFile, project);
+    }
+
+    /// <summary>
     /// A help button which opens a popup showing markdown-formatted text.
     /// </summary>
     public static void HelpButton(string markdownFile, Project project = null)
@@ -386,15 +401,11 @@ public static class ImGuiLL
             ImGui.OpenPopup("Help Popup");
         }
 
-        Vector2 pos = ImGui.GetCursorScreenPos();
-        ImGui.SameLine();
         if (ImGui.BeginPopup("Help Popup"))
         {
             popupHelpWidget.Render(ImGuiX.Unit(700.0f, 800.0f));
             ImGui.EndPopup();
         }
-
-        ImGui.SetCursorScreenPos(pos);
     }
 
     public static void PushInfoFont()

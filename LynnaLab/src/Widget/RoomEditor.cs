@@ -277,7 +277,7 @@ public class RoomEditor : Frame
         {
             if (TrackedTabItem(ROOM_TAB_NAME))
             {
-                ImGui.SeparatorText("Tileset");
+                ImGuiLL.SeparatorWithHelpButton("Tileset", "RoomEditor-Rooms.md", Project);
                 tilesetViewer.Render();
                 if (ImGui.Button("Open Tileset Editor"))
                 {
@@ -329,7 +329,7 @@ public class RoomEditor : Frame
         ImGui.SameLine();
         ImGui.BeginChild("Right Panel", Vector2.Zero, ImGuiChildFlags.Borders);
 
-        ImGui.SeparatorText("Room Selector");
+        ImGuiLL.SeparatorWithHelpButton("Room Selector", "RoomEditor.md", Project);
 
         // Input fields for either minimap type
         {
@@ -624,6 +624,8 @@ public class RoomEditor : Frame
     /// </summary>
     void DisplayChestTab()
     {
+        ImGuiLL.HelpButton("RoomEditor-Chests.md", Project);
+
         if (Room.Chest == null)
         {
             ImGui.TextWrapped("Room does not contain a chest.");

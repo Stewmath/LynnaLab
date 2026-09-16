@@ -1,6 +1,5 @@
 # Manual Data Editing
-The following data in oracles-disasm currently has no LynnaLab interface, and must be edited by
-hand.
+The following data in oracles-disasm currently has no LynnaLab interface, and must be edited by hand.
 
 ## Text
 Very straightforward to modify manually.

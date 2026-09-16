@@ -80,6 +80,9 @@ public class DungeonEditor : Frame
             }
         }
 
+        ImGui.SameLine();
+        ImGuiLL.HelpButton("DungeonEditor.md", Project);
+
         // Left panel
         {
             ImGui.BeginChild(

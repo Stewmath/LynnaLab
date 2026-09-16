@@ -51,6 +51,7 @@ public class TilesetCloner : Frame
 
     public override void Render()
     {
+        ImGuiLL.HelpButton("TilesetCloner.md");
         Vector2 panelSize = sourceViewer.WidgetSize;
         panelSize.Y += ImGuiX.Unit(80.0f);
 

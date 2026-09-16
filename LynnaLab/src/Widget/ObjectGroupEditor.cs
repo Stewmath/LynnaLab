@@ -124,6 +124,8 @@ public class ObjectGroupEditor : Frame
 
     public override void Render()
     {
+        ImGuiLL.HelpButton("RoomEditor-Objects.md", Project);
+
         // Allocate a certain amount of space for the fields at the bottom, only if an object is selected
         var childSize = ImGui.GetContentRegionAvail() - new Vector2(0.0f, ImGuiX.Unit(300.0f));
         if (SelectedObject == null)

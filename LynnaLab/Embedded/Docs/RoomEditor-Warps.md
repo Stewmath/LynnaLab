@@ -2,8 +2,8 @@
 ## Controls
   * Select a warp to show the fields for that warp (source & destination parameters).
   * Right-click in an empty space to add new warps.
-
 ![](warpeditor-rightclick-empty.png)
+  * Double-click on a warp in the room preview to follow it. (This doesn't work in the warp boxes on the left though!)
 
 ## Editing warp destinations
 You can edit the destination fields directly, but it's better to right-click on the warp and select "Edit Destination".
