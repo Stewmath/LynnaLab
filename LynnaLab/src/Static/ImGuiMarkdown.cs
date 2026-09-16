@@ -264,6 +264,13 @@ public static class ImGuiMarkdown
             MarkdownConfig cfg, ref int linkHoverStart)
         {
             MarkdownFormatInfo formatInfo = new MarkdownFormatInfo();
+
+            if (text == textEnd)
+            {
+                ImGui.TextUnformatted("");
+                return false;
+            }
+
             formatInfo.Config = cfg;
             formatInfo.Type = FormatType.Link;
             cfg.FormatCallback(formatInfo, true);
