@@ -278,6 +278,13 @@ public class ProjectWorkspace
 
     public void RenderToolbar()
     {
+        ImGuiX.ToggleImageButton("Quickstart",
+            linkTexture.GetBinding(),
+            ImGuiX.Unit(ImGuiLL.TOOLBAR_BUTTON_SIZE),
+                QuickstartData.Enabled, ToggleQuickstart);
+        ImGuiX.TooltipOnHover("Toggle Quickstart (F4)");
+
+        ImGui.SameLine();
         if (ImGui.ImageButton("Run",
             Top.PegasusSeedTexture.GetBinding(),
             ImGuiX.Unit(ImGuiLL.TOOLBAR_BUTTON_SIZE)))
@@ -285,13 +292,6 @@ public class ProjectWorkspace
             RunGame();
         }
         ImGuiX.TooltipOnHover("Run (F5)");
-
-        ImGui.SameLine();
-        ImGuiX.ToggleImageButton("Quickstart",
-            linkTexture.GetBinding(),
-            ImGuiX.Unit(ImGuiLL.TOOLBAR_BUTTON_SIZE),
-                QuickstartData.Enabled, ToggleQuickstart);
-        ImGuiX.TooltipOnHover("Toggle Quickstart (F4)");
     }
 
     public void Render(float deltaTime)
