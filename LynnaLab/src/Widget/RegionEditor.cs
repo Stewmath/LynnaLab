@@ -191,6 +191,7 @@ public class RegionEditor : Frame
     Minimap minimap;
     MapChooser mapChooser;
     EventWrapper<Dungeon> dungeonEW = new();
+    FloorPlan? lastFloorPlan = null;
 
     RegionOption selectedRegionOption;
     ModeOption selectedMode;
@@ -317,9 +318,20 @@ public class RegionEditor : Frame
             selectedRegionOption = options.First();
         }
 
+        // It's safe to not recalculate all of the fields if we're only changing the season.
+        if (regionAccessor != null
+            && gridRegions != null
+            && plan.Season != Season.None
+            && plan.MainGroup == lastFloorPlan?.MainGroup)
+        {
+            return;
+        }
+
         selectedRegion = null;
         UpdateRegionAccessor();
         UpdateGridRegions();
+
+        lastFloorPlan = plan;
     }
 
     [MemberNotNull(nameof(gridRegions))]
