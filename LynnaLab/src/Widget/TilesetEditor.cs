@@ -104,6 +104,9 @@ public class TilesetEditor : Frame
             ImGuiX.TooltipOnHover("Changes to tiles affect all seasons, not just the current selected one.");
         }
 
+        ImGui.SameLine();
+        ImGuiLL.HelpButton("TilesetEditor.md", Project);
+
         ImGui.PushItemWidth(ImGuiX.Unit(200.0f));
         if (ImGui.BeginCombo("##Brush Mode", BrushModeString(BrushMode)))
         {
@@ -171,7 +174,7 @@ public class TilesetEditor : Frame
         };
 
         ImGui.BeginChild("Tileset Viewer Panel", new Vector2(tilesetViewer.WidgetSize.X, HEIGHT));
-        ImGui.SeparatorText("Tileset");
+        ImGui.SeparatorText("Tileset Viewer");
         tilesetViewer.Render();
 
         // Tileset viewer: Watch for keyboard keys 1/2/3 for toggling subtile properties
@@ -202,7 +205,7 @@ public class TilesetEditor : Frame
         ImGui.BeginChild("SubTile Panel", new Vector2(subTileViewer.WidgetSize.X, HEIGHT));
         ImGui.SeparatorText($"Subtile Viewer");
         subTileViewer.Render();
-        ImGui.SeparatorText($"Tile {tileEditor.TileIndex:X2}");
+        ImGui.SeparatorText($"Tile {tileEditor.TileIndex:X2} Preview");
         tileEditor.Render();
 
         // Tile editor: Watch for keyboard keys 1/2/3 for toggling subtile properties

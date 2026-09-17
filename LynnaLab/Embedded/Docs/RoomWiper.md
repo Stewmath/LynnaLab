@@ -10,3 +10,7 @@ The Room Wiper doesn't leave everything as an entirely blank slate, for a few re
 
 3. There are also some hardcoded events, ie. code that uses the constants "ROOM_AGES_XXX" or "ROOM_SEASONS_XXX" to do specific things in specific rooms, which can cause surprises even after wiping rooms clean. (One example: You can't use the Cane of Somaria in Patch's room, ROOM_AGES_5e8.)
 
+## Duplicate groups
+Duplicate groups behave a bit oddly with the room wiper, which means for example that even if you wipe warps in group 4, you may still see the corresponding rooms in group 6 still have their warps (sidescrolling rooms). The same applies to Seasons groups 1-3.
+
+See [Room Editor](RoomEditor.md) for details on duplicate groups.

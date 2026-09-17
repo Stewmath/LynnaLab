@@ -13,6 +13,8 @@ Click the link icon right next to this in order to enable quickstart. A Link ico
 
 ![](basics-quickstart.png)
 
+Quickstart uses whatever save data is in file slot 1. If there is no existing file, the HUD will look glitched!
+
 ## Basic usage
 By default, the [Room Editor](RoomEditor.md) window is shown, which is the most fundamental interface in LynnaLab.
 
@@ -23,15 +25,3 @@ To access other functionality (dungeon editing, etc), use the "windows" option i
 Access LynnaLab's settings menu by clicking on the arrow on the left side of the screen.
 
 ![](basics-settings.png)
-
-## Hotkeys
-  * Ctrl-Z: Undo
-  * Ctrl-Shift-Z: Redo
-  * F1: Open help
-  * F4: Toggle quickstart
-  * F5: Build & run game
-
-The ImGui framework which powers LynnaLab also has some built-in hotkeys. I don't know them all but...
-
-  * Tab: Navigate to next element
-  * Ctrl+Tab: Cycle between open windows

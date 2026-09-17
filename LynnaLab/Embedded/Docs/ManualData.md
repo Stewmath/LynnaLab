@@ -1,6 +1,8 @@
 # Manual Data Editing
 The following data in oracles-disasm currently has no LynnaLab interface, and must be edited by hand.
 
+Since LynnaLab doesn't use most of the files listed here, you can edit them freely. But if you choose to edit a file that LynnaLab **does** read or modify, LynnaLab will not see those changes until you reload your project. (PNG files are the only exception; they are reloaded automatically.)
+
 ## Text
 Very straightforward to modify manually.
 
@@ -35,11 +37,6 @@ For smooth transitions between areas, ie. entering Yoll Graveyard.
 
 [disasm:data/{game}/paletteTransitions.s]()
 
-## Underwater surface data (ages-only)
-To specify where on the screen you can rise above water.
-
-[disasm:data/ages/underwaterSurfaceData.s]()
-
 ## Tree warps
 Setting the tree warp position:
 
@@ -48,3 +45,18 @@ Setting the tree warp position:
 Setting some extra data to make seeds respawn:
 
 [disasm:data/{game}/seedTreeRefillData.s]()
+
+## Underwater surface data (ages-only)
+To specify where on the screen you can rise above water.
+
+[disasm:data/ages/underwaterSurfaceData.s]()
+
+## Season assignments (seasons-only)
+Each byte corresponds to a specific room pack.
+
+[disasm:data/seasons/roomPackSeasonTable.s]()
+
+## Tile properties
+While basic collisions are modified in the [tileset editor](TilesetEditor.md), more complex properties must be modified by hand in the tile_properties folder.
+
+[disasm:data/{game}/tile_properties/]()

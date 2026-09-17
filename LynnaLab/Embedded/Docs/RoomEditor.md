@@ -14,6 +14,8 @@ In the center pane is a preview of the room that was selected. Here you can visu
 ## Right pane: Room selector
 This pane contains a minimap previewing an entire overworld or dungeon, through which you can select which room you want to be editing.
 
+Scroll wheel zooms (if scroll to zoom is enabled); middle click + drag to pan.
+
 You can switch between overworlds and dungeons. These are technically distinct from each other:
 
   * One overworld, or "group", represents a fixed, 16x16 grid of rooms.
@@ -32,7 +34,7 @@ In-game, the current group number is tracked in the "wActiveGroup" variable and 
 
 See also: [Wiki: Group numbers](https://wiki.zeldahacking.net/oracle/Group_number)
 
-### Group duplicates
+### Duplicate groups
 What's peculiar is that overworld groups 4/6 and 5/7 are duplicates of each other - the same rooms exist in each! The reasons for this are a bit complicated, but the gist of it is that sidescrolling rooms always use group number 6 or 7, while normal rooms use group number 4 or 5.
 
 This can be pretty nasty, because duplicate rooms in different groups actually have **separate** warp data, but share the same room layout! This can lead to an utterly bizarre "phantom room" phenomenon where, in-game, you appear to be in the correct room, but the group number is wrong, meaning warps don't work correctly.

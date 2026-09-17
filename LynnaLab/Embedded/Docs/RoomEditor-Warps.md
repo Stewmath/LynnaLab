@@ -21,5 +21,11 @@ To exit this mode, right-click the W and select "Done".
   * Specific-position warps: Use if there are multiple warp tiles on the screen. Unlike standard warps these can be placed on a specific tile.
     * Specific-position warps MUST come before any non-edge standard warps, otherwise the standard warp takes precedence!
 
+## Warp fields
+  * Source transition: Determines how Link leaves the room (instant, fadeout, walk off, etc)
+  * Dest Room/Y/X: Where the warp takes you. Warp Edit Mode is the best way to change this.
+  * Dest Transition: Determines how Link appears in the new room, and whether to update the respawn point.
+  * Parameter: What this does depends on which dest transition was selected.
+
 ## For more information
 [Wiki: Warp Editing](https://wiki.zeldahacking.net/oracle/LynnaLab/Warp_editing)
