@@ -27,7 +27,7 @@ public interface IOverlayBoxUser
         SizedWidget canvas,
         IList<OverlayBox> overlayBoxes,
         bool alwaysFullPrecision,
-        bool allowMove = false,
+        bool allowMove = true,
         bool clipToCanvas = true
     )
     {
