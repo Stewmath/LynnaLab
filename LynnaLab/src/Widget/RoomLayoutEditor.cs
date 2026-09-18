@@ -212,7 +212,13 @@ public class RoomLayoutEditor : TileGrid
             }
         }
 
-        var hoveringComponent = IOverlayBoxUser.UpdateOverlayBoxes(Project, overlayBoxUser, this, overlayBoxes, false);
+        var hoveringComponent = IOverlayBoxUser.UpdateOverlayBoxes(
+            Project,
+            overlayBoxUser,
+            this,
+            overlayBoxes,
+            alwaysFullPrecision: false,
+            clipToCanvas: false);
 
         // Render right-click menu
         if (ImGui.BeginPopup(Top.RightClickPopupName))

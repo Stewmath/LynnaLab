@@ -259,8 +259,8 @@ class ScreenWidget : SizedWidget, IDisposable
         this.parent = parent;
         this.emu = emu;
 
-        base.CenterX = true;
-        base.CenterY = true;
+        base.CenterX = false;
+        base.CenterY = false;
 
         screenTexture = Top.Backend.CreateTexture(160, 144);
         screenTexture.CopyPixels(emu.PixelData, 160, 144, 4);
@@ -324,7 +324,8 @@ class ScreenWidget : SizedWidget, IDisposable
                     this,
                     overlayBoxes,
                     alwaysFullPrecision: true,
-                    allowMove: !parent.Manager.Paused);
+                    allowMove: !parent.Manager.Paused,
+                    clipToCanvas: true);
             }
         }
         else

@@ -5,6 +5,7 @@ using SameBoySharp;
 
 namespace Emulation;
 
+using System.Collections.Concurrent;
 using LynnaLib;
 
 public class OraclesEmulator : IDisposable
@@ -76,6 +77,7 @@ public class OraclesEmulator : IDisposable
     SameBoy gb;
     string romPath;
     IntPtr pixelData;
+    ConcurrentQueue<Action> vblankActionQueue = new();
 
     Dictionary<GbPointer, Action> breakpoints = new();
     readonly GameboyState state;
@@ -136,7 +138,15 @@ public class OraclesEmulator : IDisposable
         gb.Run();
 
         if (gb.Registers.PC == 0x40)
+        {
             latestSnapshot = new GameboySnapshot(this);
+
+            while (vblankActionQueue.TryDequeue(out Action? action))
+            {
+                if (action != null)
+                    action();
+            }
+        }
 
         GbPointer ptr = state.ConstructPointer(gb.Registers.PC);
 
@@ -250,6 +260,21 @@ public class OraclesEmulator : IDisposable
         {
             gb.SetTurboMode(false);
         }
+    }
+
+    public void DoAtVBlank(Action action)
+    {
+        vblankActionQueue.Enqueue(action);
+    }
+
+    public void WriteByteSync(GbPointer ptr, byte value)
+    {
+        DoAtVBlank(() => WriteByte(ptr, value));
+    }
+
+    public void WriteWordSync(GbPointer ptr, ushort value)
+    {
+        DoAtVBlank(() => WriteWord(ptr, value));
     }
 
     public void Dispose()

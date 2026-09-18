@@ -3,12 +3,12 @@ namespace LynnaLab;
 using System.Threading;
 using Emulation;
 
-public class EmulatorManager : IDisposable
+public class EmulatorManager : Frame, IDisposable
 {
     // ================================================================================
     // Constructors
     // ================================================================================
-    public EmulatorManager(OraclesEmulator emulator)
+    public EmulatorManager(OraclesEmulator emulator) : base("Emulator")
     {
         this.emulator = emulator;
         this.debugger = new EmulatorDebugger(this);
@@ -17,11 +17,11 @@ public class EmulatorManager : IDisposable
         this.debugger.Active = true;
         this.renderer.Active = true;
 
-        this.renderer.ClosedEvent += (_, _) =>
+        this.ClosedEvent += (_, _) =>
         {
             SetPaused(true);
         };
-        this.renderer.OpenedEvent += (_, _) =>
+        this.OpenedEvent += (_, _) =>
         {
             SetPaused(false);
         };
@@ -50,10 +50,29 @@ public class EmulatorManager : IDisposable
     // Public methods
     // ================================================================================
 
-    public void RenderAll()
+    public override void Render()
     {
-        debugger.RenderAsWindow("Debugger");
-        renderer.RenderAsWindow("Renderer");
+        renderer.Render();
+        ImGui.SameLine();
+
+        ImGui.BeginChild("Debugger pane", ImGuiChildFlags.Borders);
+
+        if (ImGui.BeginTabBar("Debugger tabs"))
+        {
+            if (ImGui.BeginTabItem("General"))
+            {
+                RenderGeneralTab();
+                ImGui.EndTabItem();
+            }
+            else if (ImGui.BeginTabItem("Debugger"))
+            {
+                debugger.Render();
+                ImGui.EndTabItem();
+            }
+            ImGui.EndTabBar();
+        }
+
+        ImGui.EndChild();
     }
 
     public void Dispose()
@@ -96,6 +115,41 @@ public class EmulatorManager : IDisposable
             {
                 emulator.Run();
             }
+        }
+    }
+
+    void RenderGeneralTab()
+    {
+        ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
+        ImGui.SeparatorText("General");
+        ByteWidget("wLinkHealth");
+        ByteWidget("wNumEnemies");
+        ByteWidget("wMapleKillCounter");
+        ByteWidget("wTotalSignsDestroyed");
+        WordWidget("wTotalEnemiesKilled");
+        WordWidget("wTotalRupeesCollected");
+        ImGui.SeparatorText("Room stuff");
+        ImGui.SeparatorText("Dungeon stuff");
+        ByteWidget("wSwitchState");
+        ByteWidget("wSpinnerState");
+        ImGui.PopItemWidth();
+    }
+
+    // TODO: Write at vblank only
+
+    void ByteWidget(string label)
+    {
+        GbPointer pointer = emulator.Evaluate(label);
+        ImGuiX.InputHex(label, ref emulator.Wram[pointer.Addr & 0x1fff]);
+    }
+
+    void WordWidget(string label)
+    {
+        GbPointer ptr = emulator.Evaluate(label);
+        int val = emulator.State.ReadWord(ptr);
+        if (ImGuiX.InputHex(label, ref val))
+        {
+            emulator.WriteWordSync(ptr, (ushort)val);
         }
     }
 }

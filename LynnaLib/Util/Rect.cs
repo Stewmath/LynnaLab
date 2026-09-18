@@ -18,6 +18,14 @@ public class FRect
         Height = height;
     }
 
+    public FRect(Vector2 pos, Vector2 size)
+    {
+        X = pos.X;
+        Y = pos.Y;
+        Width = size.X;
+        Height = size.Y;
+    }
+
     // ================================================================================
     // Variables
     // ================================================================================
@@ -62,7 +70,7 @@ public class FRect
     // Operator overloads
     // ================================================================================
 
-    public static bool operator ==(FRect rect1, FRect rect2)
+    public static bool operator ==(FRect? rect1, FRect? rect2)
     {
         if (rect1 is null || rect2 is null)
             return (rect1 is null && rect2 is null);
@@ -73,7 +81,7 @@ public class FRect
         && rect1.Height == rect2.Height;
     }
 
-    public static bool operator !=(FRect rect1, FRect rect2)
+    public static bool operator !=(FRect? rect1, FRect? rect2)
     {
         return !(rect1 == rect2);
     }

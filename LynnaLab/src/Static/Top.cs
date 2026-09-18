@@ -308,7 +308,7 @@ public static class Top
             Workspace.Render(deltaTime);
         }
 
-        emulatorManager?.RenderAll();
+        emulatorManager?.RenderAsWindow("Emulator");
         helpWindow.RenderAsWindow("Help");
 
         ImGui.End(); // Dockspace window
@@ -588,6 +588,7 @@ public static class Top
 
         emulator = new OraclesEmulator(romFile, options);
         emulatorManager = new EmulatorManager(emulator);
+        emulatorManager.Focus();
     }
 
     // ================================================================================

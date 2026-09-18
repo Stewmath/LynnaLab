@@ -434,6 +434,18 @@ public static class ImGuiX
     }
 
     /// <summary>
+    /// Hex input field, takes a ref byte. Returns true if value was changed.
+    /// </summary>
+    public static unsafe bool InputHex(string name, ref byte value,
+                                       int digits = 2, int min = 0, int max = int.MaxValue)
+    {
+        int v = value;
+        bool retval = InputHex(name, ref v, digits, min, max);
+        value = (byte)v;
+        return retval;
+    }
+
+    /// <summary>
     /// Menu item that behaves as a checkbox
     /// </summary>
     public static bool MenuItemCheckbox(string name, ref bool value)

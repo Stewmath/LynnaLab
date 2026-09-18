@@ -1,4 +1,3 @@
-#nullable disable
 namespace LynnaLab;
 
 /// <summary>
@@ -110,6 +109,34 @@ public abstract class SizedWidget
         {
             drawList.AddConcavePolyFilled(in *v, polygon.Coordinates.Count, color.ToUInt());
         }
+    }
+
+    /// <summary>
+    /// Takes a rect, returns an adjusted rect that's clipped such that it falls entirely within the
+    /// canvas, or null if it falls entirely outside the canvas.
+    /// </summary>
+    public FRect? AdjustWithinCanvas(FRect rect)
+    {
+        if (rect.X >= WidgetSize.X || rect.Y >= WidgetSize.Y)
+            return null;
+
+        Vector2 p = new(
+            Math.Clamp(rect.X, 0, WidgetSize.X),
+            Math.Clamp(rect.Y, 0, WidgetSize.Y));
+
+        Vector2 p2 = new(
+            Math.Clamp(rect.X + rect.Size.X, 0, WidgetSize.X),
+            Math.Clamp(rect.Y + rect.Size.Y, 0, WidgetSize.Y));
+
+        if (p2.X <= p.X || p2.Y <= p.Y)
+            return null;
+
+        return new FRect(
+            p.X,
+            p.Y,
+            p2.X - p.X,
+            p2.Y - p.Y
+        );
     }
 
     // ================================================================================

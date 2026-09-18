@@ -1,4 +1,3 @@
-#nullable disable
 namespace LynnaLab;
 
 /// <summary>
@@ -22,16 +21,17 @@ public interface IOverlayBoxUser
     /// <summary>
     /// Common code for OverlayBox users.
     /// </summary>
-    public static OverlayBox UpdateOverlayBoxes(
+    public static OverlayBox? UpdateOverlayBoxes(
         Project project, // Can be null, only for recording undo/redo info
         IOverlayBoxUser user,
         SizedWidget canvas,
         IList<OverlayBox> overlayBoxes,
         bool alwaysFullPrecision,
-        bool allowMove = false
+        bool allowMove = false,
+        bool clipToCanvas = true
     )
     {
-        OverlayBox hoveringComponent = null;
+        OverlayBox? hoveringComponent = null;
         var mousePos = canvas.GetRelativeMousePos() / user.Scale;
         int componentIndex = 0;
 
@@ -40,28 +40,35 @@ public interface IOverlayBoxUser
         // Render room components
         foreach (var com in overlayBoxes)
         {
-            // Draw background box
-            if (com.BoxColor != null)
+            FRect? rect = new FRect(com.BoxRectangle.TopLeft, com.BoxSize) * user.Scale;
+            if (clipToCanvas)
+                rect = canvas.AdjustWithinCanvas(rect);
+            if (rect != null)
             {
-                canvas.AddRectFilled(com.BoxRectangle * user.Scale, (Color)com.BoxColor);
-            }
+                // Draw background box
+                if (com.BoxColor != null)
+                {
+                    canvas.AddRectFilled(rect, (Color)com.BoxColor);
+                }
 
-            // Create an InvisibleButton so that we can select it without dragging the entire window.
-            // Names are not unique... probably not an issue? These don't really do anything.
-            ImGui.SetCursorScreenPos(canvas.Origin + com.BoxRectangle.TopLeft * user.Scale);
-            ImGui.InvisibleButton($"OverlayBox button {componentIndex}", com.BoxSize * user.Scale);
+                // Create an InvisibleButton so that we can select it without dragging the entire
+                // window. Names are not unique... probably not an issue? These don't really do
+                // anything.
+                ImGui.SetCursorScreenPos(canvas.Origin + rect.TopLeft);
+                ImGui.InvisibleButton($"OverlayBox button {componentIndex}", rect.Size);
 
-            // Draw it. (Ensure "com.Render" is immediately after ImGui.InvisibleButton so that the
-            // Render function can manipulate it if necessary.)
-            ImGui.SetCursorScreenPos(canvas.Origin);
-            com.Render(com == user.Selected);
+                // Draw it. (Ensure "com.Render" is immediately after ImGui.InvisibleButton so that the
+                // Render function can manipulate it if necessary.)
+                ImGui.SetCursorScreenPos(canvas.Origin);
+                com.Render(com == user.Selected);
 
-            // Check if we're hovering over it. But don't draw the hovering rectangle right now
-            // because we don't want to draw it on more than one OverlayBox.
-            var rect = com.BoxRectangle;
-            if (isWindowHovered && rect.Contains(mousePos))
-            {
-                hoveringComponent = com;
+                // Check if we're hovering over it. But don't draw the hovering rectangle right now
+                // because we don't want to draw it on more than one OverlayBox.
+                rect = com.BoxRectangle;
+                if (isWindowHovered && rect.Contains(mousePos))
+                {
+                    hoveringComponent = com;
+                }
             }
 
             componentIndex++;
