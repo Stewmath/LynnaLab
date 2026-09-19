@@ -140,7 +140,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         }
 
         // The SameBoy API docs claim that SetKeyMask is thread-safe, but I don't think this
-        // entirely true.
+        // entirely true. (TODO: redundant?)
         // https://github.com/LIJI32/SameBoy/issues/774
         lock (emu)
         {
@@ -349,7 +349,7 @@ class ScreenWidget : SizedWidget, IDisposable
 
     void UpdateOverlayBoxes()
     {
-        GameboySnapshot state = emu.LatestSnapshot;
+        GameboySnapshot state = emu.Snapshot;
         HashSet<ushort> seen = new();
 
         foreach (var obj in state.GetObjects())
@@ -449,12 +449,12 @@ record class EmulatorObjectOverlayBox : OverlayBox
     public override int X
     {
         get { return (int)GetRect().Center.X; }
-        set { Emulator.Wram[address - 0xc000 + 0xd] = (byte)(value + Emulator.LatestSnapshot.CameraX); }
+        set { GetObject().X = (byte)(value + Emulator.Snapshot.CameraX); }
     }
     public override int Y
     {
         get { return (int)GetRect().Center.Y; }
-        set { Emulator.Wram[address - 0xc000 + 0xb] = (byte)(value + Emulator.LatestSnapshot.CameraY - 16); }
+        set { GetObject().Y = (byte)(value + Emulator.Snapshot.CameraY - 16); }
     }
 
     public override int BoxWidth { get { return (int)GetRect().Width; } }
@@ -476,7 +476,7 @@ record class EmulatorObjectOverlayBox : OverlayBox
     // ================================================================================
 
     OraclesEmulator Emulator { get { return parent.Emulator; } }
-    GameboyStateBase State { get { return Emulator.LatestSnapshot; } }
+    GameboyStateBase State { get { return Emulator.Snapshot; } }
 
     // ================================================================================
     // Private methods

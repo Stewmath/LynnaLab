@@ -8,38 +8,83 @@ public class GameboySnapshot : GameboyStateBase
 
     public GameboySnapshot(OraclesEmulator emulator) : base(emulator)
     {
-        RomBank = Emulator.RomBank;
-        SramBank = Emulator.SramBank;
-        VramBank = Emulator.VramBank;
-        WramBank = Emulator.WramBank;
-
-        wram = Emulator.Wram.ToArray();
-        hram = Emulator.Hram.ToArray();
-        vram = Emulator.Vram.ToArray();
-        sram = Emulator.Sram.ToArray();
+        UpdateState();
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
 
-    readonly byte[] wram;
-    readonly byte[] hram;
-    readonly byte[] vram;
-    readonly byte[] sram;
+    short romBank, sramBank, vramBank, wramBank;
+
+    byte[] wram;
+    byte[] hram;
+    byte[] vram;
+    byte[] sram;
+
+    Queue<Action> vblankWriteActions = new();
 
     // ================================================================================
     // Properties
     // ================================================================================
 
-    public override short RomBank { get; }
-    public override short SramBank { get; }
-    public override short VramBank { get; }
-    public override short WramBank { get; }
+    public override short RomBank { get { return romBank; } }
+    public override short SramBank { get { return sramBank; } }
+    public override short VramBank { get { return vramBank; } }
+    public override short WramBank { get { return wramBank; } }
 
-    public override Span<byte> Rom { get { return Emulator.Rom; } }
-    public override Span<byte> Wram { get { return wram; } }
-    public override Span<byte> Hram { get { return hram; } }
-    public override Span<byte> Vram { get { return vram; } }
-    public override Span<byte> Sram { get { return sram; } }
+    public override ReadOnlySpan<byte> Rom { get { return Emulator.Rom; } }
+    public override ReadOnlySpan<byte> Wram { get { return wram; } }
+    public override ReadOnlySpan<byte> Hram { get { return hram; } }
+    public override ReadOnlySpan<byte> Vram { get { return vram; } }
+    public override ReadOnlySpan<byte> Sram { get { return sram; } }
+
+    // ================================================================================
+    // Public methods
+    // ================================================================================
+
+    public override void WriteByte(GbPointer ptr, byte value)
+    {
+        vblankWriteActions.Enqueue(() =>
+        {
+            base.WriteByteHelper(ptr, value);
+        });
+    }
+
+    /// <summary>
+    /// Writes don't do anything until this is called, in order to ensure writes are atomic and do
+    /// not accidentally happen at different times while the gameboy thread is running. This is
+    /// called once per imgui render pass.
+    ///
+    /// (This technically shouldn't be necessary since we lock the emulator thread while rendering
+    /// the imgui interface, but it does no harm.)
+    /// </summary>
+    public void FlushWrites()
+    {
+        var actions = vblankWriteActions.ToList();
+        vblankWriteActions.Clear();
+        Emulator.DoAtVBlank(() => { foreach (var a in actions) a(); });
+    }
+
+    // ================================================================================
+    // Internal methods
+    // ================================================================================
+
+    /// <summary>
+    /// This is called from the gameboy execution thread. For thread safety, lock that thread while
+    /// using the snapshot for other things.
+    /// </summary>
+    [MemberNotNull(nameof(wram), nameof(hram), nameof(vram), nameof(sram))]
+    internal void UpdateState()
+    {
+        romBank = Emulator.RomBank;
+        sramBank = Emulator.SramBank;
+        vramBank = Emulator.VramBank;
+        wramBank = Emulator.WramBank;
+
+        wram = Emulator.Wram.ToArray();
+        hram = Emulator.Hram.ToArray();
+        vram = Emulator.Vram.ToArray();
+        sram = Emulator.Sram.ToArray();
+    }
 }

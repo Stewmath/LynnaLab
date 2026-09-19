@@ -22,7 +22,7 @@ public class OraclesEmulator : IDisposable
         this.romPath = romPath;
         this.startOptions = startOptions;
 
-        state = new GameboyState(this);
+        state = new LiveGameboyState(this);
 
         gb = new SameBoy(SameBoy.Model.GB_MODEL_CGB_E);
         gb.LoadBootRomFromBuffer(Helper.ReadResourceFileBytes("LynnaLib.resource.cgb_boot_fast.bin"));
@@ -65,7 +65,7 @@ public class OraclesEmulator : IDisposable
         if (startOptions.Quickstart)
             LoadIntoRoom(startOptions.RoomIndex, startOptions.Season, startOptions.X, startOptions.Y);
 
-        latestSnapshot = new GameboySnapshot(this);
+        snapshot = new GameboySnapshot(this);
     }
 
     // ================================================================================
@@ -73,6 +73,7 @@ public class OraclesEmulator : IDisposable
     // ================================================================================
 
     readonly EmulatorStartOptions startOptions;
+    readonly LiveGameboyState state;
 
     SameBoy gb;
     string romPath;
@@ -80,8 +81,7 @@ public class OraclesEmulator : IDisposable
     ConcurrentQueue<Action> vblankActionQueue = new();
 
     Dictionary<GbPointer, Action> breakpoints = new();
-    readonly GameboyState state;
-    GameboySnapshot latestSnapshot;
+    GameboySnapshot snapshot;
 
     // ================================================================================
     // Properties
@@ -89,16 +89,24 @@ public class OraclesEmulator : IDisposable
 
     public SameBoy GB { get { return gb; } }
 
-    public GameboyState State { get { return state; } }
+    /// <summary>
+    /// Access live state of the gameboy as it is executing (live RAM contents).
+    /// </summary>
+    public LiveGameboyState LiveState { get { return state; } }
 
     /// <summary>
-    /// Latest snapshot of emulator state taken during vblank. Use this instead of inspecting
-    /// emulator state directly so that we're pretty sure we're not in the middle of some logic that
-    /// would interfere with whatever we're checking.
+    /// Snapshot of emulator state taken during vblank. Use this instead of using LiveState directly
+    /// so that we're not in the middle of some logic that would interfere with whatever we're
+    /// checking.
+    ///
+    /// Writes which go through the Snapshot apply at next vblank.
     /// </summary>
-    public GameboySnapshot LatestSnapshot { get { return latestSnapshot; } }
+    public GameboySnapshot Snapshot { get { return snapshot; } }
 
     public IntPtr PixelData { get { return pixelData; } }
+
+
+    // Some state is exposed directly as with LiveState.
 
     public short RomBank
     {
@@ -132,6 +140,7 @@ public class OraclesEmulator : IDisposable
     /// <summary>
     /// Runs some indeterminate amount of code before returning (but usually about one opcode).
     /// Similar to gb.Run but with a bunch of hacks to implement advanced functionality.
+    /// This typically runs on a separate thread from the main program, so use caution.
     /// </summary>
     public void Run()
     {
@@ -139,7 +148,7 @@ public class OraclesEmulator : IDisposable
 
         if (gb.Registers.PC == 0x40)
         {
-            latestSnapshot = new GameboySnapshot(this);
+            snapshot.UpdateState();
 
             while (vblankActionQueue.TryDequeue(out Action? action))
             {
@@ -226,15 +235,15 @@ public class OraclesEmulator : IDisposable
 
             // TODO: These addresses are hardcoded for compatibility with older projects because at
             // the time of coding, hack-base does not put these labels in ramsections.
-            if (State.DetermineGame() == Game.Ages)
+            if (LiveState.DetermineGame() == Game.Ages)
             {
-                WriteByte(State.ConstructPointer(0xff9d), 2); // hNextLcdInterruptBehaviour
-                WriteByte(State.ConstructPointer(0xffb9), 1); // hIntroInputsEnabled
+                WriteByte(LiveState.ConstructPointer(0xff9d), 2); // hNextLcdInterruptBehaviour
+                WriteByte(LiveState.ConstructPointer(0xffb9), 1); // hIntroInputsEnabled
             }
             else
             {
-                WriteByte(State.ConstructPointer(0xff9b), 2); // hNextLcdInterruptBehaviour
-                WriteByte(State.ConstructPointer(0xffb7), 1); // hIntroInputsEnabled
+                WriteByte(LiveState.ConstructPointer(0xff9b), 2); // hNextLcdInterruptBehaviour
+                WriteByte(LiveState.ConstructPointer(0xffb7), 1); // hIntroInputsEnabled
             }
 
             WriteByte("wDeathRespawnBuffer.group", (byte)(roomIndex >> 8));
@@ -245,7 +254,7 @@ public class OraclesEmulator : IDisposable
             WriteByte("wDeathRespawnBuffer.x", x);
 
             // Hack initial thread states to run game thread
-            GbPointer wThreadStates = State.ConstructPointer(0xc2e0); // TODO: wThreadStateBuffer
+            GbPointer wThreadStates = LiveState.ConstructPointer(0xc2e0); // TODO: wThreadStateBuffer
             WriteWord(wThreadStates + 0 + 4, Evaluate("stubThreadStart").Addr);
             WriteWord(wThreadStates + 8 + 4, Evaluate("mainThreadStart").Addr);
 
@@ -382,7 +391,7 @@ public class OraclesEmulator : IDisposable
     {
         long cycleTimeout = 8000000L * timeout / 1000;
 
-        while (!State.AddressEquals(gb.Registers.PC, pointer))
+        while (!LiveState.AddressEquals(gb.Registers.PC, pointer))
         {
             cycleTimeout -= (int)gb.Run();
 
@@ -463,7 +472,7 @@ public class OraclesEmulator : IDisposable
 /// <summary>
 /// Represents a gameboy address, including (optionally) a bank number.
 /// </summary>
-public readonly struct GbPointer
+public readonly record struct GbPointer
 {
     public GbPointer(ushort addr, short bank)
     {
@@ -478,21 +487,6 @@ public readonly struct GbPointer
     public short Bank { get; init; }
 
     public bool IsBanked { get { return Bank != -1; } }
-
-    // Equal/HashCode overrides for efficient dictionary usage
-
-    public override bool Equals(object? obj)
-    {
-        return obj is GbPointer o
-               && Addr == o.Addr
-               && Bank == o.Bank;
-    }
-
-    public override int GetHashCode()
-    {
-        return (int)(Addr.GetHashCode() * 0x9e3779b9 + Bank);
-    }
-
 
     public override string ToString()
     {

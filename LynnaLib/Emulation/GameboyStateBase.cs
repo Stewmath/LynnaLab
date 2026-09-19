@@ -25,11 +25,11 @@ public abstract class GameboyStateBase
     public abstract short VramBank { get; }
     public abstract short WramBank { get; }
 
-    public abstract Span<byte> Rom { get; }
-    public abstract Span<byte> Wram { get; }
-    public abstract Span<byte> Hram { get; }
-    public abstract Span<byte> Vram { get; }
-    public abstract Span<byte> Sram { get; }
+    public abstract ReadOnlySpan<byte> Rom { get; }
+    public abstract ReadOnlySpan<byte> Wram { get; }
+    public abstract ReadOnlySpan<byte> Hram { get; }
+    public abstract ReadOnlySpan<byte> Vram { get; }
+    public abstract ReadOnlySpan<byte> Sram { get; }
 
     public short CameraY
     {
@@ -113,6 +113,14 @@ public abstract class GameboyStateBase
             return ReadByte(ptr);
     }
 
+    public abstract void WriteByte(GbPointer ptr, byte value);
+
+    public void WriteWord(GbPointer ptr, ushort value)
+    {
+        WriteByte(ptr,     (byte)(value & 0xff));
+        WriteByte(ptr + 1, (byte)(value >> 8));
+    }
+
     public bool AddressEquals(ushort addr, GbPointer ptr)
     {
         return ptr.Equals(ConstructPointer(addr));
@@ -129,10 +137,6 @@ public abstract class GameboyStateBase
         return list;
     }
 
-    // ================================================================================
-    // Private methods
-    // ================================================================================
-
     /// <summary>
     /// Make a best-effort attempt to determine what game is running. Ideally we would not rely on
     /// this result for anything.
@@ -148,5 +152,29 @@ public abstract class GameboyStateBase
         else
             // They changed the title, this won't work =)
             return Game.Ages;
+    }
+
+    // ================================================================================
+    // Protected methods
+    // ================================================================================
+
+    protected void WriteByteHelper(GbPointer ptr, byte value)
+    {
+        switch (ptr.Addr >> 12)
+        {
+            case 0xc:
+                Emulator.Wram[ptr.Addr & 0xfff] = value;
+                break;
+            case 0xd:
+                if (ptr.IsBanked)
+                {
+                    Emulator.Wram[ptr.Bank * 0x1000 + (ptr.Addr & 0xfff)] = value;
+                }
+                else
+                    throw new NotImplementedException();
+                break;
+            default:
+                throw new NotImplementedException();
+        }
     }
 }

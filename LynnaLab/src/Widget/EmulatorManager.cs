@@ -60,35 +60,43 @@ public class EmulatorManager : Frame, IDisposable
 
     public override void Render()
     {
-        if (SelectedObject?.Enabled == 0)
-            SetSelectedObject(null);
-
-        renderer.Render();
-        ImGui.SameLine();
-
-        ImGui.BeginChild("Debugger pane", ImGuiChildFlags.Borders);
-
-        if (ImGui.BeginTabBar("Debugger tabs"))
+        // Reduce surprises by disallowing the emulator from running while we're rendering it and
+        // the debug windows. There are no guarantees about where in the execution it may have
+        // paused, though.
+        lock (emulator)
         {
-            if (ImGui.BeginTabItem("Object"))
-            {
-                RenderObjectTab();
-                ImGui.EndTabItem();
-            }
-            if (ImGui.BeginTabItem("General"))
-            {
-                RenderGeneralTab();
-                ImGui.EndTabItem();
-            }
-            if (ImGui.BeginTabItem("Debugger"))
-            {
-                debugger.Render();
-                ImGui.EndTabItem();
-            }
-            ImGui.EndTabBar();
-        }
+            if (SelectedObject?.Enabled == 0)
+                SetSelectedObject(null);
 
-        ImGui.EndChild();
+            renderer.Render();
+            ImGui.SameLine();
+
+            ImGui.BeginChild("Debugger pane", ImGuiChildFlags.Borders);
+
+            if (ImGui.BeginTabBar("Debugger tabs"))
+            {
+                if (ImGui.BeginTabItem("Object"))
+                {
+                    RenderObjectTab();
+                    ImGui.EndTabItem();
+                }
+                if (ImGui.BeginTabItem("General"))
+                {
+                    RenderGeneralTab();
+                    ImGui.EndTabItem();
+                }
+                if (ImGui.BeginTabItem("Debugger"))
+                {
+                    debugger.Render();
+                    ImGui.EndTabItem();
+                }
+                ImGui.EndTabBar();
+            }
+
+            ImGui.EndChild();
+
+            emulator.Snapshot.FlushWrites();
+        }
     }
 
     public void Dispose()
@@ -130,7 +138,7 @@ public class EmulatorManager : Frame, IDisposable
         {
             if (SelectedObject?.Address == address)
                 return;
-            SelectedObject = new(Emulator.State, (ushort)address);
+            SelectedObject = new(Emulator.Snapshot, (ushort)address);
         }
     }
 
@@ -185,7 +193,7 @@ public class EmulatorManager : Frame, IDisposable
             ImGui.SeparatorText(name);
             for (int addr = 0xd000 + start; addr < 0xe000; addr += 0x100)
             {
-                EmulatorObject obj = new(Emulator.State, (ushort)addr);
+                EmulatorObject obj = new(Emulator.Snapshot, (ushort)addr);
                 if (obj.Enabled == 0)
                     ImGui.Text("----");
                 else
@@ -231,7 +239,7 @@ public class EmulatorManager : Frame, IDisposable
             ImGui.Text($"ID:    {SelectedObject.Memory[1]:X2} ({name})");
             ImGui.Text($"SubID: {SelectedObject.Memory[2]:X2}");
             ImGui.SeparatorText("Object Memory");
-            ImGuiX.HexEditor("Hex", SelectedObject.Memory, SelectedObject.Address);
+            ImGuiX.HexEditor("Hex", SelectedObject.Memory, SelectedObject.WriteByte, SelectedObject.Address);
         }
 
         ImGui.PopFont();
@@ -251,7 +259,7 @@ public class EmulatorManager : Frame, IDisposable
     void WordWidget(string label)
     {
         GbPointer ptr = emulator.Evaluate(label);
-        int val = emulator.State.ReadWord(ptr);
+        int val = emulator.Snapshot.ReadWord(ptr);
         if (ImGuiX.InputHex(label, ref val))
         {
             emulator.WriteWordSync(ptr, (ushort)val);

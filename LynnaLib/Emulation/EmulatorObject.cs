@@ -32,23 +32,47 @@ public class EmulatorObject
     private readonly ushort address;
 
     public ushort Address { get { return address; } }
+    public GbPointer Ptr { get { return new(Address, 1); } }
 
     // ================================================================================
     // Properties
     // ================================================================================
 
-    // TODO: Make this read only - not safe to write while another thread is running
-    public Span<byte> Memory
+    public ReadOnlySpan<byte> Memory
     {
         get { return state.Wram.Slice(address - 0xc000, 0x40); }
     }
 
-    public ref byte Enabled { get { return ref Memory[0]; } }
-    public ref byte Y { get { return ref Memory[0xb]; } }
-    public ref byte X { get { return ref Memory[0xd]; } }
-    public ref byte Z { get { return ref Memory[0xf]; } }
-    public ref byte CollisionRadiusY { get { return ref Memory[0x26]; } }
-    public ref byte CollisionRadiusX { get { return ref Memory[0x27]; } }
+    public byte Enabled
+    {
+        get => GetByte(0);
+        set => WriteByte(0, value);
+    }
+    public byte Y
+    {
+        get => GetByte(0xb);
+        set => WriteByte(0xb, value);
+    }
+    public byte X
+    {
+        get => GetByte(0xd);
+        set => WriteByte(0xd, value);
+    }
+    public byte Z
+    {
+        get => GetByte(0xf);
+        set => WriteByte(0xf, value);
+    }
+    public byte CollisionRadiusY
+    {
+        get => GetByte(0x26);
+        set => WriteByte(0x26, value);
+    }
+    public byte CollisionRadiusX
+    {
+        get => GetByte(0x27);
+        set => WriteByte(0x27, value);
+    }
 
     // ================================================================================
     // Public methods
@@ -93,7 +117,19 @@ public class EmulatorObject
         }
     }
 
+    public void WriteByte(int offset, byte value)
+    {
+        if (offset < 0 || offset >= 0x40)
+            throw new ArgumentException($"EmulatorObject.WriteByte: Offset {offset} out of range");
+        state.WriteByte(Ptr + offset, value);
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================
+
+    private byte GetByte(int offset)
+    {
+        return Memory[offset];
+    }
 }

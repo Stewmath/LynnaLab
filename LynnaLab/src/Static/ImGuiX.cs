@@ -633,7 +633,7 @@ public static class ImGuiX
 
     static _HexEditorState HexEditorState = new();
 
-    public static void HexEditor(string name, Span<byte> data, int startAddress = 0)
+    public static void HexEditor(string name, ReadOnlySpan<byte> data, Action<int, byte> writeByte, int startAddress = 0)
     {
         int bytesPerLine = 16;
 
@@ -704,7 +704,7 @@ public static class ImGuiX
                         if (state.enteredFirstDigit != -1)
                         {
                             int value = (state.enteredFirstDigit << 4) + num;
-                            data[addr] = (byte)value;
+                            writeByte(addr, (byte)value);
                             state.enteredFirstDigit = -1;
                             state.focusedByte++;
                             if (state.focusedByte >= data.Length)
