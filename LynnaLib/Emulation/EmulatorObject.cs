@@ -1,7 +1,5 @@
 namespace Emulation;
 
-using LynnaLib;
-
 /// <summary>
 /// Represents an object (Link/enemy/etc) within a running emulator instance.
 /// </summary>
@@ -48,6 +46,11 @@ public class EmulatorObject
         get => GetByte(0);
         set => WriteByte(0, value);
     }
+    public byte ID
+    {
+        get => GetByte(1);
+        set => WriteByte(1, value);
+    }
     public byte Y
     {
         get => GetByte(0xb);
@@ -89,39 +92,19 @@ public class EmulatorObject
         return new FRect(X - w / 2, Y - h / 2, w, h);
     }
 
-    public string GetName(Project p, bool withPrefix=true)
-    {
-        string s = GetConstantsMapping(p).ByteToString(Memory[1]);
-        if (withPrefix)
-            return s;
-        return GetConstantsMapping(p).RemovePrefix(s);
-    }
-
-    public ConstantsMapping GetConstantsMapping(Project p)
-    {
-        switch (address & 0xc0)
-        {
-            case 0x00:
-                if (address < 0xd200)
-                    return p.SpecialObjectMapping;
-                else
-                    return p.ItemMapping;
-            case 0x40:
-                return p.InteractionMapping;
-            case 0x80:
-                return p.EnemyMapping;
-            case 0xc0:
-                return p.PartMapping;
-            default:
-                throw new NotImplementedException();
-        }
-    }
-
     public void WriteByte(int offset, byte value)
     {
         if (offset < 0 || offset >= 0x40)
             throw new ArgumentException($"EmulatorObject.WriteByte: Offset {offset} out of range");
         state.WriteByte(Ptr + offset, value);
+    }
+
+    public void Delete()
+    {
+        for (int i = 0; i < 0x40; i++)
+        {
+            WriteByte(i, 0);
+        }
     }
 
     // ================================================================================

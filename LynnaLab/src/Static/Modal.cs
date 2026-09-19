@@ -37,6 +37,7 @@ public static class Modal
 
     /// <summary>
     /// Open a modal window with the given name, using the given function to render its contents.
+    /// The function returns true if it should be closed.
     /// It will be opened after any other modal windows have been closed.
     /// </summary>
     public static void OpenModal(string name, Func<bool> renderFunc)

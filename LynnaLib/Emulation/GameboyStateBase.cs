@@ -91,6 +91,12 @@ public abstract class GameboyStateBase
             return Sram[pointer.Addr - 0xa000];
         else if (pointer.Addr >= 0xc000 && pointer.Addr < 0xd000)
             return Wram[pointer.Addr - 0xc000];
+        else if (pointer.Addr >= 0xd000 && pointer.Addr < 0xe000)
+        {
+            if (!pointer.IsBanked)
+                throw new ArgumentException("ReadByte: Tried to read WRAM addr {pointer} with no bank");
+            return Wram[pointer.Bank * 0x1000 + (pointer.Addr & 0xfff)];
+        }
         else if (pointer.Addr >= 0xff80)
             return Hram[pointer.Addr - 0xff80];
         else

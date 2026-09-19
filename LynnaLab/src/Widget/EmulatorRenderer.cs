@@ -394,7 +394,8 @@ class ScreenWidget : SizedWidget, IDisposable
         {
             get
             {
-                if (renderer.Manager.SelectedObject == null)
+                if (renderer.Manager.SelectedObject == null ||
+                    renderer.Manager.SelectedObject.Enabled == 0)
                     return null;
                 return new EmulatorObjectOverlayBox(screen, renderer.Manager.SelectedObject.Address);
             }

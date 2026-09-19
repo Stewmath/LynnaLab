@@ -46,7 +46,7 @@ public static class ImGuiLL
     /// </summary>
     public static bool ComboBoxFromConstants(
         string name, ConstantsMapping mapping, ref int value,
-        bool withIntInput, bool omitPrefix)
+        bool withIntInput, bool omitPrefix, bool showHelp=true)
     {
         bool openDoc = false;
 
@@ -63,10 +63,13 @@ public static class ImGuiLL
         if (withIntInput)
         {
             ImGuiX.InputHex($"{name}##InputHex", ref value);
-            ImGui.SameLine();
-            if (ImGui.Button($"?##{name}"))
+            if (showHelp)
             {
-                openDoc = true;
+                ImGui.SameLine();
+                if (ImGui.Button($"?##{name}"))
+                {
+                    openDoc = true;
+                }
             }
         }
 
