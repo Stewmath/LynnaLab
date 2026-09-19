@@ -37,7 +37,7 @@ public class EmulatorManager : Frame, IDisposable
     OraclesEmulator emulator;
     EmulatorDebugger debugger;
     EmulatorRenderer renderer;
-    bool paused;
+    bool paused, nextPausedState;
     Thread? emuThread;
 
     // ImGui state
@@ -97,6 +97,24 @@ public class EmulatorManager : Frame, IDisposable
 
             emulator.Snapshot.FlushWrites();
         }
+
+        // Must do this outside of the lock
+        if (nextPausedState != paused)
+        {
+            paused = nextPausedState;
+            if (paused)
+            {
+                if (emuThread?.IsAlive ?? false)
+                    emuThread.Join();
+                emuThread = null;
+            }
+            else
+            {
+                Debug.Assert(emuThread == null);
+                emuThread = new Thread(RunEmuThreadCallback);
+                emuThread.Start();
+            }
+        }
     }
 
     public void Dispose()
@@ -111,19 +129,7 @@ public class EmulatorManager : Frame, IDisposable
         if (paused == value)
             return;
 
-        paused = value;
-        if (paused)
-        {
-            if (emuThread?.IsAlive ?? false)
-                emuThread.Join();
-            emuThread = null;
-        }
-        else
-        {
-            Debug.Assert(emuThread == null);
-            emuThread = new Thread(RunEmuThreadCallback);
-            emuThread.Start();
-        }
+        nextPausedState = value;
     }
 
     public void SetSelectedObject(ushort? address)
