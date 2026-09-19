@@ -146,7 +146,7 @@ public class OraclesEmulator : IDisposable
     {
         gb.Run();
 
-        if (gb.Registers.PC == 0x40)
+        if (gb.Registers.PC == 0x44) // VBlank, after pushing all registers
         {
             snapshot.UpdateState();
 
@@ -269,6 +269,26 @@ public class OraclesEmulator : IDisposable
         {
             gb.SetTurboMode(false);
         }
+    }
+
+    public void PlaySound(int music)
+    {
+        DoAtVBlank(() =>
+        {
+            // "playSound" is ambiguous between two functions with that name. So instead of calling
+            // that, just write it into the music queue.
+
+            // TODO: Use Evaluate("hMusicQueueTail") when possible, same for wMusicQueue
+            GbPointer tailPtr = new GbPointer(LiveState.DetermineGame() == Game.Ages
+                ? 0xffb5 : 0xffb3, 0);
+            GbPointer queue = new GbPointer(0xc0a0, 0); // wMusicQueue
+
+            byte tail = LiveState.ReadByte(tailPtr);
+            ushort addr = (ushort)((queue.Addr & 0xff00) | tail);
+            GbPointer ptr = new(addr, queue.Bank);
+            WriteByte(ptr, (byte)music);
+            WriteByte(tailPtr, (byte)((tail + 1) & 0xaf));
+        });
     }
 
     public void DoAtVBlank(Action action)
@@ -482,6 +502,8 @@ public readonly record struct GbPointer
         // TODO: Do some validation here? I'm not really sure whether "bank = -1" should ever be a
         // thing. Anyway, don't go crazy with validation since this is called by ExecutionCallback.
     }
+
+    public GbPointer(int addr, short bank) : this((ushort)addr, bank) {}
 
     public ushort Addr { get; init; }
     public short Bank { get; init; }

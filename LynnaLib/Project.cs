@@ -172,6 +172,10 @@ public partial class Project
     {
         get { return GetConstantsMapping("MusicMapping"); }
     }
+    public ConstantsMapping SfxMapping
+    {
+        get { return GetConstantsMapping("SfxMapping"); }
+    }
     public ConstantsMapping SourceTransitionMapping
     {
         get { return GetConstantsMapping("SourceTransitionMapping"); }
@@ -463,6 +467,12 @@ public partial class Project
                 LoadFileParser("constants/common/music.s"),
                 "MusicMapping",
                 "MUS_",
+                alphabetical: true));
+        AddConstantsMapping(
+            new ConstantsMapping(
+                LoadFileParser("constants/common/music.s"),
+                "SfxMapping",
+                [ "SND_", "SNDCTRL_" ],
                 alphabetical: true));
         AddConstantsMapping(
             new ConstantsMapping(

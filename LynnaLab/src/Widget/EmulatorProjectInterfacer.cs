@@ -62,6 +62,9 @@ public class EmulatorProjectInterfacer
     public EmulatorObjectClass EnemyObjectClass { get; }
     public EmulatorObjectClass PartObjectClass { get; }
 
+    public ConstantsMapping MusicMapping { get { return Project.MusicMapping; } }
+    public ConstantsMapping SfxMapping { get { return Project.SfxMapping; } }
+
     // ================================================================================
     // Public methods
     // ================================================================================

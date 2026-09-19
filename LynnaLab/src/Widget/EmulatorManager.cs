@@ -44,6 +44,8 @@ public class EmulatorManager : Frame, IDisposable
     // ImGui state
     int hoveringObject;
     int rightClickObjectAddr;
+    int selectedMusic = 0;
+    int selectedSfx = 0;
 
     // ================================================================================
     // Properties
@@ -177,6 +179,35 @@ public class EmulatorManager : Frame, IDisposable
         ByteWidget("wTotalSignsDestroyed");
         WordWidget("wTotalEnemiesKilled");
         WordWidget("wTotalRupeesCollected");
+
+        ImGui.SeparatorText("Audio");
+        if (ProjectInterfacer != null)
+        {
+            if (ImGui.Button("Play Music"))
+            {
+                Emulator.PlaySound(selectedMusic);
+            }
+            ImGui.SameLine();
+            ImGuiLL.ComboBoxFromConstants("Play music",
+                ProjectInterfacer.MusicMapping,
+                ref selectedMusic,
+                withIntInput: false,
+                omitPrefix: false,
+                showHelp: false);
+
+            if (ImGui.Button("Play Sound Effect"))
+            {
+                Emulator.PlaySound(selectedSfx);
+            }
+            ImGui.SameLine();
+            ImGuiLL.ComboBoxFromConstants("Play sound effect",
+                ProjectInterfacer.SfxMapping,
+                ref selectedSfx,
+                withIntInput: false,
+                omitPrefix: false,
+                showHelp: false);
+        }
+
         ImGui.SeparatorText("Room stuff");
         ImGui.SeparatorText("Dungeon stuff");
         ByteWidget("wSwitchState");
