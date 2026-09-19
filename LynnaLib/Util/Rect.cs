@@ -33,10 +33,10 @@ public class FRect
     // ================================================================================
     // Properties
     // ================================================================================
-    public float X { get; private set; }
-    public float Y { get; private set; }
-    public float Width { get; private set; }
-    public float Height { get; private set; }
+    public float X { get; init; }
+    public float Y { get; init; }
+    public float Width { get; init; }
+    public float Height { get; init; }
 
     public Vector2 Size { get { return new Vector2(Width, Height); } }
 
@@ -148,10 +148,10 @@ public class PRect
     // ================================================================================
     // Properties
     // ================================================================================
-    public int X { get; private set; }
-    public int Y { get; private set; }
-    public int Width { get; private set; }
-    public int Height { get; private set; }
+    public int X { get; init; }
+    public int Y { get; init; }
+    public int Width { get; init; }
+    public int Height { get; init; }
 
     public Point Size { get { return new Point(Width, Height); } }
 

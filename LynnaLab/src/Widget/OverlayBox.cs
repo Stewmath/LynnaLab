@@ -4,7 +4,7 @@ namespace LynnaLab;
 /// An OverlayBox is a box-like thing that can be clicked on and dragged around using the mouse, ie.
 /// objects in the room editor or in the emulator.
 /// </summary>
-public abstract class OverlayBox
+public abstract record class OverlayBox
 {
     // ================================================================================
     // Constructors
@@ -13,12 +13,6 @@ public abstract class OverlayBox
     {
         this.Parent = parent;
     }
-
-    // ================================================================================
-    // Events
-    // ================================================================================
-
-    public event EventHandler<EventArgs?>? SelectedEvent;
 
     // ================================================================================
     // Properties
@@ -51,17 +45,6 @@ public abstract class OverlayBox
     // ================================================================================
 
     public abstract void Render(bool selected);
-
-    public virtual void Select()
-    {
-        if (SelectedEvent != null)
-            SelectedEvent(this, null);
-    }
-
-    /// <summary>
-    /// Returns true if the underlying data is the same
-    /// </summary>
-    public abstract bool Compare(OverlayBox com);
 
     /// <summary>
     /// Right-click, select "delete", or press "Delete" key while selected

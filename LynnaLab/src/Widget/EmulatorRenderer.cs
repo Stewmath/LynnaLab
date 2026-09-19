@@ -396,7 +396,7 @@ class ScreenWidget : SizedWidget, IDisposable
         {
             // Even if the OverlayBox object changed, the underlying data may actually be the same as before.
             // "isDifferent" checks the underlying data rather than the OverlayBox themselves.
-            bool isDifferent = comp == null || !comp.Compare(Selected);
+            bool isDifferent = comp != Selected;
             if (isDifferent || startDrag)
             {
                 DraggingComponent = startDrag;
@@ -415,7 +415,7 @@ class ScreenWidget : SizedWidget, IDisposable
 /// <summary>
 /// Draggable object in the ScreenWidget
 /// </summary>
-class EmulatorObjectOverlayBox : OverlayBox
+record class EmulatorObjectOverlayBox : OverlayBox
 {
     readonly ScreenWidget parent;
     readonly ushort address;
@@ -424,7 +424,7 @@ class EmulatorObjectOverlayBox : OverlayBox
     // Constructors
     // ================================================================================
 
-    public EmulatorObjectOverlayBox(ScreenWidget parent, ushort address) : base(null)
+    public EmulatorObjectOverlayBox(ScreenWidget parent, ushort address) : base((RoomLayoutEditor)null)
     {
         this.parent = parent;
         this.address = address;
@@ -459,11 +459,6 @@ class EmulatorObjectOverlayBox : OverlayBox
     public override void Render(bool selected)
     {
         parent.AddRect(GetRect() * parent.Scale, Color.DarkOrange, parent.Scale);
-    }
-
-    public override bool Compare(OverlayBox com)
-    {
-        return address == (com as EmulatorObjectOverlayBox)?.address;
     }
 
     public override string GetTransactionIdentifier()

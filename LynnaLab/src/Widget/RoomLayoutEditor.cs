@@ -328,7 +328,7 @@ public class RoomLayoutEditor : TileGrid
     {
         // Even if the OverlayBox object changed, the underlying data may actually be the same as before.
         // "isDifferent" checks the underlying data rather than the OverlayBoxes themselves.
-        bool isDifferent = comp == null || !comp.Compare(selectedOverlayBox);
+        bool isDifferent = comp != selectedOverlayBox;
         if (isDifferent || startDrag)
         {
             draggingComponent = startDrag;
@@ -336,8 +336,6 @@ public class RoomLayoutEditor : TileGrid
                 draggingComponentOffset = (Vector2)dragOffset;
         }
 
-        if (selectedOverlayBox == comp)
-            return;
         OverlayBox old = selectedOverlayBox;
         selectedOverlayBox = comp;
 
@@ -414,9 +412,8 @@ public class RoomLayoutEditor : TileGrid
             {
                 Warp warp = warpGroup.GetWarp(warpIndex);
 
-                Action<int, int, int, int> addWarpComponent = (x, y, width, height) =>
+                Action<FRect> addWarpComponent = (rect) =>
                 {
-                    var rect = new FRect(x, y, width, height);
                     var com = new WarpSourceOverlayBox(this, warp, warpIndex, rect);
                     overlayBoxes.Add(com);
                 };
@@ -432,22 +429,22 @@ public class RoomLayoutEditor : TileGrid
                     int bottom = Room.Height * 16 - 8;
 
                     if (warp.TopLeft)
-                        addWarpComponent(0, -8, middle, 16);
+                        addWarpComponent(new(0, -8, middle, 16));
                     if (warp.TopRight)
-                        addWarpComponent(middle, -8, right - middle, 16);
+                        addWarpComponent(new(middle, -8, right - middle, 16));
                     if (warp.BottomLeft)
-                        addWarpComponent(0, bottom, middle, 16);
+                        addWarpComponent(new(0, bottom, middle, 16));
                     if (warp.BottomRight)
-                        addWarpComponent(middle, bottom, right - middle, 16);
+                        addWarpComponent(new(middle, bottom, right - middle, 16));
 
                     if (!warp.TopLeft && !warp.TopRight && !warp.BottomLeft && !warp.BottomRight)
                     {
-                        addWarpComponent(0, 16 * 13, Room.Width * 16, 32);
+                        addWarpComponent(new(0, 16 * 13, Room.Width * 16, 32));
                     }
                 }
                 else if (warp.WarpSourceType == WarpSourceType.Position)
                 {
-                    addWarpComponent(warp.SourceX * TileWidth, warp.SourceY * TileHeight, TileWidth, TileHeight);
+                    addWarpComponent(null);
                 }
             }
         }
@@ -475,7 +472,18 @@ public class RoomLayoutEditor : TileGrid
         // unselect it.
         foreach (var com in overlayBoxes)
         {
-            if (com.Compare(selectedOverlayBox))
+            if (com == selectedOverlayBox)
+            {
+                return;
+            }
+        }
+
+        // Found no equivalent? Check for warps. Standard warps can change their size, meaning
+        // record equality no longer works.
+        foreach (var com in overlayBoxes)
+        {
+            if (selectedOverlayBox is WarpSourceOverlayBox b
+                && b.warp == (com as WarpSourceOverlayBox)?.warp)
             {
                 SetSelectedOverlayBox(com);
                 return;
@@ -538,9 +546,9 @@ public class RoomLayoutEditor : TileGrid
     // Nested classes
     // ================================================================================
 
-    class QuickstartOverlayBox : OverlayBox
+    record class QuickstartOverlayBox : OverlayBox
     {
-        QuickstartData quickstart;
+        readonly QuickstartData quickstart;
 
         public QuickstartOverlayBox(RoomLayoutEditor parent, QuickstartData data) : base(parent)
         {
@@ -588,11 +596,6 @@ public class RoomLayoutEditor : TileGrid
             ImGuiX.DrawImage(linkTexture, Parent.Scale);
         }
 
-        public override bool Compare(OverlayBox com)
-        {
-            return quickstart == (com as QuickstartOverlayBox)?.quickstart;
-        }
-
         public override void Delete()
         {
             Parent.Workspace.QuickstartData.Enabled = false;
@@ -607,9 +610,9 @@ public class RoomLayoutEditor : TileGrid
     /// <summary>
     /// Draggable chest
     /// </summary>
-    class ChestOverlayBox : OverlayBox
+    record class ChestOverlayBox : OverlayBox
     {
-        Chest chest;
+        readonly Chest chest;
 
         public ChestOverlayBox(RoomLayoutEditor parent, Chest chest) : base(parent)
         {
@@ -657,16 +660,6 @@ public class RoomLayoutEditor : TileGrid
             }
         }
 
-        public override void Select()
-        {
-            base.Select();
-        }
-
-        public override bool Compare(OverlayBox com)
-        {
-            return chest == (com as ChestOverlayBox)?.chest;
-        }
-
         public override void Delete()
         {
             chest.Delete();
@@ -678,9 +671,9 @@ public class RoomLayoutEditor : TileGrid
         }
     }
 
-    class ObjectOverlayBox : OverlayBox
+    record class ObjectOverlayBox : OverlayBox
     {
-        public ObjectDefinition obj;
+        public readonly ObjectDefinition obj;
 
 
         public ObjectOverlayBox(RoomLayoutEditor parent, ObjectDefinition obj) : base(parent)
@@ -744,11 +737,6 @@ public class RoomLayoutEditor : TileGrid
             }
         }
 
-        public override bool Compare(OverlayBox com)
-        {
-            return obj == (com as ObjectOverlayBox)?.obj;
-        }
-
         public override void Delete()
         {
             obj.Remove();
@@ -760,19 +748,18 @@ public class RoomLayoutEditor : TileGrid
         }
     }
 
-    class WarpSourceOverlayBox : OverlayBox
+    record class WarpSourceOverlayBox : OverlayBox
     {
-        public Warp warp;
-        public int index;
+        public readonly Warp warp;
+        public readonly int index;
+        readonly FRect fixedRect;
 
-        FRect rect;
 
-
-        public WarpSourceOverlayBox(RoomLayoutEditor parent, Warp warp, int index, FRect rect) : base(parent)
+        public WarpSourceOverlayBox(RoomLayoutEditor parent, Warp warp, int index, FRect fixedRect) : base(parent)
         {
             this.warp = warp;
             this.index = index;
-            this.rect = rect;
+            this.fixedRect = fixedRect;
         }
 
 
@@ -802,7 +789,6 @@ public class RoomLayoutEditor : TileGrid
             set
             {
                 warp.SourceX = value / 16;
-                UpdateRect();
             }
         }
         public override int Y
@@ -811,14 +797,13 @@ public class RoomLayoutEditor : TileGrid
             set
             {
                 warp.SourceY = value / 16;
-                UpdateRect();
             }
         }
 
-        public override int BoxWidth { get { return (int)rect.Width; } }
-        public override int BoxHeight { get { return (int)rect.Height; } }
+        public override int BoxWidth { get { return (int)GetRect().Width; } }
+        public override int BoxHeight { get { return (int)GetRect().Height; } }
 
-        public override FRect BoxRectangle { get { return rect; } }
+        public override FRect BoxRectangle { get { return GetRect(); } }
 
 
         public override void Render(bool selected)
@@ -832,11 +817,6 @@ public class RoomLayoutEditor : TileGrid
             ImGui.PopFont();
         }
 
-        public override bool Compare(OverlayBox com)
-        {
-            return warp == (com as WarpSourceOverlayBox)?.warp;
-        }
-
         public override void Delete()
         {
             warp.Remove();
@@ -847,9 +827,15 @@ public class RoomLayoutEditor : TileGrid
             Parent.RoomEditor.FollowWarp(warp);
         }
 
-        void UpdateRect()
+        FRect GetRect()
         {
-            rect = new FRect(X - rect.Width / 2.0f, Y - rect.Height / 2.0f, rect.Width, rect.Height);
+            if (HasXY)
+            {
+                float size = 16.0f;
+                return new FRect(X - size / 2.0f, Y - size / 2.0f, size, size);
+            }
+            else
+                return fixedRect;
         }
 
         public override string GetTransactionIdentifier()
@@ -859,9 +845,9 @@ public class RoomLayoutEditor : TileGrid
     }
 
     // Represents the singular "warp destination" object that appears when in warp dest editing mode
-    class WarpDestOverlayBox : OverlayBox
+    record class WarpDestOverlayBox : OverlayBox
     {
-        public Warp warp;
+        public readonly Warp warp;
 
         public WarpDestOverlayBox(RoomLayoutEditor parent, Warp warp) : base(parent)
         {
@@ -919,11 +905,6 @@ public class RoomLayoutEditor : TileGrid
             ImGui.PopFont();
         }
 
-        public override bool Compare(OverlayBox com)
-        {
-            return warp == (com as WarpDestOverlayBox)?.warp;
-        }
-
         public override string GetTransactionIdentifier()
         {
             return "warp dest#" + warp.TransactionIdentifier;
@@ -933,9 +914,11 @@ public class RoomLayoutEditor : TileGrid
     /// <summary>
     /// Text strings inserted into the room as notes.
     /// </summary>
-    public class AnnotationOverlayBox : OverlayBox
+    public record class AnnotationOverlayBox : OverlayBox
     {
-        Annotation annotation;
+        readonly Annotation annotation;
+
+        // These are omitted in Equals()
         bool wasOpenLastFrame = false;
         bool isActive = false;
 
@@ -1106,11 +1089,6 @@ public class RoomLayoutEditor : TileGrid
             ImGui.PopFont();
         }
 
-        public override bool Compare(OverlayBox com)
-        {
-            return annotation == (com as AnnotationOverlayBox)?.annotation;
-        }
-
         public override void Delete()
         {
             annotation.Delete();
@@ -1119,6 +1097,16 @@ public class RoomLayoutEditor : TileGrid
         public override string GetTransactionIdentifier()
         {
             return "annotation#" + annotation.TransactionIdentifier;
+        }
+
+        public virtual bool Equals(AnnotationOverlayBox a)
+        {
+            return annotation == a?.annotation;
+        }
+
+        public override int GetHashCode()
+        {
+            return annotation.GetHashCode();
         }
     }
 }
