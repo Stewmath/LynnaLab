@@ -227,11 +227,11 @@ public class EmulatorManager : Frame, IDisposable
         {
             string name = SelectedObject.GetName(Project);
             ImGui.SeparatorText("Object Info");
-            ImGui.Text($"Slot: {SelectedObject.Address:X4}");
+            ImGui.Text($"Addr:  {SelectedObject.Address:X4}");
             ImGui.Text($"ID:    {SelectedObject.Memory[1]:X2} ({name})");
             ImGui.Text($"SubID: {SelectedObject.Memory[2]:X2}");
             ImGui.SeparatorText("Object Memory");
-            ImGuiX.HexEditor("Hex", SelectedObject.Memory);
+            ImGuiX.HexEditor("Hex", SelectedObject.Memory, SelectedObject.Address);
         }
 
         ImGui.PopFont();

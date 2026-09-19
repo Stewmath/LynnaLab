@@ -633,7 +633,7 @@ public static class ImGuiX
 
     static _HexEditorState HexEditorState = new();
 
-    public static void HexEditor(string name, Span<byte> data)
+    public static void HexEditor(string name, Span<byte> data, int startAddress = 0)
     {
         int bytesPerLine = 16;
 
@@ -665,7 +665,7 @@ public static class ImGuiX
 
         for (int rowStart = 0; rowStart < data.Length; rowStart += bytesPerLine)
         {
-            ImGui.Text($"{rowStart:X4}:");
+            ImGui.Text($"{rowStart + startAddress:X4}:");
 
             for (int x = 0; x < bytesPerLine; x++)
             {
