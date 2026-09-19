@@ -103,23 +103,7 @@ public class EmulatorManager : Frame, IDisposable
             emulator.Snapshot.FlushWrites();
         }
 
-        // Must do this outside of the lock
-        if (nextPausedState != paused)
-        {
-            paused = nextPausedState;
-            if (paused)
-            {
-                if (emuThread?.IsAlive ?? false)
-                    emuThread.Join();
-                emuThread = null;
-            }
-            else
-            {
-                Debug.Assert(emuThread == null);
-                emuThread = new Thread(RunEmuThreadCallback);
-                emuThread.Start();
-            }
-        }
+        UpdatePauseState();
     }
 
     public void Dispose()
@@ -135,6 +119,11 @@ public class EmulatorManager : Frame, IDisposable
             return;
 
         nextPausedState = value;
+
+        // To prevent a deadlock, we can't depend on the thread exiting right now if we're holding
+        // the lock. Call UpdatePauseState() later.
+        if (!Monitor.IsEntered(emulator))
+            UpdatePauseState();
     }
 
     public void SetSelectedObject(ushort? address)
@@ -165,6 +154,30 @@ public class EmulatorManager : Frame, IDisposable
             lock (emulator)
             {
                 emulator.Run();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Cannot call this while emulator is in a lock (need that thread to exit).
+    /// </summary>
+    void UpdatePauseState()
+    {
+        // Must do this outside of the lock
+        if (nextPausedState != paused)
+        {
+            paused = nextPausedState;
+            if (paused)
+            {
+                if (emuThread?.IsAlive ?? false)
+                    emuThread.Join();
+                emuThread = null;
+            }
+            else
+            {
+                Debug.Assert(emuThread == null);
+                emuThread = new Thread(RunEmuThreadCallback);
+                emuThread.Start();
             }
         }
     }
