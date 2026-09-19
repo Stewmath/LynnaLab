@@ -587,7 +587,7 @@ public static class Top
         emulator?.Dispose();
 
         emulator = new OraclesEmulator(romFile, options);
-        emulatorManager = new EmulatorManager(emulator);
+        emulatorManager = new EmulatorManager(emulator, Workspace?.Project);
         emulatorManager.Focus();
     }
 

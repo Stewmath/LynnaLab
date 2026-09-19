@@ -8,7 +8,7 @@ public interface IOverlayBoxUser
     public bool SelectingRectangle { get; }
     public bool DraggingComponent { get; set; }
     public Vector2 DraggingComponentOffset { get; }
-    public OverlayBox Selected { get; }
+    public OverlayBox? Selected { get; }
     public float Scale { get; }
 
     public void SetSelected(OverlayBox comp, bool startDrag = false, Vector2? dragOffset = null);
@@ -22,7 +22,7 @@ public interface IOverlayBoxUser
     /// Common code for OverlayBox users.
     /// </summary>
     public static OverlayBox? UpdateOverlayBoxes(
-        Project project, // Can be null, only for recording undo/redo info
+        Project? project, // Can be null, only for recording undo/redo info
         IOverlayBoxUser user,
         SizedWidget canvas,
         IList<OverlayBox> overlayBoxes,

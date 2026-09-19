@@ -1,5 +1,7 @@
 namespace Emulation;
 
+using LynnaLib;
+
 /// <summary>
 /// Represents an object (Link/enemy/etc) within a running emulator instance.
 /// </summary>
@@ -35,6 +37,7 @@ public class EmulatorObject
     // Properties
     // ================================================================================
 
+    // TODO: Make this read only - not safe to write while another thread is running
     public Span<byte> Memory
     {
         get { return state.Wram.Slice(address - 0xc000, 0x40); }
@@ -60,6 +63,34 @@ public class EmulatorObject
         if (h == 0)
             h = 8;
         return new FRect(X - w / 2, Y - h / 2, w, h);
+    }
+
+    public string GetName(Project p, bool withPrefix=true)
+    {
+        string s = GetConstantsMapping(p).ByteToString(Memory[1]);
+        if (withPrefix)
+            return s;
+        return GetConstantsMapping(p).RemovePrefix(s);
+    }
+
+    public ConstantsMapping GetConstantsMapping(Project p)
+    {
+        switch (address & 0xc0)
+        {
+            case 0x00:
+                if (address < 0xd200)
+                    return p.SpecialObjectMapping;
+                else
+                    return p.ItemMapping;
+            case 0x40:
+                return p.InteractionMapping;
+            case 0x80:
+                return p.EnemyMapping;
+            case 0xc0:
+                return p.PartMapping;
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     // ================================================================================

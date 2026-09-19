@@ -1,4 +1,3 @@
-#nullable disable
 using System.Runtime.InteropServices;
 using SameBoySharp;
 using Emulation;
@@ -186,7 +185,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     // Private methods
     // ================================================================================
 
-    void OnGlobalConfigPropertyChanged(object sender, PropertyChangedEventArgs args)
+    void OnGlobalConfigPropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
         switch (args.PropertyName)
         {
@@ -271,7 +270,7 @@ class ScreenWidget : SizedWidget, IDisposable
             screenTexture.CopyPixels(emu.PixelData, 160, 144, 4);
         });
 
-        overlayBoxUser = new(this);
+        overlayBoxUser = new(parent, this);
     }
 
     // ================================================================================
@@ -372,42 +371,48 @@ class ScreenWidget : SizedWidget, IDisposable
             var com = overlayBoxMap[addr];
             overlayBoxMap.Remove(addr);
             overlayBoxes.Remove(com);
-            if (overlayBoxUser.Selected == com)
-                overlayBoxUser.Selected = null;
         }
     }
 
     public class EmulatorOverlayBoxUser : LynnaLab.IOverlayBoxUser
     {
+        readonly EmulatorRenderer renderer;
         readonly ScreenWidget screen;
 
-        public EmulatorOverlayBoxUser(ScreenWidget screen)
+        public EmulatorOverlayBoxUser(EmulatorRenderer renderer, ScreenWidget screen)
         {
+            this.renderer = renderer;
             this.screen = screen;
         }
 
         public bool SelectingRectangle { get { return false; } }
         public bool DraggingComponent { get; set; }
         public Vector2 DraggingComponentOffset { get; private set; }
-        public OverlayBox Selected { get; set; }
         public float Scale { get { return screen.Scale; } }
+
+        public OverlayBox? Selected
+        {
+            get
+            {
+                if (renderer.Manager.SelectedObject == null)
+                    return null;
+                return new EmulatorObjectOverlayBox(screen, renderer.Manager.SelectedObject.Address);
+            }
+        }
 
         public void SetSelected(OverlayBox comp, bool startDrag = false, Vector2? dragOffset = null)
         {
-            // Even if the OverlayBox object changed, the underlying data may actually be the same as before.
-            // "isDifferent" checks the underlying data rather than the OverlayBox themselves.
-            bool isDifferent = comp != Selected;
-            if (isDifferent || startDrag)
+            if (comp != Selected || startDrag)
             {
                 DraggingComponent = startDrag;
-                if (startDrag)
+                if (startDrag && dragOffset != null)
                     DraggingComponentOffset = (Vector2)dragOffset;
             }
 
             if (Selected == comp)
                 return;
-            OverlayBox old = Selected;
-            Selected = comp;
+
+            renderer.Manager.SetSelectedObject((comp as EmulatorObjectOverlayBox)?.address);
         }
     }
 }
@@ -418,13 +423,13 @@ class ScreenWidget : SizedWidget, IDisposable
 record class EmulatorObjectOverlayBox : OverlayBox
 {
     readonly ScreenWidget parent;
-    readonly ushort address;
+    public readonly ushort address;
 
     // ================================================================================
     // Constructors
     // ================================================================================
 
-    public EmulatorObjectOverlayBox(ScreenWidget parent, ushort address) : base((RoomLayoutEditor)null)
+    public EmulatorObjectOverlayBox(ScreenWidget parent, ushort address) : base((RoomLayoutEditor?)null)
     {
         this.parent = parent;
         this.address = address;

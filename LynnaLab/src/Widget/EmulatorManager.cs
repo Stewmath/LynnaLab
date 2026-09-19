@@ -8,11 +8,12 @@ public class EmulatorManager : Frame, IDisposable
     // ================================================================================
     // Constructors
     // ================================================================================
-    public EmulatorManager(OraclesEmulator emulator) : base("Emulator")
+    public EmulatorManager(OraclesEmulator emulator, Project? project) : base("Emulator")
     {
         this.emulator = emulator;
         this.debugger = new EmulatorDebugger(this);
         this.renderer = new EmulatorRenderer(this);
+        this.Project = project;
 
         this.debugger.Active = true;
         this.renderer.Active = true;
@@ -39,6 +40,9 @@ public class EmulatorManager : Frame, IDisposable
     bool paused;
     Thread? emuThread;
 
+    // ImGui state
+    int hoveringObject;
+
     // ================================================================================
     // Properties
     // ================================================================================
@@ -46,12 +50,19 @@ public class EmulatorManager : Frame, IDisposable
     public OraclesEmulator Emulator { get { return emulator; } }
     public bool Paused { get { return paused; } }
 
+    public EmulatorObject? SelectedObject { get; private set; }
+
+    Project? Project { get; }
+
     // ================================================================================
     // Public methods
     // ================================================================================
 
     public override void Render()
     {
+        if (SelectedObject?.Enabled == 0)
+            SetSelectedObject(null);
+
         renderer.Render();
         ImGui.SameLine();
 
@@ -107,6 +118,22 @@ public class EmulatorManager : Frame, IDisposable
         }
     }
 
+    public void SetSelectedObject(ushort? address)
+    {
+        if (address == null)
+        {
+            if (SelectedObject == null)
+                return;
+            SelectedObject = null;
+        }
+        else
+        {
+            if (SelectedObject?.Address == address)
+                return;
+            SelectedObject = new(Emulator.State, (ushort)address);
+        }
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================
@@ -142,8 +169,75 @@ public class EmulatorManager : Frame, IDisposable
 
     void RenderObjectTab()
     {
-        ImGui.SeparatorText("Object Memory");
-        ImGuiX.HexEditor("Hex", emulator.Wram.Slice(0x1000, 64));
+        int nextHoveringObject = 0;
+
+        if (Project == null)
+        {
+            ImGui.Text("Must have a project loaded.");
+            goto end;
+        }
+
+        float childSize = ImGui.GetContentRegionAvail().X / 4.0f;
+
+        void RenderSection(string name, int start)
+        {
+            ImGui.BeginChild(name, new(childSize, 0.0f), ImGuiChildFlags.AutoResizeY);
+            ImGui.SeparatorText(name);
+            for (int addr = 0xd000 + start; addr < 0xe000; addr += 0x100)
+            {
+                EmulatorObject obj = new(Emulator.State, (ushort)addr);
+                if (obj.Enabled == 0)
+                    ImGui.Text("----");
+                else
+                {
+                    string text = obj.GetName(Project, false);
+                    if (hoveringObject == addr)
+                        ImGui.TextColored(Color.LightBlue, text);
+                    else
+                        ImGui.Text(text);
+
+                    if (ImGui.IsItemHovered())
+                    {
+                        nextHoveringObject = addr;
+                        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+                            SetSelectedObject(obj.Address);
+                    }
+                }
+            }
+            ImGui.EndChild();
+        }
+
+        ImGui.PushFont(Top.MonoFont, 0.0f);
+
+        if (SelectedObject == null)
+        {
+            RenderSection("Special/Item", 0x00);
+            ImGui.SameLine();
+            RenderSection("Interactions", 0x40);
+            ImGui.SameLine();
+            RenderSection("Enemies", 0x80);
+            ImGui.SameLine();
+            RenderSection("Parts", 0xc0);
+        }
+        else if (ImGui.Button("Back"))
+        {
+            SetSelectedObject(null);
+        }
+        else
+        {
+            string name = SelectedObject.GetName(Project);
+            ImGui.SeparatorText("Object Info");
+            ImGui.Text($"Slot: {SelectedObject.Address:X4}");
+            ImGui.Text($"ID:    {SelectedObject.Memory[1]:X2} ({name})");
+            ImGui.Text($"SubID: {SelectedObject.Memory[2]:X2}");
+            ImGui.SeparatorText("Object Memory");
+            ImGuiX.HexEditor("Hex", SelectedObject.Memory);
+        }
+
+        ImGui.PopFont();
+
+        end:
+        hoveringObject = nextHoveringObject;
     }
 
     // TODO: Write at vblank only

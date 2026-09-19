@@ -690,7 +690,11 @@ public static class ImGuiX
                 int shownValue = data[addr];
                 if (byteFocused && state.enteredFirstDigit != -1)
                     shownValue = (data[addr] & 0xF) | (state.enteredFirstDigit << 4);
-                ImGui.TextColored(color, $" {shownValue:X2}");
+
+                if (color == Color.White) // Actually use default color
+                    ImGui.Text($" {shownValue:X2}");
+                else
+                    ImGui.TextColored(color, $" {shownValue:X2}");
 
                 if (byteFocused)
                 {

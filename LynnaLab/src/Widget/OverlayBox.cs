@@ -9,7 +9,7 @@ public abstract record class OverlayBox
     // ================================================================================
     // Constructors
     // ================================================================================
-    public OverlayBox(RoomLayoutEditor parent)
+    public OverlayBox(RoomLayoutEditor? parent)
     {
         this.Parent = parent;
     }
@@ -29,7 +29,7 @@ public abstract record class OverlayBox
     public abstract int BoxHeight { get; }
 
     // TODO: Do something about this
-    public RoomLayoutEditor Parent { get; private set; }
+    public RoomLayoutEditor? Parent { get; private set; }
 
     public Vector2 BoxSize
     {
@@ -72,7 +72,7 @@ public abstract record class OverlayBox
         var origin = ImGui.GetCursorScreenPos();
         var offset = new Vector2(X + xOffset, Y + yOffset);
         TextureBase texture = Top.TextureFromBitmapTracked(sprite);
-        ImGui.SetCursorScreenPos(origin + offset * Parent.Scale);
+        ImGui.SetCursorScreenPos(origin + offset * Parent!.Scale);
         ImGuiX.DrawImage(texture, Parent.Scale);
         ImGui.SetCursorScreenPos(origin);
     }
