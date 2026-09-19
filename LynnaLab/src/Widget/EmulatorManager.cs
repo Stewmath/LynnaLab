@@ -273,10 +273,7 @@ public class EmulatorManager : Frame, IDisposable
                     nextHoveringObject = addr;
                     if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
                     {
-                        if (obj.Enabled != 0)
-                        {
-                            SetSelectedObject(obj.Address);
-                        }
+                        SetSelectedObject(obj.Address);
                     }
                     else if (ImGui.IsMouseClicked(ImGuiMouseButton.Right))
                     {
@@ -319,12 +316,18 @@ public class EmulatorManager : Frame, IDisposable
             string name = ProjectInterfacer.GetObjectClass(SelectedObject.Address).GetName(SelectedObject.ID);
             ImGui.SeparatorText("Object Info");
             ImGui.Text($"Addr:  {SelectedObject.Address:X4}");
-            ImGui.Text($"ID:    {SelectedObject.Memory[1]:X2} ({name})");
-            ImGui.Text($"SubID: {SelectedObject.Memory[2]:X2}");
 
-            if (ImGui.Button("Delete"))
+            if (SelectedObject.Enabled == 0)
+                ImGui.Text("Object is disabled.");
+            else
             {
-                SelectedObject.Delete();
+                ImGui.Text($"ID:    {SelectedObject.Memory[1]:X2} ({name})");
+                ImGui.Text($"SubID: {SelectedObject.Memory[2]:X2}");
+
+                if (ImGui.Button("Delete"))
+                {
+                    SelectedObject.Delete();
+                }
             }
 
             ImGui.SeparatorText("Object Memory");
