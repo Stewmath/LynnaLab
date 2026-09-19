@@ -51,6 +51,22 @@ public class GameboySnapshot : GameboyStateBase
         });
     }
 
+    public void OrByte(GbPointer ptr, byte mask)
+    {
+        vblankWriteActions.Enqueue(() =>
+        {
+            base.WriteByteHelper(ptr, (byte)(ReadByte(ptr) | mask));
+        });
+    }
+
+    public void AndByte(GbPointer ptr, byte mask)
+    {
+        vblankWriteActions.Enqueue(() =>
+        {
+            base.WriteByteHelper(ptr, (byte)(ReadByte(ptr) & mask));
+        });
+    }
+
     /// <summary>
     /// Writes don't do anything until this is called, in order to ensure writes are atomic and do
     /// not accidentally happen at different times while the gameboy thread is running. This is

@@ -306,6 +306,20 @@ public class OraclesEmulator : IDisposable
         DoAtVBlank(() => WriteWord(ptr, value));
     }
 
+    public GbPointer GetGroupRoomFlags(int groupIndex)
+    {
+        if (groupIndex < 0 || groupIndex > 8)
+            throw new ArgumentException();
+
+        GbPointer tablePtr = Evaluate("flagLocationGroupTable");
+        return new(LiveState.ReadByte(tablePtr + groupIndex) << 8, 0);
+    }
+
+    public GbPointer GetRoomFlagPtr(int roomIndex)
+    {
+        return GetGroupRoomFlags(roomIndex >> 8) + (roomIndex & 0xff);
+    }
+
     public void Dispose()
     {
         gb.Dispose();

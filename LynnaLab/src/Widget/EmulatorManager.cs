@@ -221,7 +221,41 @@ public class EmulatorManager : Frame, IDisposable
                 showHelp: false);
         }
 
-        ImGui.SeparatorText("Room stuff");
+        int room = Emulator.Snapshot.RoomIndex;
+        ImGui.SeparatorText($"Room {room:X3}");
+
+        if (room < 0 || room >= 0x800)
+            ImGui.Text($"Invalid room index {room:X3}?.");
+        else
+        {
+            GbPointer flagPtr = Emulator.GetRoomFlagPtr(room);
+
+            Accessor<bool> FlagAccessor(byte bitmask)
+            {
+                return new(() => (Emulator.Snapshot.ReadByte(flagPtr) & bitmask) != 0,
+                    (v) =>
+                    {
+                        if (v)
+                            Emulator.Snapshot.OrByte(flagPtr, bitmask);
+                        else
+                            Emulator.Snapshot.AndByte(flagPtr, (byte)(0xff ^ bitmask));
+                    });
+            }
+
+            ImGui.BeginTable("Room flags", 2);
+            ImGui.TableNextColumn();
+            ImGuiX.Checkbox("ROOMFLAG_01", FlagAccessor(0x01));
+            ImGuiX.Checkbox("ROOMFLAG_02", FlagAccessor(0x02));
+            ImGuiX.Checkbox("ROOMFLAG_04", FlagAccessor(0x04));
+            ImGuiX.Checkbox("ROOMFLAG_08", FlagAccessor(0x08));
+            ImGui.TableNextColumn();
+            ImGuiX.Checkbox("ROOMFLAG_VISITED", FlagAccessor(0x10));
+            ImGuiX.Checkbox("ROOMFLAG_ITEM", FlagAccessor(0x20));
+            ImGuiX.Checkbox("ROOMFLAG_40", FlagAccessor(0x40));
+            ImGuiX.Checkbox("ROOMFLAG_80", FlagAccessor(0x80));
+            ImGui.EndTable();
+        }
+
         ImGui.SeparatorText("Dungeon stuff");
         ByteWidget("wSwitchState");
         ByteWidget("wSpinnerState");

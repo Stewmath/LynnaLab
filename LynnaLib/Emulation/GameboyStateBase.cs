@@ -44,6 +44,14 @@ public abstract class GameboyStateBase
             ConstructPointer(DetermineGame() == Game.Ages ? (ushort)0xffac : (ushort)0xffaa)); }
     }
 
+    public int RoomIndex
+    {
+        get
+        {
+            return ReadSymbolByte("wActiveRoom") | (ReadSymbolByte("wActiveGroup") << 8);
+        }
+    }
+
     // ================================================================================
     // Public methods
     // ================================================================================
@@ -85,7 +93,15 @@ public abstract class GameboyStateBase
 
     public byte ReadByte(GbPointer pointer)
     {
-        if (pointer.Addr >= 0x8000 && pointer.Addr < 0xa000)
+        if (pointer.Addr < 0x4000)
+            return Rom[pointer.Addr];
+        else if (pointer.Addr < 0x8000)
+        {
+            if (!pointer.IsBanked)
+                throw new ArgumentException("ReadByte: Tried to read ROM addr {pointer} with no bank");
+            return Rom[pointer.Bank * 0x4000 + (pointer.Addr & 0x3fff)];
+        }
+        else if (pointer.Addr >= 0x8000 && pointer.Addr < 0xa000)
             return Vram[pointer.Addr - 0x8000];
         else if (pointer.Addr >= 0xa000 && pointer.Addr < 0xc000)
             return Sram[pointer.Addr - 0xa000];
