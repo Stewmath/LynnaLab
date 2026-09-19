@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using VeldridBackend;
 
 namespace LynnaLab;
@@ -616,6 +617,134 @@ public static class ImGuiX
     {
         if (ToggleImageButton(name, textureRef, size, ref toggled))
             onToggled(toggled);
+    }
+
+    // ================================================================================
+    // Custom widgets
+    // ================================================================================
+
+    class _HexEditorState
+    {
+        public uint focusedID;
+        public int focusedByte;
+
+        public int enteredFirstDigit;
+    }
+
+    static _HexEditorState HexEditorState = new();
+
+    public static void HexEditor(string name, Span<byte> data)
+    {
+        int bytesPerLine = 16;
+
+        Helper.Assert(data.Length % bytesPerLine == 0);
+
+        ImGui.PushFont(Top.MonoFont, 0.0f);
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
+
+        uint thisID = ImGui.GetID(name);
+
+        var state = HexEditorState;
+
+        /*
+        int addressDigits = 4;
+        StringBuilder headerLine = new StringBuilder(new string(' ', addressDigits + 1));
+        for (int i = 0; i < bytesPerLine; i++)
+        {
+            if (i % 4 == 0)
+                headerLine.Append($" {i:X2}");
+            else
+                headerLine.Append("   ");
+        }
+
+        ImGui.Text(headerLine.ToString());
+        ImGui.Text(new string('-', addressDigits + 1 + 3 * bytesPerLine));
+        */
+
+        bool oneWasFocused = false;
+
+        for (int rowStart = 0; rowStart < data.Length; rowStart += bytesPerLine)
+        {
+            ImGui.Text($"{rowStart:X4}:");
+
+            for (int x = 0; x < bytesPerLine; x++)
+            {
+                int addr = rowStart + x;
+
+                bool byteFocused = ImGui.IsWindowFocused()
+                                   && state.focusedID == thisID
+                                   && addr == state.focusedByte
+                                   && !oneWasFocused;
+
+                Color color = byteFocused && state.enteredFirstDigit != -1 ? Color.Red
+                    : byteFocused ? Color.LightBlue
+                    : Color.White;
+
+                ImGui.SameLine();
+                if (x % 8 == 0)
+                {
+                    ImGui.TextColored(color, " ");
+                    ImGui.SameLine();
+                }
+
+                int shownValue = data[addr];
+                if (byteFocused && state.enteredFirstDigit != -1)
+                    shownValue = (data[addr] & 0xF) | (state.enteredFirstDigit << 4);
+                ImGui.TextColored(color, $" {shownValue:X2}");
+
+                if (byteFocused)
+                {
+                    int num;
+                    if ((num = HexInputKey()) != -1)
+                    {
+                        if (state.enteredFirstDigit != -1)
+                        {
+                            int value = (state.enteredFirstDigit << 4) + num;
+                            data[addr] = (byte)value;
+                            state.enteredFirstDigit = -1;
+                            state.focusedByte++;
+                            if (state.focusedByte >= data.Length)
+                                state.focusedByte--;
+                        }
+                        else
+                        {
+                            state.enteredFirstDigit = num;
+                        }
+                    }
+
+                    oneWasFocused = true;
+                }
+                else if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsItemHovered())
+                {
+                    state.focusedID = thisID;
+                    state.focusedByte = addr;
+                    state.enteredFirstDigit = -1;
+                }
+            }
+        }
+
+        ImGui.PopStyleVar();
+        ImGui.PopFont();
+    }
+
+    // ================================================================================
+    // Private methods
+    // ================================================================================
+
+    static int HexInputKey()
+    {
+        for (var i = ImGuiKey.Key0; i <= ImGuiKey.Key9; i++)
+        {
+            if (ImGui.IsKeyPressed(i))
+                return i - ImGuiKey.Key0;
+        }
+        for (var i = ImGuiKey.A; i <= ImGuiKey.F; i++)
+        {
+            if (ImGui.IsKeyPressed(i))
+                return i - ImGuiKey.A + 10;
+        }
+
+        return -1;
     }
 }
 

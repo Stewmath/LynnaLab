@@ -59,12 +59,17 @@ public class EmulatorManager : Frame, IDisposable
 
         if (ImGui.BeginTabBar("Debugger tabs"))
         {
+            if (ImGui.BeginTabItem("Object"))
+            {
+                RenderObjectTab();
+                ImGui.EndTabItem();
+            }
             if (ImGui.BeginTabItem("General"))
             {
                 RenderGeneralTab();
                 ImGui.EndTabItem();
             }
-            else if (ImGui.BeginTabItem("Debugger"))
+            if (ImGui.BeginTabItem("Debugger"))
             {
                 debugger.Render();
                 ImGui.EndTabItem();
@@ -133,6 +138,12 @@ public class EmulatorManager : Frame, IDisposable
         ByteWidget("wSwitchState");
         ByteWidget("wSpinnerState");
         ImGui.PopItemWidth();
+    }
+
+    void RenderObjectTab()
+    {
+        ImGui.SeparatorText("Object Memory");
+        ImGuiX.HexEditor("Hex", emulator.Wram.Slice(0x1000, 64));
     }
 
     // TODO: Write at vblank only
