@@ -455,15 +455,19 @@ Examples to get you started:
             }
             if (ImGui.BeginTabItem("Obtained Treasure Flags"))
             {
-                ConstantsMapping mapping = Project.TreasureMapping;
-
-                for (int t = 0; t < Project.NumTreasures; t++)
+                if (ImGui.BeginChild("Treasure flags"))
                 {
-                    Accessor<bool> accessor = new(
-                        () => Emulator.Snapshot.GetTreasureFlag(t),
-                        (v) => Emulator.Snapshot.SetTreasureFlag(t, v));
-                    ImGuiX.Checkbox(mapping.ByteToString((byte)t), accessor);
+                    ConstantsMapping mapping = Project.TreasureMapping;
+
+                    for (int t = 0; t < Project.NumTreasures; t++)
+                    {
+                        Accessor<bool> accessor = new(
+                            () => Emulator.Snapshot.GetTreasureFlag(t),
+                            (v) => Emulator.Snapshot.SetTreasureFlag(t, v));
+                        ImGuiX.Checkbox(mapping.ByteToString((byte)t), accessor);
+                    }
                 }
+                ImGui.EndChild();
                 ImGui.EndTabItem();
             }
 
@@ -481,12 +485,16 @@ Examples to get you started:
             return;
         }
 
-        for (int i = 0; i < Project.Eval("NUM_GLOBALFLAGS"); i++)
+        if (ImGui.BeginChild("Global flags"))
         {
-            Accessor<bool> accessor = new(
-                () => Emulator.Snapshot.GetGlobalFlag(i),
-                (v) => Emulator.Snapshot.SetGlobalFlag(i, v));
-            ImGuiX.Checkbox(Project.GlobalFlagMapping.ByteToString((byte)i), accessor);
+            for (int i = 0; i < Project.Eval("NUM_GLOBALFLAGS"); i++)
+            {
+                Accessor<bool> accessor = new(
+                    () => Emulator.Snapshot.GetGlobalFlag(i),
+                    (v) => Emulator.Snapshot.SetGlobalFlag(i, v));
+                ImGuiX.Checkbox(Project.GlobalFlagMapping.ByteToString((byte)i), accessor);
+            }
+            ImGui.EndChild();
         }
     }
 
