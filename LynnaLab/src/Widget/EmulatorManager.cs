@@ -63,15 +63,15 @@ Examples to get you started:
     OraclesEmulator emulator;
     EmulatorRenderer renderer;
     readonly Thread emuThread;
+    readonly Mutex emuMutex = new();
+    bool disposed;
 
     // For sameboy debugger console
     readonly ConcurrentQueue<string> debuggerCommands = new();
     readonly AutoResetEvent debuggerCommandReady = new(false);
     readonly CancellationTokenSource emuCancellation = new();
     readonly object debuggerTextLock = new();
-    readonly Mutex emuMutex = new();
     string debuggerText = DebuggerHelpText;
-    bool disposed;
     string debuggerCurrentLine = "";
     string debuggerLastLine = "";
     int debuggerJumpToBottom;
