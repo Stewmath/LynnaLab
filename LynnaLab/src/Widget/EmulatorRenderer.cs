@@ -42,7 +42,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         base.WindowFlags |= ImGuiWindowFlags.NoScrollbar;
         base.AddStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 
-        base.RequestSize(new Vector2(160, 144) * Scale);
+        base.RequestSize(EmulatorContentSize);
 
         if (Top.AudioAvailable)
             SetupAudio();
@@ -88,6 +88,8 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     public EmulatorManager Manager { get; init; }
     public OraclesEmulator Emulator { get { return emu; } }
 
+    Vector2 EmulatorContentSize { get { return new Vector2(160, 144) * Scale + new Vector2(0, ImGui.GetFrameHeight()); } }
+
     // ================================================================================
     // Variables
     // ================================================================================
@@ -105,28 +107,10 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
     public override void Render()
     {
+        ImGui.BeginGroup();
+
+        RenderRibbon();
         renderWidget.Render();
-
-        if (ImGui.IsItemHovered() && ImGui.IsMouseClicked(ImGuiMouseButton.Right))
-        {
-            ImGui.OpenPopup("EmulatorPopupMenu");
-        }
-
-        if (ImGui.BeginPopup("EmulatorPopupMenu"))
-        {
-            if (Manager.Paused)
-            {
-                if (ImGui.Button("continue"))
-                    Manager.Continue();
-            }
-            else
-            {
-                if (ImGui.Button("pause"))
-                    Manager.Interrupt();
-            }
-            ImGuiX.Checkbox("Mute", muted, (b) => SetMuted(b));
-            ImGui.EndPopup();
-        }
 
         SameBoy.GBKeyMask mask = 0;
         bool turbo = false;
@@ -160,6 +144,8 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
             // Don't let audio stream fall behind
             SDL3.SDL_ClearAudioStream(audioStream);
         }
+
+        ImGui.EndGroup();
     }
 
     public void Dispose()
@@ -185,12 +171,30 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     /// </summary>
     protected override Vector2 RecalculateSizeOnDPIChange(Vector2 lastWindowSize)
     {
-        return new Vector2(160, 144) * Scale + new Vector2(0, ImGui.GetFrameHeight());
+        return EmulatorContentSize + new Vector2(0, ImGui.GetFrameHeight());
     }
 
     // ================================================================================
     // Private methods
     // ================================================================================
+
+    void RenderRibbon()
+    {
+        ImGuiX.Checkbox("Mute", muted, (b) => SetMuted(b));
+
+        ImGui.SameLine();
+
+        if (Manager.Paused)
+        {
+            if (ImGui.Button("Continue"))
+                Manager.Continue();
+        }
+        else
+        {
+            if (ImGui.Button("Pause"))
+                Manager.Interrupt();
+        }
+    }
 
     void OnGlobalConfigPropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
@@ -220,7 +224,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     void SetScale(int scale)
     {
         this.scale = scale;
-        RequestSize(new Vector2(160, 144) * Scale);
+        RequestSize(EmulatorContentSize);
     }
 
     void SetVolume(float volume)
