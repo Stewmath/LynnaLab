@@ -339,6 +339,11 @@ public class OraclesEmulator : IDisposable
         return true;
     }
 
+    /// <summary>
+    /// Do an action in the vblank handler, after all registers have been saved.
+    ///
+    /// It should be safe to trash registers, since they will be restored at the end of vblank anyway.
+    /// </summary>
     public void DoAtVBlank(Action action)
     {
         vblankActionQueue.Enqueue(action);
@@ -491,6 +496,7 @@ public class OraclesEmulator : IDisposable
         }
         else if (pointer.Addr < 0x8000)
         {
+            pointer.AssertBanked();
             if (RomBank != pointer.Bank)
             {
                 // Use interBankCall. Not all registers will be preserved.
