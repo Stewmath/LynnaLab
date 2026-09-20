@@ -564,6 +564,11 @@ public class ProjectWorkspace
                 options);
     }
 
+    public void CloseBuildDialog()
+    {
+        buildDialog.Close();
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================

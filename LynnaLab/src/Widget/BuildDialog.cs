@@ -92,6 +92,8 @@ public class BuildDialog : Frame
             emulatorProcess.Kill(true);
             emulatorProcess = null;
         }
+
+        Top.HaltEmulator();
     }
 
     /// <summary>

@@ -4,6 +4,12 @@ using System.Collections.Concurrent;
 using System.Threading;
 using Emulation;
 
+/// <summary>
+/// The EmulatorManager has ownership of the internal emulator within the context of LynnaLab's GUI.
+///
+/// Not necessarily associated with a ProjectWorkspace, but having one associated enables more
+/// advanced debugging functionality.
+/// </summary>
 public class EmulatorManager : Frame, IDisposable
 {
     // ================================================================================
@@ -172,11 +178,18 @@ Examples to get you started:
         emuCancellation.Dispose();
     }
 
+    /// <summary>
+    /// Pause emulator execution.
+    /// </summary>
     public void Interrupt()
     {
         QueueDebuggerCommand("interrupt");
     }
 
+    /// <summary>
+    /// Resume emulator execution. (If a breakpoint is set, this may immediately pause again when it
+    /// gets hit.)
+    /// </summary>
     public void Continue()
     {
         QueueDebuggerCommand("continue");

@@ -559,9 +559,34 @@ public static class Top
         return SDLUtil.SDLHelper.HasClipboardData(mimeType);
     }
 
+    public static void StartEmulator(string romFile, EmulatorStartOptions options)
+    {
+        HaltEmulator();
+
+        emulator = new OraclesEmulator(romFile, options);
+        emulatorManager = new EmulatorManager(emulator, Workspace?.Project);
+        emulatorManager.Focus();
+        emulatorManager.ClosedEvent += OnInternalEmulatorClosed;
+    }
+
+    public static void HaltEmulator()
+    {
+        emulatorManager?.ClosedEvent -= OnInternalEmulatorClosed;
+        emulatorManager?.Dispose();
+        emulator?.Dispose();
+        emulatorManager = null;
+        emulator = null;
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================
+
+    static void OnInternalEmulatorClosed(object sender, EventArgs args)
+    {
+        if (GlobalConfig.CloseRunDialogWithEmulator)
+            Workspace?.CloseBuildDialog();
+    }
 
     static void AddFont(string name)
     {
@@ -576,19 +601,9 @@ public static class Top
         bool retval = SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO);
 
         if (!retval)
-            log.Warn($"SDL audio failed to intiialize: {SDL3.SDL_GetError()}.");
+            log.Warn($"SDL audio failed to initialize: {SDL3.SDL_GetError()}.");
 
         return retval;
-    }
-
-    public static void StartEmulator(string romFile, EmulatorStartOptions options)
-    {
-        emulatorManager?.Dispose();
-        emulator?.Dispose();
-
-        emulator = new OraclesEmulator(romFile, options);
-        emulatorManager = new EmulatorManager(emulator, Workspace?.Project);
-        emulatorManager.Focus();
     }
 
     // ================================================================================
