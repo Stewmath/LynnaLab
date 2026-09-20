@@ -686,13 +686,13 @@ public class ProjectWorkspace
 
     void TryUndo()
     {
-        if (!Project.TransactionManager.Undo())
+        if (Project.TransactionManager.UndoAvailable && !Project.TransactionManager.Undo())
             Modal.DisplayErrorMessage("Undo failed.");
     }
 
     void TryRedo()
     {
-        if (!Project.TransactionManager.Redo())
+        if (Project.TransactionManager.RedoAvailable && !Project.TransactionManager.Redo())
             Modal.DisplayErrorMessage("Redo failed.");
     }
 
