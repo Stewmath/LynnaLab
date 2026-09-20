@@ -260,6 +260,8 @@ public class EmulatorManager : Frame, IDisposable
                     });
             }
 
+            ImGui.Text($"Flags Address: {flagPtr.Addr:X4}");
+
             ImGui.BeginTable("Room flags", 2);
             ImGui.TableNextColumn();
             ImGuiX.Checkbox("ROOMFLAG_01", FlagAccessor(0x01));
