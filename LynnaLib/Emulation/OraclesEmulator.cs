@@ -166,16 +166,12 @@ public class OraclesEmulator : IDisposable
             act();
     }
 
-    // TODO: Need to test this
     public byte ReadSymbolByte(string symbol)
     {
         if (!TryEvaluate(symbol, out var ptr))
             throw new Exception($"ReadSymbolByte: Failed to resolve symbol \"{symbol}\"");
 
-        if (!ptr.IsBanked)
-            return gb.SafeReadMemory(ptr.Addr);
-        else
-            return state.ReadByte(ptr);
+        return state.ReadByte(ptr);
     }
 
     /// <summary>
@@ -207,6 +203,11 @@ public class OraclesEmulator : IDisposable
         if (!TryEvaluate(str, out GbPointer addr))
             throw new EmulatorEvalException($"OraclesEmulator: Couldn't evaluate {str}.");
         return addr;
+    }
+
+    public string DescribeAddress(GbPointer ptr)
+    {
+        return GB.DebuggerDescribeAddress(ptr.Addr, (ushort)ptr.Bank);
     }
 
     /// <summary>
@@ -292,6 +293,42 @@ public class OraclesEmulator : IDisposable
             WriteByte(ptr, (byte)music);
             WriteByte(tailPtr, (byte)((tail + 1) & 0xaf));
         });
+    }
+
+    public void GiveTreasure(byte treasure, byte parameter)
+    {
+        DoAtVBlank(() =>
+        {
+            GB.Registers.A = treasure;
+            GB.Registers.C = parameter;
+            Call("giveTreasure");
+        });
+    }
+
+    public void LoseTreasure(byte treasure)
+    {
+        DoAtVBlank(() =>
+        {
+            GB.Registers.A = treasure;
+            Call("loseTreasure");
+        });
+    }
+
+    /// <summary>
+    /// Given a treasure ID, this tries to get the parameter corresponding to that treasure (ie.
+    /// level) reading treasureCollectionBehaviourTable.
+    /// </summary>
+    public bool GetTreasureParameterPtr(int treasureID, out GbPointer ptr)
+    {
+        GbPointer tablePtr = Evaluate("treasureCollectionBehaviourTable");
+        byte lowByte = Snapshot.ReadByte(tablePtr + treasureID * 3);
+        if (lowByte == 0)
+        {
+            ptr = new(0, 0);
+            return false;
+        }
+        ptr = new(0xc600 + lowByte, 0);
+        return true;
     }
 
     public void DoAtVBlank(Action action)

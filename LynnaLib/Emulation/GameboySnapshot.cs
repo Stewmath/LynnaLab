@@ -65,7 +65,7 @@ public class GameboySnapshot : GameboyStateBase
         });
     }
 
-    public void OrByte(GbPointer ptr, byte mask)
+    public override void OrByte(GbPointer ptr, byte mask)
     {
         vblankWriteActions.Enqueue(() =>
         {
@@ -73,7 +73,7 @@ public class GameboySnapshot : GameboyStateBase
         });
     }
 
-    public void AndByte(GbPointer ptr, byte mask)
+    public override void AndByte(GbPointer ptr, byte mask)
     {
         vblankWriteActions.Enqueue(() =>
         {

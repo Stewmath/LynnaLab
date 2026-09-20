@@ -309,6 +309,14 @@ public unsafe partial class SameBoy : IDisposable
         Native.GB_debugger_load_symbol_file(_gb, path);
     }
 
+    public unsafe string DebuggerDescribeAddress(ushort addr, ushort bank, bool exact_match = true, bool prefer_local = false)
+    {
+        VerifyNotDisposed();
+
+        char* desc = Native.GB_debugger_describe_address(_gb, addr, bank, exact_match, prefer_local);
+        return Marshal.PtrToStringAnsi((IntPtr)desc)!;
+    }
+
     // ================================================================================
     // Console I/O
     // ================================================================================

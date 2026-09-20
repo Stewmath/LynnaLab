@@ -46,6 +46,8 @@ public class EmulatorManager : Frame, IDisposable
     int rightClickObjectAddr;
     int selectedMusic = 0;
     int selectedSfx = 0;
+    int selectedTreasureID = 0;
+    int selectedTreasureParameter = 0;
     int memoryIndex = 0;
 
     // ================================================================================
@@ -81,14 +83,19 @@ public class EmulatorManager : Frame, IDisposable
 
             if (ImGui.BeginTabBar("Debugger tabs"))
             {
+                if (ImGui.BeginTabItem("General"))
+                {
+                    RenderGeneralTab();
+                    ImGui.EndTabItem();
+                }
                 if (ImGui.BeginTabItem("Object"))
                 {
                     RenderObjectTab();
                     ImGui.EndTabItem();
                 }
-                if (ImGui.BeginTabItem("General"))
+                if (ImGui.BeginTabItem("Treasure"))
                 {
-                    RenderGeneralTab();
+                    RenderTreasureManagementTab();
                     ImGui.EndTabItem();
                 }
                 if (ImGui.BeginTabItem("Debugger"))
@@ -265,6 +272,70 @@ public class EmulatorManager : Frame, IDisposable
         ImGui.SeparatorText("Dungeon stuff");
         ByteWidget("wSwitchState");
         ByteWidget("wSpinnerState");
+        ImGui.PopItemWidth();
+    }
+
+    void RenderTreasureManagementTab()
+    {
+        if (Project == null)
+        {
+            ImGui.Text("Need an active project.");
+            return;
+        }
+
+        ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
+
+        if (ImGui.BeginTabBar("Treasure Tabs"))
+        {
+            if (ImGui.BeginTabItem("Give/Lose"))
+            {
+                ImGuiLL.ComboBoxFromConstants("Treasure",
+                    Project.TreasureMapping,
+                    ref selectedTreasureID,
+                    withIntInput: true,
+                    omitPrefix: false,
+                    showHelp: false);
+                ImGuiX.InputHex("Parameter (level/quantity/etc)", ref selectedTreasureParameter,
+                    min: 0, max: 255);
+
+                if (ImGui.Button("Give treasure"))
+                {
+                    Emulator.GiveTreasure(
+                        (byte)selectedTreasureID,
+                        (byte)selectedTreasureParameter);
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Lose treasure"))
+                {
+                    Emulator.LoseTreasure((byte)selectedTreasureID);
+                }
+
+                ImGui.Separator();
+
+                if (Emulator.GetTreasureParameterPtr(selectedTreasureID, out GbPointer ptr))
+                {
+                    ByteWidget($"{Emulator.DescribeAddress(ptr)} (current parameter)", ptr);
+                }
+
+                ImGui.EndTabItem();
+            }
+            if (ImGui.BeginTabItem("Obtained Treasure Flags"))
+            {
+                ConstantsMapping mapping = Project.TreasureMapping;
+
+                for (int t = 0; t < Project.Eval("NUM_TREASURES"); t++)
+                {
+                    Accessor<bool> accessor = new(
+                        () => Emulator.Snapshot.GetTreasureFlag(t),
+                        (v) => Emulator.Snapshot.SetTreasureFlag(t, v));
+                    ImGuiX.Checkbox(mapping.ByteToString((byte)t), accessor);
+                }
+                ImGui.EndTabItem();
+            }
+
+            ImGui.EndTabBar();
+        }
+
         ImGui.PopItemWidth();
     }
 
@@ -467,6 +538,11 @@ public class EmulatorManager : Frame, IDisposable
     void ByteWidget(string label)
     {
         GbPointer pointer = emulator.Evaluate(label);
+        ByteWidget(label, pointer);
+    }
+
+    void ByteWidget(string label, GbPointer pointer)
+    {
         ImGuiX.InputHex(label, ref emulator.Wram[pointer.Addr & 0x1fff]);
     }
 

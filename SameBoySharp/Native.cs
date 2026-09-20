@@ -164,6 +164,9 @@ internal unsafe static class Native
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     internal unsafe static extern void GB_debugger_load_symbol_file(IntPtr gb, string path);
 
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern char* GB_debugger_describe_address(IntPtr gb, ushort addr, ushort bank, bool exact_match, bool prefer_local);
+
     // ================================================================================
     // Console I/O
     // ================================================================================

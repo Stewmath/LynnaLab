@@ -135,6 +135,8 @@ public abstract class GameboyStateBase
     }
 
     public abstract void WriteByte(GbPointer ptr, byte value);
+    public abstract void OrByte(GbPointer ptr, byte mask);
+    public abstract void AndByte(GbPointer ptr, byte mask);
 
     public void WriteWord(GbPointer ptr, ushort value)
     {
@@ -146,6 +148,10 @@ public abstract class GameboyStateBase
     {
         return ptr.Equals(ConstructPointer(addr));
     }
+
+    // ================================================================================
+    // Oracles-specific data handling
+    // ================================================================================
 
     public IList<EmulatorObject> GetObjects()
     {
@@ -173,6 +179,23 @@ public abstract class GameboyStateBase
         else
             // They changed the title, this won't work =)
             return Game.Ages;
+    }
+
+    public bool GetTreasureFlag(int treasureID)
+    {
+        var ptr = Emulator.Evaluate("wObtainedTreasureFlags");
+        var (offset, bitmask) = IndexToByteBitmask(treasureID);
+        return (ReadByte(ptr + offset) & bitmask) != 0;
+    }
+
+    public void SetTreasureFlag(int treasureID, bool set)
+    {
+        var ptr = Emulator.Evaluate("wObtainedTreasureFlags");
+        var (offset, bitmask) = IndexToByteBitmask(treasureID);
+        if (set)
+            OrByte(ptr, (byte)bitmask);
+        else
+            AndByte(ptr, (byte)(0xff ^ bitmask));
     }
 
     // ================================================================================
@@ -224,5 +247,19 @@ public abstract class GameboyStateBase
             default: // Should never reach here
                 throw new NotImplementedException();
         }
+    }
+
+    // ================================================================================
+    // Static methods
+    // ================================================================================
+
+    /// <summary>
+    /// Convert an index to an offset + bitmask pair for use with the game's various bit tables.
+    /// </summary>
+    static (int, int) IndexToByteBitmask(int i)
+    {
+        int bit = i % 8;
+        int bitmask = (1 << bit);
+        return (i / 8, bitmask);
     }
 }

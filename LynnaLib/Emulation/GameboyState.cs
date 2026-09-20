@@ -19,6 +19,15 @@ public class LiveGameboyState : GameboyStateBase
         base.WriteByteHelper(ptr, value);
     }
 
+    public override void OrByte(GbPointer ptr, byte mask)
+    {
+        base.WriteByteHelper(ptr, (byte)(ReadByte(ptr) | mask));
+    }
+    public override void AndByte(GbPointer ptr, byte mask)
+    {
+        base.WriteByteHelper(ptr, (byte)(ReadByte(ptr) & mask));
+    }
+
     // ================================================================================
     // Properties
     // ================================================================================
