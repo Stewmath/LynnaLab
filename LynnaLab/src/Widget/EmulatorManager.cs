@@ -355,6 +355,7 @@ public class EmulatorManager : Frame, IDisposable
         {
             int chosenID = 0;
             int chosenSubID = 0;
+            int chosenVar03 = 0;
             int chosenX = 0x38, chosenY = 0x38;
             Modal.OpenModal($"Spawn {cls.Name}", () =>
             {
@@ -365,6 +366,7 @@ public class EmulatorManager : Frame, IDisposable
 
                 ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
                 ImGuiX.InputHex("SubID", ref chosenSubID);
+                ImGuiX.InputHex("Var03", ref chosenVar03);
                 ImGuiX.InputHex("X", ref chosenX);
                 ImGuiX.InputHex("Y", ref chosenY);
                 ImGui.PopItemWidth();
@@ -382,6 +384,7 @@ public class EmulatorManager : Frame, IDisposable
                         Emulator.Snapshot.WriteByte(ptr, 1);
                         Emulator.Snapshot.WriteByte(ptr + 1, (byte)chosenID);
                         Emulator.Snapshot.WriteByte(ptr + 2, (byte)chosenSubID);
+                        Emulator.Snapshot.WriteByte(ptr + 3, (byte)chosenVar03);
                         Emulator.Snapshot.WriteByte(ptr + 0xb, (byte)chosenY);
                         Emulator.Snapshot.WriteByte(ptr + 0xd, (byte)chosenX);
                     }
