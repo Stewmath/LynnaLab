@@ -84,6 +84,7 @@ Examples to get you started:
     int selectedTreasureID = 0;
     int selectedTreasureParameter = 0;
     int memoryIndex = 0;
+    float debuggerInputTextHeight = 0.0f;
 
     // ================================================================================
     // Properties
@@ -239,14 +240,14 @@ Examples to get you started:
 
     void QueueDebuggerCommand(string command)
     {
-        debuggerCommands.Enqueue(command);
-        debuggerCommandReady.Set();
-
         lock (debuggerTextLock)
         {
             AppendDebuggerText('\n' + ("> " + command) + '\n');
             debuggerJumpToBottom = 5;
         }
+
+        debuggerCommands.Enqueue(command);
+        debuggerCommandReady.Set();
     }
 
     /// <summary>
@@ -305,7 +306,7 @@ Examples to get you started:
         {
             text = debuggerText;
 
-            var size = new Vector2(0.0f, ImGui.GetWindowSize().Y * 0.8f);
+            var size = new Vector2(0.0f, ImGui.GetContentRegionAvail().Y - debuggerInputTextHeight);
             ImGui.BeginChild("CHILD", size, 0, ImGuiWindowFlags.AlwaysVerticalScrollbar);
             foreach (string line in text.Split('\n'))
             {
@@ -326,6 +327,8 @@ Examples to get you started:
             }
         }
 
+        Vector2 pos = ImGui.GetCursorScreenPos();
+
         if (ImGui.InputText("##Text input", ref debuggerCurrentLine, Annotation.MAX_TEXT_LENGTH,
             ImGuiInputTextFlags.EnterReturnsTrue))
         {
@@ -336,6 +339,8 @@ Examples to get you started:
             debuggerLastLine = debuggerCurrentLine;
             debuggerCurrentLine = "";
         }
+
+        debuggerInputTextHeight = ImGui.GetCursorScreenPos().Y - pos.Y;
 
         ImGui.PopFont();
     }
