@@ -98,6 +98,11 @@ public class EmulatorManager : Frame, IDisposable
                     RenderTreasureManagementTab();
                     ImGui.EndTabItem();
                 }
+                if (ImGui.BeginTabItem("Global Flags"))
+                {
+                    RenderGlobalFlagsTab();
+                    ImGui.EndTabItem();
+                }
                 if (ImGui.BeginTabItem("Debugger"))
                 {
                     debugger.Render();
@@ -337,6 +342,23 @@ public class EmulatorManager : Frame, IDisposable
         }
 
         ImGui.PopItemWidth();
+    }
+
+    void RenderGlobalFlagsTab()
+    {
+        if (Project == null)
+        {
+            ImGui.Text("Need a project loaded.");
+            return;
+        }
+
+        for (int i = 0; i < Project.Eval("NUM_GLOBALFLAGS"); i++)
+        {
+            Accessor<bool> accessor = new(
+                () => Emulator.Snapshot.GetGlobalFlag(i),
+                (v) => Emulator.Snapshot.SetGlobalFlag(i, v));
+            ImGuiX.Checkbox(Project.GlobalFlagMapping.ByteToString((byte)i), accessor);
+        }
     }
 
     void RenderObjectTab()

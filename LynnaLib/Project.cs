@@ -228,6 +228,10 @@ public partial class Project
     {
         get { return GetConstantsMapping("TreasureObjectMapping"); }
     }
+    public ConstantsMapping GlobalFlagMapping
+    {
+        get { return GetConstantsMapping("GlobalFlagMapping"); }
+    }
 
 
     // TODO: Make these private
@@ -547,6 +551,11 @@ public partial class Project
                 LoadFileParser("constants/common/treasureSpawnModes.s"),
                 "TreasureGrabModeMapping",
                 "TREASURE_GRAB_MODE_"));
+        AddConstantsMapping(
+            new ConstantsMapping(
+                LoadFileParser("constants/common/globalFlags.s"),
+                "GlobalFlagMapping",
+                "GLOBALFLAG_"));
 
         if (Game == Game.Seasons)
         {

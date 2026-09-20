@@ -193,9 +193,26 @@ public abstract class GameboyStateBase
         var ptr = Emulator.Evaluate("wObtainedTreasureFlags");
         var (offset, bitmask) = IndexToByteBitmask(treasureID);
         if (set)
-            OrByte(ptr, (byte)bitmask);
+            OrByte(ptr + offset, (byte)bitmask);
         else
-            AndByte(ptr, (byte)(0xff ^ bitmask));
+            AndByte(ptr + offset, (byte)(0xff ^ bitmask));
+    }
+
+    public bool GetGlobalFlag(int flag)
+    {
+        var ptr = Emulator.Evaluate("wGlobalFlags");
+        var (offset, bitmask) = IndexToByteBitmask(flag);
+        return (ReadByte(ptr + offset) & bitmask) != 0;
+    }
+
+    public void SetGlobalFlag(int flag, bool set)
+    {
+        var ptr = Emulator.Evaluate("wGlobalFlags");
+        var (offset, bitmask) = IndexToByteBitmask(flag);
+        if (set)
+            OrByte(ptr + offset, (byte)bitmask);
+        else
+            AndByte(ptr + offset, (byte)(0xff ^ bitmask));
     }
 
     // ================================================================================
