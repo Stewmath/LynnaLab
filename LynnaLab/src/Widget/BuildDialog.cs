@@ -329,9 +329,6 @@ public class BuildDialog : Frame
 
     void OnEmulatorExitedBody()
     {
-        // Save config so that "close run dialog with emulator" value gets updated
-        GlobalConfig.Save();
-
         if (GlobalConfig.CloseRunDialogWithEmulator)
         {
             Close();
