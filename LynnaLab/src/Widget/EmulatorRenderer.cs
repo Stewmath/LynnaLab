@@ -189,6 +189,10 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
         ImGui.SameLine();
 
+        ImGuiX.Checkbox("Objects", new(() => Top.GlobalConfig.EmulatorDrawObjectBoxes));
+
+        ImGui.SameLine();
+
         if (Manager.Paused)
         {
             if (ImGui.Button("Continue"))
