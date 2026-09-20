@@ -633,11 +633,12 @@ public static class ImGuiX
 
     static _HexEditorState HexEditorState = new();
 
-    public static void HexEditor(string name, ReadOnlySpan<byte> data, Action<int, byte> writeByte, int startAddress = 0)
+    public static void HexEditor(string name, Func<int, byte> readByte, Action<int, byte> writeByte,
+                                 int numBytes, int startAddress = 0)
     {
         int bytesPerLine = 16;
 
-        Helper.Assert(data.Length % bytesPerLine == 0);
+        Helper.Assert(numBytes % bytesPerLine == 0);
 
         ImGui.PushFont(Top.MonoFont, 0.0f);
         ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
@@ -663,8 +664,16 @@ public static class ImGuiX
 
         bool oneWasFocused = false;
 
-        for (int rowStart = 0; rowStart < data.Length; rowStart += bytesPerLine)
+        float lineHeight = ImGui.CalcTextSize("A").Y;
+
+        // Use ImGuiListClipper so we don't need to render lines outside the scroll area
+        ImGuiListClipper clipper = new();
+        clipper.Begin(numBytes / bytesPerLine);
+
+        while (clipper.Step())
+        for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
         {
+            int rowStart = row * bytesPerLine;
             ImGui.Text($"{rowStart + startAddress:X4}:");
 
             for (int x = 0; x < bytesPerLine; x++)
@@ -672,9 +681,9 @@ public static class ImGuiX
                 int addr = rowStart + x;
 
                 bool byteFocused = ImGui.IsWindowFocused()
-                                   && state.focusedID == thisID
-                                   && addr == state.focusedByte
-                                   && !oneWasFocused;
+                                    && state.focusedID == thisID
+                                    && addr == state.focusedByte
+                                    && !oneWasFocused;
 
                 Color color = byteFocused && state.enteredFirstDigit != -1 ? Color.Red
                     : byteFocused ? Color.LightBlue
@@ -687,9 +696,9 @@ public static class ImGuiX
                     ImGui.SameLine();
                 }
 
-                int shownValue = data[addr];
+                int shownValue = readByte(addr);
                 if (byteFocused && state.enteredFirstDigit != -1)
-                    shownValue = (data[addr] & 0xF) | (state.enteredFirstDigit << 4);
+                    shownValue = (readByte(addr) & 0xF) | (state.enteredFirstDigit << 4);
 
                 if (color == Color.White) // Actually use default color
                     ImGui.Text($" {shownValue:X2}");
@@ -707,7 +716,7 @@ public static class ImGuiX
                             writeByte(addr, (byte)value);
                             state.enteredFirstDigit = -1;
                             state.focusedByte++;
-                            if (state.focusedByte >= data.Length)
+                            if (state.focusedByte >= numBytes)
                                 state.focusedByte--;
                         }
                         else

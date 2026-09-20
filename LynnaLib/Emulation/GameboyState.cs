@@ -33,4 +33,7 @@ public class LiveGameboyState : GameboyStateBase
     public override ReadOnlySpan<byte> Hram { get { return Emulator.Hram; } }
     public override ReadOnlySpan<byte> Vram { get { return Emulator.Vram; } }
     public override ReadOnlySpan<byte> Sram { get { return Emulator.Sram; } }
+    public override ReadOnlySpan<byte> IORam { get { return Emulator.IORam; } }
+    public override ReadOnlySpan<byte> OAM { get { return Emulator.OAM; } }
+    public override byte IE { get { return Emulator.IE; } }
 }

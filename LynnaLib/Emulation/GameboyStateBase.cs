@@ -25,11 +25,16 @@ public abstract class GameboyStateBase
     public abstract short VramBank { get; }
     public abstract short WramBank { get; }
 
+    // All RAM on the system bus is exposed through these spans (+ IE)
     public abstract ReadOnlySpan<byte> Rom { get; }
     public abstract ReadOnlySpan<byte> Wram { get; }
     public abstract ReadOnlySpan<byte> Hram { get; }
     public abstract ReadOnlySpan<byte> Vram { get; }
     public abstract ReadOnlySpan<byte> Sram { get; }
+    public abstract ReadOnlySpan<byte> IORam { get; }
+    public abstract ReadOnlySpan<byte> OAM { get; }
+    public abstract byte IE { get; }
+
 
     public short CameraY
     {
@@ -58,34 +63,20 @@ public abstract class GameboyStateBase
 
     public GbPointer ConstructPointer(ushort baseAddr)
     {
-        switch (baseAddr >> 12)
+        switch (GbPointer.GetMemoryArea(baseAddr))
         {
-            case 0x0:
-            case 0x1:
-            case 0x2:
-            case 0x3:
+            case EmulatorMemoryArea.ROM0:
                 return new(baseAddr, 0);
-            case 0x4:
-            case 0x5:
-            case 0x6:
-            case 0x7:
+            case EmulatorMemoryArea.ROMX:
                 return new(baseAddr, RomBank);
-            case 0x8:
-            case 0x9:
+            case EmulatorMemoryArea.VRAM:
                 return new(baseAddr, VramBank);
-            case 0xa:
-            case 0xb:
+            case EmulatorMemoryArea.SRAM:
                 return new(baseAddr, SramBank);
-            case 0xc:
-            case 0xe:
+            case EmulatorMemoryArea.WRAM0:
                 return new(baseAddr, 0);
-            case 0xd:
+            case EmulatorMemoryArea.WRAMX:
                 return new(baseAddr, WramBank);
-            case 0xf:
-                if (baseAddr < 0xfe00)
-                    return new(baseAddr, WramBank);
-                else
-                    return new(baseAddr, -1);
             default:
                 return new(baseAddr, -1);
         }
@@ -93,30 +84,38 @@ public abstract class GameboyStateBase
 
     public byte ReadByte(GbPointer pointer)
     {
-        if (pointer.Addr < 0x4000)
-            return Rom[pointer.Addr];
-        else if (pointer.Addr < 0x8000)
+        switch (pointer.GetMemoryArea())
         {
-            if (!pointer.IsBanked)
-                throw new ArgumentException("ReadByte: Tried to read ROM addr {pointer} with no bank");
-            return Rom[pointer.Bank * 0x4000 + (pointer.Addr & 0x3fff)];
+            case EmulatorMemoryArea.ROM0:
+                return Rom[pointer.Addr];
+            case EmulatorMemoryArea.ROMX:
+                if (!pointer.IsBanked)
+                    throw new ArgumentException("ReadByte: Tried to read ROM addr {pointer} with no bank");
+                return Rom[pointer.Bank * 0x4000 + (pointer.Addr & 0x3fff)];
+            case EmulatorMemoryArea.VRAM:
+                return Vram[pointer.Addr - 0x8000];
+            case EmulatorMemoryArea.SRAM:
+                return Sram[pointer.Addr - 0xa000];
+            case EmulatorMemoryArea.WRAM0:
+                return Wram[pointer.Addr & 0xfff];
+            case EmulatorMemoryArea.WRAMX:
+                if (!pointer.IsBanked)
+                    throw new ArgumentException("ReadByte: Tried to read WRAM addr {pointer} with no bank");
+                return Wram[pointer.Bank * 0x1000 + (pointer.Addr & 0xfff)];
+            case EmulatorMemoryArea.OAM:
+                return OAM[pointer.Addr - 0xfe00];
+            case EmulatorMemoryArea.INVALID:
+                return 0xff;
+            case EmulatorMemoryArea.IO:
+                return IORam[pointer.Addr - 0xff00];
+            case EmulatorMemoryArea.HRAM:
+                return Hram[pointer.Addr - 0xff80];
+            case EmulatorMemoryArea.IE:
+                return IE;
+            default:
+                // This should never happen
+                throw new EmulatorException($"ReadByte: Unimplemented read addr: {pointer}");
         }
-        else if (pointer.Addr >= 0x8000 && pointer.Addr < 0xa000)
-            return Vram[pointer.Addr - 0x8000];
-        else if (pointer.Addr >= 0xa000 && pointer.Addr < 0xc000)
-            return Sram[pointer.Addr - 0xa000];
-        else if (pointer.Addr >= 0xc000 && pointer.Addr < 0xd000)
-            return Wram[pointer.Addr - 0xc000];
-        else if (pointer.Addr >= 0xd000 && pointer.Addr < 0xe000)
-        {
-            if (!pointer.IsBanked)
-                throw new ArgumentException("ReadByte: Tried to read WRAM addr {pointer} with no bank");
-            return Wram[pointer.Bank * 0x1000 + (pointer.Addr & 0xfff)];
-        }
-        else if (pointer.Addr >= 0xff80)
-            return Hram[pointer.Addr - 0xff80];
-        else
-            throw new EmulatorException($"ReadByte: Unimplemented read addr: {pointer}");
     }
 
     public ushort ReadWord(GbPointer pointer)
@@ -182,20 +181,47 @@ public abstract class GameboyStateBase
 
     protected void WriteByteHelper(GbPointer ptr, byte value)
     {
-        switch (ptr.Addr >> 12)
+        switch (ptr.GetMemoryArea())
         {
-            case 0xc:
+            case EmulatorMemoryArea.ROM0:
+            case EmulatorMemoryArea.ROMX:
+            case EmulatorMemoryArea.INVALID:
+                break; // Ignore these
+
+            case EmulatorMemoryArea.VRAM:
+                ptr.AssertBanked();
+                Emulator.Vram[ptr.Bank * 0x2000 + (ptr.Addr & 0x1fff)] = value;
+                break;
+
+            case EmulatorMemoryArea.SRAM:
+                Emulator.Sram[ptr.Bank * 0x2000 + (ptr.Addr & 0x1fff)] = value;
+                break;
+
+            case EmulatorMemoryArea.WRAM0:
                 Emulator.Wram[ptr.Addr & 0xfff] = value;
                 break;
-            case 0xd:
-                if (ptr.IsBanked)
-                {
-                    Emulator.Wram[ptr.Bank * 0x1000 + (ptr.Addr & 0xfff)] = value;
-                }
-                else
-                    throw new NotImplementedException();
+
+            case EmulatorMemoryArea.WRAMX:
+                ptr.AssertBanked();
+                Emulator.Wram[ptr.Bank * 0x1000 + (ptr.Addr & 0xfff)] = value;
                 break;
-            default:
+
+            case EmulatorMemoryArea.OAM:
+                Emulator.OAM[ptr.Addr & 0xff] = value;
+                break;
+
+            case EmulatorMemoryArea.HRAM:
+                Emulator.Hram[ptr.Addr & 0x7f] = value;
+                break;
+
+            // These ones must go through Sameboy's write functions to work correctly.
+            // (We don't use this for everything else because it uses the current loaded bank.)
+            case EmulatorMemoryArea.IO:
+            case EmulatorMemoryArea.IE:
+                Emulator.GB.WriteMemory(ptr.Addr, value);
+                break;
+
+            default: // Should never reach here
                 throw new NotImplementedException();
         }
     }

@@ -43,37 +43,37 @@ public class EmulatorObject
 
     public byte Enabled
     {
-        get => GetByte(0);
+        get => ReadByte(0);
         set => WriteByte(0, value);
     }
     public byte ID
     {
-        get => GetByte(1);
+        get => ReadByte(1);
         set => WriteByte(1, value);
     }
     public byte Y
     {
-        get => GetByte(0xb);
+        get => ReadByte(0xb);
         set => WriteByte(0xb, value);
     }
     public byte X
     {
-        get => GetByte(0xd);
+        get => ReadByte(0xd);
         set => WriteByte(0xd, value);
     }
     public byte Z
     {
-        get => GetByte(0xf);
+        get => ReadByte(0xf);
         set => WriteByte(0xf, value);
     }
     public byte CollisionRadiusY
     {
-        get => GetByte(0x26);
+        get => ReadByte(0x26);
         set => WriteByte(0x26, value);
     }
     public byte CollisionRadiusX
     {
-        get => GetByte(0x27);
+        get => ReadByte(0x27);
         set => WriteByte(0x27, value);
     }
 
@@ -92,6 +92,11 @@ public class EmulatorObject
         return new FRect(X - w / 2, Y - h / 2, w, h);
     }
 
+    public byte ReadByte(int offset)
+    {
+        return Memory[offset];
+    }
+
     public void WriteByte(int offset, byte value)
     {
         if (offset < 0 || offset >= 0x40)
@@ -105,14 +110,5 @@ public class EmulatorObject
         {
             WriteByte(i, 0);
         }
-    }
-
-    // ================================================================================
-    // Private methods
-    // ================================================================================
-
-    private byte GetByte(int offset)
-    {
-        return Memory[offset];
     }
 }

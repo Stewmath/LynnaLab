@@ -46,6 +46,7 @@ public class EmulatorManager : Frame, IDisposable
     int rightClickObjectAddr;
     int selectedMusic = 0;
     int selectedSfx = 0;
+    int memoryIndex = 0;
 
     // ================================================================================
     // Properties
@@ -93,6 +94,11 @@ public class EmulatorManager : Frame, IDisposable
                 if (ImGui.BeginTabItem("Debugger"))
                 {
                     debugger.Render();
+                    ImGui.EndTabItem();
+                }
+                if (ImGui.BeginTabItem("Memory"))
+                {
+                    RenderMemoryTab();
                     ImGui.EndTabItem();
                 }
                 ImGui.EndTabBar();
@@ -409,13 +415,51 @@ public class EmulatorManager : Frame, IDisposable
             }
 
             ImGui.SeparatorText("Object Memory");
-            ImGuiX.HexEditor("Hex", SelectedObject.Memory, SelectedObject.WriteByte, SelectedObject.Address);
+            ImGuiX.HexEditor("Hex",
+                SelectedObject.ReadByte, SelectedObject.WriteByte,
+                0x40, SelectedObject.Address);
         }
 
         ImGui.PopFont();
 
         end:
         hoveringObject = nextHoveringObject;
+    }
+
+    void RenderMemoryTab()
+    {
+        string[] options = [
+            "System Bus",
+            "Wram",
+        ];
+
+        ImGui.Combo("Memory Type", ref memoryIndex, options, options.Length);
+
+        Func<int, byte> readByte;
+        Action<int, byte> writeByte;
+        int length;
+
+        if (memoryIndex == 0) // System bus
+        {
+            var getPtr = (int i) => new GbPointer(i, OraclesEmulator.DefaultBank(i));
+            readByte = (i) => Emulator.Snapshot.ReadByte(getPtr(i));
+            writeByte = (i, b) => Emulator.Snapshot.WriteByte(getPtr(i), b);
+            length = 0x10000;
+        }
+        else if (memoryIndex == 1) // WRAM
+        {
+            readByte = (i) => Emulator.Snapshot.Wram[i];
+            writeByte = (i, b) => Emulator.Snapshot.WriteWram(i, b);
+            length = 0x8000;
+        }
+        else
+        {
+            throw new Exception();
+        }
+
+        ImGui.BeginChild($"Hex {options[memoryIndex]}");
+        ImGuiX.HexEditor("Memory", readByte, writeByte, length);
+        ImGui.EndChild();
     }
 
     // TODO: Write at vblank only

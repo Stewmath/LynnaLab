@@ -21,6 +21,9 @@ public class GameboySnapshot : GameboyStateBase
     byte[] hram;
     byte[] vram;
     byte[] sram;
+    byte[] ioram;
+    byte[] oam;
+    byte ie;
 
     Queue<Action> vblankWriteActions = new();
 
@@ -38,6 +41,9 @@ public class GameboySnapshot : GameboyStateBase
     public override ReadOnlySpan<byte> Hram { get { return hram; } }
     public override ReadOnlySpan<byte> Vram { get { return vram; } }
     public override ReadOnlySpan<byte> Sram { get { return sram; } }
+    public override ReadOnlySpan<byte> IORam { get { return ioram; } }
+    public override ReadOnlySpan<byte> OAM { get { return oam; } }
+    public override byte IE { get { return ie; } }
 
     // ================================================================================
     // Public methods
@@ -48,6 +54,14 @@ public class GameboySnapshot : GameboyStateBase
         vblankWriteActions.Enqueue(() =>
         {
             base.WriteByteHelper(ptr, value);
+        });
+    }
+
+    public void WriteWram(int addr, byte value)
+    {
+        vblankWriteActions.Enqueue(() =>
+        {
+            Emulator.Wram[addr] = value;
         });
     }
 
@@ -90,7 +104,7 @@ public class GameboySnapshot : GameboyStateBase
     /// This is called from the gameboy execution thread. For thread safety, lock that thread while
     /// using the snapshot for other things.
     /// </summary>
-    [MemberNotNull(nameof(wram), nameof(hram), nameof(vram), nameof(sram))]
+    [MemberNotNull(nameof(wram), nameof(hram), nameof(vram), nameof(sram), nameof(ioram), nameof(oam))]
     internal void UpdateState()
     {
         romBank = Emulator.RomBank;
@@ -102,5 +116,8 @@ public class GameboySnapshot : GameboyStateBase
         hram = Emulator.Hram.ToArray();
         vram = Emulator.Vram.ToArray();
         sram = Emulator.Sram.ToArray();
+        ioram = Emulator.IORam.ToArray();
+        oam = Emulator.OAM.ToArray();
+        ie = Emulator.IE;
     }
 }

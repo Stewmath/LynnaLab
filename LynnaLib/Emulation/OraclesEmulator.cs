@@ -132,6 +132,9 @@ public class OraclesEmulator : IDisposable
     public Span<byte> Hram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.HRAM); } }
     public Span<byte> Vram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.VRAM); } }
     public Span<byte> Sram { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.CART_RAM); } }
+    public Span<byte> IORam { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.IO); } }
+    public Span<byte> OAM { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.OAM); } }
+    public ref byte IE { get { return ref gb.GetDirectAccess(SameBoy.GBDirectAccess.IE)[0]; } }
 
     // ================================================================================
     // Public methods
@@ -501,6 +504,35 @@ public class OraclesEmulator : IDisposable
         WriteByte(addr, (byte)(value & 0xff));
         WriteByte(addr + 1, (byte)(value >> 8));
     }
+
+    // ================================================================================
+    // Static methods
+    // ================================================================================
+
+    /// <summary>
+    /// For reads on the system bus, choose a sane default bank, rather than whatever bank is
+    /// currently loaded, for the sake of having something stable to look at.
+    /// </summary>
+    public static short DefaultBank(int addr)
+    {
+        if (addr < 0x4000)
+            return 0;
+        if (addr < 0x8000)
+            return 1;
+        if (addr < 0xa000)
+            return 0;
+        if (addr < 0xc000)
+            return 0;
+        if (addr < 0xd000)
+            return 0;
+        if (addr < 0xe000)
+            return 1;
+        if (addr < 0xf000)
+            return 0;
+        if (addr < 0xfe00)
+            return 1;
+        return -1;
+    }
 }
 
 /// <summary>
@@ -524,6 +556,11 @@ public readonly record struct GbPointer
 
     public bool IsBanked { get { return Bank != -1; } }
 
+    public EmulatorMemoryArea GetMemoryArea()
+    {
+        return GetMemoryArea(Addr);
+    }
+
     public override string ToString()
     {
         return $"{Bank:X2}:{Addr:X4}";
@@ -532,6 +569,29 @@ public readonly record struct GbPointer
     public static GbPointer operator+(GbPointer p, int i)
     {
         return new GbPointer((ushort)(p.Addr + i), p.Bank);
+    }
+
+    public void AssertBanked()
+    {
+        Helper.Assert(IsBanked, $"GbPointer expected to be banked: {this}");
+    }
+
+    public static EmulatorMemoryArea GetMemoryArea(ushort addr)
+    {
+        if (addr < 0x4000) return EmulatorMemoryArea.ROM0;
+        if (addr < 0x8000) return EmulatorMemoryArea.ROMX;
+        if (addr < 0xa000) return EmulatorMemoryArea.VRAM;
+        if (addr < 0xc000) return EmulatorMemoryArea.SRAM;
+        if (addr < 0xd000) return EmulatorMemoryArea.WRAM0;
+        if (addr < 0xe000) return EmulatorMemoryArea.WRAMX;
+        if (addr < 0xf000) return EmulatorMemoryArea.WRAM0;
+        if (addr < 0xfe00) return EmulatorMemoryArea.WRAMX;
+        if (addr < 0xfea0) return EmulatorMemoryArea.OAM;
+        if (addr < 0xff00) return EmulatorMemoryArea.INVALID;
+        if (addr < 0xff80) return EmulatorMemoryArea.IO;
+        if (addr < 0xffff) return EmulatorMemoryArea.HRAM;
+
+        return EmulatorMemoryArea.IE;
     }
 }
 
@@ -542,4 +602,22 @@ public readonly struct EmulatorStartOptions
     public Season Season { get; init; }
     public byte X { get; init; }
     public byte Y { get; init; }
+}
+
+/// <summary>
+/// A gameboy system bus address maps to one of these values
+/// </summary>
+public enum EmulatorMemoryArea
+{
+    ROM0,
+    ROMX,
+    VRAM,
+    SRAM,
+    WRAM0,
+    WRAMX,
+    OAM,
+    IO,
+    HRAM,
+    IE,
+    INVALID,
 }
