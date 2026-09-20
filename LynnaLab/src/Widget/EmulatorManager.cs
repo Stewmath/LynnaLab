@@ -212,6 +212,12 @@ Examples to get you started:
     {
         debuggerCommands.Enqueue(command);
         debuggerCommandReady.Set();
+
+        lock (debuggerTextLock)
+        {
+            AppendDebuggerText('\n' + ("> " + command) + '\n');
+            debuggerJumpToBottom = 5;
+        }
     }
 
     /// <summary>
@@ -245,6 +251,9 @@ Examples to get you started:
         return null;
     }
 
+    /// <summary>
+    /// Can be called from rendering thread or GB execution thread
+    /// </summary>
     void AppendDebuggerText(string text)
     {
         lock (debuggerTextLock)
@@ -261,25 +270,27 @@ Examples to get you started:
         lock (debuggerTextLock)
         {
             text = debuggerText;
+
+            var size = new Vector2(0.0f, ImGui.GetWindowSize().Y * 0.8f);
+            ImGui.BeginChild("CHILD", size, 0, ImGuiWindowFlags.AlwaysVerticalScrollbar);
+            foreach (string line in text.Split('\n'))
+            {
+                ImGui.TextWrapped(line);
+            }
+
+            if (debuggerJumpToBottom != 0)
+            {
+                ImGui.SetScrollY(ImGui.GetScrollMaxY());
+                debuggerJumpToBottom--;
+            }
+
+            ImGui.EndChild();
+
+            if (debuggerJumpToBottom == 1)
+            {
+                ImGui.SetKeyboardFocusHere();
+            }
         }
-
-        var size = new Vector2(0.0f, ImGui.GetWindowSize().Y * 0.8f);
-        ImGui.BeginChild("CHILD", size, 0, ImGuiWindowFlags.AlwaysVerticalScrollbar);
-        foreach (string line in text.Split('\n'))
-        {
-            ImGui.TextWrapped(line);
-        }
-
-        if (debuggerJumpToBottom != 0)
-        {
-            ImGui.SetScrollY(ImGui.GetScrollMaxY());
-            debuggerJumpToBottom--;
-        }
-
-        ImGui.EndChild();
-
-        if (debuggerJumpToBottom == 1)
-            ImGui.SetKeyboardFocusHere();
 
         if (ImGui.InputText("##Text input", ref debuggerCurrentLine, Annotation.MAX_TEXT_LENGTH,
             ImGuiInputTextFlags.EnterReturnsTrue))
@@ -287,11 +298,9 @@ Examples to get you started:
             if (debuggerCurrentLine.Trim().Length == 0)
                 debuggerCurrentLine = debuggerLastLine;
 
-            AppendDebuggerText('\n' + ("> " + debuggerCurrentLine) + '\n');
             QueueDebuggerCommand(debuggerCurrentLine);
             debuggerLastLine = debuggerCurrentLine;
             debuggerCurrentLine = "";
-            debuggerJumpToBottom = 4;
         }
 
         ImGui.PopFont();
