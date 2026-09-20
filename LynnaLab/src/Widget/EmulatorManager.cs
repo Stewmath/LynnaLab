@@ -61,9 +61,11 @@ Examples to get you started:
     // For sameboy debugger console
     readonly ConcurrentQueue<string> debuggerCommands = new();
     readonly AutoResetEvent debuggerCommandReady = new(false);
+    readonly CancellationTokenSource emuCancellation = new();
     readonly object debuggerTextLock = new();
     readonly Mutex emuMutex = new();
     string debuggerText = DebuggerHelpText;
+    bool disposed;
     string debuggerCurrentLine = "";
     string debuggerLastLine = "";
     int debuggerJumpToBottom;
@@ -156,8 +158,18 @@ Examples to get you started:
 
     public void Dispose()
     {
-        // The emulator thread owns emuMutex and runs for the lifetime of the process.
+        if (disposed)
+            return;
+        disposed = true;
+
+        emuCancellation.Cancel();
+        debuggerCommandReady.Set();
+        emuThread.Join();
+
         renderer.Dispose();
+        emuMutex.Dispose();
+        debuggerCommandReady.Dispose();
+        emuCancellation.Dispose();
     }
 
     public void Interrupt()
@@ -193,7 +205,7 @@ Examples to get you started:
 
     void RunEmuThreadCallback()
     {
-        while (true)
+        while (!emuCancellation.IsCancellationRequested)
         {
             emuMutex.WaitOne();
             try
@@ -228,10 +240,15 @@ Examples to get you started:
         try
         {
             string? command;
-            while (!debuggerCommands.TryDequeue(out command))
-                debuggerCommandReady.WaitOne();
+            while (!emuCancellation.IsCancellationRequested)
+            {
+                if (debuggerCommands.TryDequeue(out command))
+                    return command;
 
-            return command;
+                debuggerCommandReady.WaitOne();
+            }
+
+            return "continue";
         }
         finally
         {
