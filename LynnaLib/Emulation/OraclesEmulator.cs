@@ -84,6 +84,12 @@ public class OraclesEmulator : IDisposable
     GameboySnapshot snapshot;
 
     // ================================================================================
+    // Events
+    // ================================================================================
+
+    public event Action? VBlankEvent;
+
+    // ================================================================================
     // Properties
     // ================================================================================
 
@@ -158,6 +164,8 @@ public class OraclesEmulator : IDisposable
                 if (action != null)
                     action();
             }
+
+            VBlankEvent?.Invoke();
         }
 
         GbPointer ptr = state.ConstructPointer(gb.Registers.PC);

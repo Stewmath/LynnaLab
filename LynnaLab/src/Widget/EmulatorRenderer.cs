@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using SameBoySharp;
 using Emulation;
@@ -88,7 +89,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
     public EmulatorManager Manager { get; init; }
     public OraclesEmulator Emulator { get { return emu; } }
 
-    Vector2 EmulatorContentSize { get { return new Vector2(160, 144) * Scale + new Vector2(0, ImGui.GetFrameHeight()); } }
+    Vector2 EmulatorContentSize { get { return new Vector2(160, 144) * Scale + new Vector2(0, ImGui.GetFrameHeight() * 2); } }
 
     // ================================================================================
     // Variables
@@ -111,6 +112,10 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
         RenderRibbon();
         renderWidget.Render();
+
+        #if DEBUG
+        ImGui.Text($"FPS: {renderWidget.FramesPerSecond:F1}");
+        #endif
 
         SameBoy.GBKeyMask mask = 0;
         bool turbo = false;
@@ -280,6 +285,7 @@ class ScreenWidget : SizedWidget, IDisposable
         {
             screenTexture.CopyPixels(emu.PixelData, 160, 144, 4);
         });
+        emu.VBlankEvent += OnVBlank;
 
         overlayBoxUser = new(parent, this);
     }
@@ -297,6 +303,12 @@ class ScreenWidget : SizedWidget, IDisposable
     List<OverlayBox> overlayBoxes = new();
     Dictionary<ushort, EmulatorObjectOverlayBox> overlayBoxMap = new();
 
+    // FPS tracking
+    readonly object fpsLock = new();
+    long fpsStartTimestamp = Stopwatch.GetTimestamp();
+    int framesSinceFpsUpdate;
+    float framesPerSecond;
+
     // ================================================================================
     // Properties
     // ================================================================================
@@ -305,6 +317,17 @@ class ScreenWidget : SizedWidget, IDisposable
 
     public OraclesEmulator Emulator { get { return emu; } }
     public int Scale { get { return parent.Scale; } }
+    public float FramesPerSecond
+    {
+        get
+        {
+            lock (fpsLock)
+            {
+                UpdateFramesPerSecond();
+                return framesPerSecond;
+            }
+        }
+    }
 
     // ================================================================================
     // Public methods
@@ -350,6 +373,7 @@ class ScreenWidget : SizedWidget, IDisposable
 
     public void Dispose()
     {
+        emu.VBlankEvent -= OnVBlank;
         screenTexture.Dispose();
         screenTexture = null!;
     }
@@ -357,6 +381,31 @@ class ScreenWidget : SizedWidget, IDisposable
     // ================================================================================
     // Private methods
     // ================================================================================
+
+    /// <summary>
+    /// Invoked on every emulated VBlank. Differs from SameBoy's vblank callback, which does not
+    /// always get invoked, only when it wants to present new pixel data.
+    /// </summary>
+    void OnVBlank()
+    {
+        lock (fpsLock)
+        {
+            framesSinceFpsUpdate++;
+            UpdateFramesPerSecond();
+        }
+    }
+
+    void UpdateFramesPerSecond()
+    {
+        long now = Stopwatch.GetTimestamp();
+        long elapsed = now - fpsStartTimestamp;
+        if (elapsed < Stopwatch.Frequency)
+            return;
+
+        framesPerSecond = framesSinceFpsUpdate * (float)Stopwatch.Frequency / elapsed;
+        framesSinceFpsUpdate = 0;
+        fpsStartTimestamp = now;
+    }
 
     void UpdateOverlayBoxes()
     {
