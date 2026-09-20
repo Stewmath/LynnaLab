@@ -114,9 +114,16 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
         if (ImGui.BeginPopup("EmulatorPopupMenu"))
         {
-            bool paused = Manager.Paused;
-            if (ImGui.Checkbox("Pause", ref paused))
-                Manager.SetPaused(paused);
+            if (Manager.Paused)
+            {
+                if (ImGui.Button("continue"))
+                    Manager.Continue();
+            }
+            else
+            {
+                if (ImGui.Button("pause"))
+                    Manager.Interrupt();
+            }
             ImGuiX.Checkbox("Mute", muted, (b) => SetMuted(b));
             ImGui.EndPopup();
         }

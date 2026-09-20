@@ -1,5 +1,6 @@
 namespace LynnaLab;
 
+using System.Collections.Concurrent;
 using System.Threading;
 using Emulation;
 
@@ -11,35 +12,62 @@ public class EmulatorManager : Frame, IDisposable
     public EmulatorManager(OraclesEmulator emulator, Project? project) : base("Emulator")
     {
         this.emulator = emulator;
-        this.debugger = new EmulatorDebugger(this);
         this.renderer = new EmulatorRenderer(this);
         if (project != null)
             this.ProjectInterfacer = new(project);
 
-        this.debugger.Active = true;
         this.renderer.Active = true;
 
-        this.ClosedEvent += (_, _) =>
-        {
-            SetPaused(true);
-        };
-        this.OpenedEvent += (_, _) =>
-        {
-            SetPaused(false);
-        };
+        this.ClosedEvent += (_, _) => QueueDebuggerCommand("interrupt");
+        this.OpenedEvent += (_, _) => QueueDebuggerCommand("continue");
 
-        paused = true; // Set to true to enable SetPaused(false) to do something
-        SetPaused(false);
+        emulator.GB.SetLogCallback(AppendDebuggerText);
+        emulator.GB.SetInputCallback(SyncInputCallback);
+        emulator.GB.SetAsyncInputCallback(AsyncInputCallback);
+
+        emuThread = new Thread(RunEmuThreadCallback);
+        emuThread.Start();
     }
 
     // ================================================================================
     // Variables
     // ================================================================================
+    const string DebuggerHelpText = """
+This is the SameBoy debugger console.
+
+Examples to get you started:
+
+- See Link's health:
+    > p [wLinkHealth]
+
+- Watchpoint triggering when Link gains or loses health:
+    > watch wLinkHealth
+
+- Breakpoint that triggers on textboxes:
+    > break showText
+
+- Resume execution after a watchpoint or breakpoint triggers:
+    > continue
+
+- Get general help, or help on a specific command:
+    > help
+    > help watch
+
+""";
+
     OraclesEmulator emulator;
-    EmulatorDebugger debugger;
     EmulatorRenderer renderer;
-    bool paused, nextPausedState;
-    Thread? emuThread;
+    readonly Thread emuThread;
+
+    // For sameboy debugger console
+    readonly ConcurrentQueue<string> debuggerCommands = new();
+    readonly AutoResetEvent debuggerCommandReady = new(false);
+    readonly object debuggerTextLock = new();
+    readonly Mutex emuMutex = new();
+    string debuggerText = DebuggerHelpText;
+    string debuggerCurrentLine = "";
+    string debuggerLastLine = "";
+    int debuggerJumpToBottom;
 
     // ImGui state
     int hoveringObject;
@@ -55,7 +83,7 @@ public class EmulatorManager : Frame, IDisposable
     // ================================================================================
 
     public OraclesEmulator Emulator { get { return emulator; } }
-    public bool Paused { get { return paused; } }
+    public bool Paused { get { return Emulator.GB.DebuggerIsStopped(); } }
 
     /// <summary>
     /// SelectedObject points to some area of object memory. Can be a blank slot.
@@ -74,7 +102,8 @@ public class EmulatorManager : Frame, IDisposable
         // Reduce surprises by disallowing the emulator from running while we're rendering it and
         // the debug windows. There are no guarantees about where in the execution it may have
         // paused, though.
-        lock (emulator)
+        emuMutex.WaitOne();
+        try
         {
             renderer.Render();
             ImGui.SameLine();
@@ -105,7 +134,7 @@ public class EmulatorManager : Frame, IDisposable
                 }
                 if (ImGui.BeginTabItem("Debugger"))
                 {
-                    debugger.Render();
+                    RenderDebuggerTab();
                     ImGui.EndTabItem();
                 }
                 if (ImGui.BeginTabItem("Memory"))
@@ -120,28 +149,26 @@ public class EmulatorManager : Frame, IDisposable
 
             emulator.Snapshot.FlushWrites();
         }
-
-        UpdatePauseState();
+        finally
+        {
+            emuMutex.ReleaseMutex();
+        }
     }
 
     public void Dispose()
     {
-        SetPaused(true);
-        debugger.Dispose();
+        // The emulator thread owns emuMutex and runs for the lifetime of the process.
         renderer.Dispose();
     }
 
-    public void SetPaused(bool value)
+    public void Interrupt()
     {
-        if (paused == value)
-            return;
+        QueueDebuggerCommand("interrupt");
+    }
 
-        nextPausedState = value;
-
-        // To prevent a deadlock, we can't depend on the thread exiting right now if we're holding
-        // the lock. Call UpdatePauseState() later.
-        if (!Monitor.IsEntered(emulator))
-            UpdatePauseState();
+    public void Continue()
+    {
+        QueueDebuggerCommand("continue");
     }
 
     public void SetSelectedObject(ushort? address)
@@ -167,37 +194,107 @@ public class EmulatorManager : Frame, IDisposable
 
     void RunEmuThreadCallback()
     {
-        while (!Paused)
+        while (true)
         {
-            lock (emulator)
+            emuMutex.WaitOne();
+            try
             {
                 emulator.Run();
+            }
+            finally
+            {
+                emuMutex.ReleaseMutex();
             }
         }
     }
 
-    /// <summary>
-    /// Cannot call this while emulator is in a lock (need that thread to exit).
-    /// </summary>
-    void UpdatePauseState()
+    void QueueDebuggerCommand(string command)
     {
-        // Must do this outside of the lock
-        if (nextPausedState != paused)
+        debuggerCommands.Enqueue(command);
+        debuggerCommandReady.Set();
+    }
+
+    /// <summary>
+    /// Input callback while emulator is paused.
+    /// </summary>
+    string? SyncInputCallback()
+    {
+        emuMutex.ReleaseMutex();
+        try
         {
-            paused = nextPausedState;
-            if (paused)
-            {
-                if (emuThread?.IsAlive ?? false)
-                    emuThread.Join();
-                emuThread = null;
-            }
-            else
-            {
-                Debug.Assert(emuThread == null);
-                emuThread = new Thread(RunEmuThreadCallback);
-                emuThread.Start();
-            }
+            string? command;
+            while (!debuggerCommands.TryDequeue(out command))
+                debuggerCommandReady.WaitOne();
+
+            return command;
         }
+        finally
+        {
+            emuMutex.WaitOne();
+        }
+    }
+
+    /// <summary>
+    /// Input callback while emulator is running.
+    /// </summary>
+    string? AsyncInputCallback()
+    {
+        if (debuggerCommands.TryDequeue(out string? command))
+            return command;
+
+        return null;
+    }
+
+    void AppendDebuggerText(string text)
+    {
+        lock (debuggerTextLock)
+        {
+            debuggerText += text;
+        }
+    }
+
+    void RenderDebuggerTab()
+    {
+        ImGui.PushFont(Top.MonoFont, Top.GlobalConfig.MenuFontSize);
+
+        string text;
+        lock (debuggerTextLock)
+        {
+            text = debuggerText;
+        }
+
+        var size = new Vector2(0.0f, ImGui.GetWindowSize().Y * 0.8f);
+        ImGui.BeginChild("CHILD", size, 0, ImGuiWindowFlags.AlwaysVerticalScrollbar);
+        foreach (string line in text.Split('\n'))
+        {
+            ImGui.TextWrapped(line);
+        }
+
+        if (debuggerJumpToBottom != 0)
+        {
+            ImGui.SetScrollY(ImGui.GetScrollMaxY());
+            debuggerJumpToBottom--;
+        }
+
+        ImGui.EndChild();
+
+        if (debuggerJumpToBottom == 1)
+            ImGui.SetKeyboardFocusHere();
+
+        if (ImGui.InputText("##Text input", ref debuggerCurrentLine, Annotation.MAX_TEXT_LENGTH,
+            ImGuiInputTextFlags.EnterReturnsTrue))
+        {
+            if (debuggerCurrentLine.Trim().Length == 0)
+                debuggerCurrentLine = debuggerLastLine;
+
+            AppendDebuggerText('\n' + ("> " + debuggerCurrentLine) + '\n');
+            QueueDebuggerCommand(debuggerCurrentLine);
+            debuggerLastLine = debuggerCurrentLine;
+            debuggerCurrentLine = "";
+            debuggerJumpToBottom = 4;
+        }
+
+        ImGui.PopFont();
     }
 
     void RenderGeneralTab()

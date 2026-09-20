@@ -167,6 +167,10 @@ internal unsafe static class Native
     [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
     internal static extern char* GB_debugger_describe_address(IntPtr gb, ushort addr, ushort bank, bool exact_match, bool prefer_local);
 
+    [DllImport(DLL, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.I1)]
+    internal static extern bool GB_debugger_is_stopped(IntPtr gb);
+
     // ================================================================================
     // Console I/O
     // ================================================================================

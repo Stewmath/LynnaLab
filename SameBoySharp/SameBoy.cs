@@ -317,6 +317,13 @@ public unsafe partial class SameBoy : IDisposable
         return Marshal.PtrToStringAnsi((IntPtr)desc)!;
     }
 
+    public bool DebuggerIsStopped()
+    {
+        VerifyNotDisposed();
+
+        return Native.GB_debugger_is_stopped(_gb);
+    }
+
     // ================================================================================
     // Console I/O
     // ================================================================================
