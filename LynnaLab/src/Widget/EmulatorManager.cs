@@ -323,7 +323,7 @@ public class EmulatorManager : Frame, IDisposable
             {
                 ConstantsMapping mapping = Project.TreasureMapping;
 
-                for (int t = 0; t < Project.Eval("NUM_TREASURES"); t++)
+                for (int t = 0; t < Project.NumTreasures; t++)
                 {
                     Accessor<bool> accessor = new(
                         () => Emulator.Snapshot.GetTreasureFlag(t),
@@ -351,26 +351,58 @@ public class EmulatorManager : Frame, IDisposable
 
         float childSize = ImGui.GetContentRegionAvail().X / 4.0f;
 
-        void SpawnModal(GbPointer ptr, EmulatorObjectClass cls)
+        // Prompt to spawn an object
+        void SpawnModalCommon(GbPointer ptr, EmulatorObjectClass cls, bool treasureObject)
         {
             int chosenID = 0;
             int chosenSubID = 0;
             int chosenVar03 = 0;
             int chosenX = 0x38, chosenY = 0x38;
-            Modal.OpenModal($"Spawn {cls.Name}", () =>
+            string name = treasureObject ? "Treasure Object" : cls.Name;
+
+            Modal.OpenModal($"Spawn {name}", () =>
             {
-                ImGuiLL.ComboBoxFromConstants("ID", cls.ConstantsMapping, ref chosenID,
-                    withIntInput: true,
-                    omitPrefix: false,
-                    showHelp: false);
+                // Need a minimum width so that size doesn't fluctuate
+                ImGui.BeginChild("Child", ImGuiX.Unit(550.0f, 0.0f), ImGuiChildFlags.AutoResizeY);
 
                 ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
-                ImGuiX.InputHex("SubID", ref chosenSubID);
-                ImGuiX.InputHex("Var03", ref chosenVar03);
+
+                if (treasureObject)
+                {
+                    chosenID = 0x60;
+
+                    // Treasure ID is actually SubID, SubID is actually var03. I guess.
+
+                    ImGuiLL.ComboBoxFromConstants("Treasure", Project.TreasureMapping, ref chosenSubID,
+                        withIntInput: true,
+                        omitPrefix: false,
+                        showHelp: false);
+
+                    ImGuiX.InputHex("SubID", ref chosenVar03);
+
+                    if (chosenSubID < Project.NumTreasures)
+                    {
+                        var group = Project.GetIndexedDataType<TreasureGroup>(chosenSubID);
+                        ImGui.SameLine();
+                        string name = group.GetTreasureObject(chosenVar03)?.Name ?? "Non-existent";
+                        ImGui.Text($"({name})");
+                    }
+                }
+                else
+                {
+                    ImGuiLL.ComboBoxFromConstants("ID", cls.ConstantsMapping, ref chosenID,
+                        withIntInput: true,
+                        omitPrefix: false,
+                        showHelp: false);
+                    ImGuiX.InputHex("SubID", ref chosenSubID);
+                    ImGuiX.InputHex("Var03", ref chosenVar03);
+                }
+
                 ImGuiX.InputHex("X", ref chosenX);
                 ImGuiX.InputHex("Y", ref chosenY);
                 ImGui.PopItemWidth();
 
+                bool retval = false;
                 if (ImGui.Button("OK"))
                 {
                     // Best-effort check for whether the slot is in use already. But race conditions
@@ -388,16 +420,27 @@ public class EmulatorManager : Frame, IDisposable
                         Emulator.Snapshot.WriteByte(ptr + 0xb, (byte)chosenY);
                         Emulator.Snapshot.WriteByte(ptr + 0xd, (byte)chosenX);
                     }
-                    return true;
+                    retval = true;
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Cancel"))
                 {
-                    return true;
+                    retval = true;
                 }
 
-                return false;
+                ImGui.EndChild();
+                return retval;
             });
+        }
+        void SpawnModal(GbPointer ptr, EmulatorObjectClass cls)
+        {
+            SpawnModalCommon(ptr, cls, false);
+        }
+
+        // Like above, but for treasure objects specifically
+        void SpawnTreasureObjectModal(GbPointer ptr)
+        {
+            SpawnModalCommon(ptr, ProjectInterfacer.InteractionObjectClass, true);
         }
 
         void RenderSection(EmulatorObjectClass cls)
@@ -444,9 +487,14 @@ public class EmulatorManager : Frame, IDisposable
             if (ImGui.BeginPopup("EmptyRightClickMenu"))
             {
                 EmulatorObjectClass clsOverride = ProjectInterfacer.GetObjectClass(rightClickObjectAddr);
+                GbPointer ptr = new((ushort)rightClickObjectAddr, 1);
                 if (ImGui.Selectable($"Spawn {clsOverride.Name}"))
                 {
-                    SpawnModal(new((ushort)rightClickObjectAddr, 1), clsOverride);
+                    SpawnModal(ptr, clsOverride);
+                }
+                if (cls.Offset == 0x40 && ImGui.Selectable("Spawn Treasure Object"))
+                {
+                    SpawnTreasureObjectModal(ptr);
                 }
                 ImGui.EndPopup();
             }
