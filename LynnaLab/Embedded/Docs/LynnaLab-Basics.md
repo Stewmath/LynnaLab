@@ -25,3 +25,7 @@ To access other functionality (dungeon editing, etc), use the "windows" option i
 Access LynnaLab's settings menu by clicking on the arrow on the left side of the screen.
 
 ![](basics-settings.png)
+
+Changes to LynnaLab's settings generally do not persist unless you click the "Save settings" button.
+
+![](basics-savesettings.png)
