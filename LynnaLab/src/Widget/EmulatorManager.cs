@@ -210,7 +210,12 @@ Examples to get you started:
             emuMutex.WaitOne();
             try
             {
-                emulator.Run();
+                // To improve performance, call Run() many times before relinquishing the mutex.
+                // This is important since it only runs about one opcode per invocation.
+                for (int i = 0; i < 1000; i++)
+                {
+                    emulator.Run();
+                }
             }
             finally
             {
