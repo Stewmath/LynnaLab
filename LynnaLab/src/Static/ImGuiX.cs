@@ -629,16 +629,19 @@ public static class ImGuiX
         public int currentFocusedByte = -1;
         public int forceFocusedByte = -1;
         public int enteredFirstDigit = -1;
+        public bool forceRenderAll = false;
     }
 
     static _HexEditorState HexEditorState = new();
 
     public static void HexEditor(string name, Func<int, byte> readByte, Action<int, byte> writeByte,
-                                 int numBytes, int startAddress = 0)
+                                 int numBytes, int startAddress = 0, Func<string, int?> addressEvaluator = null)
     {
         int bytesPerLine = 16;
 
         Helper.Assert(numBytes % bytesPerLine == 0);
+
+        ImGui.BeginGroup();
 
         ImGui.PushFont(Top.MonoFont, 0.0f);
         ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
@@ -675,12 +678,7 @@ public static class ImGuiX
 
         bool thisWidgetFocused = state.currentFocusedID == thisID;
 
-        // Use ImGuiListClipper so we don't need to render lines outside the scroll area
-        ImGuiListClipper clipper = new();
-        clipper.Begin(numBytes / bytesPerLine);
-
-        while (clipper.Step())
-        for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
+        void RenderRow(int row)
         {
             int rowStart = row * bytesPerLine;
             ImGui.Text($"{rowStart + startAddress:X4}:");
@@ -779,10 +777,93 @@ public static class ImGuiX
             }
         }
 
+        // When doing "goto", render everything so that we can locate the focused item.
+        if (thisWidgetFocused && state.forceRenderAll)
+        {
+            for (int r = 0; r < numBytes / bytesPerLine; r++)
+            {
+                RenderRow(r);
+            }
+
+            state.forceRenderAll = false;
+        }
+        // Otherwise, use ImGuiListClipper so we don't need to render lines outside the scroll area
+        else
+        {
+            ImGuiListClipper clipper = new();
+            clipper.Begin(numBytes / bytesPerLine);
+            while (clipper.Step())
+                for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
+                    RenderRow(row);
+        }
+
         ImGui.PopStyleColor(1);
         ImGui.PopStyleVar();
         ImGui.PopStyleVar();
         ImGui.PopFont();
+
+        ImGui.EndGroup();
+
+        if (ImGui.IsWindowFocused() && ImGui.IsKeyChordPressed((int)(ImGuiKey.G | ImGuiKey.ModCtrl)))
+        {
+            string errorMessage = null;
+
+            Modal.OpenModal("Goto Address", () =>
+            {
+                ImGui.Text("Jump to address...");
+
+                ImGui.SetKeyboardFocusHere();
+
+                string address = "";
+
+                if (ImGui.InputText("##Address", ref address, 100, ImGuiInputTextFlags.EnterReturnsTrue))
+                {
+                    int addr = 0;
+
+                    if (address.Length == 0)
+                        return true;
+                    else if (addressEvaluator != null)
+                    {
+                        int? res = addressEvaluator(address);
+                        if (res == null)
+                        {
+                            errorMessage = $"Failed to parse address: {address}";
+                            return false;
+                        }
+                        addr = (int)res;
+                    }
+                    else if (int.TryParse(address,
+                        System.Globalization.NumberStyles.HexNumber,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out addr))
+                    {
+                    }
+                    else
+                    {
+                        errorMessage = $"Failed to parse address: {address}";
+                        return false;
+                    }
+
+                    if (addr < 0 || addr >= numBytes)
+                    {
+                        errorMessage = $"Address out of range: {address} ({addr:X4})";
+                        return false;
+                    }
+                    state.currentFocusedID = thisID;
+                    state.forceFocusedByte = addr;
+                    state.forceRenderAll = true;
+                    return true;
+                }
+
+                if (errorMessage != null)
+                    ImGui.Text(errorMessage);
+
+                if (ImGui.IsKeyPressed(ImGuiKey.Escape))
+                    return true;
+
+                return false;
+            });
+        }
     }
 
     // ================================================================================

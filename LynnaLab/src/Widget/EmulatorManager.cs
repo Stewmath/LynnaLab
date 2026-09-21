@@ -1,6 +1,7 @@
 namespace LynnaLab;
 
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Threading;
 using Emulation;
 
@@ -757,7 +758,25 @@ Examples to get you started:
         }
 
         ImGui.BeginChild($"Hex {options[memoryIndex]}");
-        ImGuiX.HexEditor("Memory", readByte, writeByte, length);
+        ImGuiX.HexEditor("Memory", readByte, writeByte, length,
+            addressEvaluator: (s) =>
+            {
+                // If it's a hex number, try to parse it directly. Must do this because while
+                // TryEvaluate() does return a result, it doesn't automatically assume hexadecimal input.
+                // This is a bit inconsistent, since on the Evaluate() path hex numbers will need to
+                // be prefixed with "$"...
+                if (int.TryParse(s, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int val))
+                {
+                    return val;
+                }
+                else if (Emulator.TryEvaluate(s, out GbPointer ptr))
+                {
+                    return ptr.Addr;
+                }
+                else
+                    return null;
+            });
+
         ImGui.EndChild();
     }
 
