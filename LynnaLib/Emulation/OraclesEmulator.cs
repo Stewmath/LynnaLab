@@ -196,6 +196,9 @@ public class OraclesEmulator : IDisposable
 
     /// <summary>
     /// Wrapper over SameBoy.DebuggerEvaluate. Returns true on success.
+    ///
+    /// Sameboy API docs say not to call this while GB.Run() is being invoked (unless through a
+    /// callback).
     /// </summary>
     public bool TryEvaluate(string str, out GbPointer addr)
     {

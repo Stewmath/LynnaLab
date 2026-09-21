@@ -138,6 +138,10 @@ public abstract class GameboyStateBase
     public abstract void OrByte(GbPointer ptr, byte mask);
     public abstract void AndByte(GbPointer ptr, byte mask);
 
+    public void WriteByte(string label, byte value)
+    {
+        WriteByte(Emulator.Evaluate(label), value);
+    }
     public void WriteWord(GbPointer ptr, ushort value)
     {
         WriteByte(ptr,     (byte)(value & 0xff));
@@ -181,38 +185,27 @@ public abstract class GameboyStateBase
             return Game.Ages;
     }
 
-    public bool GetTreasureFlag(int treasureID)
+    public bool GetFlag(GbPointer ptrBase, int index)
     {
-        var ptr = Emulator.Evaluate("wObtainedTreasureFlags");
-        var (offset, bitmask) = IndexToByteBitmask(treasureID);
-        return (ReadByte(ptr + offset) & bitmask) != 0;
+        var (offset, bitmask) = IndexToByteBitmask(index);
+        return (ReadByte(ptrBase + offset) & bitmask) != 0;
+    }
+    public bool GetFlag(string label, int index)
+    {
+        return GetFlag(Emulator.Evaluate(label), index);
     }
 
-    public void SetTreasureFlag(int treasureID, bool set)
+    public void SetFlag(GbPointer ptrBase, int index, bool set = true)
     {
-        var ptr = Emulator.Evaluate("wObtainedTreasureFlags");
-        var (offset, bitmask) = IndexToByteBitmask(treasureID);
+        var (offset, bitmask) = IndexToByteBitmask(index);
         if (set)
-            OrByte(ptr + offset, (byte)bitmask);
+            OrByte(ptrBase + offset, (byte)bitmask);
         else
-            AndByte(ptr + offset, (byte)(0xff ^ bitmask));
+            AndByte(ptrBase + offset, (byte)(0xff ^ bitmask));
     }
-
-    public bool GetGlobalFlag(int flag)
+    public void SetFlag(string label, int index, bool set = true)
     {
-        var ptr = Emulator.Evaluate("wGlobalFlags");
-        var (offset, bitmask) = IndexToByteBitmask(flag);
-        return (ReadByte(ptr + offset) & bitmask) != 0;
-    }
-
-    public void SetGlobalFlag(int flag, bool set)
-    {
-        var ptr = Emulator.Evaluate("wGlobalFlags");
-        var (offset, bitmask) = IndexToByteBitmask(flag);
-        if (set)
-            OrByte(ptr + offset, (byte)bitmask);
-        else
-            AndByte(ptr + offset, (byte)(0xff ^ bitmask));
+        SetFlag(Emulator.Evaluate(label), index, set);
     }
 
     // ================================================================================

@@ -48,4 +48,24 @@ public abstract class FloorPlan : TrackedProjectData
     {
         return GetRoom(x, y).GetLayout(Season);
     }
+
+    /// <summary>
+    /// Returns all rooms used. If a room appears more than once (possible in dungeons), it is only
+    /// returned once.
+    /// </summary>
+    public IEnumerable<Room> GetAllRooms()
+    {
+        HashSet<Room> visited = new();
+        for (int y = 0; y < MapHeight; y++)
+        {
+            for (int x = 0; x < MapWidth; x++)
+            {
+                Room r = GetRoom(x, y);
+                if (visited.Contains(r))
+                    continue;
+                visited.Add(r);
+                yield return r;
+            }
+        }
+    }
 }

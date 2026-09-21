@@ -306,6 +306,27 @@ public class Dungeon : TrackedProjectData, IndexedProjectDataInstantiator
         Project.EndTransaction();
     }
 
+    /// <summary>
+    /// Returns all rooms used in the dungeon. If a room appears more than once, it is only returned
+    /// once.
+    /// </summary>
+    public IEnumerable<Room> GetAllRooms()
+    {
+        HashSet<Room> visited = new();
+        for (int f = 0; f < NumFloors; f++)
+        {
+            Floor floor = GetFloor(f);
+
+            foreach (Room r in floor.GetAllRooms())
+            {
+                if (visited.Contains(r))
+                    continue;
+                visited.Add(r);
+                yield return r;
+            }
+        }
+    }
+
 
     ValueReferenceGroup GenerateValueReferenceGroup()
     {

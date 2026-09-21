@@ -448,20 +448,70 @@ Examples to get you started:
         {
             if (dungeon < Project.NumDungeons)
             {
+                ImGui.BeginTable("Dungeon Table", 2, ImGuiTableFlags.SizingFixedFit);
+                ImGui.TableNextColumn();
+
+                ImGui.PushItemWidth(ImGuiLL.LARGE_ENTRY_ITEM_WIDTH);
                 FlagWidget("Boss Key",   "wDungeonBossKeys", dungeon);
                 ImGui.SameLine();
                 FlagWidget("Compass",    "wDungeonCompasses", dungeon);
                 ImGui.SameLine();
                 FlagWidget("Map",        "wDungeonMaps", dungeon);
                 ByteWidget("Small Keys", Emulator.Evaluate("wDungeonSmallKeys") + dungeon);
+                ImGui.PopItemWidth();
+
+                ImGui.TableNextColumn();
+
+                // Roughly center the reset dungeon button vertically in the table
+                ImGui.SetCursorScreenPos(ImGui.GetCursorScreenPos() +
+                                         new Vector2(ImGuiX.Unit(10.0f), ImGui.GetItemRectSize().Y / 2));
+                if (ImGui.Button("Reset Dungeon"))
+                {
+                    Modal.YesNoModal("Reset Dungeon",
+                        "Reset the dungeon? All room flags + obtained keys, etc will be reset.",
+                        (yes) =>
+                        {
+                            if (!yes)
+                                return;
+
+                            ResetDungeon(Project.GetDungeon(dungeon));
+                        });
+                }
+
+                ImGui.EndTable();
 
                 ImGui.Separator();
             }
+            else if (dungeon != 0xff)
+                ImGui.Text($"Dungeon index {dungeon:X} is invalid?");
+
             ByteWidget("wSwitchState");
             ByteWidget("wSpinnerState");
         }
 
         ImGui.PopItemWidth();
+    }
+
+    void ResetDungeon(Dungeon d)
+    {
+        // Reset all room flags
+        foreach (Room room in d.GetAllRooms())
+        {
+            GbPointer flagAddr = Emulator.GetRoomFlagPtr(room.Index);
+            Emulator.Snapshot.WriteByte(flagAddr, 0);
+        }
+
+        try
+        {
+            Emulator.Snapshot.SetFlag("wDungeonBossKeys", d.Index, false);
+            Emulator.Snapshot.SetFlag("wDungeonCompasses", d.Index, false);
+            Emulator.Snapshot.SetFlag("wDungeonMaps", d.Index, false);
+            Emulator.Snapshot.WriteByte(Emulator.Evaluate("wDungeonSmallKeys") + d.Index, 0);
+        }
+        catch (EmulatorException e)
+        {
+            Modal.DisplayErrorMessage("Error in dungeon reset (partially completed?)", e);
+        }
     }
 
     void RenderTreasureManagementTab()
@@ -869,14 +919,10 @@ Examples to get you started:
         TryWidget(() =>
         {
             GbPointer ptr = Emulator.Evaluate(baseAddr);
-            var (offset, bitmask) = GameboyStateBase.IndexToByteBitmask(index);
-            bool val = (Emulator.Snapshot.ReadByte(ptr + offset) & bitmask) != 0;
+            bool val = Emulator.Snapshot.GetFlag(ptr, index);
             if (ImGui.Checkbox($"{label}##{index}", ref val))
             {
-                if (val)
-                    Emulator.Snapshot.OrByte(ptr + offset, (byte)bitmask);
-                else
-                    Emulator.Snapshot.AndByte(ptr + offset, (byte)~bitmask);
+                Emulator.Snapshot.SetFlag(ptr, index, val);
             }
         });
     }
