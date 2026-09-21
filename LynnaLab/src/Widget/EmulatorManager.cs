@@ -817,8 +817,11 @@ Examples to get you started:
 
     void ByteWidget(string label)
     {
-        GbPointer pointer = emulator.Evaluate(label);
-        ByteWidget(label, pointer);
+        TryWidget(() =>
+        {
+            GbPointer pointer = emulator.Evaluate(label);
+            ByteWidget(label, pointer);
+        });
     }
 
     void ByteWidget(string label, GbPointer pointer)
@@ -828,25 +831,43 @@ Examples to get you started:
 
     void WordWidget(string label)
     {
-        GbPointer ptr = emulator.Evaluate(label);
-        int val = emulator.Snapshot.ReadWord(ptr);
-        if (ImGuiX.InputHex(label, ref val))
+        TryWidget(() =>
         {
-            emulator.WriteWordSync(ptr, (ushort)val);
-        }
+            GbPointer ptr = emulator.Evaluate(label);
+            int val = emulator.Snapshot.ReadWord(ptr);
+            if (ImGuiX.InputHex(label, ref val))
+            {
+                emulator.WriteWordSync(ptr, (ushort)val);
+            }
+        });
     }
 
     void FlagWidget(string label, string baseAddr, int index)
     {
-        GbPointer ptr = Emulator.Evaluate(baseAddr);
-        var (offset, bitmask) = GameboyStateBase.IndexToByteBitmask(index);
-        bool val = (Emulator.Snapshot.ReadByte(ptr + offset) & bitmask) != 0;
-        if (ImGui.Checkbox($"{label}##{index}", ref val))
+        TryWidget(() =>
         {
-            if (val)
-                Emulator.Snapshot.OrByte(ptr + offset, (byte)bitmask);
-            else
-                Emulator.Snapshot.AndByte(ptr + offset, (byte)~bitmask);
+            GbPointer ptr = Emulator.Evaluate(baseAddr);
+            var (offset, bitmask) = GameboyStateBase.IndexToByteBitmask(index);
+            bool val = (Emulator.Snapshot.ReadByte(ptr + offset) & bitmask) != 0;
+            if (ImGui.Checkbox($"{label}##{index}", ref val))
+            {
+                if (val)
+                    Emulator.Snapshot.OrByte(ptr + offset, (byte)bitmask);
+                else
+                    Emulator.Snapshot.AndByte(ptr + offset, (byte)~bitmask);
+            }
+        });
+    }
+
+    void TryWidget(Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (EmulatorException e)
+        {
+            ImGui.Text("ERROR: " + e.Message);
         }
     }
 }

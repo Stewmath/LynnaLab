@@ -211,7 +211,7 @@ public class OraclesEmulator : IDisposable
     public GbPointer Evaluate(string str)
     {
         if (!TryEvaluate(str, out GbPointer addr))
-            throw new EmulatorEvalException($"OraclesEmulator: Couldn't evaluate {str}.");
+            throw new EmulatorEvalException($"Couldn't evaluate '{str}'.");
         return addr;
     }
 
