@@ -273,7 +273,7 @@ public abstract class GameboyStateBase
     /// <summary>
     /// Convert an index to an offset + bitmask pair for use with the game's various bit tables.
     /// </summary>
-    static (int, int) IndexToByteBitmask(int i)
+    public static (int, int) IndexToByteBitmask(int i)
     {
         int bit = i % 8;
         int bitmask = (1 << bit);

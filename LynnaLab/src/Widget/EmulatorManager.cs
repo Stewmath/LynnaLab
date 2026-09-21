@@ -422,9 +422,30 @@ Examples to get you started:
             ImGui.EndTable();
         }
 
-        ImGui.SeparatorText("Dungeon stuff");
-        ByteWidget("wSwitchState");
-        ByteWidget("wSpinnerState");
+        int dungeon = Emulator.Snapshot.ReadSymbolByte("wDungeonIndex");
+        int floor = Emulator.Snapshot.ReadSymbolByte("wDungeonFloor");
+        ImGui.SeparatorText(dungeon == 0xff ? "Dungeon: None"
+            : $"Dungeon {dungeon:X}, floor {floor:X}");
+
+        if (Project == null)
+            ImGui.Text("Must have a project loaded.");
+        else
+        {
+            if (dungeon < Project.NumDungeons)
+            {
+                FlagWidget("Boss Key",   "wDungeonBossKeys", dungeon);
+                ImGui.SameLine();
+                FlagWidget("Compass",    "wDungeonCompasses", dungeon);
+                ImGui.SameLine();
+                FlagWidget("Map",        "wDungeonMaps", dungeon);
+                ByteWidget("Small Keys", Emulator.Evaluate("wDungeonSmallKeys") + dungeon);
+
+                ImGui.Separator();
+            }
+            ByteWidget("wSwitchState");
+            ByteWidget("wSpinnerState");
+        }
+
         ImGui.PopItemWidth();
     }
 
@@ -480,10 +501,9 @@ Examples to get you started:
 
                     for (int t = 0; t < Project.NumTreasures; t++)
                     {
-                        Accessor<bool> accessor = new(
-                            () => Emulator.Snapshot.GetTreasureFlag(t),
-                            (v) => Emulator.Snapshot.SetTreasureFlag(t, v));
-                        ImGuiX.Checkbox(mapping.ByteToString((byte)t), accessor);
+                        FlagWidget(mapping.ByteToString((byte)t),
+                            "wObtainedTreasureFlags",
+                            t);
                     }
                 }
                 ImGui.EndChild();
@@ -508,10 +528,13 @@ Examples to get you started:
         {
             for (int i = 0; i < Project.Eval("NUM_GLOBALFLAGS"); i++)
             {
-                Accessor<bool> accessor = new(
-                    () => Emulator.Snapshot.GetGlobalFlag(i),
-                    (v) => Emulator.Snapshot.SetGlobalFlag(i, v));
-                ImGuiX.Checkbox(Project.GlobalFlagMapping.ByteToString((byte)i), accessor);
+                FlagWidget(Project.GlobalFlagMapping.ByteToString((byte)i),
+                    "wGlobalFlags",
+                    i);
+            }
+            ImGui.EndChild();
+        }
+    }
             }
             ImGui.EndChild();
         }
@@ -800,6 +823,20 @@ Examples to get you started:
         if (ImGuiX.InputHex(label, ref val))
         {
             emulator.WriteWordSync(ptr, (ushort)val);
+        }
+    }
+
+    void FlagWidget(string label, string baseAddr, int index)
+    {
+        GbPointer ptr = Emulator.Evaluate(baseAddr);
+        var (offset, bitmask) = GameboyStateBase.IndexToByteBitmask(index);
+        bool val = (Emulator.Snapshot.ReadByte(ptr + offset) & bitmask) != 0;
+        if (ImGui.Checkbox($"{label}##{index}", ref val))
+        {
+            if (val)
+                Emulator.Snapshot.OrByte(ptr + offset, (byte)bitmask);
+            else
+                Emulator.Snapshot.AndByte(ptr + offset, (byte)~bitmask);
         }
     }
 }
