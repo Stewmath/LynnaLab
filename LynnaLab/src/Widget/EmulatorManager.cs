@@ -348,14 +348,25 @@ Examples to get you started:
 
     void RenderGeneralTab()
     {
-        ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
+        ImGui.PushItemWidth(ImGuiLL.LARGE_ENTRY_ITEM_WIDTH);
         ImGui.SeparatorText("General");
         ByteWidget("wLinkHealth");
         ByteWidget("wNumEnemies");
-        ByteWidget("wMapleKillCounter");
-        ByteWidget("wTotalSignsDestroyed");
-        WordWidget("wTotalEnemiesKilled");
-        WordWidget("wTotalRupeesCollected");
+        WordWidget("wNumRupees", bcd: true);
+        if (Emulator.TryEvaluate("wNumOreChunks", out _))
+            WordWidget("wNumOreChunks", bcd: true);
+        if (Emulator.TryEvaluate("wActiveRing", out GbPointer ptr) && Project != null)
+        {
+            int val = Emulator.Snapshot.ReadByte(ptr);
+            int orig = val;
+            ImGuiX.InputHex("wActiveRing", ref val);
+            ImGuiLL.ComboBoxFromConstants("Ring", Project.RingMapping, ref val,
+                withIntInput: false,
+                omitPrefix: false,
+                showHelp: false);
+            if (val != orig)
+                Emulator.Snapshot.WriteByte(ptr, (byte)val);
+        }
 
         ImGui.SeparatorText("Audio");
         if (ProjectInterfacer != null)
@@ -408,7 +419,7 @@ Examples to get you started:
 
             ImGui.Text($"Flags Address: {flagPtr.Addr:X4}");
 
-            ImGui.BeginTable("Room flags", 2);
+            ImGui.BeginTable("Room flags", 2, ImGuiTableFlags.SizingFixedSame);
             ImGui.TableNextColumn();
             ImGuiX.Checkbox("ROOMFLAG_01", FlagAccessor(0x01));
             ImGuiX.Checkbox("ROOMFLAG_02", FlagAccessor(0x02));
@@ -834,14 +845,16 @@ Examples to get you started:
         ImGuiX.InputHex(label, ref emulator.Wram[pointer.Addr & 0x1fff]);
     }
 
-    void WordWidget(string label)
+    void WordWidget(string label, bool bcd = false)
     {
         TryWidget(() =>
         {
             GbPointer ptr = emulator.Evaluate(label);
             int val = emulator.Snapshot.ReadWord(ptr);
-            if (ImGuiX.InputHex(label, ref val))
+            if (ImGuiX.InputHex(label, ref val, digits:4))
             {
+                if (bcd)
+                    val = BcdRound(val);
                 emulator.WriteWordSync(ptr, (ushort)val);
             }
         });
@@ -874,5 +887,35 @@ Examples to get you started:
         {
             ImGui.Text("ERROR: " + e.Message);
         }
+    }
+
+    /// <summary>
+    /// Hacky function which converts a hexadecimal number to the "nearest" BCD-encoded number. IE.
+    /// 3A rounds up to 40 (because 39+1 should be 40), and 3F rounds down to 39.
+    /// </summary>
+    int BcdRound(int value)
+    {
+        int result = 0;
+        int inc = 0;
+        for (int i = 0; i < 4; i++)
+        {
+            int d = ((value >> (i * 4)) + inc) & 0xf;
+            inc = 0;
+            if (d >= 0xa)
+            {
+                if (d < 0xd)
+                {
+                    inc = 1;
+                    d = 0;
+                }
+                else
+                {
+                    d = 9;
+                    inc = 0;
+                }
+            }
+            result |= d << (i * 4);
+        }
+        return result;
     }
 }

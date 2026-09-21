@@ -16,6 +16,9 @@ public static class ImGuiLL
     // with font size though...)
     public static float ENTRY_ITEM_WIDTH { get { return ImGuiX.Unit(110.0f); } }
 
+    // For 4-digit entry
+    public static float LARGE_ENTRY_ITEM_WIDTH { get { return ImGuiX.Unit(130.0f); } }
+
     public static readonly Vector2 TOOLBAR_BUTTON_SIZE = new Vector2(30.0f, 30.0f);
 
 
