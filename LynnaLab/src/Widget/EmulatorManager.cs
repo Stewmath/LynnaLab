@@ -707,6 +707,11 @@ Examples to get you started:
                 {
                     SpawnTreasureObjectModal(ptr);
                 }
+                if (Emulator.Snapshot.ReadByte(ptr) != 0 && ImGui.Selectable("Delete"))
+                {
+                    EmulatorObject obj = new(Emulator.Snapshot, ptr.Addr);
+                    obj.Delete();
+                }
                 ImGui.EndPopup();
             }
             ImGui.EndChild();
