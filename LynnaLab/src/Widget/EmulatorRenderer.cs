@@ -348,7 +348,11 @@ class ScreenWidget : SizedWidget, IDisposable
         Vector2 clipRectStart = ImGui.GetCursorScreenPos();
         ImGui.PushClipRect(clipRectStart, clipRectStart + WidgetSize, true);
 
+        Vector2 renderPos = ImGui.GetCursorScreenPos();
         ImGuiX.DrawImage(screenTexture, Scale);
+        // Add an InvisibleButton so that the window can't be dragged by clicking on the game screen.
+        ImGui.SetCursorScreenPos(renderPos);
+        ImGui.InvisibleButton("Screen covering", new Vector2(160, 144) * Scale);
 
         if (Top.GlobalConfig.EmulatorDrawObjectBoxes)
         {
