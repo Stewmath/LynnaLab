@@ -101,10 +101,10 @@ public class ConstantsMapping : TrackedProjectData
 
     /// If the optional "maxValue" parameter is passed, any constants with this value or above is
     /// ignored when generating the mapping.
-    internal ConstantsMapping(FileParser parser, string id, string prefix, int maxValue = -1, bool alphabetical = false)
-        : this(parser, id, new string[] { prefix }, maxValue, alphabetical) { }
+    internal ConstantsMapping(FileParser parser, string id, string prefix, int maxValue = -1, bool alphabetical = false, bool suffix = false)
+        : this(parser, id, new string[] { prefix }, maxValue, alphabetical, suffix) { }
 
-    internal ConstantsMapping(FileParser _parser, string id, string[] _prefixes, int maxValue = -1, bool alphabetical = false)
+    internal ConstantsMapping(FileParser _parser, string id, string[] _prefixes, int maxValue = -1, bool alphabetical = false, bool suffix = false)
         : this(
             _parser.Project,
             id,
@@ -112,8 +112,9 @@ public class ConstantsMapping : TrackedProjectData
             _prefixes,
             maxValue,
             alphabetical,
+            suffix,
             _parser.DefinesDictionary.ToDictionary(kp => kp.Key, kp => kp.Value.Item2?.Instance))
-    { }
+    {}
 
     internal ConstantsMapping(
         Project p,
@@ -136,7 +137,7 @@ public class ConstantsMapping : TrackedProjectData
             }
         }
 
-        InitializeDefines(defines, alphabetical, documentation);
+        InitializeDefines(defines, alphabetical, false, documentation);
     }
 
 
@@ -147,10 +148,11 @@ public class ConstantsMapping : TrackedProjectData
         string[] _prefixes,
         int maxValue = -1,
         bool alphabetical = false,
+        bool suffix = false,
         Dictionary<string, DocumentationFileComponent> documentationDictionary = null)
         : this(p, id, _prefixes, maxValue)
     {
-        InitializeDefines(definesDictionary, alphabetical, documentationDictionary);
+        InitializeDefines(definesDictionary, alphabetical, suffix, documentationDictionary);
     }
 
     internal ConstantsMapping(Project p, string id, IList<string> prefixes, int maxValue = -1)
@@ -180,6 +182,7 @@ public class ConstantsMapping : TrackedProjectData
     void InitializeDefines(
             Dictionary<string, string> definesDictionary,
             bool alphabetical = false,
+            bool suffix = false,
             Dictionary<string, DocumentationFileComponent> documentationDictionary = null)
     {
         foreach (string key in definesDictionary.Keys)
@@ -187,7 +190,15 @@ public class ConstantsMapping : TrackedProjectData
             bool acceptable = false;
             foreach (string prefix in Prefixes)
             {
-                if (key.Length > prefix.Length && key.Substring(0, prefix.Length) == prefix)
+                if (key.Length <= prefix.Length)
+                    continue;
+
+                if (suffix && key[^prefix.Length..] == prefix)
+                {
+                    acceptable = true;
+                    break;
+                }
+                else if (!suffix && key.Substring(0, prefix.Length) == prefix)
                 {
                     acceptable = true;
                     break;

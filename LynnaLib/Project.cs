@@ -232,6 +232,10 @@ public partial class Project
     {
         get { return GetConstantsMapping("GlobalFlagMapping"); }
     }
+    public ConstantsMapping RingMapping
+    {
+        get { return GetConstantsMapping("RingMapping"); }
+    }
 
 
     // TODO: Make these private
@@ -556,6 +560,12 @@ public partial class Project
                 LoadFileParser("constants/common/globalFlags.s"),
                 "GlobalFlagMapping",
                 "GLOBALFLAG_"));
+        AddConstantsMapping(
+            new ConstantsMapping(
+                LoadFileParser("constants/common/rings.s"),
+                "RingMapping",
+                ["_RING", "_RING_L1", "_RING_L2", "_RING_L3"],
+                suffix: true));
 
         if (Game == Game.Seasons)
         {

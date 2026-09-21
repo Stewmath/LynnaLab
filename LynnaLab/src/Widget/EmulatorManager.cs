@@ -509,6 +509,20 @@ Examples to get you started:
                 ImGui.EndChild();
                 ImGui.EndTabItem();
             }
+            if (ImGui.BeginTabItem("Rings"))
+            {
+                if (ImGui.BeginChild("Rings"))
+                {
+                    for (int i = 0; i < Project.Eval("NUM_RINGS"); i++)
+                    {
+                        FlagWidget(Project.RingMapping.ByteToString((byte)i),
+                            "wRingsObtained",
+                            i);
+                    }
+                }
+                ImGui.EndChild();
+                ImGui.EndTabItem();
+            }
 
             ImGui.EndTabBar();
         }
@@ -532,12 +546,8 @@ Examples to get you started:
                     "wGlobalFlags",
                     i);
             }
-            ImGui.EndChild();
         }
-    }
-            }
-            ImGui.EndChild();
-        }
+        ImGui.EndChild();
     }
 
     void RenderObjectTab()
