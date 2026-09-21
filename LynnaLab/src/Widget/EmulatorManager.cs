@@ -714,7 +714,7 @@ Examples to get you started:
             }
 
             ImGui.SeparatorText("Object Memory");
-            ImGuiX.HexEditor("Hex",
+            ImGuiX.HexEditor($"Hex {SelectedObject.Address:X4}",
                 SelectedObject.ReadByte, SelectedObject.WriteByte,
                 0x40, SelectedObject.Address);
         }

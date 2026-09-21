@@ -625,10 +625,10 @@ public static class ImGuiX
 
     class _HexEditorState
     {
-        public uint focusedID;
-        public int focusedByte;
-
-        public int enteredFirstDigit;
+        public uint currentFocusedID;
+        public int currentFocusedByte = -1;
+        public int forceFocusedByte = -1;
+        public int enteredFirstDigit = -1;
     }
 
     static _HexEditorState HexEditorState = new();
@@ -642,6 +642,11 @@ public static class ImGuiX
 
         ImGui.PushFont(Top.MonoFont, 0.0f);
         ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
+
+        var style = ImGui.GetStyle();
+
+        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
+        ImGui.PushStyleColor(ImGuiCol.Button, style.Colors[(int)ImGuiCol.WindowBg]);
 
         uint thisID = ImGui.GetID(name);
 
@@ -662,9 +667,13 @@ public static class ImGuiX
         ImGui.Text(new string('-', addressDigits + 1 + 3 * bytesPerLine));
         */
 
-        bool oneWasFocused = false;
+        // Unselect bytes when doing stuff in other windows
+        if (!ImGui.IsWindowFocused() && state.currentFocusedID == thisID)
+        {
+            state.currentFocusedID = 0;
+        }
 
-        float lineHeight = ImGui.CalcTextSize("A").Y;
+        bool thisWidgetFocused = state.currentFocusedID == thisID;
 
         // Use ImGuiListClipper so we don't need to render lines outside the scroll area
         ImGuiListClipper clipper = new();
@@ -680,33 +689,64 @@ public static class ImGuiX
             {
                 int addr = rowStart + x;
 
-                bool byteFocused = ImGui.IsWindowFocused()
-                                    && state.focusedID == thisID
-                                    && addr == state.focusedByte
-                                    && !oneWasFocused;
-
-                Color color = byteFocused && state.enteredFirstDigit != -1 ? Color.Red
-                    : byteFocused ? Color.LightBlue
-                    : Color.White;
-
                 ImGui.SameLine();
+
+                string spacing = " ";
                 if (x % 8 == 0)
                 {
-                    ImGui.TextColored(color, " ");
-                    ImGui.SameLine();
+                    spacing += " ";
                 }
+
+                ImGui.Text(spacing);
+                ImGui.SameLine();
+
+                if (thisWidgetFocused && state.forceFocusedByte == addr)
+                {
+                    state.currentFocusedByte = state.forceFocusedByte;
+                    ImGui.SetKeyboardFocusHere();
+                    state.forceFocusedByte = -1;
+                    state.enteredFirstDigit = -1;
+                }
+
+                bool byteFocused = thisWidgetFocused && state.currentFocusedByte == addr;
 
                 int shownValue = readByte(addr);
                 if (byteFocused && state.enteredFirstDigit != -1)
                     shownValue = (readByte(addr) & 0xF) | (state.enteredFirstDigit << 4);
 
-                if (color == Color.White) // Actually use default color
-                    ImGui.Text($" {shownValue:X2}");
-                else
-                    ImGui.TextColored(color, $" {shownValue:X2}");
+                Color bgColor = byteFocused ? Color.LightBlue : Color.White;
+                Color textColor = byteFocused && state.enteredFirstDigit != -1 ? Color.Red
+                    : Color.White;
 
-                if (byteFocused)
+                if (bgColor != Color.White)
+                    PushButtonColor(bgColor.ToUInt());
+                if (textColor != Color.White)
+                    ImGui.PushStyleColor(ImGuiCol.Text, textColor);
+
+                ImGui.Button($"{shownValue:X2}###{addr}");
+
+                if (textColor != Color.White)
+                    ImGui.PopStyleColor();
+                if (bgColor != Color.White)
+                    PopButtonColor();
+
+                if (ImGui.IsItemFocused())
                 {
+                    // For handling multiple hex windows active at once
+                    if (state.currentFocusedID != thisID)
+                    {
+                        state.currentFocusedID = thisID;
+                        state.currentFocusedByte = -1;
+                    }
+
+                    // Determine if this was newly selected, if so we need to undo any previous input.
+                    if (state.currentFocusedByte != addr)
+                    {
+                        state.enteredFirstDigit = -1;
+                        state.currentFocusedByte = addr;
+                    }
+
+                    // Handle hex input
                     int num;
                     if ((num = HexInputKey()) != -1)
                     {
@@ -715,9 +755,9 @@ public static class ImGuiX
                             int value = (state.enteredFirstDigit << 4) + num;
                             writeByte(addr, (byte)value);
                             state.enteredFirstDigit = -1;
-                            state.focusedByte++;
-                            if (state.focusedByte >= numBytes)
-                                state.focusedByte--;
+                            state.forceFocusedByte = addr + 1;
+                            if (state.forceFocusedByte >= numBytes)
+                                state.forceFocusedByte = -1;
                         }
                         else
                         {
@@ -725,17 +765,22 @@ public static class ImGuiX
                         }
                     }
 
-                    oneWasFocused = true;
-                }
-                else if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsItemHovered())
-                {
-                    state.focusedID = thisID;
-                    state.focusedByte = addr;
-                    state.enteredFirstDigit = -1;
+                    // Handle arrow key navigation. (We get up/down for free, but left/right need
+                    // special case handling for moving between rows.)
+                    if (ImGui.IsKeyPressed(ImGuiKey.LeftArrow) && addr > 0)
+                    {
+                        state.forceFocusedByte = addr - 1;
+                    }
+                    else if (ImGui.IsKeyPressed(ImGuiKey.RightArrow) && addr + 1 < numBytes)
+                    {
+                        state.forceFocusedByte = addr + 1;
+                    }
                 }
             }
         }
 
+        ImGui.PopStyleColor(1);
+        ImGui.PopStyleVar();
         ImGui.PopStyleVar();
         ImGui.PopFont();
     }
@@ -758,6 +803,18 @@ public static class ImGuiX
         }
 
         return -1;
+    }
+
+    static void PushButtonColor(uint color)
+    {
+        ImGui.PushStyleColor(ImGuiCol.Button, color);
+        ImGui.PushStyleColor(ImGuiCol.ButtonActive, color);
+        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, color);
+    }
+
+    static void PopButtonColor()
+    {
+        ImGui.PopStyleColor(3);
     }
 }
 
