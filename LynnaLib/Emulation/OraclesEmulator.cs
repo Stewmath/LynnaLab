@@ -111,6 +111,7 @@ public class OraclesEmulator : IDisposable
 
     public IntPtr PixelData { get { return pixelData; } }
 
+    public bool DoingEvaluate { get; private set; }
 
     // Some state is exposed directly as with LiveState.
 
@@ -198,12 +199,15 @@ public class OraclesEmulator : IDisposable
     /// </summary>
     public bool TryEvaluate(string str, out GbPointer addr)
     {
+        DoingEvaluate = true;
         if (gb.DebuggerEvaluate(str, out ushort result, out short result_bank))
         {
+            DoingEvaluate = false;
             addr = new(result, result_bank);
             return false;
         }
 
+        DoingEvaluate = false;
         addr = new(result, result_bank);
         return true;
     }
