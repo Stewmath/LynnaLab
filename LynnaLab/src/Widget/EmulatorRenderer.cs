@@ -361,7 +361,7 @@ class ScreenWidget : SizedWidget, IDisposable
                     this,
                     overlayBoxes,
                     alwaysFullPrecision: true,
-                    allowMove: !parent.Manager.Paused,
+                    allowMove: true,
                     clipToCanvas: true);
             }
         }

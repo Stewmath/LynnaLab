@@ -142,6 +142,8 @@ public class OraclesEmulator : IDisposable
     public Span<byte> OAM { get { return gb.GetDirectAccess(SameBoy.GBDirectAccess.OAM); } }
     public ref byte IE { get { return ref gb.GetDirectAccess(SameBoy.GBDirectAccess.IE)[0]; } }
 
+    public bool DebuggerIsStopped { get { return GB.DebuggerIsStopped(); } }
+
     // ================================================================================
     // Public methods
     // ================================================================================

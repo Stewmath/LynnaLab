@@ -51,7 +51,7 @@ public class GameboySnapshot : GameboyStateBase
 
     public override void WriteByte(GbPointer ptr, byte value)
     {
-        vblankWriteActions.Enqueue(() =>
+        DoDelayed(() =>
         {
             base.WriteByteHelper(ptr, value);
         });
@@ -59,7 +59,7 @@ public class GameboySnapshot : GameboyStateBase
 
     public void WriteWram(int addr, byte value)
     {
-        vblankWriteActions.Enqueue(() =>
+        DoDelayed(() =>
         {
             Emulator.Wram[addr] = value;
         });
@@ -67,7 +67,7 @@ public class GameboySnapshot : GameboyStateBase
 
     public override void OrByte(GbPointer ptr, byte mask)
     {
-        vblankWriteActions.Enqueue(() =>
+        DoDelayed(() =>
         {
             base.WriteByteHelper(ptr, (byte)(ReadByte(ptr) | mask));
         });
@@ -75,7 +75,7 @@ public class GameboySnapshot : GameboyStateBase
 
     public override void AndByte(GbPointer ptr, byte mask)
     {
-        vblankWriteActions.Enqueue(() =>
+        DoDelayed(() =>
         {
             base.WriteByteHelper(ptr, (byte)(ReadByte(ptr) & mask));
         });
@@ -119,5 +119,35 @@ public class GameboySnapshot : GameboyStateBase
         ioram = Emulator.IORam.ToArray();
         oam = Emulator.OAM.ToArray();
         ie = Emulator.IE;
+    }
+
+    // ================================================================================
+    // Private methods
+    // ================================================================================
+
+    /// <summary>
+    /// If the emulator is not paused, don't write the memory until the vblank, on the gameboy
+    /// emulation thread.
+    ///
+    /// If the emulator is paused, then write the memory immediately.
+    ///
+    /// When the emulator is in the paused state, it tends to be in a safe spot of execution
+    /// (immediately before the vblank handler), though this is slightly different than DoAtVBlank
+    /// (at a specific opcode in the vblank handler). Either way it should be fairly safe for memory
+    /// writes, unless the game itself is lagging.
+    ///
+    /// Race conditions are still technically possible (execution resumes between reading
+    /// DebuggerIsStopped and writing the memory); but all of this is just a best-effort attempt to
+    /// apply memory writes at a stable time in the gameboy's emulation.
+    /// </summary>
+    void DoDelayed(Action action)
+    {
+        if (Emulator.DebuggerIsStopped)
+        {
+            action();
+            UpdateState(); // Keep this up-to-date so hex editor sees it
+        }
+        else
+            vblankWriteActions.Enqueue(action);
     }
 }

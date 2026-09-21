@@ -92,7 +92,7 @@ Examples to get you started:
     // ================================================================================
 
     public OraclesEmulator Emulator { get { return emulator; } }
-    public bool Paused { get { return Emulator.GB.DebuggerIsStopped(); } }
+    public bool Paused { get { return Emulator.DebuggerIsStopped; } }
 
     /// <summary>
     /// SelectedObject points to some area of object memory. Can be a blank slot.
