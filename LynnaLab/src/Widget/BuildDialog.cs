@@ -105,9 +105,6 @@ public class BuildDialog : Frame
         if (GlobalConfig.CloseEmulatorWithRunDialog)
             HaltEmulator();
         Active = false;
-
-        // Just in case checkboxes were modified
-        GlobalConfig.Save();
     }
 
     public void BeginCompile()

@@ -378,7 +378,7 @@ class ScreenWidget : SizedWidget, IDisposable
     public void Dispose()
     {
         emu.VBlankEvent -= OnVBlank;
-        screenTexture.Dispose();
+        Top.DoNextFrame(screenTexture.Dispose);
         screenTexture = null!;
     }
 

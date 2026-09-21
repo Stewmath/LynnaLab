@@ -25,7 +25,7 @@ public class EmulatorManager : Frame, IDisposable
 
         this.renderer.Active = true;
 
-        this.ClosedEvent += (_, _) => QueueDebuggerCommand("interrupt");
+        this.ClosedEvent += (_, _) => Top.HaltEmulator();
 
         emulator.GB.SetLogCallback((s) =>
         {
