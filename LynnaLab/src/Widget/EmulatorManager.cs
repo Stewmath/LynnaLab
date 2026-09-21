@@ -485,6 +485,7 @@ Examples to get you started:
             else if (dungeon != 0xff)
                 ImGui.Text($"Dungeon index {dungeon:X} is invalid?");
 
+            ByteWidget("wActiveTriggers");
             ByteWidget("wSwitchState");
             ByteWidget("wSpinnerState");
         }
