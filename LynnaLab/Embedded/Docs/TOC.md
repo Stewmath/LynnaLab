@@ -15,7 +15,7 @@
   * [Tileset Editor](TilesetEditor.md)
 
 ## Other
-  * [Sameboy](Sameboy.md)
+  * [Emulator](Emulator.md)
   * Annotations (TODO)
   * Special Thanks
     * Daniel Jioran

@@ -18,5 +18,6 @@ There can be a fifth box, for "shared data", in a few specific rooms which refer
 ![](objecteditor-shared.png)
 
 TODO: object types
+TODO: Uncounted
 
 ## 

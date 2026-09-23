@@ -185,6 +185,9 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
     void RenderRibbon()
     {
+        ImGui.BeginChild("Ribbon", new Vector2(EmulatorContentSize.X, 0.0f),
+            ImGuiChildFlags.AutoResizeY);
+
         ImGuiX.Checkbox("Mute", muted, (b) => SetMuted(b));
 
         ImGui.SameLine();
@@ -203,6 +206,12 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
             if (ImGui.Button("Pause"))
                 Manager.Interrupt();
         }
+
+        ImGui.SameLine();
+
+        ImGuiLL.HelpButton("Emulator.md", Manager.Project);
+
+        ImGui.EndChild();
     }
 
     void OnGlobalConfigPropertyChanged(object? sender, PropertyChangedEventArgs args)

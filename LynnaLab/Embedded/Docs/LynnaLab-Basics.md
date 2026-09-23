@@ -9,9 +9,8 @@ Click the "run" button or press F5 to assemble and run a project. On Windows, th
 
 ![](basics-run.png)
 
-Click the link icon right next to this in order to enable quickstart. A Link icon will appear in the room editor, and when you run the game, Link will automatically spawn into that room.
-
-![](basics-quickstart.png)
+Click the link icon right next to this in order to enable quickstart. A Link icon will appear in the
+room editor, and when you run the game, Link will automatically spawn into that room. See [Quickstart](Emulator-Quickstart.md).
 
 Quickstart uses whatever save data is in file slot 1. If there is no existing file, the HUD will look glitched!
 

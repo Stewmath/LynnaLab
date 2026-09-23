@@ -42,28 +42,7 @@ public class EmulatorManager : Frame, IDisposable
     // ================================================================================
     // Variables
     // ================================================================================
-    const string DebuggerHelpText = """
-This is the SameBoy debugger console.
-
-Examples to get you started:
-
-- See Link's health:
-    > p [wLinkHealth]
-
-- Watchpoint triggering when Link gains or loses health:
-    > watch wLinkHealth
-
-- Breakpoint that triggers on textboxes:
-    > break showText
-
-- Resume execution after a watchpoint or breakpoint triggers:
-    > continue
-
-- Get general help, or help on a specific command:
-    > help
-    > help watch
-
-""";
+    const string DebuggerHelpText = "This is the SameBoy debugger console.\n";
 
     OraclesEmulator emulator;
     EmulatorRenderer renderer;
@@ -103,7 +82,7 @@ Examples to get you started:
     /// </summary>
     public EmulatorObject? SelectedObject { get; private set; }
 
-    Project? Project { get { return ProjectInterfacer?.Project; } }
+    public Project? Project { get { return ProjectInterfacer?.Project; } }
     EmulatorProjectInterfacer? ProjectInterfacer { get; }
 
     // ================================================================================
@@ -304,6 +283,8 @@ Examples to get you started:
 
     void RenderDebuggerTab()
     {
+        ImGuiLL.SeparatorWithHelpButton("Debugger", "Emulator-Debugger.md", Project);
+
         ImGui.PushFont(Top.MonoFont, Top.GlobalConfig.MenuFontSize);
 
         string text;
@@ -353,7 +334,7 @@ Examples to get you started:
     void RenderGeneralTab()
     {
         ImGui.PushItemWidth(ImGuiLL.LARGE_ENTRY_ITEM_WIDTH);
-        ImGui.SeparatorText("General");
+        ImGuiLL.SeparatorWithHelpButton("General", "Emulator-General.md", Project);
         ByteWidget("wLinkHealth");
         ByteWidget("wNumEnemies");
         WordWidget("wNumRupees", bcd: true);
@@ -525,6 +506,8 @@ Examples to get you started:
 
         ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
 
+        ImGuiLL.SeparatorWithHelpButton("Treasure", "Emulator-Treasure.md", Project);
+
         if (ImGui.BeginTabBar("Treasure Tabs"))
         {
             if (ImGui.BeginTabItem("Give/Lose"))
@@ -604,6 +587,8 @@ Examples to get you started:
             return;
         }
 
+        ImGuiLL.SeparatorWithHelpButton("Global Flags", "Emulator-Globalflags.md", Project);
+
         if (ImGui.BeginChild("Global flags"))
         {
             for (int i = 0; i < Project.Eval("NUM_GLOBALFLAGS"); i++)
@@ -619,6 +604,8 @@ Examples to get you started:
     void RenderObjectTab()
     {
         int nextHoveringObject = 0;
+
+        ImGuiLL.SeparatorWithHelpButton("Objects", "Emulator-Object.md", Project);
 
         if (Project == null || ProjectInterfacer == null)
         {
@@ -832,6 +819,8 @@ Examples to get you started:
 
     void RenderMemoryTab()
     {
+        ImGuiLL.SeparatorWithHelpButton("Memory", "Emulator-Memory.md", Project);
+
         string[] options = [
             "System Bus",
             "Wram",
