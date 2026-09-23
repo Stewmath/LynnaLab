@@ -198,10 +198,28 @@ public class EmulatorManager : Frame, IDisposable
         }
     }
 
+    /// <summary>
+    /// Capture/restore child window states so that child frames save their state after being popped
+    /// out and a new EmulatorManager is created.
+    /// </summary>
+    public List<bool> CaptureChildWindowStates()
+    {
+        List<bool> states = new();
+        foreach (EmulatorTabFrame tabFrame in tabFrames)
+            states.Add(tabFrame.Active);
+        return states;
+    }
+
+    public void RestoreChildWindowStates(List<bool> states)
+    {
+        int count = Math.Min(tabFrames.Count, states.Count);
+        for (int i = 0; i < count; i++)
+            tabFrames[i].Active = states[i];
+    }
+
     // ================================================================================
     // Private methods
     // ================================================================================
-
 
     void RunEmuThreadCallback()
     {
@@ -342,9 +360,10 @@ public class EmulatorManager : Frame, IDisposable
 
     void RenderGeneralTab()
     {
+        ImGui.BeginTable("Variables", 2, ImGuiTableFlags.SizingFixedFit);
+        ImGui.TableNextColumn();
         ImGui.PushItemWidth(ImGuiLL.LARGE_ENTRY_ITEM_WIDTH);
         ByteWidget("wLinkHealth");
-        ByteWidget("wNumEnemies");
         WordWidget("wNumRupees", bcd: true);
         if (Emulator.TryEvaluate("wNumOreChunks", out _))
             WordWidget("wNumOreChunks", bcd: true);
@@ -360,6 +379,17 @@ public class EmulatorManager : Frame, IDisposable
             if (val != orig)
                 Emulator.Snapshot.WriteByte(ptr, (byte)val);
         }
+
+        ImGui.PopItemWidth();
+        ImGui.TableNextColumn();
+        ImGui.PushItemWidth(ImGuiLL.LARGE_ENTRY_ITEM_WIDTH);
+        ByteWidget("wNumEnemies");
+        ByteWidget("wActiveTriggers");
+        ByteWidget("wSwitchState");
+        ByteWidget("wSpinnerState");
+
+        ImGui.PopItemWidth();
+        ImGui.EndTable();
 
         ImGui.SeparatorText("Audio");
         if (ProjectInterfacer != null)
@@ -473,13 +503,7 @@ public class EmulatorManager : Frame, IDisposable
             }
             else if (dungeon != 0xff)
                 ImGui.Text($"Dungeon index {dungeon:X} is invalid?");
-
-            ByteWidget("wActiveTriggers");
-            ByteWidget("wSwitchState");
-            ByteWidget("wSpinnerState");
         }
-
-        ImGui.PopItemWidth();
     }
 
     void ResetDungeon(Dungeon d)

@@ -135,6 +135,7 @@ public static class Top
     static HelpWindow helpWindow = new();
     static OraclesEmulator emulator;
     static EmulatorManager emulatorManager;
+    static List<bool> emulatorChildWindowStates = new();
 
 
     // ================================================================================
@@ -566,6 +567,7 @@ public static class Top
 
         emulator = new OraclesEmulator(romFile, options);
         emulatorManager = new EmulatorManager(emulator, Workspace?.Project);
+        emulatorManager.RestoreChildWindowStates(emulatorChildWindowStates);
         emulatorManager.Focus();
         emulatorManager.ClosedEvent += OnInternalEmulatorClosed;
     }
@@ -573,6 +575,8 @@ public static class Top
     public static void HaltEmulator()
     {
         emulatorManager?.ClosedEvent -= OnInternalEmulatorClosed;
+        if (emulatorManager != null)
+            emulatorChildWindowStates = emulatorManager.CaptureChildWindowStates();
         emulatorManager?.Dispose();
         emulator?.Dispose();
         emulatorManager = null;
