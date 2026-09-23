@@ -391,6 +391,29 @@ public static class ImGuiLL
     }
 
     /// <summary>
+    /// An ImGui.SeparatorText with a button and help button at the right end of it.
+    /// Returns true when the extra button is pressed.
+    /// </summary>
+    public static bool SeparatorWithHelpAndButton(string separator, string markdownFile,
+                                                  string buttonLabel, Project project = null)
+    {
+        Vector2 helpButtonSize = ImGuiX.Unit(HELP_BUTTON_SIZE);
+        float buttonWidth = ImGui.CalcTextSize(buttonLabel).X + ImGui.GetStyle().FramePadding.X * 2;
+        Vector2 size = new(
+            ImGui.GetContentRegionAvail().X - helpButtonSize.X - buttonWidth
+                - ImGui.GetStyle().ItemSpacing.X - ImGui.GetStyle().FramePadding.X * 3,
+            0.0f);
+        ImGui.BeginChild("HelpContainer-" + separator, size, ImGuiChildFlags.AutoResizeY);
+        ImGui.SeparatorText(separator);
+        ImGui.EndChild();
+        ImGui.SameLine();
+        bool pressed = ImGui.Button(buttonLabel + "##" + separator);
+        ImGui.SameLine();
+        HelpButton(markdownFile, project);
+        return pressed;
+    }
+
+    /// <summary>
     /// A help button which opens a popup showing markdown-formatted text.
     /// </summary>
     public static void HelpButton(string markdownFile, Project project = null)

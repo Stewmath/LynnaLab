@@ -309,6 +309,7 @@ public static class Top
         }
 
         emulatorManager?.RenderAsWindow("Emulator");
+        emulatorManager?.RenderChildWindows();
         helpWindow.RenderAsWindow("Help");
 
         ImGui.End(); // Dockspace window

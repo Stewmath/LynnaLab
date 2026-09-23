@@ -20,6 +20,14 @@ public class EmulatorManager : Frame, IDisposable
     {
         this.emulator = emulator;
         this.renderer = new EmulatorRenderer(this);
+        tabFrames = [
+            new EmulatorTabFrame(this, "General", "Emulator-General.md", RenderGeneralTab),
+            new EmulatorTabFrame(this, "Object", "Emulator-Object.md", RenderObjectTab),
+            new EmulatorTabFrame(this, "Treasure", "Emulator-Treasure.md", RenderTreasureManagementTab),
+            new EmulatorTabFrame(this, "Global Flags", "Emulator-Globalflags.md", RenderGlobalFlagsTab),
+            new EmulatorTabFrame(this, "Debugger", "Emulator-Debugger.md", RenderDebuggerTab),
+            new EmulatorTabFrame(this, "Memory", "Emulator-Memory.md", RenderMemoryTab),
+        ];
         if (project != null)
             this.ProjectInterfacer = new(project);
 
@@ -43,6 +51,8 @@ public class EmulatorManager : Frame, IDisposable
     // Variables
     // ================================================================================
     const string DebuggerHelpText = "This is the SameBoy debugger console.\n";
+
+    readonly List<EmulatorTabFrame> tabFrames;
 
     OraclesEmulator emulator;
     EmulatorRenderer renderer;
@@ -104,35 +114,9 @@ public class EmulatorManager : Frame, IDisposable
 
             if (ImGui.BeginTabBar("Debugger tabs"))
             {
-                if (ImGui.BeginTabItem("General"))
+                foreach (var frame in tabFrames)
                 {
-                    RenderGeneralTab();
-                    ImGui.EndTabItem();
-                }
-                if (ImGui.BeginTabItem("Object"))
-                {
-                    RenderObjectTab();
-                    ImGui.EndTabItem();
-                }
-                if (ImGui.BeginTabItem("Treasure"))
-                {
-                    RenderTreasureManagementTab();
-                    ImGui.EndTabItem();
-                }
-                if (ImGui.BeginTabItem("Global Flags"))
-                {
-                    RenderGlobalFlagsTab();
-                    ImGui.EndTabItem();
-                }
-                if (ImGui.BeginTabItem("Debugger"))
-                {
-                    RenderDebuggerTab();
-                    ImGui.EndTabItem();
-                }
-                if (ImGui.BeginTabItem("Memory"))
-                {
-                    RenderMemoryTab();
-                    ImGui.EndTabItem();
+                    RenderTabItem(frame);
                 }
                 ImGui.EndTabBar();
             }
@@ -140,6 +124,24 @@ public class EmulatorManager : Frame, IDisposable
             ImGui.EndChild();
 
             emulator.Snapshot.FlushWrites();
+        }
+        finally
+        {
+            emuMutex.ReleaseMutex();
+        }
+    }
+
+    /// <summary>
+    /// Must call this manually in addition to Render(). Cannot do this within Render(), otherwise
+    /// the child windows will disappear when this one is hidden from view (ie. docked).
+    /// </summary>
+    public void RenderChildWindows()
+    {
+        emuMutex.WaitOne();
+        try
+        {
+            foreach (Frame tabFrame in tabFrames)
+                tabFrame.RenderAsWindow("Emulator");
         }
         finally
         {
@@ -281,10 +283,17 @@ public class EmulatorManager : Frame, IDisposable
         }
     }
 
+    void RenderTabItem(EmulatorTabFrame tabFrame)
+    {
+        if (!tabFrame.Active && ImGui.BeginTabItem(tabFrame.ShortName))
+        {
+            tabFrame.RenderTab(false);
+            ImGui.EndTabItem();
+        }
+    }
+
     void RenderDebuggerTab()
     {
-        ImGuiLL.SeparatorWithHelpButton("Debugger", "Emulator-Debugger.md", Project);
-
         ImGui.PushFont(Top.MonoFont, Top.GlobalConfig.MenuFontSize);
 
         string text;
@@ -334,7 +343,6 @@ public class EmulatorManager : Frame, IDisposable
     void RenderGeneralTab()
     {
         ImGui.PushItemWidth(ImGuiLL.LARGE_ENTRY_ITEM_WIDTH);
-        ImGuiLL.SeparatorWithHelpButton("General", "Emulator-General.md", Project);
         ByteWidget("wLinkHealth");
         ByteWidget("wNumEnemies");
         WordWidget("wNumRupees", bcd: true);
@@ -506,8 +514,6 @@ public class EmulatorManager : Frame, IDisposable
 
         ImGui.PushItemWidth(ImGuiLL.ENTRY_ITEM_WIDTH);
 
-        ImGuiLL.SeparatorWithHelpButton("Treasure", "Emulator-Treasure.md", Project);
-
         if (ImGui.BeginTabBar("Treasure Tabs"))
         {
             if (ImGui.BeginTabItem("Give/Lose"))
@@ -587,8 +593,6 @@ public class EmulatorManager : Frame, IDisposable
             return;
         }
 
-        ImGuiLL.SeparatorWithHelpButton("Global Flags", "Emulator-Globalflags.md", Project);
-
         if (ImGui.BeginChild("Global flags"))
         {
             for (int i = 0; i < Project.Eval("NUM_GLOBALFLAGS"); i++)
@@ -604,8 +608,6 @@ public class EmulatorManager : Frame, IDisposable
     void RenderObjectTab()
     {
         int nextHoveringObject = 0;
-
-        ImGuiLL.SeparatorWithHelpButton("Objects", "Emulator-Object.md", Project);
 
         if (Project == null || ProjectInterfacer == null)
         {
@@ -819,8 +821,6 @@ public class EmulatorManager : Frame, IDisposable
 
     void RenderMemoryTab()
     {
-        ImGuiLL.SeparatorWithHelpButton("Memory", "Emulator-Memory.md", Project);
-
         string[] options = [
             "System Bus",
             "Wram",
@@ -967,5 +967,49 @@ public class EmulatorManager : Frame, IDisposable
             result |= d << (i * 4);
         }
         return result;
+    }
+
+    sealed class EmulatorTabFrame : Frame
+    {
+        public EmulatorTabFrame(EmulatorManager manager, string tabName, string markdownFile,
+                                Action renderTab)
+            : base("Emulator " + tabName)
+        {
+            this.manager = manager;
+            this.tabName = tabName;
+            this.markdownFile = markdownFile;
+            this.renderTab = renderTab;
+            this.ShortName = tabName;
+
+            DefaultSize = new(800.0f, 600.0f);
+        }
+
+        readonly EmulatorManager manager;
+        readonly string tabName;
+        readonly string markdownFile;
+        readonly Action renderTab;
+
+        public string ShortName { get; }
+
+        public override void Render()
+        {
+            RenderTab(true);
+        }
+
+        public void RenderTab(bool poppedOut)
+        {
+            if (poppedOut)
+            {
+                ImGuiLL.SeparatorWithHelpButton(tabName, markdownFile, manager.Project);
+            }
+            else if (ImGuiLL.SeparatorWithHelpAndButton(tabName, markdownFile, "Pop out",
+                                                        manager.Project))
+            {
+                Active = true;
+                return;
+            }
+
+            renderTab();
+        }
     }
 }
