@@ -11,6 +11,7 @@ public class HelpWidget
 
         markdownConfig = new ImGuiMarkdown.MarkdownConfig();
         markdownConfig.ImageCallback = MarkdownImageCallback;
+        markdownConfig.FormatCallback = FormatCallback;
         markdownConfig.Flags = ImGuiMarkdown.FormatFlags.NoNewLineBeforeHeading;
 
         NavigateToNode(firstPage);
@@ -232,6 +233,19 @@ public class HelpWidget
         imgData.data.Size = ImGuiX.Unit(imgData.baseSize) / 1.6f;
 
         return imgData.data;
+    }
+
+    static void FormatCallback(ImGuiMarkdown.MarkdownFormatInfo info, bool start)
+    {
+        if (info.Type == ImGuiMarkdown.FormatType.Emphasis && info.Level >= 2)
+        {
+            if (start)
+                ImGui.PushFont(Top.InfoFontBold, 0.0f);
+            else
+                ImGui.PopFont();
+        }
+        else
+            ImGuiMarkdown.DefaultMarkdownFormatCallback(info, start);
     }
 }
 
