@@ -1,5 +1,7 @@
 # Emulator tab: Debugger
-This tab exposes SameBoy's built-in debugger CLI interface.
+This tab exposes SameBoy's built-in debugger CLI.
+
+The debugger automatically loads the symbol file (ie. ages.sym) that is generated along with the ROM file (ages.gbc) when it is assembled. This makes it practical to use, as it will label function names for you, and you can type variable names instead of raw addresses.
 
 ## Cheatsheet
   * General:
@@ -11,7 +13,7 @@ This tab exposes SameBoy's built-in debugger CLI interface.
     * p [wLinkHealth] = $0c: Write a byte value
     * p a = $8c: Set a register value
   * Breakpoints:
-    * l: List breakpoints
+    * l: List breakpoints & watchpoints
     * b playSound: Breakpoint on function "playSound"
     * de 1: Delete a breakpoint
     * w/r wActiveRing: Read watchpoint on 8-bit variable
@@ -29,7 +31,6 @@ This tab exposes SameBoy's built-in debugger CLI interface.
     * f: Run to end of function ("finish")
 
 ## For more information
-For more complete documentation, see: [https://sameboy.github.io/debugger/]()
+For more complete documentation on the debugger interface, see: [https://sameboy.github.io/debugger/]()
 
-TODO:
-- Move help text into here
+To learn more about how the Gameboy works, see: [Wiki: Background information](https://wiki.zeldahacking.net/oracle/Background_information).

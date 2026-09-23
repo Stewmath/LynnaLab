@@ -864,7 +864,17 @@ public class EmulatorManager : Frame, IDisposable
                 }
                 else if (Emulator.TryEvaluate(s, out GbPointer ptr))
                 {
-                    return ptr.Addr;
+                    if (memoryIndex == 0) // System bus
+                        return ptr.Addr;
+
+                    // WRAM
+                    var memoryArea = ptr.GetMemoryArea();
+                    if (memoryArea == EmulatorMemoryArea.WRAM0)
+                        return ptr.Addr & 0xfff;
+                    else if (memoryArea == EmulatorMemoryArea.WRAMX && ptr.IsBanked)
+                        return ptr.Bank * 0x1000 + (ptr.Addr & 0xfff);
+                    else
+                        return null;
                 }
                 else
                     return null;
