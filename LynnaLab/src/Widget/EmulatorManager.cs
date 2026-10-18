@@ -50,12 +50,14 @@ public class EmulatorManager : Frame, IDisposable
     // ================================================================================
     // Variables
     // ================================================================================
-    const string DebuggerHelpText = "This is the SameBoy debugger console.\n";
+    const string DebuggerHelpText = "This is the SameBoy debugger console. Type commands below.\n";
 
     readonly List<EmulatorTabFrame> tabFrames;
 
     OraclesEmulator emulator;
     EmulatorRenderer renderer;
+    EmulatorTabFrame? lastFocusedTab = null;
+
     readonly Thread emuThread;
     readonly Mutex emuMutex = new();
     bool disposed;
@@ -305,12 +307,14 @@ public class EmulatorManager : Frame, IDisposable
     {
         if (!tabFrame.Active && ImGui.BeginTabItem(tabFrame.ShortName))
         {
-            tabFrame.RenderTab(false);
+            tabFrame.RenderTab(false, lastFocusedTab != tabFrame);
             ImGui.EndTabItem();
+
+            lastFocusedTab = tabFrame;
         }
     }
 
-    void RenderDebuggerTab()
+    void RenderDebuggerTab(bool justFocused)
     {
         ImGui.PushFont(Top.MonoFont, Top.GlobalConfig.MenuFontSize);
 
@@ -342,6 +346,9 @@ public class EmulatorManager : Frame, IDisposable
 
         Vector2 pos = ImGui.GetCursorScreenPos();
 
+        if (justFocused)
+            ImGui.SetKeyboardFocusHere();
+
         if (ImGui.InputText("##Text input", ref debuggerCurrentLine, Annotation.MAX_TEXT_LENGTH,
             ImGuiInputTextFlags.EnterReturnsTrue))
         {
@@ -358,7 +365,7 @@ public class EmulatorManager : Frame, IDisposable
         ImGui.PopFont();
     }
 
-    void RenderGeneralTab()
+    void RenderGeneralTab(bool justFocused)
     {
         ImGui.BeginTable("Variables", 2, ImGuiTableFlags.SizingFixedFit);
         ImGui.TableNextColumn();
@@ -528,7 +535,7 @@ public class EmulatorManager : Frame, IDisposable
         }
     }
 
-    void RenderTreasureManagementTab()
+    void RenderTreasureManagementTab(bool justFocused)
     {
         if (Project == null)
         {
@@ -609,7 +616,7 @@ public class EmulatorManager : Frame, IDisposable
         ImGui.PopItemWidth();
     }
 
-    void RenderGlobalFlagsTab()
+    void RenderGlobalFlagsTab(bool justFocused)
     {
         if (Project == null)
         {
@@ -629,7 +636,7 @@ public class EmulatorManager : Frame, IDisposable
         ImGui.EndChild();
     }
 
-    void RenderObjectTab()
+    void RenderObjectTab(bool justFocused)
     {
         int nextHoveringObject = 0;
 
@@ -843,7 +850,7 @@ public class EmulatorManager : Frame, IDisposable
         hoveringObject = nextHoveringObject;
     }
 
-    void RenderMemoryTab()
+    void RenderMemoryTab(bool justFocused)
     {
         string[] options = [
             "System Bus",
@@ -996,7 +1003,7 @@ public class EmulatorManager : Frame, IDisposable
     sealed class EmulatorTabFrame : Frame
     {
         public EmulatorTabFrame(EmulatorManager manager, string tabName, string markdownFile,
-                                Action renderTab)
+                                Action<bool> renderTab)
             : base("Emulator " + tabName)
         {
             this.manager = manager;
@@ -1011,16 +1018,16 @@ public class EmulatorManager : Frame, IDisposable
         readonly EmulatorManager manager;
         readonly string tabName;
         readonly string markdownFile;
-        readonly Action renderTab;
+        readonly Action<bool> renderTab;
 
         public string ShortName { get; }
 
         public override void Render()
         {
-            RenderTab(true);
+            RenderTab(true, false);
         }
 
-        public void RenderTab(bool poppedOut)
+        public void RenderTab(bool poppedOut, bool justFocused)
         {
             if (poppedOut)
             {
@@ -1033,7 +1040,7 @@ public class EmulatorManager : Frame, IDisposable
                 return;
             }
 
-            renderTab();
+            renderTab(justFocused);
         }
     }
 }
