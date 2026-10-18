@@ -101,6 +101,7 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
 
     int scale;
     bool muted = false;
+    bool focusGame = false;
 
     // ================================================================================
     // Public methods
@@ -111,6 +112,11 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         ImGui.BeginGroup();
 
         RenderRibbon();
+        if (focusGame)
+        {
+            ImGui.SetKeyboardFocusHere();
+            focusGame = false;
+        }
         renderWidget.Render();
 
         #if DEBUG
@@ -199,7 +205,10 @@ public unsafe class EmulatorRenderer : Frame, IDisposable
         if (Manager.Paused)
         {
             if (ImGui.Button("Continue"))
+            {
                 Manager.Continue();
+                focusGame = true;
+            }
         }
         else
         {
