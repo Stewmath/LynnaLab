@@ -56,8 +56,8 @@ public class RegionEditor : Frame
             },
             new() {
                 name = "Map Text",
-                showIn = (_, plan) => plan.MainGroup == 0 || (plan.Project.Game == Game.Ages &&
-                                                              plan.MainGroup < 4),
+                showIn = (_, plan) => plan.MainGroup == 0
+                                      || (plan.Project.Game == Game.Ages && plan.MainGroup == 2),
                 colorMapper = null,
                 constructAccessor = (p, _) => new ByteTableAccessor(p,
                     "presentMapTextIndices",
@@ -66,8 +66,10 @@ public class RegionEditor : Frame
             },
             new() {
                 name = "Map Text",
-                showIn = (_, plan) => plan.MainGroup == 1 || (plan.Project.Game == Game.Seasons &&
-                                                              plan.MainGroup < 4),
+                showIn = (_, plan) => (plan.Project.Game == Game.Seasons &&
+                                       (plan.MainGroup >= 1 && plan.MainGroup < 4))
+                                      || (plan.Project.Game == Game.Ages &&
+                                          (plan.MainGroup == 1 || plan.MainGroup == 3)),
                 colorMapper = null,
                 constructAccessor = (p, _) => new ByteTableAccessor(p,
                     "pastMapTextIndices",
