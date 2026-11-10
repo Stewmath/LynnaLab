@@ -215,6 +215,9 @@ public class SettingsDialog : Frame
             ImGuiX.Checkbox("Scroll to Zoom", new Accessor<bool>(() => GlobalConfig.ScrollToZoom));
             ImGuiX.TooltipOnHover("Applies to minimaps, scratchpad, and tileset editor.");
 
+            ImGuiX.Checkbox("Build Combo ROM", new Accessor<bool>(() => GlobalConfig.BuildComboRom));
+            ImGuiX.TooltipOnHover("The built ROM will contain both games.");
+
             endSection();
         }
 

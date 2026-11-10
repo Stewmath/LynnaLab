@@ -205,6 +205,9 @@ public class BuildDialog : Frame
     {
         Helper.MainThreadInvoke(OnMakeExitedBody);
     }
+    string GameString { get { 
+        return Top.GlobalConfig.BuildComboRom ? "combo" : Project.GameString;
+    }}
 
     void OnMakeExitedBody()
     {
@@ -233,14 +236,14 @@ public class BuildDialog : Frame
             "Select Emulator",
             () =>
             {
-                ImGui.Text($"Your gameboy emulator path has not been configured.\nSelect your emulator executable file now to run {Project.GameString}.gbc.");
+                ImGui.Text($"Your gameboy emulator path has not been configured.\nSelect your emulator executable file now to run {GameString}.gbc.");
                 if (ImGui.Button("OK"))
                 {
                     SelectEmulatorDialog((runCommand) =>
                     {
                         if (runCommand == null)
                         {
-                            processView.AppendText($"Emulator not configured, couldn't run {Project.GameString}.gbc.", "error");
+                            processView.AppendText($"Emulator not configured, couldn't run {GameString}.gbc.", "error");
                         }
                         else
                         {
@@ -303,7 +306,7 @@ public class BuildDialog : Frame
 
     (string, string) SubstituteString(string s)
     {
-        s = s.Replace("{GAME}", Project.GameString);
+        s = s.Replace("{GAME}", GameString);
 
         // Old format: space separator
         if (!s.Contains("|"))
