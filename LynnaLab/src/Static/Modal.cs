@@ -195,6 +195,7 @@ public static class Modal
 
         var close = () =>
         {
+            Top.HaltEmulator();
             Top.CloseProject();
             if (callback != null)
                 callback();

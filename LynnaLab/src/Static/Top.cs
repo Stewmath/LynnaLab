@@ -196,10 +196,16 @@ public static class Top
 
         if (backend.CloseRequested)
         {
-            if (Workspace == null)
+            var closeApp = () =>
+            {
+                HaltEmulator();
                 backend.Close();
+            };
+
+            if (Workspace == null)
+                closeApp();
             else
-                Modal.CloseProjectModal(Workspace, () => { backend.Close(); });
+                Modal.CloseProjectModal(Workspace, closeApp);
 
             backend.CloseRequested = false;
         }
