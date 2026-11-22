@@ -18,6 +18,8 @@ public class EmulatorManager : Frame, IDisposable
     // ================================================================================
     public EmulatorManager(OraclesEmulator emulator, Project? project) : base("Emulator")
     {
+        base.DefaultSize = new Vector2(1200.0f, 700.0f);
+
         this.emulator = emulator;
         this.renderer = new EmulatorRenderer(this);
         tabFrames = [

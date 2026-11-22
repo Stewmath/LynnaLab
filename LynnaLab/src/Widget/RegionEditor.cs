@@ -11,6 +11,8 @@ public class RegionEditor : Frame
     // ================================================================================
     public RegionEditor(ProjectWorkspace workspace) : base("Region Editor")
     {
+        base.DefaultSize = new Vector2(900.0f, 550.0f);
+
         this.Workspace = workspace;
         this.minimap = new(workspace, doPostRendering: false);
 
