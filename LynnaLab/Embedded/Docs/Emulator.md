@@ -26,6 +26,7 @@ The internal emulator has numerous debugging capabilities, exposed through these
   * [Debugger](Emulator-Debugger.md)
   * [Memory](Emulator-Memory.md)
 
-## TODO: Misc
-  * Paused behaviour (updates don't apply)
-  * Saving data
+## Save data
+When a ROM is loaded, it reads "ages.sav" or "seasons.sav" from the disk in the same directory as the corresponding "ages.gbc" or "seasons.gbc" file. This is also where BGB and other emulators look for save data, so it will share save data with those emulators.
+
+Save data is written back to disk whenever the game is saved. (Specifically, a breakpoint is placed on the "saveFile", "eraseFile", and "initializeFile" functions, and the .sav file is updated whenever the breakpoint is hit.)

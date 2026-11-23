@@ -3,6 +3,8 @@ The following data in oracles-disasm currently has no LynnaLab interface, and mu
 
 Since LynnaLab doesn't use most of the files listed here, you can edit them freely. But if you choose to edit a file that LynnaLab **does** read or modify, LynnaLab will not see those changes until you reload your project. (PNG files are the only exception; they are reloaded automatically.)
 
+When editing data manually, use "Shift+F5" to force a rebuild when running the game. Otherwise, a rebuild will only occur if something was modified in LynnaLab.
+
 ## Text
 Very straightforward to modify manually.
 

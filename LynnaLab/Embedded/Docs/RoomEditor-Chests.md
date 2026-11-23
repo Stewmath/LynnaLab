@@ -7,7 +7,7 @@ The game remembers that the chest has been opened using ROOMFLAG_ITEM (see [room
   * ID: Determines what treasure you get.
   * SubID: Determines the variant of the treasure you get.
 
-The ID and SubID are paired together to reference an instance of "Treasure Object Data" (TODO: link).
+The ID and SubID are paired together to reference an instance of "Treasure Object Data" (see [disasm:data/{game}/treasureObjectData.s]())
 
 ## Treasure Object Data
 Note that multiple different chests (or even scripts!) can refer to the same treasure object data, so take care when modifying this. When in doubt, increase the SubID to a new, unused value and modify that freely.
@@ -17,11 +17,11 @@ Note that multiple different chests (or even scripts!) can refer to the same tre
   * Parameter: This is a nebulous name for a nebulous value. It can mean:
     * Item level
     * Number of the item to get (bombs / seeds / etc)
-    * Ring index (TODO)
+    * Ring index
     * Seasons for the rod
     * And more...
-  * Graphics: What it looks like. (TODO: reference)
-  * Text Index: TODO
+  * Graphics: What it looks like. Represents an index in the table "interaction60SubidData" in [disasm:data/{game}/interactionData.s]().
+  * Text Index: Text to show, ie. TX_00XX (must always start with 00).
   * Set "Item Obtained" flag: Determines whether to set ROOMFLAG_ITEM. This is basically required for treasures that come from chests, unless you want the chest to be infinitely respawning.
 
 ## Multiple chests in a room

@@ -3,6 +3,7 @@
   * [How LynnaLab Works](LynnaLab-How.md)
   * [LynnaLab Basics](LynnaLab-Basics.md)
   * [LynnaLab Controls](LynnaLab-Controls.md)
+  * [Important Resources](Resources.md)
 
 ## Editor Windows
   * [Dungeon Editor](DungeonEditor.md)
@@ -16,7 +17,6 @@
 
 ## Other
   * [Emulator](Emulator.md)
-  * Annotations (TODO)
-  * Special Thanks
-    * Daniel Jioran
+  * [Annotations](Annotations.md)
   * [Manual Data Editing](ManualData.md)
+  * [Credits](Credits.md)
