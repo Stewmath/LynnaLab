@@ -57,9 +57,7 @@ public class ProjectWorkspace
         transactionDialog = new TransactionDialog(this, "Transaction History");
         networkDialog = new NetworkDialog(this, "Networking");
         roomWiperDialog = new RoomWiper(this);
-        roomWiperDialog.Active = true;
         regionEditorDialog = new(this);
-        regionEditorDialog.Active = true;
 
         frames.AddRange(new Frame[] {
                 roomEditor,
