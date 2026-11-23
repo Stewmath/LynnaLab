@@ -289,7 +289,7 @@ public class ProjectWorkspace
         {
             RunGame();
         }
-        ImGuiX.TooltipOnHover("Run (F5)");
+        ImGuiX.TooltipOnHover("Run (F5) (Hold shift to force rebuild)");
     }
 
     public void Render(float deltaTime)
@@ -583,7 +583,9 @@ public class ProjectWorkspace
 
     void RunGame()
     {
-        if (Project.Save() || Top.GlobalConfig.UseExternalEmulator)
+        bool forceRebuild = ImGui.IsKeyDown(ImGuiKey.ModShift);
+
+        if (Project.Save() || Top.GlobalConfig.UseExternalEmulator || forceRebuild)
         {
             buildDialog.BeginCompile();
             buildDialog.Focus();

@@ -3,7 +3,7 @@
   * Ctrl-Shift-Z: Redo
   * F1: Open help
   * F4: Toggle quickstart
-  * F5: Build & run game
+  * F5: Build & run game (Shift+F5 to force rebuild)
 
 If "Scroll To Zoom" is set in LynnaLab settings, you can use the scroll wheel to zoom into the minimap, scratchpad, etc. You can pan with middle-click + drag.
 
